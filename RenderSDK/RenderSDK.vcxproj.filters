@@ -1,0 +1,290 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Math">
+      <UniqueIdentifier>{14bcef22-15a5-4213-8ad6-d6d5dfe4a9c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DX">
+      <UniqueIdentifier>{df923963-1277-46f8-b455-1351c2a4b4c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{bf37ed69-4348-40cb-a5f8-05b6e254df7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{cdfc8819-7e01-4a64-ad55-d4d9eee98bb6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CommandRecorders">
+      <UniqueIdentifier>{b02df4a5-0490-4ee5-850e-5486e84ea2c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DDSTextureLoader">
+      <UniqueIdentifier>{719216ed-8ae2-47b7-8ce1-405c4d23ebc8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Include\Math\BoundingBox.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\BoundingFrustum.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\BoundingOrientedBox.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\BoundingSphere.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Math.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Matrix4f.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Plane.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Transform.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Vector3f.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Vector4f.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXCommandAllocator.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXCommandList.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXCommandQueue.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXDebug.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXDescriptorHeap.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXDevice.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXEvent.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXFactory.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXFence.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXObject.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXPipelineState.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXResource.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXRootSignature.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXSwapChain.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXUtils.h">
+      <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\Window.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\BasicTypes.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\Application.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\Common.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\CopyTextureRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\CreateVoxelGridRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\ClearVoxelGridRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\VisualizeVoxelGridRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\OverlapTest.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Vector2f.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DDSTextureLoader\DDSTextureLoader.h">
+      <Filter>DDSTextureLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\CalcTextureLuminanceRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\ScaleTextureRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Source\Math\BoundingBox.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\BoundingFrustum.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\BoundingOrientedBox.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\BoundingSphere.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Math.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Matrix4f.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Transform.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Vector3f.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Vector4f.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXCommandAllocator.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXCommandList.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXCommandQueue.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXDebug.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXDescriptorHeap.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXDevice.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXEvent.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXFactory.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXFence.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXPipelineState.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXResource.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXRootSignature.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXSwapChain.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXUtils.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Plane.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\Window.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\Application.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\Common.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\CopyTextureRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\CreateVoxelGridRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\ClearVoxelGridRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\VisualizeVoxelGridRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\OverlapTest.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Vector2f.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DDSTextureLoader\DDSTextureLoader.cpp">
+      <Filter>DDSTextureLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\CalcTextureLuminanceRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\ScaleTextureRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\PassThroughPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\PassThroughVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\FullScreenTriangleVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CopyTexturePS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateVoxelGridVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateVoxelGridPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateVoxelGridGS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VisualizeVoxelGridPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\Reconstruction.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\ClearVoxelGridCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VoxelGrid.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CalcTextureLuminancePS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\ScaleTexture.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+</Project>

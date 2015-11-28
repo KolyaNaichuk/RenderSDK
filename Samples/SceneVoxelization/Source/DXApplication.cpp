@@ -1,0 +1,129 @@
+#include "DXApplication.h"
+#include "DX/DXFactory.h"
+#include "DX/DXDevice.h"
+#include "DX/DXSwapChain.h"
+#include "DX/DXCommandQueue.h"
+#include "DX/DXCommandAllocator.h"
+#include "DX/DXCommandList.h"
+#include "DX/DXDescriptorHeap.h"
+#include "DX/DXResource.h"
+#include "DX/DXFence.h"
+#include "DX/DXEvent.h"
+#include "CommandRecorders/ClearVoxelGridRecorder.h"
+
+enum
+{
+	kNumGridCellsX = 64,
+	kNumGridCellsY = 64,
+	kNumGridCellsZ = 64
+};
+
+DXApplication::DXApplication(HINSTANCE hApp)
+	: Application(hApp, L"Scene Voxelization", 0, 0, 1024, 512)
+	, m_pDevice(nullptr)
+	, m_pSwapChain(nullptr)
+	, m_pCommandQueue(nullptr)
+	, m_pRTVHeap(nullptr)
+	, m_pFence(nullptr)
+	, m_pFenceEvent(nullptr)
+	, m_BackBufferIndex(0)
+	, m_pClearVoxelGridRecorder(nullptr)
+{
+	for (UINT index = 0; index < kBackBufferCount; ++index)
+		m_CommandAllocators[index] = nullptr;
+
+	for (UINT index = 0; index < kBackBufferCount; ++index)
+		m_FenceValues[index] = 0;
+}
+
+DXApplication::~DXApplication()
+{
+	delete m_pClearVoxelGridRecorder;
+	delete m_pFenceEvent;
+	delete m_pFence;
+	delete m_pRTVHeap;
+	delete m_pCommandQueue;
+	delete m_pSwapChain;
+	delete m_pDevice;
+}
+
+void DXApplication::OnInit()
+{
+	DXFactory factory;
+
+	m_pDevice = new DXDevice(&factory, D3D_FEATURE_LEVEL_11_0);
+
+	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
+
+	const RECT bufferRect = m_pWindow->GetClientRect();
+	const UINT bufferWidth = bufferRect.right - bufferRect.left;
+	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
+	
+	DXSwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
+	m_pSwapChain = new DXSwapChain(&factory, &swapChainDesc, m_pCommandQueue);
+	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+
+	DXDescriptorHeapDesc descriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kBackBufferCount, false);
+	m_pRTVHeap = new DXDescriptorHeap(m_pDevice, &descriptorHeapDesc, L"m_pRTVHeap");
+
+	DXTex2DRenderTargetViewDesc rtvDesc;
+	for (UINT index = 0; index < kBackBufferCount; ++index)
+	{
+		DXResource* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVHeap->GetCPUDescriptor(index);
+
+		m_pDevice->CreateRenderTargetView(pRenderTarget, &rtvDesc, rtvHandle);
+	}
+
+	for (UINT index = 0; index < kBackBufferCount; ++index)
+		m_CommandAllocators[index] = new DXCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
+
+	m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(m_pDevice, kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ);
+}
+
+void DXApplication::OnUpdate()
+{
+}
+
+void DXApplication::OnRender()
+{
+}
+
+void DXApplication::OnDestroy()
+{
+	WaitForGPU();
+}
+
+void DXApplication::OnKeyDown(UINT8 key)
+{
+}
+
+void DXApplication::OnKeyUp(UINT8 key)
+{
+}
+
+void DXApplication::WaitForGPU()
+{
+	m_pCommandQueue->Signal(m_pFence, m_FenceValues[m_BackBufferIndex]);
+
+	m_pFence->SetEventOnCompletion(m_FenceValues[m_BackBufferIndex], m_pFenceEvent);
+	m_pFenceEvent->Wait();
+
+	++m_FenceValues[m_BackBufferIndex];
+}
+
+void DXApplication::MoveToNextFrame()
+{
+	const UINT64 currentFenceValue = m_FenceValues[m_BackBufferIndex];
+	m_pCommandQueue->Signal(m_pFence, currentFenceValue);
+
+	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+	if (m_pFence->GetCompletedValue() < m_FenceValues[m_BackBufferIndex])
+	{
+		m_pFence->SetEventOnCompletion(m_FenceValues[m_BackBufferIndex], m_pFenceEvent);
+		m_pFenceEvent->Wait();
+	}
+
+	m_FenceValues[m_BackBufferIndex] = currentFenceValue + 1;
+}

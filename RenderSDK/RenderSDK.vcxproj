@@ -1,0 +1,310 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{81373C17-8965-4747-9818-AA450B2578DC}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>RenderSDK</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.10240.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)Library\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Bin\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)Library\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Bin\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include</AdditionalIncludeDirectories>
+      <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <SubSystem>
+      </SubSystem>
+    </Lib>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Include\CommandRecorders\CalcTextureLuminanceRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\ClearVoxelGridRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\CopyTextureRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\CreateVoxelGridRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\ScaleTextureRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\VisualizeVoxelGridRecorder.h" />
+    <ClInclude Include="..\Include\Common\Application.h" />
+    <ClInclude Include="..\Include\Common\BasicTypes.h" />
+    <ClInclude Include="..\Include\Common\Common.h" />
+    <ClInclude Include="..\Include\Common\Window.h" />
+    <ClInclude Include="..\Include\DDSTextureLoader\DDSTextureLoader.h" />
+    <ClInclude Include="..\Include\DX\DXCommandAllocator.h" />
+    <ClInclude Include="..\Include\DX\DXCommandList.h" />
+    <ClInclude Include="..\Include\DX\DXCommandQueue.h" />
+    <ClInclude Include="..\Include\DX\DXDebug.h" />
+    <ClInclude Include="..\Include\DX\DXDescriptorHeap.h" />
+    <ClInclude Include="..\Include\DX\DXDevice.h" />
+    <ClInclude Include="..\Include\DX\DXEvent.h" />
+    <ClInclude Include="..\Include\DX\DXFactory.h" />
+    <ClInclude Include="..\Include\DX\DXFence.h" />
+    <ClInclude Include="..\Include\DX\DXObject.h" />
+    <ClInclude Include="..\Include\DX\DXPipelineState.h" />
+    <ClInclude Include="..\Include\DX\DXResource.h" />
+    <ClInclude Include="..\Include\DX\DXRootSignature.h" />
+    <ClInclude Include="..\Include\DX\DXSwapChain.h" />
+    <ClInclude Include="..\Include\DX\DXUtils.h" />
+    <ClInclude Include="..\Include\Math\BoundingBox.h" />
+    <ClInclude Include="..\Include\Math\BoundingFrustum.h" />
+    <ClInclude Include="..\Include\Math\BoundingOrientedBox.h" />
+    <ClInclude Include="..\Include\Math\BoundingSphere.h" />
+    <ClInclude Include="..\Include\Math\Math.h" />
+    <ClInclude Include="..\Include\Math\Matrix4f.h" />
+    <ClInclude Include="..\Include\Math\OverlapTest.h" />
+    <ClInclude Include="..\Include\Math\Plane.h" />
+    <ClInclude Include="..\Include\Math\Transform.h" />
+    <ClInclude Include="..\Include\Math\Vector2f.h" />
+    <ClInclude Include="..\Include\Math\Vector3f.h" />
+    <ClInclude Include="..\Include\Math\Vector4f.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Source\CommandRecorders\CalcTextureLuminanceRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\ClearVoxelGridRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\CopyTextureRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\CreateVoxelGridRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\ScaleTextureRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\VisualizeVoxelGridRecorder.cpp" />
+    <ClCompile Include="..\Source\Common\Application.cpp" />
+    <ClCompile Include="..\Source\Common\Common.cpp" />
+    <ClCompile Include="..\Source\Common\Window.cpp" />
+    <ClCompile Include="..\Source\DDSTextureLoader\DDSTextureLoader.cpp" />
+    <ClCompile Include="..\Source\DX\DXCommandAllocator.cpp" />
+    <ClCompile Include="..\Source\DX\DXCommandList.cpp" />
+    <ClCompile Include="..\Source\DX\DXCommandQueue.cpp" />
+    <ClCompile Include="..\Source\DX\DXDebug.cpp" />
+    <ClCompile Include="..\Source\DX\DXDescriptorHeap.cpp" />
+    <ClCompile Include="..\Source\DX\DXDevice.cpp" />
+    <ClCompile Include="..\Source\DX\DXEvent.cpp" />
+    <ClCompile Include="..\Source\DX\DXFactory.cpp" />
+    <ClCompile Include="..\Source\DX\DXFence.cpp" />
+    <ClCompile Include="..\Source\DX\DXPipelineState.cpp" />
+    <ClCompile Include="..\Source\DX\DXResource.cpp" />
+    <ClCompile Include="..\Source\DX\DXRootSignature.cpp" />
+    <ClCompile Include="..\Source\DX\DXSwapChain.cpp" />
+    <ClCompile Include="..\Source\DX\DXUtils.cpp" />
+    <ClCompile Include="..\Source\Math\BoundingBox.cpp" />
+    <ClCompile Include="..\Source\Math\BoundingFrustum.cpp" />
+    <ClCompile Include="..\Source\Math\BoundingOrientedBox.cpp" />
+    <ClCompile Include="..\Source\Math\BoundingSphere.cpp" />
+    <ClCompile Include="..\Source\Math\Math.cpp" />
+    <ClCompile Include="..\Source\Math\Matrix4f.cpp" />
+    <ClCompile Include="..\Source\Math\OverlapTest.cpp" />
+    <ClCompile Include="..\Source\Math\Plane.cpp" />
+    <ClCompile Include="..\Source\Math\Transform.cpp" />
+    <ClCompile Include="..\Source\Math\Vector2f.cpp" />
+    <ClCompile Include="..\Source\Math\Vector3f.cpp" />
+    <ClCompile Include="..\Source\Math\Vector4f.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\PassThroughPS.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\PassThroughVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\CopyTexturePS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\FullScreenTriangleVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\CreateVoxelGridVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\VisualizeVoxelGridPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\CreateVoxelGridPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\CreateVoxelGridGS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\ClearVoxelGridCS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\Reconstruction.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\VoxelGrid.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\CalcTextureLuminancePS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\ScaleTexture.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

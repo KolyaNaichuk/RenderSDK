@@ -1,0 +1,12 @@
+RenderSDK/Bin/
+RenderSDK.opensdf
+RenderSDK.sdf
+Library/
+Samples/Bin/
+Samples/SceneVoxelization/Win32/
+Samples/SceneVoxelization/Shaders/
+Samples/HelloRectangle/Win32/
+Samples/HelloRectangle/Shaders/
+Samples/ToneMapping/Win32/
+Samples/ToneMapping/Shaders/
+
