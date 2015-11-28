@@ -135,6 +135,12 @@
     <ClInclude Include="..\Include\CommandRecorders\ScaleTextureRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Common\MeshData.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\MeshDataFactory.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\BoundingBox.cpp">
@@ -244,6 +250,12 @@
     </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\ScaleTextureRecorder.cpp">
       <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\MeshDataFactory.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\MeshData.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

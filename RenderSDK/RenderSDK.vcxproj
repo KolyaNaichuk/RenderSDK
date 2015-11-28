@@ -154,6 +154,8 @@
     <ClInclude Include="..\Include\Common\Application.h" />
     <ClInclude Include="..\Include\Common\BasicTypes.h" />
     <ClInclude Include="..\Include\Common\Common.h" />
+    <ClInclude Include="..\Include\Common\MeshData.h" />
+    <ClInclude Include="..\Include\Common\MeshDataFactory.h" />
     <ClInclude Include="..\Include\Common\Window.h" />
     <ClInclude Include="..\Include\DDSTextureLoader\DDSTextureLoader.h" />
     <ClInclude Include="..\Include\DX\DXCommandAllocator.h" />
@@ -193,6 +195,8 @@
     <ClCompile Include="..\Source\CommandRecorders\VisualizeVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\Common\Application.cpp" />
     <ClCompile Include="..\Source\Common\Common.cpp" />
+    <ClCompile Include="..\Source\Common\MeshData.cpp" />
+    <ClCompile Include="..\Source\Common\MeshDataFactory.cpp" />
     <ClCompile Include="..\Source\Common\Window.cpp" />
     <ClCompile Include="..\Source\DDSTextureLoader\DDSTextureLoader.cpp" />
     <ClCompile Include="..\Source\DX\DXCommandAllocator.cpp" />

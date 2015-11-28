@@ -14,48 +14,6 @@ enum RootParams
 	kGridBufferUAVRootParam,
 	kNumRootParams
 };
-/*
-class Mesh
-{
-public:
-	Mesh();
-	~Mesh();
-
-	Mesh(const Mesh& mesh) = delete;
-	Mesh& operator= (const Mesh& mesh) = delete;
-
-	u32 GetNumFaces() const;
-	u32 GetNumVertices() const;
-		
-	const u16* Get16BitIndices() const;
-	void Set16BitIndices(u32 numFaces, const u16* pIndices);
-
-	const u32* Get32BitIndices() const;
-	void Set32BitIndices(u32 numFaces, const u32* pIndices);
-
-	const Vector3f* GetPositions() const;
-	void SetPositions(u32 numVertices, const Vector3f* pPositions);
-
-	const Vector3f* GetNormals() const;
-	void SetNormals(u32 numVertices, const Vector3f* pNormals);
-
-	const Vector2f* GetTexCoords() const;
-	void SetTexCoords(u32 numVertices, const Vector2f* pTexCoords);
-
-	void Clear();
-
-private:
-	u32 m_NumFaces;
-	u32 m_NumVertices;
-
-	u16* m_Indices16Bit;
-	u32* m_Indices32Bit;
-
-	Vector3f* m_Positions;
-	Vector3f* m_Normals;
-	Vector2f* m_TexCoords;
-};
-*/
 
 CreateVoxelGridRecorder::CreateVoxelGridRecorder(DXDevice* pDevice)
 	: m_pRootSignature(nullptr)
