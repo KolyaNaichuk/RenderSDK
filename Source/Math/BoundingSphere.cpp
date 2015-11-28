@@ -7,6 +7,11 @@ BoundingSphere::BoundingSphere(const Vector3f& center, f32 radius)
 {
 }
 
+BoundingSphere::BoundingSphere(u32 numPoints, const Vector3f* pFirstPoint)
+{
+	assert(false);
+}
+
 BoundingSphere::BoundingSphere(const BoundingSphere& sphere1, const BoundingSphere& sphere2)
 {
     Vector3f centerDir = sphere2.m_Center - sphere1.m_Center;

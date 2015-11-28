@@ -4,12 +4,14 @@
 
 MeshData::MeshData()
 	: m_NumIndices(0)
-	, m_NumVertices(0)
 	, m_pIndices16Bit(nullptr)
 	, m_pIndices32Bit(nullptr)
+	, m_NumVertices(0)
 	, m_pPositions(nullptr)
 	, m_pNormals(nullptr)
 	, m_pTexCoords(nullptr)
+	, m_NumSubMeshes(0)
+	, m_pSubMeshes(nullptr)
 {
 }
 
@@ -35,7 +37,7 @@ u32 MeshData::GetNumVertices() const
 
 void MeshData::SetVertexData(u32 numVertices, const Vector3f* pPositions, const Vector3f* pNormals, const Vector2f* pTexCoords)
 {
-	assert(numVertices > 0);
+	assert((numVertices > 0) && (pPositions != nullptr));
 	m_NumVertices = numVertices;
 	
 	delete[] m_pPositions;
@@ -43,12 +45,18 @@ void MeshData::SetVertexData(u32 numVertices, const Vector3f* pPositions, const 
 	std::memcpy(m_pPositions, pPositions, numVertices * sizeof(Vector3f));
 
 	delete[] m_pNormals;
-	m_pNormals = new Vector3f[numVertices];
-	std::memcpy(m_pNormals, pNormals, numVertices * sizeof(Vector3f));
-
+	if (pNormals != nullptr)
+	{
+		m_pNormals = new Vector3f[numVertices];
+		std::memcpy(m_pNormals, pNormals, numVertices * sizeof(Vector3f));
+	}
+	
 	delete[] m_pTexCoords;
-	m_pTexCoords = new Vector2f[numVertices];
-	std::memcpy(m_pTexCoords, pTexCoords, numVertices * sizeof(Vector2f));
+	if (pTexCoords != nullptr)
+	{
+		m_pTexCoords = new Vector2f[numVertices];
+		std::memcpy(m_pTexCoords, pTexCoords, numVertices * sizeof(Vector2f));
+	}
 }
 
 const Vector3f* MeshData::GetPositions() const
@@ -96,14 +104,37 @@ const u32* MeshData::Get32BitIndices() const
 	return m_pIndices32Bit;
 }
 
+void MeshData::SetSubMeshData(u32 numSubMeshes, const SubMeshData* pSubMeshes)
+{
+	assert((numSubMeshes > 0) && (pSubMeshes != nullptr));
+	m_NumSubMeshes = numSubMeshes;
+
+	delete[] m_pSubMeshes;
+	m_pSubMeshes = new SubMeshData[numSubMeshes];
+	std::memcpy(m_pSubMeshes, pSubMeshes, numSubMeshes * sizeof(SubMeshData));
+}
+
+u32 MeshData::GetNumSubMeshes() const
+{
+	return m_NumSubMeshes;
+}
+
+const SubMeshData* MeshData::GetSubMeshes() const
+{
+	return m_pSubMeshes;
+}
+
 void MeshData::Clear()
 {
+	m_NumIndices = 0;
 	delete[] m_pIndices16Bit;
 	delete[] m_pIndices32Bit;
+
+	m_NumVertices = 0;
 	delete[] m_pPositions;
 	delete[] m_pNormals;
 	delete[] m_pTexCoords;
 
-	m_NumIndices = 0;
-	m_NumVertices = 0;
+	m_NumSubMeshes = 0;
+	delete[] m_pSubMeshes;	
 }

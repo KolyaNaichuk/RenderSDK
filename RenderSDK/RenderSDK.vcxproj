@@ -154,6 +154,7 @@
     <ClInclude Include="..\Include\Common\Application.h" />
     <ClInclude Include="..\Include\Common\BasicTypes.h" />
     <ClInclude Include="..\Include\Common\Common.h" />
+    <ClInclude Include="..\Include\Common\Material.h" />
     <ClInclude Include="..\Include\Common\MeshData.h" />
     <ClInclude Include="..\Include\Common\MeshDataFactory.h" />
     <ClInclude Include="..\Include\Common\Window.h" />
