@@ -15,4 +15,5 @@ public:
 	static MeshData* CreateSphereData(VertexDataFlags dataFlags);
 	static MeshData* CreateTorusData(VertexDataFlags dataFlags);
 	static MeshData* CreateCubeData(VertexDataFlags dataFlags);
+	static MeshData* CreateCylinderData(VertexDataFlags dataFlags);
 };

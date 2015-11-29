@@ -155,6 +155,7 @@
     <ClInclude Include="..\Include\Common\BasicTypes.h" />
     <ClInclude Include="..\Include\Common\Common.h" />
     <ClInclude Include="..\Include\Common\Material.h" />
+    <ClInclude Include="..\Include\Common\Mesh.h" />
     <ClInclude Include="..\Include\Common\MeshData.h" />
     <ClInclude Include="..\Include\Common\MeshDataFactory.h" />
     <ClInclude Include="..\Include\Common\Window.h" />
@@ -196,6 +197,7 @@
     <ClCompile Include="..\Source\CommandRecorders\VisualizeVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\Common\Application.cpp" />
     <ClCompile Include="..\Source\Common\Common.cpp" />
+    <ClCompile Include="..\Source\Common\Mesh.cpp" />
     <ClCompile Include="..\Source\Common\MeshData.cpp" />
     <ClCompile Include="..\Source\Common\MeshDataFactory.cpp" />
     <ClCompile Include="..\Source\Common\Window.cpp" />

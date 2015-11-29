@@ -10,6 +10,7 @@
 #include <wrl.h>
 
 #include <string>
+#include <vector>
 #include <algorithm>
 #include <cassert>
 #include <memory>
@@ -18,4 +19,21 @@
 
 using namespace Microsoft::WRL;
 
-extern void DXVerify(HRESULT result);
+static void DXVerify(HRESULT result)
+{
+	assert(SUCCEEDED(result));
+}
+
+template <typename T>
+static void SafeDelete(T*& pObject)
+{
+	delete pObject;
+	pObject = nullptr;
+}
+
+template <typename T>
+static void SafeArrayDelete(T*& pArrayObject)
+{
+	delete[] pArrayObject;
+	pArrayObject = nullptr;
+}
