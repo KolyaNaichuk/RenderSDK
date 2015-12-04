@@ -7,6 +7,8 @@ struct Material
 	Vector4f mAmbientColor;
 	Vector4f mDiffuseColor;
 	Vector4f mSpecularColor;
+	f32	mSpecularPower;
 	Vector4f mEmissiveColor;
-	f32 mSpecularPower;
+	
+	std::string mTextureFileName;
 };

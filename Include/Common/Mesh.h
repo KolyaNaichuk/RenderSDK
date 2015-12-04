@@ -7,6 +7,7 @@ class DXResource;
 class DXCommandList;
 struct DXVertexBufferView;
 struct DXIndexBufferView;
+struct DXInputLayoutDesc;
 
 class MeshData;
 struct SubMeshData;
@@ -26,6 +27,8 @@ public:
 	DXResource* GetIndexBuffer();
 	DXIndexBufferView* GetIndexBufferView();
 
+	const DXInputLayoutDesc* GetInputLayoutDesc() const;
+
 	u32 GetNumSubMeshes() const;
 	const SubMeshData* GetSubMeshes() const;
 
@@ -44,6 +47,8 @@ private:
 	DXVertexBufferView* m_pVBView;
 	DXIndexBufferView* m_pIBView;
 	
+	DXInputLayoutDesc* m_pInputLayoutDesc;
+
 	u32 m_NumSubMeshes;
 	SubMeshData* m_pSubMeshes;
 };

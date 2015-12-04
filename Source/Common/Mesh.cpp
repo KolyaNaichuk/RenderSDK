@@ -2,6 +2,7 @@
 #include "Common/MeshData.h"
 #include "DX/DXResource.h"
 #include "DX/DXCommandList.h"
+#include "DX/DXPipelineState.h"
 #include "Math/Vector2f.h"
 #include "Math/Vector3f.h"
 
@@ -12,6 +13,7 @@ Mesh::Mesh(DXDevice* pDevice, const MeshData* pMeshData)
 	, m_pDefaultHeapIB(nullptr)
 	, m_pVBView(nullptr)
 	, m_pIBView(nullptr)
+	, m_pInputLayoutDesc(nullptr)
 	, m_NumSubMeshes(0)
 	, m_pSubMeshes(nullptr)
 {
@@ -22,6 +24,7 @@ Mesh::Mesh(DXDevice* pDevice, const MeshData* pMeshData)
 
 Mesh::~Mesh()
 {
+	SafeDelete(m_pInputLayoutDesc);
 	SafeDelete(m_pUploadHeapVB);
 	SafeDelete(m_pUploadHeapIB);
 	SafeDelete(m_pDefaultHeapVB);
@@ -66,6 +69,10 @@ DXIndexBufferView* Mesh::GetIndexBufferView()
 	return m_pIBView;
 }
 
+const DXInputLayoutDesc* Mesh::GetInputLayoutDesc() const {
+	return m_pInputLayoutDesc;
+}
+
 u32 Mesh::GetNumSubMeshes() const
 {
 	return m_NumSubMeshes;
@@ -84,16 +91,17 @@ void Mesh::InitVertexBuffer(DXDevice* pDevice, const MeshData* pMeshData)
 	const u32 numVertices = pMeshData->GetNumVertices();
 
 	const Vector3f* pPositions = pMeshData->GetPositions();
+	const Vector4f* pColors = pMeshData->GetColors();
 	const Vector3f* pNormals = pMeshData->GetNormals();
 	const Vector2f* pTexCoords = pMeshData->GetTexCoords();
+	const Vector4f* pTangents = pMeshData->GetTangents();
 
-	if ((pPositions != nullptr) && (pNormals != nullptr) && (pTexCoords != nullptr))
+	if (pNormals != nullptr)
 	{
 		struct Vertex
 		{
 			Vector3f mPosition;
 			Vector3f mNormal;
-			Vector2f mTexCoord;
 		};
 
 		std::vector<Vertex> vertices(numVertices);
@@ -101,7 +109,6 @@ void Mesh::InitVertexBuffer(DXDevice* pDevice, const MeshData* pMeshData)
 		{
 			vertices[i].mPosition = pPositions[i];
 			vertices[i].mNormal = pNormals[i];
-			vertices[i].mTexCoord = pTexCoords[i];
 		}
 
 		const u32 strideInBytes = sizeof(Vertex);
