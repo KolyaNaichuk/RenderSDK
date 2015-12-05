@@ -10,6 +10,10 @@
 #include "DX/DXFence.h"
 #include "DX/DXEvent.h"
 #include "CommandRecorders/ClearVoxelGridRecorder.h"
+#include "Common/MeshData.h"
+#include "Common/Color.h"
+#include "Math/Vector3f.h"
+#include "Math/Vector4f.h"
 
 enum
 {
@@ -80,6 +84,178 @@ void DXApplication::OnInit()
 		m_CommandAllocators[index] = new DXCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
 
 	m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(m_pDevice, kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ);
+	
+	const Vector3f positions[] =
+	{
+		// Floor
+		Vector3f(552.8f,   0.0f,   0.0f),
+		Vector3f(  0.0f,   0.0f,   0.0f),
+		Vector3f(  0.0f,   0.0f, 559.2f),
+		Vector3f(549.6f,   0.0f, 559.2f),
+
+		// Ceiling
+		Vector3f(556.0f, 548.8f,   0.0f),
+		Vector3f(556.0f, 548.8f, 559.2f),
+		Vector3f(  0.0f, 548.8f, 559.2f),
+		Vector3f(  0.0f, 548.8f,   0.0f),
+
+		// Back wall
+		Vector3f(549.6f,   0.0f, 559.2f),
+		Vector3f(  0.0f,   0.0f, 559.2f),
+		Vector3f(  0.0f, 548.8f, 559.2f),
+		Vector3f(556.0f, 548.8f, 559.2f),
+
+		// Right wall
+		Vector3f(  0.0f,   0.0f, 559.2f),
+		Vector3f(  0.0f,   0.0f,   0.0f),
+		Vector3f(  0.0f, 548.8f,   0.0f),
+		Vector3f(  0.0f, 548.8f, 559.2f),
+
+		// Left wall
+		Vector3f(552.8f,   0.0f,   0.0f),
+		Vector3f(549.6f,   0.0f, 559.2f),
+		Vector3f(556.0f, 548.8f, 559.2f),
+		Vector3f(556.0f, 548.8f,   0.0f),
+
+		// Short block
+		Vector3f(130.0f, 165.0f,  65.0f),
+		Vector3f( 82.0f, 165.0f, 225.0f),
+		Vector3f(240.0f, 165.0f, 272.0f),
+		Vector3f(290.0f, 165.0f, 114.0f),
+
+		Vector3f(290.0f,   0.0f, 114.0f),
+		Vector3f(290.0f, 165.0f, 114.0f),
+		Vector3f(240.0f, 165.0f, 272.0f),
+		Vector3f(240.0f,   0.0f, 272.0f),
+
+		Vector3f(130.0f,   0.0f,  65.0f),
+		Vector3f(130.0f, 165.0f,  65.0f),
+		Vector3f(290.0f, 165.0f, 114.0f),
+		Vector3f(290.0f,   0.0f, 114.0f),
+
+		Vector3f( 82.0f,   0.0f, 225.0f),
+		Vector3f( 82.0f, 165.0f, 225.0f),
+		Vector3f(130.0f, 165.0f,  65.0f),
+		Vector3f(130.0f,   0.0f,  65.0f),
+
+		Vector3f(240.0f,   0.0f, 272.0f),
+		Vector3f(240.0f, 165.0f, 272.0f),
+		Vector3f( 82.0f, 165.0f, 225.0f),
+		Vector3f( 82.0f,   0.0f, 225.0f),
+
+		// Tall block
+		Vector3f(423.0f, 330.0f, 247.0f),
+		Vector3f(265.0f, 330.0f, 296.0f),
+		Vector3f(314.0f, 330.0f, 456.0f),
+		Vector3f(472.0f, 330.0f, 406.0f),
+
+		Vector3f(423.0f,   0.0f, 247.0f),
+		Vector3f(423.0f, 330.0f, 247.0f),
+		Vector3f(472.0f, 330.0f, 406.0f),
+		Vector3f(472.0f,   0.0f, 406.0f),
+
+		Vector3f(472.0f,   0.0f, 406.0f),
+		Vector3f(472.0f, 330.0f, 406.0f),
+		Vector3f(314.0f, 330.0f, 456.0f),
+		Vector3f(314.0f,   0.0f, 456.0f),
+
+		Vector3f(314.0f,   0.0f, 456.0f),
+		Vector3f(314.0f, 330.0f, 456.0f),
+		Vector3f(265.0f, 330.0f, 296.0f),
+		Vector3f(265.0f,   0.0f, 296.0f),
+
+		Vector3f(265.0f,   0.0f, 296.0f),
+		Vector3f(265.0f, 330.0f, 296.0f),
+		Vector3f(423.0f, 330.0f, 247.0f),
+		Vector3f(423.0f,   0.0f, 247.0f)
+	};
+		
+	const Vector4f colors[] =
+	{
+		// Floor
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+
+		// Ceiling
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+
+		// Back wall
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+
+		// Right wall
+		Color::GREEN,
+		Color::GREEN,
+		Color::GREEN,
+		Color::GREEN,
+
+		// Left wall
+		Color::RED,
+		Color::RED,
+		Color::RED,
+		Color::RED,
+
+		// Short block
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+
+		// Tall block
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE,
+		Color::WHITE
+	};
+
+	MeshData meshData;
 }
 
 void DXApplication::OnUpdate()

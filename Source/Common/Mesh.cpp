@@ -6,6 +6,11 @@
 #include "Math/Vector2f.h"
 #include "Math/Vector3f.h"
 
+namespace
+{
+	u32 GetBytesPerElement(DXGI_FORMAT format);
+}
+
 Mesh::Mesh(DXDevice* pDevice, const MeshData* pMeshData)
 	: m_pUploadHeapVB(nullptr)
 	, m_pUploadHeapIB(nullptr)
@@ -17,6 +22,7 @@ Mesh::Mesh(DXDevice* pDevice, const MeshData* pMeshData)
 	, m_NumSubMeshes(0)
 	, m_pSubMeshes(nullptr)
 {
+	InitInputLayoutDesc(pMeshData);
 	InitVertexBuffer(pDevice, pMeshData);
 	InitIndexBuffer(pDevice, pMeshData);
 	InitSubMeshes(pMeshData);
@@ -83,6 +89,58 @@ const SubMeshData* Mesh::GetSubMeshes() const
 	return m_pSubMeshes;
 }
 
+void Mesh::InitInputLayoutDesc(const MeshData* pMeshData)
+{
+	assert(false && "Check if D3D11_APPEND_ALIGNED_ELEMENT could be used for byteOffset");
+	assert(false && "If using D3D11_APPEND_ALIGNED_ELEMENT then byteOffset is not needed probably at all");
+
+	const Vector3f* pPositions = pMeshData->GetPositions();
+	const Vector4f* pColors = pMeshData->GetColors();
+	const Vector3f* pNormals = pMeshData->GetNormals();
+	const Vector2f* pTexCoords = pMeshData->GetTexCoords();
+	const Vector4f* pTangents = pMeshData->GetTangents();
+
+	UINT byteOffset = 0;
+	std::vector<DXInputElementDesc> inputElements;
+
+	assert(pPositions != nullptr);
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
+		inputElements.push_back(DXInputElementDesc("POSITION", 0, format, 0, byteOffset));
+		byteOffset += GetBytesPerElement(format);
+	}	
+
+	if (pNormals != nullptr)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
+		inputElements.push_back(DXInputElementDesc("NORMAL", 0, format, 0, byteOffset));
+		byteOffset += GetBytesPerElement(format);
+	}
+
+	if (pColors != nullptr)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		inputElements.push_back(DXInputElementDesc("COLOR", 0, format, 0, byteOffset));
+		byteOffset += GetBytesPerElement(format);
+	}
+
+	if (pTangents != nullptr)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		inputElements.push_back(DXInputElementDesc("TANGENT", 0, format, 0, byteOffset));
+		byteOffset += GetBytesPerElement(format);
+	}
+
+	if (pTexCoords != nullptr)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32_FLOAT;
+		inputElements.push_back(DXInputElementDesc("TEXCOORD", 0, format, 0, byteOffset));
+		byteOffset += GetBytesPerElement(format);
+	}
+
+	m_pInputLayoutDesc = new DXInputLayoutDesc(inputElements.size(), &inputElements[0]);
+}
+
 void Mesh::InitVertexBuffer(DXDevice* pDevice, const MeshData* pMeshData)
 {
 	DXHeapProperties uploadHeapProperties(D3D12_HEAP_TYPE_UPLOAD);
@@ -95,7 +153,7 @@ void Mesh::InitVertexBuffer(DXDevice* pDevice, const MeshData* pMeshData)
 	const Vector3f* pNormals = pMeshData->GetNormals();
 	const Vector2f* pTexCoords = pMeshData->GetTexCoords();
 	const Vector4f* pTangents = pMeshData->GetTangents();
-
+		
 	if (pNormals != nullptr)
 	{
 		struct Vertex
@@ -163,4 +221,78 @@ void Mesh::InitSubMeshes(const MeshData* pMeshData)
 
 	m_pSubMeshes = new SubMeshData[numSubMeshes];
 	std::memcpy(m_pSubMeshes, pSubMeshes, numSubMeshes * sizeof(SubMeshData));
+}
+
+namespace
+{
+	u32 GetBytesPerElement(DXGI_FORMAT format)
+	{
+		switch (format)
+		{
+			case DXGI_FORMAT_R32G32B32A32_FLOAT:
+			case DXGI_FORMAT_R32G32B32A32_UINT:
+			case DXGI_FORMAT_R32G32B32A32_SINT:
+				return 16;
+
+			case DXGI_FORMAT_R32G32B32_FLOAT:
+			case DXGI_FORMAT_R32G32B32_UINT:
+			case DXGI_FORMAT_R32G32B32_SINT:
+				return 12;
+
+			case DXGI_FORMAT_R16G16B16A16_FLOAT:
+			case DXGI_FORMAT_R16G16B16A16_UNORM:
+			case DXGI_FORMAT_R16G16B16A16_UINT:
+			case DXGI_FORMAT_R16G16B16A16_SNORM:
+			case DXGI_FORMAT_R16G16B16A16_SINT:
+			case DXGI_FORMAT_R32G32_FLOAT:
+			case DXGI_FORMAT_R32G32_UINT:
+			case DXGI_FORMAT_R32G32_SINT:
+				return 8;
+
+			case DXGI_FORMAT_R10G10B10A2_UNORM:
+			case DXGI_FORMAT_R10G10B10A2_UINT:
+			case DXGI_FORMAT_R11G11B10_FLOAT:
+			case DXGI_FORMAT_R8G8B8A8_UNORM:
+			case DXGI_FORMAT_R8G8B8A8_UINT:
+			case DXGI_FORMAT_R8G8B8A8_SNORM:
+			case DXGI_FORMAT_R8G8B8A8_SINT:
+			case DXGI_FORMAT_R16G16_FLOAT:
+			case DXGI_FORMAT_R16G16_UNORM:
+			case DXGI_FORMAT_R16G16_UINT:
+			case DXGI_FORMAT_R16G16_SNORM:
+			case DXGI_FORMAT_R16G16_SINT:
+			case DXGI_FORMAT_R32_FLOAT:
+			case DXGI_FORMAT_R32_UINT:
+			case DXGI_FORMAT_R32_SINT:
+			case DXGI_FORMAT_B8G8R8A8_UNORM:
+			case DXGI_FORMAT_B8G8R8X8_UNORM:
+				return 4;
+
+			case DXGI_FORMAT_R8G8_UNORM:
+			case DXGI_FORMAT_R8G8_UINT:
+			case DXGI_FORMAT_R8G8_SNORM:
+			case DXGI_FORMAT_R8G8_SINT:
+			case DXGI_FORMAT_R16_FLOAT:
+			case DXGI_FORMAT_R16_UNORM:
+			case DXGI_FORMAT_R16_UINT:
+			case DXGI_FORMAT_R16_SNORM:
+			case DXGI_FORMAT_R16_SINT:
+			case DXGI_FORMAT_B5G6R5_UNORM:
+			case DXGI_FORMAT_B5G5R5A1_UNORM:
+				return 2;
+
+			case DXGI_FORMAT_R8_UNORM:
+			case DXGI_FORMAT_R8_UINT:
+			case DXGI_FORMAT_R8_SNORM:
+			case DXGI_FORMAT_R8_SINT:
+				return 1;
+
+			case DXGI_FORMAT_B4G4R4A4_UNORM:
+				return 2;
+
+			default:
+				assert(false);
+				return 0;
+		}
+	}
 }

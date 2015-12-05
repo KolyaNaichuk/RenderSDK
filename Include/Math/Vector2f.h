@@ -10,6 +10,13 @@ struct Vector2f
 
 	f32 m_X;
 	f32 m_Y;
+
+	static const Vector2f ONE;
+	static const Vector2f ZERO;
+	static const Vector2f UP;
+	static const Vector2f DOWN;
+	static const Vector2f LEFT;
+	static const Vector2f RIGHT;
 };
 
 const Vector2f Abs(const Vector2f& vec);

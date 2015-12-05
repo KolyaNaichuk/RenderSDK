@@ -153,6 +153,7 @@
     <ClInclude Include="..\Include\CommandRecorders\VisualizeVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\Common\Application.h" />
     <ClInclude Include="..\Include\Common\BasicTypes.h" />
+    <ClInclude Include="..\Include\Common\Color.h" />
     <ClInclude Include="..\Include\Common\Common.h" />
     <ClInclude Include="..\Include\Common\Material.h" />
     <ClInclude Include="..\Include\Common\Mesh.h" />

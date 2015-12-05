@@ -33,6 +33,7 @@ public:
 	const SubMeshData* GetSubMeshes() const;
 
 private:
+	void InitInputLayoutDesc(const MeshData* pMeshData);
 	void InitVertexBuffer(DXDevice* pDevice, const MeshData* pMeshData);
 	void InitIndexBuffer(DXDevice* pDevice, const MeshData* pMeshData);
 	void InitSubMeshes(const MeshData* pMeshData);

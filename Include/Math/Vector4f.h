@@ -12,6 +12,9 @@ struct Vector4f
     f32 m_Y;
     f32 m_Z;
     f32 m_W;
+
+	static const Vector4f ONE;
+	static const Vector4f ZERO;
 };
 
 const Vector4f Abs(const Vector4f& vec);

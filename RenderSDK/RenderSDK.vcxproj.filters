@@ -147,6 +147,9 @@
     <ClInclude Include="..\Include\Common\Mesh.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Common\Color.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\BoundingBox.cpp">

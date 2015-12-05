@@ -4,6 +4,16 @@
 #include "Math/Vector4f.h"
 #include "Math/BoundingBox.h"
 
+namespace
+{
+	template <typename Index>
+	void ComputeNormals(const Vector3f* pPositions, u32 numIndices, const Index* pIndices, Vector3f* pNormals)
+	{
+		assert((pPositions != nullptr) && (pIndices != nullptr));
+		assert(false && "Needs impl");
+	}
+}
+
 MeshData::MeshData()
 	: m_NumIndices(0)
 	, m_pIndices16Bit(nullptr)
@@ -107,7 +117,7 @@ const Vector4f* MeshData::GetTangents() const
 
 void MeshData::SetIndexData(u32 numIndices, const u16* pIndices)
 {
-	assert((numIndices > 0) && (pIndices != nullptr));
+	assert((numIndices > 0) && ((numIndices % 3) == 0) && (pIndices != nullptr));
 	m_NumIndices = numIndices;
 		
 	SafeArrayDelete(m_pIndices32Bit);
@@ -124,7 +134,7 @@ const u16* MeshData::Get16BitIndices() const
 
 void MeshData::SetIndexData(u32 numIndices, const u32* pIndices)
 {
-	assert((numIndices > 0) && (pIndices != nullptr));
+	assert((numIndices > 0) && ((numIndices % 3) == 0) && (pIndices != nullptr));
 	m_NumIndices = numIndices;
 
 	SafeArrayDelete(m_pIndices16Bit);
@@ -163,6 +173,23 @@ void MeshData::ComputeBoundingBox()
 {
 	SafeDelete(m_pBoundingBox);
 	m_pBoundingBox = new BoundingBox(m_NumVertices, m_pPositions);
+}
+
+void MeshData::ComputeNormals()
+{
+	SafeArrayDelete(m_pNormals);
+	if (m_pIndices16Bit != nullptr)
+	{
+		::ComputeNormals(m_pPositions, m_NumIndices, m_pIndices16Bit, m_pNormals);
+	}
+	else if (m_pIndices32Bit != nullptr)
+	{
+		::ComputeNormals(m_pPositions, m_NumIndices, m_pIndices32Bit, m_pNormals);
+	}
+	else
+	{
+		assert(false);
+	}
 }
 
 const BoundingBox* MeshData::GetBoundingBox() const

@@ -1,6 +1,13 @@
 #include "Math/Vector2f.h"
 #include "Math/Math.h"
 
+const Vector2f Vector2f::ONE(1.0f, 1.0f);
+const Vector2f Vector2f::ZERO(0.0f, 0.0f);
+const Vector2f Vector2f::UP(0.0f, 1.0f);
+const Vector2f Vector2f::DOWN(0.0f, -1.0f);
+const Vector2f Vector2f::LEFT(-1.0f, 0.0f);
+const Vector2f Vector2f::RIGHT(1.0f, 0.0f);
+
 Vector2f::Vector2f()
 	: m_X(0.0f)
 	, m_Y(0.0f)

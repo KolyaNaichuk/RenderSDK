@@ -48,6 +48,8 @@ public:
 	
 	void ComputeBoundingBox();
 	const BoundingBox* GetBoundingBox() const;
+
+	void ComputeNormals();
 	
 	void Clear();
 	
