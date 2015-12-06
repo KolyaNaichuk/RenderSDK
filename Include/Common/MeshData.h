@@ -17,6 +17,13 @@ struct SubMeshData
 	u32 mNumIndices;
 };
 
+enum FaceNormalWeight
+{
+	FaceNormalWeight_Equal,
+	FaceNormalWeight_ByArea,
+	FaceNormalWeight_ByAngle
+};
+
 class MeshData
 {
 public:
@@ -49,7 +56,7 @@ public:
 	void ComputeBoundingBox();
 	const BoundingBox* GetBoundingBox() const;
 
-	void ComputeNormals();
+	void ComputeNormals(FaceNormalWeight faceNormalWeight = FaceNormalWeight_Equal);
 	
 	void Clear();
 	
