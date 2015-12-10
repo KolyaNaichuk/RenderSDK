@@ -159,6 +159,7 @@
     <ClInclude Include="..\Include\Common\Mesh.h" />
     <ClInclude Include="..\Include\Common\MeshData.h" />
     <ClInclude Include="..\Include\Common\MeshDataFactory.h" />
+    <ClInclude Include="..\Include\Common\MeshDataUtilities.h" />
     <ClInclude Include="..\Include\Common\Window.h" />
     <ClInclude Include="..\Include\DDSTextureLoader\DDSTextureLoader.h" />
     <ClInclude Include="..\Include\DX\DXCommandAllocator.h" />
@@ -190,6 +191,7 @@
     <ClInclude Include="..\Include\Math\Vector4f.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CalcTextureLuminanceRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\ClearVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CopyTextureRecorder.cpp" />

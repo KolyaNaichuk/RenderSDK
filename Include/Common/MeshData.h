@@ -29,24 +29,40 @@ class MeshData
 public:
 	MeshData();
 	~MeshData();
-
+	
 	u32 GetNumFaces() const;
 	u32 GetNumIndices() const;
 	u32 GetNumVertices() const;
-	
+
 	void SetVertexData(u32 numVertices, const Vector3f* pPositions, const Vector4f* pColors = nullptr,
-		const Vector3f* pNormals = nullptr, const Vector2f* pTexCoords = nullptr, const Vector4f* pTangents = nullptr);
-		
-	const Vector3f* GetPositions() const;
-	const Vector3f* GetNormals() const;
-	const Vector2f* GetTexCoords() const;
-	const Vector4f* GetColors() const;
-	const Vector4f* GetTangents() const;
+		const Vector3f* pNormals = nullptr, const Vector2f* pTexCoords = nullptr,
+		const Vector3f* pTangents = nullptr, const Vector3f* pBiTangents = nullptr);
 	
 	void SetIndexData(u32 numIndices, const u16* pIndices);
-	const u16* Get16BitIndices() const;
-
 	void SetIndexData(u32 numIndices, const u32* pIndices);
+	
+	Vector3f* GetPositions();
+	const Vector3f* GetPositions() const;
+	
+	Vector3f* GetNormals();
+	const Vector3f* GetNormals() const;
+
+	Vector2f* GetTexCoords();
+	const Vector2f* GetTexCoords() const;
+
+	Vector4f* GetColors();
+	const Vector4f* GetColors() const;
+
+	Vector3f* GetTangents();
+	const Vector3f* GetTangents() const;
+
+	Vector3f* GetBiTangents();
+	const Vector3f* GetBiTangents() const;
+			
+	u16* Get16BitIndices();
+	const u16* Get16BitIndices() const;
+	
+	u32* Get32BitIndices();
 	const u32* Get32BitIndices() const;
 
 	void SetSubMeshData(u32 numSubMeshes, const SubMeshData* pSubMeshes);
@@ -70,7 +86,8 @@ private:
 	Vector3f* m_pNormals;
 	Vector2f* m_pTexCoords;
 	Vector4f* m_pColors;
-	Vector4f* m_pTangents;
+	Vector3f* m_pTangents;
+	Vector3f* m_pBiTangents;
 
 	u32 m_NumSubMeshes;
 	SubMeshData* m_pSubMeshes;

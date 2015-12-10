@@ -60,6 +60,7 @@ MeshData::MeshData()
 	, m_pTexCoords(nullptr)
 	, m_pColors(nullptr)
 	, m_pTangents(nullptr)
+	, m_pBiTangents(nullptr)
 	, m_NumSubMeshes(0)
 	, m_pSubMeshes(nullptr)
 	, m_pBoundingBox(nullptr)
@@ -86,7 +87,8 @@ u32 MeshData::GetNumVertices() const
 	return m_NumVertices;
 }
 
-void MeshData::SetVertexData(u32 numVertices, const Vector3f* pPositions, const Vector4f* pColors, const Vector3f* pNormals, const Vector2f* pTexCoords, const Vector4f* pTangents)
+void MeshData::SetVertexData(u32 numVertices, const Vector3f* pPositions, const Vector4f* pColors,
+	const Vector3f* pNormals, const Vector2f* pTexCoords, const Vector3f* pTangents, const Vector3f* pBiTangents)
 {
 	assert((numVertices > 0) && (pPositions != nullptr));
 	m_NumVertices = numVertices;
@@ -119,11 +121,23 @@ void MeshData::SetVertexData(u32 numVertices, const Vector3f* pPositions, const 
 	SafeArrayDelete(m_pTangents);
 	if (pTangents != nullptr)
 	{
-		m_pTangents = new Vector4f[numVertices];
-		std::memcpy(m_pTangents, pTangents, numVertices * sizeof(Vector4f));
+		m_pTangents = new Vector3f[numVertices];
+		std::memcpy(m_pTangents, pTangents, numVertices * sizeof(Vector3f));
+	}
+
+	SafeArrayDelete(m_pBiTangents);
+	if (pBiTangents != nullptr)
+	{
+		m_pBiTangents = new Vector3f[numVertices];
+		std::memcpy(m_pBiTangents, pBiTangents, numVertices * sizeof(Vector3f));
 	}
 
 	SafeDelete(m_pBoundingBox);
+}
+
+Vector3f* MeshData::GetPositions()
+{
+	return m_pPositions;
 }
 
 const Vector3f* MeshData::GetPositions() const
@@ -131,9 +145,19 @@ const Vector3f* MeshData::GetPositions() const
 	return m_pPositions;
 }
 
+Vector3f* MeshData::GetNormals()
+{
+	return m_pNormals;
+}
+
 const Vector3f* MeshData::GetNormals() const
 {
 	return m_pNormals;
+}
+
+Vector2f* MeshData::GetTexCoords()
+{
+	return m_pTexCoords;
 }
 
 const Vector2f* MeshData::GetTexCoords() const
@@ -141,14 +165,34 @@ const Vector2f* MeshData::GetTexCoords() const
 	return m_pTexCoords;
 }
 
+Vector4f* MeshData::GetColors()
+{
+	return m_pColors;
+}
+
 const Vector4f* MeshData::GetColors() const
 {
 	return m_pColors;
 }
 
-const Vector4f* MeshData::GetTangents() const
+Vector3f* MeshData::GetTangents()
 {
 	return m_pTangents;
+}
+
+const Vector3f* MeshData::GetTangents() const
+{
+	return m_pTangents;
+}
+
+Vector3f* MeshData::GetBiTangents()
+{
+	return m_pBiTangents;
+}
+
+const Vector3f* MeshData::GetBiTangents() const
+{
+	return m_pBiTangents;
 }
 
 void MeshData::SetIndexData(u32 numIndices, const u16* pIndices)
@@ -161,6 +205,11 @@ void MeshData::SetIndexData(u32 numIndices, const u16* pIndices)
 
 	m_pIndices16Bit = new u16[numIndices];
 	std::memcpy(m_pIndices16Bit, pIndices, numIndices * sizeof(u16));
+}
+
+u16* MeshData::Get16BitIndices()
+{
+	return m_pIndices16Bit;
 }
 
 const u16* MeshData::Get16BitIndices() const
@@ -178,6 +227,11 @@ void MeshData::SetIndexData(u32 numIndices, const u32* pIndices)
 
 	m_pIndices32Bit = new u32[numIndices];
 	std::memcpy(m_pIndices32Bit, pIndices, numIndices * sizeof(u32));
+}
+
+u32* MeshData::Get32BitIndices()
+{
+	return m_pIndices32Bit;
 }
 
 const u32* MeshData::Get32BitIndices() const
@@ -273,6 +327,7 @@ void MeshData::Clear()
 	SafeArrayDelete(m_pTexCoords);
 	SafeArrayDelete(m_pColors);
 	SafeArrayDelete(m_pTangents);
+	SafeArrayDelete(m_pBiTangents);
 
 	m_NumSubMeshes = 0;
 	SafeArrayDelete(m_pSubMeshes);

@@ -98,7 +98,8 @@ void Mesh::InitInputLayoutDesc(const MeshData* pMeshData)
 	const Vector4f* pColors = pMeshData->GetColors();
 	const Vector3f* pNormals = pMeshData->GetNormals();
 	const Vector2f* pTexCoords = pMeshData->GetTexCoords();
-	const Vector4f* pTangents = pMeshData->GetTangents();
+	const Vector3f* pTangents = pMeshData->GetTangents();
+	const Vector3f* pBiTangents = pMeshData->GetBiTangents();
 
 	UINT byteOffset = 0;
 	std::vector<DXInputElementDesc> inputElements;
@@ -126,11 +127,18 @@ void Mesh::InitInputLayoutDesc(const MeshData* pMeshData)
 
 	if (pTangents != nullptr)
 	{
-		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
 		inputElements.push_back(DXInputElementDesc("TANGENT", 0, format, 0, byteOffset));
 		byteOffset += GetBytesPerElement(format);
 	}
 
+	if (pBiTangents != nullptr)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
+		inputElements.push_back(DXInputElementDesc("BITANGENT", 0, format, 0, byteOffset));
+		byteOffset += GetBytesPerElement(format);
+	}
+	
 	if (pTexCoords != nullptr)
 	{
 		const DXGI_FORMAT format = DXGI_FORMAT_R32G32_FLOAT;
@@ -152,7 +160,7 @@ void Mesh::InitVertexBuffer(DXDevice* pDevice, const MeshData* pMeshData)
 	const Vector4f* pColors = pMeshData->GetColors();
 	const Vector3f* pNormals = pMeshData->GetNormals();
 	const Vector2f* pTexCoords = pMeshData->GetTexCoords();
-	const Vector4f* pTangents = pMeshData->GetTangents();
+	const Vector3f* pTangents = pMeshData->GetTangents();
 		
 	if (pNormals != nullptr)
 	{

@@ -11,6 +11,7 @@
 #include "DX/DXEvent.h"
 #include "CommandRecorders/ClearVoxelGridRecorder.h"
 #include "Common/MeshData.h"
+#include "Common/MeshDataUtilities.h"
 #include "Common/Color.h"
 #include "Math/Vector3f.h"
 #include "Math/Vector4f.h"
@@ -173,89 +174,73 @@ void DXApplication::OnInit()
 	const Vector4f colors[] =
 	{
 		// Floor
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
+		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
 
 		// Ceiling
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
+		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
 
 		// Back wall
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-
+		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
+				
 		// Right wall
-		Color::GREEN,
-		Color::GREEN,
-		Color::GREEN,
-		Color::GREEN,
+		Color::GREEN, Color::GREEN, Color::GREEN, Color::GREEN,	
 
 		// Left wall
-		Color::RED,
-		Color::RED,
-		Color::RED,
-		Color::RED,
+		Color::RED, Color::RED, Color::RED, Color::RED,
 
 		// Short block
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
+		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
+		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
+		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
+		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE, 
+		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
 
 		// Tall block
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
+		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
+		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
+		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
+		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
+		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE
+	};
 
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
+	const u16 indices[] =
+	{
+		// Floor
+		0, 1, 2, 2, 3, 0,
 
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
+		// Ceiling
+		4, 5, 6, 6, 7, 4,
 
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
+		// Back wall
+		8, 9, 10, 10, 11, 8,
 
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE,
-		Color::WHITE
+		// Right wall
+		12, 13, 14, 14, 15, 12,
+
+		// Left wall
+		16, 17, 18, 18, 19, 16,
+
+		// Short block
+		20, 21, 22, 22, 23, 20,
+		24, 25, 26, 26, 27, 24,
+		28, 29, 30, 30, 31, 28,
+		32, 33, 34, 34, 35, 32,
+		36, 37, 38, 38, 39, 36,
+
+		// Tall block
+		40, 41, 42, 42, 43, 40,
+		44, 45, 46, 46, 47, 44,
+		48, 49, 50, 50, 51, 48,
+		52, 53, 54, 54, 55, 52,
+		56, 57, 58, 58, 59, 56
 	};
 
 	MeshData meshData;
+	meshData.SetVertexData(ARRAYSIZE(positions), positions, colors);
+	meshData.SetIndexData(ARRAYSIZE(indices), indices);
+	meshData.ComputeNormals();
+
+	ConvertMeshData(&meshData, ConvertionFlags_LeftHandedCoordSystem);
 }
 
 void DXApplication::OnUpdate()
