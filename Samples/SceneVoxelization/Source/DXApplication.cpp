@@ -12,6 +12,7 @@
 #include "CommandRecorders/ClearVoxelGridRecorder.h"
 #include "Common/MeshData.h"
 #include "Common/MeshDataUtilities.h"
+#include "Common/Mesh.h"
 #include "Common/Color.h"
 #include "Math/Vector3f.h"
 #include "Math/Vector4f.h"
@@ -33,6 +34,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFenceEvent(nullptr)
 	, m_BackBufferIndex(0)
 	, m_pClearVoxelGridRecorder(nullptr)
+	, m_pMesh(nullptr)
 {
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 		m_CommandAllocators[index] = nullptr;
@@ -43,13 +45,14 @@ DXApplication::DXApplication(HINSTANCE hApp)
 
 DXApplication::~DXApplication()
 {
-	delete m_pClearVoxelGridRecorder;
-	delete m_pFenceEvent;
-	delete m_pFence;
-	delete m_pRTVHeap;
-	delete m_pCommandQueue;
-	delete m_pSwapChain;
-	delete m_pDevice;
+	SafeDelete(m_pMesh);
+	SafeDelete(m_pClearVoxelGridRecorder);
+	SafeDelete(m_pFenceEvent);
+	SafeDelete(m_pFence);
+	SafeDelete(m_pRTVHeap);
+	SafeDelete(m_pCommandQueue);
+	SafeDelete(m_pSwapChain);
+	SafeDelete(m_pDevice);
 }
 
 void DXApplication::OnInit()
@@ -239,8 +242,13 @@ void DXApplication::OnInit()
 	meshData.SetVertexData(ARRAYSIZE(positions), positions, colors);
 	meshData.SetIndexData(ARRAYSIZE(indices), indices);
 	meshData.ComputeNormals();
+	
+	SubMeshData subMeshData(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, 0, meshData.GetNumVertices(), 0, meshData.GetNumIndices());
+	meshData.SetSubMeshData(1, &subMeshData);
 
-	ConvertMeshData(&meshData, ConvertionFlags_LeftHandedCoordSystem);
+	ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+	
+	m_pMesh = new Mesh(m_pDevice, &meshData);
 }
 
 void DXApplication::OnUpdate()

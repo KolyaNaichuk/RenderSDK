@@ -50,6 +50,26 @@ namespace
 	}
 }
 
+SubMeshData::SubMeshData()
+	: m_TopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED)
+	, m_VertexStart(0)
+	, m_NumVertices(0)
+	, m_IndexStart(0)
+	, m_NumIndices(0)
+	, m_MaterialId(NONE_MATERIAL_ID)
+{
+}
+
+SubMeshData::SubMeshData(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType, u32 vertexStart, u32 numVertices, u32 indexStart, u32 numIndices, u32 materialId)
+	: m_TopologyType(topologyType)
+	, m_VertexStart(vertexStart)
+	, m_NumVertices(numVertices)
+	, m_IndexStart(indexStart)
+	, m_NumIndices(numIndices)
+	, m_MaterialId(materialId)
+{
+}
+
 MeshData::MeshData()
 	: m_NumIndices(0)
 	, m_pIndices16Bit(nullptr)

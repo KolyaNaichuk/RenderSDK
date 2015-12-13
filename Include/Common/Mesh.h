@@ -1,5 +1,10 @@
 #pragma once
 
+/*
+http://docs.unity3d.com/Manual/SL-VertexFragmentShaderExamples.html
+http://docs.unity3d.com/Manual/SL-VertexProgramInputs.html
+*/
+
 #include "Common/Common.h"
 
 class DXDevice;
@@ -12,6 +17,16 @@ struct DXInputLayoutDesc;
 class MeshData;
 struct SubMeshData;
 
+enum VertexElementFlags
+{
+	VertexElementFlag_Position = 1,
+	VertexElementFlag_Normal = 2,
+	VertexElementFlag_Color = 4,
+	VertexElementFlag_Tangent = 8,
+	VertexElementFlag_BiTangent = 16,
+	VertexElementFlag_TexCoords = 32
+};
+
 class Mesh
 {
 public:
@@ -21,19 +36,18 @@ public:
 	void RecordDataForUpload(DXCommandList* pCommandList);
 	void RemoveDataForUpload();
 	
+	u16 GetVertexElementFlags() const;
+
 	DXResource* GetVertexBuffer();
 	DXVertexBufferView* GetVertexBufferView();
 	
 	DXResource* GetIndexBuffer();
 	DXIndexBufferView* GetIndexBufferView();
-
-	const DXInputLayoutDesc* GetInputLayoutDesc() const;
-
+	
 	u32 GetNumSubMeshes() const;
 	const SubMeshData* GetSubMeshes() const;
-
+		
 private:
-	void InitInputLayoutDesc(const MeshData* pMeshData);
 	void InitVertexBuffer(DXDevice* pDevice, const MeshData* pMeshData);
 	void InitIndexBuffer(DXDevice* pDevice, const MeshData* pMeshData);
 	void InitSubMeshes(const MeshData* pMeshData);
@@ -47,9 +61,9 @@ private:
 	
 	DXVertexBufferView* m_pVBView;
 	DXIndexBufferView* m_pIBView;
-	
-	DXInputLayoutDesc* m_pInputLayoutDesc;
 
+	u8 m_VertexElementFlags;
+	
 	u32 m_NumSubMeshes;
 	SubMeshData* m_pSubMeshes;
 };

@@ -11,6 +11,7 @@ class DXFence;
 class DXEvent;
 
 class ClearVoxelGridRecorder;
+class Mesh;
 
 class DXApplication : public Application
 {
@@ -43,4 +44,5 @@ private:
 	UINT m_BackBufferIndex;
 
 	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;
+	Mesh* m_pMesh;
 };

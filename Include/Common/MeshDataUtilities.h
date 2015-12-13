@@ -1,13 +1,27 @@
 #pragma once
 
+#include "DX/DXPipelineState.h"
+
 class MeshData;
 
 enum ConvertionFlags
 {
-	ConvertionFlags_FlipZCoord = 1,
-	ConvertionFlags_FlipWindingOrder = 2,
-	ConvertionFlags_FlipTexCoords = 4,
-	ConvertionFlags_LeftHandedCoordSystem = ConvertionFlags_FlipZCoord | ConvertionFlags_FlipWindingOrder | ConvertionFlags_FlipTexCoords
+	ConvertionFlag_FlipZCoord = 1,
+	ConvertionFlag_FlipWindingOrder = 2,
+	ConvertionFlag_FlipTexCoords = 4,
+	ConvertionFlag_LeftHandedCoordSystem = ConvertionFlag_FlipZCoord | ConvertionFlag_FlipWindingOrder | ConvertionFlag_FlipTexCoords
 };
 
-void ConvertMeshData(MeshData* pMeshData, ConvertionFlags flags);
+void ConvertMeshData(MeshData* pMeshData, u8 convertionFlags);
+
+enum InputElementFlags
+{
+	InputElementFlag_Position = 1,
+	InputElementFlag_Normal = 2,
+	InputElementFlag_Color = 4,
+	InputElementFlag_Tangent = 8,
+	InputElementFlag_BiTangent = 16,
+	InputElementFlag_TexCoords = 32
+};
+
+void GenerateInputElements(std::vector<DXInputElementDesc>& inputElements, u8 inputElementFlags, u8 vertexElementFlags);

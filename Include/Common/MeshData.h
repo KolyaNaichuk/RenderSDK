@@ -7,14 +7,23 @@ struct Vector3f;
 struct Vector4f;
 struct BoundingBox;
 
+static const u32 NONE_MATERIAL_ID = (u32)-1;
+
 struct SubMeshData
 {
-	u32 mMaterialId;
-	u32 mTopologyType;
-	u32 mVertexStart;
-	u32 mNumVertices;
-	u32 mIndexStart;
-	u32 mNumIndices;
+	SubMeshData();
+
+	SubMeshData(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType,
+		u32 vertexStart, u32 numVertices,
+		u32 indexStart, u32 numIndices,
+		u32 materialId = NONE_MATERIAL_ID);
+
+	D3D12_PRIMITIVE_TOPOLOGY_TYPE m_TopologyType;
+	u32 m_VertexStart;
+	u32 m_NumVertices;
+	u32 m_IndexStart;
+	u32 m_NumIndices;
+	u32 m_MaterialId;
 };
 
 enum FaceNormalWeight
