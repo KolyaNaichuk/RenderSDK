@@ -161,6 +161,8 @@ void ConvertMeshData(MeshData* pMeshData, u8 convertionFlags)
 
 void GenerateInputElements(std::vector<DXInputElementDesc>& inputElements, u8 inputElementFlags, u8 vertexElementFlags)
 {
+	assert((inputElementFlags & vertexElementFlags) == inputElementFlags);
+	
 	assert(inputElements.empty());
 	inputElements.reserve(6);
 

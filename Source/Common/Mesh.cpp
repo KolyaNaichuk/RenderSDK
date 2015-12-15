@@ -5,10 +5,11 @@
 #include "DX/DXPipelineState.h"
 #include "Math/Vector2f.h"
 #include "Math/Vector3f.h"
+#include "Math/Vector4f.h"
 
 namespace
 {
-	u8 ComputeVertexElementFlags(const MeshData* pMeshData);
+	void RetrieveVertexInfo(const MeshData* pMeshData, u8* pVertexElementFlags, u32* pStrideInBytes);
 }
 
 Mesh::Mesh(DXDevice* pDevice, const MeshData* pMeshData)
@@ -18,7 +19,7 @@ Mesh::Mesh(DXDevice* pDevice, const MeshData* pMeshData)
 	, m_pDefaultHeapIB(nullptr)
 	, m_pVBView(nullptr)
 	, m_pIBView(nullptr)
-	, m_VertexElementFlags(ComputeVertexElementFlags(pMeshData))
+	, m_VertexElementFlags(0)
 	, m_NumSubMeshes(0)
 	, m_pSubMeshes(nullptr)
 {
@@ -53,7 +54,7 @@ void Mesh::RemoveDataForUpload()
 	SafeDelete(m_pUploadHeapIB);
 }
 
-u16 Mesh::GetVertexElementFlags() const
+u8 Mesh::GetVertexElementFlags() const
 {
 	return m_VertexElementFlags;
 }
@@ -95,42 +96,89 @@ void Mesh::InitVertexBuffer(DXDevice* pDevice, const MeshData* pMeshData)
 
 	const u32 numVertices = pMeshData->GetNumVertices();
 
+	u32 strideInBytes = 0;
+	RetrieveVertexInfo(pMeshData, &m_VertexElementFlags, &strideInBytes);
+
+	const u32 sizeInBytes = numVertices * strideInBytes;
+	
+	u8* pVertexData = new u8[sizeInBytes];
+	u32 vertexOffset = 0;
+
 	const Vector3f* pPositions = pMeshData->GetPositions();
-	const Vector4f* pColors = pMeshData->GetColors();
+	assert(pPositions != nullptr);
+	{             
+		const u32 elementSizeInBytes = sizeof(pPositions[0]);
+
+		for (u32 index = 0; index < numVertices; ++index)
+			std::memcpy(pVertexData + index * strideInBytes + vertexOffset, &pPositions[index], elementSizeInBytes);
+
+		vertexOffset += elementSizeInBytes;
+	}
+
 	const Vector3f* pNormals = pMeshData->GetNormals();
-	const Vector2f* pTexCoords = pMeshData->GetTexCoords();
-	const Vector3f* pTangents = pMeshData->GetTangents();
-		
 	if (pNormals != nullptr)
 	{
-		struct Vertex
-		{
-			Vector3f mPosition;
-			Vector3f mNormal;
-		};
+		const u32 elementSizeInBytes = sizeof(pNormals[0]);
 
-		std::vector<Vertex> vertices(numVertices);
-		for (u32 i = 0; i < numVertices; ++i)
-		{
-			vertices[i].mPosition = pPositions[i];
-			vertices[i].mNormal = pNormals[i];
-		}
+		for (u32 index = 0; index < numVertices; ++index)
+			std::memcpy(pVertexData + index * strideInBytes + vertexOffset, &pNormals[index], elementSizeInBytes);
 
-		const u32 strideInBytes = sizeof(Vertex);
-		const u32 sizeInBytes = numVertices * strideInBytes;
-
-		DXBufferResourceDesc bufferDesc(sizeInBytes);
-
-		m_pDefaultHeapVB = new DXResource(pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"Mesh::m_pDefaultHeapVB");
-		m_pVBView = new DXVertexBufferView(m_pDefaultHeapVB, sizeInBytes, strideInBytes);
-
-		m_pUploadHeapVB = new DXResource(pDevice, &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"Mesh::m_pUploadHeapVB");
-		m_pUploadHeapVB->Write(&vertices[0], sizeInBytes);
+		vertexOffset += elementSizeInBytes;
 	}
-	else
+
+	const Vector4f* pColors = pMeshData->GetColors();
+	if (pColors != nullptr)
 	{
-		assert(false);
+		const u32 elementSizeInBytes = sizeof(pColors[0]);
+
+		for (u32 index = 0; index < numVertices; ++index)
+			std::memcpy(pVertexData + index * strideInBytes + vertexOffset, &pColors[index], elementSizeInBytes);
+		
+		vertexOffset += elementSizeInBytes;
 	}
+
+	const Vector3f* pTangents = pMeshData->GetTangents();
+	if (pTangents != nullptr)
+	{
+		const u32 elementSizeInBytes = sizeof(pTangents[0]);
+
+		for (u32 index = 0; index < numVertices; ++index)
+			std::memcpy(pVertexData + index * strideInBytes + vertexOffset, &pTangents[index], elementSizeInBytes);
+		
+		vertexOffset += elementSizeInBytes;
+	}
+
+	const Vector3f* pBiTangents = pMeshData->GetBiTangents();
+	if (pBiTangents != nullptr)
+	{
+		const u32 elementSizeInBytes = sizeof(pBiTangents[0]);
+
+		for (u32 index = 0; index < numVertices; ++index)
+			std::memcpy(pVertexData + index * strideInBytes + vertexOffset, &pBiTangents[index], elementSizeInBytes);
+		
+		vertexOffset += elementSizeInBytes;
+	}
+
+	const Vector2f* pTexCoords = pMeshData->GetTexCoords();
+	if (pTexCoords != nullptr)
+	{
+		const u32 elementSizeInBytes = sizeof(pTexCoords[0]);
+
+		for (u32 index = 0; index < numVertices; ++index)
+			std::memcpy(pVertexData + index * strideInBytes + vertexOffset, &pTexCoords[index], elementSizeInBytes);
+
+		vertexOffset += elementSizeInBytes;
+	}
+	
+	DXBufferResourceDesc bufferDesc(sizeInBytes);
+
+	m_pDefaultHeapVB = new DXResource(pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"Mesh::m_pDefaultHeapVB");
+	m_pVBView = new DXVertexBufferView(m_pDefaultHeapVB, sizeInBytes, strideInBytes);
+
+	m_pUploadHeapVB = new DXResource(pDevice, &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"Mesh::m_pUploadHeapVB");
+	m_pUploadHeapVB->Write(pVertexData, sizeInBytes);
+	
+	SafeArrayDelete(pVertexData);
 }
 
 void Mesh::InitIndexBuffer(DXDevice* pDevice, const MeshData* pMeshData)
@@ -172,32 +220,57 @@ void Mesh::InitSubMeshes(const MeshData* pMeshData)
 
 namespace
 {
-	u8 ComputeVertexElementFlags(const MeshData* pMeshData)
+	void RetrieveVertexInfo(const MeshData* pMeshData, u8* pVertexElementFlags, u32* pStrideInBytes)
 	{
+		u8 vertexElementFlags = 0;
+		u8 strideInBytes = 0;
+
 		const Vector3f* pPositions = pMeshData->GetPositions();
 		assert(pPositions != nullptr);
-		u8 flags = VertexElementFlag_Position;
-		
+		{
+			vertexElementFlags |= VertexElementFlag_Position;
+			strideInBytes += sizeof(pPositions[0]);
+		}
+
 		const Vector3f* pNormals = pMeshData->GetNormals();
 		if (pNormals != nullptr)
-			flags |= VertexElementFlag_Normal;
+		{
+			vertexElementFlags |= VertexElementFlag_Normal;
+			strideInBytes += sizeof(pNormals[0]);
+		}			
 
 		const Vector4f* pColors = pMeshData->GetColors();
 		if (pColors != nullptr)
-			flags |= VertexElementFlag_Color;
+		{
+			vertexElementFlags |= VertexElementFlag_Color;
+			strideInBytes += sizeof(pColors[0]);
+		}
 
 		const Vector3f* pTangents = pMeshData->GetTangents();
 		if (pTangents != nullptr)
-			flags |= VertexElementFlag_Tangent;
+		{
+			vertexElementFlags |= VertexElementFlag_Tangent;
+			strideInBytes += sizeof(pTangents[0]);
+		}			
 
 		const Vector3f* pBiTangents = pMeshData->GetBiTangents();
 		if (pBiTangents != nullptr)
-			flags |= VertexElementFlag_BiTangent;
+		{
+			vertexElementFlags |= VertexElementFlag_BiTangent;
+			strideInBytes += sizeof(pBiTangents[0]);
+		}			
 		
 		const Vector2f* pTexCoords = pMeshData->GetTexCoords();
 		if (pTexCoords != nullptr)
-			flags |= VertexElementFlag_TexCoords;
+		{
+			vertexElementFlags |= VertexElementFlag_TexCoords;
+			strideInBytes += sizeof(pTexCoords[0]);
+		}
 
-		return flags;
+		if (pVertexElementFlags != nullptr)
+			*pVertexElementFlags = vertexElementFlags;
+
+		if (pStrideInBytes != nullptr)
+			*pStrideInBytes = strideInBytes;
 	}
 }

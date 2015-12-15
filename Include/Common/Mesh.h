@@ -36,7 +36,7 @@ public:
 	void RecordDataForUpload(DXCommandList* pCommandList);
 	void RemoveDataForUpload();
 	
-	u16 GetVertexElementFlags() const;
+	u8 GetVertexElementFlags() const;
 
 	DXResource* GetVertexBuffer();
 	DXVertexBufferView* GetVertexBufferView();
