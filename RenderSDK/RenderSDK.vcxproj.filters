@@ -153,6 +153,12 @@
     <ClInclude Include="..\Include\Common\MeshDataUtilities.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\VisualizeMeshRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\DX\DXCommandSignature.h">
+      <Filter>DX</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\BoundingBox.cpp">
@@ -275,6 +281,12 @@
     <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\VisualizeMeshRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DX\DXCommandSignature.cpp">
+      <Filter>DX</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -314,6 +326,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\ScaleTexture.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VisualizeMeshPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VisualizeMeshVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
