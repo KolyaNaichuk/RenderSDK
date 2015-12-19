@@ -1,11 +1,6 @@
 #pragma once
 
-/*
-http://docs.unity3d.com/Manual/SL-VertexFragmentShaderExamples.html
-http://docs.unity3d.com/Manual/SL-VertexProgramInputs.html
-*/
-
-#include "Common/Common.h"
+#include "DX/DXPipelineState.h"
 
 class DXDevice;
 class DXResource;
@@ -67,3 +62,5 @@ private:
 	u32 m_NumSubMeshes;
 	SubMeshData* m_pSubMeshes;
 };
+
+void GenerateInputElements(std::vector<DXInputElementDesc>& inputElements, u8 inputElementFlags, u8 vertexElementFlags);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DX/DXPipelineState.h"
+#include "Common/Common.h"
 
 class MeshData;
 
@@ -13,15 +13,3 @@ enum ConvertionFlags
 };
 
 void ConvertMeshData(MeshData* pMeshData, u8 convertionFlags);
-
-enum InputElementFlags
-{
-	InputElementFlag_Position = 1,
-	InputElementFlag_Normal = 2,
-	InputElementFlag_Color = 4,
-	InputElementFlag_Tangent = 8,
-	InputElementFlag_BiTangent = 16,
-	InputElementFlag_TexCoords = 32
-};
-
-void GenerateInputElements(std::vector<DXInputElementDesc>& inputElements, u8 inputElementFlags, u8 vertexElementFlags);

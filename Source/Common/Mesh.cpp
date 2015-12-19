@@ -9,6 +9,7 @@
 
 namespace
 {
+	u32 GetBytesPerElement(DXGI_FORMAT format);
 	void RetrieveVertexInfo(const MeshData* pMeshData, u8* pVertexElementFlags, u32* pStrideInBytes);
 }
 
@@ -220,6 +221,77 @@ void Mesh::InitSubMeshes(const MeshData* pMeshData)
 
 namespace
 {
+	u32 GetBytesPerElement(DXGI_FORMAT format)
+	{
+		switch (format)
+		{
+		case DXGI_FORMAT_R32G32B32A32_FLOAT:
+		case DXGI_FORMAT_R32G32B32A32_UINT:
+		case DXGI_FORMAT_R32G32B32A32_SINT:
+			return 16;
+
+		case DXGI_FORMAT_R32G32B32_FLOAT:
+		case DXGI_FORMAT_R32G32B32_UINT:
+		case DXGI_FORMAT_R32G32B32_SINT:
+			return 12;
+
+		case DXGI_FORMAT_R16G16B16A16_FLOAT:
+		case DXGI_FORMAT_R16G16B16A16_UNORM:
+		case DXGI_FORMAT_R16G16B16A16_UINT:
+		case DXGI_FORMAT_R16G16B16A16_SNORM:
+		case DXGI_FORMAT_R16G16B16A16_SINT:
+		case DXGI_FORMAT_R32G32_FLOAT:
+		case DXGI_FORMAT_R32G32_UINT:
+		case DXGI_FORMAT_R32G32_SINT:
+			return 8;
+
+		case DXGI_FORMAT_R10G10B10A2_UNORM:
+		case DXGI_FORMAT_R10G10B10A2_UINT:
+		case DXGI_FORMAT_R11G11B10_FLOAT:
+		case DXGI_FORMAT_R8G8B8A8_UNORM:
+		case DXGI_FORMAT_R8G8B8A8_UINT:
+		case DXGI_FORMAT_R8G8B8A8_SNORM:
+		case DXGI_FORMAT_R8G8B8A8_SINT:
+		case DXGI_FORMAT_R16G16_FLOAT:
+		case DXGI_FORMAT_R16G16_UNORM:
+		case DXGI_FORMAT_R16G16_UINT:
+		case DXGI_FORMAT_R16G16_SNORM:
+		case DXGI_FORMAT_R16G16_SINT:
+		case DXGI_FORMAT_R32_FLOAT:
+		case DXGI_FORMAT_R32_UINT:
+		case DXGI_FORMAT_R32_SINT:
+		case DXGI_FORMAT_B8G8R8A8_UNORM:
+		case DXGI_FORMAT_B8G8R8X8_UNORM:
+			return 4;
+
+		case DXGI_FORMAT_R8G8_UNORM:
+		case DXGI_FORMAT_R8G8_UINT:
+		case DXGI_FORMAT_R8G8_SNORM:
+		case DXGI_FORMAT_R8G8_SINT:
+		case DXGI_FORMAT_R16_FLOAT:
+		case DXGI_FORMAT_R16_UNORM:
+		case DXGI_FORMAT_R16_UINT:
+		case DXGI_FORMAT_R16_SNORM:
+		case DXGI_FORMAT_R16_SINT:
+		case DXGI_FORMAT_B5G6R5_UNORM:
+		case DXGI_FORMAT_B5G5R5A1_UNORM:
+			return 2;
+
+		case DXGI_FORMAT_R8_UNORM:
+		case DXGI_FORMAT_R8_UINT:
+		case DXGI_FORMAT_R8_SNORM:
+		case DXGI_FORMAT_R8_SINT:
+			return 1;
+
+		case DXGI_FORMAT_B4G4R4A4_UNORM:
+			return 2;
+
+		default:
+			assert(false);
+			return 0;
+		}
+	}
+
 	void RetrieveVertexInfo(const MeshData* pMeshData, u8* pVertexElementFlags, u32* pStrideInBytes)
 	{
 		u8 vertexElementFlags = 0;
@@ -272,5 +344,74 @@ namespace
 
 		if (pStrideInBytes != nullptr)
 			*pStrideInBytes = strideInBytes;
+	}
+}
+
+void GenerateInputElements(std::vector<DXInputElementDesc>& inputElements, u8 inputElementFlags, u8 vertexElementFlags)
+{
+	assert((inputElementFlags & vertexElementFlags) == inputElementFlags);
+
+	assert(inputElements.empty());
+	inputElements.reserve(6);
+
+	UINT byteOffset = 0;
+	assert(vertexElementFlags & VertexElementFlag_Position);
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
+
+		if (inputElementFlags & VertexElementFlag_Position)
+			inputElements.push_back(DXInputElementDesc("POSITION", 0, format, 0, byteOffset));
+
+		byteOffset += GetBytesPerElement(format);
+	}
+
+	if (vertexElementFlags & VertexElementFlag_Normal)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
+
+		if (inputElementFlags & VertexElementFlag_Normal)
+			inputElements.push_back(DXInputElementDesc("NORMAL", 0, format, 0, byteOffset));
+
+		byteOffset += GetBytesPerElement(format);
+	}
+
+	if (vertexElementFlags & VertexElementFlag_Color)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_B8G8R8A8_UNORM;
+
+		if (inputElementFlags & VertexElementFlag_Color)
+			inputElements.push_back(DXInputElementDesc("COLOR", 0, format, 0, byteOffset));
+
+		byteOffset += GetBytesPerElement(format);
+	}
+
+	if (vertexElementFlags & VertexElementFlag_Tangent)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
+
+		if (inputElementFlags & VertexElementFlag_Tangent)
+			inputElements.push_back(DXInputElementDesc("TANGENT", 0, format, 0, byteOffset));
+
+		byteOffset += GetBytesPerElement(format);
+	}
+
+	if (vertexElementFlags & VertexElementFlag_BiTangent)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
+
+		if (inputElementFlags & VertexElementFlag_BiTangent)
+			inputElements.push_back(DXInputElementDesc("BITANGENT", 0, format, 0, byteOffset));
+
+		byteOffset += GetBytesPerElement(format);
+	}
+
+	if (vertexElementFlags & VertexElementFlag_TexCoords)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32_FLOAT;
+
+		if (inputElementFlags & VertexElementFlag_TexCoords)
+			inputElements.push_back(DXInputElementDesc("TEXCOORD", 0, format, 0, byteOffset));
+
+		byteOffset += GetBytesPerElement(format);
 	}
 }
