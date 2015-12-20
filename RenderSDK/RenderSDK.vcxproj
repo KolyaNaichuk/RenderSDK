@@ -22,7 +22,7 @@
     <ProjectGuid>{81373C17-8965-4747-9818-AA450B2578DC}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>RenderSDK</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.10240.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
