@@ -75,3 +75,6 @@ T Rcp(T value)
 {
     return T(1) / value;
 }
+
+f32 RadiansToDegrees(f32 radians);
+f32 DegreesToRadians(f32 degrees);
