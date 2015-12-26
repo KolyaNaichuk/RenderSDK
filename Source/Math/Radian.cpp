@@ -151,6 +151,11 @@ const Radian Radian::operator/ (const Degree& degree)
 	return Radian(m_Radian / DegreesToRadians(degree.Get()));
 }
 
+const Radian Radian::operator- () const
+{
+	return Radian(-m_Radian);
+}
+
 const Radian operator+ (f32 left, const Radian& right)
 {
 	return Radian(left + right.Get());

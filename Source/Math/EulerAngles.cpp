@@ -13,3 +13,8 @@ EulerAngles::EulerAngles(const Radian& x, const Radian& y, const Radian& z)
 	, m_Z(z)
 {
 }
+
+const EulerAngles Negate(const EulerAngles& eulerAngles)
+{
+	return EulerAngles(-eulerAngles.m_X, -eulerAngles.m_Y, -eulerAngles.m_Z);
+}

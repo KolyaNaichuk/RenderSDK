@@ -45,6 +45,8 @@ public:
 	const Degree operator/ (const Degree& degree);
 	const Degree operator/ (const Radian& radian);
 
+	const Degree operator- () const;
+
 private:
 	f32 m_Degree;
 };

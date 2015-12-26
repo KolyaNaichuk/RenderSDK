@@ -11,3 +11,5 @@ struct EulerAngles
 	Radian m_Y;
 	Radian m_Z;
 };
+
+const EulerAngles Negate(const EulerAngles& eulerAngles);
