@@ -1,5 +1,15 @@
 #include "Math/Matrix4f.h"
 
+const Matrix4f Matrix4f::IDENTITY(1.0f, 0.0f, 0.0f, 0.0f,
+								  0.0f, 1.0f, 0.0f, 0.0f,
+								  0.0f, 0.0f, 1.0f, 0.0f,
+								  0.0f, 0.0f, 0.0f, 1.0f);
+
+const Matrix4f Matrix4f::ZERO(0.0f, 0.0f, 0.0f, 0.0f,
+							  0.0f, 0.0f, 0.0f, 0.0f,
+							  0.0f, 0.0f, 0.0f, 0.0f,
+							  0.0f, 0.0f, 0.0f, 0.0f);
+
 Matrix4f::Matrix4f()
     : m_00(0.0f), m_01(0.0f), m_02(0.0f), m_03(0.0f)
     , m_10(0.0f), m_11(0.0f), m_12(0.0f), m_13(0.0f)
@@ -225,14 +235,6 @@ const Matrix4f operator- (const Matrix4f& left, f32 scalar)
 const Matrix4f operator* (const Matrix4f& left, f32 scalar)
 {
     return (Matrix4f(left) *= scalar);
-}
-
-const Matrix4f Identity()
-{
-    return Matrix4f(1.0f, 0.0f, 0.0f, 0.0f,
-                    0.0f, 1.0f, 0.0f, 0.0f,
-                    0.0f, 0.0f, 1.0f, 0.0f,
-                    0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 const Matrix4f Transpose(const Matrix4f& matrix)

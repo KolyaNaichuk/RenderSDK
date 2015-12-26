@@ -10,3 +10,5 @@ Samples/HelloRectangle/Shaders/
 Samples/ToneMapping/Win32/
 Samples/ToneMapping/Shaders/
 
+.vs/RenderSDK/v14/.suo
+RenderSDK.VC.opendb

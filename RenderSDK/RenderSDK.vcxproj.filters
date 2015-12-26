@@ -159,6 +159,21 @@
     <ClInclude Include="..\Include\DX\DXCommandSignature.h">
       <Filter>DX</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Common\Camera.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\SceneObject.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Degree.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Radian.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\EulerAngles.h">
+      <Filter>Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\BoundingBox.cpp">
@@ -286,6 +301,21 @@
     </ClCompile>
     <ClCompile Include="..\Source\DX\DXCommandSignature.cpp">
       <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\Camera.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\SceneObject.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Degree.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Radian.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\EulerAngles.cpp">
+      <Filter>Math</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

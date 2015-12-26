@@ -3,6 +3,8 @@
 #include <cmath>
 #include "Common/Common.h"
 
+class Radian;
+
 static const f32 PI = 3.141592653589793f;
 static const f32 TWO_PI = 6.28318530717958647692f;
 static const f32 RCP_PI = 0.31830988618379067154f;
@@ -26,24 +28,6 @@ template <typename T>
 T Sqrt(T value)
 {
     return std::sqrt(value);
-}
-
-template <typename T>
-T Sin(T angleInRadians)
-{
-    return std::sin(angleInRadians);
-}
-
-template <typename T>
-T Cos(T angleInRadians)
-{
-    return std::cos(angleInRadians);
-}
-
-template <typename T> 
-T Tan(T angleInRadians)
-{
-    return (T)std::tan((double)angleInRadians);
 }
 
 template <typename T>
@@ -78,3 +62,7 @@ T Rcp(T value)
 
 f32 RadiansToDegrees(f32 radians);
 f32 DegreesToRadians(f32 degrees);
+
+f32 Sin(const Radian& angle);
+f32 Cos(const Radian& angle);
+f32 Tan(const Radian& angle);
