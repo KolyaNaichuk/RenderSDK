@@ -15,6 +15,7 @@ Camera::Camera(ProjType projType, f32 nearClipPlane, f32 farClipPlane, f32 aspec
 	, m_OpaqueSortMode(OpaqueSortMode_FrontToBack)
 	, m_FovY(0.25f * PI)
 	, m_SizeY(10.0f)
+	, m_DirtyFlags(DirtyFlag_All)
 {
 }
 
@@ -26,6 +27,7 @@ f32 Camera::GetAspectRatio() const
 void Camera::SetAspectRatio(f32 aspectRatio)
 {
 	m_AspectRatio = aspectRatio;
+	m_DirtyFlags |= DirtyFlag_ProjMatrix;
 }
 
 u8 Camera::GetClearFlags() const
@@ -80,6 +82,7 @@ void Camera::SetFovY(const Radian& fovY)
 {
 	assert(m_ProjType == ProjType_Perspective);
 	m_FovY = fovY;
+	m_DirtyFlags |= DirtyFlag_ProjMatrix;
 }
 
 f32 Camera::GetSizeY() const
@@ -92,6 +95,7 @@ void Camera::SetSizeY(f32 sizeY)
 {
 	assert(m_ProjType == ProjType_Ortho);
 	m_SizeY = sizeY;
+	m_DirtyFlags |= DirtyFlag_ProjMatrix;
 }
 
 Camera::ProjType Camera::GetProjType() const
@@ -102,6 +106,7 @@ Camera::ProjType Camera::GetProjType() const
 void Camera::SetProjType(Camera::ProjType projType)
 {
 	m_ProjType = projType;
+	m_DirtyFlags |= DirtyFlag_ProjMatrix;
 }
 
 const Vector4f& Camera::GetBackgroundColor() const
@@ -122,6 +127,7 @@ f32 Camera::GetNearClipPlane() const
 void Camera::SetNearClipPlane(f32 nearClipPlane)
 {
 	m_NearClipPlane = nearClipPlane;
+	m_DirtyFlags |= DirtyFlag_ProjMatrix;
 }
 
 f32 Camera::GetFarClipPlane() const
@@ -132,4 +138,36 @@ f32 Camera::GetFarClipPlane() const
 void Camera::SetFarClipPlane(f32 farClipPlane)
 {
 	m_FarClipPlane = farClipPlane;
+	m_DirtyFlags |= DirtyFlag_ProjMatrix;
+}
+
+const Matrix4f& Camera::GetViewMatrix() const
+{
+	if (m_DirtyFlags & DirtyFlag_ViewMatrix)
+	{
+		assert(false && "Needs impl");
+		m_DirtyFlags &= ~DirtyFlag_ViewMatrix;
+	}
+	return m_ViewMatrix;
+}
+
+const Matrix4f& Camera::GetProjMatrix() const
+{
+	if (m_DirtyFlags & DirtyFlag_ProjMatrix)
+	{
+		if (m_ProjType == ProjType_Ortho)
+		{
+			m_ProjMatrix = CreateOrthoProjMatrix(m_AspectRatio * m_SizeY, m_SizeY, m_NearClipPlane, m_FarClipPlane);
+		}
+		else if (m_ProjType == ProjType_Perspective)
+		{
+			m_ProjMatrix = CreatePerspectiveFovProjMatrix(m_FovY, m_AspectRatio, m_NearClipPlane, m_FarClipPlane);
+		}
+		else
+		{
+			assert(false);
+		}
+		m_DirtyFlags &= ~DirtyFlag_ProjMatrix;
+	}
+	return m_ProjMatrix;
 }

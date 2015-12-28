@@ -62,7 +62,18 @@ public:
 	f32 GetSizeY() const;
 	void SetSizeY(f32 sizeY);
 
+	const Matrix4f& GetViewMatrix() const;
+	const Matrix4f& GetProjMatrix() const;
+
 private:
+	enum DirtyFlags
+	{
+		DirtyFlag_None = 0,
+		DirtyFlag_ViewMatrix = 1 << 0,
+		DirtyFlag_ProjMatrix = 1 << 1,
+		DirtyFlag_All = DirtyFlag_ViewMatrix | DirtyFlag_ProjMatrix
+	};
+
 	ProjType m_ProjType;
 	Vector4f m_BackgroundColor;
 	f32 m_NearClipPlane;
@@ -74,4 +85,8 @@ private:
 	OpaqueSortMode m_OpaqueSortMode;
 	Radian m_FovY;
 	f32 m_SizeY;
+
+	mutable Matrix4f m_ViewMatrix;
+	mutable Matrix4f m_ProjMatrix;
+	mutable u8 m_DirtyFlags;
 };

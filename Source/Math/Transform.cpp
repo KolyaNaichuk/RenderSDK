@@ -4,17 +4,17 @@
 
 Transform::Transform()
 	: m_Scaling(Vector3f::ONE)
-	, m_Translation(Vector3f::ZERO)
+	, m_Position(Vector3f::ZERO)
 	, m_LocalToWorldMatrix(Matrix4f::IDENTITY)
 	, m_WorldToLocalMatrix(Matrix4f::IDENTITY)
 	, m_DirtyFlags(DirtyFlag_None)
 {
 }
 
-Transform::Transform(const Vector3f& scaling, const EulerAngles& rotation, const Vector3f& translation)
+Transform::Transform(const Vector3f& scaling, const EulerAngles& rotation, const Vector3f& position)
 	: m_Scaling(scaling)
 	, m_Rotation(rotation)
-	, m_Translation(translation)
+	, m_Position(position)
 	, m_DirtyFlags(DirtyFlag_All)
 {
 }
@@ -41,14 +41,14 @@ void Transform::SetRotation(const EulerAngles& rotation)
 	m_DirtyFlags = DirtyFlag_All;
 }
 
-const Vector3f& Transform::GetTranslation() const
+const Vector3f& Transform::GetPosition() const
 {
-	return m_Translation;
+	return m_Position;
 }
 
-void Transform::SetTranslation(const Vector3f& translation)
+void Transform::SetPosition(const Vector3f& position)
 {
-	m_Translation = translation;
+	m_Position = position;
 	m_DirtyFlags = DirtyFlag_All;
 }
 
@@ -58,7 +58,7 @@ const Matrix4f& Transform::GetLocalToWorldMatrix() const
 	{
 		Matrix4f scalingMatrix = CreateScalingMatrix(m_Scaling);
 		Matrix4f rotationMatrix = CreateRotationMatrix(m_Rotation);
-		Matrix4f translationMatrix = CreateTranslationMatrix(m_Translation);
+		Matrix4f translationMatrix = CreateTranslationMatrix(m_Position);
 
 		m_LocalToWorldMatrix = scalingMatrix * rotationMatrix * translationMatrix;
 		m_DirtyFlags &= ~DirtyFlag_LocalToWorldMatrix;
@@ -72,7 +72,7 @@ const Matrix4f& Transform::GetWorldToLocalMatrix() const
 	{
 		Matrix4f invScalingMatrix = CreateScalingMatrix(Rcp(m_Scaling));
 		Matrix4f invRotationMatrix = CreateRotationMatrix(Negate(m_Rotation));
-		Matrix4f invTranslationMatrix = CreateTranslationMatrix(Negate(m_Translation));
+		Matrix4f invTranslationMatrix = CreateTranslationMatrix(Negate(m_Position));
 
 		m_WorldToLocalMatrix = invTranslationMatrix * invRotationMatrix * invScalingMatrix;
 		m_DirtyFlags &= ~DirtyFlag_WorldToLocalMatrix;

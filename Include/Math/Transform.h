@@ -9,7 +9,7 @@ class Transform
 {
 public:
 	Transform();
-	Transform(const Vector3f& scaling, const EulerAngles& rotation, const Vector3f& translation);
+	Transform(const Vector3f& scaling, const EulerAngles& rotation, const Vector3f& position);
 	
 	const Vector3f& GetScaling() const;
 	void SetScaling(const Vector3f& scaling);
@@ -17,8 +17,8 @@ public:
 	const EulerAngles& GetRotation() const;
 	void SetRotation(const EulerAngles& rotation);
 
-	const Vector3f& GetTranslation() const;
-	void SetTranslation(const Vector3f& translation);
+	const Vector3f& GetPosition() const;
+	void SetPosition(const Vector3f& position);
 
 	const Matrix4f& GetLocalToWorldMatrix() const;
 	const Matrix4f& GetWorldToLocalMatrix() const;
@@ -37,7 +37,7 @@ private:
 	
 	Vector3f m_Scaling;
 	EulerAngles m_Rotation;
-	Vector3f m_Translation;
+	Vector3f m_Position;
 
 	mutable Matrix4f m_LocalToWorldMatrix;
 	mutable Matrix4f m_WorldToLocalMatrix;
