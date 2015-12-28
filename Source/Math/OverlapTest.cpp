@@ -16,7 +16,7 @@ bool Overlap(const BoundingBox& box1, const BoundingBox& box2)
 
 bool Overlap(const BoundingSphere& sphere1, const BoundingSphere& sphere2)
 {
-	f32 sqLength = LengthSq(sphere1.m_Center - sphere2.m_Center);
+	f32 sqLength = LengthSquared(sphere1.m_Center - sphere2.m_Center);
 	f32 radiusSum = sphere1.m_Radius + sphere2.m_Radius;
 	return (sqLength <= Sqr(radiusSum));
 }

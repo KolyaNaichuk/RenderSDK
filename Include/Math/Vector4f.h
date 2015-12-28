@@ -20,7 +20,7 @@ struct Vector4f
 const Vector4f Abs(const Vector4f& vec);
 const Vector4f Sqrt(const Vector4f& vec);
 f32 Length(const Vector4f& vec);
-f32 LengthSq(const Vector4f& vec);
+f32 LengthSquared(const Vector4f& vec);
 const Vector4f Normalize(const Vector4f& vec);
 const Vector4f Negate(const Vector4f& vec);
 const Vector4f Rcp(const Vector4f& vec);

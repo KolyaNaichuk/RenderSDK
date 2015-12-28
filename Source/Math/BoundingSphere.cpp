@@ -15,7 +15,7 @@ BoundingSphere::BoundingSphere(u32 numPoints, const Vector3f* pFirstPoint)
 BoundingSphere::BoundingSphere(const BoundingSphere& sphere1, const BoundingSphere& sphere2)
 {
     Vector3f centerDir = sphere2.m_Center - sphere1.m_Center;
-    f32 sqLength = LengthSq(centerDir);
+    f32 sqLength = LengthSquared(centerDir);
     if (Sqr(sphere2.m_Radius - sphere1.m_Radius) > sqLength)
     {
         f32 length = Sqrt(sqLength);

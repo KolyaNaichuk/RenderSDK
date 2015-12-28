@@ -43,7 +43,7 @@ f32 Length(const Vector4f& vec)
     return Sqrt(Dot(vec, vec));
 }
 
-f32 LengthSq(const Vector4f& vec)
+f32 LengthSquared(const Vector4f& vec)
 {
     return Dot(vec, vec);
 }

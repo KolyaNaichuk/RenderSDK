@@ -22,7 +22,7 @@ struct Vector2f
 const Vector2f Abs(const Vector2f& vec);
 const Vector2f Sqrt(const Vector2f& vec);
 f32 Length(const Vector2f& vec);
-f32 LengthSq(const Vector2f& vec);
+f32 LengthSquared(const Vector2f& vec);
 const Vector2f Normalize(const Vector2f& vec);
 const Vector2f Negate(const Vector2f& vec);
 const Vector2f Rcp(const Vector2f& vec);

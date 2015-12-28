@@ -25,7 +25,7 @@ struct Vector3f
 const Vector3f Abs(const Vector3f& vec);
 const Vector3f Sqrt(const Vector3f& vec);
 f32 Length(const Vector3f& vec);
-f32 LengthSq(const Vector3f& vec);
+f32 LengthSquared(const Vector3f& vec);
 const Vector3f Normalize(const Vector3f& vec);
 const Vector3f Negate(const Vector3f& vec);
 const Vector3f Rcp(const Vector3f& vec);
