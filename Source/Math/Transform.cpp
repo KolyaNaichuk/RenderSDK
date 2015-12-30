@@ -1,5 +1,6 @@
 #include "Math/Transform.h"
 #include "Math/AxisAngle.h"
+#include "Math/EulerAngles.h"
 #include "Math/Vector3f.h"
 
 Transform::Transform()
@@ -192,8 +193,7 @@ const Matrix4f CreateRotationMatrix(const AxisAngle& axisAngle)
 
 const Matrix4f CreateRotationMatrix(const EulerAngles& eulerAngles)
 {
-	assert(false && "Needs impl");
-	return Matrix4f();
+	return CreateRotationMatrix(Quaternion(eulerAngles));
 }
 
 const Matrix4f CreateRotationMatrix(const Quaternion& quat)

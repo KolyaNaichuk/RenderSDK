@@ -7,6 +7,7 @@ class Radian;
 struct Vector3f;
 struct Matrix4f;
 struct AxisAngle;
+struct EulerAngles;
 
 struct Quaternion
 {
@@ -15,6 +16,7 @@ struct Quaternion
 	Quaternion(f32 x, f32 y, f32 z);
 	Quaternion(f32 x, f32 y, f32 z, f32 w);
 	Quaternion(const AxisAngle& axisAngle);
+	Quaternion(const EulerAngles& eulerAngles);
 	Quaternion(const Matrix4f& rotationMatrix);
 
 	const Quaternion operator- () const;
