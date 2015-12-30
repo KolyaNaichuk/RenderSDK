@@ -177,6 +177,12 @@
     <ClInclude Include="..\Include\Math\Quaternion.h">
       <Filter>Math</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Math\BasisAxes.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\AxisAngle.h">
+      <Filter>Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\BoundingBox.cpp">
@@ -321,6 +327,12 @@
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Math\Quaternion.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\BasisAxes.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\AxisAngle.cpp">
       <Filter>Math</Filter>
     </ClCompile>
   </ItemGroup>

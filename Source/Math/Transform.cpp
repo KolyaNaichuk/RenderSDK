@@ -1,6 +1,6 @@
 #include "Math/Transform.h"
+#include "Math/AxisAngle.h"
 #include "Math/Vector3f.h"
-#include "Math/Math.h"
 
 Transform::Transform()
 	: m_Scaling(Vector3f::ONE)
@@ -11,7 +11,12 @@ Transform::Transform()
 {
 }
 
-Transform::Transform(const Vector3f& scaling, const EulerAngles& rotation, const Vector3f& position)
+Transform::Transform(const Quaternion& rotation, const Vector3f& position)
+	: Transform(Vector3f::ONE, rotation, position)
+{
+}
+
+Transform::Transform(const Vector3f& scaling, const Quaternion& rotation, const Vector3f& position)
 	: m_Scaling(scaling)
 	, m_Rotation(rotation)
 	, m_Position(position)
@@ -30,12 +35,12 @@ void Transform::SetScaling(const Vector3f& scaling)
 	m_DirtyFlags = DirtyFlag_All;
 }
 
-const EulerAngles& Transform::GetRotation() const
+const Quaternion& Transform::GetRotation() const
 {
 	return m_Rotation;
 }
 
-void Transform::SetRotation(const EulerAngles& rotation)
+void Transform::SetRotation(const Quaternion& rotation)
 {
 	m_Rotation = rotation;
 	m_DirtyFlags = DirtyFlag_All;
@@ -71,7 +76,7 @@ const Matrix4f& Transform::GetWorldToLocalMatrix() const
 	if (m_DirtyFlags & DirtyFlag_WorldToLocalMatrix)
 	{
 		Matrix4f invScalingMatrix = CreateScalingMatrix(Rcp(m_Scaling));
-		Matrix4f invRotationMatrix = CreateRotationMatrix(Negate(m_Rotation));
+		Matrix4f invRotationMatrix = CreateRotationMatrix(Inverse(m_Rotation));
 		Matrix4f invTranslationMatrix = CreateTranslationMatrix(Negate(m_Position));
 
 		m_WorldToLocalMatrix = invTranslationMatrix * invRotationMatrix * invScalingMatrix;
@@ -137,8 +142,8 @@ const Matrix4f CreateScalingMatrix(f32 scale)
 
 const Matrix4f CreateRotationXMatrix(const Radian& angle)
 {
-	f32 sinAngle = Sin(angle);
-	f32 cosAngle = Cos(angle);
+	f32 sinAngle, cosAngle;
+	SinCos(sinAngle, cosAngle, angle);
 
 	return Matrix4f(1.0f, 0.0f, 0.0f, 0.0f,
 					0.0f, cosAngle, sinAngle, 0.0f,
@@ -148,8 +153,8 @@ const Matrix4f CreateRotationXMatrix(const Radian& angle)
 
 const Matrix4f CreateRotationYMatrix(const Radian& angle)
 {
-	f32 sinAngle = Sin(angle);
-	f32 cosAngle = Cos(angle);
+	f32 sinAngle, cosAngle;
+	SinCos(sinAngle, cosAngle, angle);
 
 	return Matrix4f(cosAngle, 0.0f, -sinAngle, 0.0f,
 					0.0f, 1.0f, 0.0f, 0.0f,
@@ -159,8 +164,8 @@ const Matrix4f CreateRotationYMatrix(const Radian& angle)
 
 const Matrix4f CreateRotationZMatrix(const Radian& angle)
 {
-	f32 sinAngle = Sin(angle);
-	f32 cosAngle = Cos(angle);
+	f32 sinAngle, cosAngle;
+	SinCos(sinAngle, cosAngle, angle);
 
 	return Matrix4f(cosAngle, sinAngle, 0.0f, 0.0f,
 				   -sinAngle, cosAngle, 0.0f, 0.0f,
@@ -168,10 +173,40 @@ const Matrix4f CreateRotationZMatrix(const Radian& angle)
 					0.0f, 0.0f, 0.0f, 1.0f);
 }
 
+const Matrix4f CreateRotationMatrix(const AxisAngle& axisAngle)
+{
+	assert(IsNormalized(axisAngle.m_Axis));
+
+	f32 sinAngle, cosAngle;
+	SinCos(sinAngle, cosAngle, axisAngle.m_Angle);
+
+	Vector3f sinAxis = sinAngle * axisAngle.m_Axis;
+	Vector3f cosAxis = (1.0f - cosAngle) * axisAngle.m_Axis;
+
+	Vector3f xAxis = axisAngle.m_Axis.m_X * cosAxis + Vector3f(cosAngle, sinAxis.m_Z, -sinAxis.m_Y);
+	Vector3f yAxis = axisAngle.m_Axis.m_Y * cosAxis + Vector3f(-sinAxis.m_Z, cosAngle, sinAxis.m_X);
+	Vector3f zAxis = axisAngle.m_Axis.m_Z * cosAxis + Vector3f(sinAxis.m_Y, -sinAxis.m_X, cosAngle);
+
+	return CreateRotationMatrix(BasisAxes(xAxis, yAxis, zAxis));
+}
+
 const Matrix4f CreateRotationMatrix(const EulerAngles& eulerAngles)
 {
 	assert(false && "Needs impl");
 	return Matrix4f();
+}
+
+const Matrix4f CreateRotationMatrix(const Quaternion& quat)
+{
+	return CreateRotationMatrix(ExtractBasisAxes(quat));
+}
+
+const Matrix4f CreateRotationMatrix(const BasisAxes& basis)
+{
+	return Matrix4f(basis.m_XAxis.m_X, basis.m_XAxis.m_Y, basis.m_XAxis.m_Z, 0.0f,
+					basis.m_YAxis.m_X, basis.m_YAxis.m_Y, basis.m_YAxis.m_Z, 0.0f,
+					basis.m_ZAxis.m_X, basis.m_ZAxis.m_Y, basis.m_ZAxis.m_Z, 0.0f,
+					0.0f, 0.0f, 0.0f, 1.0f);
 }
 
 const Matrix4f CreateLookAtMatrix(const Vector3f& eyePos, const Vector3f& lookAtPos, const Vector3f& upDir)
@@ -233,20 +268,9 @@ const Matrix4f CreateMatrixFromForwardDirection(const Vector3f& forwardDir)
 	return Matrix4f();
 }
 
-const Vector3f GetUpDirection(const Matrix4f& matrix)
+const BasisAxes GetBasisAxes(const Matrix4f& matrix)
 {
-	assert(false && "Needs impl");
-	return Vector3f();
-}
-
-const Vector3f GetForwardDirection(const Matrix4f& matrix)
-{
-	assert(false && "Needs impl");
-	return Vector3f();
-}
-
-const Vector3f GetRightDirection(const Matrix4f& matrix)
-{
-	assert(false && "Needs impl");
-	return Vector3f();
+	return BasisAxes(Vector3f(matrix.m_00, matrix.m_01, matrix.m_02),
+					 Vector3f(matrix.m_10, matrix.m_11, matrix.m_12),
+					 Vector3f(matrix.m_20, matrix.m_21, matrix.m_22));
 }

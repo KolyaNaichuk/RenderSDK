@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common/Common.h"
+#include "Math/Math.h"
 
 struct Vector4f
 {
@@ -25,9 +25,10 @@ const Vector4f Normalize(const Vector4f& vec);
 const Vector4f Negate(const Vector4f& vec);
 const Vector4f Rcp(const Vector4f& vec);
 f32 Dot(const Vector4f& vec1, const Vector4f& vec2);
-bool  IsEqual(const Vector4f& vec1, const Vector4f& vec2, f32 epsilon);
+bool IsEqual(const Vector4f& vec1, const Vector4f& vec2, f32 epsilon = EPSILON);
 const Vector4f Min(const Vector4f& vec1, const Vector4f& vec2);
 const Vector4f Max(const Vector4f& vec1, const Vector4f& vec2);
+bool IsNormalized(const Vector4f& vec, f32 epsilon = EPSILON);
 
 Vector4f& operator+= (Vector4f& left, const Vector4f& right);
 Vector4f& operator-= (Vector4f& left, const Vector4f& right);

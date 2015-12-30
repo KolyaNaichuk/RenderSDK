@@ -81,6 +81,11 @@ const Vector2f Max(const Vector2f& vec1, const Vector2f& vec2)
 	return Vector2f(Max(vec1.m_X, vec2.m_X), Max(vec1.m_Y, vec2.m_Y));
 }
 
+bool IsNormalized(const Vector2f& vec, f32 epsilon)
+{
+	return (Abs(1.0f - Length(vec)) < epsilon);
+}
+
 Vector2f& operator+= (Vector2f& left, const Vector2f& right)
 {
 	left.m_X += right.m_X;

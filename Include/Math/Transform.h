@@ -3,19 +3,23 @@
 #include "Math/Matrix4f.h"
 #include "Math/Vector3f.h"
 #include "Math/Vector4f.h"
-#include "Math/EulerAngles.h"
+#include "Math/Quaternion.h"
+
+struct EulerAngles;
+struct AxisAngle;
 
 class Transform
 {
 public:
 	Transform();
-	Transform(const Vector3f& scaling, const EulerAngles& rotation, const Vector3f& position);
+	Transform(const Quaternion& rotation, const Vector3f& position);
+	Transform(const Vector3f& scaling, const Quaternion& rotation, const Vector3f& position);
 	
 	const Vector3f& GetScaling() const;
 	void SetScaling(const Vector3f& scaling);
 
-	const EulerAngles& GetRotation() const;
-	void SetRotation(const EulerAngles& rotation);
+	const Quaternion& GetRotation() const;
+	void SetRotation(const Quaternion& rotation);
 
 	const Vector3f& GetPosition() const;
 	void SetPosition(const Vector3f& position);
@@ -36,7 +40,7 @@ private:
 	};
 	
 	Vector3f m_Scaling;
-	EulerAngles m_Rotation;
+	Quaternion m_Rotation;
 	Vector3f m_Position;
 
 	mutable Matrix4f m_LocalToWorldMatrix;
@@ -54,7 +58,10 @@ const Matrix4f CreateScalingMatrix(f32 scale);
 const Matrix4f CreateRotationXMatrix(const Radian& angle);
 const Matrix4f CreateRotationYMatrix(const Radian& angle);
 const Matrix4f CreateRotationZMatrix(const Radian& angle);
+const Matrix4f CreateRotationMatrix(const AxisAngle& axisAngle);
 const Matrix4f CreateRotationMatrix(const EulerAngles& eulerAngles);
+const Matrix4f CreateRotationMatrix(const Quaternion& quat);
+const Matrix4f CreateRotationMatrix(const BasisAxes& basis);
 
 const Matrix4f CreateLookAtMatrix(const Vector3f& eyePos, const Vector3f& lookAtPos, const Vector3f& upDir);
 
@@ -67,6 +74,4 @@ const Matrix4f CreatePerspectiveFovProjMatrix(const Radian& fovY, f32 aspectRati
 const Matrix4f CreateMatrixFromUpDirection(const Vector3f& upDir);
 const Matrix4f CreateMatrixFromForwardDirection(const Vector3f& forwardDir);
 
-const Vector3f GetUpDirection(const Matrix4f& matrix);
-const Vector3f GetForwardDirection(const Matrix4f& matrix);
-const Vector3f GetRightDirection(const Matrix4f& matrix);
+const BasisAxes GetBasisAxes(const Matrix4f& matrix);

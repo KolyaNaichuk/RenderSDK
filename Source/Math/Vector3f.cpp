@@ -95,6 +95,11 @@ const Vector3f Max(const Vector3f& vec1, const Vector3f& vec2)
     return Vector3f(Max(vec1.m_X, vec2.m_X), Max(vec1.m_Y, vec2.m_Y), Max(vec1.m_Z, vec2.m_Z));
 }
 
+bool IsNormalized(const Vector3f& vec, f32 epsilon)
+{
+	return (Abs(1.0f - Length(vec)) < epsilon);
+}
+
 Vector3f& operator+= (Vector3f& left, const Vector3f& right)
 {
     left.m_X += right.m_X;

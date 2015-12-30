@@ -23,7 +23,18 @@ f32 Cos(const Radian& angle)
 	return std::cosf(angle.Get());
 }
 
+const Radian ACos(f32 cosAngle)
+{
+	return Radian(std::acosf(cosAngle));
+}
+
 f32 Tan(const Radian& angle)
 {
 	return (f32)std::tan((f64)angle.Get());
+}
+
+void SinCos(f32& sinAngle, f32& cosAngle, const Radian& angle)
+{
+	sinAngle = Sin(angle);
+	cosAngle = Cos(angle);
 }

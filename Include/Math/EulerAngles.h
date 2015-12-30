@@ -5,11 +5,9 @@
 struct EulerAngles
 {
 	EulerAngles();
-	EulerAngles(const Radian& x, const Radian& y, const Radian& z);
+	EulerAngles(const Radian& xAxisAngle, const Radian& yAxisAngle, const Radian& zAxisAngle);
 
-	Radian m_X;
-	Radian m_Y;
-	Radian m_Z;
+	Radian m_XAxisAngle;
+	Radian m_YAxisAngle;
+	Radian m_ZAxisAngle;
 };
-
-const EulerAngles Negate(const EulerAngles& eulerAngles);

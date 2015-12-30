@@ -11,6 +11,7 @@ static const f32 RCP_PI = 0.31830988618379067154f;
 static const f32 RCP_TWO_PI = 0.15915494309189533577f;
 static const f32 PI_DIV_TWO = 1.57079632679489661923f;
 static const f32 PI_DIV_FOUR = 0.78539816339744830962f;
+static const f32 EPSILON = 1e-4f;
 
 template <typename T>
 T Max(T left, T right)
@@ -64,5 +65,9 @@ f32 RadiansToDegrees(f32 radians);
 f32 DegreesToRadians(f32 degrees);
 
 f32 Sin(const Radian& angle);
+
 f32 Cos(const Radian& angle);
+const Radian ACos(f32 cosAngle);
+
+void SinCos(f32& sinAngle, f32& cosAngle, const Radian& angle);
 f32 Tan(const Radian& angle);
