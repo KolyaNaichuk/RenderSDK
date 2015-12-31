@@ -3,6 +3,7 @@
 #include "Math/EulerAngles.h"
 #include "Math/Radian.h"
 #include "Math/Vector3f.h"
+#include "Math/Matrix4f.h"
 
 Quaternion::Quaternion()
 	: Quaternion(0.0f, 0.0f, 0.0f, 1.0f)
@@ -59,7 +60,68 @@ Quaternion::Quaternion(const EulerAngles& eulerAngles)
 
 Quaternion::Quaternion(const Matrix4f& rotationMatrix)
 {
-	assert(false && "Needs impl");
+	enum { kWComp = 0, kXComp, kYComp, kZComp, kNumComps };
+
+	f32 mul4SqrCompMinus1[kNumComps];
+	mul4SqrCompMinus1[kWComp] = rotationMatrix.m_00 + rotationMatrix.m_11 + rotationMatrix.m_22;
+	mul4SqrCompMinus1[kXComp] = rotationMatrix.m_00 - rotationMatrix.m_11 - rotationMatrix.m_22;
+	mul4SqrCompMinus1[kYComp] = rotationMatrix.m_11 - rotationMatrix.m_00 - rotationMatrix.m_22;
+	mul4SqrCompMinus1[kZComp] = rotationMatrix.m_22 - rotationMatrix.m_00 - rotationMatrix.m_11;
+
+	u8  maxProdComp = kWComp;
+	if (mul4SqrCompMinus1[maxProdComp] < mul4SqrCompMinus1[kXComp])
+		maxProdComp = kXComp;
+	if (mul4SqrCompMinus1[maxProdComp] < mul4SqrCompMinus1[kYComp])
+		maxProdComp = kYComp;
+	if (mul4SqrCompMinus1[maxProdComp] < mul4SqrCompMinus1[kZComp])
+		maxProdComp = kZComp;
+	
+	switch (maxProdComp)
+	{
+		case kWComp:
+		{
+			m_W = 0.5f * Sqrt(1.0f + mul4SqrCompMinus1[kWComp]);
+			f32 rcp4MulW = 0.25f / m_W;
+			
+			m_X = rcp4MulW * (rotationMatrix.m_12 - rotationMatrix.m_21);
+			m_Y = rcp4MulW * (rotationMatrix.m_20 - rotationMatrix.m_02);
+			m_Z = rcp4MulW * (rotationMatrix.m_01 - rotationMatrix.m_10);
+
+			break;
+		}
+		case kXComp:
+		{
+			m_X = 0.5f * Sqrt(1.0f + mul4SqrCompMinus1[kXComp]);
+			f32 rcp4MulX = 0.25f / m_X;
+
+			m_W = rcp4MulX * (rotationMatrix.m_12 - rotationMatrix.m_21);
+			m_Y = rcp4MulX * (rotationMatrix.m_01 + rotationMatrix.m_10);
+			m_Z = rcp4MulX * (rotationMatrix.m_20 + rotationMatrix.m_02);
+			break;
+		}
+		case kYComp:
+		{
+			m_Y = 0.5f * Sqrt(1.0f + mul4SqrCompMinus1[kYComp]);
+			f32 rcp4MulY = 0.25f / m_Y;
+
+			m_W = rcp4MulY * (rotationMatrix.m_20 - rotationMatrix.m_02);
+			m_X = rcp4MulY * (rotationMatrix.m_01 + rotationMatrix.m_10);
+			m_Z = rcp4MulY * (rotationMatrix.m_12 + rotationMatrix.m_21);
+
+			break;
+		}
+		case kZComp:
+		{
+			m_Z = 0.5f * Sqrt(1.0f + mul4SqrCompMinus1[kZComp]);
+			f32 rcp4MulZ = 0.25f / m_Z;
+
+			m_W = rcp4MulZ * (rotationMatrix.m_01 - rotationMatrix.m_10);
+			m_X = rcp4MulZ * (rotationMatrix.m_20 + rotationMatrix.m_02);
+			m_Y = rcp4MulZ * (rotationMatrix.m_12 + rotationMatrix.m_21);
+
+			break;
+		}
+	}
 }
 
 const Quaternion Quaternion::operator- () const
