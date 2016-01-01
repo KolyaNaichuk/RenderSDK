@@ -98,7 +98,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
@@ -147,7 +147,7 @@ COPY /Y "$(SolutionDir)Shaders\VisualizeMeshPS.hlsl" "$(SolutionDir)Samples\Bin\
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

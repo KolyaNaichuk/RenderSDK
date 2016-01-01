@@ -98,7 +98,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <LinkStatus>
       </LinkStatus>
@@ -150,7 +150,7 @@ COPY /Y "$(SolutionDir)Shaders\PassThroughPS.hlsl" "$(SolutionDir)Samples\Bin\$(
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
