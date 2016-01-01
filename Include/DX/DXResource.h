@@ -19,6 +19,11 @@ struct DXIndexBufferView : public D3D12_INDEX_BUFFER_VIEW
 	DXIndexBufferView(DXResource* pIndexBuffer, UINT sizeInBytes, UINT strideInBytes);
 };
 
+struct DXConstantBufferViewDesc : public D3D12_CONSTANT_BUFFER_VIEW_DESC
+{
+	DXConstantBufferViewDesc(DXResource* pConstantBuffer, UINT sizeInBytes);
+};
+
 struct DXRange : public D3D12_RANGE
 {
 	DXRange(SIZE_T begin, SIZE_T end);

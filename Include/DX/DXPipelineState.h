@@ -60,7 +60,8 @@ struct DXDepthStencilDesc : public D3D12_DEPTH_STENCIL_DESC
 {
 	enum Id
 	{
-		Disabled
+		Disabled,
+		Enabled
 	};
 	DXDepthStencilDesc(Id id = Disabled);
 };

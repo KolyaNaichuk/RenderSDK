@@ -195,7 +195,7 @@ void Mesh::InitIndexBuffer(DXDevice* pDevice, const MeshData* pMeshData)
 	assert((p16BitIndices != nullptr) || (p32BitIndices != nullptr));
 	const bool is32BitIndices = p32BitIndices != nullptr;
 
-	const u32 strideInBytes = is32BitIndices ? 32 : 16;
+	const u32 strideInBytes = is32BitIndices ? sizeof(u32) : sizeof(u16);
 	const u32 sizeInBytes = numIndices * strideInBytes;
 	
 	DXBufferResourceDesc bufferDesc(sizeInBytes);
@@ -212,11 +212,11 @@ void Mesh::InitIndexBuffer(DXDevice* pDevice, const MeshData* pMeshData)
 
 void Mesh::InitSubMeshes(const MeshData* pMeshData)
 {
-	const u32 numSubMeshes = pMeshData->GetNumSubMeshes();
+	m_NumSubMeshes = pMeshData->GetNumSubMeshes();
 	const SubMeshData* pSubMeshes = pMeshData->GetSubMeshes();
 
-	m_pSubMeshes = new SubMeshData[numSubMeshes];
-	std::memcpy(m_pSubMeshes, pSubMeshes, numSubMeshes * sizeof(SubMeshData));
+	m_pSubMeshes = new SubMeshData[m_NumSubMeshes];
+	std::memcpy(m_pSubMeshes, pSubMeshes, m_NumSubMeshes * sizeof(SubMeshData));
 }
 
 namespace

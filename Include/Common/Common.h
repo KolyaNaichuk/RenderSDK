@@ -37,3 +37,5 @@ static void SafeArrayDelete(T*& pArrayObject)
 	delete[] pArrayObject;
 	pArrayObject = nullptr;
 }
+
+#define MS_ALIGN(n) __declspec(align(n))

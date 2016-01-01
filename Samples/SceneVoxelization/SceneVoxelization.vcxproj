@@ -108,7 +108,13 @@ COPY /Y "$(SolutionDir)Shaders\VoxelGrid.hlsl" "$(SolutionDir)Samples\$(ProjectN
 COPY /Y "$(SolutionDir)Shaders\VoxelGrid.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelGrid.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\ClearVoxelGridCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ClearVoxelGridCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\ClearVoxelGridCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ClearVoxelGridCS.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\ClearVoxelGridCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ClearVoxelGridCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\VisualizeMeshVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeMeshVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VisualizeMeshVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeMeshVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\VisualizeMeshPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeMeshPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VisualizeMeshPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeMeshPS.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

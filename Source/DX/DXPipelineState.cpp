@@ -132,6 +132,23 @@ DXDepthStencilDesc::DXDepthStencilDesc(Id id)
 		BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
 		BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 	}
+	else if (id == DXDepthStencilDesc::Enabled)
+	{
+		DepthEnable = TRUE;
+		DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+		DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+		StencilEnable = FALSE;
+		StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
+		StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+		FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+		FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+		FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+		FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+		BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+		BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+		BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	}
 	else
 	{
 		assert(false);

@@ -54,6 +54,11 @@ void DXDevice::CreateDepthStencilView(DXResource* pResource, const D3D12_DEPTH_S
 	GetDXObject()->CreateDepthStencilView(pResource->GetDXObject(), pDesc, dsvHandle);
 }
 
+void DXDevice::CreateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC* pDesc, D3D12_CPU_DESCRIPTOR_HANDLE cbvHandle)
+{
+	GetDXObject()->CreateConstantBufferView(pDesc, cbvHandle);
+}
+
 void DXDevice::CreateShaderResourceView(DXResource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc, D3D12_CPU_DESCRIPTOR_HANDLE srvHandle)
 {
 	GetDXObject()->CreateShaderResourceView(pResource->GetDXObject(), pDesc, srvHandle);

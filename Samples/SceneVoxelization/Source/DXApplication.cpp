@@ -10,18 +10,33 @@
 #include "DX/DXFence.h"
 #include "DX/DXEvent.h"
 #include "CommandRecorders/ClearVoxelGridRecorder.h"
+#include "CommandRecorders/VisualizeMeshRecorder.h"
 #include "Common/MeshData.h"
 #include "Common/MeshDataUtilities.h"
 #include "Common/Mesh.h"
 #include "Common/Color.h"
+#include "Common/Camera.h"
 #include "Math/Vector3f.h"
 #include "Math/Vector4f.h"
+#include "Math/Matrix4f.h"
+#include "Math/Transform.h"
 
 enum
 {
 	kNumGridCellsX = 64,
 	kNumGridCellsY = 64,
-	kNumGridCellsZ = 64
+	kNumGridCellsZ = 64,
+	
+	kDSVHandleIndex = 0,
+	kCBVHandleIndex = 0
+};
+
+struct ObjectTransform
+{
+	Matrix4f m_WorldNormalMatrix;
+	Matrix4f m_WorldViewProjMatrix;
+	Matrix4f m_NotUsed1;
+	Matrix4f m_NotUsed2;
 };
 
 DXApplication::DXApplication(HINSTANCE hApp)
@@ -29,12 +44,19 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pDevice(nullptr)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
+	, m_pCommandList(nullptr)
 	, m_pRTVHeap(nullptr)
+	, m_pDSVHeap(nullptr)
+	, m_pCBVHeap(nullptr)
+	, m_pDSVTexture(nullptr)
+	, m_pCBVBuffer(nullptr)
 	, m_pFence(nullptr)
 	, m_pFenceEvent(nullptr)
 	, m_BackBufferIndex(0)
 	, m_pClearVoxelGridRecorder(nullptr)
+	, m_pVisualizeNormalRecorder(nullptr)
 	, m_pMesh(nullptr)
+	, m_pCamera(nullptr)
 {
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 		m_CommandAllocators[index] = nullptr;
@@ -45,12 +67,19 @@ DXApplication::DXApplication(HINSTANCE hApp)
 
 DXApplication::~DXApplication()
 {
+	SafeDelete(m_pCamera);
 	SafeDelete(m_pMesh);
 	SafeDelete(m_pClearVoxelGridRecorder);
+	SafeDelete(m_pVisualizeNormalRecorder);
 	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
+	SafeDelete(m_pCBVHeap);
+	SafeDelete(m_pCBVBuffer);
+	SafeDelete(m_pDSVHeap);
+	SafeDelete(m_pDSVTexture);
 	SafeDelete(m_pRTVHeap);
 	SafeDelete(m_pCommandQueue);
+	SafeDelete(m_pCommandList);
 	SafeDelete(m_pSwapChain);
 	SafeDelete(m_pDevice);
 }
@@ -68,12 +97,20 @@ void DXApplication::OnInit()
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
 	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
 	
+	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 100.0f, FLOAT(bufferWidth) / FLOAT(bufferHeight));
+	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
+	m_pCamera->SetBackgroundColor(Color::GREEN);
+
+	Transform& transform = m_pCamera->GetTransform();
+	transform.SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
+	transform.SetRotation(CreateRotationXQuaternion(Radian(PI / 4.0f)));
+
 	DXSwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
 	m_pSwapChain = new DXSwapChain(&factory, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
-	DXDescriptorHeapDesc descriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kBackBufferCount, false);
-	m_pRTVHeap = new DXDescriptorHeap(m_pDevice, &descriptorHeapDesc, L"m_pRTVHeap");
+	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kBackBufferCount, false);
+	m_pRTVHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pRTVHeap");
 
 	DXTex2DRenderTargetViewDesc rtvDesc;
 	for (UINT index = 0; index < kBackBufferCount; ++index)
@@ -84,11 +121,36 @@ void DXApplication::OnInit()
 		m_pDevice->CreateRenderTargetView(pRenderTarget, &rtvDesc, rtvHandle);
 	}
 
+	DXHeapProperties uploadHeapProperties(D3D12_HEAP_TYPE_UPLOAD);
+	DXHeapProperties defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
+
+	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
+	m_pDSVHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pDSVHeap");
+
+	DXTex2DResourceDesc dsvTexDesc(DXGI_FORMAT_D32_FLOAT, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+	m_pDSVTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &dsvTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, L"m_pDSVTexture");
+
+	DXTex2DDepthStencilViewDesc dsvDesc;
+	m_pDevice->CreateDepthStencilView(m_pDSVTexture, &dsvDesc, m_pDSVHeap->GetCPUDescriptor(kDSVHandleIndex));
+
+	DXDescriptorHeapDesc cbvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, true);
+	m_pCBVHeap = new DXDescriptorHeap(m_pDevice, &cbvHeapDesc, L"m_pCBVHeap");
+
+	DXBufferResourceDesc cbvBufferDesc(sizeof(ObjectTransform));
+	m_pCBVBuffer = new DXResource(m_pDevice, &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &cbvBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCBVBuffer");
+
+	DXConstantBufferViewDesc cbvDesc(m_pCBVBuffer, sizeof(ObjectTransform));
+	m_pDevice->CreateConstantBufferView(&cbvDesc, m_pCBVHeap->GetCPUDescriptor(kCBVHandleIndex));
+
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 		m_CommandAllocators[index] = new DXCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
 
-	m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(m_pDevice, kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ);
-	
+	m_pFenceEvent = new DXEvent();
+	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
+	++m_FenceValues[m_BackBufferIndex];
+
+	m_pCommandList = new DXCommandList(m_pDevice, m_CommandAllocators[m_BackBufferIndex], nullptr, L"m_pCommandList");
+
 	const Vector3f positions[] =
 	{
 		// Floor
@@ -249,14 +311,92 @@ void DXApplication::OnInit()
 	ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 	
 	m_pMesh = new Mesh(m_pDevice, &meshData);
+	
+	m_pMesh->RecordDataForUpload(m_pCommandList);
+	m_pCommandList->Close();
+
+	ID3D12CommandList* pDXCommandList = m_pCommandList->GetDXObject();
+	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+	
+	WaitForGPU();
+	m_pMesh->RemoveDataForUpload();
+
+	m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(m_pDevice, kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ);
+	m_pVisualizeNormalRecorder = new VisualizeMeshRecorder(m_pDevice, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_D32_FLOAT, MeshDataElement_Normal, m_pMesh->GetVertexElementFlags());
 }
 
 void DXApplication::OnUpdate()
 {
+	const Matrix4f& viewMatrix = m_pCamera->GetViewMatrix();
+	const Matrix4f& projMatrix = m_pCamera->GetProjMatrix();
+
+	ObjectTransform objectTransform;
+	objectTransform.m_WorldNormalMatrix = Matrix4f::IDENTITY;
+	objectTransform.m_WorldViewProjMatrix = Matrix4f::IDENTITY * viewMatrix * projMatrix;
+
+	m_pCBVBuffer->Write(&objectTransform, sizeof(objectTransform));
 }
 
 void DXApplication::OnRender()
 {
+	ID3D12CommandList* pDXCommandList = m_pCommandList->GetDXObject();
+
+	DXCommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
+	pCommandAllocator->Reset();
+
+	DXResource* pRTVTexture = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+	
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVHeap->GetCPUDescriptor(m_BackBufferIndex);
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDSVHeap->GetCPUDescriptor(kDSVHandleIndex);
+	
+	const u8 clearFlags = m_pCamera->GetClearFlags();
+	if (clearFlags != 0)
+	{
+		m_pCommandList->Reset(pCommandAllocator);
+
+		if (clearFlags & Camera::ClearFlag_Color)
+		{
+			if (pRTVTexture->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
+				m_pCommandList->TransitionBarrier(pRTVTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+			const Vector4f& clearColor = m_pCamera->GetBackgroundColor();
+			m_pCommandList->ClearRenderTargetView(rtvHandle, &clearColor.m_X);
+		}
+		if (clearFlags & Camera::ClearFlag_Depth)
+		{
+			if (m_pDSVTexture->GetState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
+				m_pCommandList->TransitionBarrier(m_pDSVTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
+			m_pCommandList->ClearDepthView(dsvHandle);
+		}
+
+		m_pCommandList->Close();
+		m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+
+		WaitForGPU();
+	}
+
+	D3D12_RESOURCE_STATES rtvEndState = D3D12_RESOURCE_STATE_PRESENT;
+	
+	VisualizeMeshParams params;
+	params.m_pMesh = m_pMesh;
+	params.m_pCommandList = m_pCommandList;
+	params.m_pCommandAllocator = pCommandAllocator;
+	params.m_pRTVTexture = pRTVTexture;
+	params.m_RTVHandle = rtvHandle;
+	params.m_pRTVEndState = &rtvEndState;
+	params.m_pDSVTexture = m_pDSVTexture;
+	params.m_DSVHandle = dsvHandle;
+	params.m_NumDXDescriptorHeaps = 1;
+	params.m_pDXFirstDescriptorHeap = m_pCBVHeap->GetDXObject();
+	params.m_CBVHandle = m_pCBVHeap->GetGPUDescriptor(kCBVHandleIndex);
+	
+	m_pVisualizeNormalRecorder->Record(&params);
+
+	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+
+	m_pSwapChain->Present(1, 0);
+	MoveToNextFrame();
 }
 
 void DXApplication::OnDestroy()

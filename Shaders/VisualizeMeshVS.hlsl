@@ -25,7 +25,7 @@ struct VSInput
 
 struct VSOutput
 {
-	float4 worldSpacePos		: SV_Position;
+	float4 clipSpacePos			: SV_Position;
 
 #ifdef HAS_NORMAL
 	float3 worldSpaceNormal		: NORMAL;
@@ -42,8 +42,10 @@ struct VSOutput
 
 struct ObjectTransform
 {
-	matrix worldMatrix;
-	matrix worldInvTransposeMatrix;
+	matrix worldNormalMatrix;
+	matrix worldViewProjMatrix;
+	matrix notUsed1;
+	matrix notUsed2;
 };
 
 cbuffer ObjectTransformBuffer : register(b0)
@@ -53,11 +55,11 @@ cbuffer ObjectTransformBuffer : register(b0)
 
 VSOutput Main(VSInput input)
 {
-	VSOuput output;
-	output.worldSpacePos = mul(float4(input.localSpacePos.xyz, 1.0f), g_ObjectTransform.worldMatrix);
+	VSOutput output;
+	output.clipSpacePos = mul(float4(input.localSpacePos.xyz, 1.0f), g_ObjectTransform.worldViewProjMatrix);
 
 #ifdef HAS_NORMAL
-	output.worldSpaceNormal = mul(float4(input.localSpaceNormal.xyz, 0.0f), g_ObjectTransform.worldInvTransposeMatrix).xyz;
+	output.worldSpaceNormal = mul(float4(input.localSpaceNormal.xyz, 0.0f), g_ObjectTransform.worldNormalMatrix).xyz;
 #endif // HAS_NORMAL
 
 #ifdef HAS_COLOR

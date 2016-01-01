@@ -17,6 +17,8 @@ public:
 	void CreateDepthStencilView(DXResource* pResource,
 		const D3D12_DEPTH_STENCIL_VIEW_DESC* pDesc,
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle);
+
+	void CreateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC* pDesc, D3D12_CPU_DESCRIPTOR_HANDLE cbvHandle);
 	
 	void CreateShaderResourceView(DXResource* pResource,
 		const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc,

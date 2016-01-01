@@ -8,31 +8,31 @@
 
 enum RootParams
 {
-	kObjectTransformCBVRootParam = 0,
+	kCBVRootParam = 0,
 	kNumRootParams
 };
 
-VisualizeMeshRecorder::VisualizeMeshRecorder(DXDevice* pDevice, DXGI_FORMAT rtvFormat, MeshDataElement meshDataElement, u8 vertexElementFlags)
+VisualizeMeshRecorder::VisualizeMeshRecorder(DXDevice* pDevice, DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat, MeshDataElement meshDataElement, u8 vertexElementFlags)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
-	u8 inputElementFlags = 0;
-	DXShaderMacro shaderDefines[2];	
+	u8 inputElementFlags = VertexElementFlag_Position;
+	DXShaderMacro shaderDefines[2];
 
 	if (meshDataElement == MeshDataElement_Color)
 	{
 		shaderDefines[0] = DXShaderMacro("HAS_COLOR", "1");
-		inputElementFlags = VertexElementFlag_Color;
+		inputElementFlags |= VertexElementFlag_Color;
 	}
 	else if (meshDataElement == MeshDataElement_Normal)
 	{
 		shaderDefines[0] = DXShaderMacro("HAS_NORMAL", "1");
-		inputElementFlags = VertexElementFlag_Normal;
+		inputElementFlags |= VertexElementFlag_Normal;
 	}
 	else if (meshDataElement == MeshDataElement_TexCoords)
 	{
 		shaderDefines[0] = DXShaderMacro("HAS_TEXCOORD", "1");
-		inputElementFlags = VertexElementFlag_TexCoords;
+		inputElementFlags |= VertexElementFlag_TexCoords;
 	}
 	else
 	{
@@ -44,10 +44,10 @@ VisualizeMeshRecorder::VisualizeMeshRecorder(DXDevice* pDevice, DXGI_FORMAT rtvF
 	DXShader vertexShader(L"Shaders//VisualizeMeshVS.hlsl", "Main", "vs_4_0", shaderDefines);
 	DXShader pixelShader(L"Shaders//VisualizeMeshPS.hlsl", "Main", "ps_4_0", shaderDefines);
 
-	DXCBVRange objectTransformCBVRange(1, 0);
+	DXCBVRange cbvRange(1, 0);
 
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kObjectTransformCBVRootParam] = DXRootDescriptorTableParameter(1, &objectTransformCBVRange, D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParams[kCBVRootParam] = DXRootDescriptorTableParameter(1, &cbvRange, D3D12_SHADER_VISIBILITY_VERTEX);
 
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	m_pRootSignature = new DXRootSignature(pDevice, &rootSignatureDesc, L"VisualizeMeshRecorder::m_pRootSignature");
@@ -61,7 +61,8 @@ VisualizeMeshRecorder::VisualizeMeshRecorder(DXDevice* pDevice, DXGI_FORMAT rtvF
 	pipelineStateDesc.SetPixelShader(&pixelShader);
 	pipelineStateDesc.SetInputLayout(inputElementDescs.size(), &inputElementDescs[0]);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipelineStateDesc.SetRenderTargetFormat(rtvFormat);
+	pipelineStateDesc.DepthStencilState = DXDepthStencilDesc(DXDepthStencilDesc::Enabled);
+	pipelineStateDesc.SetRenderTargetFormat(rtvFormat, dsvFormat);
 
 	m_pPipelineState = new DXPipelineState(pDevice, &pipelineStateDesc, L"VisualizeMeshRecorder::m_pPipelineState");
 }
@@ -72,39 +73,37 @@ VisualizeMeshRecorder::~VisualizeMeshRecorder()
 	SafeDelete(m_pRootSignature);
 }
 
-void VisualizeMeshRecorder::Record(DXCommandList* pCommandList, DXCommandAllocator* pCommandAllocator,
-	DXResource* pRTVTexture, D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor,
-	UINT numDXDescriptorHeaps, ID3D12DescriptorHeap* pDXFirstDescriptorHeap,
-	D3D12_GPU_DESCRIPTOR_HANDLE objectTransformCBVDescriptor,
-	Mesh* pMesh, const D3D12_RESOURCE_STATES* pRTVEndState)
+void VisualizeMeshRecorder::Record(VisualizeMeshParams* pParams)
 {
-	pCommandList->Reset(pCommandAllocator, m_pPipelineState);
-	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
+	pParams->m_pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
+	pParams->m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
-	if (pRTVTexture->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
-		pCommandList->TransitionBarrier(pRTVTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	if (pParams->m_pRTVTexture->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
+		pParams->m_pCommandList->TransitionBarrier(pParams->m_pRTVTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	if (pParams->m_pDSVTexture->GetState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
+		pParams->m_pCommandList->TransitionBarrier(pParams->m_pDSVTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
-	pCommandList->SetDescriptorHeaps(numDXDescriptorHeaps, &pDXFirstDescriptorHeap);
-	pCommandList->SetGraphicsRootDescriptorTable(kObjectTransformCBVRootParam, objectTransformCBVDescriptor);
+	pParams->m_pCommandList->SetDescriptorHeaps(pParams->m_NumDXDescriptorHeaps, &pParams->m_pDXFirstDescriptorHeap);
+	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParam, pParams->m_CBVHandle);
 
-	pCommandList->OMSetRenderTargets(1, &rtvDescriptor);
+	pParams->m_pCommandList->OMSetRenderTargets(1, &pParams->m_RTVHandle, TRUE, &pParams->m_DSVHandle);
 			
-	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	pCommandList->IASetVertexBuffers(0, 1, pMesh->GetVertexBufferView());
-	pCommandList->IASetIndexBuffer(pMesh->GetIndexBufferView());
+	pParams->m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	pParams->m_pCommandList->IASetVertexBuffers(0, 1, pParams->m_pMesh->GetVertexBufferView());
+	pParams->m_pCommandList->IASetIndexBuffer(pParams->m_pMesh->GetIndexBufferView());
 
-	DXViewport viewport(0.0f, 0.0f, FLOAT(pRTVTexture->GetWidth()), FLOAT(pRTVTexture->GetHeight()));
-	pCommandList->RSSetViewports(1, &viewport);
+	DXViewport viewport(0.0f, 0.0f, FLOAT(pParams->m_pRTVTexture->GetWidth()), FLOAT(pParams->m_pRTVTexture->GetHeight()));
+	pParams->m_pCommandList->RSSetViewports(1, &viewport);
 
-	DXRect scissorRect(0, 0, LONG(pRTVTexture->GetWidth()), LONG(pRTVTexture->GetHeight()));
-	pCommandList->RSSetScissorRects(1, &scissorRect);
+	DXRect scissorRect(0, 0, LONG(pParams->m_pRTVTexture->GetWidth()), LONG(pParams->m_pRTVTexture->GetHeight()));
+	pParams->m_pCommandList->RSSetScissorRects(1, &scissorRect);
 
-	assert(pMesh->GetNumSubMeshes() == 1);
-	const SubMeshData* pSubMeshData = pMesh->GetSubMeshes();
-	pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
+	assert(pParams->m_pMesh->GetNumSubMeshes() == 1);
+	const SubMeshData* pSubMeshData = pParams->m_pMesh->GetSubMeshes();
+	pParams->m_pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
 
-	if (pRTVEndState != nullptr)
-		pCommandList->TransitionBarrier(pRTVTexture, *pRTVEndState);
+	if (pParams->m_pRTVEndState != nullptr)
+		pParams->m_pCommandList->TransitionBarrier(pParams->m_pRTVTexture, *pParams->m_pRTVEndState);
 
-	pCommandList->Close();
+	pParams->m_pCommandList->Close();
 }

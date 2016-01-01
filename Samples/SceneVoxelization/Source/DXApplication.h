@@ -6,12 +6,16 @@ class DXDevice;
 class DXSwapChain;
 class DXCommandQueue;
 class DXCommandAllocator;
+class DXCommandList;
 class DXDescriptorHeap;
+class DXResource;
 class DXFence;
 class DXEvent;
 
 class ClearVoxelGridRecorder;
+class VisualizeMeshRecorder;
 class Mesh;
+class Camera;
 
 class DXApplication : public Application
 {
@@ -37,12 +41,19 @@ private:
 	DXSwapChain* m_pSwapChain;
 	DXCommandQueue* m_pCommandQueue;
 	DXCommandAllocator* m_CommandAllocators[kBackBufferCount];
+	DXCommandList* m_pCommandList;
 	DXDescriptorHeap* m_pRTVHeap;
+	DXDescriptorHeap* m_pDSVHeap;
+	DXDescriptorHeap* m_pCBVHeap;
+	DXResource* m_pDSVTexture;
+	DXResource* m_pCBVBuffer;
 	DXFence* m_pFence;
 	DXEvent* m_pFenceEvent;
 	UINT64 m_FenceValues[kBackBufferCount];
 	UINT m_BackBufferIndex;
 
 	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;
+	VisualizeMeshRecorder* m_pVisualizeNormalRecorder;
 	Mesh* m_pMesh;
+	Camera* m_pCamera;
 };

@@ -69,9 +69,7 @@ private:
 	enum DirtyFlags
 	{
 		DirtyFlag_None = 0,
-		DirtyFlag_ViewMatrix = 1 << 0,
-		DirtyFlag_ProjMatrix = 1 << 1,
-		DirtyFlag_All = DirtyFlag_ViewMatrix | DirtyFlag_ProjMatrix
+		DirtyFlag_ProjMatrix = 1 << 0
 	};
 
 	ProjType m_ProjType;
@@ -86,7 +84,6 @@ private:
 	Radian m_FovY;
 	f32 m_SizeY;
 
-	mutable Matrix4f m_ViewMatrix;
 	mutable Matrix4f m_ProjMatrix;
 	mutable u8 m_DirtyFlags;
 };

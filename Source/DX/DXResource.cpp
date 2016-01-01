@@ -34,12 +34,18 @@ DXIndexBufferView::DXIndexBufferView(DXResource* pIndexBuffer, UINT sizeInBytes,
 	BufferLocation = pIndexBuffer->GetGPUVirtualAddress();
 	SizeInBytes = sizeInBytes;
 
-	if (strideInBytes == sizeof(WORD))
+	if (strideInBytes == sizeof(u16))
 		Format = DXGI_FORMAT_R16_UINT;
-	else if (strideInBytes == sizeof(DWORD))
+	else if (strideInBytes == sizeof(u32))
 		Format = DXGI_FORMAT_R32_UINT;
 	else 
 		assert(false);
+}
+
+DXConstantBufferViewDesc::DXConstantBufferViewDesc(DXResource* pConstantBuffer, UINT sizeInBytes)
+{
+	BufferLocation = pConstantBuffer->GetGPUVirtualAddress();
+	SizeInBytes = sizeInBytes;
 }
 
 DXRange::DXRange(SIZE_T begin, SIZE_T end)

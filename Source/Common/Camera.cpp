@@ -15,7 +15,7 @@ Camera::Camera(ProjType projType, f32 nearClipPlane, f32 farClipPlane, f32 aspec
 	, m_OpaqueSortMode(OpaqueSortMode_FrontToBack)
 	, m_FovY(0.25f * PI)
 	, m_SizeY(10.0f)
-	, m_DirtyFlags(DirtyFlag_All)
+	, m_DirtyFlags(DirtyFlag_ProjMatrix)
 {
 }
 
@@ -143,12 +143,7 @@ void Camera::SetFarClipPlane(f32 farClipPlane)
 
 const Matrix4f& Camera::GetViewMatrix() const
 {
-	if (m_DirtyFlags & DirtyFlag_ViewMatrix)
-	{
-		assert(false && "Needs impl");
-		m_DirtyFlags &= ~DirtyFlag_ViewMatrix;
-	}
-	return m_ViewMatrix;
+	return GetTransform().GetWorldToLocalMatrix();
 }
 
 const Matrix4f& Camera::GetProjMatrix() const
