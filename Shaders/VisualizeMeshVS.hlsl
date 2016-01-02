@@ -40,7 +40,7 @@ struct VSOutput
 #endif // HAS_TEXCOORD
 };
 
-struct ObjectTransform
+struct Transform
 {
 	matrix worldNormalMatrix;
 	matrix worldViewProjMatrix;
@@ -48,18 +48,18 @@ struct ObjectTransform
 	matrix notUsed2;
 };
 
-cbuffer ObjectTransformBuffer : register(b0)
+cbuffer TransformBuffer : register(b0)
 {
-	ObjectTransform g_ObjectTransform;
+	Transform g_Transform;
 }
 
 VSOutput Main(VSInput input)
 {
 	VSOutput output;
-	output.clipSpacePos = mul(float4(input.localSpacePos.xyz, 1.0f), g_ObjectTransform.worldViewProjMatrix);
+	output.clipSpacePos = mul(float4(input.localSpacePos.xyz, 1.0f), g_Transform.worldViewProjMatrix);
 
 #ifdef HAS_NORMAL
-	output.worldSpaceNormal = mul(float4(input.localSpaceNormal.xyz, 0.0f), g_ObjectTransform.worldNormalMatrix).xyz;
+	output.worldSpaceNormal = mul(float4(input.localSpaceNormal.xyz, 0.0f), g_Transform.worldNormalMatrix).xyz;
 #endif // HAS_NORMAL
 
 #ifdef HAS_COLOR

@@ -71,3 +71,9 @@ const Radian ACos(f32 cosAngle);
 
 void SinCos(f32& sinAngle, f32& cosAngle, const Radian& angle);
 f32 Tan(const Radian& angle);
+
+f32 Ceil(f32 value);
+f64 Ceil(f64 value);
+
+f32 Floor(f32 value);
+f64 Floor(f64 value);

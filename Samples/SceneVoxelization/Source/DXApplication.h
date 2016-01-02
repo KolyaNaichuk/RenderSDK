@@ -44,17 +44,19 @@ private:
 	DXCommandList* m_pCommandList;
 	DXDescriptorHeap* m_pRTVHeap;
 	DXDescriptorHeap* m_pDSVHeap;
-	DXDescriptorHeap* m_pCBVHeap;
+	DXDescriptorHeap* m_pCBVSRVUAVHeap;
 	DXResource* m_pDSVTexture;
-	DXResource* m_pCBVBuffer;
+	DXResource* m_pTransformBuffer;
+	DXResource* m_pGridBuffer;
+	DXResource* m_pGridConfigBuffer;
 	DXFence* m_pFence;
 	DXEvent* m_pFenceEvent;
 	UINT64 m_FenceValues[kBackBufferCount];
 	UINT m_BackBufferIndex;
 
 	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;
-	VisualizeMeshRecorder* m_pVisualizeNormalRecorder;
-	VisualizeMeshRecorder* m_pVisualizeColorRecorder;
+	VisualizeMeshRecorder* m_pVisualizeMeshRecorder;
+
 	Mesh* m_pMesh;
 	Camera* m_pCamera;
 };

@@ -12,24 +12,24 @@ enum RootParams
 	kNumRootParams
 };
 
-VisualizeMeshRecorder::VisualizeMeshRecorder(DXDevice* pDevice, DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat, MeshDataElement meshDataElement, u8 vertexElementFlags)
+VisualizeMeshRecorder::VisualizeMeshRecorder(VisualizeMeshInitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
 	u8 inputElementFlags = VertexElementFlag_Position;
 	DXShaderMacro shaderDefines[2];
 
-	if (meshDataElement == MeshDataElement_Color)
+	if (pParams->m_MeshDataElement == MeshDataElement_Color)
 	{
 		shaderDefines[0] = DXShaderMacro("HAS_COLOR", "1");
 		inputElementFlags |= VertexElementFlag_Color;
 	}
-	else if (meshDataElement == MeshDataElement_Normal)
+	else if (pParams->m_MeshDataElement == MeshDataElement_Normal)
 	{
 		shaderDefines[0] = DXShaderMacro("HAS_NORMAL", "1");
 		inputElementFlags |= VertexElementFlag_Normal;
 	}
-	else if (meshDataElement == MeshDataElement_TexCoords)
+	else if (pParams->m_MeshDataElement == MeshDataElement_TexCoords)
 	{
 		shaderDefines[0] = DXShaderMacro("HAS_TEXCOORD", "1");
 		inputElementFlags |= VertexElementFlag_TexCoords;
@@ -50,10 +50,10 @@ VisualizeMeshRecorder::VisualizeMeshRecorder(DXDevice* pDevice, DXGI_FORMAT rtvF
 	rootParams[kCBVRootParam] = DXRootDescriptorTableParameter(1, &cbvRange, D3D12_SHADER_VISIBILITY_VERTEX);
 
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new DXRootSignature(pDevice, &rootSignatureDesc, L"VisualizeMeshRecorder::m_pRootSignature");
+	m_pRootSignature = new DXRootSignature(pParams->m_pDevice, &rootSignatureDesc, L"VisualizeMeshRecorder::m_pRootSignature");
 
 	std::vector<DXInputElementDesc> inputElementDescs;
-	GenerateInputElements(inputElementDescs, inputElementFlags, vertexElementFlags);
+	GenerateInputElements(inputElementDescs, inputElementFlags, pParams->m_VertexElementFlags);
 
 	DXGraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
@@ -62,9 +62,9 @@ VisualizeMeshRecorder::VisualizeMeshRecorder(DXDevice* pDevice, DXGI_FORMAT rtvF
 	pipelineStateDesc.SetInputLayout(inputElementDescs.size(), &inputElementDescs[0]);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.DepthStencilState = DXDepthStencilDesc(DXDepthStencilDesc::Enabled);
-	pipelineStateDesc.SetRenderTargetFormat(rtvFormat, dsvFormat);
+	pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat, pParams->m_DSVFormat);
 
-	m_pPipelineState = new DXPipelineState(pDevice, &pipelineStateDesc, L"VisualizeMeshRecorder::m_pPipelineState");
+	m_pPipelineState = new DXPipelineState(pParams->m_pDevice, &pipelineStateDesc, L"VisualizeMeshRecorder::m_pPipelineState");
 }
 
 VisualizeMeshRecorder::~VisualizeMeshRecorder()
@@ -73,7 +73,7 @@ VisualizeMeshRecorder::~VisualizeMeshRecorder()
 	SafeDelete(m_pRootSignature);
 }
 
-void VisualizeMeshRecorder::Record(VisualizeMeshParams* pParams)
+void VisualizeMeshRecorder::Record(VisualizeMeshRecordParams* pParams)
 {
 	pParams->m_pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	pParams->m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);

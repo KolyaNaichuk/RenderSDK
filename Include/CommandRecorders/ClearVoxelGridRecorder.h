@@ -9,23 +9,38 @@ class DXRootSignature;
 class DXPipelineState;
 class DXResource;
 
+struct ClearVoxelGridInitParams
+{
+	DXDevice* m_pDevice;
+	UINT m_NumGridCellsX;
+	UINT m_NumGridCellsY;
+	UINT m_NumGridCellsZ;
+};
+
+struct ClearVoxelGridRecordParams
+{
+	DXCommandList* m_pCommandList;
+	DXCommandAllocator* m_pCommandAllocator;
+	UINT m_NumDXDescriptorHeaps;
+	ID3D12DescriptorHeap* m_pDXFirstDescriptorHeap;
+	DXResource* m_pGridBuffer;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_GridBufferUAVHandle;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_GridConfigCBVHandle;
+};
+
 class ClearVoxelGridRecorder
 {
 public:
-	ClearVoxelGridRecorder(DXDevice* pDevice, UINT numGridCellsX, UINT numGridCellsY, UINT numGridCellsZ);
+	ClearVoxelGridRecorder(ClearVoxelGridInitParams* pParams);
 	~ClearVoxelGridRecorder();
 
-	void Record(DXCommandList* pCommandList, DXCommandAllocator* pCommandAllocator,
-		UINT numDXDescriptorHeaps, ID3D12DescriptorHeap* pDXFirstDescriptorHeap,
-		DXResource* pGridBuffer, D3D12_GPU_DESCRIPTOR_HANDLE gridUAVDescriptor,
-		D3D12_GPU_DESCRIPTOR_HANDLE gridConfigCBVDescriptor,
-		const D3D12_RESOURCE_STATES* pGridBufferEndState = nullptr);
+	void Record(ClearVoxelGridRecordParams* pParams);
 
 private:
 	DXRootSignature* m_pRootSignature;
 	DXPipelineState* m_pPipelineState;
 
-	UINT m_NumThreadGroupsX;
-	UINT m_NumThreadGroupsY;
-	UINT m_NumThreadGroupsZ;
+	u16 m_NumThreadGroupsX;
+	u16 m_NumThreadGroupsY;
+	u16 m_NumThreadGroupsZ;
 };

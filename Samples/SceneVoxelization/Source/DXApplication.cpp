@@ -26,9 +26,20 @@ enum
 	kNumGridCellsX = 64,
 	kNumGridCellsY = 64,
 	kNumGridCellsZ = 64,
-	
-	kDSVHandleIndex = 0,
-	kCBVHandleIndex = 0
+};
+
+enum DSVHeapHandles
+{
+	kDSVHandle = 0,
+	kNumDSVHandles
+};
+
+enum CBVSRVUAVHeapHandles
+{
+	kTransformCBVHandle = 0,
+	kGridConfigCBVHandle,
+	kGridBufferUAVHandle,
+	kNumCBVSRVUAVHandles
 };
 
 struct ObjectTransform
@@ -39,6 +50,13 @@ struct ObjectTransform
 	Matrix4f m_NotUsed2;
 };
 
+struct GridConfig
+{
+	Vector4f m_WorldSpaceOrigin;
+	Vector4f m_RcpCellSize;
+	//int4   numCells;
+};
+
 DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Scene Voxelization", 0, 0, 924, 668)
 	, m_pDevice(nullptr)
@@ -47,15 +65,16 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCommandList(nullptr)
 	, m_pRTVHeap(nullptr)
 	, m_pDSVHeap(nullptr)
-	, m_pCBVHeap(nullptr)
+	, m_pCBVSRVUAVHeap(nullptr)
 	, m_pDSVTexture(nullptr)
-	, m_pCBVBuffer(nullptr)
+	, m_pTransformBuffer(nullptr)
+	, m_pGridBuffer(nullptr)
+	, m_pGridConfigBuffer(nullptr)
 	, m_pFence(nullptr)
 	, m_pFenceEvent(nullptr)
 	, m_BackBufferIndex(0)
 	, m_pClearVoxelGridRecorder(nullptr)
-	, m_pVisualizeNormalRecorder(nullptr)
-	, m_pVisualizeColorRecorder(nullptr)
+	, m_pVisualizeMeshRecorder(nullptr)
 	, m_pMesh(nullptr)
 	, m_pCamera(nullptr)
 {
@@ -71,12 +90,13 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pMesh);
 	SafeDelete(m_pClearVoxelGridRecorder);
-	SafeDelete(m_pVisualizeNormalRecorder);
-	SafeDelete(m_pVisualizeColorRecorder);
+	SafeDelete(m_pVisualizeMeshRecorder);
 	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
-	SafeDelete(m_pCBVHeap);
-	SafeDelete(m_pCBVBuffer);
+	SafeDelete(m_pCBVSRVUAVHeap);
+	SafeDelete(m_pGridConfigBuffer);
+	SafeDelete(m_pGridBuffer);
+	SafeDelete(m_pTransformBuffer);
 	SafeDelete(m_pDSVHeap);
 	SafeDelete(m_pDSVTexture);
 	SafeDelete(m_pRTVHeap);
@@ -126,23 +146,23 @@ void DXApplication::OnInit()
 	DXHeapProperties uploadHeapProperties(D3D12_HEAP_TYPE_UPLOAD);
 	DXHeapProperties defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 
-	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
+	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, kNumDSVHandles, false);
 	m_pDSVHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pDSVHeap");
 
 	DXTex2DResourceDesc dsvTexDesc(DXGI_FORMAT_D32_FLOAT, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 	m_pDSVTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &dsvTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, L"m_pDSVTexture");
 
 	DXTex2DDepthStencilViewDesc dsvDesc;
-	m_pDevice->CreateDepthStencilView(m_pDSVTexture, &dsvDesc, m_pDSVHeap->GetCPUDescriptor(kDSVHandleIndex));
+	m_pDevice->CreateDepthStencilView(m_pDSVTexture, &dsvDesc, m_pDSVHeap->GetCPUDescriptor(kDSVHandle));
 
-	DXDescriptorHeapDesc cbvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, true);
-	m_pCBVHeap = new DXDescriptorHeap(m_pDevice, &cbvHeapDesc, L"m_pCBVHeap");
+	DXDescriptorHeapDesc cbvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kNumCBVSRVUAVHandles, true);
+	m_pCBVSRVUAVHeap = new DXDescriptorHeap(m_pDevice, &cbvHeapDesc, L"m_pCBVSRVUAVHeap");
 
-	DXBufferResourceDesc cbvBufferDesc(sizeof(ObjectTransform));
-	m_pCBVBuffer = new DXResource(m_pDevice, &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &cbvBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCBVBuffer");
+	DXBufferResourceDesc transformBufferDesc(sizeof(ObjectTransform));
+	m_pTransformBuffer = new DXResource(m_pDevice, &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &transformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCBVBuffer");
 
-	DXConstantBufferViewDesc cbvDesc(m_pCBVBuffer, sizeof(ObjectTransform));
-	m_pDevice->CreateConstantBufferView(&cbvDesc, m_pCBVHeap->GetCPUDescriptor(kCBVHandleIndex));
+	DXConstantBufferViewDesc transformCBVDesc(m_pTransformBuffer, sizeof(ObjectTransform));
+	m_pDevice->CreateConstantBufferView(&transformCBVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kTransformCBVHandle));
 
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 		m_CommandAllocators[index] = new DXCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
@@ -323,9 +343,22 @@ void DXApplication::OnInit()
 	WaitForGPU();
 	m_pMesh->RemoveDataForUpload();
 
-	m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(m_pDevice, kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ);
-	m_pVisualizeNormalRecorder = new VisualizeMeshRecorder(m_pDevice, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_D32_FLOAT, MeshDataElement_Normal, m_pMesh->GetVertexElementFlags());
-	m_pVisualizeColorRecorder = new VisualizeMeshRecorder(m_pDevice, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_D32_FLOAT, MeshDataElement_Color, m_pMesh->GetVertexElementFlags());
+	ClearVoxelGridInitParams clearGridInitParams;
+	clearGridInitParams.m_pDevice = m_pDevice;
+	clearGridInitParams.m_NumGridCellsX = kNumGridCellsX;
+	clearGridInitParams.m_NumGridCellsY = kNumGridCellsY;
+	clearGridInitParams.m_NumGridCellsZ = kNumGridCellsZ;
+
+	m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(&clearGridInitParams);
+	
+	VisualizeMeshInitParams visualizeMeshInitParams;
+	visualizeMeshInitParams.m_pDevice = m_pDevice;
+	visualizeMeshInitParams.m_MeshDataElement = MeshDataElement_Normal;
+	visualizeMeshInitParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
+	visualizeMeshInitParams.m_RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+	visualizeMeshInitParams.m_DSVFormat = DXGI_FORMAT_D32_FLOAT;
+		
+	m_pVisualizeMeshRecorder = new VisualizeMeshRecorder(&visualizeMeshInitParams);
 }
 
 void DXApplication::OnUpdate()
@@ -333,11 +366,11 @@ void DXApplication::OnUpdate()
 	const Matrix4f& viewMatrix = m_pCamera->GetViewMatrix();
 	const Matrix4f& projMatrix = m_pCamera->GetProjMatrix();
 
-	ObjectTransform objectTransform;
-	objectTransform.m_WorldNormalMatrix = Matrix4f::IDENTITY;
-	objectTransform.m_WorldViewProjMatrix = Matrix4f::IDENTITY * viewMatrix * projMatrix;
+	ObjectTransform transform;
+	transform.m_WorldNormalMatrix = Matrix4f::IDENTITY;
+	transform.m_WorldViewProjMatrix = Matrix4f::IDENTITY * viewMatrix * projMatrix;
 
-	m_pCBVBuffer->Write(&objectTransform, sizeof(objectTransform));
+	m_pTransformBuffer->Write(&transform, sizeof(transform));
 }
 
 void DXApplication::OnRender()
@@ -347,10 +380,11 @@ void DXApplication::OnRender()
 	DXCommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
 	pCommandAllocator->Reset();
 
+#if 0
 	DXResource* pRTVTexture = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVHeap->GetCPUDescriptor(m_BackBufferIndex);
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDSVHeap->GetCPUDescriptor(kDSVHandleIndex);
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDSVHeap->GetCPUDescriptor(kDSVHandle);
 	
 	const u8 clearFlags = m_pCamera->GetClearFlags();
 	if (clearFlags != 0)
@@ -381,7 +415,7 @@ void DXApplication::OnRender()
 
 	D3D12_RESOURCE_STATES rtvEndState = D3D12_RESOURCE_STATE_PRESENT;
 	
-	VisualizeMeshParams params;
+	VisualizeMeshRecordParams params;
 	params.m_pMesh = m_pMesh;
 	params.m_pCommandList = m_pCommandList;
 	params.m_pCommandAllocator = pCommandAllocator;
@@ -391,11 +425,21 @@ void DXApplication::OnRender()
 	params.m_pDSVTexture = m_pDSVTexture;
 	params.m_DSVHandle = dsvHandle;
 	params.m_NumDXDescriptorHeaps = 1;
-	params.m_pDXFirstDescriptorHeap = m_pCBVHeap->GetDXObject();
-	params.m_CBVHandle = m_pCBVHeap->GetGPUDescriptor(kCBVHandleIndex);
+	params.m_pDXFirstDescriptorHeap = m_pCBVSRVUAVHeap->GetDXObject();
+	params.m_CBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kTransformCBVHandle);
 	
-	//m_pVisualizeNormalRecorder->Record(&params);
-	m_pVisualizeColorRecorder->Record(&params);
+	m_pVisualizeMeshRecorder->Record(&params);
+#else
+	ClearVoxelGridRecordParams recordParams;
+	recordParams.m_pCommandAllocator = pCommandAllocator;
+	recordParams.m_pCommandList = m_pCommandList;
+	recordParams.m_NumDXDescriptorHeaps = 1;
+	recordParams.m_pDXFirstDescriptorHeap = m_pCBVSRVUAVHeap->GetDXObject();
+	//recordParams.m_pGridBuffer = 
+	//recordParams.m_GridBufferUAVHandle =
+	//recordParams.m_GridConfigCBVHandle =
+
+#endif
 
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
 

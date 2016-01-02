@@ -38,3 +38,23 @@ void SinCos(f32& sinAngle, f32& cosAngle, const Radian& angle)
 	sinAngle = Sin(angle);
 	cosAngle = Cos(angle);
 }
+
+f32 Ceil(f32 value)
+{
+	return std::ceilf(value);
+}
+
+f64 Ceil(f64 value)
+{
+	return std::ceil(value);
+}
+
+f32 Floor(f32 value)
+{
+	return std::floorf(value);
+}
+
+f64 Floor(f64 value)
+{
+	return std::floor(value);
+}

@@ -15,7 +15,16 @@ enum MeshDataElement
 	MeshDataElement_TexCoords
 };
 
-struct VisualizeMeshParams
+struct VisualizeMeshInitParams
+{
+	DXDevice* m_pDevice;
+	DXGI_FORMAT m_RTVFormat;
+	DXGI_FORMAT m_DSVFormat;
+	MeshDataElement m_MeshDataElement;
+	u8 m_VertexElementFlags;
+};
+
+struct VisualizeMeshRecordParams
 {
 	Mesh* m_pMesh;
 
@@ -37,11 +46,10 @@ struct VisualizeMeshParams
 class VisualizeMeshRecorder
 {
 public:
-	VisualizeMeshRecorder(DXDevice* pDevice, DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat,
-		MeshDataElement meshDataElement, u8 vertexElementFlags);
+	VisualizeMeshRecorder(VisualizeMeshInitParams* pParams);
 	~VisualizeMeshRecorder();
 
-	void Record(VisualizeMeshParams* pParams);
+	void Record(VisualizeMeshRecordParams* pParams);
 
 private:
 	DXRootSignature* m_pRootSignature;
