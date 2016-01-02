@@ -40,7 +40,7 @@ struct ObjectTransform
 };
 
 DXApplication::DXApplication(HINSTANCE hApp)
-	: Application(hApp, L"Scene Voxelization", 0, 0, 1024, 512)
+	: Application(hApp, L"Scene Voxelization", 0, 0, 924, 668)
 	, m_pDevice(nullptr)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
@@ -97,13 +97,13 @@ void DXApplication::OnInit()
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
 	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
 	
-	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 100.0f, FLOAT(bufferWidth) / FLOAT(bufferHeight));
+	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(bufferWidth) / FLOAT(bufferHeight));
 	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
 	m_pCamera->SetBackgroundColor(Color::GREEN);
 
 	Transform& transform = m_pCamera->GetTransform();
-	transform.SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
-	transform.SetRotation(CreateRotationXQuaternion(Radian(PI / 4.0f)));
+	transform.SetPosition(Vector3f(278.0f, 274.0f, 700.0f));
+	transform.SetRotation(CreateRotationYQuaternion(Radian(PI)));
 
 	DXSwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
 	m_pSwapChain = new DXSwapChain(&factory, &swapChainDesc, m_pCommandQueue);
