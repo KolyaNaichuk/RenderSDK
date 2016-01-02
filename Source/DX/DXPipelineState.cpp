@@ -22,7 +22,10 @@ DXShaderMacro::DXShaderMacro(LPCSTR pName, LPCSTR pDefinition)
 
 DXShader::DXShader(LPCWSTR pFileName, LPCSTR pEntryPoint, LPCSTR pShaderModel, const DXShaderMacro* pDefines)
 {
-	UINT compileFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+	UINT compileFlags = 0;
+	compileFlags |= D3DCOMPILE_ENABLE_STRICTNESS;
+	compileFlags |= D3DCOMPILE_PACK_MATRIX_ROW_MAJOR;
+
 #ifdef _DEBUG
 	compileFlags |= D3DCOMPILE_DEBUG;
 	compileFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
