@@ -55,6 +55,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_BackBufferIndex(0)
 	, m_pClearVoxelGridRecorder(nullptr)
 	, m_pVisualizeNormalRecorder(nullptr)
+	, m_pVisualizeColorRecorder(nullptr)
 	, m_pMesh(nullptr)
 	, m_pCamera(nullptr)
 {
@@ -71,6 +72,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pMesh);
 	SafeDelete(m_pClearVoxelGridRecorder);
 	SafeDelete(m_pVisualizeNormalRecorder);
+	SafeDelete(m_pVisualizeColorRecorder);
 	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pCBVHeap);
@@ -99,7 +101,7 @@ void DXApplication::OnInit()
 	
 	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(bufferWidth) / FLOAT(bufferHeight));
 	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
-	m_pCamera->SetBackgroundColor(Color::GREEN);
+	m_pCamera->SetBackgroundColor(Color::GRAY);
 
 	Transform& transform = m_pCamera->GetTransform();
 	transform.SetPosition(Vector3f(278.0f, 274.0f, 700.0f));
@@ -323,6 +325,7 @@ void DXApplication::OnInit()
 
 	m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(m_pDevice, kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ);
 	m_pVisualizeNormalRecorder = new VisualizeMeshRecorder(m_pDevice, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_D32_FLOAT, MeshDataElement_Normal, m_pMesh->GetVertexElementFlags());
+	m_pVisualizeColorRecorder = new VisualizeMeshRecorder(m_pDevice, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_D32_FLOAT, MeshDataElement_Color, m_pMesh->GetVertexElementFlags());
 }
 
 void DXApplication::OnUpdate()
@@ -391,7 +394,8 @@ void DXApplication::OnRender()
 	params.m_pDXFirstDescriptorHeap = m_pCBVHeap->GetDXObject();
 	params.m_CBVHandle = m_pCBVHeap->GetGPUDescriptor(kCBVHandleIndex);
 	
-	m_pVisualizeNormalRecorder->Record(&params);
+	//m_pVisualizeNormalRecorder->Record(&params);
+	m_pVisualizeColorRecorder->Record(&params);
 
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
 

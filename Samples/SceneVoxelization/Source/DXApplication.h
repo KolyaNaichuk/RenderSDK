@@ -54,6 +54,7 @@ private:
 
 	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;
 	VisualizeMeshRecorder* m_pVisualizeNormalRecorder;
+	VisualizeMeshRecorder* m_pVisualizeColorRecorder;
 	Mesh* m_pMesh;
 	Camera* m_pCamera;
 };
