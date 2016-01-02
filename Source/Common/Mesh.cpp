@@ -377,7 +377,7 @@ void GenerateInputElements(std::vector<DXInputElementDesc>& inputElements, u8 in
 
 	if (vertexElementFlags & VertexElementFlag_Color)
 	{
-		const DXGI_FORMAT format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 
 		if (inputElementFlags & VertexElementFlag_Color)
 			inputElements.push_back(DXInputElementDesc("COLOR", 0, format, 0, byteOffset));
