@@ -51,3 +51,29 @@ const Vector2f operator+ (const Vector2f& left, f32 scalar);
 const Vector2f operator- (const Vector2f& left, f32 scalar);
 const Vector2f operator* (const Vector2f& left, f32 scalar);
 const Vector2f operator/ (const Vector2f& left, f32 scalar);
+
+struct Vector2i
+{
+	Vector2i();
+	Vector2i(i32 x, i32 y);
+	Vector2i(i32 scalar);
+
+	i32 m_X;
+	i32 m_Y;
+
+	static const Vector2i ONE;
+	static const Vector2i ZERO;
+};
+
+struct Vector2u
+{
+	Vector2u();
+	Vector2u(u32 x, u32 y);
+	Vector2u(u32 scalar);
+
+	u32 m_X;
+	u32 m_Y;
+
+	static const Vector2u ONE;
+	static const Vector2u ZERO;
+};

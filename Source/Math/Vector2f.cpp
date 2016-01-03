@@ -9,8 +9,7 @@ const Vector2f Vector2f::LEFT(-1.0f, 0.0f);
 const Vector2f Vector2f::RIGHT(1.0f, 0.0f);
 
 Vector2f::Vector2f()
-	: m_X(0.0f)
-	, m_Y(0.0f)
+	: Vector2f(0.0f)
 {
 }
 
@@ -21,8 +20,7 @@ Vector2f::Vector2f(f32 x, f32 y)
 }
 
 Vector2f::Vector2f(f32 scalar)
-	: m_X(scalar)
-	, m_Y(scalar)
+	: Vector2f(scalar, scalar)
 {
 }
 
@@ -180,4 +178,42 @@ const Vector2f operator* (const Vector2f& left, f32 scalar)
 const Vector2f operator/ (const Vector2f& left, f32 scalar)
 {
 	return (Vector2f(left) /= scalar);
+}
+
+const Vector2i ONE(1, 1);
+const Vector2i Vector2i::ZERO(0, 0);
+
+Vector2i::Vector2i()
+	: Vector2i(0)
+{
+}
+
+Vector2i::Vector2i(i32 x, i32 y)
+	: m_X(x)
+	, m_Y(y)
+{
+}
+
+Vector2i::Vector2i(i32 scalar)
+	: Vector2i(scalar, scalar)
+{
+}
+
+const Vector2u Vector2u::ONE(1, 1);
+const Vector2u Vector2u::ZERO(0, 0);
+
+Vector2u::Vector2u()
+	: Vector2u(0)
+{
+}
+
+Vector2u::Vector2u(u32 x, u32 y)
+	: m_X(x)
+	, m_Y(y)
+{
+}
+
+Vector2u::Vector2u(u32 scalar)
+	: Vector2u(scalar, scalar)
+{
 }

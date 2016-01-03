@@ -11,9 +11,7 @@ const Vector3f Vector3f::BACK(0.0f, 0.0f, -1.0f);
 const Vector3f Vector3f::FORWARD(0.0f, 0.0f, 1.0f);
 
 Vector3f::Vector3f()
-    : m_X(0.0f)
-    , m_Y(0.0f)
-    , m_Z(0.0f)
+    : Vector3f(0.0f)
 {
 }
 
@@ -25,9 +23,7 @@ Vector3f::Vector3f(f32 x, f32 y, f32 z)
 }
 
 Vector3f::Vector3f(f32 scalar)
-    : m_X(scalar)
-    , m_Y(scalar)
-    , m_Z(scalar)
+    : Vector3f(scalar, scalar, scalar)
 {
 }
 
@@ -202,4 +198,50 @@ const Vector3f operator* (const Vector3f& left, f32 scalar)
 const Vector3f operator/ (const Vector3f& left, f32 scalar)
 {
     return (Vector3f(left) /= scalar);
+}
+
+const Vector3i Vector3i::ONE(1, 1, 1);
+const Vector3i Vector3i::ZERO(0, 0, 0);
+const Vector3i Vector3i::UP(0, 1, 0);
+const Vector3i Vector3i::DOWN(0, -1, 0);
+const Vector3i Vector3i::LEFT(-1, 0, 0);
+const Vector3i Vector3i::RIGHT(1, 0, 0);
+const Vector3i Vector3i::BACK(0, 0, -1);
+const Vector3i Vector3i::FORWARD(0, 0, 1);
+
+Vector3i::Vector3i()
+	: Vector3i(0)
+{
+}
+
+Vector3i::Vector3i(i32 x, i32 y, i32 z)
+	: m_X(x)
+	, m_Y(y)
+	, m_Z(z)
+{
+}
+
+Vector3i::Vector3i(i32 scalar)
+	: Vector3i(scalar, scalar, scalar)
+{
+}
+
+const Vector3u Vector3u::ONE(1, 1, 1);
+const Vector3u Vector3u::ZERO(0, 0, 0);
+
+Vector3u::Vector3u()
+	: Vector3u(0)
+{
+}
+
+Vector3u::Vector3u(u32 x, u32 y, u32 z)
+	: m_X(x)
+	, m_Y(y)
+	, m_Z(z)
+{
+}
+
+Vector3u::Vector3u(u32 scalar)
+	: Vector3u(scalar, scalar, scalar)
+{
 }

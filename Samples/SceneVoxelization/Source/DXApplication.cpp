@@ -54,7 +54,7 @@ struct GridConfig
 {
 	Vector4f m_WorldSpaceOrigin;
 	Vector4f m_RcpCellSize;
-	//int4   numCells;
+	Vector4i m_NumCells;
 };
 
 DXApplication::DXApplication(HINSTANCE hApp)

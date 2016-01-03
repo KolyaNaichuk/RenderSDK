@@ -55,3 +55,37 @@ const Vector3f operator+ (const Vector3f& left, f32 scalar);
 const Vector3f operator- (const Vector3f& left, f32 scalar);
 const Vector3f operator* (const Vector3f& left, f32 scalar);
 const Vector3f operator/ (const Vector3f& left, f32 scalar);
+
+struct Vector3i
+{
+	Vector3i();
+	Vector3i(i32 x, i32 y, i32 z);
+	Vector3i(i32 scalar);
+
+	i32 m_X;
+	i32 m_Y;
+	i32 m_Z;
+
+	static const Vector3i ONE;
+	static const Vector3i ZERO;
+	static const Vector3i UP;
+	static const Vector3i DOWN;
+	static const Vector3i LEFT;
+	static const Vector3i RIGHT;
+	static const Vector3i BACK;
+	static const Vector3i FORWARD;
+};
+
+struct Vector3u
+{
+	Vector3u();
+	Vector3u(u32 x, u32 y, u32 z);
+	Vector3u(u32 scalar);
+
+	u32 m_X;
+	u32 m_Y;
+	u32 m_Z;
+
+	static const Vector3u ONE;
+	static const Vector3u ZERO;
+};

@@ -5,10 +5,7 @@ const Vector4f Vector4f::ONE(1.0f, 1.0f, 1.0f, 1.0f);
 const Vector4f Vector4f::ZERO(0.0f, 0.0f, 0.0f, 0.0f);
 
 Vector4f::Vector4f()
-    : m_X(0.0f)
-    , m_Y(0.0f)
-    , m_Z(0.0f)
-    , m_W(0.0f)
+    : Vector4f(0.0f)
 {
 }
 
@@ -21,10 +18,7 @@ Vector4f::Vector4f(f32 x, f32 y, f32 z, f32 w)
 }
 
 Vector4f::Vector4f(f32 scalar)
-    : m_X(scalar)
-    , m_Y(scalar)
-    , m_Z(scalar)
-    , m_W(scalar)
+    : Vector4f(scalar, scalar, scalar, scalar)
 {
 }
 
@@ -201,4 +195,46 @@ const Vector4f operator* (const Vector4f& left, f32 scalar)
 const Vector4f operator/ (const Vector4f& left, f32 scalar)
 {
     return (Vector4f(left) /= scalar);
+}
+
+const Vector4i Vector4i::ONE(1, 1, 1, 1);
+const Vector4i Vector4i::ZERO(0, 0, 0, 0);
+
+Vector4i::Vector4i()
+	: Vector4i(0)
+{
+}
+
+Vector4i::Vector4i(i32 x, i32 y, i32 z, i32 w)
+	: m_X(x)
+	, m_Y(y)
+	, m_Z(z)
+	, m_W(w)
+{
+}
+
+Vector4i::Vector4i(i32 scalar)
+	: Vector4i(scalar, scalar, scalar, scalar)
+{
+}
+
+const Vector4u Vector4u::ONE(1, 1, 1, 1);
+const Vector4u Vector4u::ZERO(0, 0, 0, 0);
+
+Vector4u::Vector4u()
+	: Vector4u(0)
+{
+}
+
+Vector4u::Vector4u(u32 x, u32 y, u32 z, u32 w)
+	: m_X(x)
+	, m_Y(y)
+	, m_Z(z)
+	, m_W(w)
+{
+}
+
+Vector4u::Vector4u(u32 scalar)
+	: Vector4u(scalar, scalar, scalar, scalar)
+{
 }
