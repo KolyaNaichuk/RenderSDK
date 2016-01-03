@@ -50,6 +50,36 @@ struct DXBufferResourceDesc : public D3D12_RESOURCE_DESC
 	DXBufferResourceDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, UINT64 alignment = 0);
 };
 
+struct DXBufferShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
+{
+	DXBufferShaderResourceViewDesc(UINT64 firstElement, UINT numElements,
+		UINT structureByteStride, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN,
+		UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
+};
+
+struct DXRawBufferShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
+{
+	DXRawBufferShaderResourceViewDesc(UINT64 firstElement, UINT numElements,
+		UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
+};
+
+struct DXBufferUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	DXBufferUnorderedAccessViewDesc(UINT64 firstElement, UINT numElements,
+		UINT structureByteStride, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
+};
+
+struct DXCounterBufferUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	DXCounterBufferUnorderedAccessViewDesc(UINT64 firstElement, UINT numElements,
+		UINT structureByteStride, UINT64 counterOffsetInBytes);
+};
+
+struct DXRawBufferUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	DXRawBufferUnorderedAccessViewDesc(UINT64 firstElement, UINT numElements);
+};
+
 struct DXTex1DResourceDesc : public D3D12_RESOURCE_DESC
 {
 	DXTex1DResourceDesc(DXGI_FORMAT format, UINT64 width, D3D12_RESOURCE_FLAGS flags,

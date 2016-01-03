@@ -82,6 +82,64 @@ DXBufferResourceDesc::DXBufferResourceDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FL
 	Flags = flags;
 }
 
+DXBufferShaderResourceViewDesc::DXBufferShaderResourceViewDesc(UINT64 firstElement, UINT numElements,
+	UINT structureByteStride, DXGI_FORMAT format, UINT shader4ComponentMapping)
+{
+	Format = format;
+	ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	Shader4ComponentMapping = shader4ComponentMapping;
+	Buffer.FirstElement = firstElement;
+	Buffer.NumElements = numElements;
+	Buffer.StructureByteStride = structureByteStride;
+	Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+}
+
+DXRawBufferShaderResourceViewDesc::DXRawBufferShaderResourceViewDesc(UINT64 firstElement, UINT numElements, UINT shader4ComponentMapping)
+{
+	Format = DXGI_FORMAT_R32_TYPELESS;
+	ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	Shader4ComponentMapping = shader4ComponentMapping;
+	Buffer.FirstElement = firstElement;
+	Buffer.NumElements = numElements;
+	Buffer.StructureByteStride = 0;
+	Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+}
+
+DXBufferUnorderedAccessViewDesc::DXBufferUnorderedAccessViewDesc(UINT64 firstElement, UINT numElements,
+	UINT structureByteStride, DXGI_FORMAT format)
+{
+	Format = format;
+	ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+	Buffer.FirstElement = firstElement;
+	Buffer.NumElements = numElements;
+	Buffer.StructureByteStride = structureByteStride;
+	Buffer.CounterOffsetInBytes = 0;
+	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+}
+
+DXCounterBufferUnorderedAccessViewDesc::DXCounterBufferUnorderedAccessViewDesc(UINT64 firstElement, UINT numElements,
+	UINT structureByteStride, UINT64 counterOffsetInBytes)
+{
+	Format = DXGI_FORMAT_UNKNOWN;
+	ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+	Buffer.FirstElement = firstElement;
+	Buffer.NumElements = numElements;
+	Buffer.StructureByteStride = structureByteStride;
+	Buffer.CounterOffsetInBytes = counterOffsetInBytes;
+	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+}
+
+DXRawBufferUnorderedAccessViewDesc::DXRawBufferUnorderedAccessViewDesc(UINT64 firstElement, UINT numElements)
+{
+	Format = DXGI_FORMAT_R32_TYPELESS;
+	ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+	Buffer.FirstElement = firstElement;
+	Buffer.NumElements = numElements;
+	Buffer.StructureByteStride = 0;
+	Buffer.CounterOffsetInBytes = 0;
+	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
+}
+
 DXTex1DResourceDesc::DXTex1DResourceDesc(DXGI_FORMAT format, UINT64 width, D3D12_RESOURCE_FLAGS flags,
 	UINT16 arraySize, UINT16 mipLevels, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
 {
