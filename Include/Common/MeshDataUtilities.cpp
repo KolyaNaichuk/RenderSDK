@@ -1,9 +1,9 @@
 #include "Common/MeshDataUtilities.h"
 #include "Common/MeshData.h"
 #include "Common/Mesh.h"
-#include "Math/Vector2f.h"
-#include "Math/Vector3f.h"
-#include "Math/Vector4f.h"
+#include "Math/Vector2.h"
+#include "Math/Vector3.h"
+#include "Math/Vector4.h"
 
 namespace
 {

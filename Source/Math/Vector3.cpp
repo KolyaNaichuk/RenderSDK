@@ -1,4 +1,4 @@
-#include "Math/Vector3f.h"
+#include "Math/Vector3.h"
 #include "Math/Math.h"
 
 const Vector3f Vector3f::ONE(1.0f, 1.0f, 1.0f);

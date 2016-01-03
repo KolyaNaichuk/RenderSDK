@@ -1,7 +1,7 @@
 #include "Math/Transform.h"
 #include "Math/AxisAngle.h"
 #include "Math/EulerAngles.h"
-#include "Math/Vector3f.h"
+#include "Math/Vector3.h"
 
 Transform::Transform()
 	: m_Scaling(Vector3f::ONE)

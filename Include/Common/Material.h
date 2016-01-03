@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Math/Vector4f.h"
+#include "Math/Vector4.h"
 
 class DXResource;
 

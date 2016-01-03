@@ -12,7 +12,7 @@
 #include "DX/DXFence.h"
 #include "DX/DXEvent.h"
 #include "DX/DXUtils.h"
-#include "Math/Vector4f.h"
+#include "Math/Vector4.h"
 
 DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Hello Rectangle", 0, 0, 1024, 512)

@@ -36,19 +36,10 @@
     <ClInclude Include="..\Include\Math\Math.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Math\Matrix4f.h">
-      <Filter>Math</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Math\Plane.h">
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\Math\Transform.h">
-      <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Math\Vector3f.h">
-      <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Math\Vector4f.h">
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\DX\DXCommandAllocator.h">
@@ -123,9 +114,6 @@
     <ClInclude Include="..\Include\Math\OverlapTest.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Math\Vector2f.h">
-      <Filter>Math</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\DDSTextureLoader\DDSTextureLoader.h">
       <Filter>DDSTextureLoader</Filter>
     </ClInclude>
@@ -183,6 +171,18 @@
     <ClInclude Include="..\Include\Math\AxisAngle.h">
       <Filter>Math</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Math\Vector2.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Matrix4.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Vector3.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Vector4.h">
+      <Filter>Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\BoundingBox.cpp">
@@ -200,16 +200,7 @@
     <ClCompile Include="..\Source\Math\Math.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\Math\Matrix4f.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\Math\Transform.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Math\Vector3f.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Math\Vector4f.cpp">
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\DX\DXCommandAllocator.cpp">
@@ -281,9 +272,6 @@
     <ClCompile Include="..\Source\Math\OverlapTest.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\Math\Vector2f.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\DDSTextureLoader\DDSTextureLoader.cpp">
       <Filter>DDSTextureLoader</Filter>
     </ClCompile>
@@ -333,6 +321,18 @@
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Math\AxisAngle.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Vector2.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Matrix4.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Vector3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Vector4.cpp">
       <Filter>Math</Filter>
     </ClCompile>
   </ItemGroup>

@@ -16,9 +16,9 @@
 #include "Common/Mesh.h"
 #include "Common/Color.h"
 #include "Common/Camera.h"
-#include "Math/Vector3f.h"
-#include "Math/Vector4f.h"
-#include "Math/Matrix4f.h"
+#include "Math/Vector3.h"
+#include "Math/Vector4.h"
+#include "Math/Matrix4.h"
 #include "Math/Transform.h"
 
 enum

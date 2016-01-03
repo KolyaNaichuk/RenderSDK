@@ -2,8 +2,8 @@
 #include "Math/AxisAngle.h"
 #include "Math/EulerAngles.h"
 #include "Math/Radian.h"
-#include "Math/Vector3f.h"
-#include "Math/Matrix4f.h"
+#include "Math/Vector3.h"
+#include "Math/Matrix4.h"
 
 Quaternion::Quaternion()
 	: Quaternion(0.0f, 0.0f, 0.0f, 1.0f)

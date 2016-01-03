@@ -190,15 +190,15 @@
     <ClInclude Include="..\Include\Math\BoundingSphere.h" />
     <ClInclude Include="..\Include\Math\EulerAngles.h" />
     <ClInclude Include="..\Include\Math\Math.h" />
-    <ClInclude Include="..\Include\Math\Matrix4f.h" />
+    <ClInclude Include="..\Include\Math\Matrix4.h" />
     <ClInclude Include="..\Include\Math\OverlapTest.h" />
     <ClInclude Include="..\Include\Math\Plane.h" />
     <ClInclude Include="..\Include\Math\Quaternion.h" />
     <ClInclude Include="..\Include\Math\Radian.h" />
     <ClInclude Include="..\Include\Math\Transform.h" />
-    <ClInclude Include="..\Include\Math\Vector2f.h" />
-    <ClInclude Include="..\Include\Math\Vector3f.h" />
-    <ClInclude Include="..\Include\Math\Vector4f.h" />
+    <ClInclude Include="..\Include\Math\Vector2.h" />
+    <ClInclude Include="..\Include\Math\Vector3.h" />
+    <ClInclude Include="..\Include\Math\Vector4.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp" />
@@ -242,15 +242,15 @@
     <ClCompile Include="..\Source\Math\Degree.cpp" />
     <ClCompile Include="..\Source\Math\EulerAngles.cpp" />
     <ClCompile Include="..\Source\Math\Math.cpp" />
-    <ClCompile Include="..\Source\Math\Matrix4f.cpp" />
+    <ClCompile Include="..\Source\Math\Matrix4.cpp" />
     <ClCompile Include="..\Source\Math\OverlapTest.cpp" />
     <ClCompile Include="..\Source\Math\Plane.cpp" />
     <ClCompile Include="..\Source\Math\Quaternion.cpp" />
     <ClCompile Include="..\Source\Math\Radian.cpp" />
     <ClCompile Include="..\Source\Math\Transform.cpp" />
-    <ClCompile Include="..\Source\Math\Vector2f.cpp" />
-    <ClCompile Include="..\Source\Math\Vector3f.cpp" />
-    <ClCompile Include="..\Source\Math\Vector4f.cpp" />
+    <ClCompile Include="..\Source\Math\Vector2.cpp" />
+    <ClCompile Include="..\Source\Math\Vector3.cpp" />
+    <ClCompile Include="..\Source\Math\Vector4.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">

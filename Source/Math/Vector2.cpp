@@ -1,4 +1,4 @@
-#include "Math/Vector2f.h"
+#include "Math/Vector2.h"
 #include "Math/Math.h"
 
 const Vector2f Vector2f::ONE(1.0f, 1.0f);

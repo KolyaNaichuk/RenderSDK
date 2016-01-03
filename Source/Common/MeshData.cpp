@@ -1,7 +1,7 @@
 #include "Common/MeshData.h"
-#include "Math/Vector2f.h"
-#include "Math/Vector3f.h"
-#include "Math/Vector4f.h"
+#include "Math/Vector2.h"
+#include "Math/Vector3.h"
+#include "Math/Vector4.h"
 #include "Math/BoundingBox.h"
 
 namespace

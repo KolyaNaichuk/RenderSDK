@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Math/Matrix4f.h"
-#include "Math/Vector3f.h"
-#include "Math/Vector4f.h"
+#include "Math/Matrix4.h"
+#include "Math/Vector3.h"
+#include "Math/Vector4.h"
 #include "Math/Quaternion.h"
 
 struct EulerAngles;

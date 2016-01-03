@@ -3,9 +3,9 @@
 #include "DX/DXResource.h"
 #include "DX/DXCommandList.h"
 #include "DX/DXPipelineState.h"
-#include "Math/Vector2f.h"
-#include "Math/Vector3f.h"
-#include "Math/Vector4f.h"
+#include "Math/Vector2.h"
+#include "Math/Vector3.h"
+#include "Math/Vector4.h"
 
 namespace
 {
