@@ -87,6 +87,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 
 DXApplication::~DXApplication()
 {
+	for (UINT index = 0; index < kBackBufferCount; ++index)
+		delete m_CommandAllocators[index];
+
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pMesh);
 	SafeDelete(m_pClearVoxelGridRecorder);
