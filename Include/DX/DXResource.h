@@ -9,6 +9,16 @@ DXGI_FORMAT GetRenderTargetViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetShaderResourceViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat);
 
+struct DXColorClearValue : D3D12_CLEAR_VALUE
+{
+	DXColorClearValue(DXGI_FORMAT format, const FLOAT color[4]);
+};
+
+struct DXDepthStencilClearValue : D3D12_CLEAR_VALUE
+{
+	DXDepthStencilClearValue(DXGI_FORMAT format, FLOAT depth = 1.0f, UINT8 stencil = 0);
+};
+
 struct DXVertexBufferView : public D3D12_VERTEX_BUFFER_VIEW
 {
 	DXVertexBufferView(DXResource* pVertexBuffer, UINT sizeInBytes, UINT strideInBytes);

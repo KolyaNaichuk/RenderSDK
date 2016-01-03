@@ -1,6 +1,19 @@
 #include "DX/DXResource.h"
 #include "DX/DXDevice.h"
 
+DXColorClearValue::DXColorClearValue(DXGI_FORMAT format, const FLOAT color[4])
+{
+	Format = format;
+	std::memcpy(Color, color, sizeof(color));
+}
+
+DXDepthStencilClearValue::DXDepthStencilClearValue(DXGI_FORMAT format, FLOAT depth, UINT8 stencil)
+{
+	Format = format;
+	DepthStencil.Depth = depth;
+	DepthStencil.Stencil = stencil;
+}
+
 DXGI_FORMAT GetRenderTargetViewFormat(DXGI_FORMAT resourceFormat)
 {
 	return resourceFormat;

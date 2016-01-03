@@ -152,7 +152,8 @@ void DXApplication::OnInit()
 	m_pDSVHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pDSVHeap");
 
 	DXTex2DResourceDesc dsvTexDesc(DXGI_FORMAT_D32_FLOAT, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-	m_pDSVTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &dsvTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, L"m_pDSVTexture");
+	DXDepthStencilClearValue depthClearValue(DXGI_FORMAT_D32_FLOAT);
+	m_pDSVTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &dsvTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, L"m_pDSVTexture", &depthClearValue);
 
 	DXTex2DDepthStencilViewDesc dsvDesc;
 	m_pDevice->CreateDepthStencilView(m_pDSVTexture, &dsvDesc, m_pDSVHeap->GetCPUDescriptor(kDSVHandle));
