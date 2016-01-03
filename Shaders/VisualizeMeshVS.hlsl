@@ -44,8 +44,7 @@ struct Transform
 {
 	matrix worldNormalMatrix;
 	matrix worldViewProjMatrix;
-	matrix notUsed1;
-	matrix notUsed2;
+	float4 notUsed[8];
 };
 
 cbuffer TransformBuffer : register(b0)

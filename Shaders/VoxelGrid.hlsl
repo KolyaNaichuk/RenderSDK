@@ -11,6 +11,7 @@ struct GridConfig
 	float4 worldSpaceOrigin;
 	float4 rcpCellSize;
 	int4   numCells;
+	float4 notUsed[13];
 };
 
 struct ObjectTransform

@@ -46,8 +46,7 @@ struct ObjectTransform
 {
 	Matrix4f m_WorldNormalMatrix;
 	Matrix4f m_WorldViewProjMatrix;
-	Matrix4f m_NotUsed1;
-	Matrix4f m_NotUsed2;
+	Vector4f m_NotUsed[8];
 };
 
 struct GridConfig
@@ -55,6 +54,7 @@ struct GridConfig
 	Vector4f m_WorldSpaceOrigin;
 	Vector4f m_RcpCellSize;
 	Vector4i m_NumCells;
+	Vector4f m_NotUsed[13];
 };
 
 DXApplication::DXApplication(HINSTANCE hApp)
@@ -109,7 +109,6 @@ DXApplication::~DXApplication()
 void DXApplication::OnInit()
 {
 	DXFactory factory;
-
 	m_pDevice = new DXDevice(&factory, D3D_FEATURE_LEVEL_11_0);
 
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -380,7 +379,7 @@ void DXApplication::OnRender()
 	DXCommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
 	pCommandAllocator->Reset();
 
-#if 0
+#if 1
 	DXResource* pRTVTexture = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVHeap->GetCPUDescriptor(m_BackBufferIndex);
