@@ -20,6 +20,7 @@
 #include "Math/Vector4.h"
 #include "Math/Matrix4.h"
 #include "Math/Transform.h"
+#include "Math/BoundingBox.h"
 
 enum
 {
@@ -39,6 +40,7 @@ enum CBVSRVUAVHeapHandles
 	kTransformCBVHandle = 0,
 	kGridConfigCBVHandle,
 	kGridBufferUAVHandle,
+	kGridBufferSRVHandle,
 	kNumCBVSRVUAVHandles
 };
 
@@ -55,6 +57,11 @@ struct GridConfig
 	Vector4f m_RcpCellSize;
 	Vector4i m_NumCells;
 	Vector4f m_NotUsed[13];
+};
+
+struct Voxel
+{
+	Vector4f m_ColorAndNumOccluders;
 };
 
 DXApplication::DXApplication(HINSTANCE hApp)
@@ -112,7 +119,7 @@ DXApplication::~DXApplication()
 void DXApplication::OnInit()
 {
 	DXFactory factory;
-	m_pDevice = new DXDevice(&factory, D3D_FEATURE_LEVEL_11_0);
+	m_pDevice = new DXDevice(&factory, D3D_FEATURE_LEVEL_11_0, true);
 
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
@@ -162,10 +169,27 @@ void DXApplication::OnInit()
 	m_pCBVSRVUAVHeap = new DXDescriptorHeap(m_pDevice, &cbvHeapDesc, L"m_pCBVSRVUAVHeap");
 
 	DXBufferResourceDesc transformBufferDesc(sizeof(ObjectTransform));
-	m_pTransformBuffer = new DXResource(m_pDevice, &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &transformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCBVBuffer");
+	m_pTransformBuffer = new DXResource(m_pDevice, &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &transformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pTransformBuffer");
 
 	DXConstantBufferViewDesc transformCBVDesc(m_pTransformBuffer, sizeof(ObjectTransform));
 	m_pDevice->CreateConstantBufferView(&transformCBVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kTransformCBVHandle));
+
+	const UINT numGridElements = kNumGridCellsX * kNumGridCellsY * kNumGridCellsZ;
+
+	DXBufferResourceDesc gridBufferDesc(numGridElements * sizeof(Voxel), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+	m_pGridBuffer = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &gridBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pGridBuffer");
+
+	DXBufferShaderResourceViewDesc gridBufferSRVDesc(0, numGridElements, sizeof(Voxel));
+	m_pDevice->CreateShaderResourceView(m_pGridBuffer, &gridBufferSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kGridBufferSRVHandle));
+
+	DXBufferUnorderedAccessViewDesc gridBufferUAVDesc(0, numGridElements, sizeof(Voxel));
+	m_pDevice->CreateUnorderedAccessView(m_pGridBuffer, &gridBufferUAVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kGridBufferUAVHandle));
+
+	DXBufferResourceDesc gridConfigBufferDesc(sizeof(GridConfig));
+	m_pGridConfigBuffer = new DXResource(m_pDevice, &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &gridConfigBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pGridConfigBuffer");
+
+	DXConstantBufferViewDesc gridConfigCBVDesc(m_pGridConfigBuffer, sizeof(GridConfig));
+	m_pDevice->CreateConstantBufferView(&gridConfigCBVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kGridConfigCBVHandle));
 
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 		m_CommandAllocators[index] = new DXCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
@@ -346,22 +370,37 @@ void DXApplication::OnInit()
 	WaitForGPU();
 	m_pMesh->RemoveDataForUpload();
 
-	ClearVoxelGridInitParams clearGridInitParams;
-	clearGridInitParams.m_pDevice = m_pDevice;
-	clearGridInitParams.m_NumGridCellsX = kNumGridCellsX;
-	clearGridInitParams.m_NumGridCellsY = kNumGridCellsY;
-	clearGridInitParams.m_NumGridCellsZ = kNumGridCellsZ;
+	meshData.ComputeBoundingBox();
+	const BoundingBox* boundingBox = meshData.GetBoundingBox();
 
-	m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(&clearGridInitParams);
+	const Vector3f gridMinPoint = boundingBox->m_Center - boundingBox->m_Radius;
+	const Vector3f gridSize = 2.0f * boundingBox->m_Radius;
+	const Vector3f gridNumCells = Vector3f(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ);
+	const Vector3f gridRcpCellSize = Rcp(gridSize / gridNumCells);
+
+	GridConfig gridConfig;
+	gridConfig.m_WorldSpaceOrigin = Vector4f(gridMinPoint.m_X, gridMinPoint.m_Y, gridMinPoint.m_Z, 0.0f);
+	gridConfig.m_RcpCellSize = Vector4f(gridRcpCellSize.m_X, gridRcpCellSize.m_Y, gridRcpCellSize.m_Z, 0.0f);
+	gridConfig.m_NumCells = Vector4i(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, 0);
+
+	m_pGridConfigBuffer->Write(&gridConfig, sizeof(GridConfig));
+
+	ClearVoxelGridInitParams clearGridParams;
+	clearGridParams.m_pDevice = m_pDevice;
+	clearGridParams.m_NumGridCellsX = kNumGridCellsX;
+	clearGridParams.m_NumGridCellsY = kNumGridCellsY;
+	clearGridParams.m_NumGridCellsZ = kNumGridCellsZ;
+
+	m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(&clearGridParams);
 	
-	VisualizeMeshInitParams visualizeMeshInitParams;
-	visualizeMeshInitParams.m_pDevice = m_pDevice;
-	visualizeMeshInitParams.m_MeshDataElement = MeshDataElement_Normal;
-	visualizeMeshInitParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
-	visualizeMeshInitParams.m_RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-	visualizeMeshInitParams.m_DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	VisualizeMeshInitParams visualizeMeshParams;
+	visualizeMeshParams.m_pDevice = m_pDevice;
+	visualizeMeshParams.m_MeshDataElement = MeshDataElement_Normal;
+	visualizeMeshParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
+	visualizeMeshParams.m_RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+	visualizeMeshParams.m_DSVFormat = DXGI_FORMAT_D32_FLOAT;
 		
-	m_pVisualizeMeshRecorder = new VisualizeMeshRecorder(&visualizeMeshInitParams);
+	m_pVisualizeMeshRecorder = new VisualizeMeshRecorder(&visualizeMeshParams);
 }
 
 void DXApplication::OnUpdate()
@@ -383,7 +422,6 @@ void DXApplication::OnRender()
 	DXCommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
 	pCommandAllocator->Reset();
 
-#if 1
 	DXResource* pRTVTexture = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVHeap->GetCPUDescriptor(m_BackBufferIndex);
@@ -418,32 +456,33 @@ void DXApplication::OnRender()
 
 	D3D12_RESOURCE_STATES rtvEndState = D3D12_RESOURCE_STATE_PRESENT;
 	
-	VisualizeMeshRecordParams params;
-	params.m_pMesh = m_pMesh;
-	params.m_pCommandList = m_pCommandList;
-	params.m_pCommandAllocator = pCommandAllocator;
-	params.m_pRTVTexture = pRTVTexture;
-	params.m_RTVHandle = rtvHandle;
-	params.m_pRTVEndState = &rtvEndState;
-	params.m_pDSVTexture = m_pDSVTexture;
-	params.m_DSVHandle = dsvHandle;
-	params.m_NumDXDescriptorHeaps = 1;
-	params.m_pDXFirstDescriptorHeap = m_pCBVSRVUAVHeap->GetDXObject();
-	params.m_CBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kTransformCBVHandle);
+	VisualizeMeshRecordParams visualizeMeshParams;
+	visualizeMeshParams.m_pMesh = m_pMesh;
+	visualizeMeshParams.m_pCommandList = m_pCommandList;
+	visualizeMeshParams.m_pCommandAllocator = pCommandAllocator;
+	visualizeMeshParams.m_pRTVTexture = pRTVTexture;
+	visualizeMeshParams.m_RTVHandle = rtvHandle;
+	visualizeMeshParams.m_pRTVEndState = &rtvEndState;
+	visualizeMeshParams.m_pDSVTexture = m_pDSVTexture;
+	visualizeMeshParams.m_DSVHandle = dsvHandle;
+	visualizeMeshParams.m_NumDXDescriptorHeaps = 1;
+	visualizeMeshParams.m_pDXFirstDescriptorHeap = m_pCBVSRVUAVHeap->GetDXObject();
+	visualizeMeshParams.m_CBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kTransformCBVHandle);
 	
-	m_pVisualizeMeshRecorder->Record(&params);
-#else
-	ClearVoxelGridRecordParams recordParams;
-	recordParams.m_pCommandAllocator = pCommandAllocator;
-	recordParams.m_pCommandList = m_pCommandList;
-	recordParams.m_NumDXDescriptorHeaps = 1;
-	recordParams.m_pDXFirstDescriptorHeap = m_pCBVSRVUAVHeap->GetDXObject();
-	//recordParams.m_pGridBuffer = 
-	//recordParams.m_GridBufferUAVHandle =
-	//recordParams.m_GridConfigCBVHandle =
+	m_pVisualizeMeshRecorder->Record(&visualizeMeshParams);
+	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+	WaitForGPU();
 
-#endif
+	ClearVoxelGridRecordParams clearGridParams;
+	clearGridParams.m_pCommandAllocator = pCommandAllocator;
+	clearGridParams.m_pCommandList = m_pCommandList;
+	clearGridParams.m_NumDXDescriptorHeaps = 1;
+	clearGridParams.m_pDXFirstDescriptorHeap = m_pCBVSRVUAVHeap->GetDXObject();
+	clearGridParams.m_pGridBuffer = m_pGridBuffer;
+	clearGridParams.m_GridBufferUAVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kGridBufferUAVHandle);
+	clearGridParams.m_GridConfigCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kGridConfigCBVHandle);
 
+	m_pClearVoxelGridRecorder->Record(&clearGridParams);
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
 
 	m_pSwapChain->Present(1, 0);
