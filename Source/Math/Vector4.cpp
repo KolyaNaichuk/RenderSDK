@@ -1,5 +1,4 @@
 #include "Math/Vector4.h"
-#include "Math/Math.h"
 
 const Vector4f Vector4f::ONE(1.0f, 1.0f, 1.0f, 1.0f);
 const Vector4f Vector4f::ZERO(0.0f, 0.0f, 0.0f, 0.0f);

@@ -6,7 +6,7 @@
 #include "DX/DXFence.h"
 #include "DX/DXResource.h"
 
-void GetHardwareAdapter(DXFactory* pFactory, IDXGIAdapter1** ppAdapter)
+void GetHardwareAdapter(DXFactory* pFactory, D3D_FEATURE_LEVEL minFeatureLevel, IDXGIAdapter1** ppAdapter)
 {
 	ComPtr<IDXGIAdapter1> adapter;
 	*ppAdapter = nullptr;
@@ -19,7 +19,7 @@ void GetHardwareAdapter(DXFactory* pFactory, IDXGIAdapter1** ppAdapter)
 		if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
 			continue;
 
-		if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)))
+		if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), minFeatureLevel, _uuidof(ID3D12Device), nullptr)))
 			break;
 	}
 
@@ -38,7 +38,7 @@ DXDevice::DXDevice(DXFactory* pFactory, D3D_FEATURE_LEVEL minFeatureLevel, bool 
 	else
 	{
 		ComPtr<IDXGIAdapter1> hardwareAdapter;
-		GetHardwareAdapter(pFactory, &hardwareAdapter);
+		GetHardwareAdapter(pFactory, minFeatureLevel, &hardwareAdapter);
 
 		DXVerify(D3D12CreateDevice(hardwareAdapter.Get(), minFeatureLevel, IID_PPV_ARGS(GetDXObjectAddress())));
 	}
