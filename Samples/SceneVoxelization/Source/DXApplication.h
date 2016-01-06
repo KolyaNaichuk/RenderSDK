@@ -12,10 +12,11 @@ class DXResource;
 class DXFence;
 class DXEvent;
 
-class ClearVoxelGridRecorder;
-class VisualizeMeshRecorder;
 class Mesh;
 class Camera;
+class ClearVoxelGridRecorder;
+class CreateVoxelGridRecorder;
+class VisualizeMeshRecorder;
 
 class DXApplication : public Application
 {
@@ -46,7 +47,8 @@ private:
 	DXDescriptorHeap* m_pDSVHeap;
 	DXDescriptorHeap* m_pCBVSRVUAVHeap;
 	DXResource* m_pDSVTexture;
-	DXResource* m_pTransformBuffer;
+	DXResource* m_pObjectTransformBuffer;
+	DXResource* m_pCameraTransformBuffer;
 	DXResource* m_pGridBuffer;
 	DXResource* m_pGridConfigBuffer;
 	DXFence* m_pFence;
@@ -55,6 +57,7 @@ private:
 	UINT m_BackBufferIndex;
 
 	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;
+	CreateVoxelGridRecorder* m_pCreateVoxelGridRecorder;
 	VisualizeMeshRecorder* m_pVisualizeMeshRecorder;
 
 	Mesh* m_pMesh;

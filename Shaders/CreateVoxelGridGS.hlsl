@@ -4,7 +4,12 @@ struct GSInput
 {
 	float4 worldSpacePos		: SV_Position;
 	float3 worldSpaceNormal		: NORMAL;
+
+#ifdef HAS_TEXCOORD
 	float2 texCoord				: TEXCOORD;
+#else // HAS_COLOR
+	float4 color				: COLOR;
+#endif // HAS_TEXCOORD
 };
 
 struct GSOutput
@@ -12,12 +17,17 @@ struct GSOutput
 	float4 clipSpacePos			: SV_Position;
 	float4 worldSpacePos		: POSITION;
 	float3 worldSpaceNormal		: NORMAL;
+
+#ifdef HAS_TEXCOORD
 	float2 texCoord				: TEXCOORD;
+#else // HAS_COLOR
+	float4 color				: COLOR;
+#endif // HAS_TEXCOORD
 };
 
-cbuffer CameraTransformBuffer : register(b0)
+cbuffer TransformBuffer : register(b0)
 {
-	CameraTransform g_CameraTransform;
+	CameraTransform g_Transform;
 }
 
 static const float3 ViewDirections[3] = {
@@ -36,10 +46,12 @@ int FindViewDirectionWithLargestProjectedArea(float3 worldSpaceFaceNormal)
 	float3 dotProducts = abs(mul(worldSpaceFaceNormal, viewDirectionMatrix));
 	float maxDotProduct = max(max(dotProducts.x, dotProducts.y), dotProducts.z);
 
-	if (maxDotProduct == maxDotProduct.x)
+	if (maxDotProduct == dotProducts.x)
 		return 0;
-	if (maxDotProduct == maxDotProduct.y)
+
+	if (maxDotProduct == dotProducts.y)
 		return 1;
+
 	return 2;
 }
 
@@ -52,10 +64,15 @@ void Main(triangle GSInput input[3], inout TriangleStream<GSOutput> outputStream
 	for (int index = 0; index < 3; ++index)
 	{
 		GSOutput output;
-		output.clipSpacePos = mul(input[index].worldSpacePos, g_CameraTransform.viewProjMatrices[viewDirectionIndex]);
+		output.clipSpacePos = mul(input[index].worldSpacePos, g_Transform.viewProjMatrices[viewDirectionIndex]);
 		output.worldSpacePos = input[index].worldSpacePos;
 		output.worldSpaceNormal = input[index].worldSpaceNormal;
+
+#ifdef HAS_TEXCOORD
 		output.texCoord = input[index].texCoord;
+#else // HAS_COLOR
+		output.color = input[index].color;
+#endif // HAS_TEXCOORD
 
 		outputStream.Append(output);
 	}

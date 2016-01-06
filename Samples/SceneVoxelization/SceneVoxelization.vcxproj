@@ -110,6 +110,15 @@ COPY /Y "$(SolutionDir)Shaders\VoxelGrid.hlsl" "$(SolutionDir)Samples\Bin\$(Proj
 COPY /Y "$(SolutionDir)Shaders\ClearVoxelGridCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ClearVoxelGridCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\ClearVoxelGridCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ClearVoxelGridCS.hlsl"
 
+COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelGridVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelGridVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelGridGS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelGridGS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelGridPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelGridPS.hlsl"
+
 COPY /Y "$(SolutionDir)Shaders\VisualizeMeshVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeMeshVS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\VisualizeMeshVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeMeshVS.hlsl"
 

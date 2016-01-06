@@ -51,7 +51,8 @@ struct DXRasterizerDesc : public D3D12_RASTERIZER_DESC
 {
 	enum Id
 	{
-		Default
+		Default,
+		CullNoneConservative
 	};
 	DXRasterizerDesc(Id id = Default);
 };

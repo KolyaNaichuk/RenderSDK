@@ -40,16 +40,17 @@ struct VSOutput
 #endif // HAS_TEXCOORD
 };
 
-struct Transform
+struct ObjectTransform
 {
+	matrix worldPosMatrix;
 	matrix worldNormalMatrix;
 	matrix worldViewProjMatrix;
-	float4 notUsed[8];
+	float4 notUsed[4];
 };
 
 cbuffer TransformBuffer : register(b0)
 {
-	Transform g_Transform;
+	ObjectTransform g_Transform;
 }
 
 VSOutput Main(VSInput input)

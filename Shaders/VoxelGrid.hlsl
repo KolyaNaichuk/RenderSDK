@@ -16,8 +16,10 @@ struct GridConfig
 
 struct ObjectTransform
 {
-	matrix worldMatrix;
-	matrix worldInvTransposeMatrix;
+	matrix worldPosMatrix;
+	matrix worldNormalMatrix;
+	matrix worldViewProjMatrix;
+	float4 notUsed[4];
 };
 
 struct CameraTransform

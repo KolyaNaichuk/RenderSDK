@@ -110,6 +110,20 @@ DXRasterizerDesc::DXRasterizerDesc(Id id)
 		ForcedSampleCount = 0;
 		ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 	}
+	else if (id == DXRasterizerDesc::CullNoneConservative)
+	{
+		FillMode = D3D12_FILL_MODE_SOLID;
+		CullMode = D3D12_CULL_MODE_NONE;
+		FrontCounterClockwise = FALSE;
+		DepthBias = 0;
+		DepthBiasClamp = 0.0f;
+		SlopeScaledDepthBias = 0.0f;
+		DepthClipEnable = TRUE;
+		MultisampleEnable = FALSE;
+		AntialiasedLineEnable = FALSE;
+		ForcedSampleCount = 0;
+		ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON;
+	}
 	else
 	{
 		assert(false);

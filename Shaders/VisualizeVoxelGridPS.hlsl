@@ -12,9 +12,9 @@ cbuffer GridConfigBuffer : register(b0)
 	GridConfig g_GridConfig;
 }
 
-cbuffer CameraTransformBuffer : register(b1)
+cbuffer TransformBuffer : register(b1)
 {
-	CameraTransform g_CameraTransform;
+	CameraTransform g_Transform;
 }
 
 Texture2D DepthTexture : register(t0);
@@ -23,7 +23,7 @@ StructuredBuffer<Voxel> GridBuffer : register(u0);
 float4 Main(PSInput input) : SV_Target
 {
 	float hardwareDepth = DepthTexture.Load(int3(input.screenSpacePos.xy, 0)).r;
-	float4 worldSpacePos = ComputeWorldSpacePosition(input.texCoord, hardwareDepth, g_CameraTransform.viewProjInvMatrix);
+	float4 worldSpacePos = ComputeWorldSpacePosition(input.texCoord, hardwareDepth, g_Transform.viewProjInvMatrix);
 	
 	int3 gridCell = ComputeGridCell(g_GridConfig, worldSpacePos.xyz);
 	int cellIndex = ComputeCellIndex(g_GridConfig, gridCell);
