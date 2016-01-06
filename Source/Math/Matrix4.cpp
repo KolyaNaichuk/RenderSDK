@@ -247,8 +247,30 @@ const Matrix4f Transpose(const Matrix4f& matrix)
 
 f32 Determinant(const Matrix4f& matrix)
 {
-    assert(false);
-    return 0.0f;
+	f32 cofactor00 =
+		matrix.m_11 * (matrix.m_22 * matrix.m_33 - matrix.m_23 * matrix.m_32)
+	  + matrix.m_12 * (matrix.m_23 * matrix.m_31 - matrix.m_21 * matrix.m_33)
+	  + matrix.m_13 * (matrix.m_21 * matrix.m_32 - matrix.m_22 * matrix.m_31);
+
+	f32 cofactor01 =
+		matrix.m_10 * (matrix.m_23 * matrix.m_32 - matrix.m_22 * matrix.m_33)
+	  + matrix.m_12 * (matrix.m_20 * matrix.m_33 - matrix.m_23 * matrix.m_30)
+	  + matrix.m_13 * (matrix.m_22 * matrix.m_30 - matrix.m_20 * matrix.m_32);
+
+	f32 cofactor02 =
+		matrix.m_10 * (matrix.m_21 * matrix.m_33 - matrix.m_23 * matrix.m_31)
+	  + matrix.m_11 * (matrix.m_23 * matrix.m_30 - matrix.m_20 * matrix.m_33)
+	  + matrix.m_13 * (matrix.m_20 * matrix.m_31 - matrix.m_21 * matrix.m_30);
+
+	f32 cofactor03 =
+		matrix.m_10 * (matrix.m_22 * matrix.m_31 - matrix.m_21 * matrix.m_32)
+	  + matrix.m_11 * (matrix.m_20 * matrix.m_32 - matrix.m_22 * matrix.m_30)
+	  + matrix.m_12 * (matrix.m_21 * matrix.m_30 - matrix.m_20 * matrix.m_31);
+
+    return (matrix.m_00 * cofactor00
+		  + matrix.m_01 * cofactor01
+		  + matrix.m_02 * cofactor02
+		  + matrix.m_03 * cofactor03);
 }
 
 const Matrix4f Inverse(const Matrix4f& matrix)
