@@ -18,7 +18,7 @@ cbuffer TransformBuffer : register(b1)
 }
 
 Texture2D DepthTexture : register(t0);
-StructuredBuffer<Voxel> GridBuffer : register(u0);
+StructuredBuffer<Voxel> GridBuffer : register(t1);
 
 float4 Main(PSInput input) : SV_Target
 {

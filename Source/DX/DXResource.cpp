@@ -19,8 +19,29 @@ DXGI_FORMAT GetRenderTargetViewFormat(DXGI_FORMAT resourceFormat)
 	return resourceFormat;
 }
 
+DXGI_FORMAT GetDepthStencilViewFormat(DXGI_FORMAT resourceFormat)
+{
+	switch (resourceFormat)
+	{
+		case DXGI_FORMAT_R32_TYPELESS:
+			return DXGI_FORMAT_D32_FLOAT;
+		case DXGI_FORMAT_R24G8_TYPELESS:
+			return DXGI_FORMAT_D24_UNORM_S8_UINT;
+	}
+	assert(false);
+	return resourceFormat;
+}
+
 DXGI_FORMAT GetShaderResourceViewFormat(DXGI_FORMAT resourceFormat)
 {
+	switch (resourceFormat)
+	{
+		case DXGI_FORMAT_R32_TYPELESS:
+			return DXGI_FORMAT_R32_FLOAT;
+		case DXGI_FORMAT_R24G8_TYPELESS:
+			return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	}
+	assert(false);
 	return resourceFormat;
 }
 
@@ -268,7 +289,7 @@ DXTex1DDepthStencilViewDesc::DXTex1DDepthStencilViewDesc(UINT mipSlice, UINT arr
 	}
 }
 
-DXTex2DDepthStencilViewDesc::DXTex2DDepthStencilViewDesc(UINT mipSlice, UINT arraySize, bool multisampled, DXGI_FORMAT format, D3D12_DSV_FLAGS flags)
+DXTex2DDepthStencilViewDesc::DXTex2DDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT arraySize, bool multisampled, D3D12_DSV_FLAGS flags)
 {
 	Format = format;
 	Flags = flags;

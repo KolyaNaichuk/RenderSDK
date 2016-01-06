@@ -6,6 +6,7 @@ class DXDevice;
 class DXResource;
 
 DXGI_FORMAT GetRenderTargetViewFormat(DXGI_FORMAT resourceFormat);
+DXGI_FORMAT GetDepthStencilViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetShaderResourceViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat);
 
@@ -130,8 +131,8 @@ struct DXTex1DDepthStencilViewDesc : public D3D12_DEPTH_STENCIL_VIEW_DESC
 
 struct DXTex2DDepthStencilViewDesc : public D3D12_DEPTH_STENCIL_VIEW_DESC
 {
-	DXTex2DDepthStencilViewDesc(UINT mipSlice = 0, UINT arraySize = 1, bool multisampled = false,
-		DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
+	DXTex2DDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice = 0, UINT arraySize = 1,
+		bool multisampled = false, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
 };
 
 struct DXTex1DShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC

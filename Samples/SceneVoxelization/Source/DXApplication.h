@@ -16,6 +16,7 @@ class Mesh;
 class Camera;
 class ClearVoxelGridRecorder;
 class CreateVoxelGridRecorder;
+class VisualizeVoxelGridRecorder;
 class VisualizeMeshRecorder;
 
 class DXApplication : public Application
@@ -46,7 +47,7 @@ private:
 	DXDescriptorHeap* m_pRTVHeap;
 	DXDescriptorHeap* m_pDSVHeap;
 	DXDescriptorHeap* m_pCBVSRVUAVHeap;
-	DXResource* m_pDSVTexture;
+	DXResource* m_pDepthTexture;
 	DXResource* m_pObjectTransformBuffer;
 	DXResource* m_pCameraTransformBuffer;
 	DXResource* m_pGridBuffer;
@@ -58,6 +59,7 @@ private:
 
 	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;
 	CreateVoxelGridRecorder* m_pCreateVoxelGridRecorder;
+	VisualizeVoxelGridRecorder* m_pVisualizeVoxelGridRecorder;
 	VisualizeMeshRecorder* m_pVisualizeMeshRecorder;
 
 	Mesh* m_pMesh;

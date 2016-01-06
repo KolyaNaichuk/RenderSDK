@@ -44,7 +44,7 @@ float4 ComputeWorldSpacePosition(float2 texCoord, float hardwareDepth, matrix vi
 	float4 worldSpacePos = mul(postWDivideProjSpacePos, viewProjInvMatrix);
 	worldSpacePos /= worldSpacePos.w;
 
-	return worldSpacePosition;
+	return worldSpacePos;
 }
 
 float2 ComputeScreenSpacePosition(float4 clipSpacePos, float2 screenSize)
