@@ -1,5 +1,13 @@
 #include "Math/Matrix4.h"
 
+#define DETERMINANT2X2(m00, m01, m10, m11) \
+    (m00 * m11 - m01 * m10)
+
+#define DETERMINANT3X3(m00, m01, m02, m10, m11, m12, m20, m21, m22) \
+	(m20 * (m01 * m12 - m02 * m11) + \
+     m21 * (m02 * m10 - m00 * m12) + \
+     m22 * (m00 * m11 - m01 * m10))
+
 const Matrix4f Matrix4f::IDENTITY(1.0f, 0.0f, 0.0f, 0.0f,
 								  0.0f, 1.0f, 0.0f, 0.0f,
 								  0.0f, 0.0f, 1.0f, 0.0f,
@@ -247,25 +255,21 @@ const Matrix4f Transpose(const Matrix4f& matrix)
 
 f32 Determinant(const Matrix4f& matrix)
 {
-	f32 cofactor00 =
-		matrix.m_11 * (matrix.m_22 * matrix.m_33 - matrix.m_23 * matrix.m_32)
-	  + matrix.m_12 * (matrix.m_23 * matrix.m_31 - matrix.m_21 * matrix.m_33)
-	  + matrix.m_13 * (matrix.m_21 * matrix.m_32 - matrix.m_22 * matrix.m_31);
+	f32 cofactor00 = DETERMINANT3X3(matrix.m_11, matrix.m_12, matrix.m_13,
+		matrix.m_21, matrix.m_22, matrix.m_23,
+		matrix.m_31, matrix.m_32, matrix.m_33);
 
-	f32 cofactor01 =
-		matrix.m_10 * (matrix.m_23 * matrix.m_32 - matrix.m_22 * matrix.m_33)
-	  + matrix.m_12 * (matrix.m_20 * matrix.m_33 - matrix.m_23 * matrix.m_30)
-	  + matrix.m_13 * (matrix.m_22 * matrix.m_30 - matrix.m_20 * matrix.m_32);
+	f32 cofactor01 = -DETERMINANT3X3(matrix.m_10, matrix.m_12, matrix.m_13,
+		matrix.m_20, matrix.m_22, matrix.m_23,
+		matrix.m_30, matrix.m_32, matrix.m_33);
 
-	f32 cofactor02 =
-		matrix.m_10 * (matrix.m_21 * matrix.m_33 - matrix.m_23 * matrix.m_31)
-	  + matrix.m_11 * (matrix.m_23 * matrix.m_30 - matrix.m_20 * matrix.m_33)
-	  + matrix.m_13 * (matrix.m_20 * matrix.m_31 - matrix.m_21 * matrix.m_30);
+	f32 cofactor02 = DETERMINANT3X3(matrix.m_10, matrix.m_11, matrix.m_13,
+		matrix.m_20, matrix.m_21, matrix.m_23,
+		matrix.m_30, matrix.m_31, matrix.m_33);
 
-	f32 cofactor03 =
-		matrix.m_10 * (matrix.m_22 * matrix.m_31 - matrix.m_21 * matrix.m_32)
-	  + matrix.m_11 * (matrix.m_20 * matrix.m_32 - matrix.m_22 * matrix.m_30)
-	  + matrix.m_12 * (matrix.m_21 * matrix.m_30 - matrix.m_20 * matrix.m_31);
+	f32 cofactor03 = -DETERMINANT3X3(matrix.m_10, matrix.m_11, matrix.m_12,
+		matrix.m_20, matrix.m_21, matrix.m_22,
+		matrix.m_30, matrix.m_31, matrix.m_32);
 
     return (matrix.m_00 * cofactor00
 		  + matrix.m_01 * cofactor01
@@ -273,8 +277,82 @@ f32 Determinant(const Matrix4f& matrix)
 		  + matrix.m_03 * cofactor03);
 }
 
+const Matrix4f Adjoint(const Matrix4f& matrix)
+{
+	f32 cofactor00 = DETERMINANT3X3(matrix.m_11, matrix.m_12, matrix.m_13,
+		matrix.m_21, matrix.m_22, matrix.m_23,
+		matrix.m_31, matrix.m_32, matrix.m_33);
+
+	f32 cofactor01 = -DETERMINANT3X3(matrix.m_10, matrix.m_12, matrix.m_13,
+		matrix.m_20, matrix.m_22, matrix.m_23,
+		matrix.m_30, matrix.m_32, matrix.m_33);
+
+	f32 cofactor02 = DETERMINANT3X3(matrix.m_10, matrix.m_11, matrix.m_13,
+		matrix.m_20, matrix.m_21, matrix.m_23,
+		matrix.m_30, matrix.m_31, matrix.m_33);
+
+	f32 cofactor03 = -DETERMINANT3X3(matrix.m_10, matrix.m_11, matrix.m_12,
+		matrix.m_20, matrix.m_21, matrix.m_22,
+		matrix.m_30, matrix.m_31, matrix.m_32);
+
+	f32 cofactor10 = -DETERMINANT3X3(matrix.m_01, matrix.m_02, matrix.m_03,
+		matrix.m_21, matrix.m_22, matrix.m_23,
+		matrix.m_31, matrix.m_32, matrix.m_33);
+
+	f32 cofactor11 = DETERMINANT3X3(matrix.m_00, matrix.m_02, matrix.m_03,
+		matrix.m_20, matrix.m_22, matrix.m_23,
+		matrix.m_30, matrix.m_32, matrix.m_33);
+
+	f32 cofactor12 = -DETERMINANT3X3(matrix.m_00, matrix.m_01, matrix.m_03,
+		matrix.m_20, matrix.m_21, matrix.m_23,
+		matrix.m_30, matrix.m_31, matrix.m_33);
+
+	f32 cofactor13 = DETERMINANT3X3(matrix.m_00, matrix.m_01, matrix.m_02,
+		matrix.m_20, matrix.m_21, matrix.m_22,
+		matrix.m_30, matrix.m_31, matrix.m_32);
+
+	f32 cofactor20 = DETERMINANT3X3(matrix.m_01, matrix.m_02, matrix.m_03,
+		matrix.m_11, matrix.m_12, matrix.m_13,
+		matrix.m_31, matrix.m_32, matrix.m_33);
+
+	f32 cofactor21 = -DETERMINANT3X3(matrix.m_00, matrix.m_02, matrix.m_03,
+		matrix.m_10, matrix.m_12, matrix.m_13,
+		matrix.m_30, matrix.m_32, matrix.m_33);
+
+	f32 cofactor22 = DETERMINANT3X3(matrix.m_00, matrix.m_01, matrix.m_03,
+		matrix.m_10, matrix.m_11, matrix.m_13,
+		matrix.m_30, matrix.m_31, matrix.m_33);
+
+	f32 cofactor23 = -DETERMINANT3X3(matrix.m_00, matrix.m_01, matrix.m_02,
+		matrix.m_10, matrix.m_11, matrix.m_12,
+		matrix.m_30, matrix.m_31, matrix.m_32);
+
+	f32 cofactor30 = -DETERMINANT3X3(matrix.m_01, matrix.m_02, matrix.m_03,
+		matrix.m_11, matrix.m_12, matrix.m_13,
+		matrix.m_21, matrix.m_22, matrix.m_23);
+
+	f32 cofactor31 = DETERMINANT3X3(matrix.m_00, matrix.m_02, matrix.m_03,
+		matrix.m_10, matrix.m_12, matrix.m_13,
+		matrix.m_20, matrix.m_22, matrix.m_23);
+
+	f32 cofactor32 = -DETERMINANT3X3(matrix.m_00, matrix.m_01, matrix.m_03,
+		matrix.m_10, matrix.m_11, matrix.m_13,
+		matrix.m_20, matrix.m_21, matrix.m_23);
+
+	f32 cofactor33 = DETERMINANT3X3(matrix.m_00, matrix.m_01, matrix.m_02,
+		matrix.m_10, matrix.m_11, matrix.m_12,
+		matrix.m_20, matrix.m_21, matrix.m_22);
+
+	return Matrix4f(cofactor00, cofactor10, cofactor20, cofactor30,
+					cofactor01, cofactor11, cofactor21, cofactor31,
+					cofactor02, cofactor12, cofactor22, cofactor32,
+					cofactor03, cofactor13, cofactor23, cofactor33);
+}
+
 const Matrix4f Inverse(const Matrix4f& matrix)
 {
-    assert(false);
-    return Matrix4f();
+	f32 det = Determinant(matrix);
+	assert(det > EPSILON);
+
+    return Rcp(det) * Adjoint(matrix);
 }

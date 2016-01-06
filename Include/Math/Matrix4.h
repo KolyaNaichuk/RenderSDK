@@ -38,4 +38,5 @@ const Matrix4f operator* (const Matrix4f& left, f32 scalar);
 
 const Matrix4f Transpose(const Matrix4f& matrix);
 f32 Determinant(const Matrix4f& matrix);
+const Matrix4f Adjoint(const Matrix4f& matrix);
 const Matrix4f Inverse(const Matrix4f& matrix);
