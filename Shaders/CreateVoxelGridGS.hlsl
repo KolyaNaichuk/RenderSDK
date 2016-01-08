@@ -30,20 +30,13 @@ cbuffer TransformBuffer : register(b0)
 	CameraTransform g_Transform;
 }
 
-static const float3 ViewDirections[3] = {
-	float3(0.0f, 0.0f, 1.0f),
-	float3(1.0f, 0.0f, 0.0f),
-	float3(0.0f, 1.0f, 0.0f)
-};
-
 int FindViewDirectionWithLargestProjectedArea(float3 worldSpaceFaceNormal)
 {
-	float3x3 viewDirectionMatrix;
-	viewDirectionMatrix[0] = ViewDirections[0];
-	viewDirectionMatrix[1] = ViewDirections[1];
-	viewDirectionMatrix[2] = ViewDirections[2];
-
-	float3 dotProducts = abs(mul(worldSpaceFaceNormal, viewDirectionMatrix));
+	float3 dotProducts;
+	dotProducts.x = abs(dot(worldSpaceFaceNormal, float3(1.0f, 0.0f, 0.0f)));
+	dotProducts.y = abs(dot(worldSpaceFaceNormal, float3(0.0f, 1.0f, 0.0f)));
+	dotProducts.z = abs(dot(worldSpaceFaceNormal, float3(0.0f, 0.0f, 1.0f)));
+	
 	float maxDotProduct = max(max(dotProducts.x, dotProducts.y), dotProducts.z);
 
 	if (maxDotProduct == dotProducts.x)

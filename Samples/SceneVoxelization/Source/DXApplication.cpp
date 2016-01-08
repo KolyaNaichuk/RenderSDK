@@ -481,10 +481,9 @@ void DXApplication::OnUpdate()
 	
 	CameraTransform cameraTransform;
 	cameraTransform.m_ViewProjInvMatrix = Inverse(mainViewProjMatrix);
-	cameraTransform.m_ViewProjInvMatrix = Matrix4f::IDENTITY;
-	cameraTransform.m_ViewProjMatrices[0] = zAxisCamera.GetViewMatrix() * zAxisCamera.GetProjMatrix();
-	cameraTransform.m_ViewProjMatrices[1] = xAxisCamera.GetViewMatrix() * xAxisCamera.GetProjMatrix();
-	cameraTransform.m_ViewProjMatrices[2] = yAxisCamera.GetViewMatrix() * yAxisCamera.GetProjMatrix();
+	cameraTransform.m_ViewProjMatrices[0] = xAxisCamera.GetViewMatrix() * xAxisCamera.GetProjMatrix();
+	cameraTransform.m_ViewProjMatrices[1] = yAxisCamera.GetViewMatrix() * yAxisCamera.GetProjMatrix();
+	cameraTransform.m_ViewProjMatrices[2] = zAxisCamera.GetViewMatrix() * zAxisCamera.GetProjMatrix();
 
 	m_pCameraTransformBuffer->Write(&cameraTransform, sizeof(cameraTransform));
 }
