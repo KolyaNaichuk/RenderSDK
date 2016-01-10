@@ -195,10 +195,13 @@ template <typename T>
 void DXResource::Write(const T* pInputData, SIZE_T numBytes)
 {
 	const UINT subresource = 0;
-	const DXRange range(0, numBytes);
-	
 	T* pResourceData = nullptr;
-	DXVerify(GetDXObject()->Map(subresource, &range, reinterpret_cast<void**>(&pResourceData)));
+
+	const DXRange readRange(0, 0);
+	DXVerify(GetDXObject()->Map(subresource, &readRange, reinterpret_cast<void**>(&pResourceData)));
+	
 	std::memcpy(pResourceData, pInputData, numBytes);
-	GetDXObject()->Unmap(subresource, &range);
+	
+	const DXRange writtenRange(0, numBytes);
+	GetDXObject()->Unmap(subresource, &writtenRange);
 }
