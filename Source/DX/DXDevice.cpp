@@ -73,3 +73,8 @@ void DXDevice::CreateSampler(const D3D12_SAMPLER_DESC* pDesc, D3D12_CPU_DESCRIPT
 {
 	GetDXObject()->CreateSampler(pDesc, samplerHandle);
 }
+
+void DXDevice::CheckFeatureSupport(D3D12_FEATURE feature, void* pFeatureSupportData, UINT featureSupportDataSize)
+{
+	DXVerify(GetDXObject()->CheckFeatureSupport(feature, pFeatureSupportData, featureSupportDataSize));
+}

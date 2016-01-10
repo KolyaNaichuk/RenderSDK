@@ -144,6 +144,11 @@ void DXApplication::OnInit()
 	DXFactory factory;
 	m_pDevice = new DXDevice(&factory, D3D_FEATURE_LEVEL_12_0, true);
 
+	D3D12_FEATURE_DATA_D3D12_OPTIONS supportedOptions;
+	m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &supportedOptions, sizeof(supportedOptions));
+	assert(supportedOptions.ConservativeRasterizationTier != D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED);
+	assert(supportedOptions.ROVsSupported == TRUE);
+	
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
 

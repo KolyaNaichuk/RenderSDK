@@ -30,4 +30,6 @@ public:
 		DXResource* pCounterResource = nullptr);
 
 	void CreateSampler(const D3D12_SAMPLER_DESC* pDesc, D3D12_CPU_DESCRIPTOR_HANDLE samplerHandle);
+
+	void CheckFeatureSupport(D3D12_FEATURE feature, void* pFeatureSupportData, UINT featureSupportDataSize);
 };
