@@ -95,7 +95,7 @@ void VisualizeMeshRecorder::Record(VisualizeMeshRecordParams* pParams)
 	DXViewport viewport(0.0f, 0.0f, FLOAT(pParams->m_pRTVTexture->GetWidth()), FLOAT(pParams->m_pRTVTexture->GetHeight()));
 	pParams->m_pCommandList->RSSetViewports(1, &viewport);
 
-	DXRect scissorRect(0, 0, LONG(pParams->m_pRTVTexture->GetWidth()), LONG(pParams->m_pRTVTexture->GetHeight()));
+	DXRect scissorRect(GetRect(viewport));
 	pParams->m_pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	assert(pParams->m_pMesh->GetNumSubMeshes() == 1);
