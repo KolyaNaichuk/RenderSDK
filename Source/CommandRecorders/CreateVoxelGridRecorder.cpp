@@ -3,6 +3,7 @@
 #include "DX/DXRootSignature.h"
 #include "DX/DXCommandList.h"
 #include "DX/DXResource.h"
+#include "DX/DXUtils.h"
 #include "Common/Mesh.h"
 #include "Common/MeshData.h"
 
@@ -75,7 +76,7 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(CreateVoxelGridInitParams* pPar
 	pipelineStateDesc.RasterizerState = DXRasterizerDesc(DXRasterizerDesc::CullNoneConservative);
 	pipelineStateDesc.SetInputLayout(inputElementDescs.size(), &inputElementDescs[0]);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-
+	
 	m_pPipelineState = new DXPipelineState(pParams->m_pDevice, &pipelineStateDesc, L"CreateVoxelGridRecorder::m_pPipelineState");
 }
 
@@ -97,6 +98,8 @@ void CreateVoxelGridRecorder::Record(CreateVoxelGridRecordParams* pParams)
 	if (pParams->m_pColorTexture->GetState() != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
 		pParams->m_pCommandList->TransitionBarrier(pParams->m_pColorTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 #endif // HAS_TEXCOORD
+		
+	pParams->m_pCommandList->OMSetRenderTargets(0, nullptr);
 
 	pParams->m_pCommandList->SetDescriptorHeaps(pParams->m_NumDXDescriptorHeaps, &pParams->m_pDXFirstDescriptorHeap);
 	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kObjectTransformCBVRootParam, pParams->m_ObjectTransformCBVHandle);
@@ -113,9 +116,16 @@ void CreateVoxelGridRecorder::Record(CreateVoxelGridRecordParams* pParams)
 	pParams->m_pCommandList->IASetVertexBuffers(0, 1, pParams->m_pMesh->GetVertexBufferView());
 	pParams->m_pCommandList->IASetIndexBuffer(pParams->m_pMesh->GetIndexBufferView());
 	
+	// Kolya: Hard-coding viewport size for now
+	DXViewport viewport(0.0f, 0.0f, 924.0f, 668.0f);
+	pParams->m_pCommandList->RSSetViewports(1, &viewport);
+	
+	DXRect scissorRect(GetRect(viewport));
+	pParams->m_pCommandList->RSSetScissorRects(1, &scissorRect);
+	
 	assert(pParams->m_pMesh->GetNumSubMeshes() == 1);
 	const SubMeshData* pSubMeshData = pParams->m_pMesh->GetSubMeshes();
 	pParams->m_pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
-
+	
 	pParams->m_pCommandList->Close();
 }

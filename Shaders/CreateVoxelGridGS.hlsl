@@ -38,13 +38,10 @@ int FindViewDirectionWithLargestProjectedArea(float3 worldSpaceFaceNormal)
 	dotProducts.z = abs(dot(worldSpaceFaceNormal, float3(0.0f, 0.0f, 1.0f)));
 	
 	float maxDotProduct = max(max(dotProducts.x, dotProducts.y), dotProducts.z);
-
 	if (maxDotProduct == dotProducts.x)
 		return 0;
-
 	if (maxDotProduct == dotProducts.y)
 		return 1;
-
 	return 2;
 }
 

@@ -146,7 +146,7 @@ void DXApplication::OnInit()
 
 	D3D12_FEATURE_DATA_D3D12_OPTIONS supportedOptions;
 	m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &supportedOptions, sizeof(supportedOptions));
-	assert(supportedOptions.ConservativeRasterizationTier != D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED);
+	//assert(supportedOptions.ConservativeRasterizationTier != D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED);
 	assert(supportedOptions.ROVsSupported == TRUE);
 	
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -435,10 +435,9 @@ void DXApplication::OnInit()
 	visualizeMeshParams.m_DSVFormat = DXGI_FORMAT_D32_FLOAT;
 		
 	m_pVisualizeMeshRecorder = new VisualizeMeshRecorder(&visualizeMeshParams);
-}
 
-void DXApplication::OnUpdate()
-{
+	// Kolya: Should be moved to OnUpdate
+	// Temporarily moved constant buffer update here to overcome frame capture crash on AMD R9 290
 	const Vector3f& mainCameraPos = m_pCamera->GetTransform().GetPosition();
 	const Quaternion& mainCameraRotation = m_pCamera->GetTransform().GetRotation();
 	const Matrix4f mainViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
@@ -448,18 +447,13 @@ void DXApplication::OnUpdate()
 	assert(IsNormalized(mainCameraBasis.m_YAxis));
 	assert(IsNormalized(mainCameraBasis.m_ZAxis));
 
-	ObjectTransform objectTransform;
-	objectTransform.m_WorldPosMatrix = Matrix4f::IDENTITY;
-	objectTransform.m_WorldNormalMatrix = Matrix4f::IDENTITY;
-	objectTransform.m_WorldViewProjMatrix = Matrix4f::IDENTITY * mainViewProjMatrix;
-
-	m_pObjectTransformBuffer->Write(&objectTransform, sizeof(objectTransform));
-
 	const Vector3f gridSize(kGridSizeX, kGridSizeY, kGridSizeZ);
 	const Vector3f gridHalfSize(0.5f * gridSize);
 	const Vector3f gridNumCells(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ);
 	const Vector3f gridRcpCellSize(Rcp(gridSize / gridNumCells));
-	const Vector3f gridCenter(mainCameraPos + (0.25f * gridSize.m_Z) * mainCameraBasis.m_ZAxis);
+	// Kolya: Hard-coding grid center for now
+	//const Vector3f gridCenter(mainCameraPos + (0.25f * gridSize.m_Z) * mainCameraBasis.m_ZAxis);
+	const Vector3f gridCenter(278.0f, 274.0f, -279.0f);
 	const Vector3f gridMinPoint(gridCenter - gridHalfSize);
 
 	GridConfig gridConfig;
@@ -473,12 +467,12 @@ void DXApplication::OnUpdate()
 	xAxisCamera.SetSizeY(gridSize.m_Y);
 	xAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_X * mainCameraBasis.m_XAxis);
 	xAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationYQuaternion(Radian(PI_DIV_TWO)));
-	
+		
 	Camera yAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_Y, gridSize.m_X / gridSize.m_Z);
 	yAxisCamera.SetSizeY(gridSize.m_Z);
 	yAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_Y * mainCameraBasis.m_YAxis);
 	yAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationXQuaternion(Radian(-PI_DIV_TWO)));
-	
+		
 	Camera zAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_Z, gridSize.m_X / gridSize.m_Y);
 	zAxisCamera.SetSizeY(gridSize.m_Y);
 	zAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_Z * mainCameraBasis.m_ZAxis);
@@ -491,6 +485,17 @@ void DXApplication::OnUpdate()
 	cameraTransform.m_ViewProjMatrices[2] = zAxisCamera.GetViewMatrix() * zAxisCamera.GetProjMatrix();
 
 	m_pCameraTransformBuffer->Write(&cameraTransform, sizeof(cameraTransform));
+
+	ObjectTransform objectTransform;
+	objectTransform.m_WorldPosMatrix = Matrix4f::IDENTITY;
+	objectTransform.m_WorldNormalMatrix = Matrix4f::IDENTITY;
+	objectTransform.m_WorldViewProjMatrix = mainViewProjMatrix;
+
+	m_pObjectTransformBuffer->Write(&objectTransform, sizeof(objectTransform));
+}
+
+void DXApplication::OnUpdate()
+{
 }
 
 void DXApplication::OnRender()
@@ -584,6 +589,7 @@ void DXApplication::OnRender()
 
 	m_pCreateVoxelGridRecorder->Record(&createGridParams);
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+	/*
 	WaitForGPU();
 
 	VisualizeVoxelGridRecordParams visualizeGridParams;
@@ -603,7 +609,7 @@ void DXApplication::OnRender()
 
 	m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
-
+	*/
 	m_pSwapChain->Present(1, 0);
 	MoveToNextFrame();
 }
