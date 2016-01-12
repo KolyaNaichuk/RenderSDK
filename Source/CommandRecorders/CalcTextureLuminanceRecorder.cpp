@@ -82,7 +82,7 @@ void CalcTextureLuminanceRecorder::Record(DXCommandList* pCommandList, DXCommand
 	DXViewport viewport(0.0f, 0.0f, FLOAT(pRTVTexture->GetWidth()), FLOAT(pRTVTexture->GetHeight()));
 	pCommandList->RSSetViewports(1, &viewport);
 
-	DXRect scissorRect(GetRect(viewport));
+	DXRect scissorRect(ExtractRect(viewport));
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	pCommandList->DrawInstanced(3, 1, 0, 0);

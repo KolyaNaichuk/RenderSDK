@@ -79,7 +79,7 @@ void VisualizeVoxelGridRecorder::Record(VisualizeVoxelGridRecordParams* pParams)
 	DXViewport viewport(0.0f, 0.0f, FLOAT(pParams->m_pDepthTexture->GetWidth()), FLOAT(pParams->m_pDepthTexture->GetHeight()));
 	pParams->m_pCommandList->RSSetViewports(1, &viewport);
 
-	DXRect scissorRect(GetRect(viewport));
+	DXRect scissorRect(ExtractRect(viewport));
 	pParams->m_pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	pParams->m_pCommandList->DrawInstanced(3, 1, 0, 0);

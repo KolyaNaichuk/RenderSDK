@@ -120,7 +120,7 @@ void CreateVoxelGridRecorder::Record(CreateVoxelGridRecordParams* pParams)
 	DXViewport viewport(0.0f, 0.0f, 924.0f, 668.0f);
 	pParams->m_pCommandList->RSSetViewports(1, &viewport);
 	
-	DXRect scissorRect(GetRect(viewport));
+	DXRect scissorRect(ExtractRect(viewport));
 	pParams->m_pCommandList->RSSetScissorRects(1, &scissorRect);
 	
 	assert(pParams->m_pMesh->GetNumSubMeshes() == 1);
