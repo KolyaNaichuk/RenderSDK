@@ -235,14 +235,29 @@ const Matrix4f operator+ (const Matrix4f& left, f32 scalar)
     return (Matrix4f(left) += scalar);
 }
 
+const Matrix4f operator+ (f32 scalar, const Matrix4f& right)
+{
+	return (right + scalar);
+}
+
 const Matrix4f operator- (const Matrix4f& left, f32 scalar)
 {
     return (Matrix4f(left) -= scalar);
 }
 
+const Matrix4f operator- (f32 scalar, const Matrix4f& right)
+{
+	return (Matrix4f(scalar) -= right);
+}
+
 const Matrix4f operator* (const Matrix4f& left, f32 scalar)
 {
     return (Matrix4f(left) *= scalar);
+}
+
+const Matrix4f operator* (f32 scalar, const Matrix4f& right)
+{
+	return (right * scalar);
 }
 
 const Matrix4f Transpose(const Matrix4f& matrix)

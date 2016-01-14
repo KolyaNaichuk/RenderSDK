@@ -5,7 +5,7 @@
 struct Matrix4f
 {
     Matrix4f();
-    Matrix4f(f32 scalar);
+    explicit Matrix4f(f32 scalar);
     Matrix4f(f32 scalar00, f32 scalar01, f32 scalar02, f32 scalar03,
         f32 scalar10, f32 scalar11, f32 scalar12, f32 scalar13,
         f32 scalar20, f32 scalar21, f32 scalar22, f32 scalar23,
@@ -33,8 +33,13 @@ const Matrix4f operator- (const Matrix4f& left, const Matrix4f& right);
 const Matrix4f operator* (const Matrix4f& left, const Matrix4f& right);
 
 const Matrix4f operator+ (const Matrix4f& left, f32 scalar);
+const Matrix4f operator+ (f32 scalar, const Matrix4f& right);
+
 const Matrix4f operator- (const Matrix4f& left, f32 scalar);
+const Matrix4f operator- (f32 scalar, const Matrix4f& right);
+
 const Matrix4f operator* (const Matrix4f& left, f32 scalar);
+const Matrix4f operator* (f32 scalar, const Matrix4f& right);
 
 const Matrix4f Transpose(const Matrix4f& matrix);
 f32 Determinant(const Matrix4f& matrix);

@@ -181,9 +181,19 @@ const Vector4f operator+ (const Vector4f& left, f32 scalar)
     return (Vector4f(left) += scalar);
 }
 
+const Vector4f operator+ (f32 scalar, const Vector4f& right)
+{
+	return Vector4f(right + scalar);
+}
+
 const Vector4f operator- (const Vector4f& left, f32 scalar)
 {
     return (Vector4f(left) -= scalar);
+}
+
+const Vector4f operator- (f32 scalar, const Vector4f& right)
+{
+	return (Vector4f(scalar) - right);
 }
 
 const Vector4f operator* (const Vector4f& left, f32 scalar)
@@ -191,9 +201,19 @@ const Vector4f operator* (const Vector4f& left, f32 scalar)
     return (Vector4f(left) *= scalar);
 }
 
+const Vector4f operator* (f32 scalar, const Vector4f& right)
+{
+	return (right * scalar);
+}
+
 const Vector4f operator/ (const Vector4f& left, f32 scalar)
 {
     return (Vector4f(left) /= scalar);
+}
+
+const Vector4f operator/ (f32 scalar, const Vector4f& right)
+{
+	return (Vector4f(scalar) / right);
 }
 
 const Vector4i Vector4i::ONE(1, 1, 1, 1);

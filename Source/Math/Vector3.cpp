@@ -184,9 +184,19 @@ const Vector3f operator+ (const Vector3f& left, f32 scalar)
     return (Vector3f(left) += scalar);
 }
 
+const Vector3f operator+ (f32 scalar, const Vector3f& right)
+{
+	return (right + scalar);
+}
+
 const Vector3f operator- (const Vector3f& left, f32 scalar)
 {
     return (Vector3f(left) -= scalar);
+}
+
+const Vector3f operator- (f32 scalar, const Vector3f& right)
+{
+	return (Vector3f(scalar) - right);
 }
 
 const Vector3f operator* (const Vector3f& left, f32 scalar)
@@ -194,9 +204,19 @@ const Vector3f operator* (const Vector3f& left, f32 scalar)
     return (Vector3f(left) *= scalar);
 }
 
+const Vector3f operator* (f32 scalar, const Vector3f& right)
+{
+	return (right * scalar);
+}
+
 const Vector3f operator/ (const Vector3f& left, f32 scalar)
 {
     return (Vector3f(left) /= scalar);
+}
+
+const Vector3f operator/ (f32 scalar, const Vector3f& right)
+{
+	return (Vector3f(scalar) / right);
 }
 
 const Vector3i Vector3i::ONE(1, 1, 1);

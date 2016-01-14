@@ -6,7 +6,7 @@ struct Vector2f
 {
 	Vector2f();
 	Vector2f(f32 x, f32 y);
-	Vector2f(f32 scalar);
+	explicit Vector2f(f32 scalar);
 
 	f32 m_X;
 	f32 m_Y;

@@ -6,7 +6,7 @@ struct Vector3f
 {
     Vector3f();
     Vector3f(f32 x, f32 y, f32 z);
-    Vector3f(f32 scalar);
+    explicit Vector3f(f32 scalar);
 
     f32 m_X;
     f32 m_Y;
@@ -52,9 +52,16 @@ const Vector3f operator* (const Vector3f& left, const Vector3f& right);
 const Vector3f operator/ (const Vector3f& left, const Vector3f& right);
 
 const Vector3f operator+ (const Vector3f& left, f32 scalar);
+const Vector3f operator+ (f32 scalar, const Vector3f& right);
+
 const Vector3f operator- (const Vector3f& left, f32 scalar);
+const Vector3f operator- (f32 scalar, const Vector3f& right);
+
 const Vector3f operator* (const Vector3f& left, f32 scalar);
+const Vector3f operator* (f32 scalar, const Vector3f& right);
+
 const Vector3f operator/ (const Vector3f& left, f32 scalar);
+const Vector3f operator/ (f32 scalar, const Vector3f& right);
 
 struct Vector3i
 {

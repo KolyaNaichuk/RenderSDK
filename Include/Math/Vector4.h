@@ -6,7 +6,7 @@ struct Vector4f
 {
     Vector4f();
     Vector4f(f32 x, f32 y, f32 z, f32 w);
-    Vector4f(f32 scalar);
+    explicit Vector4f(f32 scalar);
         
     f32 m_X;
     f32 m_Y;
@@ -46,9 +46,16 @@ const Vector4f operator* (const Vector4f& left, const Vector4f& right);
 const Vector4f operator/ (const Vector4f& left, const Vector4f& right);
 
 const Vector4f operator+ (const Vector4f& left, f32 scalar);
+const Vector4f operator+ (f32 scalar, const Vector4f& right);
+
 const Vector4f operator- (const Vector4f& left, f32 scalar);
+const Vector4f operator- (f32 scalar, const Vector4f& right);
+
 const Vector4f operator* (const Vector4f& left, f32 scalar);
+const Vector4f operator* (f32 scalar, const Vector4f& right);
+
 const Vector4f operator/ (const Vector4f& left, f32 scalar);
+const Vector4f operator/ (f32 scalar, const Vector4f& right);
 
 struct Vector4i
 {
