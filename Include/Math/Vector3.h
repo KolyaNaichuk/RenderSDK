@@ -4,8 +4,8 @@
 
 struct Vector3f
 {
-    Vector3f();
-    Vector3f(f32 x, f32 y, f32 z);
+	explicit Vector3f();
+	explicit Vector3f(f32 x, f32 y, f32 z);
     explicit Vector3f(f32 scalar);
 
     f32 m_X;
@@ -36,38 +36,38 @@ const Vector3f Min(const Vector3f& vec1, const Vector3f& vec2);
 const Vector3f Max(const Vector3f& vec1, const Vector3f& vec2);
 bool IsNormalized(const Vector3f& vec, f32 epsilon = EPSILON);
 
-Vector3f& operator+= (Vector3f& left, const Vector3f& right);
-Vector3f& operator-= (Vector3f& left, const Vector3f& right);
-Vector3f& operator*= (Vector3f& left, const Vector3f& right);
-Vector3f& operator/= (Vector3f& left, const Vector3f& right);
+Vector3f& operator+= (Vector3f& vec1, const Vector3f& vec2);
+Vector3f& operator-= (Vector3f& vec1, const Vector3f& vec2);
+Vector3f& operator*= (Vector3f& vec1, const Vector3f& vec2);
+Vector3f& operator/= (Vector3f& vec1, const Vector3f& vec2);
 
-Vector3f& operator+= (Vector3f& left, f32 scalar);
-Vector3f& operator-= (Vector3f& left, f32 scalar);
-Vector3f& operator*= (Vector3f& left, f32 scalar);
-Vector3f& operator/= (Vector3f& left, f32 scalar);
+Vector3f& operator+= (Vector3f& vec, f32 scalar);
+Vector3f& operator-= (Vector3f& vec, f32 scalar);
+Vector3f& operator*= (Vector3f& vec, f32 scalar);
+Vector3f& operator/= (Vector3f& vec, f32 scalar);
 
-const Vector3f operator+ (const Vector3f& left, const Vector3f& right);
-const Vector3f operator- (const Vector3f& left, const Vector3f& right);
-const Vector3f operator* (const Vector3f& left, const Vector3f& right);
-const Vector3f operator/ (const Vector3f& left, const Vector3f& right);
+const Vector3f operator+ (const Vector3f& vec1, const Vector3f& vec2);
+const Vector3f operator- (const Vector3f& vec1, const Vector3f& vec2);
+const Vector3f operator* (const Vector3f& vec1, const Vector3f& vec2);
+const Vector3f operator/ (const Vector3f& vec1, const Vector3f& vec2);
 
-const Vector3f operator+ (const Vector3f& left, f32 scalar);
-const Vector3f operator+ (f32 scalar, const Vector3f& right);
+const Vector3f operator+ (const Vector3f& vec, f32 scalar);
+const Vector3f operator+ (f32 scalar, const Vector3f& vec);
 
-const Vector3f operator- (const Vector3f& left, f32 scalar);
-const Vector3f operator- (f32 scalar, const Vector3f& right);
+const Vector3f operator- (const Vector3f& vec, f32 scalar);
+const Vector3f operator- (f32 scalar, const Vector3f& vec);
 
-const Vector3f operator* (const Vector3f& left, f32 scalar);
-const Vector3f operator* (f32 scalar, const Vector3f& right);
+const Vector3f operator* (const Vector3f& vec, f32 scalar);
+const Vector3f operator* (f32 scalar, const Vector3f& vec);
 
-const Vector3f operator/ (const Vector3f& left, f32 scalar);
-const Vector3f operator/ (f32 scalar, const Vector3f& right);
+const Vector3f operator/ (const Vector3f& vec, f32 scalar);
+const Vector3f operator/ (f32 scalar, const Vector3f& vec);
 
 struct Vector3i
 {
-	Vector3i();
-	Vector3i(i32 x, i32 y, i32 z);
-	Vector3i(i32 scalar);
+	explicit Vector3i();
+	explicit Vector3i(i32 x, i32 y, i32 z);
+	explicit Vector3i(i32 scalar);
 
 	i32 m_X;
 	i32 m_Y;
@@ -85,9 +85,9 @@ struct Vector3i
 
 struct Vector3u
 {
-	Vector3u();
-	Vector3u(u32 x, u32 y, u32 z);
-	Vector3u(u32 scalar);
+	explicit Vector3u();
+	explicit Vector3u(u32 x, u32 y, u32 z);
+	explicit Vector3u(u32 scalar);
 
 	u32 m_X;
 	u32 m_Y;

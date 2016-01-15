@@ -95,128 +95,128 @@ bool IsNormalized(const Vector3f& vec, f32 epsilon)
 	return (Abs(1.0f - Length(vec)) < epsilon);
 }
 
-Vector3f& operator+= (Vector3f& left, const Vector3f& right)
+Vector3f& operator+= (Vector3f& vec1, const Vector3f& vec2)
 {
-    left.m_X += right.m_X;
-    left.m_Y += right.m_Y;
-    left.m_Z += right.m_Z;
-    return left;
+	vec1.m_X += vec2.m_X;
+	vec1.m_Y += vec2.m_Y;
+	vec1.m_Z += vec2.m_Z;
+    return vec1;
 }
 
-Vector3f& operator-= (Vector3f& left, const Vector3f& right)
+Vector3f& operator-= (Vector3f& vec1, const Vector3f& vec2)
 {
-    left.m_X -= right.m_X;
-    left.m_Y -= right.m_Y;
-    left.m_Z -= right.m_Z;
-    return left;
+	vec1.m_X -= vec2.m_X;
+	vec1.m_Y -= vec2.m_Y;
+	vec1.m_Z -= vec2.m_Z;
+    return vec1;
 }
 
-Vector3f& operator*= (Vector3f& left, const Vector3f& right)
+Vector3f& operator*= (Vector3f& vec1, const Vector3f& vec2)
 {
-    left.m_X *= right.m_X;
-    left.m_Y *= right.m_Y;
-    left.m_Z *= right.m_Z;
-    return left;
+	vec1.m_X *= vec2.m_X;
+	vec1.m_Y *= vec2.m_Y;
+	vec1.m_Z *= vec2.m_Z;
+    return vec1;
 }
 
-Vector3f& operator/= (Vector3f& left, const Vector3f& right)
+Vector3f& operator/= (Vector3f& vec1, const Vector3f& vec2)
 {
-    left.m_X /= right.m_X;
-    left.m_Y /= right.m_Y;
-    left.m_Z /= right.m_Z;
-    return left;
+	vec1.m_X /= vec2.m_X;
+	vec1.m_Y /= vec2.m_Y;
+	vec1.m_Z /= vec2.m_Z;
+    return vec1;
 }
 
-Vector3f& operator+= (Vector3f& left, f32 scalar)
+Vector3f& operator+= (Vector3f& vec, f32 scalar)
 {
-	left.m_X += scalar;
-	left.m_Y += scalar;
-	left.m_Z += scalar;
-    return left;
+	vec.m_X += scalar;
+	vec.m_Y += scalar;
+	vec.m_Z += scalar;
+    return vec;
 }
 
-Vector3f& operator-= (Vector3f& left, f32 scalar)
+Vector3f& operator-= (Vector3f& vec, f32 scalar)
 {
-	left.m_X -= scalar;
-	left.m_Y -= scalar;
-	left.m_Z -= scalar;
-    return left;
+	vec.m_X -= scalar;
+	vec.m_Y -= scalar;
+	vec.m_Z -= scalar;
+    return vec;
 }
 
-Vector3f& operator*= (Vector3f& left, f32 scalar)
+Vector3f& operator*= (Vector3f& vec, f32 scalar)
 {
-	left.m_X *= scalar;
-	left.m_Y *= scalar;
-	left.m_Z *= scalar;
-    return left;
+	vec.m_X *= scalar;
+	vec.m_Y *= scalar;
+	vec.m_Z *= scalar;
+    return vec;
 }
 
-Vector3f& operator/= (Vector3f& left, f32 scalar)
+Vector3f& operator/= (Vector3f& vec, f32 scalar)
 {
-	left.m_X /= scalar;
-	left.m_Y /= scalar;
-	left.m_Z /= scalar;
-    return left;
+	vec.m_X /= scalar;
+	vec.m_Y /= scalar;
+	vec.m_Z /= scalar;
+    return vec;
 }
 
-const Vector3f operator+ (const Vector3f& left, const Vector3f& right)
+const Vector3f operator+ (const Vector3f& vec1, const Vector3f& vec2)
 {
-    return (Vector3f(left) += right);
+    return Vector3f(vec1.m_X + vec2.m_X, vec1.m_Y + vec2.m_Y, vec1.m_Z + vec2.m_Z);
 }
 
-const Vector3f operator- (const Vector3f& left, const Vector3f& right)
+const Vector3f operator- (const Vector3f& vec1, const Vector3f& vec2)
 {
-    return (Vector3f(left) -= right);
+	return Vector3f(vec1.m_X - vec2.m_X, vec1.m_Y - vec2.m_Y, vec1.m_Z - vec2.m_Z);
 }
 
-const Vector3f operator* (const Vector3f& left, const Vector3f& right)
+const Vector3f operator* (const Vector3f& vec1, const Vector3f& vec2)
 {
-    return (Vector3f(left) *= right);
+	return Vector3f(vec1.m_X * vec2.m_X, vec1.m_Y * vec2.m_Y, vec1.m_Z * vec2.m_Z);
 }
 
-const Vector3f operator/ (const Vector3f& left, const Vector3f& right)
+const Vector3f operator/ (const Vector3f& vec1, const Vector3f& vec2)
 {
-    return (Vector3f(left) /= right);
+	return Vector3f(vec1.m_X / vec2.m_X, vec1.m_Y / vec2.m_Y, vec1.m_Z / vec2.m_Z);
 }
 
-const Vector3f operator+ (const Vector3f& left, f32 scalar)
+const Vector3f operator+ (const Vector3f& vec, f32 scalar)
 {
-    return (Vector3f(left) += scalar);
+    return Vector3f(vec.m_X + scalar, vec.m_Y + scalar, vec.m_Z + scalar);
 }
 
-const Vector3f operator+ (f32 scalar, const Vector3f& right)
+const Vector3f operator+ (f32 scalar, const Vector3f& vec)
 {
-	return (right + scalar);
+	return Vector3f(scalar + vec.m_X, scalar + vec.m_Y, scalar + vec.m_Z);
 }
 
-const Vector3f operator- (const Vector3f& left, f32 scalar)
+const Vector3f operator- (const Vector3f& vec, f32 scalar)
 {
-    return (Vector3f(left) -= scalar);
+    return Vector3f(vec.m_X - scalar, vec.m_Y - scalar, vec.m_Z - scalar);
 }
 
-const Vector3f operator- (f32 scalar, const Vector3f& right)
+const Vector3f operator- (f32 scalar, const Vector3f& vec)
 {
-	return (Vector3f(scalar) - right);
+	return Vector3f(scalar - vec.m_X, scalar - vec.m_Y, scalar - vec.m_Z);
 }
 
-const Vector3f operator* (const Vector3f& left, f32 scalar)
+const Vector3f operator* (const Vector3f& vec, f32 scalar)
 {
-    return (Vector3f(left) *= scalar);
+    return Vector3f(vec.m_X * scalar, vec.m_Y * scalar, vec.m_Z * scalar);
 }
 
-const Vector3f operator* (f32 scalar, const Vector3f& right)
+const Vector3f operator* (f32 scalar, const Vector3f& vec)
 {
-	return (right * scalar);
+	return Vector3f(scalar * vec.m_X, scalar * vec.m_Y, scalar * vec.m_Z);
 }
 
-const Vector3f operator/ (const Vector3f& left, f32 scalar)
+const Vector3f operator/ (const Vector3f& vec, f32 scalar)
 {
-    return (Vector3f(left) /= scalar);
+    return Vector3f(vec.m_X / scalar, vec.m_Y / scalar, vec.m_Z / scalar);
 }
 
-const Vector3f operator/ (f32 scalar, const Vector3f& right)
+const Vector3f operator/ (f32 scalar, const Vector3f& vec)
 {
-	return (Vector3f(scalar) / right);
+	return Vector3f(scalar / vec.m_X, scalar / vec.m_Y, scalar / vec.m_Z);
 }
 
 const Vector3i Vector3i::ONE(1, 1, 1);
