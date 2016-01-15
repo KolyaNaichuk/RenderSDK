@@ -45,219 +45,230 @@ Matrix4f::Matrix4f(f32 scalar00, f32 scalar01, f32 scalar02, f32 scalar03,
 {
 }
 
-Matrix4f& operator+= (Matrix4f& left, const Matrix4f& right)
+const Matrix4f Matrix4f::operator- () const
 {
-    left.m_00 += right.m_00;
-    left.m_01 += right.m_01;
-    left.m_02 += right.m_02;
-    left.m_03 += right.m_03;
-
-    left.m_10 += right.m_10;
-    left.m_11 += right.m_11;
-    left.m_12 += right.m_12;
-    left.m_13 += right.m_13;
-
-    left.m_20 += right.m_20;
-    left.m_21 += right.m_21;
-    left.m_22 += right.m_22;
-    left.m_23 += right.m_23;
-
-    left.m_30 += right.m_30;
-    left.m_31 += right.m_31;
-    left.m_32 += right.m_32;
-    left.m_33 += right.m_33;
-
-    return left;
+	return Matrix4f(-m_00, -m_01, -m_02, -m_03,
+					-m_10, -m_11, -m_12, -m_13,
+					-m_20, -m_21, -m_22, -m_23,
+					-m_30, -m_31, -m_32, -m_33);
 }
 
-Matrix4f& operator-= (Matrix4f& left, const Matrix4f& right)
+Matrix4f& operator+= (Matrix4f& matrix1, const Matrix4f& matrix2)
 {
-    left.m_00 -= right.m_00;
-    left.m_01 -= right.m_01;
-    left.m_02 -= right.m_02;
-    left.m_03 -= right.m_03;
+	matrix1.m_00 += matrix2.m_00;
+	matrix1.m_01 += matrix2.m_01;
+	matrix1.m_02 += matrix2.m_02;
+	matrix1.m_03 += matrix2.m_03;
 
-    left.m_10 -= right.m_10;
-    left.m_11 -= right.m_11;
-    left.m_12 -= right.m_12;
-    left.m_13 -= right.m_13;
+	matrix1.m_10 += matrix2.m_10;
+	matrix1.m_11 += matrix2.m_11;
+	matrix1.m_12 += matrix2.m_12;
+	matrix1.m_13 += matrix2.m_13;
 
-    left.m_20 -= right.m_20;
-    left.m_21 -= right.m_21;
-    left.m_22 -= right.m_22;
-    left.m_23 -= right.m_23;
+	matrix1.m_20 += matrix2.m_20;
+	matrix1.m_21 += matrix2.m_21;
+	matrix1.m_22 += matrix2.m_22;
+	matrix1.m_23 += matrix2.m_23;
 
-    left.m_30 -= right.m_30;
-    left.m_31 -= right.m_31;
-    left.m_32 -= right.m_32;
-    left.m_33 -= right.m_33;
+	matrix1.m_30 += matrix2.m_30;
+	matrix1.m_31 += matrix2.m_31;
+	matrix1.m_32 += matrix2.m_32;
+	matrix1.m_33 += matrix2.m_33;
 
-    return left;
+    return matrix1;
 }
 
-Matrix4f& operator*= (Matrix4f& left, const Matrix4f& right)
+Matrix4f& operator-= (Matrix4f& matrix1, const Matrix4f& matrix2)
 {
-    f32 m_00 = left.m_00 * right.m_00 + left.m_01 * right.m_10 + left.m_02 * right.m_20 + left.m_03 * right.m_30;
-    f32 m_01 = left.m_00 * right.m_01 + left.m_01 * right.m_11 + left.m_02 * right.m_21 + left.m_03 * right.m_31;
-    f32 m_02 = left.m_00 * right.m_02 + left.m_01 * right.m_12 + left.m_02 * right.m_22 + left.m_03 * right.m_32;
-    f32 m_03 = left.m_00 * right.m_03 + left.m_01 * right.m_13 + left.m_02 * right.m_23 + left.m_03 * right.m_33;
+	matrix1.m_00 -= matrix2.m_00;
+	matrix1.m_01 -= matrix2.m_01;
+	matrix1.m_02 -= matrix2.m_02;
+	matrix1.m_03 -= matrix2.m_03;
+
+	matrix1.m_10 -= matrix2.m_10;
+	matrix1.m_11 -= matrix2.m_11;
+	matrix1.m_12 -= matrix2.m_12;
+	matrix1.m_13 -= matrix2.m_13;
+
+	matrix1.m_20 -= matrix2.m_20;
+	matrix1.m_21 -= matrix2.m_21;
+	matrix1.m_22 -= matrix2.m_22;
+	matrix1.m_23 -= matrix2.m_23;
+
+	matrix1.m_30 -= matrix2.m_30;
+	matrix1.m_31 -= matrix2.m_31;
+	matrix1.m_32 -= matrix2.m_32;
+	matrix1.m_33 -= matrix2.m_33;
+
+    return matrix1;
+}
+
+Matrix4f& operator*= (Matrix4f& matrix1, const Matrix4f& matrix2)
+{
+    f32 m00 = matrix1.m_00 * matrix2.m_00 + matrix1.m_01 * matrix2.m_10 + matrix1.m_02 * matrix2.m_20 + matrix1.m_03 * matrix2.m_30;
+    f32 m01 = matrix1.m_00 * matrix2.m_01 + matrix1.m_01 * matrix2.m_11 + matrix1.m_02 * matrix2.m_21 + matrix1.m_03 * matrix2.m_31;
+    f32 m02 = matrix1.m_00 * matrix2.m_02 + matrix1.m_01 * matrix2.m_12 + matrix1.m_02 * matrix2.m_22 + matrix1.m_03 * matrix2.m_32;
+    f32 m03 = matrix1.m_00 * matrix2.m_03 + matrix1.m_01 * matrix2.m_13 + matrix1.m_02 * matrix2.m_23 + matrix1.m_03 * matrix2.m_33;
         
-    f32 m_10 = left.m_10 * right.m_00 + left.m_11 * right.m_10 + left.m_12 * right.m_20 + left.m_13 * right.m_30;
-    f32 m_11 = left.m_10 * right.m_01 + left.m_11 * right.m_11 + left.m_12 * right.m_21 + left.m_13 * right.m_31;
-    f32 m_12 = left.m_10 * right.m_02 + left.m_11 * right.m_12 + left.m_12 * right.m_22 + left.m_13 * right.m_32;
-    f32 m_13 = left.m_10 * right.m_03 + left.m_11 * right.m_13 + left.m_12 * right.m_23 + left.m_13 * right.m_33;
+    f32 m10 = matrix1.m_10 * matrix2.m_00 + matrix1.m_11 * matrix2.m_10 + matrix1.m_12 * matrix2.m_20 + matrix1.m_13 * matrix2.m_30;
+    f32 m11 = matrix1.m_10 * matrix2.m_01 + matrix1.m_11 * matrix2.m_11 + matrix1.m_12 * matrix2.m_21 + matrix1.m_13 * matrix2.m_31;
+    f32 m12 = matrix1.m_10 * matrix2.m_02 + matrix1.m_11 * matrix2.m_12 + matrix1.m_12 * matrix2.m_22 + matrix1.m_13 * matrix2.m_32;
+    f32 m13 = matrix1.m_10 * matrix2.m_03 + matrix1.m_11 * matrix2.m_13 + matrix1.m_12 * matrix2.m_23 + matrix1.m_13 * matrix2.m_33;
 
-    f32 m_20 = left.m_20 * right.m_00 + left.m_21 * right.m_10 + left.m_22 * right.m_20 + left.m_23 * right.m_30;
-    f32 m_21 = left.m_20 * right.m_01 + left.m_21 * right.m_11 + left.m_22 * right.m_21 + left.m_23 * right.m_31;
-    f32 m_22 = left.m_20 * right.m_02 + left.m_21 * right.m_12 + left.m_22 * right.m_22 + left.m_23 * right.m_32;
-    f32 m_23 = left.m_20 * right.m_03 + left.m_21 * right.m_13 + left.m_22 * right.m_23 + left.m_23 * right.m_33;
+    f32 m20 = matrix1.m_20 * matrix2.m_00 + matrix1.m_21 * matrix2.m_10 + matrix1.m_22 * matrix2.m_20 + matrix1.m_23 * matrix2.m_30;
+    f32 m21 = matrix1.m_20 * matrix2.m_01 + matrix1.m_21 * matrix2.m_11 + matrix1.m_22 * matrix2.m_21 + matrix1.m_23 * matrix2.m_31;
+    f32 m22 = matrix1.m_20 * matrix2.m_02 + matrix1.m_21 * matrix2.m_12 + matrix1.m_22 * matrix2.m_22 + matrix1.m_23 * matrix2.m_32;
+    f32 m23 = matrix1.m_20 * matrix2.m_03 + matrix1.m_21 * matrix2.m_13 + matrix1.m_22 * matrix2.m_23 + matrix1.m_23 * matrix2.m_33;
 
-    f32 m_30 = left.m_30 * right.m_00 + left.m_31 * right.m_10 + left.m_32 * right.m_20 + left.m_33 * right.m_30;
-    f32 m_31 = left.m_30 * right.m_01 + left.m_31 * right.m_11 + left.m_32 * right.m_21 + left.m_33 * right.m_31;
-    f32 m_32 = left.m_30 * right.m_02 + left.m_31 * right.m_12 + left.m_32 * right.m_22 + left.m_33 * right.m_32;
-    f32 m_33 = left.m_30 * right.m_03 + left.m_31 * right.m_13 + left.m_32 * right.m_23 + left.m_33 * right.m_33;
+    f32 m30 = matrix1.m_30 * matrix2.m_00 + matrix1.m_31 * matrix2.m_10 + matrix1.m_32 * matrix2.m_20 + matrix1.m_33 * matrix2.m_30;
+    f32 m31 = matrix1.m_30 * matrix2.m_01 + matrix1.m_31 * matrix2.m_11 + matrix1.m_32 * matrix2.m_21 + matrix1.m_33 * matrix2.m_31;
+    f32 m32 = matrix1.m_30 * matrix2.m_02 + matrix1.m_31 * matrix2.m_12 + matrix1.m_32 * matrix2.m_22 + matrix1.m_33 * matrix2.m_32;
+    f32 m33 = matrix1.m_30 * matrix2.m_03 + matrix1.m_31 * matrix2.m_13 + matrix1.m_32 * matrix2.m_23 + matrix1.m_33 * matrix2.m_33;
 
-    left.m_00 = m_00;
-    left.m_01 = m_01;
-    left.m_02 = m_02;
-    left.m_03 = m_03;
+	matrix1.m_00 = m00;
+	matrix1.m_01 = m01;
+	matrix1.m_02 = m02;
+	matrix1.m_03 = m03;
 
-    left.m_10 = m_10;
-    left.m_11 = m_11;
-    left.m_12 = m_12;
-    left.m_13 = m_13;
+	matrix1.m_10 = m10;
+	matrix1.m_11 = m11;
+	matrix1.m_12 = m12;
+	matrix1.m_13 = m13;
 
-    left.m_20 = m_20;
-    left.m_21 = m_21;
-    left.m_22 = m_22;
-    left.m_23 = m_23;
+	matrix1.m_20 = m20;
+	matrix1.m_21 = m21;
+	matrix1.m_22 = m22;
+	matrix1.m_23 = m23;
 
-    left.m_30 = m_30;
-    left.m_31 = m_31;
-    left.m_32 = m_32;
-    left.m_33 = m_33;
+	matrix1.m_30 = m30;
+	matrix1.m_31 = m31;
+	matrix1.m_32 = m32;
+	matrix1.m_33 = m33;
 
-    return left;
+    return matrix1;
 }
 
-Matrix4f& operator+= (Matrix4f& left, f32 scalar)
+Matrix4f& operator+= (Matrix4f& matrix, f32 scalar)
 {
-    left.m_00 += scalar;
-    left.m_01 += scalar;
-    left.m_02 += scalar;
-    left.m_03 += scalar;
+	matrix.m_00 += scalar;
+	matrix.m_01 += scalar;
+	matrix.m_02 += scalar;
+	matrix.m_03 += scalar;
 
-    left.m_10 += scalar;
-    left.m_11 += scalar;
-    left.m_12 += scalar;
-    left.m_13 += scalar;
+	matrix.m_10 += scalar;
+	matrix.m_11 += scalar;
+	matrix.m_12 += scalar;
+	matrix.m_13 += scalar;
 
-    left.m_20 += scalar;
-    left.m_21 += scalar;
-    left.m_22 += scalar;
-    left.m_23 += scalar;
+	matrix.m_20 += scalar;
+	matrix.m_21 += scalar;
+	matrix.m_22 += scalar;
+	matrix.m_23 += scalar;
 
-    left.m_30 += scalar;
-    left.m_31 += scalar;
-    left.m_32 += scalar;
-    left.m_33 += scalar;
+	matrix.m_30 += scalar;
+	matrix.m_31 += scalar;
+	matrix.m_32 += scalar;
+	matrix.m_33 += scalar;
 
-    return left;
+    return matrix;
 }
 
-Matrix4f& operator-= (Matrix4f& left, f32 scalar)
+Matrix4f& operator-= (Matrix4f& matrix, f32 scalar)
 {
-    left.m_00 -= scalar;
-    left.m_01 -= scalar;
-    left.m_02 -= scalar;
-    left.m_03 -= scalar;
+	matrix.m_00 -= scalar;
+	matrix.m_01 -= scalar;
+	matrix.m_02 -= scalar;
+	matrix.m_03 -= scalar;
 
-    left.m_10 -= scalar;
-    left.m_11 -= scalar;
-    left.m_12 -= scalar;
-    left.m_13 -= scalar;
+	matrix.m_10 -= scalar;
+	matrix.m_11 -= scalar;
+	matrix.m_12 -= scalar;
+	matrix.m_13 -= scalar;
 
-    left.m_20 -= scalar;
-    left.m_21 -= scalar;
-    left.m_22 -= scalar;
-    left.m_23 -= scalar;
+	matrix.m_20 -= scalar;
+	matrix.m_21 -= scalar;
+	matrix.m_22 -= scalar;
+	matrix.m_23 -= scalar;
 
-    left.m_30 -= scalar;
-    left.m_31 -= scalar;
-    left.m_32 -= scalar;
-    left.m_33 -= scalar;
+	matrix.m_30 -= scalar;
+	matrix.m_31 -= scalar;
+	matrix.m_32 -= scalar;
+	matrix.m_33 -= scalar;
 
-    return left;
+    return matrix;
 }
 
-Matrix4f& operator*= (Matrix4f& left, f32 scalar)
+Matrix4f& operator*= (Matrix4f& matrix, f32 scalar)
 {
-    left.m_00 *= scalar;
-    left.m_01 *= scalar;
-    left.m_02 *= scalar;
-    left.m_03 *= scalar;
+	matrix.m_00 *= scalar;
+	matrix.m_01 *= scalar;
+	matrix.m_02 *= scalar;
+	matrix.m_03 *= scalar;
 
-    left.m_10 *= scalar;
-    left.m_11 *= scalar;
-    left.m_12 *= scalar;
-    left.m_13 *= scalar;
+	matrix.m_10 *= scalar;
+	matrix.m_11 *= scalar;
+	matrix.m_12 *= scalar;
+	matrix.m_13 *= scalar;
 
-    left.m_20 *= scalar;
-    left.m_21 *= scalar;
-    left.m_22 *= scalar;
-    left.m_23 *= scalar;
+	matrix.m_20 *= scalar;
+	matrix.m_21 *= scalar;
+	matrix.m_22 *= scalar;
+	matrix.m_23 *= scalar;
 
-    left.m_30 *= scalar;
-    left.m_31 *= scalar;
-    left.m_32 *= scalar;
-    left.m_33 *= scalar;
+	matrix.m_30 *= scalar;
+	matrix.m_31 *= scalar;
+	matrix.m_32 *= scalar;
+	matrix.m_33 *= scalar;
 
-    return left;
+    return matrix;
 }
 
-const Matrix4f operator+ (const Matrix4f& left, const Matrix4f& right)
+const Matrix4f operator+ (const Matrix4f& matrix1, const Matrix4f& matrix2)
 {
-    return (Matrix4f(left) += right);
+    return (Matrix4f(matrix1) += matrix2);
 }
 
-const Matrix4f operator- (const Matrix4f& left, const Matrix4f& right)
+const Matrix4f operator- (const Matrix4f& matrix1, const Matrix4f& matrix2)
 {
-    return (Matrix4f(left) -= right);
+    return (Matrix4f(matrix1) -= matrix2);
 }
 
-const Matrix4f operator* (const Matrix4f& left, const Matrix4f& right)
+const Matrix4f operator* (const Matrix4f& matrix1, const Matrix4f& matrix2)
 {
-    return (Matrix4f(left) *= right);
+    return (Matrix4f(matrix1) *= matrix2);
 }
 
-const Matrix4f operator+ (const Matrix4f& left, f32 scalar)
+const Matrix4f operator+ (const Matrix4f& matrix, f32 scalar)
 {
-    return (Matrix4f(left) += scalar);
+    return (Matrix4f(matrix) += scalar);
 }
 
-const Matrix4f operator+ (f32 scalar, const Matrix4f& right)
+const Matrix4f operator+ (f32 scalar, const Matrix4f& matrix)
 {
-	return (right + scalar);
+	return (Matrix4f(matrix) += scalar);
 }
 
-const Matrix4f operator- (const Matrix4f& left, f32 scalar)
+const Matrix4f operator- (const Matrix4f& matrix, f32 scalar)
 {
-    return (Matrix4f(left) -= scalar);
+    return (Matrix4f(matrix) -= scalar);
 }
 
-const Matrix4f operator- (f32 scalar, const Matrix4f& right)
+const Matrix4f operator- (f32 scalar, const Matrix4f& matrix)
 {
-	return (Matrix4f(scalar) -= right);
+	return Matrix4f(scalar - matrix.m_00, scalar - matrix.m_01, scalar - matrix.m_02, scalar - matrix.m_03,
+					scalar - matrix.m_10, scalar - matrix.m_11, scalar - matrix.m_12, scalar - matrix.m_13,
+					scalar - matrix.m_20, scalar - matrix.m_21, scalar - matrix.m_22, scalar - matrix.m_23,
+					scalar - matrix.m_30, scalar - matrix.m_31, scalar - matrix.m_32, scalar - matrix.m_33);
 }
 
-const Matrix4f operator* (const Matrix4f& left, f32 scalar)
+const Matrix4f operator* (const Matrix4f& matrix, f32 scalar)
 {
-    return (Matrix4f(left) *= scalar);
+    return (Matrix4f(matrix) *= scalar);
 }
 
-const Matrix4f operator* (f32 scalar, const Matrix4f& right)
+const Matrix4f operator* (f32 scalar, const Matrix4f& matrix)
 {
-	return (right * scalar);
+	return (Matrix4f(matrix) *= scalar);
 }
 
 const Matrix4f Transpose(const Matrix4f& matrix)
