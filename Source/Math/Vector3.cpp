@@ -26,6 +26,11 @@ Vector3f::Vector3f(f32 scalar)
 {
 }
 
+const Vector3f Vector3f::operator- () const
+{
+	return Vector3f(-m_X, -m_Y, -m_Z);
+}
+
 const Vector3f Abs(const Vector3f& vec)
 {
     return Vector3f(Abs(vec.m_X), Abs(vec.m_Y), Abs(vec.m_Z));
@@ -49,11 +54,6 @@ f32 LengthSquared(const Vector3f& vec)
 const Vector3f Normalize(const Vector3f& vec)
 {
     return (Rcp(Length(vec)) * vec);
-}
-
-const Vector3f Negate(const Vector3f& vec)
-{
-    return (-1.0f * vec);
 }
 
 const Vector3f Rcp(const Vector3f& vec)
@@ -243,6 +243,11 @@ Vector3i::Vector3i(i32 x, i32 y, i32 z)
 Vector3i::Vector3i(i32 scalar)
 	: Vector3i(scalar, scalar, scalar)
 {
+}
+
+const Vector3i Vector3i::operator- () const
+{
+	return Vector3i(-m_X, -m_Y, -m_Z);
 }
 
 const Vector3u Vector3u::ONE(1, 1, 1);

@@ -8,6 +8,8 @@ struct Vector3f
 	explicit Vector3f(f32 x, f32 y, f32 z);
     explicit Vector3f(f32 scalar);
 
+	const Vector3f operator- () const;
+
     f32 m_X;
     f32 m_Y;
     f32 m_Z;
@@ -27,7 +29,6 @@ const Vector3f Sqrt(const Vector3f& vec);
 f32 Length(const Vector3f& vec);
 f32 LengthSquared(const Vector3f& vec);
 const Vector3f Normalize(const Vector3f& vec);
-const Vector3f Negate(const Vector3f& vec);
 const Vector3f Rcp(const Vector3f& vec);
 f32 Dot(const Vector3f& vec1, const Vector3f& vec2);
 const Vector3f Cross(const Vector3f& vec1, const Vector3f& vec2);
@@ -68,6 +69,8 @@ struct Vector3i
 	explicit Vector3i();
 	explicit Vector3i(i32 x, i32 y, i32 z);
 	explicit Vector3i(i32 scalar);
+
+	const Vector3i operator- () const;
 
 	i32 m_X;
 	i32 m_Y;
