@@ -4,10 +4,12 @@
 
 struct Vector4f
 {
-    Vector4f();
-    Vector4f(f32 x, f32 y, f32 z, f32 w);
+	explicit Vector4f();
+	explicit Vector4f(f32 x, f32 y, f32 z, f32 w);
     explicit Vector4f(f32 scalar);
-        
+    
+	const Vector4f operator- () const;
+
     f32 m_X;
     f32 m_Y;
     f32 m_Z;
@@ -22,7 +24,6 @@ const Vector4f Sqrt(const Vector4f& vec);
 f32 Length(const Vector4f& vec);
 f32 LengthSquared(const Vector4f& vec);
 const Vector4f Normalize(const Vector4f& vec);
-const Vector4f Negate(const Vector4f& vec);
 const Vector4f Rcp(const Vector4f& vec);
 f32 Dot(const Vector4f& vec1, const Vector4f& vec2);
 bool IsEqual(const Vector4f& vec1, const Vector4f& vec2, f32 epsilon = EPSILON);
@@ -30,38 +31,40 @@ const Vector4f Min(const Vector4f& vec1, const Vector4f& vec2);
 const Vector4f Max(const Vector4f& vec1, const Vector4f& vec2);
 bool IsNormalized(const Vector4f& vec, f32 epsilon = EPSILON);
 
-Vector4f& operator+= (Vector4f& left, const Vector4f& right);
-Vector4f& operator-= (Vector4f& left, const Vector4f& right);
-Vector4f& operator*= (Vector4f& left, const Vector4f& right);
-Vector4f& operator/= (Vector4f& left, const Vector4f& right);
+Vector4f& operator+= (Vector4f& vec1, const Vector4f& vec2);
+Vector4f& operator-= (Vector4f& vec1, const Vector4f& vec2);
+Vector4f& operator*= (Vector4f& vec1, const Vector4f& vec2);
+Vector4f& operator/= (Vector4f& vec1, const Vector4f& vec2);
 
-Vector4f& operator+= (Vector4f& left, f32 scalar);
-Vector4f& operator-= (Vector4f& left, f32 scalar);
-Vector4f& operator*= (Vector4f& left, f32 scalar);
-Vector4f& operator/= (Vector4f& left, f32 scalar);
+Vector4f& operator+= (Vector4f& vec, f32 scalar);
+Vector4f& operator-= (Vector4f& vec, f32 scalar);
+Vector4f& operator*= (Vector4f& vec, f32 scalar);
+Vector4f& operator/= (Vector4f& vec, f32 scalar);
 
-const Vector4f operator+ (const Vector4f& left, const Vector4f& right);
-const Vector4f operator- (const Vector4f& left, const Vector4f& right);
-const Vector4f operator* (const Vector4f& left, const Vector4f& right);
-const Vector4f operator/ (const Vector4f& left, const Vector4f& right);
+const Vector4f operator+ (const Vector4f& vec1, const Vector4f& vec2);
+const Vector4f operator- (const Vector4f& vec1, const Vector4f& vec2);
+const Vector4f operator* (const Vector4f& vec1, const Vector4f& vec2);
+const Vector4f operator/ (const Vector4f& vec1, const Vector4f& vec2);
 
-const Vector4f operator+ (const Vector4f& left, f32 scalar);
-const Vector4f operator+ (f32 scalar, const Vector4f& right);
+const Vector4f operator+ (const Vector4f& vec, f32 scalar);
+const Vector4f operator+ (f32 scalar, const Vector4f& vec);
 
-const Vector4f operator- (const Vector4f& left, f32 scalar);
+const Vector4f operator- (const Vector4f& vec, f32 scalar);
 const Vector4f operator- (f32 scalar, const Vector4f& right);
 
-const Vector4f operator* (const Vector4f& left, f32 scalar);
-const Vector4f operator* (f32 scalar, const Vector4f& right);
+const Vector4f operator* (const Vector4f& vec, f32 scalar);
+const Vector4f operator* (f32 scalar, const Vector4f& vec);
 
-const Vector4f operator/ (const Vector4f& left, f32 scalar);
-const Vector4f operator/ (f32 scalar, const Vector4f& right);
+const Vector4f operator/ (const Vector4f& vec, f32 scalar);
+const Vector4f operator/ (f32 scalar, const Vector4f& vec);
 
 struct Vector4i
 {
-	Vector4i();
-	Vector4i(i32 x, i32 y, i32 z, i32 w);
-	Vector4i(i32 scalar);
+	explicit Vector4i();
+	explicit Vector4i(i32 x, i32 y, i32 z, i32 w);
+	explicit Vector4i(i32 scalar);
+
+	const Vector4i operator- () const;
 
 	i32 m_X;
 	i32 m_Y;
@@ -74,9 +77,9 @@ struct Vector4i
 
 struct Vector4u
 {
-	Vector4u();
-	Vector4u(u32 x, u32 y, u32 z, u32 w);
-	Vector4u(u32 scalar);
+	explicit Vector4u();
+	explicit Vector4u(u32 x, u32 y, u32 z, u32 w);
+	explicit Vector4u(u32 scalar);
 
 	u32 m_X;
 	u32 m_Y;

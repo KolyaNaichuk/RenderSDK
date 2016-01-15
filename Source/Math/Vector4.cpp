@@ -21,6 +21,11 @@ Vector4f::Vector4f(f32 scalar)
 {
 }
 
+const Vector4f Vector4f::operator- () const
+{
+	return Vector4f(-m_X, -m_Y, -m_Z, -m_W);
+}
+
 const Vector4f Abs(const Vector4f& vec)
 {
     return Vector4f(Abs(vec.m_X), Abs(vec.m_Y), Abs(vec.m_Z), Abs(vec.m_W));
@@ -44,11 +49,6 @@ f32 LengthSquared(const Vector4f& vec)
 const Vector4f Normalize(const Vector4f& vec)
 {
     return (Rcp(Length(vec)) * vec);
-}
-
-const Vector4f Negate(const Vector4f& vec)
-{
-    return (-1.0f * vec);
 }
 
 const Vector4f Rcp(const Vector4f& vec)
@@ -84,136 +84,136 @@ bool IsNormalized(const Vector4f& vec, f32 epsilon)
 	return (Abs(1.0f - Length(vec)) < epsilon);
 }
 
-Vector4f& operator+= (Vector4f& left, const Vector4f& right)
+Vector4f& operator+= (Vector4f& vec1, const Vector4f& vec2)
 {
-    left.m_X += right.m_X;
-    left.m_Y += right.m_Y;
-    left.m_Z += right.m_Z;
-    left.m_W += right.m_W;
-    return left;
+	vec1.m_X += vec2.m_X;
+	vec1.m_Y += vec2.m_Y;
+	vec1.m_Z += vec2.m_Z;
+	vec1.m_W += vec2.m_W;
+    return vec1;
 }
 
-Vector4f& operator-= (Vector4f& left, const Vector4f& right)
+Vector4f& operator-= (Vector4f& vec1, const Vector4f& vec2)
 {
-    left.m_X -= right.m_X;
-    left.m_Y -= right.m_Y;
-    left.m_Z -= right.m_Z;
-    left.m_W -= right.m_W;
-    return left;
+	vec1.m_X -= vec2.m_X;
+	vec1.m_Y -= vec2.m_Y;
+	vec1.m_Z -= vec2.m_Z;
+	vec1.m_W -= vec2.m_W;
+    return vec1;
 }
 
-Vector4f& operator*= (Vector4f& left, const Vector4f& right)
+Vector4f& operator*= (Vector4f& vec1, const Vector4f& vec2)
 {
-    left.m_X *= right.m_X;
-    left.m_Y *= right.m_Y;
-    left.m_Z *= right.m_Z;
-    left.m_W *= right.m_W;
-    return left;
+	vec1.m_X *= vec2.m_X;
+	vec1.m_Y *= vec2.m_Y;
+	vec1.m_Z *= vec2.m_Z;
+	vec1.m_W *= vec2.m_W;
+    return vec1;
 }
 
-Vector4f& operator/= (Vector4f& left, const Vector4f& right)
+Vector4f& operator/= (Vector4f& vec1, const Vector4f& vec2)
 {
-    left.m_X /= right.m_X;
-    left.m_Y /= right.m_Y;
-    left.m_Z /= right.m_Z;
-    left.m_W /= right.m_W;
-    return left;
+	vec1.m_X /= vec2.m_X;
+	vec1.m_Y /= vec2.m_Y;
+	vec1.m_Z /= vec2.m_Z;
+	vec1.m_W /= vec2.m_W;
+    return vec1;
 }
 
-Vector4f& operator+= (Vector4f& left, f32 scalar)
+Vector4f& operator+= (Vector4f& vec, f32 scalar)
 {
-	left.m_X += scalar;
-	left.m_Y += scalar;
-	left.m_Z += scalar;
-	left.m_W += scalar;
-    return left;
+	vec.m_X += scalar;
+	vec.m_Y += scalar;
+	vec.m_Z += scalar;
+	vec.m_W += scalar;
+    return vec;
 }
 
-Vector4f& operator-= (Vector4f& left, f32 scalar)
+Vector4f& operator-= (Vector4f& vec, f32 scalar)
 {
-	left.m_X -= scalar;
-	left.m_Y -= scalar;
-	left.m_Z -= scalar;
-	left.m_W -= scalar;
-    return left;
+	vec.m_X -= scalar;
+	vec.m_Y -= scalar;
+	vec.m_Z -= scalar;
+	vec.m_W -= scalar;
+    return vec;
 }
 
-Vector4f& operator*= (Vector4f& left, f32 scalar)
+Vector4f& operator*= (Vector4f& vec, f32 scalar)
 {
-	left.m_X *= scalar;
-	left.m_Y *= scalar;
-	left.m_Z *= scalar;
-	left.m_W *= scalar;
-    return left;
+	vec.m_X *= scalar;
+	vec.m_Y *= scalar;
+	vec.m_Z *= scalar;
+	vec.m_W *= scalar;
+    return vec;
 }
 
-Vector4f& operator/= (Vector4f& left, f32 scalar)
+Vector4f& operator/= (Vector4f& vec, f32 scalar)
 {
-	left.m_X /= scalar;
-	left.m_Y /= scalar;
-	left.m_Z /= scalar;
-	left.m_W /= scalar;
-    return left;
+	vec.m_X /= scalar;
+	vec.m_Y /= scalar;
+	vec.m_Z /= scalar;
+	vec.m_W /= scalar;
+    return vec;
 }
 
-const Vector4f operator+ (const Vector4f& left, const Vector4f& right)
+const Vector4f operator+ (const Vector4f& vec1, const Vector4f& vec2)
 {
-    return (Vector4f(left) += right);
+    return Vector4f(vec1.m_X + vec2.m_X, vec1.m_Y + vec2.m_Y, vec1.m_Z + vec2.m_Z, vec1.m_W + vec2.m_W);
 }
 
-const Vector4f operator- (const Vector4f& left, const Vector4f& right)
+const Vector4f operator- (const Vector4f& vec1, const Vector4f& vec2)
 {
-    return (Vector4f(left) -= right);
+	return Vector4f(vec1.m_X - vec2.m_X, vec1.m_Y - vec2.m_Y, vec1.m_Z - vec2.m_Z, vec1.m_W - vec2.m_W);
 }
 
-const Vector4f operator* (const Vector4f& left, const Vector4f& right)
+const Vector4f operator* (const Vector4f& vec1, const Vector4f& vec2)
 {
-    return (Vector4f(left) *= right);
+	return Vector4f(vec1.m_X * vec2.m_X, vec1.m_Y * vec2.m_Y, vec1.m_Z * vec2.m_Z, vec1.m_W * vec2.m_W);
 }
 
-const Vector4f operator/ (const Vector4f& left, const Vector4f& right)
+const Vector4f operator/ (const Vector4f& vec1, const Vector4f& vec2)
 {
-    return (Vector4f(left) /= right);
+	return Vector4f(vec1.m_X / vec2.m_X, vec1.m_Y / vec2.m_Y, vec1.m_Z / vec2.m_Z, vec1.m_W / vec2.m_W);
 }
 
-const Vector4f operator+ (const Vector4f& left, f32 scalar)
+const Vector4f operator+ (const Vector4f& vec, f32 scalar)
 {
-    return (Vector4f(left) += scalar);
+    return Vector4f(vec.m_X + scalar, vec.m_Y + scalar, vec.m_Z + scalar, vec.m_W + scalar);
 }
 
-const Vector4f operator+ (f32 scalar, const Vector4f& right)
+const Vector4f operator+ (f32 scalar, const Vector4f& vec)
 {
-	return Vector4f(right + scalar);
+	return Vector4f(scalar + vec.m_X, scalar + vec.m_Y, scalar + vec.m_Z, scalar + vec.m_W);
 }
 
-const Vector4f operator- (const Vector4f& left, f32 scalar)
+const Vector4f operator- (const Vector4f& vec, f32 scalar)
 {
-    return (Vector4f(left) -= scalar);
+    return Vector4f(vec.m_X - scalar, vec.m_Y - scalar, vec.m_Z - scalar, vec.m_W - scalar);
 }
 
-const Vector4f operator- (f32 scalar, const Vector4f& right)
+const Vector4f operator- (f32 scalar, const Vector4f& vec)
 {
-	return (Vector4f(scalar) - right);
+	return Vector4f(scalar - vec.m_X, scalar - vec.m_Y, scalar - vec.m_Z, scalar - vec.m_W);
 }
 
-const Vector4f operator* (const Vector4f& left, f32 scalar)
+const Vector4f operator* (const Vector4f& vec, f32 scalar)
 {
-    return (Vector4f(left) *= scalar);
+	return Vector4f(vec.m_X * scalar, vec.m_Y * scalar, vec.m_Z * scalar, vec.m_W * scalar);
 }
 
-const Vector4f operator* (f32 scalar, const Vector4f& right)
+const Vector4f operator* (f32 scalar, const Vector4f& vec)
 {
-	return (right * scalar);
+	return Vector4f(scalar * vec.m_X, scalar * vec.m_Y, scalar * vec.m_Z, scalar * vec.m_W);
 }
 
-const Vector4f operator/ (const Vector4f& left, f32 scalar)
+const Vector4f operator/ (const Vector4f& vec, f32 scalar)
 {
-    return (Vector4f(left) /= scalar);
+    return Vector4f(vec.m_X / scalar, vec.m_Y / scalar, vec.m_Z / scalar, vec.m_W / scalar);
 }
 
-const Vector4f operator/ (f32 scalar, const Vector4f& right)
+const Vector4f operator/ (f32 scalar, const Vector4f& vec)
 {
-	return (Vector4f(scalar) / right);
+	return Vector4f(scalar / vec.m_X, scalar / vec.m_Y, scalar / vec.m_Z, scalar / vec.m_W);
 }
 
 const Vector4i Vector4i::ONE(1, 1, 1, 1);
@@ -235,6 +235,11 @@ Vector4i::Vector4i(i32 x, i32 y, i32 z, i32 w)
 Vector4i::Vector4i(i32 scalar)
 	: Vector4i(scalar, scalar, scalar, scalar)
 {
+}
+
+const Vector4i Vector4i::operator- () const
+{
+	return Vector4i(-m_X, -m_Y, -m_Z, -m_W);
 }
 
 const Vector4u Vector4u::ONE(1, 1, 1, 1);
