@@ -165,24 +165,24 @@ void DXApplication::OnRender()
 	{
 		m_pCopyTextureRecorder->Record(m_pCommandList, pCommandAllocator,
 			pRenderTarget, m_pRTVHeap->GetCPUDescriptor(m_BackBufferIndex),
-			m_pSRVHeap->GetDXObject(), m_pHDRTexture, m_pSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
-			m_pSamplerHeap->GetDXObject(), m_pSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
+			m_pSRVHeap, m_pHDRTexture, m_pSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
+			m_pSamplerHeap, m_pSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
 			&rtvEndState);
 	}
 	else if (m_DisplayResult == DisplayResult_ImageLuminance)
 	{
 		m_CalcTextureLuminanceRecorder->Record(m_pCommandList, pCommandAllocator,
 			pRenderTarget, m_pRTVHeap->GetCPUDescriptor(m_BackBufferIndex),
-			m_pSRVHeap->GetDXObject(), m_pHDRTexture, m_pSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
-			m_pSamplerHeap->GetDXObject(), m_pSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
+			m_pSRVHeap, m_pHDRTexture, m_pSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
+			m_pSamplerHeap, m_pSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
 			&rtvEndState);
 	}
 	else if (m_DisplayResult == DisplayResult_ImageLogLuminance)
 	{
 		m_CalcTextureLogLuminanceRecorder->Record(m_pCommandList, pCommandAllocator,
 			pRenderTarget, m_pRTVHeap->GetCPUDescriptor(m_BackBufferIndex),
-			m_pSRVHeap->GetDXObject(), m_pHDRTexture, m_pSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
-			m_pSamplerHeap->GetDXObject(), m_pSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
+			m_pSRVHeap, m_pHDRTexture, m_pSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
+			m_pSamplerHeap, m_pSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
 			&rtvEndState);
 	}
 	

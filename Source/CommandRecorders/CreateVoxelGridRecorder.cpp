@@ -4,6 +4,7 @@
 #include "DX/DXCommandList.h"
 #include "DX/DXResource.h"
 #include "DX/DXUtils.h"
+#include "DX/DXDescriptorHeap.h"
 #include "Common/Mesh.h"
 #include "Common/MeshData.h"
 
@@ -101,7 +102,7 @@ void CreateVoxelGridRecorder::Record(CreateVoxelGridRecordParams* pParams)
 		
 	pParams->m_pCommandList->OMSetRenderTargets(0, nullptr);
 
-	pParams->m_pCommandList->SetDescriptorHeaps(pParams->m_NumDXDescriptorHeaps, &pParams->m_pDXFirstDescriptorHeap);
+	pParams->m_pCommandList->SetDescriptorHeaps(pParams->m_pCBVSRVUAVDescriptorHeap);
 	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kObjectTransformCBVRootParam, pParams->m_ObjectTransformCBVHandle);
 	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kCameraTransformCBVRootParam, pParams->m_CameraTransformCBVHandle);
 	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kGridConfigCBVRootParam, pParams->m_GridConfigCBVHandle);
@@ -126,6 +127,9 @@ void CreateVoxelGridRecorder::Record(CreateVoxelGridRecordParams* pParams)
 	assert(pParams->m_pMesh->GetNumSubMeshes() == 1);
 	const SubMeshData* pSubMeshData = pParams->m_pMesh->GetSubMeshes();
 	pParams->m_pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
-	
+
+	D3D12_GPU_DESCRIPTOR_HANDLE nullHandle = pParams->m_pCBVSRVUAVDescriptorHeap->GetGPUDescriptor(0);
+	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kGridBufferUAVRootParam, nullHandle);
+
 	pParams->m_pCommandList->Close();
 }

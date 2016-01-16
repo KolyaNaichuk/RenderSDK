@@ -7,6 +7,7 @@ class DXCommandAllocator;
 class DXPipelineState;
 class DXRootSignature;
 class DXResource;
+class DXDescriptorHeap;
 
 struct DXViewport;
 struct DXRect;
@@ -31,7 +32,7 @@ public:
 	void SetComputeRootSignature(DXRootSignature* pRootSignature);
 	void SetComputeRootDescriptorTable(UINT rootParameterIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle);
 
-	void SetDescriptorHeaps(UINT numDescriptorHeaps, ID3D12DescriptorHeap** pDescriptorHeaps);
+	void SetDescriptorHeaps(DXDescriptorHeap* pCBVSRVUAVDescriptorHeap, DXDescriptorHeap* pSamplerDescriptorHeap = nullptr);
 
 	void RSSetViewports(UINT numViewports, const DXViewport* pViewports);
 	void RSSetScissorRects(UINT numRects, const DXRect* pRects);

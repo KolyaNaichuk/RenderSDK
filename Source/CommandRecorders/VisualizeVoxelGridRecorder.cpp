@@ -3,6 +3,7 @@
 #include "DX/DXRootSignature.h"
 #include "DX/DXCommandList.h"
 #include "DX/DXResource.h"
+#include "DX/DXDescriptorHeap.h"
 #include "DX/DXUtils.h"
 
 enum RootParams
@@ -61,7 +62,7 @@ void VisualizeVoxelGridRecorder::Record(VisualizeVoxelGridRecordParams* pParams)
 	if (pParams->m_pDepthTexture->GetState() != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
 		pParams->m_pCommandList->TransitionBarrier(pParams->m_pDepthTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	pParams->m_pCommandList->SetDescriptorHeaps(pParams->m_NumDXDescriptorHeaps, &pParams->m_pDXFirstDescriptorHeap);
+	pParams->m_pCommandList->SetDescriptorHeaps(pParams->m_pCBVSRVUAVDescriptorHeap);
 	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kGridConfigCBVRootParam, pParams->m_GridConfigCBVHandle);
 	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kTransformCBVHandleRootParam, pParams->m_TransformCBVHandle);
 	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kDepthSRVRootParam, pParams->m_DepthSRVHandle);
@@ -86,6 +87,10 @@ void VisualizeVoxelGridRecorder::Record(VisualizeVoxelGridRecordParams* pParams)
 
 	if (pParams->m_pRenderTargetEndState != nullptr)
 		pParams->m_pCommandList->TransitionBarrier(pParams->m_pRenderTarget, *pParams->m_pRenderTargetEndState);
+
+	D3D12_GPU_DESCRIPTOR_HANDLE nullHandle = pParams->m_pCBVSRVUAVDescriptorHeap->GetGPUDescriptor(0);
+	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kDepthSRVRootParam, nullHandle);
+	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kGridBufferSRVRootParam, nullHandle);
 
 	pParams->m_pCommandList->Close();
 }

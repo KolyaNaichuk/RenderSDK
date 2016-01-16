@@ -2,6 +2,7 @@
 #include "DX/DXCommandList.h"
 #include "DX/DXPipelineState.h"
 #include "DX/DXRootSignature.h"
+#include "DX/DXDescriptorHeap.h"
 #include "DX/DXResource.h"
 #include "Math/Math.h"
 
@@ -71,10 +72,14 @@ void ClearVoxelGridRecorder::Record(ClearVoxelGridRecordParams* pParams)
 	if (pParams->m_pGridBuffer->GetState() != D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
 		pParams->m_pCommandList->TransitionBarrier(pParams->m_pGridBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-	pParams->m_pCommandList->SetDescriptorHeaps(pParams->m_NumDXDescriptorHeaps, &pParams->m_pDXFirstDescriptorHeap);
+	pParams->m_pCommandList->SetDescriptorHeaps(pParams->m_pCBVSRVUAVDescriptorHeap);
 	pParams->m_pCommandList->SetComputeRootDescriptorTable(kGridBufferUAVRootParam, pParams->m_GridBufferUAVHandle);
 	pParams->m_pCommandList->SetComputeRootDescriptorTable(kGridConfigCBVRootParam, pParams->m_GridConfigCBVHandle);
 
 	pParams->m_pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, m_NumThreadGroupsZ);
+
+	D3D12_GPU_DESCRIPTOR_HANDLE nullHandle = pParams->m_pCBVSRVUAVDescriptorHeap->GetGPUDescriptor(0);
+	pParams->m_pCommandList->SetComputeRootDescriptorTable(kGridBufferUAVRootParam, nullHandle);
+
 	pParams->m_pCommandList->Close();
 }

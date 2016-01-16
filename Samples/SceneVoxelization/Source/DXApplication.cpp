@@ -45,7 +45,8 @@ enum DSVHeapHandles
 
 enum CBVSRVUAVHeapHandles
 {
-	kObjectTransformCBVHandle = 0,
+	kNullHandle = 0,
+	kObjectTransformCBVHandle,
 	kCameraTransformCBVHandle,
 	kGridConfigCBVHandle,
 	kGridBufferUAVHandle,
@@ -442,6 +443,13 @@ void DXApplication::OnInit()
 	const Quaternion& mainCameraRotation = m_pCamera->GetTransform().GetRotation();
 	const Matrix4f mainViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
 
+	ObjectTransform objectTransform;
+	objectTransform.m_WorldPosMatrix = Matrix4f::IDENTITY;
+	objectTransform.m_WorldNormalMatrix = Matrix4f::IDENTITY;
+	objectTransform.m_WorldViewProjMatrix = mainViewProjMatrix;
+
+	m_pObjectTransformBuffer->Write(&objectTransform, sizeof(objectTransform));
+
 	const BasisAxes mainCameraBasis = ExtractBasisAxes(mainCameraRotation);
 	assert(IsNormalized(mainCameraBasis.m_XAxis));
 	assert(IsNormalized(mainCameraBasis.m_YAxis));
@@ -467,17 +475,17 @@ void DXApplication::OnInit()
 	xAxisCamera.SetSizeY(gridSize.m_Y);
 	xAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_X * mainCameraBasis.m_XAxis);
 	xAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationYQuaternion(Radian(PI_DIV_TWO)));
-		
+
 	Camera yAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_Y, gridSize.m_X / gridSize.m_Z);
 	yAxisCamera.SetSizeY(gridSize.m_Z);
 	yAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_Y * mainCameraBasis.m_YAxis);
 	yAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationXQuaternion(Radian(-PI_DIV_TWO)));
-		
+
 	Camera zAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_Z, gridSize.m_X / gridSize.m_Y);
 	zAxisCamera.SetSizeY(gridSize.m_Y);
 	zAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_Z * mainCameraBasis.m_ZAxis);
 	zAxisCamera.GetTransform().SetRotation(mainCameraRotation);
-	
+
 	CameraTransform cameraTransform;
 	cameraTransform.m_ViewProjInvMatrix = Inverse(mainViewProjMatrix);
 	cameraTransform.m_ViewProjMatrices[0] = xAxisCamera.GetViewMatrix() * xAxisCamera.GetProjMatrix();
@@ -485,13 +493,6 @@ void DXApplication::OnInit()
 	cameraTransform.m_ViewProjMatrices[2] = zAxisCamera.GetViewMatrix() * zAxisCamera.GetProjMatrix();
 
 	m_pCameraTransformBuffer->Write(&cameraTransform, sizeof(cameraTransform));
-
-	ObjectTransform objectTransform;
-	objectTransform.m_WorldPosMatrix = Matrix4f::IDENTITY;
-	objectTransform.m_WorldNormalMatrix = Matrix4f::IDENTITY;
-	objectTransform.m_WorldViewProjMatrix = mainViewProjMatrix;
-
-	m_pObjectTransformBuffer->Write(&objectTransform, sizeof(objectTransform));
 }
 
 void DXApplication::OnUpdate()
@@ -548,8 +549,7 @@ void DXApplication::OnRender()
 	visualizeMeshParams.m_pRTVEndState = &renderTargetEndState;
 	visualizeMeshParams.m_pDSVTexture = m_pDepthTexture;
 	visualizeMeshParams.m_DSVHandle = dsvHandle;
-	visualizeMeshParams.m_NumDXDescriptorHeaps = 1;
-	visualizeMeshParams.m_pDXFirstDescriptorHeap = m_pCBVSRVUAVHeap->GetDXObject();
+	visualizeMeshParams.m_pCBVSRVUAVDescriptorHeap = m_pCBVSRVUAVHeap;
 	visualizeMeshParams.m_CBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kObjectTransformCBVHandle);
 	
 	m_pVisualizeMeshRecorder->Record(&visualizeMeshParams);
@@ -559,8 +559,7 @@ void DXApplication::OnRender()
 	ClearVoxelGridRecordParams clearGridParams;
 	clearGridParams.m_pCommandAllocator = pCommandAllocator;
 	clearGridParams.m_pCommandList = m_pCommandList;
-	clearGridParams.m_NumDXDescriptorHeaps = 1;
-	clearGridParams.m_pDXFirstDescriptorHeap = m_pCBVSRVUAVHeap->GetDXObject();
+	clearGridParams.m_pCBVSRVUAVDescriptorHeap = m_pCBVSRVUAVHeap;
 	clearGridParams.m_pGridBuffer = m_pGridBuffer;
 	clearGridParams.m_GridBufferUAVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kGridBufferUAVHandle);
 	clearGridParams.m_GridConfigCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kGridConfigCBVHandle);
@@ -572,8 +571,7 @@ void DXApplication::OnRender()
 	CreateVoxelGridRecordParams createGridParams;
 	createGridParams.m_pCommandList = m_pCommandList;
 	createGridParams.m_pCommandAllocator = pCommandAllocator;
-	createGridParams.m_NumDXDescriptorHeaps = 1;
-	createGridParams.m_pDXFirstDescriptorHeap = m_pCBVSRVUAVHeap->GetDXObject();
+	createGridParams.m_pCBVSRVUAVDescriptorHeap = m_pCBVSRVUAVHeap;
 	createGridParams.m_ObjectTransformCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kObjectTransformCBVHandle);
 	createGridParams.m_CameraTransformCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kCameraTransformCBVHandle);
 	createGridParams.m_GridConfigCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kGridConfigCBVHandle);
@@ -589,7 +587,6 @@ void DXApplication::OnRender()
 
 	m_pCreateVoxelGridRecorder->Record(&createGridParams);
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
-	/*
 	WaitForGPU();
 
 	VisualizeVoxelGridRecordParams visualizeGridParams;
@@ -604,12 +601,11 @@ void DXApplication::OnRender()
 	visualizeGridParams.m_GridBufferSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kGridBufferSRVHandle);
 	visualizeGridParams.m_GridConfigCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kGridConfigCBVHandle);
 	visualizeGridParams.m_TransformCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kCameraTransformCBVHandle);
-	visualizeGridParams.m_NumDXDescriptorHeaps = 1;
-	visualizeGridParams.m_pDXFirstDescriptorHeap = m_pCBVSRVUAVHeap->GetDXObject();
+	visualizeGridParams.m_pCBVSRVUAVDescriptorHeap = m_pCBVSRVUAVHeap;
 
 	m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
-	*/
+	
 	m_pSwapChain->Present(1, 0);
 	MoveToNextFrame();
 }

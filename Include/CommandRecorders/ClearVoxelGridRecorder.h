@@ -7,6 +7,7 @@ class DXCommandList;
 class DXCommandAllocator;
 class DXRootSignature;
 class DXPipelineState;
+class DXDescriptorHeap;
 class DXResource;
 
 struct ClearVoxelGridInitParams
@@ -21,8 +22,7 @@ struct ClearVoxelGridRecordParams
 {
 	DXCommandList* m_pCommandList;
 	DXCommandAllocator* m_pCommandAllocator;
-	UINT m_NumDXDescriptorHeaps;
-	ID3D12DescriptorHeap* m_pDXFirstDescriptorHeap;
+	DXDescriptorHeap* m_pCBVSRVUAVDescriptorHeap;
 	DXResource* m_pGridBuffer;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_GridBufferUAVHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_GridConfigCBVHandle;

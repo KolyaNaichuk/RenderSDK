@@ -4,6 +4,7 @@
 #include "DX/DXResource.h"
 #include "DX/DXRootSignature.h"
 #include "DX/DXDevice.h"
+#include "DX/DXDescriptorHeap.h"
 #include "DX/DXUtils.h"
 
 DXCommandList::DXCommandList(DXDevice* pDevice, DXCommandAllocator* pAllocator, DXPipelineState* pInitialState, LPCWSTR pName)
@@ -24,6 +25,9 @@ void DXCommandList::Reset(DXCommandAllocator* pAllocator, DXPipelineState* pInit
 {
 	DXVerify(GetDXObject()->Reset(pAllocator->GetDXObject(),
 		(pInitialState != nullptr) ? pInitialState->GetDXObject() : nullptr));
+
+	// Kolya: Has to force clear state - otherwise VS Graphics Debugger will fail to make capture
+	GetDXObject()->ClearState((pInitialState != nullptr) ? pInitialState->GetDXObject() : nullptr);
 }
 
 void DXCommandList::Close()
@@ -70,9 +74,22 @@ void DXCommandList::SetGraphicsRootSignature(DXRootSignature* pRootSignature)
 	GetDXObject()->SetGraphicsRootSignature(pRootSignature->GetDXObject());
 }
 
-void DXCommandList::SetDescriptorHeaps(UINT numDescriptorHeaps, ID3D12DescriptorHeap** pDescriptorHeaps)
+void DXCommandList::SetDescriptorHeaps(DXDescriptorHeap* pCBVSRVUAVDescriptorHeap, DXDescriptorHeap* pSamplerDescriptorHeap)
 {
-	GetDXObject()->SetDescriptorHeaps(numDescriptorHeaps, pDescriptorHeaps);
+	static const UINT maxNumDescriptorHeaps = 2;
+	ID3D12DescriptorHeap* dxDescriptorHeaps[maxNumDescriptorHeaps];
+	
+	assert(pCBVSRVUAVDescriptorHeap != nullptr);
+	dxDescriptorHeaps[0] = pCBVSRVUAVDescriptorHeap->GetDXObject();
+	UINT numDescriptorHeaps = 1;
+
+	if (pSamplerDescriptorHeap != nullptr)
+	{
+		dxDescriptorHeaps[1] = pSamplerDescriptorHeap->GetDXObject();
+		++numDescriptorHeaps;
+	}
+
+	GetDXObject()->SetDescriptorHeaps(numDescriptorHeaps, dxDescriptorHeaps);
 }
 
 void DXCommandList::SetGraphicsRootDescriptorTable(UINT rootParameterIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle)

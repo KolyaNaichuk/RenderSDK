@@ -8,6 +8,7 @@ class DXCommandAllocator;
 class DXRootSignature;
 class DXPipelineState;
 class DXResource;
+class DXDescriptorHeap;
 
 struct VisualizeVoxelGridInitParams
 {
@@ -28,8 +29,7 @@ struct VisualizeVoxelGridRecordParams
 	D3D12_GPU_DESCRIPTOR_HANDLE m_GridBufferSRVHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_GridConfigCBVHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_TransformCBVHandle;
-	UINT m_NumDXDescriptorHeaps;
-	ID3D12DescriptorHeap* m_pDXFirstDescriptorHeap;
+	DXDescriptorHeap* m_pCBVSRVUAVDescriptorHeap;
 };
 
 class VisualizeVoxelGridRecorder

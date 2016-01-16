@@ -53,8 +53,8 @@ CalcTextureLuminanceRecorder::~CalcTextureLuminanceRecorder()
 
 void CalcTextureLuminanceRecorder::Record(DXCommandList* pCommandList, DXCommandAllocator* pCommandAllocator,
 	DXResource* pRTVTexture, D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor,
-	ID3D12DescriptorHeap* pSRVDescriptorHeap, DXResource* pSRVTexture, D3D12_GPU_DESCRIPTOR_HANDLE srvDescriptor,
-	ID3D12DescriptorHeap* pSamplerDescriptorHeap, D3D12_GPU_DESCRIPTOR_HANDLE samplerDescriptor,
+	DXDescriptorHeap* pSRVDescriptorHeap, DXResource* pSRVTexture, D3D12_GPU_DESCRIPTOR_HANDLE srvDescriptor,
+	DXDescriptorHeap* pSamplerDescriptorHeap, D3D12_GPU_DESCRIPTOR_HANDLE samplerDescriptor,
 	const D3D12_RESOURCE_STATES* pRTVEndState, const D3D12_RESOURCE_STATES* pSRVEndState)
 {
 	pCommandList->Reset(pCommandAllocator, m_pPipelineState);
@@ -66,9 +66,9 @@ void CalcTextureLuminanceRecorder::Record(DXCommandList* pCommandList, DXCommand
 		pCommandList->TransitionBarrier(pSRVTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 	pCommandList->OMSetRenderTargets(1, &rtvDescriptor);
-	pCommandList->SetDescriptorHeaps(1, &pSRVDescriptorHeap);
+	pCommandList->SetDescriptorHeaps(pSRVDescriptorHeap, pSamplerDescriptorHeap);
+	
 	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParam, srvDescriptor);
-	pCommandList->SetDescriptorHeaps(1, &pSamplerDescriptorHeap);
 	pCommandList->SetGraphicsRootDescriptorTable(kSamplerRootParam, samplerDescriptor);
 
 	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

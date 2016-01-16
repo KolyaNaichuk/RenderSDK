@@ -8,6 +8,7 @@ class DXPipelineState;
 class DXCommandList;
 class DXCommandAllocator;
 class DXResource;
+class DXDescriptorHeap;
 class Mesh;
 
 //#define HAS_TEXCOORD
@@ -22,8 +23,7 @@ struct CreateVoxelGridRecordParams
 {
 	DXCommandList* m_pCommandList;
 	DXCommandAllocator* m_pCommandAllocator;
-	UINT m_NumDXDescriptorHeaps;
-	ID3D12DescriptorHeap* m_pDXFirstDescriptorHeap;
+	DXDescriptorHeap* m_pCBVSRVUAVDescriptorHeap;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_ObjectTransformCBVHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_CameraTransformCBVHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_GridConfigCBVHandle;

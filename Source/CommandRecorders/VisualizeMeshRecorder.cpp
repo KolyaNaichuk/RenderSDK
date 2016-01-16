@@ -83,7 +83,7 @@ void VisualizeMeshRecorder::Record(VisualizeMeshRecordParams* pParams)
 	if (pParams->m_pDSVTexture->GetState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
 		pParams->m_pCommandList->TransitionBarrier(pParams->m_pDSVTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
-	pParams->m_pCommandList->SetDescriptorHeaps(pParams->m_NumDXDescriptorHeaps, &pParams->m_pDXFirstDescriptorHeap);
+	pParams->m_pCommandList->SetDescriptorHeaps(pParams->m_pCBVSRVUAVDescriptorHeap);
 	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParam, pParams->m_CBVHandle);
 
 	pParams->m_pCommandList->OMSetRenderTargets(1, &pParams->m_RTVHandle, TRUE, &pParams->m_DSVHandle);
