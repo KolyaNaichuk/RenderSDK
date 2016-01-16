@@ -26,8 +26,13 @@ float4 Main(PSInput input) : SV_Target
 	float4 worldSpacePos = ComputeWorldSpacePosition(input.texCoord, hardwareDepth, g_Transform.viewProjInvMatrix);
 	
 	int3 gridCell = ComputeGridCell(g_GridConfig, worldSpacePos.xyz);
-	int cellIndex = ComputeCellIndex(g_GridConfig, gridCell);
+	if (all(float3(-1.0f, -1.0f, -1.0f) < gridCell.xyz) && all(gridCell.xyz < g_GridConfig.numCells.xyz))
+	{
+		int cellIndex = ComputeCellIndex(g_GridConfig, gridCell);
 
-	float3 color = GridBuffer[cellIndex].colorAndNumOccluders.rgb;
-	return float4(color, 1.0f);
+		float3 color = GridBuffer[cellIndex].colorAndNumOccluders.rgb;
+		return float4(color, 1.0f);
+	}
+
+	return float4(0.7f, 0.8f, 0.5f, 1.0f);;
 }
