@@ -25,9 +25,6 @@ void DXCommandList::Reset(DXCommandAllocator* pAllocator, DXPipelineState* pInit
 {
 	DXVerify(GetDXObject()->Reset(pAllocator->GetDXObject(),
 		(pInitialState != nullptr) ? pInitialState->GetDXObject() : nullptr));
-
-	// Kolya: Has to force clear state - otherwise VS Graphics Debugger will fail to make capture
-	GetDXObject()->ClearState((pInitialState != nullptr) ? pInitialState->GetDXObject() : nullptr);
 }
 
 void DXCommandList::Close()

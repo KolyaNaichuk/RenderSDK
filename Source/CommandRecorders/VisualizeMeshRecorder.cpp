@@ -76,6 +76,10 @@ VisualizeMeshRecorder::~VisualizeMeshRecorder()
 void VisualizeMeshRecorder::Record(VisualizeMeshRecordParams* pParams)
 {
 	pParams->m_pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
+	
+	// Kolya: Has to force clear state - otherwise VS Graphics Debugger will fail to make capture
+	pParams->m_pCommandList->GetDXObject()->ClearState(m_pPipelineState->GetDXObject());
+
 	pParams->m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
 	if (pParams->m_pRTVTexture->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
