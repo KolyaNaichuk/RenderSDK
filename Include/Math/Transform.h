@@ -4,6 +4,7 @@
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 #include "Math/Quaternion.h"
+#include "Math/Frustum.h"
 
 struct EulerAngles;
 struct AxisAngle;
@@ -25,10 +26,7 @@ public:
 	void SetPosition(const Vector3f& position);
 
 	const Matrix4f& GetLocalToWorldMatrix() const;
-	const Matrix4f& GetWorldToLocalMatrix() const;
-
-	const Vector4f TransformVector(const Vector4f& vec) const;
-	const Vector4f TransformNormal(const Vector4f& vec) const;
+	const Matrix4f& GetWorldToLocalMatrix() const;	
 
 private:
 	enum DirtyFlags
@@ -70,8 +68,5 @@ const Matrix4f CreateOrthoProjMatrix(f32 width, f32 height, f32 nearZ, f32 farZ)
 
 const Matrix4f CreatePerspectiveProjMatrix(f32 nearWidth, f32 nearHeight, f32 nearZ, f32 farZ);
 const Matrix4f CreatePerspectiveFovProjMatrix(const Radian& fovY, f32 aspectRatio, f32 nearZ, f32 farZ);
-
-const Matrix4f CreateMatrixFromUpDirection(const Vector3f& upDir);
-const Matrix4f CreateMatrixFromForwardDirection(const Vector3f& forwardDir);
 
 const BasisAxes GetBasisAxes(const Matrix4f& matrix);

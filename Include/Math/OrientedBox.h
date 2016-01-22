@@ -2,6 +2,6 @@
 
 #include "Common/Common.h"
 
-struct BoundingOrientedBox
+struct OrientedBox
 {
 };

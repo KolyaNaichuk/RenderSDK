@@ -11,13 +11,13 @@ struct EulerAngles;
 
 struct Quaternion
 {
-	Quaternion();
-	Quaternion(f32 w);
-	Quaternion(f32 x, f32 y, f32 z);
-	Quaternion(f32 x, f32 y, f32 z, f32 w);
-	Quaternion(const AxisAngle& axisAngle);
-	Quaternion(const EulerAngles& eulerAngles);
-	Quaternion(const Matrix4f& rotationMatrix);
+	explicit Quaternion();
+	explicit Quaternion(f32 w);
+	explicit Quaternion(f32 x, f32 y, f32 z);
+	explicit Quaternion(f32 x, f32 y, f32 z, f32 w);
+	explicit Quaternion(const AxisAngle& axisAngle);
+	explicit Quaternion(const EulerAngles& eulerAngles);
+	explicit Quaternion(const Matrix4f& rotationMatrix);
 
 	const Quaternion operator- () const;
 	
@@ -44,6 +44,7 @@ f32 Dot(const Quaternion& quat1, const Quaternion& quat2);
 
 Quaternion& operator*= (Quaternion& quat, f32 scalar);
 const Quaternion operator* (const Quaternion& quat, f32 scalar);
+const Quaternion operator* (f32 scalar, const Quaternion& quat);
 
 Quaternion& operator*= (Quaternion& quat1, const Quaternion& quat2);
 const Quaternion operator* (const Quaternion& quat1, const Quaternion& quat2);

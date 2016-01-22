@@ -245,6 +245,11 @@ const Quaternion operator* (const Quaternion& quat, f32 scalar)
 	return (Quaternion(quat) *= scalar);
 }
 
+const Quaternion operator* (f32 scalar, const Quaternion& quat)
+{
+	return (Quaternion(quat) *= scalar);
+}
+
 Quaternion& operator*= (Quaternion& quat1, const Quaternion& quat2)
 {
 	f32 x = quat1.m_W * quat2.m_X + quat1.m_X * quat2.m_W + quat1.m_Y * quat2.m_Z - quat1.m_Z * quat2.m_Y;

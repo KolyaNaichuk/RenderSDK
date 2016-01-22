@@ -2,7 +2,7 @@
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
-#include "Math/BoundingBox.h"
+#include "Math/AxisAlignedBox.h"
 
 namespace
 {
@@ -282,7 +282,7 @@ const SubMeshData* MeshData::GetSubMeshes() const
 void MeshData::ComputeBoundingBox()
 {
 	SafeDelete(m_pBoundingBox);
-	m_pBoundingBox = new BoundingBox(m_NumVertices, m_pPositions);
+	m_pBoundingBox = new AxisAlignedBox(m_NumVertices, m_pPositions);
 }
 
 void MeshData::ComputeNormals(FaceNormalWeight faceNormalWeight)
@@ -330,7 +330,7 @@ void MeshData::ComputeNormals(FaceNormalWeight faceNormalWeight)
 	}
 }
 
-const BoundingBox* MeshData::GetBoundingBox() const
+const AxisAlignedBox* MeshData::GetBoundingBox() const
 {
 	return m_pBoundingBox;
 }

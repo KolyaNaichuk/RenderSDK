@@ -1,18 +1,18 @@
-#include "Math/BoundingSphere.h"
+#include "Math/Sphere.h"
 #include "Math/Math.h"
 
-BoundingSphere::BoundingSphere(const Vector3f& center, f32 radius)
+Sphere::Sphere(const Vector3f& center, f32 radius)
     : m_Center(center)
     , m_Radius(radius)
 {
 }
 
-BoundingSphere::BoundingSphere(u32 numPoints, const Vector3f* pFirstPoint)
+Sphere::Sphere(u32 numPoints, const Vector3f* pFirstPoint)
 {
 	assert(false);
 }
 
-BoundingSphere::BoundingSphere(const BoundingSphere& sphere1, const BoundingSphere& sphere2)
+Sphere::Sphere(const Sphere& sphere1, const Sphere& sphere2)
 {
     Vector3f centerDir = sphere2.m_Center - sphere1.m_Center;
     f32 sqLength = LengthSquared(centerDir);
@@ -24,7 +24,7 @@ BoundingSphere::BoundingSphere(const BoundingSphere& sphere1, const BoundingSphe
     }
     else
     {
-        const BoundingSphere& enclosingSphere = (sphere2.m_Radius > sphere1.m_Radius) ? sphere2 : sphere1;
+        const Sphere& enclosingSphere = (sphere2.m_Radius > sphere1.m_Radius) ? sphere2 : sphere1;
         m_Center = enclosingSphere.m_Center;
         m_Radius = enclosingSphere.m_Radius;
     }

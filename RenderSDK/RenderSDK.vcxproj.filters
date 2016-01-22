@@ -21,18 +21,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Include\Math\BoundingBox.h">
-      <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Math\BoundingFrustum.h">
-      <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Math\BoundingOrientedBox.h">
-      <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Math\BoundingSphere.h">
-      <Filter>Math</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Math\Math.h">
       <Filter>Math</Filter>
     </ClInclude>
@@ -183,20 +171,20 @@
     <ClInclude Include="..\Include\Math\Vector4.h">
       <Filter>Math</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Math\AxisAlignedBox.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Frustum.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\OrientedBox.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Sphere.h">
+      <Filter>Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Source\Math\BoundingBox.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Math\BoundingFrustum.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Math\BoundingOrientedBox.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Math\BoundingSphere.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\Math\Math.cpp">
       <Filter>Math</Filter>
     </ClCompile>
@@ -333,6 +321,18 @@
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Math\Vector4.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\AxisAlignedBox.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Frustum.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\OrientedBox.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Sphere.cpp">
       <Filter>Math</Filter>
     </ClCompile>
   </ItemGroup>

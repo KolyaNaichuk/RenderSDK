@@ -271,6 +271,26 @@ const Matrix4f operator* (f32 scalar, const Matrix4f& matrix)
 	return (Matrix4f(matrix) *= scalar);
 }
 
+const Vector4f operator* (const Vector4f& vec, const Matrix4f& matrix)
+{
+	f32 x = vec.m_X * matrix.m_00 + vec.m_Y * matrix.m_10 + vec.m_Z * matrix.m_20 + vec.m_W * matrix.m_30;
+	f32 y = vec.m_X * matrix.m_01 + vec.m_Y * matrix.m_11 + vec.m_Z * matrix.m_21 + vec.m_W * matrix.m_31;
+	f32 z = vec.m_X * matrix.m_02 + vec.m_Y * matrix.m_12 + vec.m_Z * matrix.m_22 + vec.m_W * matrix.m_32;
+	f32 w = vec.m_X * matrix.m_03 + vec.m_Y * matrix.m_13 + vec.m_Z * matrix.m_23 + vec.m_W * matrix.m_33;
+
+	return Vector4f(x, y, z, w);
+}
+
+const Vector4f operator* (const Matrix4f& matrix, const Vector4f& vec)
+{
+	f32 x = vec.m_X * matrix.m_00 + vec.m_Y * matrix.m_01 + vec.m_Z * matrix.m_02 + vec.m_W * matrix.m_03;
+	f32 y = vec.m_X * matrix.m_10 + vec.m_Y * matrix.m_11 + vec.m_Z * matrix.m_12 + vec.m_W * matrix.m_13;
+	f32 z = vec.m_X * matrix.m_20 + vec.m_Y * matrix.m_21 + vec.m_Z * matrix.m_22 + vec.m_W * matrix.m_23;
+	f32 w = vec.m_X * matrix.m_30 + vec.m_Y * matrix.m_31 + vec.m_Z * matrix.m_32 + vec.m_W * matrix.m_33;
+
+	return Vector4f(x, y, z, w);
+}
+
 const Matrix4f Transpose(const Matrix4f& matrix)
 {
     return Matrix4f(matrix.m_00, matrix.m_10, matrix.m_20, matrix.m_30,

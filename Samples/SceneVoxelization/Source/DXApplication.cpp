@@ -22,7 +22,6 @@
 #include "Math/Vector4.h"
 #include "Math/Matrix4.h"
 #include "Math/Transform.h"
-#include "Math/BoundingBox.h"
 #include "Math/BasisAxes.h"
 #include "Math/Radian.h"
 
@@ -396,7 +395,6 @@ void DXApplication::OnInit()
 	meshData.SetSubMeshData(1, &subMeshData);
 
 	ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-	
 	m_pMesh = new Mesh(m_pDevice, &meshData);
 	
 	m_pMesh->RecordDataForUpload(m_pCommandList);

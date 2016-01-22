@@ -153,9 +153,10 @@ Vector3f& operator*= (Vector3f& vec, f32 scalar)
 
 Vector3f& operator/= (Vector3f& vec, f32 scalar)
 {
-	vec.m_X /= scalar;
-	vec.m_Y /= scalar;
-	vec.m_Z /= scalar;
+	f32 rcpScalar = Rcp(scalar);
+	vec.m_X *= rcpScalar;
+	vec.m_Y *= rcpScalar;
+	vec.m_Z *= rcpScalar;
     return vec;
 }
 
@@ -211,7 +212,8 @@ const Vector3f operator* (f32 scalar, const Vector3f& vec)
 
 const Vector3f operator/ (const Vector3f& vec, f32 scalar)
 {
-    return Vector3f(vec.m_X / scalar, vec.m_Y / scalar, vec.m_Z / scalar);
+	f32 rcpScalar = Rcp(scalar);
+    return Vector3f(vec.m_X * rcpScalar, vec.m_Y * rcpScalar, vec.m_Z * rcpScalar);
 }
 
 const Vector3f operator/ (f32 scalar, const Vector3f& vec)

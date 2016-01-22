@@ -86,30 +86,6 @@ const Matrix4f& Transform::GetWorldToLocalMatrix() const
 	return m_WorldToLocalMatrix;
 }
 
-const Vector4f Transform::TransformVector(const Vector4f& vec) const
-{
-	const Matrix4f& matrix = GetLocalToWorldMatrix();
-	
-	f32 x = vec.m_X * matrix.m_00 + vec.m_Y * matrix.m_10 + vec.m_Z * matrix.m_20 + vec.m_W * matrix.m_30;
-	f32 y = vec.m_X * matrix.m_01 + vec.m_Y * matrix.m_11 + vec.m_Z * matrix.m_21 + vec.m_W * matrix.m_31;
-	f32 z = vec.m_X * matrix.m_02 + vec.m_Y * matrix.m_12 + vec.m_Z * matrix.m_22 + vec.m_W * matrix.m_32;
-	f32 w = vec.m_X * matrix.m_03 + vec.m_Y * matrix.m_13 + vec.m_Z * matrix.m_23 + vec.m_W * matrix.m_33;
-
-	return Vector4f(x, y, z, w);
-}
-
-const Vector4f Transform::TransformNormal(const Vector4f& vec) const
-{
-	const Matrix4f& matrix = GetWorldToLocalMatrix();
-
-	f32 x = vec.m_X * matrix.m_00 + vec.m_Y * matrix.m_01 + vec.m_Z * matrix.m_02 + vec.m_W * matrix.m_03;
-	f32 y = vec.m_X * matrix.m_10 + vec.m_Y * matrix.m_11 + vec.m_Z * matrix.m_12 + vec.m_W * matrix.m_13;
-	f32 z = vec.m_X * matrix.m_20 + vec.m_Y * matrix.m_21 + vec.m_Z * matrix.m_22 + vec.m_W * matrix.m_23;
-	f32 w = vec.m_X * matrix.m_30 + vec.m_Y * matrix.m_31 + vec.m_Z * matrix.m_32 + vec.m_W * matrix.m_33;
-
-	return Vector4f(x, y, z, w);
-}
-
 const Matrix4f CreateTranslationMatrix(const Vector3f& offset)
 {
 	return CreateTranslationMatrix(offset.m_X, offset.m_Y, offset.m_Z);
@@ -254,18 +230,6 @@ const Matrix4f CreatePerspectiveFovProjMatrix(const Radian& fovY, f32 aspectRati
 					0.0f, yScale, 0.0f, 0.0f,
 					0.0f, 0.0f, farZ / (farZ - nearZ), 1.0f,
 					0.0f, 0.0f, nearZ * farZ / (nearZ - farZ), 0.0f);
-}
-
-const Matrix4f CreateMatrixFromUpDirection(const Vector3f& upDir)
-{
-	assert(false && "Needs impl");
-	return Matrix4f();
-}
-
-const Matrix4f CreateMatrixFromForwardDirection(const Vector3f& forwardDir)
-{
-	assert(false && "Needs impl");
-	return Matrix4f();
 }
 
 const BasisAxes GetBasisAxes(const Matrix4f& matrix)

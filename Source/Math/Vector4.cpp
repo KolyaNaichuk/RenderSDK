@@ -1,4 +1,5 @@
 #include "Math/Vector4.h"
+#include "Math/Transform.h"
 
 const Vector4f Vector4f::ONE(1.0f, 1.0f, 1.0f, 1.0f);
 const Vector4f Vector4f::ZERO(0.0f, 0.0f, 0.0f, 0.0f);
@@ -84,6 +85,16 @@ bool IsNormalized(const Vector4f& vec, f32 epsilon)
 	return (Abs(1.0f - Length(vec)) < epsilon);
 }
 
+const Vector4f TransformVector(const Vector4f& vec, const Transform& transform)
+{
+	return vec * transform.GetLocalToWorldMatrix();
+}
+
+const Vector4f TransformNormal(const Vector4f& vec, const Transform& transform)
+{
+	return transform.GetWorldToLocalMatrix() * vec;
+}
+
 Vector4f& operator+= (Vector4f& vec1, const Vector4f& vec2)
 {
 	vec1.m_X += vec2.m_X;
@@ -149,10 +160,11 @@ Vector4f& operator*= (Vector4f& vec, f32 scalar)
 
 Vector4f& operator/= (Vector4f& vec, f32 scalar)
 {
-	vec.m_X /= scalar;
-	vec.m_Y /= scalar;
-	vec.m_Z /= scalar;
-	vec.m_W /= scalar;
+	f32 rcpScalar = Rcp(scalar);
+	vec.m_X *= rcpScalar;
+	vec.m_Y *= rcpScalar;
+	vec.m_Z *= rcpScalar;
+	vec.m_W *= rcpScalar;
     return vec;
 }
 
@@ -208,7 +220,8 @@ const Vector4f operator* (f32 scalar, const Vector4f& vec)
 
 const Vector4f operator/ (const Vector4f& vec, f32 scalar)
 {
-    return Vector4f(vec.m_X / scalar, vec.m_Y / scalar, vec.m_Z / scalar, vec.m_W / scalar);
+	f32 rcpScalar = Rcp(scalar);
+    return Vector4f(vec.m_X * rcpScalar, vec.m_Y * rcpScalar, vec.m_Z * rcpScalar, vec.m_W * rcpScalar);
 }
 
 const Vector4f operator/ (f32 scalar, const Vector4f& vec)

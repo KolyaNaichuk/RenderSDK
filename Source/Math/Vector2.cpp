@@ -134,8 +134,9 @@ Vector2f& operator*= (Vector2f& vec, f32 scalar)
 
 Vector2f& operator/= (Vector2f& vec, f32 scalar)
 {
-	vec.m_X /= scalar;
-	vec.m_Y /= scalar;
+	f32 rcpScalar = Rcp(scalar);
+	vec.m_X *= rcpScalar;
+	vec.m_Y *= rcpScalar;
 	return vec;
 }
 
@@ -191,7 +192,8 @@ const Vector2f operator* (f32 scalar, const Vector2f& vec)
 
 const Vector2f operator/ (const Vector2f& vec, f32 scalar)
 {
-	return Vector2f(vec.m_X / scalar, vec.m_Y / scalar);
+	f32 rcpScalar = Rcp(scalar);
+	return Vector2f(vec.m_X * rcpScalar, vec.m_Y * rcpScalar);
 }
 
 const Vector2f operator/ (f32 scalar, const Vector2f& vec)

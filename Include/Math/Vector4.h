@@ -2,6 +2,8 @@
 
 #include "Math/Math.h"
 
+class Transform;
+
 struct Vector4f
 {
 	explicit Vector4f();
@@ -30,6 +32,8 @@ bool IsEqual(const Vector4f& vec1, const Vector4f& vec2, f32 epsilon = EPSILON);
 const Vector4f Min(const Vector4f& vec1, const Vector4f& vec2);
 const Vector4f Max(const Vector4f& vec1, const Vector4f& vec2);
 bool IsNormalized(const Vector4f& vec, f32 epsilon = EPSILON);
+const Vector4f TransformVector(const Vector4f& vec, const Transform& transform);
+const Vector4f TransformNormal(const Vector4f& vec, const Transform& transform);
 
 Vector4f& operator+= (Vector4f& vec1, const Vector4f& vec2);
 Vector4f& operator-= (Vector4f& vec1, const Vector4f& vec2);
@@ -50,7 +54,7 @@ const Vector4f operator+ (const Vector4f& vec, f32 scalar);
 const Vector4f operator+ (f32 scalar, const Vector4f& vec);
 
 const Vector4f operator- (const Vector4f& vec, f32 scalar);
-const Vector4f operator- (f32 scalar, const Vector4f& right);
+const Vector4f operator- (f32 scalar, const Vector4f& vec);
 
 const Vector4f operator* (const Vector4f& vec, f32 scalar);
 const Vector4f operator* (f32 scalar, const Vector4f& vec);

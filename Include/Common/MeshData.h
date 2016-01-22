@@ -5,7 +5,7 @@
 struct Vector2f;
 struct Vector3f;
 struct Vector4f;
-struct BoundingBox;
+struct AxisAlignedBox;
 
 static const u32 NONE_MATERIAL_ID = (u32)-1;
 
@@ -79,7 +79,7 @@ public:
 	const SubMeshData* GetSubMeshes() const;
 	
 	void ComputeBoundingBox();
-	const BoundingBox* GetBoundingBox() const;
+	const AxisAlignedBox* GetBoundingBox() const;
 
 	void ComputeNormals(FaceNormalWeight faceNormalWeight = FaceNormalWeight_Equal);
 	
@@ -101,5 +101,5 @@ private:
 	u32 m_NumSubMeshes;
 	SubMeshData* m_pSubMeshes;
 
-	BoundingBox* m_pBoundingBox;
+	AxisAlignedBox* m_pBoundingBox;
 };
