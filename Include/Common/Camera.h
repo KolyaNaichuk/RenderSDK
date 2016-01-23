@@ -2,6 +2,7 @@
 
 #include "Math/Vector4.h"
 #include "Math/Radian.h"
+#include "Math/Frustum.h"
 #include "Common/SceneObject.h"
 
 class Camera : public SceneObject
@@ -87,3 +88,5 @@ private:
 	mutable Matrix4f m_ProjMatrix;
 	mutable u8 m_DirtyFlags;
 };
+
+const Frustum ExtractFrustum(const Camera& camera);

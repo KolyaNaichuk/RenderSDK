@@ -166,3 +166,9 @@ const Matrix4f& Camera::GetProjMatrix() const
 	}
 	return m_ProjMatrix;
 }
+
+const Frustum ExtractFrustum(const Camera& camera)
+{
+	Frustum objectSpaceFrustum(camera.GetProjMatrix());
+	return TransformFrustum(objectSpaceFrustum, camera.GetTransform());
+}

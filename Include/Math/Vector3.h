@@ -2,6 +2,8 @@
 
 #include "Math/Math.h"
 
+class Transform;
+
 struct Vector3f
 {
 	explicit Vector3f();
@@ -36,6 +38,7 @@ bool IsEqual(const Vector3f& vec1, const Vector3f& vec2, f32 epsilon = EPSILON);
 const Vector3f Min(const Vector3f& vec1, const Vector3f& vec2);
 const Vector3f Max(const Vector3f& vec1, const Vector3f& vec2);
 bool IsNormalized(const Vector3f& vec, f32 epsilon = EPSILON);
+const Vector3f TransformPoint(const Vector3f& point, const Transform& transform);
 
 Vector3f& operator+= (Vector3f& vec1, const Vector3f& vec2);
 Vector3f& operator-= (Vector3f& vec1, const Vector3f& vec2);

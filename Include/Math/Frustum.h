@@ -38,3 +38,5 @@ struct Frustum
 	Vector3f m_Corners[NumCorners];
 	Plane m_Planes[NumPlanes];	
 };
+
+const Frustum TransformFrustum(Frustum frustum, const Transform& transform);

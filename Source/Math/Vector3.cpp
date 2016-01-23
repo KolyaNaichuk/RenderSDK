@@ -1,4 +1,5 @@
 #include "Math/Vector3.h"
+#include "Math/Transform.h"
 
 const Vector3f Vector3f::ONE(1.0f, 1.0f, 1.0f);
 const Vector3f Vector3f::ZERO(0.0f, 0.0f, 0.0f);
@@ -93,6 +94,18 @@ const Vector3f Max(const Vector3f& vec1, const Vector3f& vec2)
 bool IsNormalized(const Vector3f& vec, f32 epsilon)
 {
 	return (Abs(1.0f - Length(vec)) < epsilon);
+}
+
+const Vector3f TransformPoint(const Vector3f& point, const Transform& transform)
+{
+	const Matrix4f& matrix = transform.GetLocalToWorldMatrix();
+
+	f32 x = point.m_X * matrix.m_00 + point.m_Y * matrix.m_10 + point.m_Z * matrix.m_20 + matrix.m_30;
+	f32 y = point.m_X * matrix.m_01 + point.m_Y * matrix.m_11 + point.m_Z * matrix.m_21 + matrix.m_31;
+	f32 z = point.m_X * matrix.m_02 + point.m_Y * matrix.m_12 + point.m_Z * matrix.m_22 + matrix.m_32;
+	f32 w = point.m_X * matrix.m_03 + point.m_Y * matrix.m_13 + point.m_Z * matrix.m_23 + matrix.m_33;
+
+	return Vector3f(x / w, y / w, z / w);
 }
 
 Vector3f& operator+= (Vector3f& vec1, const Vector3f& vec2)
