@@ -58,3 +58,13 @@ f64 Floor(f64 value)
 {
 	return std::floor(value);
 }
+
+f32 Pow(f32 base, f32 exponent)
+{
+	return std::powf(base, exponent);
+}
+
+f64 Pow(f64 base, f64 exponent)
+{
+	return std::pow(base, exponent);
+}

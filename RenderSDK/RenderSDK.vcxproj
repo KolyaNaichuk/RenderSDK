@@ -195,6 +195,7 @@
     <ClInclude Include="..\Include\Math\Plane.h" />
     <ClInclude Include="..\Include\Math\Quaternion.h" />
     <ClInclude Include="..\Include\Math\Radian.h" />
+    <ClInclude Include="..\Include\Math\SphericalHarmonics.h" />
     <ClInclude Include="..\Include\Math\Transform.h" />
     <ClInclude Include="..\Include\Math\Vector2.h" />
     <ClInclude Include="..\Include\Math\Vector3.h" />
@@ -247,6 +248,7 @@
     <ClCompile Include="..\Source\Math\Plane.cpp" />
     <ClCompile Include="..\Source\Math\Quaternion.cpp" />
     <ClCompile Include="..\Source\Math\Radian.cpp" />
+    <ClCompile Include="..\Source\Math\SphericalHarmonics.cpp" />
     <ClCompile Include="..\Source\Math\Transform.cpp" />
     <ClCompile Include="..\Source\Math\Vector2.cpp" />
     <ClCompile Include="..\Source\Math\Vector3.cpp" />

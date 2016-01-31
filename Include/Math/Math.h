@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cmath>
 #include "Common/Common.h"
+#include <cmath>
 
 class Radian;
 
@@ -77,3 +77,6 @@ f64 Ceil(f64 value);
 
 f32 Floor(f32 value);
 f64 Floor(f64 value);
+
+f32 Pow(f32 base, f32 exponent);
+f64 Pow(f64 base, f64 exponent);
