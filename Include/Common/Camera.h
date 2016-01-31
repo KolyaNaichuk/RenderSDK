@@ -89,4 +89,4 @@ private:
 	mutable u8 m_DirtyFlags;
 };
 
-const Frustum ExtractFrustum(const Camera& camera);
+const Frustum ExtractWorldFrustum(const Camera& camera);

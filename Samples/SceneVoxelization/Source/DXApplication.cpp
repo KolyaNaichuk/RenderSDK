@@ -325,13 +325,16 @@ void DXApplication::OnInit()
 	const Vector4f colors[] =
 	{
 		// Floor
-		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
+		Color::BISQUE, Color::BISQUE, Color::BISQUE, Color::BISQUE,
+		//Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
 
 		// Ceiling
-		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
+		Color::BLANCHED_ALMOND, Color::BLANCHED_ALMOND, Color::BLANCHED_ALMOND, Color::BLANCHED_ALMOND,
+		//Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
 
 		// Back wall
-		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
+		Color::BLUE_VIOLET, Color::BLUE_VIOLET, Color::BLUE_VIOLET, Color::BLUE_VIOLET,
+		//Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
 				
 		// Right wall
 		Color::GREEN, Color::GREEN, Color::GREEN, Color::GREEN,	
@@ -340,18 +343,32 @@ void DXApplication::OnInit()
 		Color::RED, Color::RED, Color::RED, Color::RED,
 
 		// Short block
+		Color::BLUE, Color::BLUE, Color::BLUE, Color::BLUE,
+		Color::BLUE, Color::BLUE, Color::BLUE, Color::BLUE,
+		Color::BLUE, Color::BLUE, Color::BLUE, Color::BLUE,
+		Color::BLUE, Color::BLUE, Color::BLUE, Color::BLUE,
+		Color::BLUE, Color::BLUE, Color::BLUE, Color::BLUE,
+		/*
 		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
 		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
 		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
 		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE, 
 		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
+		*/
 
 		// Tall block
+		Color::GOLD, Color::GOLD, Color::GOLD, Color::GOLD,
+		Color::GOLD, Color::GOLD, Color::GOLD, Color::GOLD,
+		Color::GOLD, Color::GOLD, Color::GOLD, Color::GOLD,
+		Color::GOLD, Color::GOLD, Color::GOLD, Color::GOLD,
+		Color::GOLD, Color::GOLD, Color::GOLD, Color::GOLD,
+		/*
 		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
 		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
 		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
 		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
 		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE
+		*/
 	};
 
 	const u16 indices[] =
