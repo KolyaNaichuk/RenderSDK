@@ -5,13 +5,19 @@
 
 class Radian;
 
-static const f32 PI = 3.141592653589793f;
-static const f32 TWO_PI = 6.28318530717958647692f;
-static const f32 RCP_PI = 0.31830988618379067154f;
-static const f32 RCP_TWO_PI = 0.15915494309189533577f;
-static const f32 PI_DIV_TWO = 1.57079632679489661923f;
-static const f32 PI_DIV_FOUR = 0.78539816339744830962f;
+static const f32 PI = 3.141592654f;
+static const f32 TWO_PI = 6.283185307f;
+static const f32 RCP_PI = 0.318309886f;
+static const f32 RCP_TWO_PI = 0.159154943f;
+static const f32 PI_DIV_TWO = 1.570796327f;
+static const f32 PI_DIV_FOUR = 0.785398163f;
 static const f32 EPSILON = 1e-8f;
+
+template <typename T>
+bool IsInRange(T minValue, T maxValue, T value)
+{
+	return ((minValue <= value) && (value <= maxValue));
+}
 
 template <typename T>
 T Max(T left, T right)
