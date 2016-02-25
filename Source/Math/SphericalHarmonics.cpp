@@ -4,6 +4,9 @@
 
 namespace
 {
+	const int MIN_NUM_BANDS = 1;
+	const int MAX_NUM_BANDS = 5;
+
 	f32 K(i32 l, i32 m);
 	i32 Factorial(i32 number);
 	i32 DoubleFactorial(i32 number);
@@ -31,8 +34,11 @@ i32 SHGetNumBasisFuncs(i32 numBands)
 
 void SHEvaluateBasis(f32* pBasisFuncValues, i32 numBands, const Vector3f& dir)
 {
+	// Based on Appendix A2 Polynomial Forms of SH Basis
+	// from Stupid Spherical Harmonics Tricks by Peter-Pike Sloan 
+
 	assert(IsNormalized(dir));
-	assert(IsInRange(1, 5, numBands));
+	assert(IsInRange(MIN_NUM_BANDS, MAX_NUM_BANDS, numBands));
 	
 	pBasisFuncValues[0] = 0.282095f;
 	if (numBands == 1)
@@ -82,18 +88,31 @@ i32 SHGetBasisFuncIndex(i32 l, i32 m)
 	return (l * (l + 1) + m);
 }
 
-void SHProjectClampedCosineFunc(f32* pCoeffs, i32 numBands, const Vector3f& direction)
+void ZHProjectClampedCosineFunc(f32* pCoeffs, i32 numBands)
 {
-	assert(false);
-
-	pCoeffs[SHGetBasisFuncIndex(0,  0)] = 0.0f;
+	// Based on Properties of the Convolution Kernel
+	// from Lambertian Reflectance and Linear Subspaces by Ronen Basri and Dawid W. Jacobs
+		
+	assert(IsInRange(MIN_NUM_BANDS, MAX_NUM_BANDS, numBands));
+	
+	pCoeffs[0] = 0.886227f;
 	if (numBands == 1)
 		return;
 
-	pCoeffs[SHGetBasisFuncIndex(1, -1)] = 0.0f;
-	pCoeffs[SHGetBasisFuncIndex(1,  0)] = 0.0f;
-	pCoeffs[SHGetBasisFuncIndex(1,  1)] = 0.0f;
+	pCoeffs[1] = 1.023327f;
 	if (numBands == 2)
+		return;
+
+	pCoeffs[2] = 0.495416f;
+	if (numBands == 3)
+		return;
+
+	pCoeffs[3] = 0.0f;
+	if (numBands == 4)
+		return;
+
+	pCoeffs[4] = -0.110778f;
+	if (numBands == 5)
 		return;
 }
 
