@@ -388,5 +388,8 @@
     <None Include="..\Shaders\VisualizeMeshVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Packing.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
