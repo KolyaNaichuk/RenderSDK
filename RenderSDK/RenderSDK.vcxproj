@@ -353,11 +353,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Packing.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    <None Include="..\Shaders\Packing.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
