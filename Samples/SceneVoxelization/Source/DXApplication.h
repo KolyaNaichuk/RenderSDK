@@ -14,6 +14,7 @@ class DXEvent;
 
 class Mesh;
 class Camera;
+class FillGBufferRecorder;
 class ClearVoxelGridRecorder;
 class CreateVoxelGridRecorder;
 class VisualizeVoxelGridRecorder;
@@ -57,6 +58,7 @@ private:
 	UINT64 m_FenceValues[kBackBufferCount];
 	UINT m_BackBufferIndex;
 
+	FillGBufferRecorder* m_pFillGBufferRecorder;
 	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;
 	CreateVoxelGridRecorder* m_pCreateVoxelGridRecorder;
 	VisualizeVoxelGridRecorder* m_pVisualizeVoxelGridRecorder;

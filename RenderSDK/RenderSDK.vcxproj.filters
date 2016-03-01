@@ -186,6 +186,9 @@
     <ClInclude Include="..\Include\Math\SphericalHarmonics.h">
       <Filter>Math</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\FillGBufferRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -341,6 +344,9 @@
     <ClCompile Include="..\Source\Math\SphericalHarmonics.cpp">
       <Filter>Math</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\FillGBufferRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -389,6 +395,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\Packing.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\FillGBufferVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\FillGBufferPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

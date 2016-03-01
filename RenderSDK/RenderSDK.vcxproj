@@ -149,6 +149,7 @@
     <ClInclude Include="..\Include\CommandRecorders\ClearVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\CopyTextureRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\CreateVoxelGridRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\FillGBufferRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\ScaleTextureRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\VisualizeMeshRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\VisualizeVoxelGridRecorder.h" />
@@ -207,6 +208,7 @@
     <ClCompile Include="..\Source\CommandRecorders\ClearVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CopyTextureRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CreateVoxelGridRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\FillGBufferRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\ScaleTextureRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\VisualizeMeshRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\VisualizeVoxelGridRecorder.cpp" />
@@ -354,6 +356,24 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\Packing.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\FillGBufferVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\FillGBufferPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

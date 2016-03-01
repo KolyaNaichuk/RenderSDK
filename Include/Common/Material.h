@@ -2,6 +2,13 @@
 
 #include "Math/Vector4.h"
 
+enum MaterialElementFlags
+{
+	MaterialElementFlag_DiffuseMap = 1 << 0,
+	MaterialElementFlag_NormalMap = 1 << 1,
+	MaterialElementFlag_SpecularMap = 1 << 2
+};
+
 class DXResource;
 
 struct Material
@@ -12,7 +19,7 @@ struct Material
 	f32	m_SpecularPower;
 	Vector4f m_EmissiveColor;
 
-	DXResource* m_pDiffuseTexture;
-	DXResource* m_pNormalTexture;
-	DXResource* m_pSpecularTexture;
+	DXResource* m_pDiffuseMap;
+	DXResource* m_pNormalMap;
+	DXResource* m_pSpecularMap;
 };

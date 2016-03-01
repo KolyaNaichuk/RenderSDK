@@ -132,7 +132,13 @@ COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelGridPS.hlsl" "$(SolutionDir)Samples
 COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelGridPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeVoxelGridPS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Reconstruction.hlsl"
-COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Reconstruction.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Reconstruction.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FillGBufferVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillGBufferVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillGBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillGBufferVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FillGBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillGBufferPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillGBufferPS.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

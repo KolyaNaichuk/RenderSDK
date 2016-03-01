@@ -9,6 +9,7 @@
 #include "DX/DXResource.h"
 #include "DX/DXFence.h"
 #include "DX/DXEvent.h"
+#include "CommandRecorders/FillGBufferRecorder.h"
 #include "CommandRecorders/ClearVoxelGridRecorder.h"
 #include "CommandRecorders/CreateVoxelGridRecorder.h"
 #include "CommandRecorders/VisualizeVoxelGridRecorder.h"
@@ -98,6 +99,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFence(nullptr)
 	, m_pFenceEvent(nullptr)
 	, m_BackBufferIndex(0)
+	, m_pFillGBufferRecorder(nullptr)
 	, m_pClearVoxelGridRecorder(nullptr)
 	, m_pCreateVoxelGridRecorder(nullptr)
 	, m_pVisualizeVoxelGridRecorder(nullptr)
@@ -123,6 +125,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCreateVoxelGridRecorder);
 	SafeDelete(m_pVisualizeVoxelGridRecorder);
 	SafeDelete(m_pVisualizeMeshRecorder);
+	SafeDelete(m_pFillGBufferRecorder);
 	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pCBVSRVUAVHeap);
@@ -423,6 +426,17 @@ void DXApplication::OnInit()
 	WaitForGPU();
 	m_pMesh->RemoveDataForUpload();
 
+	FillGBufferInitParams fillGBufferParams;
+	fillGBufferParams.m_pDevice = m_pDevice;
+	fillGBufferParams.m_DiffuseRTVFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
+	fillGBufferParams.m_NormalRTVFormat = DXGI_FORMAT_R16G16_SNORM;
+	fillGBufferParams.m_SpecularRTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+	fillGBufferParams.m_DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	fillGBufferParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
+	fillGBufferParams.m_MaterialElementFlags = 0;
+
+	m_pFillGBufferRecorder = new FillGBufferRecorder(&fillGBufferParams);
+	
 	ClearVoxelGridInitParams clearGridParams;
 	clearGridParams.m_pDevice = m_pDevice;
 	clearGridParams.m_NumGridCellsX = kNumGridCellsX;
