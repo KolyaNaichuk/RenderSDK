@@ -72,7 +72,8 @@ struct DXSamplerDesc : public D3D12_SAMPLER_DESC
 	enum Id
 	{
 		Point,
-		Linear
+		Linear,
+		Anisotropic
 	};
 	DXSamplerDesc(Id id);
 };

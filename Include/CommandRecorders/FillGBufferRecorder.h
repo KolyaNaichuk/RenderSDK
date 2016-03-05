@@ -11,6 +11,31 @@ class DXDescriptorHeap;
 class DXResource;
 class Mesh;
 
+struct Material;
+
+struct GBuffer
+{
+	DXResource* m_pDiffuseTexture;
+	D3D12_CPU_DESCRIPTOR_HANDLE m_DiffuseRTVHandle;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_DiffuseSRVHandle;
+
+	DXResource* m_pNormalTexture;
+	D3D12_CPU_DESCRIPTOR_HANDLE m_NormalRTVHandle;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_NormalSRVHandle;
+
+	DXResource* m_pSpecularTexture;
+	D3D12_CPU_DESCRIPTOR_HANDLE m_SpecularRTVHandle;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_SpecularSRVHandle;
+	
+	DXResource* m_AccumulatedLightTexture;
+	D3D12_CPU_DESCRIPTOR_HANDLE m_AccumulatedLightRTVHandle;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_AccumulatedLightSRVHandle;
+
+	DXResource* m_pDepthTexture;
+	D3D12_CPU_DESCRIPTOR_HANDLE m_DSVHandle;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_DepthSRVHandle;
+};
+
 struct FillGBufferInitParams
 {
 	DXDevice* m_pDevice;
@@ -24,38 +49,19 @@ struct FillGBufferInitParams
 
 struct FillGBufferRecordParams
 {
-	Mesh* m_pMesh;
-
 	DXCommandList* m_pCommandList;
 	DXCommandAllocator* m_pCommandAllocator;
-
-	DXResource* m_pDiffuseTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_DiffuseRTVHandle;
-
-	DXResource* m_pNormalTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_NormalRTVHandle;
-
-	DXResource* m_pDepthTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_DSVHandle;
-
+	
+	GBuffer* m_pGBuffer;
+	Mesh* m_pMesh;
+	Material* m_pMaterial;
+	
 	DXDescriptorHeap* m_pCBVDescriptorHeap;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_TransformCBVHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_MaterialCBVHandle;
-};
 
-class GBuffer
-{
-	DXResource* m_pDiffuseTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_DiffuseRTVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_DiffuseSRVHandle;
-
-	DXResource* m_pNormalTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_NormalRTVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_NormalSRVHandle;
-
-	DXResource* m_pDepthTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_DSVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_DepthSRVHandle;
+	DXDescriptorHeap* m_pSamplerDescriptorHeap;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_AnisoSamplerHandle;
 };
 
 class FillGBufferRecorder
@@ -67,6 +73,15 @@ public:
 	void Record(FillGBufferRecordParams* pParams);
 
 private:
+	const u8 m_MaterialElementFlags;
+
 	DXRootSignature* m_pRootSignature;
 	DXPipelineState* m_pPipelineState;
+
+	u8 m_TransformCBVRootParam;
+	u8 m_MaterialCBVRootParam;
+	u8 m_AnisoSamplerRootParam;
+	u8 m_DiffuseSRVRootParam;
+	u8 m_NormalSRVRootParam;
+	u8 m_SpecularSRVRootParam;
 };

@@ -429,7 +429,7 @@ void DXApplication::OnInit()
 	FillGBufferInitParams fillGBufferParams;
 	fillGBufferParams.m_pDevice = m_pDevice;
 	fillGBufferParams.m_DiffuseRTVFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
-	fillGBufferParams.m_NormalRTVFormat = DXGI_FORMAT_R16G16_SNORM;
+	fillGBufferParams.m_NormalRTVFormat = DXGI_FORMAT_R8G8B8A8_SNORM;
 	fillGBufferParams.m_SpecularRTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	fillGBufferParams.m_DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	fillGBufferParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();

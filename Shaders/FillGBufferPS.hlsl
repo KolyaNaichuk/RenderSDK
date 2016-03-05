@@ -1,15 +1,15 @@
 struct PSInput
 {
-	float4 screenSpacePos			: SV_Position;
-	float3 worldSpaceNormal			: NORMAL;
-	float4 color					: COLOR;
+	float4 screenSpacePos		: SV_Position;
+	float3 worldSpaceNormal		: NORMAL;
+	float4 color				: COLOR;
 };
 
 struct PSOutput
 {
-	float4 diffuseColor				: SV_Target0;
-	float2 packedWorldSpaceNormal	: SV_Target1;
-	float4 specularColor			: SV_Target2;
+	float4 diffuseColor			: SV_Target0;
+	float3 worldSpaceNormal		: SV_Target1;
+	float4 specularColor		: SV_Target2;
 };
 
 struct Material
@@ -48,13 +48,25 @@ PSOutput Main(PSInput input)
 	PSOutput output;
 	
 #if defined(DIFFUSE_MAP)
+	float4 diffuseColor = g_DiffuseMap.Sample(g_AnisoSampler, input.texCoord).rgba;
+#else
+	float4 diffuseColor = g_Material.diffuseColor;
 #endif
 
 #if defined(NORMAL_MAP)
+#else
+	float3 worldSpaceNormal = normalize(input.worldSpaceNormal);
 #endif
 
 #if defined(SPECULAR_MAP)
+	float4 specularColor = g_SpecularMap.Sample(g_AnisoSampler, input.texCoord).rgba;
+#else
+	float4 specularColor = g_Material.specularColor;
 #endif
+
+	output.diffuseColor = diffuseColor;
+	output.worldSpaceNormal = worldSpaceNormal;
+	output.specularColor = specularColor;
 
 	return output;
 }

@@ -7,42 +7,61 @@
 #include "Common/MeshData.h"
 #include "Common/Mesh.h"
 
-enum RootParams
-{
-	kTransformCBVRootParam = 0,
-	kMaterialCBVRootParam,
-	kNumRootParams
-};
-
 FillGBufferRecorder::FillGBufferRecorder(FillGBufferInitParams* pParams)
-	: m_pRootSignature(nullptr)
+	: m_MaterialElementFlags(pParams->m_MaterialElementFlags)
+	, m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
-	DXShader vertexShader(L"Shaders//FillGBufferVS.hlsl", "Main", "vs_4_0");
-
-	std::vector<DXShaderMacro> pixelShaderDefines;
-	
-	if (pParams->m_MaterialElementFlags & MaterialElementFlag_DiffuseMap)
-		pixelShaderDefines.push_back(DXShaderMacro("DIFFUSE_MAP", "1"));
-	
-	if (pParams->m_MaterialElementFlags & MaterialElementFlag_NormalMap)
-		pixelShaderDefines.push_back(DXShaderMacro("NORMAL_MAP", "1"));
-	
-	if (pParams->m_MaterialElementFlags & MaterialElementFlag_SpecularMap)
-		pixelShaderDefines.push_back(DXShaderMacro("SPECULAR_MAP", "1"));
-
-	pixelShaderDefines.push_back(DXShaderMacro());
-
-	DXShader pixelShader(L"Shaders//FillGBufferPS.hlsl", "Main", "ps_4_0", &pixelShaderDefines[0]);
-		
 	DXCBVRange transformCBVRange(1, 0);
 	DXCBVRange materialCBVRange(1, 0);
+	DXSRVRange diffuseSRVRange(1, 0);
+	DXSRVRange normalSRVRange(1, 1);
+	DXSRVRange specularSRVRange(1, 2);
+	DXSamplerRange anisoSamplerRange(1, 0);
 
-	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kTransformCBVRootParam] = DXRootDescriptorTableParameter(1, &transformCBVRange, D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParams[kMaterialCBVRootParam] = DXRootDescriptorTableParameter(1, &materialCBVRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	u8 numRootParams = 0;
+	std::vector<D3D12_ROOT_PARAMETER> rootParams;
+	
+	rootParams.push_back(DXRootDescriptorTableParameter(1, &transformCBVRange, D3D12_SHADER_VISIBILITY_VERTEX));
+	m_TransformCBVRootParam = numRootParams++;
 
-	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	rootParams.push_back(DXRootDescriptorTableParameter(1, &materialCBVRange, D3D12_SHADER_VISIBILITY_PIXEL));
+	m_MaterialCBVRootParam = numRootParams++;
+
+	std::vector<DXShaderMacro> pixelShaderDefines;
+	if (m_MaterialElementFlags != 0)
+	{
+		rootParams.push_back(DXRootDescriptorTableParameter(1, &anisoSamplerRange, D3D12_SHADER_VISIBILITY_PIXEL));
+		m_AnisoSamplerRootParam = numRootParams++;
+
+		if (m_MaterialElementFlags & MaterialElementFlag_DiffuseMap)
+		{
+			pixelShaderDefines.push_back(DXShaderMacro("DIFFUSE_MAP", "1"));
+			rootParams.push_back(DXRootDescriptorTableParameter(1, &diffuseSRVRange, D3D12_SHADER_VISIBILITY_PIXEL));
+
+			m_DiffuseSRVRootParam = numRootParams++;
+		}
+		if (m_MaterialElementFlags & MaterialElementFlag_NormalMap)
+		{
+			pixelShaderDefines.push_back(DXShaderMacro("NORMAL_MAP", "1"));
+			rootParams.push_back(DXRootDescriptorTableParameter(1, &normalSRVRange, D3D12_SHADER_VISIBILITY_PIXEL));
+
+			m_NormalSRVRootParam = numRootParams++;
+		}
+		if (m_MaterialElementFlags & MaterialElementFlag_SpecularMap)
+		{
+			pixelShaderDefines.push_back(DXShaderMacro("SPECULAR_MAP", "1"));
+			rootParams.push_back(DXRootDescriptorTableParameter(1, &specularSRVRange, D3D12_SHADER_VISIBILITY_PIXEL));
+
+			m_SpecularSRVRootParam = numRootParams++;
+		}
+	}
+	pixelShaderDefines.push_back(DXShaderMacro());
+	
+	DXShader vertexShader(L"Shaders//FillGBufferVS.hlsl", "Main", "vs_4_0");
+	DXShader pixelShader(L"Shaders//FillGBufferPS.hlsl", "Main", "ps_4_0", &pixelShaderDefines[0]);
+	
+	DXRootSignatureDesc rootSignatureDesc(numRootParams, &rootParams[0], D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	m_pRootSignature = new DXRootSignature(pParams->m_pDevice, &rootSignatureDesc, L"FillGBufferRecorder::m_pRootSignature");
 
 	std::vector<DXInputElementDesc> inputElementDescs;
@@ -70,40 +89,80 @@ FillGBufferRecorder::~FillGBufferRecorder()
 
 void FillGBufferRecorder::Record(FillGBufferRecordParams* pParams)
 {
-	pParams->m_pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
-
+	DXCommandList* pCommandList = pParams->m_pCommandList;
+	
+	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	// Kolya: Has to force clear state - otherwise VS Graphics Debugger will fail to make capture
-	pParams->m_pCommandList->GetDXObject()->ClearState(m_pPipelineState->GetDXObject());
-	pParams->m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);
+	pCommandList->GetDXObject()->ClearState(m_pPipelineState->GetDXObject());
+	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	
-	if (pParams->m_pDiffuseTexture->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
-		pParams->m_pCommandList->TransitionBarrier(pParams->m_pDiffuseTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	GBuffer* pGBuffer = pParams->m_pGBuffer;
+	if (pGBuffer->m_pDiffuseTexture->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
+		pCommandList->TransitionBarrier(pGBuffer->m_pDiffuseTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	
-	if (pParams->m_pNormalTexture->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
-		pParams->m_pCommandList->TransitionBarrier(pParams->m_pNormalTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	if (pGBuffer->m_pNormalTexture->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
+		pCommandList->TransitionBarrier(pGBuffer->m_pNormalTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+	if (pGBuffer->m_pSpecularTexture->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
+		pCommandList->TransitionBarrier(pGBuffer->m_pSpecularTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	
-	if (pParams->m_pDepthTexture->GetState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
-		pParams->m_pCommandList->TransitionBarrier(pParams->m_pDepthTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	if (pGBuffer->m_pDepthTexture->GetState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
+		pCommandList->TransitionBarrier(pGBuffer->m_pDepthTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
-	pParams->m_pCommandList->SetDescriptorHeaps(pParams->m_pCBVDescriptorHeap);
-	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kTransformCBVRootParam, pParams->m_TransformCBVHandle);
+	pCommandList->SetDescriptorHeaps(pParams->m_pCBVDescriptorHeap, pParams->m_pSamplerDescriptorHeap);
+	pCommandList->SetGraphicsRootDescriptorTable(m_TransformCBVRootParam, pParams->m_TransformCBVHandle);
+	pCommandList->SetGraphicsRootDescriptorTable(m_MaterialCBVRootParam, pParams->m_MaterialCBVHandle);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[] = {pParams->m_DiffuseRTVHandle, pParams->m_NormalRTVHandle};
-	pParams->m_pCommandList->OMSetRenderTargets(ARRAYSIZE(rtvHandles), rtvHandles, TRUE, &pParams->m_DSVHandle);
+	if (m_MaterialElementFlags != 0)
+	{
+		Material* pMaterial = pParams->m_pMaterial;
+		pCommandList->SetGraphicsRootDescriptorTable(m_AnisoSamplerRootParam, pParams->m_AnisoSamplerHandle);
+		
+		if (m_MaterialElementFlags & MaterialElementFlag_DiffuseMap)
+		{
+			if (pMaterial->m_pDiffuseMap->GetState() != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
+				pCommandList->TransitionBarrier(pMaterial->m_pDiffuseMap, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+			
+			pCommandList->SetGraphicsRootDescriptorTable(m_DiffuseSRVRootParam, pMaterial->m_DiffuseSRVHandle);
+		}
+		if (m_MaterialElementFlags & MaterialElementFlag_NormalMap)
+		{
+			if (pMaterial->m_pNormalMap->GetState() != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
+				pCommandList->TransitionBarrier(pMaterial->m_pNormalMap, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	pParams->m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	pParams->m_pCommandList->IASetVertexBuffers(0, 1, pParams->m_pMesh->GetVertexBufferView());
-	pParams->m_pCommandList->IASetIndexBuffer(pParams->m_pMesh->GetIndexBufferView());
+			pCommandList->SetGraphicsRootDescriptorTable(m_NormalSRVRootParam, pMaterial->m_NormalSRVHandle);
+		}
+		if (m_MaterialElementFlags & MaterialElementFlag_SpecularMap)
+		{
+			if (pMaterial->m_pSpecularMap->GetState() != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
+				pCommandList->TransitionBarrier(pMaterial->m_pSpecularMap, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	DXViewport viewport(0.0f, 0.0f, FLOAT(pParams->m_pDiffuseTexture->GetWidth()), FLOAT(pParams->m_pDiffuseTexture->GetHeight()));
-	pParams->m_pCommandList->RSSetViewports(1, &viewport);
+			pCommandList->SetGraphicsRootDescriptorTable(m_NormalSRVRootParam, pMaterial->m_SpecualSRVHandle);
+		}
+	}
+
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[] =
+	{
+		pGBuffer->m_DiffuseRTVHandle,
+		pGBuffer->m_NormalRTVHandle,
+		pGBuffer->m_SpecularRTVHandle
+	};
+	pCommandList->OMSetRenderTargets(ARRAYSIZE(rtvHandles), rtvHandles, TRUE, &pGBuffer->m_DSVHandle);
+
+	Mesh* pMesh = pParams->m_pMesh;
+	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	pCommandList->IASetVertexBuffers(0, 1, pMesh->GetVertexBufferView());
+	pCommandList->IASetIndexBuffer(pMesh->GetIndexBufferView());
+
+	DXViewport viewport(0.0f, 0.0f, FLOAT(pGBuffer->m_pDiffuseTexture->GetWidth()), FLOAT(pGBuffer->m_pDiffuseTexture->GetHeight()));
+	pCommandList->RSSetViewports(1, &viewport);
 
 	DXRect scissorRect(ExtractRect(viewport));
-	pParams->m_pCommandList->RSSetScissorRects(1, &scissorRect);
+	pCommandList->RSSetScissorRects(1, &scissorRect);
 
-	assert(pParams->m_pMesh->GetNumSubMeshes() == 1);
-	const SubMeshData* pSubMeshData = pParams->m_pMesh->GetSubMeshes();
-	pParams->m_pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
+	assert(pMesh->GetNumSubMeshes() == 1);
+	const SubMeshData* pSubMeshData = pMesh->GetSubMeshes();
+	pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
 
-	pParams->m_pCommandList->Close();
+	pCommandList->Close();
 }

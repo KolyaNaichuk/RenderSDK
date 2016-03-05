@@ -81,11 +81,9 @@ DXBlendDesc::DXBlendDesc(Id id)
 		RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
 		RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
 		RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
-		RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-		
+		RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;		
 		RenderTarget[0].LogicOpEnable = FALSE;
-		RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
-		
+		RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;		
 		RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 	}
 	else
@@ -180,7 +178,7 @@ DXSamplerDesc::DXSamplerDesc(Id id)
 		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 		MipLODBias = 0.0f;
 		MaxAnisotropy = 1;
-		ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 		BorderColor[0] = BorderColor[1] = BorderColor[2] = BorderColor[3] = 1.0f;
 		MinLOD = -D3D12_FLOAT32_MAX;
 		MaxLOD = D3D12_FLOAT32_MAX;
@@ -191,9 +189,20 @@ DXSamplerDesc::DXSamplerDesc(Id id)
 		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 		MipLODBias = 0.0f;
 		MaxAnisotropy = 1;
-		ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 		BorderColor[0] = BorderColor[1] = BorderColor[2] = BorderColor[3] = 1.0f;
 		MinLOD = -D3D12_FLOAT32_MAX;
+		MaxLOD = D3D12_FLOAT32_MAX;
+	}
+	else if (id == DXSamplerDesc::Anisotropic)
+	{
+		Filter = D3D12_FILTER_ANISOTROPIC;
+		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		MipLODBias = 0.0f;
+		MaxAnisotropy = 16;
+		ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		BorderColor[0] = BorderColor[1] = BorderColor[2] = BorderColor[3] = 1.0f;
+		MinLOD = 0.0f;
 		MaxLOD = D3D12_FLOAT32_MAX;
 	}
 	else
