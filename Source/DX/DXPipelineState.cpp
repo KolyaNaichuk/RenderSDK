@@ -75,16 +75,19 @@ DXBlendDesc::DXBlendDesc(Id id)
 		AlphaToCoverageEnable = FALSE;
 		IndependentBlendEnable = FALSE;
 		
-		RenderTarget[0].BlendEnable = FALSE;
-		RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
-		RenderTarget[0].DestBlend = D3D12_BLEND_ZERO;
-		RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-		RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
-		RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
-		RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;		
-		RenderTarget[0].LogicOpEnable = FALSE;
-		RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;		
-		RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+		for (u8 index = 0; index < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++index)
+		{
+			RenderTarget[index].BlendEnable = FALSE;
+			RenderTarget[index].SrcBlend = D3D12_BLEND_ONE;
+			RenderTarget[index].DestBlend = D3D12_BLEND_ZERO;
+			RenderTarget[index].BlendOp = D3D12_BLEND_OP_ADD;
+			RenderTarget[index].SrcBlendAlpha = D3D12_BLEND_ONE;
+			RenderTarget[index].DestBlendAlpha = D3D12_BLEND_ZERO;
+			RenderTarget[index].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+			RenderTarget[index].LogicOpEnable = FALSE;
+			RenderTarget[index].LogicOp = D3D12_LOGIC_OP_NOOP;
+			RenderTarget[index].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+		}
 	}
 	else
 	{
