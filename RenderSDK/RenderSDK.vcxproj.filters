@@ -189,6 +189,9 @@
     <ClInclude Include="..\Include\CommandRecorders\FillGBufferRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -347,6 +350,9 @@
     <ClCompile Include="..\Source\CommandRecorders\FillGBufferRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -401,6 +407,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\FillGBufferPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\InjectVPLsIntoVoxelGridCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\Lighting.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

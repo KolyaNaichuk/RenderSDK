@@ -6,6 +6,13 @@ struct Voxel
 	float4 colorAndNumOccluders;
 };
 
+struct VPL
+{
+	float4 shRedCoeffs;
+	float4 shGreenCoeffs;
+	float4 shBlueCoeffs;
+};
+
 struct GridConfig
 {
 	float4 worldSpaceOrigin;

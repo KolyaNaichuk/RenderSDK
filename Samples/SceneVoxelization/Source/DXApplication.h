@@ -17,6 +17,7 @@ class Camera;
 class FillGBufferRecorder;
 class ClearVoxelGridRecorder;
 class CreateVoxelGridRecorder;
+class InjectVPLsIntoVoxelGridRecorder;
 class VisualizeVoxelGridRecorder;
 class VisualizeMeshRecorder;
 
@@ -61,6 +62,7 @@ private:
 	FillGBufferRecorder* m_pFillGBufferRecorder;
 	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;
 	CreateVoxelGridRecorder* m_pCreateVoxelGridRecorder;
+	InjectVPLsIntoVoxelGridRecorder* m_pInjectVPLsIntoVoxelGridRecorder;
 	VisualizeVoxelGridRecorder* m_pVisualizeVoxelGridRecorder;
 	VisualizeMeshRecorder* m_pVisualizeMeshRecorder;
 

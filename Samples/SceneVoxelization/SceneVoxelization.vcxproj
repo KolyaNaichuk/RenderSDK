@@ -138,7 +138,13 @@ COPY /Y "$(SolutionDir)Shaders\FillGBufferVS.hlsl" "$(SolutionDir)Samples\$(Proj
 COPY /Y "$(SolutionDir)Shaders\FillGBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillGBufferVS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\FillGBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillGBufferPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\FillGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillGBufferPS.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\FillGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillGBufferPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\InjectVPLsIntoVoxelGridCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\InjectVPLsIntoVoxelGridCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\InjectVPLsIntoVoxelGridCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\InjectVPLsIntoVoxelGridCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Lighting.hlsl"
+COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Lighting.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

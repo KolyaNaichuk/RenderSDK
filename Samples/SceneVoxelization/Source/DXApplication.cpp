@@ -12,6 +12,7 @@
 #include "CommandRecorders/FillGBufferRecorder.h"
 #include "CommandRecorders/ClearVoxelGridRecorder.h"
 #include "CommandRecorders/CreateVoxelGridRecorder.h"
+#include "CommandRecorders/InjectVPLsIntoVoxelGridRecorder.h"
 #include "CommandRecorders/VisualizeVoxelGridRecorder.h"
 #include "CommandRecorders/VisualizeMeshRecorder.h"
 #include "Common/MeshData.h"
@@ -102,6 +103,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFillGBufferRecorder(nullptr)
 	, m_pClearVoxelGridRecorder(nullptr)
 	, m_pCreateVoxelGridRecorder(nullptr)
+	, m_pInjectVPLsIntoVoxelGridRecorder(nullptr)
 	, m_pVisualizeVoxelGridRecorder(nullptr)
 	, m_pVisualizeMeshRecorder(nullptr)
 	, m_pMesh(nullptr)
@@ -123,6 +125,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pMesh);
 	SafeDelete(m_pClearVoxelGridRecorder);
 	SafeDelete(m_pCreateVoxelGridRecorder);
+	SafeDelete(m_pInjectVPLsIntoVoxelGridRecorder);
 	SafeDelete(m_pVisualizeVoxelGridRecorder);
 	SafeDelete(m_pVisualizeMeshRecorder);
 	SafeDelete(m_pFillGBufferRecorder);
@@ -450,6 +453,14 @@ void DXApplication::OnInit()
 	createGridParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
 
 	m_pCreateVoxelGridRecorder = new CreateVoxelGridRecorder(&createGridParams);
+
+	InjectVPLsIntoVoxelGridRecorder::InitPrams injectVPLsParams;
+	injectVPLsParams.m_pDevice = m_pDevice;
+	injectVPLsParams.m_NumGridCellsX = kNumGridCellsX;
+	injectVPLsParams.m_NumGridCellsY = kNumGridCellsY;
+	injectVPLsParams.m_NumGridCellsZ = kNumGridCellsZ;
+
+	m_pInjectVPLsIntoVoxelGridRecorder = new InjectVPLsIntoVoxelGridRecorder(&injectVPLsParams);
 
 	VisualizeVoxelGridInitParams visualizeGridParams;
 	visualizeGridParams.m_pDevice = m_pDevice;

@@ -13,9 +13,9 @@ class DXResource;
 struct ClearVoxelGridInitParams
 {
 	DXDevice* m_pDevice;
-	UINT m_NumGridCellsX;
-	UINT m_NumGridCellsY;
-	UINT m_NumGridCellsZ;
+	u16 m_NumGridCellsX;
+	u16 m_NumGridCellsY;
+	u16 m_NumGridCellsZ;
 };
 
 struct ClearVoxelGridRecordParams

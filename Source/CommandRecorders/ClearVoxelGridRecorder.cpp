@@ -16,9 +16,6 @@ enum RootParams
 ClearVoxelGridRecorder::ClearVoxelGridRecorder(ClearVoxelGridInitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
-	, m_NumThreadGroupsX(0)
-	, m_NumThreadGroupsY(0)
-	, m_NumThreadGroupsZ(0)
 {
 	const u16 numThreadsPerGroupX = 8;
 	const u16 numThreadsPerGroupY = 8;
