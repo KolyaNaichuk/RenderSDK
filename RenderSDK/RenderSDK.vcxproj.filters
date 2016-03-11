@@ -192,6 +192,9 @@
     <ClInclude Include="..\Include\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Common\Light.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -352,6 +355,9 @@
     </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.cpp">
       <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\Light.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

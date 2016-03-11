@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Common/Common.h"
 #include "Math/Transform.h"
 
 class SceneObject

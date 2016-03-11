@@ -7,10 +7,10 @@ cbuffer GridConfigBuffer : register(b0)
 }
 
 StructuredBuffer<Voxel> g_GridBuffer : register(t0);
-StructuredBuffer<OmniLight> g_OmniLightsBuffer : register(t1);
-StructuredBuffer<SpotLight> g_SpotLightsBuffer : register(t2);
+StructuredBuffer<PointLight> g_PointLightBuffer : register(t1);
+StructuredBuffer<SpotLight> g_SpotLightBuffer : register(t2);
 
-RWStructuredBuffer<VPL> g_VPLsBuffer : register(u0);
+RWStructuredBuffer<VPL> g_VPLBuffer : register(u0);
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 void Main(int3 gridCell : SV_DispatchThreadID)

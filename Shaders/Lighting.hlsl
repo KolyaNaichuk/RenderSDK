@@ -1,7 +1,7 @@
 #ifndef __LIGHTING__
 #define __LIGHTING__
 
-struct OmniLight
+struct PointLight
 {
 	float3 worldSpacePos;
 };
