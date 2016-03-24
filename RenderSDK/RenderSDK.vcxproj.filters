@@ -421,5 +421,8 @@
     <None Include="..\Shaders\Lighting.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\Shaders\TiledLightCullingCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -3,8 +3,8 @@
 
 uint PackColor(float3 color)
 {
-	uint3 colorUInt = uint3(color * 255.0f);
-	return ((colorUInt.r << 16u) | (colorUInt.g << 8u) | colorUInt.b);
+	uint3 colorInt = uint3(color * 255.0f);
+	return ((colorInt.r << 16u) | (colorInt.g << 8u) | colorInt.b);
 }
 
 float3 UnpackColor(uint packedColor)

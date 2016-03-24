@@ -27,6 +27,11 @@ result = afterWDivideProjSpacePosition * InvProjMatrix = {x/z, y/z, 1, 1/z}
 viewSpacePosition = result / result.w;
 */
 
+float ComputeViewSpaceDepth(float hardwareDepth, matrix projMatrix)
+{
+	return projMatrix._43 / (hardwareDepth - projMatrix._33);
+}
+
 float4 ComputeViewSpacePosition(float2 texCoord, float hardwareDepth, matrix projInvMatrix)
 {
 	float4 postWDivideProjSpacePos = float4(2.0f * texCoord.x - 1.0f, 1.0f - 2.0f * texCoord.y, hardwareDepth, 1.0f);
@@ -50,7 +55,7 @@ float4 ComputeWorldSpacePosition(float2 texCoord, float hardwareDepth, matrix vi
 float2 ComputeScreenSpacePosition(float4 clipSpacePos, float2 screenSize)
 {
 	float4 postWDivideProjSpacePos = clipSpacePos / clipSpacePos.w;
-	
+		
 	float2 screenSpacePos;
 	screenSpacePos.x = 0.5f * screenSize.x * (postWDivideProjSpacePos.x + 1.0f);
 	screenSpacePos.y = 0.5f * screenSize.y * (1.0f - postWDivideProjSpacePos.y);
