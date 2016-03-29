@@ -1,7 +1,7 @@
 #pragma once
 
-struct BoundingBox;
-struct BoundingSphere;
+struct AxisAlignedBox;
+struct Sphere;
 
-bool Overlap(const BoundingBox& box1, const BoundingBox& box2);
-bool Overlap(const BoundingSphere& sphere1, const BoundingSphere& sphere2);
+bool Overlap(const AxisAlignedBox& box1, const AxisAlignedBox& box2);
+bool Overlap(const Sphere& sphere1, const Sphere& sphere2);

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Math/Vector3.h"
-#include "Math/Vector4.h"
 
 class Transform;
 
@@ -26,6 +25,5 @@ struct Plane
 const Plane Normalize(const Plane& plane);
 bool IsNormalized(const Plane& plane, f32 epsilon = EPSILON);
 f32 SignedDistanceToPoint(const Plane& plane, const Vector3f& point);
-f32 DistanceToPoint(const Plane& plane, const Vector3f& point);
 Plane::HalfSpace ClassifyPoint(const Plane& plane, const Vector3f& point);
 const Plane TransformPlane(const Plane& plane, const Transform& transform);

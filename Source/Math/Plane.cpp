@@ -38,23 +38,18 @@ bool IsNormalized(const Plane& plane, f32 epsilon)
 
 f32 SignedDistanceToPoint(const Plane& plane, const Vector3f& point)
 {
-	return (Dot(point, plane.m_Normal) + plane.m_SignedDistFromOrigin);
-}
-
-f32 DistanceToPoint(const Plane& plane, const Vector3f& point)
-{
 	assert(IsNormalized(plane));
-	return SignedDistanceToPoint(plane, point);
+	return (Dot(point, plane.m_Normal) + plane.m_SignedDistFromOrigin);
 }
 
 Plane::HalfSpace ClassifyPoint(const Plane& plane, const Vector3f& point)
 {
-	f32 signedDist = SignedDistanceToPoint(plane, point);
+	f32 signedDist = Dot(point, plane.m_Normal) + plane.m_SignedDistFromOrigin;	
 	
-	if (signedDist > 0)
+	if (signedDist > 0.0f)
 		return Plane::Positive;
-
-	if (signedDist < 0)
+	
+	if (signedDist < 0.0f)
 		return Plane::Negative;
 
 	return Plane::OnPlane;
@@ -66,4 +61,3 @@ const Plane TransformPlane(const Plane& plane, const Transform& transform)
 	Vector4f transformedVec = TransformNormal(vec, transform);
 	return Plane(Vector3f(transformedVec.m_X, transformedVec.m_Y, transformedVec.m_Z), transformedVec.m_W);
 }
-
