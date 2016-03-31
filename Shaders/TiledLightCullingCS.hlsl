@@ -34,9 +34,19 @@ float4 CreatePlanePassingThroughOrigin(float3 pt1, float3 pt2)
 	return float4(planeNormal, signedDistFromOrigin);
 }
 
-float SignedDistanceToPoint(float4 plane, float3 pt)
+float CalcSignedDistance(float4 plane, float3 pt)
 {
 	return dot(plane, float4(pt, 1.0f));
+}
+
+bool TestSphereAgainstFrustum(float4 frustumSidePlanes[4], float frustumMinZ, float frustumMaxZ, float3 sphereCenter, float sphereRadius)
+{
+	return (CalcSignedDistance(frustumSidePlanes[0], sphereCenter) < sphereRadius) &&
+		(CalcSignedDistance(frustumSidePlanes[1], sphereCenter) < sphereRadius) &&
+		(CalcSignedDistance(frustumSidePlanes[2], sphereCenter) < sphereRadius) &&
+		(CalcSignedDistance(frustumSidePlanes[3], sphereCenter) < sphereRadius) &&
+		(frustumMinZ < sphereCenter.z + sphereRadius) &&
+		(frustumMaxZ > sphereCenter.z - sphereRadius);
 }
 
 Texture2D g_DepthTexture : register(t0);
@@ -66,26 +76,15 @@ groupshared uint g_NumSpotLightsPerTile;
 groupshared uint g_SpotLightIndicesPerTile[MAX_NUM_LIGHTS_PER_TILE];
 #endif // USE_SPOT_LIGHTS
 
-bool TestSphereAgainstFrustum(float4 frustumSidePlanes[4], float frustumNearPlaneDepth,
-	float frustumFarPlaneDepth, float3 sphereCenter, float sphereRadius)
-{
-	return (SignedDistanceToPoint(frustumSidePlanes[0], sphereCenter) < sphereRadius) &&
-		(SignedDistanceToPoint(frustumSidePlanes[1], sphereCenter) < sphereRadius) &&
-		(SignedDistanceToPoint(frustumSidePlanes[2], sphereCenter) < sphereRadius) &&
-		(SignedDistanceToPoint(frustumSidePlanes[3], sphereCenter) < sphereRadius);
-}
-
 #ifdef USE_POINT_LIGHTS
-void FindPointLightsPerTile(float4 viewSpaceFrustumPlanes[4])
+void FindPointLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth)
 {
 	for (uint lightIndex = localThreadIndex; lightIndex < g_NumPointLights; lightIndex += NUM_THREADS_PER_TILE)
 	{
-		float3 lightViewSpacePos = g_PointLightGeometryBuffer[lightIndex].viewSpacePos;
+		float3 viewSpaceLightCenter = g_PointLightGeometryBuffer[lightIndex].viewSpaceCenter;
 		float lightRadius = g_PointLightGeometryBuffer[lightIndex].radius;
 
-		bool insideOrOverlaps = 
-
-
+		bool insideOrOverlaps = TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceLightCenter, lightRadius);
 		if (insideOrOverlaps)
 		{
 			uint listIndex;
@@ -97,14 +96,11 @@ void FindPointLightsPerTile(float4 viewSpaceFrustumPlanes[4])
 #endif // USE_POINT_LIGHTS
 
 #ifdef USE_SPOT_LIGHTS
-void FindSpotLightsPerTile()
+void FindSpotLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth)
 {
 	for (uint lightIndex = localThreadIndex; lightIndex < g_NumSpotLights; lightIndex += NUM_THREADS_PER_TILE)
 	{
 		SpotLightGeometry lightGeometry = g_SpotLightGeometryBuffer[lightIndex];
-
-		bool insideOrOverlaps = true;
-		for ()
 		
 		if (insideOrOverlaps)
 		{
@@ -162,19 +158,34 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 groupId : SV_GroupID
 	float3 viewSpaceTileBLCorner = ComputeViewSpacePosition(texSpaceTileBLCorner, 1.0f, g_ProjInvMatrix).xyz;
 	float3 viewSpaceTileBRCorner = ComputeViewSpacePosition(texSpaceTileBRCorner, 1.0f, g_ProjInvMatrix).xyz;
 
-	float4 viewSpaceFrusumPlanes[4];
-	viewSpaceFrusumPlanes[0] = CreatePlanePassingThroughOrigin(texSpaceTileTRCorner, texSpaceTileTLCorner);
-	viewSpaceFrusumPlanes[1] = CreatePlanePassingThroughOrigin(texSpaceTileBLCorner, texSpaceTileBRCorner);
-	viewSpaceFrusumPlanes[2] = CreatePlanePassingThroughOrigin(texSpaceTileTLCorner, texSpaceTileBLCorner);
-	viewSpaceFrusumPlanes[3] = CreatePlanePassingThroughOrigin(texSpaceTileBRCorner, texSpaceTileTRCorner);
+	float4 viewSpaceFrusumSidePlanes[4];
+	viewSpaceFrusumSidePlanes[0] = CreatePlanePassingThroughOrigin(texSpaceTileTRCorner, texSpaceTileTLCorner);
+	viewSpaceFrusumSidePlanes[1] = CreatePlanePassingThroughOrigin(texSpaceTileBLCorner, texSpaceTileBRCorner);
+	viewSpaceFrusumSidePlanes[2] = CreatePlanePassingThroughOrigin(texSpaceTileTLCorner, texSpaceTileBLCorner);
+	viewSpaceFrusumSidePlanes[3] = CreatePlanePassingThroughOrigin(texSpaceTileBRCorner, texSpaceTileTRCorner);
 	
 #ifdef USE_POINT_LIGHTS
-	FindPointLightsPerTile(viewSpaceFrusumPlanes);
+	FindPointLightsPerTile(localThreadIndex, viewSpaceFrusumSidePlanes, viewSpaceMinDepthPerTile, viewSpaceMaxDepthPerTile);
 	GroupMemoryBarrierWithGroupSync();
 #endif // USE_POINT_LIGHTS
 
 #ifdef USE_SPOT_LIGHTS
-	FindSpotLightsPerTile(viewSpaceFrusumPlanes);
+	FindSpotLightsPerTile(localThreadIndex, viewSpaceFrusumSidePlanes, viewSpaceMinDepthPerTile, viewSpaceMaxDepthPerTile);
 	GroupMemoryBarrierWithGroupSync();
 #endif // USE_SPOT_LIGHTS
+
+#ifdef USE_DIRECT_LIGHT
+#endif // USE_DIRECT_LIGHT
+
+	float3 diffuseColor = float3(0.0f, 0.0f, 0.0f);
+	float3 specularColor = float3(0.0f, 0.0f, 0.0f);
+
+#ifdef USE_POINT_LIGHTS
+#endif // USE_POINT_LIGHTS
+	
+#ifdef USE_SPOT_LIGHTS
+#endif // USE_SPOT_LIGHTS
+
+#ifdef USE_DIRECT_LIGHT
+#endif // USE_DIRECT_LIGHT
 }
