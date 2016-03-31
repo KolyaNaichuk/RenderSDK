@@ -68,3 +68,49 @@ f64 Pow(f64 base, f64 exponent)
 {
 	return std::pow(base, exponent);
 }
+
+f32 Lerp(f32 minValue, f32 maxValue, f32 weight)
+{
+	return minValue + weight * (maxValue - minValue);
+}
+
+f64 Lerp(f64 minValue, f64 maxValue, f64 weight)
+{
+	return minValue + weight * (maxValue - minValue);
+}
+
+f32 SmoothStep(f32 minValue, f32 maxValue, f32 value)
+{
+	f32 x = Saturate((value - minValue) / (maxValue - minValue));
+	return (3.0f - 2.0f * x) * x * x;
+}
+
+f64 SmoothStep(f64 minValue, f64 maxValue, f64 value)
+{
+	f64 x = Saturate((value - minValue) / (maxValue - minValue));
+	return (3.0 - 2.0 * x) * x * x;
+}
+
+f32 SmootherStep(f32 minValue, f32 maxValue, f32 value)
+{
+	f32 x = Saturate((value - minValue) / (maxValue - minValue));
+	return (10.0f + x * (6.0f * x - 15.0f)) * x * x * x;
+}
+
+f64 SmootherStep(f64 minValue, f64 maxValue, f64 value)
+{
+	f64 x = Saturate((value - minValue) / (maxValue - minValue));
+	return (10.0 + x * (6.0 * x - 15.0)) * x * x * x;
+}
+
+f32 SmoothestStep(f32 minValue, f32 maxValue, f32 value)
+{
+	f32 x = Saturate((value - minValue) / (maxValue - minValue));
+	return ((35.0f - 84.0f * x + 70.0f * x * x - 20.0f * x * x * x) * x * x * x * x);
+}
+
+f64 SmoothestStep(f64 minValue, f64 maxValue, f64 value)
+{
+	f64 x = Saturate((value - minValue) / (maxValue - minValue));
+	return ((35.0 - 84.0 * x + 70.0 * x * x - 20.0 * x * x * x) * x * x * x * x);
+}

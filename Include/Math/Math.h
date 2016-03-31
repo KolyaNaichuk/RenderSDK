@@ -50,9 +50,15 @@ T Abs(T value)
 }
 
 template <typename T>
-T Clamp(T lowerBound, T upperBound, T value)
+T Clamp(T minValue, T maxValue, T value)
 {
-    return Max(Min(upperBound, value), lowerBound);
+    return Max(Min(maxValue, value), minValue);
+}
+
+template <typename T>
+T Saturate(T value)
+{
+	return Clamp(T(0), T(1), value);
 }
 
 template <typename T>
@@ -86,3 +92,15 @@ f64 Floor(f64 value);
 
 f32 Pow(f32 base, f32 exponent);
 f64 Pow(f64 base, f64 exponent);
+
+f32 Lerp(f32 minValue, f32 maxValue, f32 weight);
+f64 Lerp(f64 minValue, f64 maxValue, f64 weight);
+
+f32 SmoothStep(f32 minValue, f32 maxValue, f32 value);
+f64 SmoothStep(f64 minValue, f64 maxValue, f64 value);
+
+f32 SmootherStep(f32 minValue, f32 maxValue, f32 value);
+f64 SmootherStep(f64 minValue, f64 maxValue, f64 value);
+
+f32 SmoothestStep(f32 minValue, f32 maxValue, f32 value);
+f64 SmoothestStep(f64 minValue, f64 maxValue, f64 value);
