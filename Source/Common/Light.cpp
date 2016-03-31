@@ -99,12 +99,11 @@ void PointLight::SetAttenEndRange(f32 attenEndRange)
 	m_AttenEndRange = attenEndRange;
 }
 
-SpotLight::SpotLight(const std::string& name, f32 range, f32 falloff, const Radian& innerConeAngle, const Radian& outerConeAngle)
+SpotLight::SpotLight(const std::string& name, f32 range, const Radian& innerConeAngle, const Radian& outerConeAngle)
 	: Light(name)
 	, m_Range(range)
 	, m_AttenStartRange(0.0f)
 	, m_AttenEndRange(range)
-	, m_FallOff(falloff)
 	, m_InnerConeAngle(innerConeAngle)
 	, m_OuterConeAngle(outerConeAngle)
 {
@@ -138,16 +137,6 @@ f32 SpotLight::GetAttenEndRange() const
 void SpotLight::SetAttenEndRange(f32 attenEndRange)
 {
 	m_AttenEndRange = attenEndRange;
-}
-
-f32 SpotLight::GetFalloff() const
-{
-	return m_FallOff;
-}
-
-void SpotLight::SetFalloff(f32 falloff)
-{
-	m_FallOff = falloff;
 }
 
 const Radian& SpotLight::GetInnerConeAngle() const

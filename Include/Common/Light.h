@@ -56,7 +56,7 @@ private:
 class SpotLight : public Light
 {
 public:
-	SpotLight(const std::string& name, f32 range, f32 falloff, const Radian& innerConeAngle, const Radian& outerConeAngle);
+	SpotLight(const std::string& name, f32 range, const Radian& innerConeAngle, const Radian& outerConeAngle);
 
 	f32 GetRange() const;
 	void SetRange(f32 range);
@@ -66,10 +66,7 @@ public:
 
 	f32 GetAttenEndRange() const;
 	void SetAttenEndRange(f32 attenEndRange);
-
-	f32 GetFalloff() const;
-	void SetFalloff(f32 falloff);
-
+	
 	const Radian& GetInnerConeAngle() const;
 	void SetInnerConeAngle(const Radian& innerConeAngle);
 
@@ -80,7 +77,6 @@ private:
 	f32 m_Range;
 	f32 m_AttenStartRange;
 	f32 m_AttenEndRange;
-	f32 m_FallOff;
 	Radian m_InnerConeAngle;
 	Radian m_OuterConeAngle;
 };
