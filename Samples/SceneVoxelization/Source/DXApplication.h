@@ -20,6 +20,7 @@ class CreateVoxelGridRecorder;
 class InjectVPLsIntoVoxelGridRecorder;
 class VisualizeVoxelGridRecorder;
 class VisualizeMeshRecorder;
+class TiledShadingRecorder;
 
 class DXApplication : public Application
 {
@@ -60,6 +61,7 @@ private:
 	UINT m_BackBufferIndex;
 
 	FillGBufferRecorder* m_pFillGBufferRecorder;
+	TiledShadingRecorder* m_pTiledShadingRecorder;
 	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;
 	CreateVoxelGridRecorder* m_pCreateVoxelGridRecorder;
 	InjectVPLsIntoVoxelGridRecorder* m_pInjectVPLsIntoVoxelGridRecorder;

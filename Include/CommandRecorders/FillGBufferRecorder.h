@@ -27,9 +27,9 @@ struct GBuffer
 	D3D12_CPU_DESCRIPTOR_HANDLE m_SpecularRTVHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_SpecularSRVHandle;
 	
-	DXResource* m_AccumulatedLightTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_AccumulatedLightRTVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_AccumulatedLightSRVHandle;
+	DXResource* m_AccumLightTexture;
+	D3D12_CPU_DESCRIPTOR_HANDLE m_AccumLightRTVHandle;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_AccumLightSRVHandle;
 
 	DXResource* m_pDepthTexture;
 	D3D12_CPU_DESCRIPTOR_HANDLE m_DSVHandle;

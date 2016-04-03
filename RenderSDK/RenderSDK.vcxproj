@@ -152,6 +152,7 @@
     <ClInclude Include="..\Include\CommandRecorders\FillGBufferRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\ScaleTextureRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\TiledShadingRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\VisualizeMeshRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\VisualizeVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\Common\Application.h" />
@@ -213,6 +214,7 @@
     <ClCompile Include="..\Source\CommandRecorders\FillGBufferRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\ScaleTextureRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\TiledShadingRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\VisualizeMeshRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\VisualizeVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\Common\Application.cpp" />
@@ -408,7 +410,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\TiledLightCullingCS.hlsl">
+    <None Include="..\Shaders\TiledShadingCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>

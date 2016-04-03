@@ -10,6 +10,7 @@
 #include "DX/DXFence.h"
 #include "DX/DXEvent.h"
 #include "CommandRecorders/FillGBufferRecorder.h"
+#include "CommandRecorders/TiledShadingRecorder.h"
 #include "CommandRecorders/ClearVoxelGridRecorder.h"
 #include "CommandRecorders/CreateVoxelGridRecorder.h"
 #include "CommandRecorders/InjectVPLsIntoVoxelGridRecorder.h"
@@ -29,6 +30,10 @@
 
 enum
 {
+	kTileSize = 16,
+	kNumTilesX = 58,
+	kNumTilesY = 48,
+
 	kGridSizeX = 640,
 	kGridSizeY = 640,
 	kGridSizeZ = 640,
@@ -84,7 +89,7 @@ struct Voxel
 };
 
 DXApplication::DXApplication(HINSTANCE hApp)
-	: Application(hApp, L"Scene Voxelization", 0, 0, 924, 668)
+	: Application(hApp, L"Scene Voxelization", 0, 0, kTileSize * kNumTilesX, kTileSize * kNumTilesY)
 	, m_pDevice(nullptr)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
@@ -101,6 +106,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFenceEvent(nullptr)
 	, m_BackBufferIndex(0)
 	, m_pFillGBufferRecorder(nullptr)
+	, m_pTiledShadingRecorder(nullptr)
 	, m_pClearVoxelGridRecorder(nullptr)
 	, m_pCreateVoxelGridRecorder(nullptr)
 	, m_pInjectVPLsIntoVoxelGridRecorder(nullptr)
@@ -128,6 +134,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pInjectVPLsIntoVoxelGridRecorder);
 	SafeDelete(m_pVisualizeVoxelGridRecorder);
 	SafeDelete(m_pVisualizeMeshRecorder);
+	SafeDelete(m_pTiledShadingRecorder);
 	SafeDelete(m_pFillGBufferRecorder);
 	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
@@ -439,6 +446,17 @@ void DXApplication::OnInit()
 	fillGBufferParams.m_MaterialElementFlags = 0;
 
 	m_pFillGBufferRecorder = new FillGBufferRecorder(&fillGBufferParams);
+
+	TiledShadingRecorder::InitParams tiledShadingParams;
+	tiledShadingParams.m_pDevice = m_pDevice;
+	tiledShadingParams.m_ShadingMode = ShadingMode_Phong;
+	tiledShadingParams.m_NumTilesX = kNumTilesX;
+	tiledShadingParams.m_NumTilesY = kNumTilesY;
+	tiledShadingParams.m_NumPointLights = 1;
+	tiledShadingParams.m_NumSpotLights = 0;
+	tiledShadingParams.m_UseDirectLight = false;
+
+	m_pTiledShadingRecorder = new TiledShadingRecorder(&tiledShadingParams);
 	
 	ClearVoxelGridInitParams clearGridParams;
 	clearGridParams.m_pDevice = m_pDevice;
@@ -460,7 +478,7 @@ void DXApplication::OnInit()
 	injectVPLsParams.m_NumGridCellsY = kNumGridCellsY;
 	injectVPLsParams.m_NumGridCellsZ = kNumGridCellsZ;
 
-	m_pInjectVPLsIntoVoxelGridRecorder = new InjectVPLsIntoVoxelGridRecorder(&injectVPLsParams);
+	//m_pInjectVPLsIntoVoxelGridRecorder = new InjectVPLsIntoVoxelGridRecorder(&injectVPLsParams);
 
 	VisualizeVoxelGridInitParams visualizeGridParams;
 	visualizeGridParams.m_pDevice = m_pDevice;

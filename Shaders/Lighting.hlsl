@@ -1,6 +1,9 @@
 #ifndef __LIGHTING__
 #define __LIGHTING__
 
+#define SHADING_MODE_PHONG			1
+#define SHADING_MODE_BLINN_PHONG	2
+
 float3 CalcPhongLighting(float3 dirToViewer, float3 dirToLight, float3 lightColor,
 	float3 normal, float3 diffuseAlbedo, float3 specularAlbedo, float specularPower)
 {
@@ -30,13 +33,13 @@ float3 CalcBlinnPhongLighting(float3 dirToViewer, float3 dirToLight, float3 ligh
 float3 CalcLighting(float3 dirToViewer, float3 dirToLight, float3 lightColor,
 	float3 normal, float3 diffuseAlbedo, float3 specularAlbedo, float specularPower)
 {
-#ifdef PHONG_LIGHTING
+#if SHADING_MODE == SHADING_MODE_PHONG
 	return CalcPhongLighting(dirToViewer, dirToLight, lightColor, normal, diffuseAlbedo, specularAlbedo, specularPower);
-#endif // PHONG_LIGHTING
+#endif
 
-#ifdef BLINN_PHONG_LIGHTING
+#if SHADING_MODE == SHADING_MODE_BLINN_PHONG
 	return CalcBlinnPhongLighting(dirToViewer, dirToLight, lightColor, normal, diffuseAlbedo, specularAlbedo, specularPower);
-#endif // BLINN_PHONG_LIGHTING
+#endif
 }
 
 float CalcLightDistanceAttenuation(float distToLight, float attenStartRange, float attenEndRange)

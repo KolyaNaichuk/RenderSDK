@@ -143,6 +143,9 @@ COPY /Y "$(SolutionDir)Shaders\FillGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(
 COPY /Y "$(SolutionDir)Shaders\InjectVPLsIntoVoxelGridCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\InjectVPLsIntoVoxelGridCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\InjectVPLsIntoVoxelGridCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\InjectVPLsIntoVoxelGridCS.hlsl"
 
+COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledShadingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledShadingCS.hlsl"
+
 COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Lighting.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Lighting.hlsl"</Command>
     </PostBuildEvent>

@@ -195,6 +195,9 @@
     <ClInclude Include="..\Include\Common\Light.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\TiledShadingRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -359,6 +362,9 @@
     <ClCompile Include="..\Source\Common\Light.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\TiledShadingRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -421,7 +427,7 @@
     <None Include="..\Shaders\Lighting.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\TiledLightCullingCS.hlsl">
+    <None Include="..\Shaders\TiledShadingCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
