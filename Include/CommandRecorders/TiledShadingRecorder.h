@@ -40,4 +40,15 @@ private:
 
 	u16 m_NumThreadGroupsX;
 	u16 m_NumThreadGroupsY;
+
+	u8 m_ShadingDataCBVRootParam;
+	u8 m_DepthSRVRootParam;
+	u8 m_NormalSRVRootParam;
+	u8 m_DiffuseSRVRootParam;
+	u8 m_SpecularSRVRootParam;
+	u8 m_PointLightGeometrySRVRootParam;
+	u8 m_PointLightPropsSRVRootParam;
+	u8 m_SpotLightGeometrySRVRootParam;
+	u8 m_SpotLightPropsSRVRootParam;
+	u8 m_AccumLightUAVRootParam;
 };
