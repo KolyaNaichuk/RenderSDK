@@ -27,8 +27,8 @@ struct GBuffer
 	D3D12_CPU_DESCRIPTOR_HANDLE m_SpecularRTVHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_SpecularSRVHandle;
 	
-	DXResource* m_AccumLightTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_AccumLightRTVHandle;
+	DXResource* m_pAccumLightTexture;
+	D3D12_GPU_DESCRIPTOR_HANDLE m_AccumLightUAVHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_AccumLightSRVHandle;
 
 	DXResource* m_pDepthTexture;
@@ -36,41 +36,40 @@ struct GBuffer
 	D3D12_GPU_DESCRIPTOR_HANDLE m_DepthSRVHandle;
 };
 
-struct FillGBufferInitParams
-{
-	DXDevice* m_pDevice;
-	DXGI_FORMAT m_DiffuseRTVFormat;
-	DXGI_FORMAT m_NormalRTVFormat;
-	DXGI_FORMAT m_SpecularRTVFormat;
-	DXGI_FORMAT m_DSVFormat;
-	u8 m_VertexElementFlags;
-	u8 m_MaterialElementFlags;
-};
-
-struct FillGBufferRecordParams
-{
-	DXCommandList* m_pCommandList;
-	DXCommandAllocator* m_pCommandAllocator;
-	
-	GBuffer* m_pGBuffer;
-	Mesh* m_pMesh;
-	Material* m_pMaterial;
-	
-	DXDescriptorHeap* m_pCBVDescriptorHeap;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_TransformCBVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_MaterialCBVHandle;
-
-	DXDescriptorHeap* m_pSamplerDescriptorHeap;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_AnisoSamplerHandle;
-};
-
 class FillGBufferRecorder
 {
 public:
-	FillGBufferRecorder(FillGBufferInitParams* pParams);
+	struct InitParams
+	{
+		DXDevice* m_pDevice;
+		DXGI_FORMAT m_DiffuseRTVFormat;
+		DXGI_FORMAT m_NormalRTVFormat;
+		DXGI_FORMAT m_SpecularRTVFormat;
+		DXGI_FORMAT m_DSVFormat;
+		u8 m_VertexElementFlags;
+		u8 m_MaterialElementFlags;
+	};
+	struct RenderPassParams
+	{
+		DXCommandList* m_pCommandList;
+		DXCommandAllocator* m_pCommandAllocator;
+
+		GBuffer* m_pGBuffer;
+		Mesh* m_pMesh;
+		Material* m_pMaterial;
+
+		DXDescriptorHeap* m_pCBVDescriptorHeap;
+		D3D12_GPU_DESCRIPTOR_HANDLE m_TransformCBVHandle;
+		D3D12_GPU_DESCRIPTOR_HANDLE m_MaterialCBVHandle;
+
+		DXDescriptorHeap* m_pSamplerDescriptorHeap;
+		D3D12_GPU_DESCRIPTOR_HANDLE m_AnisoSamplerHandle;
+	};
+
+	FillGBufferRecorder(InitParams* pParams);
 	~FillGBufferRecorder();
 
-	void Record(FillGBufferRecordParams* pParams);
+	void Record(RenderPassParams* pParams);
 
 private:
 	const u8 m_MaterialElementFlags;

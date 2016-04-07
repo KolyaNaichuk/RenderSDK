@@ -7,7 +7,7 @@
 #include "Common/MeshData.h"
 #include "Common/Mesh.h"
 
-FillGBufferRecorder::FillGBufferRecorder(FillGBufferInitParams* pParams)
+FillGBufferRecorder::FillGBufferRecorder(InitParams* pParams)
 	: m_MaterialElementFlags(pParams->m_MaterialElementFlags)
 	, m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
@@ -87,7 +87,7 @@ FillGBufferRecorder::~FillGBufferRecorder()
 	SafeDelete(m_pRootSignature);
 }
 
-void FillGBufferRecorder::Record(FillGBufferRecordParams* pParams)
+void FillGBufferRecorder::Record(RenderPassParams* pParams)
 {
 	DXCommandList* pCommandList = pParams->m_pCommandList;
 	

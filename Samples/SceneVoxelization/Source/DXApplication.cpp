@@ -43,6 +43,14 @@ enum
 	kNumGridCellsZ = 64
 };
 
+enum RTVHeapHandles
+{
+	kDiffuseRTVHandle = kBackBufferCount,
+	kNormalRTVHandle,
+	kSpecularRTVHandle,
+	kNumRTVHandles
+};
+
 enum DSVHeapHandles
 {
 	kDSVHandle = 0,
@@ -58,7 +66,18 @@ enum CBVSRVUAVHeapHandles
 	kGridBufferUAVHandle,
 	kGridBufferSRVHandle,
 	kDepthSRVHandle,
+	kDiffuseSRVHandle,
+	kNormalSRVHandle,
+	kSpecularSRVHandle,
+	kAccumLightSRVHandle,
+	kAccumLightUAVHandle,
 	kNumCBVSRVUAVHandles
+};
+
+enum SamplerHandles
+{
+	kAnisoSamplerHandle = 0,
+	kNumSamplerHandles
 };
 
 struct ObjectTransform
@@ -97,7 +116,12 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pRTVHeap(nullptr)
 	, m_pDSVHeap(nullptr)
 	, m_pCBVSRVUAVHeap(nullptr)
+	, m_pSamplerHeap(nullptr)
 	, m_pDepthTexture(nullptr)
+	, m_pDiffuseTexture(nullptr)
+	, m_pNormalTexture(nullptr)
+	, m_pSpecularTexture(nullptr)
+	, m_pAccumLightTexture(nullptr)
 	, m_pObjectTransformBuffer(nullptr)
 	, m_pCameraTransformBuffer(nullptr)
 	, m_pGridBuffer(nullptr)
@@ -139,11 +163,16 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pCBVSRVUAVHeap);
+	SafeDelete(m_pSamplerHeap);
 	SafeDelete(m_pGridConfigBuffer);
 	SafeDelete(m_pGridBuffer);
 	SafeDelete(m_pCameraTransformBuffer);
 	SafeDelete(m_pObjectTransformBuffer);
 	SafeDelete(m_pDSVHeap);
+	SafeDelete(m_pDiffuseTexture);
+	SafeDelete(m_pNormalTexture);
+	SafeDelete(m_pSpecularTexture);
+	SafeDelete(m_pAccumLightTexture);
 	SafeDelete(m_pDepthTexture);
 	SafeDelete(m_pRTVHeap);
 	SafeDelete(m_pCommandQueue);
@@ -181,7 +210,7 @@ void DXApplication::OnInit()
 	m_pSwapChain = new DXSwapChain(&factory, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
-	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kBackBufferCount, false);
+	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kNumRTVHandles, false);
 	m_pRTVHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pRTVHeap");
 
 	DXTex2DRenderTargetViewDesc rtvDesc;
@@ -196,11 +225,17 @@ void DXApplication::OnInit()
 	DXHeapProperties uploadHeapProperties(D3D12_HEAP_TYPE_UPLOAD);
 	DXHeapProperties defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 
+	DXDescriptorHeapDesc samplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, kNumSamplerHandles, true);
+	m_pSamplerHeap = new DXDescriptorHeap(m_pDevice, &samplerHeapDesc, L"m_pSamplerHeap");
+
+	DXSamplerDesc anisoSampler(DXSamplerDesc::Anisotropic);
+	m_pDevice->CreateSampler(&anisoSampler, m_pSamplerHeap->GetCPUDescriptor(kAnisoSamplerHandle));
+
 	DXDescriptorHeapDesc cbvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kNumCBVSRVUAVHandles, true);
 	m_pCBVSRVUAVHeap = new DXDescriptorHeap(m_pDevice, &cbvHeapDesc, L"m_pCBVSRVUAVHeap");
 
 	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, kNumDSVHandles, false);
-	m_pDSVHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pDSVHeap");
+	m_pDSVHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pDSVHeap");	
 
 	DXTex2DResourceDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 	DXDepthStencilClearValue depthClearValue(GetDepthStencilViewFormat(DXGI_FORMAT_R32_TYPELESS));
@@ -211,6 +246,39 @@ void DXApplication::OnInit()
 
 	DXTex2DShaderResourceViewDesc depthSRVDesc(GetShaderResourceViewFormat(DXGI_FORMAT_R32_TYPELESS));
 	m_pDevice->CreateShaderResourceView(m_pDepthTexture, &depthSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kDepthSRVHandle));
+	
+	DXTex2DResourceDesc diffuseTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+	m_pDiffuseTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &diffuseTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pDiffuseTexture");
+	
+	m_pDevice->CreateRenderTargetView(m_pDiffuseTexture, &rtvDesc, m_pRTVHeap->GetCPUDescriptor(kDiffuseRTVHandle));
+
+	DXTex2DShaderResourceViewDesc diffuseSRVDesc(GetShaderResourceViewFormat(DXGI_FORMAT_R10G10B10A2_UNORM));
+	m_pDevice->CreateShaderResourceView(m_pDiffuseTexture, &diffuseSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kDiffuseSRVHandle));
+
+	DXTex2DResourceDesc normalTexDesc(DXGI_FORMAT_R8G8B8A8_SNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+	m_pNormalTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &normalTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pNormalTexture");
+
+	m_pDevice->CreateRenderTargetView(m_pNormalTexture, &rtvDesc, m_pRTVHeap->GetCPUDescriptor(kNormalRTVHandle));
+
+	DXTex2DShaderResourceViewDesc normalSRVDesc(GetShaderResourceViewFormat(DXGI_FORMAT_R8G8B8A8_SNORM));
+	m_pDevice->CreateShaderResourceView(m_pNormalTexture, &normalSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kNormalSRVHandle));
+	
+	DXTex2DResourceDesc specularTexDesc(DXGI_FORMAT_R8G8B8A8_UNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+	m_pSpecularTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &specularTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pSpecularTexture");
+
+	m_pDevice->CreateRenderTargetView(m_pSpecularTexture, &rtvDesc, m_pRTVHeap->GetCPUDescriptor(kSpecularRTVHandle));
+
+	DXTex2DShaderResourceViewDesc specularSRVDesc(GetShaderResourceViewFormat(DXGI_FORMAT_R8G8B8A8_UNORM));
+	m_pDevice->CreateShaderResourceView(m_pSpecularTexture, &specularSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kSpecularSRVHandle));
+
+	DXTex2DResourceDesc accumLightTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+	m_pAccumLightTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &accumLightTexDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pAccumLightTexture");
+
+	DXTex2DUnorderedAccessViewDesc accumLightUAVDesc(GetUnorderedAccessViewFormat(DXGI_FORMAT_R10G10B10A2_UNORM));
+	m_pDevice->CreateUnorderedAccessView(m_pAccumLightTexture, &accumLightUAVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kAccumLightUAVHandle));
+
+	DXTex2DShaderResourceViewDesc accumLightSRVDesc(GetShaderResourceViewFormat(DXGI_FORMAT_R10G10B10A2_UNORM));
+	m_pDevice->CreateShaderResourceView(m_pAccumLightTexture, &accumLightSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kAccumLightSRVHandle));
 
 	DXBufferResourceDesc objectTransformBufferDesc(sizeof(ObjectTransform));
 	m_pObjectTransformBuffer = new DXResource(m_pDevice, &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &objectTransformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pObjectTransformBuffer");
@@ -436,12 +504,12 @@ void DXApplication::OnInit()
 	WaitForGPU();
 	m_pMesh->RemoveDataForUpload();
 
-	FillGBufferInitParams fillGBufferParams;
+	FillGBufferRecorder::InitParams fillGBufferParams;
 	fillGBufferParams.m_pDevice = m_pDevice;
 	fillGBufferParams.m_DiffuseRTVFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
 	fillGBufferParams.m_NormalRTVFormat = DXGI_FORMAT_R8G8B8A8_SNORM;
 	fillGBufferParams.m_SpecularRTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-	fillGBufferParams.m_DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	fillGBufferParams.m_DSVFormat = GetDepthStencilViewFormat(DXGI_FORMAT_R32_TYPELESS);
 	fillGBufferParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
 	fillGBufferParams.m_MaterialElementFlags = 0;
 
@@ -592,12 +660,44 @@ void DXApplication::OnRender()
 
 		m_pCommandList->Close();
 		m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
-
 		WaitForGPU();
 	}
 
-	D3D12_RESOURCE_STATES renderTargetEndState = D3D12_RESOURCE_STATE_PRESENT;
+	GBuffer gBuffer;
+	gBuffer.m_pDiffuseTexture = m_pDiffuseTexture;
+	gBuffer.m_DiffuseRTVHandle = m_pRTVHeap->GetCPUDescriptor(kDiffuseRTVHandle);
+	gBuffer.m_DiffuseSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kDiffuseSRVHandle);
+	gBuffer.m_pNormalTexture = m_pNormalTexture;
+	gBuffer.m_NormalRTVHandle = m_pRTVHeap->GetCPUDescriptor(kNormalRTVHandle);
+	gBuffer.m_NormalSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kNormalSRVHandle);
+	gBuffer.m_pSpecularTexture = m_pSpecularTexture;
+	gBuffer.m_SpecularRTVHandle = m_pRTVHeap->GetCPUDescriptor(kSpecularRTVHandle);
+	gBuffer.m_SpecularSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kSpecularSRVHandle);
+	gBuffer.m_pAccumLightTexture = m_pAccumLightTexture;
+	gBuffer.m_AccumLightUAVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kAccumLightUAVHandle);
+	gBuffer.m_AccumLightSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kAccumLightSRVHandle);
+	gBuffer.m_pDepthTexture = m_pDepthTexture;
+	gBuffer.m_DSVHandle = dsvHandle;
+	gBuffer.m_DepthSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kDepthSRVHandle);
 	
+	D3D12_RESOURCE_STATES renderTargetEndState = D3D12_RESOURCE_STATE_PRESENT;
+
+	FillGBufferRecorder::RenderPassParams fillGBufferParams;
+	fillGBufferParams.m_pCommandList = m_pCommandList;
+	fillGBufferParams.m_pCommandAllocator = pCommandAllocator;
+	fillGBufferParams.m_pGBuffer = &gBuffer;
+	fillGBufferParams.m_pMesh = m_pMesh;
+	//fillGBufferParams.m_pMaterial;
+	fillGBufferParams.m_pCBVDescriptorHeap = m_pCBVSRVUAVHeap;
+	fillGBufferParams.m_TransformCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kObjectTransformCBVHandle);
+	//fillGBufferParams.m_MaterialCBVHandle;
+	fillGBufferParams.m_pSamplerDescriptorHeap = m_pSamplerHeap;
+	fillGBufferParams.m_AnisoSamplerHandle = m_pSamplerHeap->GetGPUDescriptor(kAnisoSamplerHandle);
+	
+	m_pFillGBufferRecorder->Record(&fillGBufferParams);
+	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+	WaitForGPU();
+
 	VisualizeMeshRecordParams visualizeMeshParams;
 	visualizeMeshParams.m_pMesh = m_pMesh;
 	visualizeMeshParams.m_pCommandList = m_pCommandList;
@@ -613,7 +713,7 @@ void DXApplication::OnRender()
 	m_pVisualizeMeshRecorder->Record(&visualizeMeshParams);
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
 	WaitForGPU();
-
+	
 	ClearVoxelGridRecordParams clearGridParams;
 	clearGridParams.m_pCommandAllocator = pCommandAllocator;
 	clearGridParams.m_pCommandList = m_pCommandList;

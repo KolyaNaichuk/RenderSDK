@@ -40,6 +40,12 @@ DXGI_FORMAT GetShaderResourceViewFormat(DXGI_FORMAT resourceFormat)
 			return DXGI_FORMAT_R32_FLOAT;
 		case DXGI_FORMAT_R24G8_TYPELESS:
 			return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+		case DXGI_FORMAT_R10G10B10A2_UNORM:
+			return DXGI_FORMAT_R10G10B10A2_UNORM;
+		case DXGI_FORMAT_R8G8B8A8_SNORM:
+			return DXGI_FORMAT_R8G8B8A8_SNORM;
+		case DXGI_FORMAT_R8G8B8A8_UNORM:
+			return DXGI_FORMAT_R8G8B8A8_UNORM;
 	}
 	assert(false);
 	return resourceFormat;
@@ -50,7 +56,9 @@ DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat)
 	switch (resourceFormat)
 	{
 		case DXGI_FORMAT_R8G8B8A8_UNORM:
-			return DXGI_FORMAT_R8G8B8A8_UNORM;	
+			return DXGI_FORMAT_R8G8B8A8_UNORM;
+		case DXGI_FORMAT_R10G10B10A2_UNORM:
+			return DXGI_FORMAT_R10G10B10A2_UNORM;
 	}
 	assert(false);
 	return resourceFormat;

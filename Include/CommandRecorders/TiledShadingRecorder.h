@@ -5,6 +5,12 @@
 class DXDevice;
 class DXRootSignature;
 class DXPipelineState;
+class DXDescriptorHeap;
+class DXResource;
+class DXCommandList;
+class DXCommandAllocator;
+
+struct GBuffer;
 
 enum ShadingMode
 {
@@ -27,8 +33,27 @@ public:
 	};
 	struct RenderPassParams
 	{
-	};
+		DXCommandList* m_pCommandList;
+		DXCommandAllocator* m_pCommandAllocator;
+				
+		DXDescriptorHeap* m_pCBVSRVUAVDescriptorHeap;
+		D3D12_GPU_DESCRIPTOR_HANDLE m_ShadingDataCBVHandle;
 
+		DXResource* m_pPointLightGeometryBuffer;
+		D3D12_GPU_DESCRIPTOR_HANDLE m_PointLightGeometrySRVHandle;
+
+		DXResource* m_pPointLightPropsBuffer;
+		D3D12_GPU_DESCRIPTOR_HANDLE m_PointLightPropsSRVHandle;
+
+		DXResource* m_SpotLightGeometryBuffer;
+		D3D12_GPU_DESCRIPTOR_HANDLE m_SpotLightGeometrySRVHandle;
+
+		DXResource* m_SpotLightPropsBuffer;
+		D3D12_GPU_DESCRIPTOR_HANDLE m_SpotLightPropsSRVHandle;
+		
+		GBuffer* m_pGBuffer;
+	};
+	
 	TiledShadingRecorder(InitParams* pParams);
 	~TiledShadingRecorder();
 
@@ -42,6 +67,7 @@ private:
 	u16 m_NumThreadGroupsY;
 
 	u8 m_ShadingDataCBVRootParam;
+	u8 m_AccumLightUAVRootParam;
 	u8 m_DepthSRVRootParam;
 	u8 m_NormalSRVRootParam;
 	u8 m_DiffuseSRVRootParam;
@@ -50,5 +76,4 @@ private:
 	u8 m_PointLightPropsSRVRootParam;
 	u8 m_SpotLightGeometrySRVRootParam;
 	u8 m_SpotLightPropsSRVRootParam;
-	u8 m_AccumLightUAVRootParam;
 };

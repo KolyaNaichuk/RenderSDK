@@ -1,6 +1,10 @@
 #include "CommandRecorders/TiledShadingRecorder.h"
+#include "CommandRecorders/FillGBufferRecorder.h"
 #include "DX/DXPipelineState.h"
 #include "DX/DXRootSignature.h"
+#include "DX/DXCommandList.h"
+#include "DX/DXCommandAllocator.h"
+#include "DX/DXResource.h"
 
 TiledShadingRecorder::TiledShadingRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
@@ -24,6 +28,9 @@ TiledShadingRecorder::TiledShadingRecorder(InitParams* pParams)
 	
 	rootParams.push_back(DXRootDescriptorTableParameter(1, &shadingDataCBVRange, D3D12_SHADER_VISIBILITY_ALL));
 	m_ShadingDataCBVRootParam = numRootParams++;
+
+	rootParams.push_back(DXRootDescriptorTableParameter(1, &accumLightUAVRange, D3D12_SHADER_VISIBILITY_ALL));
+	m_AccumLightUAVRootParam = numRootParams++;
 
 	rootParams.push_back(DXRootDescriptorTableParameter(1, &depthSRVRange, D3D12_SHADER_VISIBILITY_ALL));
 	m_DepthSRVRootParam = numRootParams++;
@@ -54,9 +61,6 @@ TiledShadingRecorder::TiledShadingRecorder(InitParams* pParams)
 		rootParams.push_back(DXRootDescriptorTableParameter(1, &spotLightPropsSRVRange, D3D12_SHADER_VISIBILITY_ALL));
 		m_SpotLightPropsSRVRootParam = numRootParams++;
 	}
-
-	rootParams.push_back(DXRootDescriptorTableParameter(1, &accumLightUAVRange, D3D12_SHADER_VISIBILITY_ALL));
-	m_AccumLightUAVRootParam = numRootParams++;
 
 	DXRootSignatureDesc rootSignatureDesc(numRootParams, &rootParams[0]);
 	m_pRootSignature = new DXRootSignature(pParams->m_pDevice, &rootSignatureDesc, L"TiledShadingRecorder::m_pRootSignature");
@@ -95,4 +99,65 @@ TiledShadingRecorder::~TiledShadingRecorder()
 
 void TiledShadingRecorder::Record(RenderPassParams* pParams)
 {
+	GBuffer* pGBuffer = pParams->m_pGBuffer;
+	DXCommandList* pCommandList = pParams->m_pCommandList;
+
+	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
+	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
+			
+	if (pGBuffer->m_pAccumLightTexture->GetState() != D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+		pCommandList->TransitionBarrier(pGBuffer->m_pAccumLightTexture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+	if (pGBuffer->m_pDiffuseTexture->GetState() != D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+		pCommandList->TransitionBarrier(pGBuffer->m_pDiffuseTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+	if (pGBuffer->m_pNormalTexture->GetState() != D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+		pCommandList->TransitionBarrier(pGBuffer->m_pNormalTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+	if (pGBuffer->m_pSpecularTexture->GetState() != D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+		pCommandList->TransitionBarrier(pGBuffer->m_pSpecularTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+	if (pGBuffer->m_pDepthTexture->GetState() != D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+		pCommandList->TransitionBarrier(pGBuffer->m_pDepthTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+	if ((pParams->m_pPointLightGeometryBuffer != nullptr) && (pParams->m_pPointLightPropsBuffer != nullptr))
+	{
+		if (pParams->m_pPointLightGeometryBuffer->GetState() != D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+			pCommandList->TransitionBarrier(pParams->m_pPointLightGeometryBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+		if (pParams->m_pPointLightPropsBuffer->GetState() != D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+			pCommandList->TransitionBarrier(pParams->m_pPointLightPropsBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	}
+	if ((pParams->m_SpotLightGeometryBuffer != nullptr) && (pParams->m_SpotLightPropsBuffer != nullptr))
+	{
+		if (pParams->m_SpotLightGeometryBuffer->GetState() != D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+			pCommandList->TransitionBarrier(pParams->m_SpotLightGeometryBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+		
+		if (pParams->m_SpotLightPropsBuffer->GetState() != D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+			pCommandList->TransitionBarrier(pParams->m_SpotLightPropsBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	}	
+
+	pCommandList->SetDescriptorHeaps(pParams->m_pCBVSRVUAVDescriptorHeap);
+	
+	pCommandList->SetGraphicsRootDescriptorTable(m_ShadingDataCBVRootParam, pParams->m_ShadingDataCBVHandle);
+	pCommandList->SetGraphicsRootDescriptorTable(m_AccumLightUAVRootParam, pGBuffer->m_AccumLightUAVHandle);
+	
+	pCommandList->SetGraphicsRootDescriptorTable(m_DepthSRVRootParam, pGBuffer->m_DepthSRVHandle);
+	pCommandList->SetGraphicsRootDescriptorTable(m_NormalSRVRootParam, pGBuffer->m_NormalSRVHandle);
+	pCommandList->SetGraphicsRootDescriptorTable(m_DiffuseSRVRootParam, pGBuffer->m_DiffuseSRVHandle);
+	pCommandList->SetGraphicsRootDescriptorTable(m_SpecularSRVRootParam, pGBuffer->m_SpecularSRVHandle);
+
+	if ((pParams->m_pPointLightGeometryBuffer != nullptr) && (pParams->m_pPointLightPropsBuffer != nullptr))
+	{
+		pCommandList->SetGraphicsRootDescriptorTable(m_PointLightGeometrySRVRootParam, pParams->m_PointLightGeometrySRVHandle);
+		pCommandList->SetGraphicsRootDescriptorTable(m_PointLightPropsSRVRootParam, pParams->m_PointLightPropsSRVHandle);
+	}
+	if ((pParams->m_SpotLightGeometryBuffer != nullptr) && (pParams->m_SpotLightPropsBuffer != nullptr))
+	{
+		pCommandList->SetGraphicsRootDescriptorTable(m_SpotLightGeometrySRVRootParam, pParams->m_SpotLightGeometrySRVHandle);
+		pCommandList->SetGraphicsRootDescriptorTable(m_SpotLightPropsSRVRootParam, pParams->m_SpotLightPropsSRVHandle);
+	}
+		
+	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
+	pCommandList->Close();
 }

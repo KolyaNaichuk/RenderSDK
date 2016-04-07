@@ -22,6 +22,11 @@ class VisualizeVoxelGridRecorder;
 class VisualizeMeshRecorder;
 class TiledShadingRecorder;
 
+enum
+{ 
+	kBackBufferCount = 3
+};
+
 class DXApplication : public Application
 {
 public:
@@ -40,8 +45,6 @@ private:
 	void MoveToNextFrame();
 
 private:
-	enum { kBackBufferCount = 3 };
-
 	DXDevice* m_pDevice;
 	DXSwapChain* m_pSwapChain;
 	DXCommandQueue* m_pCommandQueue;
@@ -50,7 +53,12 @@ private:
 	DXDescriptorHeap* m_pRTVHeap;
 	DXDescriptorHeap* m_pDSVHeap;
 	DXDescriptorHeap* m_pCBVSRVUAVHeap;
+	DXDescriptorHeap* m_pSamplerHeap;
 	DXResource* m_pDepthTexture;
+	DXResource* m_pDiffuseTexture;
+	DXResource* m_pNormalTexture;
+	DXResource* m_pSpecularTexture;
+	DXResource* m_pAccumLightTexture;
 	DXResource* m_pObjectTransformBuffer;
 	DXResource* m_pCameraTransformBuffer;
 	DXResource* m_pGridBuffer;
