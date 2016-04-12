@@ -47,10 +47,10 @@ Plane::HalfSpace ClassifyPoint(const Plane& plane, const Vector3f& point)
 	f32 signedDist = Dot(point, plane.m_Normal) + plane.m_SignedDistFromOrigin;	
 	
 	if (signedDist > 0.0f)
-		return Plane::Positive;
+		return Plane::Front;
 	
 	if (signedDist < 0.0f)
-		return Plane::Negative;
+		return Plane::Back;
 
 	return Plane::OnPlane;
 }

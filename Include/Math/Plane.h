@@ -8,8 +8,8 @@ struct Plane
 {
 	enum HalfSpace
 	{
-		Positive,
-		Negative,
+		Front,
+		Back,
 		OnPlane
 	};
 
