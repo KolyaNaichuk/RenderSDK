@@ -150,6 +150,7 @@
     <ClInclude Include="..\Include\CommandRecorders\CopyTextureRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\CreateVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\FillGBufferRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\FrustumCullingRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\ScaleTextureRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\TiledShadingRecorder.h" />
@@ -212,6 +213,7 @@
     <ClCompile Include="..\Source\CommandRecorders\CopyTextureRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CreateVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\FillGBufferRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\FrustumCullingRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\ScaleTextureRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\TiledShadingRecorder.cpp" />
@@ -419,6 +421,21 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Shaders\FrustumCullingCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+    </FxCompile>
+    <None Include="..\Shaders\OverlapTest.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
