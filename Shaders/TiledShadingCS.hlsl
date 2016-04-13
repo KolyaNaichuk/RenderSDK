@@ -1,5 +1,6 @@
 #include "Reconstruction.hlsl"
 #include "Lighting.hlsl"
+#include "OverlapTest.hlsl"
 
 struct ShadingData
 {
@@ -58,11 +59,6 @@ float4 CreatePlanePassingThroughOrigin(float3 pt1, float3 pt2)
 	return float4(planeNormal, signedDistFromOrigin);
 }
 
-float CalcSignedDistance(float4 plane, float3 pt)
-{
-	return dot(plane, float4(pt, 1.0f));
-}
-
 void BuildFrustumSidePlanes(out float4 viewSpaceFrusumSidePlanes[4], uint2 tileId, float2 rcpScreenSize, matrix projInvMatrix)
 {
 	uint2 screenSpaceTileTLCorner = tileId.xy * TILE_SIZE;
@@ -86,12 +82,14 @@ void BuildFrustumSidePlanes(out float4 viewSpaceFrusumSidePlanes[4], uint2 tileI
 
 bool TestSphereAgainstFrustum(float4 frustumSidePlanes[4], float frustumMinZ, float frustumMaxZ, float3 sphereCenter, float sphereRadius)
 {
-	return (CalcSignedDistance(frustumSidePlanes[0], sphereCenter) < sphereRadius) &&
-		(CalcSignedDistance(frustumSidePlanes[1], sphereCenter) < sphereRadius) &&
-		(CalcSignedDistance(frustumSidePlanes[2], sphereCenter) < sphereRadius) &&
-		(CalcSignedDistance(frustumSidePlanes[3], sphereCenter) < sphereRadius) &&
+	bool insideOrOverlap = TestSphereAgainstPlane(frustumSidePlanes[0], sphereCenter, sphereRadius) &&
+		TestSphereAgainstPlane(frustumSidePlanes[1], sphereCenter, sphereRadius) &&
+		TestSphereAgainstPlane(frustumSidePlanes[2], sphereCenter, sphereRadius) &&
+		TestSphereAgainstPlane(frustumSidePlanes[3], sphereCenter, sphereRadius) &&
 		(frustumMinZ < sphereCenter.z + sphereRadius) &&
 		(frustumMaxZ > sphereCenter.z - sphereRadius);
+
+	return insideOrOverlap;
 }
 
 cbuffer ShadingDataBuffer : register(b0)
@@ -136,11 +134,9 @@ void CullPointLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePl
 	{
 		float3 worldSpaceLightPos = g_PointLightGeometryBuffer[lightIndex].worldSpacePos;
 		float3 viewSpaceLightPos = mul(float4(worldSpaceLightPos.xyz, 1.0f), viewMatrix).xyz;
-
 		float lightRadius = g_PointLightGeometryBuffer[lightIndex].attenEndRange;
 
-		bool insideOrOverlaps = TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceLightPos, lightRadius);
-		if (insideOrOverlaps)
+		if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceLightPos, lightRadius))
 		{
 			uint listIndex;
 			InterlockedAdd(g_NumPointLightsPerTile, 1, listIndex);
@@ -175,7 +171,7 @@ void CullSpotLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePla
 	for (uint lightIndex = localThreadIndex; lightIndex < NUM_SPOT_LIGHTS; lightIndex += NUM_THREADS_PER_TILE)
 	{
 		SpotLightGeometry lightGeometry = g_SpotLightGeometryBuffer[lightIndex];
-		if (insideOrOverlaps)
+		if (insideOrOverlap)
 		{
 			uint listIndex;
 			InterlockedAdd(g_NumSpotLightsPerTile, 1, listIndex);
