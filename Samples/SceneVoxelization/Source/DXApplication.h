@@ -21,6 +21,7 @@ class InjectVPLsIntoVoxelGridRecorder;
 class VisualizeVoxelGridRecorder;
 class VisualizeMeshRecorder;
 class TiledShadingRecorder;
+class ViewFrustumCullingRecorder;
 
 enum
 { 
@@ -75,6 +76,7 @@ private:
 	InjectVPLsIntoVoxelGridRecorder* m_pInjectVPLsIntoVoxelGridRecorder;
 	VisualizeVoxelGridRecorder* m_pVisualizeVoxelGridRecorder;
 	VisualizeMeshRecorder* m_pVisualizeMeshRecorder;
+	ViewFrustumCullingRecorder* m_pViewFrustumCullingRecorder;
 
 	Mesh* m_pMesh;
 	Camera* m_pCamera;

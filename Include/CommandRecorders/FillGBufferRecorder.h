@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common/Material.h"
+#include "Math/Vector4.h"
 
 class DXDevice;
 class DXRootSignature;
@@ -34,6 +34,16 @@ struct GBuffer
 	DXResource* m_pDepthTexture;
 	D3D12_CPU_DESCRIPTOR_HANDLE m_DSVHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_DepthSRVHandle;
+};
+
+struct MaterialBufferData
+{
+	Vector4f m_AmbientColor;
+	Vector4f m_DiffuseColor;
+	Vector4f m_SpecularColor;
+	Vector4f m_EmissiveColor;
+	f32	m_SpecularPower;
+	f32 m_NotUsed[47];
 };
 
 class FillGBufferRecorder

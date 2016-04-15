@@ -16,6 +16,7 @@
 #include "CommandRecorders/InjectVPLsIntoVoxelGridRecorder.h"
 #include "CommandRecorders/VisualizeVoxelGridRecorder.h"
 #include "CommandRecorders/VisualizeMeshRecorder.h"
+#include "CommandRecorders/ViewFrustumCullingRecorder.h"
 #include "Common/MeshData.h"
 #include "Common/MeshDataUtilities.h"
 #include "Common/Mesh.h"
@@ -136,6 +137,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pInjectVPLsIntoVoxelGridRecorder(nullptr)
 	, m_pVisualizeVoxelGridRecorder(nullptr)
 	, m_pVisualizeMeshRecorder(nullptr)
+	, m_pViewFrustumCullingRecorder(nullptr)
 	, m_pMesh(nullptr)
 	, m_pCamera(nullptr)
 {
@@ -160,6 +162,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pVisualizeMeshRecorder);
 	SafeDelete(m_pTiledShadingRecorder);
 	SafeDelete(m_pFillGBufferRecorder);
+	SafeDelete(m_pViewFrustumCullingRecorder);
 	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pCBVSRVUAVHeap);
@@ -503,6 +506,12 @@ void DXApplication::OnInit()
 	
 	WaitForGPU();
 	m_pMesh->RemoveDataForUpload();
+
+	ViewFrustumCullingRecorder::InitParams viewFrustumCullingParams;
+	viewFrustumCullingParams.m_pDevice = m_pDevice;
+	viewFrustumCullingParams.m_NumMeshes = meshData.GetNumSubMeshes();
+
+	m_pViewFrustumCullingRecorder = new ViewFrustumCullingRecorder(&viewFrustumCullingParams);
 
 	FillGBufferRecorder::InitParams fillGBufferParams;
 	fillGBufferParams.m_pDevice = m_pDevice;

@@ -198,7 +198,7 @@
     <ClInclude Include="..\Include\CommandRecorders\TiledShadingRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\FrustumCullingRecorder.h">
+    <ClInclude Include="..\Include\CommandRecorders\ViewFrustumCullingRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
   </ItemGroup>
@@ -368,7 +368,7 @@
     <ClCompile Include="..\Source\CommandRecorders\TiledShadingRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\FrustumCullingRecorder.cpp">
+    <ClCompile Include="..\Source\CommandRecorders\ViewFrustumCullingRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
   </ItemGroup>
@@ -439,10 +439,8 @@
     <None Include="..\Shaders\OverlapTest.hlsl">
       <Filter>Shaders</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="..\Shaders\FrustumCullingCS.hlsl">
+    <None Include="..\Shaders\ViewFrustumCullingCS.hlsl">
       <Filter>Shaders</Filter>
-    </FxCompile>
+    </None>
   </ItemGroup>
 </Project>

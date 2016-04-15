@@ -147,7 +147,13 @@ COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\$(Pro
 COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledShadingCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Lighting.hlsl"
-COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Lighting.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Lighting.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ViewFrustumCullingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ViewFrustumCullingCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\OverlapTest.hlsl"
+COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\OverlapTest.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

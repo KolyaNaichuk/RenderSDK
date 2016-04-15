@@ -4,6 +4,7 @@
 #include "DX/DXCommandList.h"
 #include "DX/DXResource.h"
 #include "DX/DXUtils.h"
+#include "Common/Material.h"
 #include "Common/MeshData.h"
 #include "Common/Mesh.h"
 

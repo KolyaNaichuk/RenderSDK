@@ -1,4 +1,4 @@
-#include "OverlapTest.h"
+#include "OverlapTest.hlsl"
 
 struct MeshData
 {
@@ -22,6 +22,19 @@ struct DrawCommand
 	DrawIndexedArgs drawArgs;
 };
 
+struct CullingData
+{
+	float4 worldSpaceViewFrustumPlanes[6];
+	uint numMeshes;
+	uint3 notUsed1;
+	float4 notUsed2[14];
+};
+
+cbuffer CullingDataBuffer : register(b0)
+{
+	CullingData g_CullingData;
+};
+
 StructuredBuffer<AABB> g_MeshBoundsBuffer : register(t0);
 StructuredBuffer<MeshData> g_MeshDataBuffer : register(t1);
 RWStructuredBuffer<DrawCommand> g_CommandBuffer : register(u0);
@@ -42,9 +55,9 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 	GroupMemoryBarrierWithGroupSync();
 
 	uint globalIndex = groupId.x * THREAD_GROUP_SIZE + localIndex;
-	if (globalIndex < g_NumMeshes)
+	if (globalIndex < g_CullingData.numMeshes)
 	{
-		if (TestAABBAgainstFrustum(g_FrustumPlanes, g_MeshBoundsBuffer[globalIndex]))
+		if (TestAABBAgainstFrustum(g_CullingData.worldSpaceViewFrustumPlanes, g_MeshBoundsBuffer[globalIndex]))
 		{
 			uint listIndex;
 			InterlockedAdd(g_NumVisibleMeshes, 1, listIndex);
