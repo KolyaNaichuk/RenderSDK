@@ -1,5 +1,6 @@
 #include "DX/DXResource.h"
 #include "DX/DXDevice.h"
+#include "DX/DXRenderEnvironment.h"
 
 DXColorClearValue::DXColorClearValue(DXGI_FORMAT format, const FLOAT color[4])
 {
@@ -432,6 +433,13 @@ DXTexCubeShaderResourceViewDesc::DXTexCubeShaderResourceViewDesc(DXGI_FORMAT for
 	}
 }
 
+DXTex1DUnorderedAccessViewDesc::DXTex1DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice)
+{
+	Format = format;
+	ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
+	Texture1D.MipSlice = mipSlice;
+}
+
 DXTex2DUnorderedAccessViewDesc::DXTex2DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT planeSlice)
 {
 	Format = format;
@@ -517,4 +525,201 @@ DXHeapProperties::DXHeapProperties(D3D12_CPU_PAGE_PROPERTY cpuPageProperty, D3D1
 	MemoryPoolPreference = memoryPoolPreference;
 	CreationNodeMask = 1;
 	VisibleNodeMask = 1;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+DXRenderTarget::DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const DXTex1DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+{
+	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
+		
+	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+	const D3D12_CLEAR_VALUE* pOptimizedClearValue = nullptr;
+
+	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
+		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+	
+#ifdef _DEBUG
+	SetName(pName);
+#endif
+
+	// Kolya: Add missing impl
+	assert(pTexDesc->DepthOrArraySize == 1);
+	assert(pTexDesc->MipLevels == 0);
+	
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
+	{
+		m_RTVHandle = pEnv->m_pRTVDescriptorHeap->Allocate();
+
+		DXTex1DRenderTargetViewDesc viewDesc;
+		pDXDevice->CreateRenderTargetView(GetDXObject(), &viewDesc, m_RTVHandle);
+	}
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+		m_SRVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+
+		DXTex1DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format));
+		pDXDevice->CreateShaderResourceView(GetDXObject(), &viewDesc, m_SRVHandle);
+	}
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
+	{
+		m_UAVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+
+		DXTex1DUnorderedAccessViewDesc viewDesc(GetUnorderedAccessViewFormat(pTexDesc->Format));
+		pDXDevice->CreateUnorderedAccessView(GetDXObject(), nullptr, &viewDesc, m_UAVHandle);
+	}
+}
+
+DXRenderTarget::DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const DXTex2DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+{
+	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
+
+	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+	const D3D12_CLEAR_VALUE* pOptimizedClearValue = nullptr;
+
+	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
+		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+
+#ifdef _DEBUG
+	SetName(pName);
+#endif
+
+	// Kolya: Add missing impl
+	assert(pTexDesc->DepthOrArraySize == 1);
+	assert(pTexDesc->MipLevels == 0);
+	assert(pTexDesc->SampleDesc.Count == 1);
+	assert(pTexDesc->SampleDesc.Quality == 0);
+
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
+	{
+		m_RTVHandle = pEnv->m_pRTVDescriptorHeap->Allocate();
+
+		DXTex2DRenderTargetViewDesc viewDesc;
+		pDXDevice->CreateRenderTargetView(GetDXObject(), &viewDesc, m_RTVHandle);
+	}
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+		m_SRVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+
+		DXTex2DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format));
+		pDXDevice->CreateShaderResourceView(GetDXObject(), &viewDesc, m_SRVHandle);
+	}
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
+	{
+		m_UAVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+
+		DXTex2DUnorderedAccessViewDesc viewDesc(GetUnorderedAccessViewFormat(pTexDesc->Format));
+		pDXDevice->CreateUnorderedAccessView(GetDXObject(), nullptr, &viewDesc, m_UAVHandle);
+	}
+}
+
+DXRenderTarget::DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const DXTex3DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+{
+	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
+
+	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+	const D3D12_CLEAR_VALUE* pOptimizedClearValue = nullptr;
+
+	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
+		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+
+#ifdef _DEBUG
+	SetName(pName);
+#endif
+
+	assert(false && "Kolya: Needs impl");
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
+	{
+	}
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+	}
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
+	{
+	}
+}
+
+DXDepthStencilTexture::DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const DXTex1DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
+{
+	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
+
+	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
+		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+
+#ifdef _DEBUG
+	SetName(pName);
+#endif
+
+	assert(false && "Kolya: Needs impl");
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
+	{
+	}
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+	}
+}
+
+DXDepthStencilTexture::DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const DXTex2DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
+{
+	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
+
+	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
+		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+
+#ifdef _DEBUG
+	SetName(pName);
+#endif
+
+	// Kolya: Add missing impl
+	assert(pTexDesc->DepthOrArraySize == 1);
+	assert(pTexDesc->MipLevels == 0);
+	assert(pTexDesc->SampleDesc.Count == 1);
+	assert(pTexDesc->SampleDesc.Quality == 0);
+
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
+	{
+		m_DSVHandle = pEnv->m_pDSVDescritoprHeap->Allocate();
+
+		DXTex2DDepthStencilViewDesc viewDesc(GetDepthStencilViewFormat(pTexDesc->Format));
+		pDXDevice->CreateDepthStencilView(GetDXObject(), &viewDesc, m_DSVHandle);
+	}
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+		m_SRVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+
+		DXTex2DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format));
+		pDXDevice->CreateShaderResourceView(GetDXObject(), &viewDesc, m_SRVHandle);
+	}
+}
+
+DXDepthStencilTexture::DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const DXTex3DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
+{
+	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
+
+	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
+		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+
+#ifdef _DEBUG
+	SetName(pName);
+#endif
+
+	assert(false && "Kolya: Needs impl");
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
+	{
+	}
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+	}
 }

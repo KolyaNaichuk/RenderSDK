@@ -182,6 +182,7 @@
     <ClInclude Include="..\Include\DX\DXFence.h" />
     <ClInclude Include="..\Include\DX\DXObject.h" />
     <ClInclude Include="..\Include\DX\DXPipelineState.h" />
+    <ClInclude Include="..\Include\DX\DXRenderEnvironment.h" />
     <ClInclude Include="..\Include\DX\DXResource.h" />
     <ClInclude Include="..\Include\DX\DXRootSignature.h" />
     <ClInclude Include="..\Include\DX\DXSwapChain.h" />

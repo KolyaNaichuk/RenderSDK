@@ -1,9 +1,11 @@
 #pragma once
 
-#include "DXObject.h"
+#include "DX/DXDescriptorHeap.h"
 
 class DXDevice;
 class DXResource;
+
+struct DXRenderEnvironment;
 
 DXGI_FORMAT GetRenderTargetViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetDepthStencilViewFormat(DXGI_FORMAT resourceFormat);
@@ -159,6 +161,11 @@ struct DXTexCubeShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 		FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
 };
 
+struct DXTex1DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	DXTex1DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice = 0);
+};
+
 struct DXTex2DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 {
 	DXTex2DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice = 0, UINT planeSlice = 0);
@@ -205,3 +212,50 @@ void DXResource::Write(const T* pInputData, SIZE_T numBytes)
 	const DXRange writtenRange(0, numBytes);
 	GetDXObject()->Unmap(subresource, &writtenRange);
 }
+
+///////////////////////////////////////////////////////
+
+class DXRenderTarget : public DXObject<ID3D12Resource>
+{
+public:
+	DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXTex1DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+
+	DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXTex2DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+
+	DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXTex3DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+
+	DXDescriptorHandle GetRTVHandle() { return m_RTVHandle; }
+	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
+	DXDescriptorHandle GetUAVHandle() { return m_UAVHandle; }
+		
+private:
+	DXDescriptorHandle m_RTVHandle;
+	DXDescriptorHandle m_SRVHandle;
+	DXDescriptorHandle m_UAVHandle;
+};
+
+class DXDepthStencilTexture : public DXObject<ID3D12Resource>
+{
+public:
+	DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXTex1DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+		const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName);
+
+	DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXTex2DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+		const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName);
+
+	DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXTex3DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+		const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName);
+
+	DXDescriptorHandle GetDSVHandle() { return m_DSVHandle; }
+	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
+
+private:
+	DXDescriptorHandle m_DSVHandle;
+	DXDescriptorHandle m_SRVHandle;
+};
