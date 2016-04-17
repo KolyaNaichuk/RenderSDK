@@ -48,6 +48,8 @@ struct DXHeapProperties : public D3D12_HEAP_PROPERTIES
 	DXHeapProperties(D3D12_CPU_PAGE_PROPERTY cpuPageProperty, D3D12_MEMORY_POOL memoryPoolPreference);
 };
 
+// Kolya: should verify if the following structs are used
+
 struct DXBufferResourceDesc : public D3D12_RESOURCE_DESC
 {
 	DXBufferResourceDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, UINT64 alignment = 0);
@@ -81,6 +83,27 @@ struct DXCounterBufferUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VI
 struct DXRawBufferUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 {
 	DXRawBufferUnorderedAccessViewDesc(UINT64 firstElement, UINT numElements);
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+struct DXStructuredBufferDesc : public D3D12_RESOURCE_DESC
+{
+	DXStructuredBufferDesc(UINT numElements, UINT structureByteStride, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, UINT64 alignment = 0);
+
+	UINT NumElements;
+	UINT StructureByteStride;
+};
+
+struct DXStructuredBufferSRVDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
+{
+	DXStructuredBufferSRVDesc(UINT64 firstElement, UINT numElements,
+		UINT structureByteStride, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
+};
+
+struct DXStructuredBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	DXStructuredBufferUAVDesc(UINT64 firstElement, UINT numElements, UINT structureByteStride);
 };
 
 struct DXTex1DResourceDesc : public D3D12_RESOURCE_DESC
@@ -258,4 +281,18 @@ public:
 private:
 	DXDescriptorHandle m_DSVHandle;
 	DXDescriptorHandle m_SRVHandle;
+};
+
+class DXStructuredBuffer : public DXObject<ID3D12Resource>
+{
+public:
+	DXStructuredBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXStructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+
+	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
+	DXDescriptorHandle GetUAVHandle() { return m_UAVHandle; }
+
+private:
+	DXDescriptorHandle m_SRVHandle;
+	DXDescriptorHandle m_UAVHandle;
 };

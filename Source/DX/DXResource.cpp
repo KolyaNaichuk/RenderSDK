@@ -112,6 +112,46 @@ DXBufferResourceDesc::DXBufferResourceDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FL
 	Flags = flags;
 }
 
+DXStructuredBufferDesc::DXStructuredBufferDesc(UINT numElements, UINT structureByteStride, D3D12_RESOURCE_FLAGS flags, UINT64 alignment)
+{
+	Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	Alignment = alignment;
+	Width = numElements * structureByteStride;
+	Height = 1;
+	DepthOrArraySize = 1;
+	MipLevels = 1;
+	Format = DXGI_FORMAT_UNKNOWN;
+	SampleDesc.Count = 1;
+	SampleDesc.Quality = 0;
+	Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	Flags = flags;
+	NumElements = numElements;
+	StructureByteStride = structureByteStride;
+}
+
+DXStructuredBufferSRVDesc::DXStructuredBufferSRVDesc(UINT64 firstElement, UINT numElements,
+	UINT structureByteStride, UINT shader4ComponentMapping)
+{
+	Format = DXGI_FORMAT_UNKNOWN;
+	ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	Shader4ComponentMapping = shader4ComponentMapping;
+	Buffer.FirstElement = firstElement;
+	Buffer.NumElements = numElements;
+	Buffer.StructureByteStride = structureByteStride;
+	Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+}
+
+DXStructuredBufferUAVDesc::DXStructuredBufferUAVDesc(UINT64 firstElement, UINT numElements, UINT structureByteStride)
+{
+	Format = DXGI_FORMAT_UNKNOWN;
+	ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+	Buffer.FirstElement = firstElement;
+	Buffer.NumElements = numElements;
+	Buffer.StructureByteStride = structureByteStride;
+	Buffer.CounterOffsetInBytes = 0;
+	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+}
+
 DXBufferShaderResourceViewDesc::DXBufferShaderResourceViewDesc(UINT64 firstElement, UINT numElements,
 	UINT structureByteStride, DXGI_FORMAT format, UINT shader4ComponentMapping)
 {
@@ -721,5 +761,36 @@ DXDepthStencilTexture::DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
+	}
+}
+
+DXStructuredBuffer::DXStructuredBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const DXStructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+{
+	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
+
+	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+	const D3D12_CLEAR_VALUE* pOptimizedClearValue = nullptr;
+
+	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pBufferDesc,
+		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+
+#ifdef _DEBUG
+	SetName(pName);
+#endif
+
+	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+		m_SRVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+
+		DXStructuredBufferSRVDesc viewDesc(0, pBufferDesc->NumElements, pBufferDesc->StructureByteStride);
+		pDXDevice->CreateShaderResourceView(GetDXObject(), &viewDesc, m_SRVHandle);
+	}
+	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
+	{
+		m_UAVHandle = pEnv->m_pUAVDescriptorHeap->Allocate();
+
+		DXStructuredBufferUAVDesc viewDesc(0, pBufferDesc->NumElements, pBufferDesc->StructureByteStride);
+		pDXDevice->CreateUnorderedAccessView(GetDXObject(), nullptr, &viewDesc, m_UAVHandle);
 	}
 }
