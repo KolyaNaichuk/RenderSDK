@@ -87,9 +87,14 @@ struct DXRawBufferUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_D
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
+struct DXConstantBufferDesc : public D3D12_RESOURCE_DESC
+{
+	DXConstantBufferDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, UINT64 alignment = 0);
+};
+
 struct DXStructuredBufferDesc : public D3D12_RESOURCE_DESC
 {
-	DXStructuredBufferDesc(UINT numElements, UINT structureByteStride, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, UINT64 alignment = 0);
+	DXStructuredBufferDesc(UINT numElements, UINT structureByteStride, D3D12_RESOURCE_FLAGS flags, UINT64 alignment = 0);
 
 	UINT NumElements;
 	UINT StructureByteStride;
@@ -253,6 +258,10 @@ public:
 	DXDescriptorHandle GetRTVHandle() { return m_RTVHandle; }
 	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
 	DXDescriptorHandle GetUAVHandle() { return m_UAVHandle; }
+
+private:
+	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 		
 private:
 	DXDescriptorHandle m_RTVHandle;
@@ -279,18 +288,30 @@ public:
 	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
 
 private:
+	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
+		const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName);
+
+private:
 	DXDescriptorHandle m_DSVHandle;
 	DXDescriptorHandle m_SRVHandle;
 };
 
-class DXStructuredBuffer : public DXObject<ID3D12Resource>
+class DXBuffer : public DXObject<ID3D12Resource>
 {
 public:
-	DXStructuredBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const DXStructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXConstantBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
+	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXStructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+		
 	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
 	DXDescriptorHandle GetUAVHandle() { return m_UAVHandle; }
+
+private:
+	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const D3D12_RESOURCE_DESC* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
 private:
 	DXDescriptorHandle m_SRVHandle;
