@@ -92,9 +92,20 @@ struct DXConstantBufferDesc : public D3D12_RESOURCE_DESC
 	DXConstantBufferDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, UINT64 alignment = 0);
 };
 
+struct DXVertexBufferDesc : public D3D12_RESOURCE_DESC
+{
+	DXVertexBufferDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, UINT64 alignment = 0);
+};
+
+struct DXIndexBufferDesc : public D3D12_RESOURCE_DESC
+{
+	DXIndexBufferDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, UINT64 alignment = 0);
+};
+
 struct DXStructuredBufferDesc : public D3D12_RESOURCE_DESC
 {
-	DXStructuredBufferDesc(UINT numElements, UINT structureByteStride, D3D12_RESOURCE_FLAGS flags, UINT64 alignment = 0);
+	DXStructuredBufferDesc(UINT numElements, UINT structureByteStride,
+		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, UINT64 alignment = 0);
 
 	UINT NumElements;
 	UINT StructureByteStride;
@@ -113,7 +124,8 @@ struct DXStructuredBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 
 struct DXTex1DResourceDesc : public D3D12_RESOURCE_DESC
 {
-	DXTex1DResourceDesc(DXGI_FORMAT format, UINT64 width, D3D12_RESOURCE_FLAGS flags,
+	DXTex1DResourceDesc(DXGI_FORMAT format, UINT64 width,
+		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE,
 		UINT16 arraySize = 1, UINT16 mipLevels = 0,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
@@ -121,7 +133,8 @@ struct DXTex1DResourceDesc : public D3D12_RESOURCE_DESC
 
 struct DXTex2DResourceDesc : public D3D12_RESOURCE_DESC
 {
-	DXTex2DResourceDesc(DXGI_FORMAT format, UINT64 width, UINT height, D3D12_RESOURCE_FLAGS flags,
+	DXTex2DResourceDesc(DXGI_FORMAT format, UINT64 width, UINT height,
+		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE,
 		UINT16 arraySize = 1, UINT16 mipLevels = 0,
 		UINT sampleCount = 1, UINT sampleQuality = 0,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
@@ -130,7 +143,8 @@ struct DXTex2DResourceDesc : public D3D12_RESOURCE_DESC
 
 struct DXTex3DResourceDesc : public D3D12_RESOURCE_DESC
 {
-	DXTex3DResourceDesc(DXGI_FORMAT format, UINT64 width, UINT height, UINT16 depth, D3D12_RESOURCE_FLAGS flags,
+	DXTex3DResourceDesc(DXGI_FORMAT format, UINT64 width, UINT height, UINT16 depth,
+		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE,
 		UINT16 mipLevels = 0,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
@@ -304,10 +318,19 @@ public:
 		const DXConstantBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
 	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXVertexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+
+	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXIndexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+
+	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXStructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 		
 	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
 	DXDescriptorHandle GetUAVHandle() { return m_UAVHandle; }
+
+	template <typename T>
+	void Write(const T* pInputData, SIZE_T numBytes);
 
 private:
 	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -317,3 +340,18 @@ private:
 	DXDescriptorHandle m_SRVHandle;
 	DXDescriptorHandle m_UAVHandle;
 };
+
+template <typename T>
+void DXBuffer::Write(const T* pInputData, SIZE_T numBytes)
+{
+	const UINT subresource = 0;
+	T* pResourceData = nullptr;
+
+	const DXRange readRange(0, 0);
+	DXVerify(GetDXObject()->Map(subresource, &readRange, reinterpret_cast<void**>(&pResourceData)));
+
+	std::memcpy(pResourceData, pInputData, numBytes);
+
+	const DXRange writtenRange(0, numBytes);
+	GetDXObject()->Unmap(subresource, &writtenRange);
+}
