@@ -19,6 +19,9 @@ CopyTextureRecorder::CopyTextureRecorder(DXDevice* pDevice, DXGI_FORMAT rtvForma
 	DXShader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
 	DXShader pixelShader(L"Shaders//CopyTexturePS.hlsl", "Main", "ps_4_0");
 
+	// Kolya: fix me
+	assert(false);
+	/*
 	DXSRVRange srvRange(1, 0);
 	DXSamplerRange samplerRange(1, 0);
 	
@@ -37,12 +40,13 @@ CopyTextureRecorder::CopyTextureRecorder(DXDevice* pDevice, DXGI_FORMAT rtvForma
 	pipelineStateDesc.SetRenderTargetFormat(rtvFormat);
 
 	m_pPipelineState = new DXPipelineState(pDevice, &pipelineStateDesc, L"CopyTextureRecorder::m_pPipelineState");
+	*/
 }
 
 CopyTextureRecorder::~CopyTextureRecorder()
 {
-	delete m_pPipelineState;
-	delete m_pRootSignature;
+	SafeDelete(m_pPipelineState);
+	SafeDelete(m_pRootSignature);
 }
 
 void CopyTextureRecorder::Record(DXCommandList* pCommandList, DXCommandAllocator* pCommandAllocator,
@@ -52,6 +56,9 @@ void CopyTextureRecorder::Record(DXCommandList* pCommandList, DXCommandAllocator
 	const D3D12_RESOURCE_STATES* pRTVEndState,
 	const D3D12_RESOURCE_STATES* pSRVEndState)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	pCommandList->Reset(pCommandAllocator, m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	
@@ -87,4 +94,5 @@ void CopyTextureRecorder::Record(DXCommandList* pCommandList, DXCommandAllocator
 		pCommandList->TransitionBarrier(pSRVTexture, *pSRVEndState);
 
 	pCommandList->Close();
+	*/
 }

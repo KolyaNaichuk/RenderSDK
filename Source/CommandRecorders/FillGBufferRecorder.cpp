@@ -13,6 +13,9 @@ FillGBufferRecorder::FillGBufferRecorder(InitParams* pParams)
 	, m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	DXCBVRange transformCBVRange(1, 0);
 	DXCBVRange materialCBVRange(1, 0);
 	DXSRVRange diffuseSRVRange(1, 0);
@@ -80,6 +83,7 @@ FillGBufferRecorder::FillGBufferRecorder(InitParams* pParams)
 	pipelineStateDesc.SetRenderTargetFormats(ARRAYSIZE(rtvFormats), rtvFormats, pParams->m_DSVFormat);
 
 	m_pPipelineState = new DXPipelineState(pParams->m_pDevice, &pipelineStateDesc, L"FillGBufferRecorder::m_pPipelineState");
+	*/
 }
 
 FillGBufferRecorder::~FillGBufferRecorder()
@@ -90,6 +94,9 @@ FillGBufferRecorder::~FillGBufferRecorder()
 
 void FillGBufferRecorder::Record(RenderPassParams* pParams)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	DXCommandList* pCommandList = pParams->m_pCommandList;
 	
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
@@ -166,4 +173,5 @@ void FillGBufferRecorder::Record(RenderPassParams* pParams)
 	pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
 
 	pCommandList->Close();
+	*/
 }

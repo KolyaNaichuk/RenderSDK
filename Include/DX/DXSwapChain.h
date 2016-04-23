@@ -4,7 +4,9 @@
 
 class DXFactory;
 class DXCommandQueue;
-class DXResource;
+class DXRenderTarget;
+
+struct DXRenderEnvironment;
 
 struct DXSwapChainDesc : public DXGI_SWAP_CHAIN_DESC
 {
@@ -17,15 +19,15 @@ struct DXSwapChainDesc : public DXGI_SWAP_CHAIN_DESC
 class DXSwapChain : public DXObject<IDXGISwapChain3>
 {
 public:
-	DXSwapChain(DXFactory* pFactory, DXSwapChainDesc* pDesc, DXCommandQueue* pCommandQueue);
+	DXSwapChain(DXFactory* pFactory, DXRenderEnvironment* pEnv, DXSwapChainDesc* pDesc, DXCommandQueue* pCommandQueue);
 	~DXSwapChain();
 
-	DXResource* GetBackBuffer(UINT index);
+	DXRenderTarget* GetBackBuffer(UINT index);
 	UINT GetCurrentBackBufferIndex();
 
 	void Present(UINT syncInterval = 1, UINT flags = 0);
 
 private:
-	DXResource** m_ppFirstBuffer;
+	DXRenderTarget** m_ppFirstBuffer;
 	UINT m_BufferCount;
 };

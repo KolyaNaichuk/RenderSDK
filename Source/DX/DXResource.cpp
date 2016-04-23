@@ -65,16 +65,16 @@ DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat)
 	return resourceFormat;
 }
 
-DXVertexBufferView::DXVertexBufferView(DXResource* pVertexBuffer, UINT sizeInBytes, UINT strideInBytes)
+DXVertexBufferView::DXVertexBufferView(DXBuffer* pBuffer, UINT sizeInBytes, UINT strideInBytes)
 {
-	BufferLocation = pVertexBuffer->GetGPUVirtualAddress();
+	BufferLocation = pBuffer->GetGPUVirtualAddress();
 	SizeInBytes = sizeInBytes;
 	StrideInBytes = strideInBytes;
 }
 
-DXIndexBufferView::DXIndexBufferView(DXResource* pIndexBuffer, UINT sizeInBytes, UINT strideInBytes)
+DXIndexBufferView::DXIndexBufferView(DXBuffer* pBuffer, UINT sizeInBytes, UINT strideInBytes)
 {
-	BufferLocation = pIndexBuffer->GetGPUVirtualAddress();
+	BufferLocation = pBuffer->GetGPUVirtualAddress();
 	SizeInBytes = sizeInBytes;
 
 	if (strideInBytes == sizeof(u16))
@@ -85,9 +85,9 @@ DXIndexBufferView::DXIndexBufferView(DXResource* pIndexBuffer, UINT sizeInBytes,
 		assert(false);
 }
 
-DXConstantBufferViewDesc::DXConstantBufferViewDesc(DXResource* pConstantBuffer, UINT sizeInBytes)
+DXConstantBufferViewDesc::DXConstantBufferViewDesc(DXBuffer* pBuffer, UINT sizeInBytes)
 {
-	BufferLocation = pConstantBuffer->GetGPUVirtualAddress();
+	BufferLocation = pBuffer->GetGPUVirtualAddress();
 	SizeInBytes = sizeInBytes;
 }
 
@@ -96,23 +96,6 @@ DXRange::DXRange(SIZE_T begin, SIZE_T end)
 	Begin = begin;
 	End = end;
 }
-
-DXBufferResourceDesc::DXBufferResourceDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FLAGS flags, UINT64 alignment)
-{
-	Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	Alignment = alignment;
-	Width = sizeInBytes;
-	Height = 1;
-	DepthOrArraySize = 1;
-	MipLevels = 1;
-	Format = DXGI_FORMAT_UNKNOWN;
-	SampleDesc.Count = 1;
-	SampleDesc.Quality = 0;
-	Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Flags = flags;
-}
-
-///////////////////////////////////////////////////////////////////
 
 DXConstantBufferDesc::DXConstantBufferDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FLAGS flags, UINT64 alignment)
 {
@@ -535,20 +518,6 @@ DXTex2DUnorderedAccessViewDesc::DXTex2DUnorderedAccessViewDesc(DXGI_FORMAT forma
 	Texture2D.PlaneSlice = planeSlice;
 }
 
-DXResource::DXResource(DXDevice* pDevice, const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS heapFlags,
-	const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName, const D3D12_CLEAR_VALUE* pClearValue)
-{
-	DXVerify(pDevice->GetDXObject()->CreateCommittedResource(pHeapProperties, heapFlags, pDesc,
-		initialState, pClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
-
-	m_State = initialState;
-	m_Desc = *pDesc;
-
-#ifdef _DEBUG
-	SetName(pName);
-#endif
-}
-
 DXResource::DXResource(ID3D12Resource* pDXObject, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
 	: DXObject<ID3D12Resource>(pDXObject)
 	, m_Desc(pDXObject->GetDesc())
@@ -570,11 +539,6 @@ DXResource::DXResource(const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES i
 #ifdef _DEBUG
 	SetName(pName);
 #endif
-}
-
-D3D12_GPU_VIRTUAL_ADDRESS DXResource::GetGPUVirtualAddress()
-{
-	return GetDXObject()->GetGPUVirtualAddress();
 }
 
 DXHeapProperties::DXHeapProperties(D3D12_HEAP_TYPE type)
@@ -847,6 +811,8 @@ void DXBuffer::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HE
 
 	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pBufferDesc,
 		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+
+	m_GPUVirtualAddress = GetDXObject()->GetGPUVirtualAddress();
 }
 
 void DXBuffer::CreateStructuredBufferViews(DXRenderEnvironment* pEnv, const DXStructuredBufferDesc* pBufferDesc)

@@ -23,23 +23,22 @@ DXSwapChainDesc::DXSwapChainDesc(UINT bufferCount, HWND hOutputWindow, UINT widt
 	Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 }
 
-DXSwapChain::DXSwapChain(DXFactory* pFactory, DXSwapChainDesc* pDesc, DXCommandQueue* pCommandQueue)
+DXSwapChain::DXSwapChain(DXFactory* pFactory, DXRenderEnvironment* pEnv, DXSwapChainDesc* pDesc, DXCommandQueue* pCommandQueue)
 	: m_ppFirstBuffer(nullptr)
 	, m_BufferCount(pDesc->BufferCount)
 {
 	IDXGISwapChain* pDXObject = nullptr;
 	DXVerify(pFactory->GetDXObject()->CreateSwapChain(pCommandQueue->GetDXObject(), pDesc, &pDXObject));
-	
 	DXVerify(pDXObject->QueryInterface(IID_PPV_ARGS(GetDXObjectAddress())));
-	pDXObject->Release();
+	SafeRelease(pDXObject);
 
-	m_ppFirstBuffer = new DXResource* [m_BufferCount];
+	m_ppFirstBuffer = new DXRenderTarget* [m_BufferCount];
 	for (UINT index = 0; index < m_BufferCount; ++index)
 	{
 		ID3D12Resource* pDXBuffer = nullptr;
 		DXVerify(GetDXObject()->GetBuffer(index, IID_PPV_ARGS(&pDXBuffer)));
-
-		DXResource* pBuffer = new DXResource(pDXBuffer, D3D12_RESOURCE_STATE_PRESENT, L"BackBuffer");
+		
+		DXRenderTarget* pBuffer = new DXRenderTarget(pEnv, pDXBuffer, D3D12_RESOURCE_STATE_PRESENT, L"BackBuffer");
 		m_ppFirstBuffer[index] = pBuffer;
 	}
 }
@@ -51,7 +50,7 @@ DXSwapChain::~DXSwapChain()
 	delete[] m_ppFirstBuffer;
 }
 
-DXResource* DXSwapChain::GetBackBuffer(UINT index)
+DXRenderTarget* DXSwapChain::GetBackBuffer(UINT index)
 {
 	assert(index < m_BufferCount);
 	return m_ppFirstBuffer[index];

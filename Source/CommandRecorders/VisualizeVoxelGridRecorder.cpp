@@ -22,6 +22,9 @@ VisualizeVoxelGridRecorder::VisualizeVoxelGridRecorder(VisualizeVoxelGridInitPar
 	DXShader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
 	DXShader pixelShader(L"Shaders//VisualizeVoxelGridPS.hlsl", "Main", "ps_4_0");
 
+	// Kolya: fix me
+	assert(false);
+	/*
 	DXCBVRange gridConfigCBVRange(1, 0);
 	DXCBVRange transformCBVRange(1, 1);
 	DXSRVRange depthSRVRange(1, 0);
@@ -44,6 +47,7 @@ VisualizeVoxelGridRecorder::VisualizeVoxelGridRecorder(VisualizeVoxelGridInitPar
 	pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat);
 
 	m_pPipelineState = new DXPipelineState(pParams->m_pDevice, &pipelineStateDesc, L"VisualizeVoxelGridRecorder::m_pPipelineState");
+	*/
 }
 
 VisualizeVoxelGridRecorder::~VisualizeVoxelGridRecorder()
@@ -54,6 +58,9 @@ VisualizeVoxelGridRecorder::~VisualizeVoxelGridRecorder()
 
 void VisualizeVoxelGridRecorder::Record(VisualizeVoxelGridRecordParams* pParams)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	pParams->m_pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	pParams->m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
@@ -93,4 +100,5 @@ void VisualizeVoxelGridRecorder::Record(VisualizeVoxelGridRecordParams* pParams)
 	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kGridBufferSRVRootParam, nullHandle);
 
 	pParams->m_pCommandList->Close();
+	*/
 }

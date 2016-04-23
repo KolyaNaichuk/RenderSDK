@@ -2,34 +2,31 @@
 
 #include "Common/Common.h"
 
-class DXDevice;
 class DXCommandList;
 class DXCommandAllocator;
 class DXRootSignature;
 class DXPipelineState;
-class DXResource;
-class DXDescriptorHeap;
+class DXRenderTarget;
+class DXDepthStencilTexture;
+class DXBuffer;
+struct DXRenderEnvironment;
 
 struct VisualizeVoxelGridInitParams
 {
-	DXDevice* m_pDevice;
+	DXRenderEnvironment* m_pEnv;
 	DXGI_FORMAT m_RTVFormat;
 };
 
 struct VisualizeVoxelGridRecordParams
 {
+	DXRenderEnvironment* m_pEnv;
 	DXCommandList* m_pCommandList;
 	DXCommandAllocator* m_pCommandAllocator;
-	DXResource* m_pRenderTarget;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_RTVHandle;
-	const D3D12_RESOURCE_STATES* m_pRenderTargetEndState;
-	DXResource* m_pDepthTexture;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_DepthSRVHandle;
-	DXResource* m_pGridBuffer;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_GridBufferSRVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_GridConfigCBVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_TransformCBVHandle;
-	DXDescriptorHeap* m_pCBVSRVUAVDescriptorHeap;
+	DXRenderTarget* m_pRenderTarget;
+	DXDepthStencilTexture* m_pDepthTexture;
+	DXBuffer* m_pGridBuffer;
+	DXBuffer* m_pGridConfigBuffer;
+	DXBuffer* m_pTransformBuffer;
 };
 
 class VisualizeVoxelGridRecorder

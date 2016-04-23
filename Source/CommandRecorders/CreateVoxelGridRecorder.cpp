@@ -27,6 +27,9 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(CreateVoxelGridInitParams* pPar
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	u8 inputElementFlags = 0;
 	inputElementFlags |= VertexElementFlag_Position;
 	inputElementFlags |= VertexElementFlag_Normal;
@@ -79,16 +82,20 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(CreateVoxelGridInitParams* pPar
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	
 	m_pPipelineState = new DXPipelineState(pParams->m_pDevice, &pipelineStateDesc, L"CreateVoxelGridRecorder::m_pPipelineState");
+	*/
 }
 
 CreateVoxelGridRecorder::~CreateVoxelGridRecorder()
 {
-	delete m_pPipelineState;
-	delete m_pRootSignature;
+	SafeDelete(m_pPipelineState);
+	SafeDelete(m_pRootSignature);
 }
 
 void CreateVoxelGridRecorder::Record(CreateVoxelGridRecordParams* pParams)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	pParams->m_pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	
 	// Kolya: Has to force clear state - otherwise VS Graphics Debugger will fail to make capture
@@ -136,4 +143,5 @@ void CreateVoxelGridRecorder::Record(CreateVoxelGridRecordParams* pParams)
 	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kGridBufferUAVRootParam, nullHandle);
 
 	pParams->m_pCommandList->Close();
+	*/
 }

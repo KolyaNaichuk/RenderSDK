@@ -17,6 +17,9 @@ ClearVoxelGridRecorder::ClearVoxelGridRecorder(ClearVoxelGridInitParams* pParams
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	const u16 numThreadsPerGroupX = 8;
 	const u16 numThreadsPerGroupY = 8;
 	const u16 numThreadsPerGroupZ = 8;
@@ -53,6 +56,7 @@ ClearVoxelGridRecorder::ClearVoxelGridRecorder(ClearVoxelGridInitParams* pParams
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
 	m_pPipelineState = new DXPipelineState(pParams->m_pDevice, &pipelineStateDesc, L"ClearVoxelGridRecorder::m_pPipelineState");
+	*/
 }
 
 ClearVoxelGridRecorder::~ClearVoxelGridRecorder()
@@ -63,6 +67,9 @@ ClearVoxelGridRecorder::~ClearVoxelGridRecorder()
 
 void ClearVoxelGridRecorder::Record(ClearVoxelGridRecordParams* pParams)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	pParams->m_pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	pParams->m_pCommandList->SetComputeRootSignature(m_pRootSignature);
 
@@ -79,4 +86,5 @@ void ClearVoxelGridRecorder::Record(ClearVoxelGridRecordParams* pParams)
 	pParams->m_pCommandList->SetComputeRootDescriptorTable(kGridBufferUAVRootParam, nullHandle);
 
 	pParams->m_pCommandList->Close();
+	*/
 }

@@ -18,6 +18,8 @@ CalcTextureLuminanceRecorder::CalcTextureLuminanceRecorder(DXDevice* pDevice, DX
 {
 	DXShader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
 
+	// Kolya: fix me
+	/*
 	const DXShaderMacro pixelShaderDefines[] =
 	{
 		DXShaderMacro("LOG_LUMINANCE", logLuminance ? "1" : "0"),
@@ -43,12 +45,13 @@ CalcTextureLuminanceRecorder::CalcTextureLuminanceRecorder(DXDevice* pDevice, DX
 	pipelineStateDesc.SetRenderTargetFormat(rtvFormat);
 
 	m_pPipelineState = new DXPipelineState(pDevice, &pipelineStateDesc, L"CalcTextureLuminanceRecorder::m_pPipelineState");
+	*/
 }
 
 CalcTextureLuminanceRecorder::~CalcTextureLuminanceRecorder()
 {
-	delete m_pPipelineState;
-	delete m_pRootSignature;
+ 	SafeDelete(m_pPipelineState);
+	SafeDelete(m_pRootSignature);
 }
 
 void CalcTextureLuminanceRecorder::Record(DXCommandList* pCommandList, DXCommandAllocator* pCommandAllocator,
@@ -57,6 +60,8 @@ void CalcTextureLuminanceRecorder::Record(DXCommandList* pCommandList, DXCommand
 	DXDescriptorHeap* pSamplerDescriptorHeap, D3D12_GPU_DESCRIPTOR_HANDLE samplerDescriptor,
 	const D3D12_RESOURCE_STATES* pRTVEndState, const D3D12_RESOURCE_STATES* pSRVEndState)
 {
+	// Kolya: fix me
+	/*
 	pCommandList->Reset(pCommandAllocator, m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
@@ -93,4 +98,5 @@ void CalcTextureLuminanceRecorder::Record(DXCommandList* pCommandList, DXCommand
 		pCommandList->TransitionBarrier(pSRVTexture, *pSRVEndState);
 
 	pCommandList->Close();
+	*/
 }

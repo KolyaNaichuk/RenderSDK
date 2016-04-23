@@ -2,9 +2,10 @@
 
 #include "DX/DXPipelineState.h"
 
-class DXDevice;
-class DXResource;
+class DXBuffer;
 class DXCommandList;
+
+struct DXRenderEnvironment;
 struct DXVertexBufferView;
 struct DXIndexBufferView;
 struct DXInputLayoutDesc;
@@ -25,7 +26,7 @@ enum VertexElementFlags
 class Mesh
 {
 public:
-	Mesh(DXDevice* pDevice, const MeshData* pMeshData);
+	Mesh(DXRenderEnvironment* pEnv, const MeshData* pMeshData);
 	~Mesh();
 
 	void RecordDataForUpload(DXCommandList* pCommandList);
@@ -33,26 +34,26 @@ public:
 	
 	u8 GetVertexElementFlags() const;
 
-	DXResource* GetVertexBuffer();
+	DXBuffer* GetVertexBuffer();
 	DXVertexBufferView* GetVertexBufferView();
 	
-	DXResource* GetIndexBuffer();
+	DXBuffer* GetIndexBuffer();
 	DXIndexBufferView* GetIndexBufferView();
 	
 	u32 GetNumSubMeshes() const;
 	const SubMeshData* GetSubMeshes() const;
 		
 private:
-	void InitVertexBuffer(DXDevice* pDevice, const MeshData* pMeshData);
-	void InitIndexBuffer(DXDevice* pDevice, const MeshData* pMeshData);
+	void InitVertexBuffer(DXRenderEnvironment* pEnv, const MeshData* pMeshData);
+	void InitIndexBuffer(DXRenderEnvironment* pEnv, const MeshData* pMeshData);
 	void InitSubMeshes(const MeshData* pMeshData);
 
 private:
-	DXResource* m_pUploadHeapVB;
-	DXResource* m_pUploadHeapIB;
+	DXBuffer* m_pUploadHeapVB;
+	DXBuffer* m_pUploadHeapIB;
 
-	DXResource* m_pDefaultHeapVB;	
-	DXResource* m_pDefaultHeapIB;
+	DXBuffer* m_pDefaultHeapVB;	
+	DXBuffer* m_pDefaultHeapIB;
 	
 	DXVertexBufferView* m_pVBView;
 	DXIndexBufferView* m_pIBView;

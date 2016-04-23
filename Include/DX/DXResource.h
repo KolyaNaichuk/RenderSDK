@@ -3,7 +3,7 @@
 #include "DX/DXDescriptorHeap.h"
 
 class DXDevice;
-class DXResource;
+class DXBuffer;
 
 struct DXRenderEnvironment;
 
@@ -24,17 +24,17 @@ struct DXDepthStencilClearValue : D3D12_CLEAR_VALUE
 
 struct DXVertexBufferView : public D3D12_VERTEX_BUFFER_VIEW
 {
-	DXVertexBufferView(DXResource* pVertexBuffer, UINT sizeInBytes, UINT strideInBytes);
+	DXVertexBufferView(DXBuffer* pBuffer, UINT sizeInBytes, UINT strideInBytes);
 };
 
 struct DXIndexBufferView : public D3D12_INDEX_BUFFER_VIEW
 {
-	DXIndexBufferView(DXResource* pIndexBuffer, UINT sizeInBytes, UINT strideInBytes);
+	DXIndexBufferView(DXBuffer* pBuffer, UINT sizeInBytes, UINT strideInBytes);
 };
 
 struct DXConstantBufferViewDesc : public D3D12_CONSTANT_BUFFER_VIEW_DESC
 {
-	DXConstantBufferViewDesc(DXResource* pConstantBuffer, UINT sizeInBytes);
+	DXConstantBufferViewDesc(DXBuffer* pBuffer, UINT sizeInBytes);
 };
 
 struct DXRange : public D3D12_RANGE
@@ -48,13 +48,7 @@ struct DXHeapProperties : public D3D12_HEAP_PROPERTIES
 	DXHeapProperties(D3D12_CPU_PAGE_PROPERTY cpuPageProperty, D3D12_MEMORY_POOL memoryPoolPreference);
 };
 
-// Kolya: should verify if the following structs are used
-
-struct DXBufferResourceDesc : public D3D12_RESOURCE_DESC
-{
-	DXBufferResourceDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, UINT64 alignment = 0);
-};
-
+// Kolya: should verify if the following structures are used
 struct DXBufferShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 {
 	DXBufferShaderResourceViewDesc(UINT64 firstElement, UINT numElements,
@@ -215,20 +209,9 @@ struct DXTex2DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 
 class DXResource : public DXObject<ID3D12Resource>
 {
-public:
+protected:
 	DXResource(ID3D12Resource* pDXObject, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 	DXResource(const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
-	
-	DXResource(DXDevice* pDevice, const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS heapFlags,
-		const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName, const D3D12_CLEAR_VALUE* pClearValue = nullptr);
-		
-		
-	UINT64 GetWidth() const { return m_Desc.Width; }
-	UINT GetHeight() const { return m_Desc.Height; }
-	
-	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress();
-		
-	/////////////////////////////////////////////////
 
 public:
 	DXGI_FORMAT GetFormat() const { return m_Desc.Format; }
@@ -263,8 +246,6 @@ void DXResource::Write(const T* pInputData, SIZE_T numBytes)
 	const DXRange writtenRange(0, numBytes);
 	GetDXObject()->Unmap(subresource, &writtenRange);
 }
-
-///////////////////////////////////////////////////////
 
 class DXRenderTarget : public DXResource
 {
@@ -355,6 +336,8 @@ public:
 	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
 	DXDescriptorHandle GetUAVHandle() { return m_UAVHandle; }
 
+	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() { return m_GPUVirtualAddress; }
+
 private:
 	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pBufferDesc, D3D12_RESOURCE_STATES initialState);
@@ -364,6 +347,7 @@ private:
 private:
 	DXDescriptorHandle m_SRVHandle;
 	DXDescriptorHandle m_UAVHandle;
+	D3D12_GPU_VIRTUAL_ADDRESS m_GPUVirtualAddress;
 };
 
 class DXSampler
