@@ -17,6 +17,9 @@ ViewFrustumCullingRecorder::ViewFrustumCullingRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	const u16 threadGroupSize = 64;
 	m_NumThreadGroupsX = (u16)Ceil((f32)pParams->m_NumMeshes / (f32)threadGroupSize);
 
@@ -49,6 +52,7 @@ ViewFrustumCullingRecorder::ViewFrustumCullingRecorder(InitParams* pParams)
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
 	m_pPipelineState = new DXPipelineState(pParams->m_pDevice, &pipelineStateDesc, L"ViewFrustumCullingRecorder::m_pPipelineState");
+	*/
 }
 
 ViewFrustumCullingRecorder::~ViewFrustumCullingRecorder()

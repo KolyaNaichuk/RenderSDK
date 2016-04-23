@@ -12,6 +12,9 @@ TiledShadingRecorder::TiledShadingRecorder(InitParams* pParams)
 	, m_NumThreadGroupsX(pParams->m_NumTilesX)
 	, m_NumThreadGroupsY(pParams->m_NumTilesY)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	DXCBVRange shadingDataCBVRange(1, 0);
 	DXSRVRange depthSRVRange(1, 0);
 	DXSRVRange normalSRVRange(1, 1);
@@ -89,6 +92,7 @@ TiledShadingRecorder::TiledShadingRecorder(InitParams* pParams)
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
 	m_pPipelineState = new DXPipelineState(pParams->m_pDevice, &pipelineStateDesc, L"TiledShadingRecorder::m_pPipelineState");
+	*/
 }
 
 TiledShadingRecorder::~TiledShadingRecorder()
@@ -99,6 +103,9 @@ TiledShadingRecorder::~TiledShadingRecorder()
 
 void TiledShadingRecorder::Record(RenderPassParams* pParams)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	GBuffer* pGBuffer = pParams->m_pGBuffer;
 	DXCommandList* pCommandList = pParams->m_pCommandList;
 
@@ -160,4 +167,5 @@ void TiledShadingRecorder::Record(RenderPassParams* pParams)
 		
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
 	pCommandList->Close();
+	*/
 }

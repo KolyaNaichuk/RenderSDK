@@ -20,6 +20,9 @@ InjectVPLsIntoVoxelGridRecorder::InjectVPLsIntoVoxelGridRecorder(InitPrams* pPar
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	const u16 numThreadsPerGroupX = 8;
 	const u16 numThreadsPerGroupY = 8;
 	const u16 numThreadsPerGroupZ = 8;
@@ -62,6 +65,7 @@ InjectVPLsIntoVoxelGridRecorder::InjectVPLsIntoVoxelGridRecorder(InitPrams* pPar
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
 	m_pPipelineState = new DXPipelineState(pParams->m_pDevice, &pipelineStateDesc, L"InjectVPLsIntoVoxelGridRecorder::m_pPipelineState");
+	*/
 }
 
 InjectVPLsIntoVoxelGridRecorder::~InjectVPLsIntoVoxelGridRecorder()
@@ -72,5 +76,4 @@ InjectVPLsIntoVoxelGridRecorder::~InjectVPLsIntoVoxelGridRecorder()
 
 void InjectVPLsIntoVoxelGridRecorder::Record(RenderPassParams* pParams)
 {
-
 }

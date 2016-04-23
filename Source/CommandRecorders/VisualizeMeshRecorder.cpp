@@ -16,6 +16,9 @@ VisualizeMeshRecorder::VisualizeMeshRecorder(VisualizeMeshInitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	u8 inputElementFlags = VertexElementFlag_Position;
 	DXShaderMacro shaderDefines[2];
 
@@ -65,6 +68,7 @@ VisualizeMeshRecorder::VisualizeMeshRecorder(VisualizeMeshInitParams* pParams)
 	pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat, pParams->m_DSVFormat);
 
 	m_pPipelineState = new DXPipelineState(pParams->m_pDevice, &pipelineStateDesc, L"VisualizeMeshRecorder::m_pPipelineState");
+	*/
 }
 
 VisualizeMeshRecorder::~VisualizeMeshRecorder()
@@ -75,6 +79,9 @@ VisualizeMeshRecorder::~VisualizeMeshRecorder()
 
 void VisualizeMeshRecorder::Record(VisualizeMeshRecordParams* pParams)
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	pParams->m_pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	
 	// Kolya: Has to force clear state - otherwise VS Graphics Debugger will fail to make capture
@@ -110,4 +117,5 @@ void VisualizeMeshRecorder::Record(VisualizeMeshRecordParams* pParams)
 		pParams->m_pCommandList->TransitionBarrier(pParams->m_pRTVTexture, *pParams->m_pRTVEndState);
 
 	pParams->m_pCommandList->Close();
+	*/
 }
