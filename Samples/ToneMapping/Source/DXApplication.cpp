@@ -33,7 +33,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
 	, m_pRTVDescriptorHeap(nullptr)
-	, m_pSRVHeap(nullptr)
+	, m_pSRVDescriptorHeap(nullptr)
 	, m_pSamplerHeap(nullptr)
 	, m_pCommandList(nullptr)
 	, m_pFence(nullptr)
@@ -41,39 +41,39 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_BackBufferIndex(0)
 	, m_pHDRTexture(nullptr)
 	, m_pCopyTextureRecorder(nullptr)
-	, m_CalcTextureLuminanceRecorder(nullptr)
-	, m_CalcTextureLogLuminanceRecorder(nullptr)
+	, m_pCalcTextureLuminanceRecorder(nullptr)
+	, m_pCalcTextureLogLuminanceRecorder(nullptr)
 	, m_DisplayResult(DisplayResult_HDRImage)
 {
-	for (UINT index = 0; index < kBackBufferCount; ++index)
-		m_CommandAllocators[index] = nullptr;
-
-	for (UINT index = 0; index < kBackBufferCount; ++index)
-		m_FenceValues[index] = 0;
+	std::memset(m_CommandAllocators, 0, sizeof(m_CommandAllocators));
+	std::memset(m_FenceValues, 0, sizeof(m_FenceValues));
 }
 
 DXApplication::~DXApplication()
 {
 	for (UINT index = 0; index < kBackBufferCount; ++index)
-		delete m_CommandAllocators[index];
+		SafeDelete(m_CommandAllocators[index]);
 
-	delete m_pCopyTextureRecorder;
-	delete m_CalcTextureLuminanceRecorder;
-	delete m_CalcTextureLogLuminanceRecorder;
-	delete m_pSRVHeap;
-	delete m_pSamplerHeap;
-	delete m_pHDRTexture;
-	delete m_pCommandList;
-	delete m_pFenceEvent;
-	delete m_pFence;
-	delete m_pRTVDescriptorHeap;
-	delete m_pDevice;
-	delete m_pSwapChain;
-	delete m_pCommandQueue;
+	SafeDelete(m_pCopyTextureRecorder);
+	SafeDelete(m_pCalcTextureLuminanceRecorder);
+	SafeDelete(m_pCalcTextureLogLuminanceRecorder);
+	SafeDelete(m_pSRVDescriptorHeap);
+	SafeDelete(m_pSamplerHeap);
+	SafeDelete(m_pHDRTexture);
+	SafeDelete(m_pCommandList);
+	SafeDelete(m_pFenceEvent);
+	SafeDelete(m_pFence);
+	SafeDelete(m_pRTVDescriptorHeap);
+	SafeDelete(m_pDevice);
+	SafeDelete(m_pSwapChain);
+	SafeDelete(m_pCommandQueue);
 }
 
 void DXApplication::OnInit()
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	DXFactory factory;
 
 	m_pDevice = new DXDevice(&factory, D3D_FEATURE_LEVEL_11_0, true);
@@ -93,7 +93,7 @@ void DXApplication::OnInit()
 	m_pRTVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &rtvDescriptorHeapDesc, L"m_pRTVDescriptorHeap");
 
 	DXDescriptorHeapDesc srvDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kSRVDescriptor_Count, true);
-	m_pSRVHeap = new DXDescriptorHeap(m_pDevice, &srvDescriptorHeapDesc, L"m_pSRVHeap");
+	m_pSRVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &srvDescriptorHeapDesc, L"m_pSRVDescriptorHeap");
 
 	DXDescriptorHeapDesc samplerDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, kSamplerDescriptor_Count, true);
 	m_pSamplerHeap = new DXDescriptorHeap(m_pDevice, &samplerDescriptorHeapDesc, L"m_pSamplerHeap");
@@ -114,8 +114,8 @@ void DXApplication::OnInit()
 	const DXGI_FORMAT rtvFormat = GetRenderTargetViewFormat(pFirstRenderTarget->GetFormat());
 
 	m_pCopyTextureRecorder = new CopyTextureRecorder(m_pDevice, rtvFormat);
-	m_CalcTextureLuminanceRecorder = new CalcTextureLuminanceRecorder(m_pDevice, rtvFormat);
-	m_CalcTextureLogLuminanceRecorder = new CalcTextureLuminanceRecorder(m_pDevice, rtvFormat, true);
+	m_pCalcTextureLuminanceRecorder = new CalcTextureLuminanceRecorder(m_pDevice, rtvFormat);
+	m_pCalcTextureLogLuminanceRecorder = new CalcTextureLuminanceRecorder(m_pDevice, rtvFormat, true);
 
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 		m_CommandAllocators[index] = new DXCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
@@ -146,7 +146,8 @@ void DXApplication::OnInit()
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
 	WaitForGPU();
 
-	m_pDevice->CreateShaderResourceView(m_pHDRTexture, &srvView, m_pSRVHeap->GetCPUDescriptor(kSRVDescriptor_HDRTexture));
+	m_pDevice->CreateShaderResourceView(m_pHDRTexture, &srvView, m_pSRVDescriptorHeap->GetCPUDescriptor(kSRVDescriptor_HDRTexture));
+	*/
 }
 
 void DXApplication::OnUpdate()
@@ -155,6 +156,9 @@ void DXApplication::OnUpdate()
 
 void DXApplication::OnRender()
 {
+	// Kolya: fix me
+	assert(false);
+	/*
 	DXCommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
 	pCommandAllocator->Reset();
 	
@@ -165,23 +169,23 @@ void DXApplication::OnRender()
 	{
 		m_pCopyTextureRecorder->Record(m_pCommandList, pCommandAllocator,
 			pRenderTarget, m_pRTVDescriptorHeap->GetCPUDescriptor(m_BackBufferIndex),
-			m_pSRVHeap, m_pHDRTexture, m_pSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
+			m_pSRVDescriptorHeap, m_pHDRTexture, m_pSRVDescriptorHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
 			m_pSamplerHeap, m_pSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
 			&rtvEndState);
 	}
 	else if (m_DisplayResult == DisplayResult_ImageLuminance)
 	{
-		m_CalcTextureLuminanceRecorder->Record(m_pCommandList, pCommandAllocator,
+		m_pCalcTextureLuminanceRecorder->Record(m_pCommandList, pCommandAllocator,
 			pRenderTarget, m_pRTVDescriptorHeap->GetCPUDescriptor(m_BackBufferIndex),
-			m_pSRVHeap, m_pHDRTexture, m_pSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
+			m_pSRVDescriptorHeap, m_pHDRTexture, m_pSRVDescriptorHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
 			m_pSamplerHeap, m_pSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
 			&rtvEndState);
 	}
 	else if (m_DisplayResult == DisplayResult_ImageLogLuminance)
 	{
-		m_CalcTextureLogLuminanceRecorder->Record(m_pCommandList, pCommandAllocator,
+		m_pCalcTextureLogLuminanceRecorder->Record(m_pCommandList, pCommandAllocator,
 			pRenderTarget, m_pRTVDescriptorHeap->GetCPUDescriptor(m_BackBufferIndex),
-			m_pSRVHeap, m_pHDRTexture, m_pSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
+			m_pSRVDescriptorHeap, m_pHDRTexture, m_pSRVDescriptorHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
 			m_pSamplerHeap, m_pSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
 			&rtvEndState);
 	}
@@ -191,6 +195,7 @@ void DXApplication::OnRender()
 
 	m_pSwapChain->Present(1, 0);
 	MoveToNextFrame();
+	*/
 }
 
 void DXApplication::OnDestroy()

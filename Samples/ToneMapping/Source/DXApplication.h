@@ -8,12 +8,15 @@ class DXCommandQueue;
 class DXCommandList;
 class DXCommandAllocator;
 class DXDescriptorHeap;
-class DXResource;
+class DXRenderTarget;
 class DXFence;
 class DXEvent;
 
 class CopyTextureRecorder;
 class CalcTextureLuminanceRecorder;
+class DXRenderEnvironment;
+
+struct DXHeapProperties;
 
 enum DisplayResult
 {
@@ -46,7 +49,7 @@ private:
 	DXSwapChain* m_pSwapChain;
 	DXCommandQueue* m_pCommandQueue;
 	DXDescriptorHeap* m_pRTVDescriptorHeap;
-	DXDescriptorHeap* m_pSRVHeap;
+	DXDescriptorHeap* m_pSRVDescriptorHeap;
 	DXDescriptorHeap* m_pSamplerHeap;
 	DXCommandAllocator* m_CommandAllocators[kBackBufferCount];
 	DXCommandList* m_pCommandList;
@@ -55,10 +58,10 @@ private:
 	UINT64 m_FenceValues[kBackBufferCount];
 	UINT m_BackBufferIndex;
 
-	DXResource* m_pHDRTexture;
+	DXRenderTarget* m_pHDRTexture;
 	CopyTextureRecorder* m_pCopyTextureRecorder;
-	CalcTextureLuminanceRecorder* m_CalcTextureLuminanceRecorder;
-	CalcTextureLuminanceRecorder* m_CalcTextureLogLuminanceRecorder;
+	CalcTextureLuminanceRecorder* m_pCalcTextureLuminanceRecorder;
+	CalcTextureLuminanceRecorder* m_pCalcTextureLogLuminanceRecorder;
 
 	DisplayResult m_DisplayResult;
 };
