@@ -2,12 +2,14 @@
 
 #include "Common/Mesh.h"
 
-class DXDevice;
 class DXCommandList;
 class DXCommandAllocator;
 class DXRootSignature;
 class DXPipelineState;
-class DXDescriptorHeap;
+class DXRenderTarget;
+class DXDepthStencilTexture;
+class DXBuffer;
+struct DXRenderEnvironment;
 
 enum MeshDataElement
 {
@@ -18,7 +20,7 @@ enum MeshDataElement
 
 struct VisualizeMeshInitParams
 {
-	DXDevice* m_pDevice;
+	DXRenderEnvironment* m_pEnv;
 	DXGI_FORMAT m_RTVFormat;
 	DXGI_FORMAT m_DSVFormat;
 	MeshDataElement m_MeshDataElement;
@@ -27,20 +29,13 @@ struct VisualizeMeshInitParams
 
 struct VisualizeMeshRecordParams
 {
-	Mesh* m_pMesh;
-
+	DXRenderEnvironment* m_pEnv;
 	DXCommandList* m_pCommandList;
 	DXCommandAllocator* m_pCommandAllocator;
-	
-	DXResource* m_pRTVTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_RTVHandle;
-	const D3D12_RESOURCE_STATES* m_pRTVEndState;
-
-	DXResource* m_pDSVTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_DSVHandle;
-
-	DXDescriptorHeap* m_pCBVSRVUAVDescriptorHeap;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_CBVHandle;
+	DXRenderTarget* m_pRenderTarget;
+	DXDepthStencilTexture* m_pDepthTexture;
+	DXBuffer* m_pTransformBuffer;
+	Mesh* m_pMesh;
 };
 
 class VisualizeMeshRecorder

@@ -7,35 +7,36 @@ class DXRootSignature;
 class DXPipelineState;
 class DXCommandList;
 class DXCommandAllocator;
-class DXResource;
-class DXDescriptorHeap;
+class DXBuffer;
 class Mesh;
+
+struct DXRenderEnvironment;
 
 //#define HAS_TEXCOORD
 
 struct CreateVoxelGridInitParams
 {
-	DXDevice* m_pDevice;
+	DXRenderEnvironment* m_pEnv;
 	u8 m_VertexElementFlags;
 };
 
 struct CreateVoxelGridRecordParams
 {
+	DXRenderEnvironment* m_pEnv;
 	DXCommandList* m_pCommandList;
 	DXCommandAllocator* m_pCommandAllocator;
-	DXDescriptorHeap* m_pCBVSRVUAVDescriptorHeap;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_ObjectTransformCBVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_CameraTransformCBVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_GridConfigCBVHandle;
-	DXResource* m_pGridBuffer;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_GridBufferUAVHandle;
-	Mesh* m_pMesh;
-
+	DXBuffer* m_pObjectTransformBuffer;
+	DXBuffer* m_pCameraTransformBuffer;
+	DXBuffer* m_GridConfigBuffer;
+	DXBuffer* m_pGridBuffer;
+		
 #ifdef HAS_TEXCOORD
 	DXResource* m_pColorTexture;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_ColorSRVHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_LinearSamplerHandle;
 #endif // HAS_TEXCOORD
+
+	Mesh* m_pMesh;
 };
 
 class CreateVoxelGridRecorder

@@ -2,38 +2,25 @@
 
 #include "Math/Vector4.h"
 
-class DXDevice;
 class DXRootSignature;
 class DXPipelineState;
 class DXCommandList;
 class DXCommandAllocator;
-class DXDescriptorHeap;
-class DXResource;
+class DXRenderTarget;
+class DXDepthStencilTexture;
+class DXSampler;
 class Mesh;
 
+struct DXRenderEnvironment;
 struct Material;
 
 struct GBuffer
 {
-	DXResource* m_pDiffuseTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_DiffuseRTVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_DiffuseSRVHandle;
-
-	DXResource* m_pNormalTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_NormalRTVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_NormalSRVHandle;
-
-	DXResource* m_pSpecularTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_SpecularRTVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_SpecularSRVHandle;
-	
-	DXResource* m_pAccumLightTexture;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_AccumLightUAVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_AccumLightSRVHandle;
-
-	DXResource* m_pDepthTexture;
-	D3D12_CPU_DESCRIPTOR_HANDLE m_DSVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_DepthSRVHandle;
+	DXRenderTarget* m_pDiffuseTexture;
+	DXRenderTarget* m_pNormalTexture;
+	DXRenderTarget* m_pSpecularTexture;
+	DXRenderTarget* m_pAccumLightTexture;
+	DXDepthStencilTexture* m_pDepthTexture;
 };
 
 struct MaterialBufferData
@@ -51,7 +38,7 @@ class FillGBufferRecorder
 public:
 	struct InitParams
 	{
-		DXDevice* m_pDevice;
+		DXRenderEnvironment* m_pEnv;
 		DXGI_FORMAT m_DiffuseRTVFormat;
 		DXGI_FORMAT m_NormalRTVFormat;
 		DXGI_FORMAT m_SpecularRTVFormat;
@@ -61,19 +48,16 @@ public:
 	};
 	struct RenderPassParams
 	{
+		DXRenderEnvironment* m_pEnv;
 		DXCommandList* m_pCommandList;
 		DXCommandAllocator* m_pCommandAllocator;
+		DXBuffer* m_pTransformBuffer;
+		DXBuffer* m_pMaterialBuffer;
+		DXSampler* m_pAnisoSampler;
 
-		GBuffer* m_pGBuffer;
 		Mesh* m_pMesh;
+		GBuffer* m_pGBuffer;
 		Material* m_pMaterial;
-
-		DXDescriptorHeap* m_pCBVDescriptorHeap;
-		D3D12_GPU_DESCRIPTOR_HANDLE m_TransformCBVHandle;
-		D3D12_GPU_DESCRIPTOR_HANDLE m_MaterialCBVHandle;
-
-		DXDescriptorHeap* m_pSamplerDescriptorHeap;
-		D3D12_GPU_DESCRIPTOR_HANDLE m_AnisoSamplerHandle;
 	};
 
 	FillGBufferRecorder(InitParams* pParams);

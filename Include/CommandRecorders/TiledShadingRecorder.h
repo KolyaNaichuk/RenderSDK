@@ -2,15 +2,14 @@
 
 #include "Common/Common.h"
 
-class DXDevice;
 class DXRootSignature;
 class DXPipelineState;
-class DXDescriptorHeap;
-class DXResource;
 class DXCommandList;
 class DXCommandAllocator;
+class DXBuffer;
 
 struct GBuffer;
+struct DXRenderEnvironment;
 
 enum ShadingMode
 {
@@ -23,7 +22,7 @@ class TiledShadingRecorder
 public:
 	struct InitParams
 	{
-		DXDevice* m_pDevice;
+		DXRenderEnvironment* m_pEnv;
 		ShadingMode m_ShadingMode;
 		u16 m_NumTilesX;
 		u16 m_NumTilesY;
@@ -33,24 +32,14 @@ public:
 	};
 	struct RenderPassParams
 	{
+		DXRenderEnvironment* m_pEnv;
 		DXCommandList* m_pCommandList;
 		DXCommandAllocator* m_pCommandAllocator;
-				
-		DXDescriptorHeap* m_pCBVSRVUAVDescriptorHeap;
-		D3D12_GPU_DESCRIPTOR_HANDLE m_ShadingDataCBVHandle;
-
-		DXResource* m_pPointLightGeometryBuffer;
-		D3D12_GPU_DESCRIPTOR_HANDLE m_PointLightGeometrySRVHandle;
-
-		DXResource* m_pPointLightPropsBuffer;
-		D3D12_GPU_DESCRIPTOR_HANDLE m_PointLightPropsSRVHandle;
-
-		DXResource* m_SpotLightGeometryBuffer;
-		D3D12_GPU_DESCRIPTOR_HANDLE m_SpotLightGeometrySRVHandle;
-
-		DXResource* m_SpotLightPropsBuffer;
-		D3D12_GPU_DESCRIPTOR_HANDLE m_SpotLightPropsSRVHandle;
-		
+		DXBuffer* m_pShadingDataBuffer;
+		DXBuffer* m_pPointLightGeometryBuffer;
+		DXBuffer* m_pPointLightPropsBuffer;
+		DXBuffer* m_pSpotLightGeometryBuffer;
+		DXBuffer* m_pSpotLightPropsBuffer;		
 		GBuffer* m_pGBuffer;
 	};
 	

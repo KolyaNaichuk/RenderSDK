@@ -2,16 +2,16 @@
 
 #include "Common/Common.h"
 
-class DXDevice;
 class DXRootSignature;
 class DXPipelineState;
+struct DXRenderEnvironment;
 
 class ViewFrustumCullingRecorder
 {
 public:
 	struct InitParams
 	{
-		DXDevice* m_pDevice;
+		DXRenderEnvironment* m_pEnv;
 		u16 m_NumMeshes;
 	};
 	struct RenderPassParams

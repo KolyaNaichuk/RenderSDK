@@ -7,15 +7,16 @@ class DXCommandList;
 class DXCommandAllocator;
 class DXRootSignature;
 class DXPipelineState;
-class DXDescriptorHeap;
 class DXResource;
+
+struct DXRenderEnvironment;
 
 class InjectVPLsIntoVoxelGridRecorder
 {
 public:
 	struct InitPrams
 	{
-		DXDevice* m_pDevice;
+		DXRenderEnvironment* m_pEnv;
 		u16 m_NumGridCellsX;
 		u16 m_NumGridCellsY;
 		u16 m_NumGridCellsZ;

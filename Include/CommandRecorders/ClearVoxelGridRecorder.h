@@ -2,17 +2,16 @@
 
 #include "Common/Common.h"
 
-class DXDevice;
 class DXCommandList;
 class DXCommandAllocator;
 class DXRootSignature;
 class DXPipelineState;
-class DXDescriptorHeap;
-class DXResource;
+class DXBuffer;
+struct DXRenderEnvironment;
 
 struct ClearVoxelGridInitParams
 {
-	DXDevice* m_pDevice;
+	DXRenderEnvironment* m_pEnv;
 	u16 m_NumGridCellsX;
 	u16 m_NumGridCellsY;
 	u16 m_NumGridCellsZ;
@@ -20,12 +19,11 @@ struct ClearVoxelGridInitParams
 
 struct ClearVoxelGridRecordParams
 {
+	DXRenderEnvironment* m_pEnv;
 	DXCommandList* m_pCommandList;
 	DXCommandAllocator* m_pCommandAllocator;
-	DXDescriptorHeap* m_pCBVSRVUAVDescriptorHeap;
-	DXResource* m_pGridBuffer;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_GridBufferUAVHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE m_GridConfigCBVHandle;
+	DXBuffer* m_pGridBuffer;
+	DXBuffer* m_pGridConfigBuffer;
 };
 
 class ClearVoxelGridRecorder
