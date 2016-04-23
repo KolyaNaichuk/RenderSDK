@@ -8,7 +8,10 @@ class DXCommandQueue;
 class DXCommandAllocator;
 class DXCommandList;
 class DXDescriptorHeap;
-class DXResource;
+class DXRenderTarget;
+class DXDepthStencilTexture;
+class DXBuffer;
+class DXSampler;
 class DXFence;
 class DXEvent;
 
@@ -22,6 +25,9 @@ class VisualizeVoxelGridRecorder;
 class VisualizeMeshRecorder;
 class TiledShadingRecorder;
 class ViewFrustumCullingRecorder;
+
+struct DXHeapProperties;
+struct DXRenderEnvironment;
 
 enum
 { 
@@ -51,19 +57,23 @@ private:
 	DXCommandQueue* m_pCommandQueue;
 	DXCommandAllocator* m_CommandAllocators[kBackBufferCount];
 	DXCommandList* m_pCommandList;
+	DXHeapProperties* m_pDefaultHeapProps;
+	DXHeapProperties* m_pUploadHeapProps;
 	DXDescriptorHeap* m_pRTVDescriptorHeap;
-	DXDescriptorHeap* m_pDSVHeap;
-	DXDescriptorHeap* m_pCBVSRVUAVHeap;
-	DXDescriptorHeap* m_pSamplerHeap;
-	DXResource* m_pDepthTexture;
-	DXResource* m_pDiffuseTexture;
-	DXResource* m_pNormalTexture;
-	DXResource* m_pSpecularTexture;
-	DXResource* m_pAccumLightTexture;
-	DXResource* m_pObjectTransformBuffer;
-	DXResource* m_pCameraTransformBuffer;
-	DXResource* m_pGridBuffer;
-	DXResource* m_pGridConfigBuffer;
+	DXDescriptorHeap* m_pDSVDescriptorHeap;
+	DXDescriptorHeap* m_pSRVDescriptorHeap;
+	DXDescriptorHeap* m_pSamplerDescriptorHeap;
+	DXDepthStencilTexture* m_pDepthTexture;
+	DXRenderTarget* m_pDiffuseTexture;
+	DXRenderTarget* m_pNormalTexture;
+	DXRenderTarget* m_pSpecularTexture;
+	DXRenderTarget* m_pAccumLightTexture;
+	DXBuffer* m_pObjectTransformBuffer;
+	DXBuffer* m_pCameraTransformBuffer;
+	DXBuffer* m_pGridBuffer;
+	DXBuffer* m_pGridConfigBuffer;
+	DXSampler* m_pAnisoSampler;
+	DXRenderEnvironment* m_pEnv;
 	DXFence* m_pFence;
 	DXEvent* m_pFenceEvent;
 	UINT64 m_FenceValues[kBackBufferCount];

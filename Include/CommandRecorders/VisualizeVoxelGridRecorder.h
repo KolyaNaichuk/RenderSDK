@@ -26,7 +26,7 @@ struct VisualizeVoxelGridRecordParams
 	DXDepthStencilTexture* m_pDepthTexture;
 	DXBuffer* m_pGridBuffer;
 	DXBuffer* m_pGridConfigBuffer;
-	DXBuffer* m_pTransformBuffer;
+	DXBuffer* m_pCameraTransformBuffer;
 };
 
 class VisualizeVoxelGridRecorder

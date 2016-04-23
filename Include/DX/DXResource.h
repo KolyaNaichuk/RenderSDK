@@ -34,7 +34,7 @@ struct DXIndexBufferView : public D3D12_INDEX_BUFFER_VIEW
 
 struct DXConstantBufferViewDesc : public D3D12_CONSTANT_BUFFER_VIEW_DESC
 {
-	DXConstantBufferViewDesc(DXBuffer* pBuffer, UINT sizeInBytes);
+	DXConstantBufferViewDesc(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes);
 };
 
 struct DXRange : public D3D12_RANGE
@@ -335,6 +335,7 @@ public:
 		
 	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
 	DXDescriptorHandle GetUAVHandle() { return m_UAVHandle; }
+	DXDescriptorHandle GetCBVHandle() { return m_CBVHandle; }
 
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() { return m_GPUVirtualAddress; }
 
@@ -342,11 +343,13 @@ private:
 	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pBufferDesc, D3D12_RESOURCE_STATES initialState);
 
+	void CreateConstantBufferView(DXRenderEnvironment* pEnv, const DXConstantBufferDesc* pBufferDesc);
 	void CreateStructuredBufferViews(DXRenderEnvironment* pEnv, const DXStructuredBufferDesc* pBufferDesc);
-
+	
 private:
 	DXDescriptorHandle m_SRVHandle;
 	DXDescriptorHandle m_UAVHandle;
+	DXDescriptorHandle m_CBVHandle;
 	D3D12_GPU_VIRTUAL_ADDRESS m_GPUVirtualAddress;
 };
 

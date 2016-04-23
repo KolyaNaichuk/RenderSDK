@@ -13,7 +13,6 @@ struct DXRenderEnvironment
 		, m_pRTVDescriptorHeap(nullptr)
 		, m_pDSVDescritoprHeap(nullptr)
 		, m_pSRVDescriptorHeap(nullptr)
-		, m_pUAVDescriptorHeap(nullptr)
 		, m_pSamplerDescriptorHeap(nullptr)
 	{}
 
@@ -23,6 +22,5 @@ struct DXRenderEnvironment
 	DXDescriptorHeap* m_pRTVDescriptorHeap;
 	DXDescriptorHeap* m_pDSVDescritoprHeap;
 	DXDescriptorHeap* m_pSRVDescriptorHeap;
-	DXDescriptorHeap* m_pUAVDescriptorHeap;
 	DXDescriptorHeap* m_pSamplerDescriptorHeap;
 };

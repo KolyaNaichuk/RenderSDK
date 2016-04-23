@@ -34,7 +34,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCommandQueue(nullptr)
 	, m_pRTVDescriptorHeap(nullptr)
 	, m_pSRVDescriptorHeap(nullptr)
-	, m_pSamplerHeap(nullptr)
+	, m_pSamplerDescriptorHeap(nullptr)
 	, m_pCommandList(nullptr)
 	, m_pFence(nullptr)
 	, m_pFenceEvent(nullptr)
@@ -58,7 +58,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCalcTextureLuminanceRecorder);
 	SafeDelete(m_pCalcTextureLogLuminanceRecorder);
 	SafeDelete(m_pSRVDescriptorHeap);
-	SafeDelete(m_pSamplerHeap);
+	SafeDelete(m_pSamplerDescriptorHeap);
 	SafeDelete(m_pHDRTexture);
 	SafeDelete(m_pCommandList);
 	SafeDelete(m_pFenceEvent);
@@ -96,10 +96,10 @@ void DXApplication::OnInit()
 	m_pSRVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &srvDescriptorHeapDesc, L"m_pSRVDescriptorHeap");
 
 	DXDescriptorHeapDesc samplerDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, kSamplerDescriptor_Count, true);
-	m_pSamplerHeap = new DXDescriptorHeap(m_pDevice, &samplerDescriptorHeapDesc, L"m_pSamplerHeap");
+	m_pSamplerDescriptorHeap = new DXDescriptorHeap(m_pDevice, &samplerDescriptorHeapDesc, L"m_pSamplerDescriptorHeap");
 
 	DXSamplerDesc pointSampler(DXSamplerDesc::Point);
-	m_pDevice->CreateSampler(&pointSampler, m_pSamplerHeap->GetCPUDescriptor(kSamplerDescriptor_Point));
+	m_pDevice->CreateSampler(&pointSampler, m_pSamplerDescriptorHeap->GetCPUDescriptor(kSamplerDescriptor_Point));
 	
 	DXTex2DRenderTargetViewDesc rtvDesc;
 	for (UINT index = 0; index < kBackBufferCount; ++index)
@@ -170,7 +170,7 @@ void DXApplication::OnRender()
 		m_pCopyTextureRecorder->Record(m_pCommandList, pCommandAllocator,
 			pRenderTarget, m_pRTVDescriptorHeap->GetCPUDescriptor(m_BackBufferIndex),
 			m_pSRVDescriptorHeap, m_pHDRTexture, m_pSRVDescriptorHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
-			m_pSamplerHeap, m_pSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
+			m_pSamplerDescriptorHeap, m_pSamplerDescriptorHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
 			&rtvEndState);
 	}
 	else if (m_DisplayResult == DisplayResult_ImageLuminance)
@@ -178,7 +178,7 @@ void DXApplication::OnRender()
 		m_pCalcTextureLuminanceRecorder->Record(m_pCommandList, pCommandAllocator,
 			pRenderTarget, m_pRTVDescriptorHeap->GetCPUDescriptor(m_BackBufferIndex),
 			m_pSRVDescriptorHeap, m_pHDRTexture, m_pSRVDescriptorHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
-			m_pSamplerHeap, m_pSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
+			m_pSamplerDescriptorHeap, m_pSamplerDescriptorHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
 			&rtvEndState);
 	}
 	else if (m_DisplayResult == DisplayResult_ImageLogLuminance)
@@ -186,7 +186,7 @@ void DXApplication::OnRender()
 		m_pCalcTextureLogLuminanceRecorder->Record(m_pCommandList, pCommandAllocator,
 			pRenderTarget, m_pRTVDescriptorHeap->GetCPUDescriptor(m_BackBufferIndex),
 			m_pSRVDescriptorHeap, m_pHDRTexture, m_pSRVDescriptorHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
-			m_pSamplerHeap, m_pSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
+			m_pSamplerDescriptorHeap, m_pSamplerDescriptorHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
 			&rtvEndState);
 	}
 	

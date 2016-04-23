@@ -27,7 +27,7 @@ struct CreateVoxelGridRecordParams
 	DXCommandAllocator* m_pCommandAllocator;
 	DXBuffer* m_pObjectTransformBuffer;
 	DXBuffer* m_pCameraTransformBuffer;
-	DXBuffer* m_GridConfigBuffer;
+	DXBuffer* m_pGridConfigBuffer;
 	DXBuffer* m_pGridBuffer;
 		
 #ifdef HAS_TEXCOORD

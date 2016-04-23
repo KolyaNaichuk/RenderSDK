@@ -50,7 +50,7 @@ private:
 	DXCommandQueue* m_pCommandQueue;
 	DXDescriptorHeap* m_pRTVDescriptorHeap;
 	DXDescriptorHeap* m_pSRVDescriptorHeap;
-	DXDescriptorHeap* m_pSamplerHeap;
+	DXDescriptorHeap* m_pSamplerDescriptorHeap;
 	DXCommandAllocator* m_CommandAllocators[kBackBufferCount];
 	DXCommandList* m_pCommandList;
 	DXFence* m_pFence;

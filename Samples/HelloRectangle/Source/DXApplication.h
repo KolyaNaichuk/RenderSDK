@@ -10,12 +10,12 @@ class DXCommandAllocator;
 class DXDescriptorHeap;
 class DXRootSignature;
 class DXPipelineState;
-class DXHeapProperties;
 class DXBuffer;
 class DXRenderTarget;
 class DXFence;
 class DXEvent;
 
+struct DXHeapProperties;
 struct DXRenderEnvironment;
 struct DXVertexBufferView;
 struct DXIndexBufferView;

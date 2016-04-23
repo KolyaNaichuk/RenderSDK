@@ -85,9 +85,9 @@ DXIndexBufferView::DXIndexBufferView(DXBuffer* pBuffer, UINT sizeInBytes, UINT s
 		assert(false);
 }
 
-DXConstantBufferViewDesc::DXConstantBufferViewDesc(DXBuffer* pBuffer, UINT sizeInBytes)
+DXConstantBufferViewDesc::DXConstantBufferViewDesc(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes)
 {
-	BufferLocation = pBuffer->GetGPUVirtualAddress();
+	BufferLocation = bufferLocation;
 	SizeInBytes = sizeInBytes;
 }
 
@@ -777,6 +777,7 @@ DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeap
 	: DXResource(pBufferDesc, initialState, pName)
 {
 	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState);
+	CreateConstantBufferView(pEnv, pBufferDesc);
 }
 
 DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -815,6 +816,15 @@ void DXBuffer::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HE
 	m_GPUVirtualAddress = GetDXObject()->GetGPUVirtualAddress();
 }
 
+void DXBuffer::CreateConstantBufferView(DXRenderEnvironment* pEnv, const DXConstantBufferDesc* pBufferDesc)
+{
+	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
+	m_CBVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+	
+	DXConstantBufferViewDesc viewDesc(m_GPUVirtualAddress, (UINT)pBufferDesc->Width);
+	pDXDevice->CreateConstantBufferView(&viewDesc, m_CBVHandle);
+}
+
 void DXBuffer::CreateStructuredBufferViews(DXRenderEnvironment* pEnv, const DXStructuredBufferDesc* pBufferDesc)
 {
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
@@ -828,7 +838,7 @@ void DXBuffer::CreateStructuredBufferViews(DXRenderEnvironment* pEnv, const DXSt
 	}
 	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
 	{
-		m_UAVHandle = pEnv->m_pUAVDescriptorHeap->Allocate();
+		m_UAVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
 
 		DXStructuredBufferUAVDesc viewDesc(0, pBufferDesc->NumElements, pBufferDesc->StructureByteStride);
 		pDXDevice->CreateUnorderedAccessView(GetDXObject(), nullptr, &viewDesc, m_UAVHandle);

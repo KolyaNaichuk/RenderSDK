@@ -9,6 +9,7 @@
 #include "DX/DXResource.h"
 #include "DX/DXFence.h"
 #include "DX/DXEvent.h"
+#include "DX/DXRenderEnvironment.h"
 #include "CommandRecorders/FillGBufferRecorder.h"
 #include "CommandRecorders/TiledShadingRecorder.h"
 #include "CommandRecorders/ClearVoxelGridRecorder.h"
@@ -58,7 +59,7 @@ enum DSVHeapHandles
 	kNumDSVHandles
 };
 
-enum CBVSRVUAVHeapHandles
+enum SRVHeapHandles
 {
 	kNullHandle = 0,
 	kObjectTransformCBVHandle,
@@ -72,7 +73,7 @@ enum CBVSRVUAVHeapHandles
 	kSpecularSRVHandle,
 	kAccumLightSRVHandle,
 	kAccumLightUAVHandle,
-	kNumCBVSRVUAVHandles
+	kNumSRVHandles
 };
 
 enum SamplerHandles
@@ -114,10 +115,12 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
 	, m_pCommandList(nullptr)
+	, m_pDefaultHeapProps(new DXHeapProperties(D3D12_HEAP_TYPE_DEFAULT))
+	, m_pUploadHeapProps(new DXHeapProperties(D3D12_HEAP_TYPE_UPLOAD))
 	, m_pRTVDescriptorHeap(nullptr)
-	, m_pDSVHeap(nullptr)
-	, m_pCBVSRVUAVHeap(nullptr)
-	, m_pSamplerHeap(nullptr)
+	, m_pDSVDescriptorHeap(nullptr)
+	, m_pSRVDescriptorHeap(nullptr)
+	, m_pSamplerDescriptorHeap(nullptr)
 	, m_pDepthTexture(nullptr)
 	, m_pDiffuseTexture(nullptr)
 	, m_pNormalTexture(nullptr)
@@ -127,6 +130,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCameraTransformBuffer(nullptr)
 	, m_pGridBuffer(nullptr)
 	, m_pGridConfigBuffer(nullptr)
+	, m_pAnisoSampler(nullptr)
+	, m_pEnv(new DXRenderEnvironment())
 	, m_pFence(nullptr)
 	, m_pFenceEvent(nullptr)
 	, m_BackBufferIndex(0)
@@ -141,17 +146,14 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pMesh(nullptr)
 	, m_pCamera(nullptr)
 {
-	for (UINT index = 0; index < kBackBufferCount; ++index)
-		m_CommandAllocators[index] = nullptr;
-
-	for (UINT index = 0; index < kBackBufferCount; ++index)
-		m_FenceValues[index] = 0;
+	std::memset(m_CommandAllocators, 0, sizeof(m_CommandAllocators));
+	std::memset(m_FenceValues, 0, sizeof(m_FenceValues));
 }
 
 DXApplication::~DXApplication()
 {
 	for (UINT index = 0; index < kBackBufferCount; ++index)
-		delete m_CommandAllocators[index];
+		SafeDelete(m_CommandAllocators[index]);
 
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pMesh);
@@ -165,19 +167,23 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pViewFrustumCullingRecorder);
 	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
-	SafeDelete(m_pCBVSRVUAVHeap);
-	SafeDelete(m_pSamplerHeap);
+	SafeDelete(m_pDefaultHeapProps);
+	SafeDelete(m_pUploadHeapProps);
+	SafeDelete(m_pDSVDescriptorHeap);
+	SafeDelete(m_pSRVDescriptorHeap);
+	SafeDelete(m_pRTVDescriptorHeap);
+	SafeDelete(m_pSamplerDescriptorHeap);
+	SafeDelete(m_pEnv);
+	SafeDelete(m_pAnisoSampler);
 	SafeDelete(m_pGridConfigBuffer);
 	SafeDelete(m_pGridBuffer);
 	SafeDelete(m_pCameraTransformBuffer);
 	SafeDelete(m_pObjectTransformBuffer);
-	SafeDelete(m_pDSVHeap);
 	SafeDelete(m_pDiffuseTexture);
 	SafeDelete(m_pNormalTexture);
 	SafeDelete(m_pSpecularTexture);
 	SafeDelete(m_pAccumLightTexture);
 	SafeDelete(m_pDepthTexture);
-	SafeDelete(m_pRTVDescriptorHeap);
 	SafeDelete(m_pCommandQueue);
 	SafeDelete(m_pCommandList);
 	SafeDelete(m_pSwapChain);
@@ -197,6 +203,26 @@ void DXApplication::OnInit()
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
 
+	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kNumRTVHandles, false);
+	m_pRTVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pRTVDescriptorHeap");
+
+	DXDescriptorHeapDesc samplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, kNumSamplerHandles, true);
+	m_pSamplerDescriptorHeap = new DXDescriptorHeap(m_pDevice, &samplerHeapDesc, L"m_pSamplerDescriptorHeap");
+
+	DXDescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kNumSRVHandles, true);
+	m_pSRVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pSRVDescriptorHeap");
+
+	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, kNumDSVHandles, false);
+	m_pDSVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pDSVDescriptorHeap");
+
+	m_pEnv->m_pDevice = m_pDevice;
+	m_pEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
+	m_pEnv->m_pUploadHeapProps = m_pUploadHeapProps;
+	m_pEnv->m_pRTVDescriptorHeap = m_pRTVDescriptorHeap;
+	m_pEnv->m_pSRVDescriptorHeap = m_pSRVDescriptorHeap;
+	m_pEnv->m_pDSVDescritoprHeap = m_pDSVDescriptorHeap;
+	m_pEnv->m_pSamplerDescriptorHeap = m_pSamplerDescriptorHeap;
+
 	const RECT bufferRect = m_pWindow->GetClientRect();
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
 	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
@@ -210,108 +236,41 @@ void DXApplication::OnInit()
 	transform.SetRotation(CreateRotationYQuaternion(Radian(PI)));
 
 	DXSwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
-	m_pSwapChain = new DXSwapChain(&factory, &swapChainDesc, m_pCommandQueue);
+	m_pSwapChain = new DXSwapChain(&factory, m_pEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-
-	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kNumRTVHandles, false);
-	m_pRTVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pRTVDescriptorHeap");
-
-	DXTex2DRenderTargetViewDesc rtvDesc;
-	for (UINT index = 0; index < kBackBufferCount; ++index)
-	{
-		DXResource* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVDescriptorHeap->GetCPUDescriptor(index);
-
-		m_pDevice->CreateRenderTargetView(pRenderTarget, &rtvDesc, rtvHandle);
-	}
-
-	DXHeapProperties uploadHeapProperties(D3D12_HEAP_TYPE_UPLOAD);
-	DXHeapProperties defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
-
-	DXDescriptorHeapDesc samplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, kNumSamplerHandles, true);
-	m_pSamplerHeap = new DXDescriptorHeap(m_pDevice, &samplerHeapDesc, L"m_pSamplerHeap");
-
-	DXSamplerDesc anisoSampler(DXSamplerDesc::Anisotropic);
-	m_pDevice->CreateSampler(&anisoSampler, m_pSamplerHeap->GetCPUDescriptor(kAnisoSamplerHandle));
-
-	DXDescriptorHeapDesc cbvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kNumCBVSRVUAVHandles, true);
-	m_pCBVSRVUAVHeap = new DXDescriptorHeap(m_pDevice, &cbvHeapDesc, L"m_pCBVSRVUAVHeap");
-
-	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, kNumDSVHandles, false);
-	m_pDSVHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pDSVHeap");	
-
+		
+	DXSamplerDesc anisoSamplerDesc(DXSamplerDesc::Anisotropic);
+	m_pAnisoSampler = new DXSampler(m_pEnv, &anisoSamplerDesc);
+	
 	DXTex2DResourceDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-	DXDepthStencilClearValue depthClearValue(GetDepthStencilViewFormat(DXGI_FORMAT_R32_TYPELESS));
-	m_pDepthTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &depthTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, L"m_pDepthTexture", &depthClearValue);
-
-	DXTex2DDepthStencilViewDesc dsvDesc(GetDepthStencilViewFormat(DXGI_FORMAT_R32_TYPELESS));
-	m_pDevice->CreateDepthStencilView(m_pDepthTexture, &dsvDesc, m_pDSVHeap->GetCPUDescriptor(kDSVHandle));
-
-	DXTex2DShaderResourceViewDesc depthSRVDesc(GetShaderResourceViewFormat(DXGI_FORMAT_R32_TYPELESS));
-	m_pDevice->CreateShaderResourceView(m_pDepthTexture, &depthSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kDepthSRVHandle));
+	DXDepthStencilClearValue depthClearValue(GetDepthStencilViewFormat(depthTexDesc.Format));
+	m_pDepthTexture = new DXDepthStencilTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &depthTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthClearValue, L"m_pDepthTexture");
 	
 	DXTex2DResourceDesc diffuseTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
-	m_pDiffuseTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &diffuseTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pDiffuseTexture");
+	m_pDiffuseTexture = new DXRenderTarget(m_pEnv, m_pEnv->m_pDefaultHeapProps, &diffuseTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pDiffuseTexture");
 	
-	m_pDevice->CreateRenderTargetView(m_pDiffuseTexture, &rtvDesc, m_pRTVDescriptorHeap->GetCPUDescriptor(kDiffuseRTVHandle));
-
-	DXTex2DShaderResourceViewDesc diffuseSRVDesc(GetShaderResourceViewFormat(DXGI_FORMAT_R10G10B10A2_UNORM));
-	m_pDevice->CreateShaderResourceView(m_pDiffuseTexture, &diffuseSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kDiffuseSRVHandle));
-
 	DXTex2DResourceDesc normalTexDesc(DXGI_FORMAT_R8G8B8A8_SNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
-	m_pNormalTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &normalTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pNormalTexture");
-
-	m_pDevice->CreateRenderTargetView(m_pNormalTexture, &rtvDesc, m_pRTVDescriptorHeap->GetCPUDescriptor(kNormalRTVHandle));
-
-	DXTex2DShaderResourceViewDesc normalSRVDesc(GetShaderResourceViewFormat(DXGI_FORMAT_R8G8B8A8_SNORM));
-	m_pDevice->CreateShaderResourceView(m_pNormalTexture, &normalSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kNormalSRVHandle));
-	
+	m_pNormalTexture = new DXRenderTarget(m_pEnv, m_pEnv->m_pDefaultHeapProps, &normalTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pNormalTexture");
+		
 	DXTex2DResourceDesc specularTexDesc(DXGI_FORMAT_R8G8B8A8_UNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
-	m_pSpecularTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &specularTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pSpecularTexture");
-
-	m_pDevice->CreateRenderTargetView(m_pSpecularTexture, &rtvDesc, m_pRTVDescriptorHeap->GetCPUDescriptor(kSpecularRTVHandle));
-
-	DXTex2DShaderResourceViewDesc specularSRVDesc(GetShaderResourceViewFormat(DXGI_FORMAT_R8G8B8A8_UNORM));
-	m_pDevice->CreateShaderResourceView(m_pSpecularTexture, &specularSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kSpecularSRVHandle));
+	m_pSpecularTexture = new DXRenderTarget(m_pEnv, m_pEnv->m_pDefaultHeapProps, &specularTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pSpecularTexture");
 
 	DXTex2DResourceDesc accumLightTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-	m_pAccumLightTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &accumLightTexDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pAccumLightTexture");
+	m_pAccumLightTexture = new DXRenderTarget(m_pEnv, m_pEnv->m_pDefaultHeapProps, &accumLightTexDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pAccumLightTexture");
+	
+	DXConstantBufferDesc objectTransformBufferDesc(sizeof(ObjectTransform));
+	m_pObjectTransformBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &objectTransformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pObjectTransformBuffer");
 
-	DXTex2DUnorderedAccessViewDesc accumLightUAVDesc(GetUnorderedAccessViewFormat(DXGI_FORMAT_R10G10B10A2_UNORM));
-	m_pDevice->CreateUnorderedAccessView(m_pAccumLightTexture, &accumLightUAVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kAccumLightUAVHandle));
-
-	DXTex2DShaderResourceViewDesc accumLightSRVDesc(GetShaderResourceViewFormat(DXGI_FORMAT_R10G10B10A2_UNORM));
-	m_pDevice->CreateShaderResourceView(m_pAccumLightTexture, &accumLightSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kAccumLightSRVHandle));
-
-	DXBufferResourceDesc objectTransformBufferDesc(sizeof(ObjectTransform));
-	m_pObjectTransformBuffer = new DXResource(m_pDevice, &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &objectTransformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pObjectTransformBuffer");
-
-	DXConstantBufferViewDesc objectTransformCBVDesc(m_pObjectTransformBuffer, sizeof(ObjectTransform));
-	m_pDevice->CreateConstantBufferView(&objectTransformCBVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kObjectTransformCBVHandle));
-
-	DXBufferResourceDesc cameraTransformBufferDesc(sizeof(CameraTransform));
-	m_pCameraTransformBuffer = new DXResource(m_pDevice, &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &cameraTransformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCameraTransformBuffer");
-
-	DXConstantBufferViewDesc cameraTransformCBVDesc(m_pCameraTransformBuffer, sizeof(CameraTransform));
-	m_pDevice->CreateConstantBufferView(&cameraTransformCBVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kCameraTransformCBVHandle));
-
+	DXConstantBufferDesc cameraTransformBufferDesc(sizeof(CameraTransform));
+	m_pCameraTransformBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &cameraTransformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCameraTransformBuffer");
+	
+	DXConstantBufferDesc gridConfigBufferDesc(sizeof(GridConfig));
+	m_pGridConfigBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &gridConfigBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pGridConfigBuffer");
+	
 	const UINT numGridElements = kNumGridCellsX * kNumGridCellsY * kNumGridCellsZ;
-
-	DXBufferResourceDesc gridBufferDesc(numGridElements * sizeof(Voxel), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-	m_pGridBuffer = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &gridBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pGridBuffer");
-
-	DXBufferShaderResourceViewDesc gridBufferSRVDesc(0, numGridElements, sizeof(Voxel));
-	m_pDevice->CreateShaderResourceView(m_pGridBuffer, &gridBufferSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kGridBufferSRVHandle));
-
-	DXBufferUnorderedAccessViewDesc gridBufferUAVDesc(0, numGridElements, sizeof(Voxel));
-	m_pDevice->CreateUnorderedAccessView(m_pGridBuffer, &gridBufferUAVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kGridBufferUAVHandle));
-
-	DXBufferResourceDesc gridConfigBufferDesc(sizeof(GridConfig));
-	m_pGridConfigBuffer = new DXResource(m_pDevice, &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &gridConfigBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pGridConfigBuffer");
-
-	DXConstantBufferViewDesc gridConfigCBVDesc(m_pGridConfigBuffer, sizeof(GridConfig));
-	m_pDevice->CreateConstantBufferView(&gridConfigCBVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kGridConfigCBVHandle));
-
+	DXStructuredBufferDesc gridBufferDesc(numGridElements, sizeof(Voxel), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+	m_pGridBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &gridBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pGridBuffer");
+	
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 		m_CommandAllocators[index] = new DXCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
 
@@ -496,7 +455,7 @@ void DXApplication::OnInit()
 	meshData.SetSubMeshData(1, &subMeshData);
 
 	ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-	m_pMesh = new Mesh(m_pDevice, &meshData);
+	m_pMesh = new Mesh(m_pEnv, &meshData);
 	
 	m_pMesh->RecordDataForUpload(m_pCommandList);
 	m_pCommandList->Close();
@@ -508,24 +467,24 @@ void DXApplication::OnInit()
 	m_pMesh->RemoveDataForUpload();
 
 	ViewFrustumCullingRecorder::InitParams viewFrustumCullingParams;
-	viewFrustumCullingParams.m_pDevice = m_pDevice;
+	viewFrustumCullingParams.m_pEnv = m_pEnv;
 	viewFrustumCullingParams.m_NumMeshes = meshData.GetNumSubMeshes();
 
 	m_pViewFrustumCullingRecorder = new ViewFrustumCullingRecorder(&viewFrustumCullingParams);
 
 	FillGBufferRecorder::InitParams fillGBufferParams;
-	fillGBufferParams.m_pDevice = m_pDevice;
-	fillGBufferParams.m_DiffuseRTVFormat = DXGI_FORMAT_R10G10B10A2_UNORM;
-	fillGBufferParams.m_NormalRTVFormat = DXGI_FORMAT_R8G8B8A8_SNORM;
-	fillGBufferParams.m_SpecularRTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-	fillGBufferParams.m_DSVFormat = GetDepthStencilViewFormat(DXGI_FORMAT_R32_TYPELESS);
+	fillGBufferParams.m_pEnv = m_pEnv;
+	fillGBufferParams.m_DiffuseRTVFormat = GetRenderTargetViewFormat(m_pDiffuseTexture->GetFormat());
+	fillGBufferParams.m_NormalRTVFormat = GetRenderTargetViewFormat(m_pNormalTexture->GetFormat());
+	fillGBufferParams.m_SpecularRTVFormat = GetRenderTargetViewFormat(m_pSpecularTexture->GetFormat());
+	fillGBufferParams.m_DSVFormat = GetDepthStencilViewFormat(m_pDepthTexture->GetFormat());
 	fillGBufferParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
 	fillGBufferParams.m_MaterialElementFlags = 0;
 
 	m_pFillGBufferRecorder = new FillGBufferRecorder(&fillGBufferParams);
 
 	TiledShadingRecorder::InitParams tiledShadingParams;
-	tiledShadingParams.m_pDevice = m_pDevice;
+	tiledShadingParams.m_pEnv = m_pEnv;
 	tiledShadingParams.m_ShadingMode = ShadingMode_Phong;
 	tiledShadingParams.m_NumTilesX = kNumTilesX;
 	tiledShadingParams.m_NumTilesY = kNumTilesY;
@@ -536,7 +495,7 @@ void DXApplication::OnInit()
 	m_pTiledShadingRecorder = new TiledShadingRecorder(&tiledShadingParams);
 	
 	ClearVoxelGridInitParams clearGridParams;
-	clearGridParams.m_pDevice = m_pDevice;
+	clearGridParams.m_pEnv = m_pEnv;
 	clearGridParams.m_NumGridCellsX = kNumGridCellsX;
 	clearGridParams.m_NumGridCellsY = kNumGridCellsY;
 	clearGridParams.m_NumGridCellsZ = kNumGridCellsZ;
@@ -544,13 +503,13 @@ void DXApplication::OnInit()
 	m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(&clearGridParams);
 	
 	CreateVoxelGridInitParams createGridParams;
-	createGridParams.m_pDevice = m_pDevice;
+	createGridParams.m_pEnv = m_pEnv;
 	createGridParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
 
 	m_pCreateVoxelGridRecorder = new CreateVoxelGridRecorder(&createGridParams);
 
 	InjectVPLsIntoVoxelGridRecorder::InitPrams injectVPLsParams;
-	injectVPLsParams.m_pDevice = m_pDevice;
+	injectVPLsParams.m_pEnv = m_pEnv;
 	injectVPLsParams.m_NumGridCellsX = kNumGridCellsX;
 	injectVPLsParams.m_NumGridCellsY = kNumGridCellsY;
 	injectVPLsParams.m_NumGridCellsZ = kNumGridCellsZ;
@@ -558,13 +517,13 @@ void DXApplication::OnInit()
 	//m_pInjectVPLsIntoVoxelGridRecorder = new InjectVPLsIntoVoxelGridRecorder(&injectVPLsParams);
 
 	VisualizeVoxelGridInitParams visualizeGridParams;
-	visualizeGridParams.m_pDevice = m_pDevice;
+	visualizeGridParams.m_pEnv = m_pEnv;
 	visualizeGridParams.m_RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 	m_pVisualizeVoxelGridRecorder = new VisualizeVoxelGridRecorder(&visualizeGridParams);
 
 	VisualizeMeshInitParams visualizeMeshParams;
-	visualizeMeshParams.m_pDevice = m_pDevice;
+	visualizeMeshParams.m_pEnv = m_pEnv;
 	visualizeMeshParams.m_MeshDataElement = MeshDataElement_Normal;
 	visualizeMeshParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
 	visualizeMeshParams.m_RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -641,10 +600,10 @@ void DXApplication::OnRender()
 	DXCommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
 	pCommandAllocator->Reset();
 
-	DXResource* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+	DXRenderTarget* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVDescriptorHeap->GetCPUDescriptor(m_BackBufferIndex);
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDSVHeap->GetCPUDescriptor(kDSVHandle);
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDSVDescriptorHeap->GetCPUDescriptor(kDSVHandle);
 	
 	const u8 clearFlags = m_pCamera->GetClearFlags();
 	if (clearFlags != 0)
@@ -674,76 +633,57 @@ void DXApplication::OnRender()
 
 	GBuffer gBuffer;
 	gBuffer.m_pDiffuseTexture = m_pDiffuseTexture;
-	gBuffer.m_DiffuseRTVHandle = m_pRTVDescriptorHeap->GetCPUDescriptor(kDiffuseRTVHandle);
-	gBuffer.m_DiffuseSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kDiffuseSRVHandle);
 	gBuffer.m_pNormalTexture = m_pNormalTexture;
-	gBuffer.m_NormalRTVHandle = m_pRTVDescriptorHeap->GetCPUDescriptor(kNormalRTVHandle);
-	gBuffer.m_NormalSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kNormalSRVHandle);
 	gBuffer.m_pSpecularTexture = m_pSpecularTexture;
-	gBuffer.m_SpecularRTVHandle = m_pRTVDescriptorHeap->GetCPUDescriptor(kSpecularRTVHandle);
-	gBuffer.m_SpecularSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kSpecularSRVHandle);
 	gBuffer.m_pAccumLightTexture = m_pAccumLightTexture;
-	gBuffer.m_AccumLightUAVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kAccumLightUAVHandle);
-	gBuffer.m_AccumLightSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kAccumLightSRVHandle);
 	gBuffer.m_pDepthTexture = m_pDepthTexture;
-	gBuffer.m_DSVHandle = dsvHandle;
-	gBuffer.m_DepthSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kDepthSRVHandle);
 	
 	D3D12_RESOURCE_STATES renderTargetEndState = D3D12_RESOURCE_STATE_PRESENT;
 
 	FillGBufferRecorder::RenderPassParams fillGBufferParams;
+	fillGBufferParams.m_pEnv = m_pEnv;
 	fillGBufferParams.m_pCommandList = m_pCommandList;
 	fillGBufferParams.m_pCommandAllocator = pCommandAllocator;
 	fillGBufferParams.m_pGBuffer = &gBuffer;
 	fillGBufferParams.m_pMesh = m_pMesh;
 	//fillGBufferParams.m_pMaterial;
-	fillGBufferParams.m_pCBVDescriptorHeap = m_pCBVSRVUAVHeap;
-	fillGBufferParams.m_TransformCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kObjectTransformCBVHandle);
-	//fillGBufferParams.m_MaterialCBVHandle;
-	fillGBufferParams.m_pSamplerDescriptorHeap = m_pSamplerHeap;
-	fillGBufferParams.m_AnisoSamplerHandle = m_pSamplerHeap->GetGPUDescriptor(kAnisoSamplerHandle);
+	fillGBufferParams.m_pAnisoSampler = m_pAnisoSampler;
 	
 	m_pFillGBufferRecorder->Record(&fillGBufferParams);
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
 	WaitForGPU();
 
 	VisualizeMeshRecordParams visualizeMeshParams;
+	visualizeMeshParams.m_pEnv = m_pEnv;
 	visualizeMeshParams.m_pMesh = m_pMesh;
 	visualizeMeshParams.m_pCommandList = m_pCommandList;
 	visualizeMeshParams.m_pCommandAllocator = pCommandAllocator;
-	visualizeMeshParams.m_pRTVTexture = pRenderTarget;
-	visualizeMeshParams.m_RTVHandle = rtvHandle;
-	visualizeMeshParams.m_pRTVEndState = &renderTargetEndState;
-	visualizeMeshParams.m_pDSVTexture = m_pDepthTexture;
-	visualizeMeshParams.m_DSVHandle = dsvHandle;
-	visualizeMeshParams.m_pCBVSRVUAVDescriptorHeap = m_pCBVSRVUAVHeap;
-	visualizeMeshParams.m_CBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kObjectTransformCBVHandle);
+	visualizeMeshParams.m_pRenderTarget = pRenderTarget;
+	visualizeMeshParams.m_pDepthTexture = m_pDepthTexture;
 	
 	m_pVisualizeMeshRecorder->Record(&visualizeMeshParams);
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
 	WaitForGPU();
 	
 	ClearVoxelGridRecordParams clearGridParams;
+	clearGridParams.m_pEnv = m_pEnv;
 	clearGridParams.m_pCommandAllocator = pCommandAllocator;
 	clearGridParams.m_pCommandList = m_pCommandList;
-	clearGridParams.m_pCBVSRVUAVDescriptorHeap = m_pCBVSRVUAVHeap;
 	clearGridParams.m_pGridBuffer = m_pGridBuffer;
-	clearGridParams.m_GridBufferUAVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kGridBufferUAVHandle);
-	clearGridParams.m_GridConfigCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kGridConfigCBVHandle);
+	clearGridParams.m_pGridConfigBuffer = m_pGridConfigBuffer;
 
 	m_pClearVoxelGridRecorder->Record(&clearGridParams);
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
 	WaitForGPU();
 
 	CreateVoxelGridRecordParams createGridParams;
+	createGridParams.m_pEnv = m_pEnv;
 	createGridParams.m_pCommandList = m_pCommandList;
 	createGridParams.m_pCommandAllocator = pCommandAllocator;
-	createGridParams.m_pCBVSRVUAVDescriptorHeap = m_pCBVSRVUAVHeap;
-	createGridParams.m_ObjectTransformCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kObjectTransformCBVHandle);
-	createGridParams.m_CameraTransformCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kCameraTransformCBVHandle);
-	createGridParams.m_GridConfigCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kGridConfigCBVHandle);
+	createGridParams.m_pObjectTransformBuffer = m_pObjectTransformBuffer;
+	createGridParams.m_pCameraTransformBuffer = m_pCameraTransformBuffer;
+	createGridParams.m_pGridConfigBuffer = m_pGridConfigBuffer;
 	createGridParams.m_pGridBuffer = m_pGridBuffer;
-	createGridParams.m_GridBufferUAVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kGridBufferUAVHandle);
 	createGridParams.m_pMesh = m_pMesh;
 
 #ifdef HAS_TEXCOORD
@@ -760,15 +700,10 @@ void DXApplication::OnRender()
 	visualizeGridParams.m_pCommandList = m_pCommandList;
 	visualizeGridParams.m_pCommandAllocator = pCommandAllocator;
 	visualizeGridParams.m_pRenderTarget = pRenderTarget;
-	visualizeGridParams.m_RTVHandle = rtvHandle;
-	visualizeGridParams.m_pRenderTargetEndState = &renderTargetEndState;
 	visualizeGridParams.m_pDepthTexture = m_pDepthTexture;
-	visualizeGridParams.m_DepthSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kDepthSRVHandle);
 	visualizeGridParams.m_pGridBuffer = m_pGridBuffer;
-	visualizeGridParams.m_GridBufferSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kGridBufferSRVHandle);
-	visualizeGridParams.m_GridConfigCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kGridConfigCBVHandle);
-	visualizeGridParams.m_TransformCBVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kCameraTransformCBVHandle);
-	visualizeGridParams.m_pCBVSRVUAVDescriptorHeap = m_pCBVSRVUAVHeap;
+	visualizeGridParams.m_pGridConfigBuffer = m_pGridConfigBuffer;
+	visualizeGridParams.m_pCameraTransformBuffer = m_pCameraTransformBuffer;
 
 	m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
