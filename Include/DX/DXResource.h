@@ -365,3 +365,13 @@ private:
 	DXDescriptorHandle m_SRVHandle;
 	DXDescriptorHandle m_UAVHandle;
 };
+
+class DXSampler
+{
+public:
+	DXSampler(DXRenderEnvironment* pEnv, const D3D12_SAMPLER_DESC* pDesc);
+	DXDescriptorHandle GetHandle() { return m_Handle; }
+
+private:
+	DXDescriptorHandle m_Handle;
+};
