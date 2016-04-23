@@ -8,6 +8,7 @@ class DXCommandList;
 class DXCommandAllocator;
 class DXRenderTarget;
 class DXDepthStencilTexture;
+class DXBuffer;
 class DXSampler;
 class Mesh;
 

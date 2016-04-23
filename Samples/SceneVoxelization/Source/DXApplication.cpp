@@ -114,7 +114,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
 	, m_pCommandList(nullptr)
-	, m_pRTVHeap(nullptr)
+	, m_pRTVDescriptorHeap(nullptr)
 	, m_pDSVHeap(nullptr)
 	, m_pCBVSRVUAVHeap(nullptr)
 	, m_pSamplerHeap(nullptr)
@@ -177,7 +177,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pSpecularTexture);
 	SafeDelete(m_pAccumLightTexture);
 	SafeDelete(m_pDepthTexture);
-	SafeDelete(m_pRTVHeap);
+	SafeDelete(m_pRTVDescriptorHeap);
 	SafeDelete(m_pCommandQueue);
 	SafeDelete(m_pCommandList);
 	SafeDelete(m_pSwapChain);
@@ -214,13 +214,13 @@ void DXApplication::OnInit()
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
 	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kNumRTVHandles, false);
-	m_pRTVHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pRTVHeap");
+	m_pRTVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pRTVDescriptorHeap");
 
 	DXTex2DRenderTargetViewDesc rtvDesc;
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 	{
 		DXResource* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVHeap->GetCPUDescriptor(index);
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVDescriptorHeap->GetCPUDescriptor(index);
 
 		m_pDevice->CreateRenderTargetView(pRenderTarget, &rtvDesc, rtvHandle);
 	}
@@ -253,7 +253,7 @@ void DXApplication::OnInit()
 	DXTex2DResourceDesc diffuseTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 	m_pDiffuseTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &diffuseTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pDiffuseTexture");
 	
-	m_pDevice->CreateRenderTargetView(m_pDiffuseTexture, &rtvDesc, m_pRTVHeap->GetCPUDescriptor(kDiffuseRTVHandle));
+	m_pDevice->CreateRenderTargetView(m_pDiffuseTexture, &rtvDesc, m_pRTVDescriptorHeap->GetCPUDescriptor(kDiffuseRTVHandle));
 
 	DXTex2DShaderResourceViewDesc diffuseSRVDesc(GetShaderResourceViewFormat(DXGI_FORMAT_R10G10B10A2_UNORM));
 	m_pDevice->CreateShaderResourceView(m_pDiffuseTexture, &diffuseSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kDiffuseSRVHandle));
@@ -261,7 +261,7 @@ void DXApplication::OnInit()
 	DXTex2DResourceDesc normalTexDesc(DXGI_FORMAT_R8G8B8A8_SNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 	m_pNormalTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &normalTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pNormalTexture");
 
-	m_pDevice->CreateRenderTargetView(m_pNormalTexture, &rtvDesc, m_pRTVHeap->GetCPUDescriptor(kNormalRTVHandle));
+	m_pDevice->CreateRenderTargetView(m_pNormalTexture, &rtvDesc, m_pRTVDescriptorHeap->GetCPUDescriptor(kNormalRTVHandle));
 
 	DXTex2DShaderResourceViewDesc normalSRVDesc(GetShaderResourceViewFormat(DXGI_FORMAT_R8G8B8A8_SNORM));
 	m_pDevice->CreateShaderResourceView(m_pNormalTexture, &normalSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kNormalSRVHandle));
@@ -269,7 +269,7 @@ void DXApplication::OnInit()
 	DXTex2DResourceDesc specularTexDesc(DXGI_FORMAT_R8G8B8A8_UNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 	m_pSpecularTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &specularTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pSpecularTexture");
 
-	m_pDevice->CreateRenderTargetView(m_pSpecularTexture, &rtvDesc, m_pRTVHeap->GetCPUDescriptor(kSpecularRTVHandle));
+	m_pDevice->CreateRenderTargetView(m_pSpecularTexture, &rtvDesc, m_pRTVDescriptorHeap->GetCPUDescriptor(kSpecularRTVHandle));
 
 	DXTex2DShaderResourceViewDesc specularSRVDesc(GetShaderResourceViewFormat(DXGI_FORMAT_R8G8B8A8_UNORM));
 	m_pDevice->CreateShaderResourceView(m_pSpecularTexture, &specularSRVDesc, m_pCBVSRVUAVHeap->GetCPUDescriptor(kSpecularSRVHandle));
@@ -643,7 +643,7 @@ void DXApplication::OnRender()
 
 	DXResource* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVHeap->GetCPUDescriptor(m_BackBufferIndex);
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVDescriptorHeap->GetCPUDescriptor(m_BackBufferIndex);
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDSVHeap->GetCPUDescriptor(kDSVHandle);
 	
 	const u8 clearFlags = m_pCamera->GetClearFlags();
@@ -674,13 +674,13 @@ void DXApplication::OnRender()
 
 	GBuffer gBuffer;
 	gBuffer.m_pDiffuseTexture = m_pDiffuseTexture;
-	gBuffer.m_DiffuseRTVHandle = m_pRTVHeap->GetCPUDescriptor(kDiffuseRTVHandle);
+	gBuffer.m_DiffuseRTVHandle = m_pRTVDescriptorHeap->GetCPUDescriptor(kDiffuseRTVHandle);
 	gBuffer.m_DiffuseSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kDiffuseSRVHandle);
 	gBuffer.m_pNormalTexture = m_pNormalTexture;
-	gBuffer.m_NormalRTVHandle = m_pRTVHeap->GetCPUDescriptor(kNormalRTVHandle);
+	gBuffer.m_NormalRTVHandle = m_pRTVDescriptorHeap->GetCPUDescriptor(kNormalRTVHandle);
 	gBuffer.m_NormalSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kNormalSRVHandle);
 	gBuffer.m_pSpecularTexture = m_pSpecularTexture;
-	gBuffer.m_SpecularRTVHandle = m_pRTVHeap->GetCPUDescriptor(kSpecularRTVHandle);
+	gBuffer.m_SpecularRTVHandle = m_pRTVDescriptorHeap->GetCPUDescriptor(kSpecularRTVHandle);
 	gBuffer.m_SpecularSRVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kSpecularSRVHandle);
 	gBuffer.m_pAccumLightTexture = m_pAccumLightTexture;
 	gBuffer.m_AccumLightUAVHandle = m_pCBVSRVUAVHeap->GetGPUDescriptor(kAccumLightUAVHandle);

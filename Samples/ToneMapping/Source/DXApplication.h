@@ -45,7 +45,7 @@ private:
 	DXDevice* m_pDevice;
 	DXSwapChain* m_pSwapChain;
 	DXCommandQueue* m_pCommandQueue;
-	DXDescriptorHeap* m_pRTVHeap;
+	DXDescriptorHeap* m_pRTVDescriptorHeap;
 	DXDescriptorHeap* m_pSRVHeap;
 	DXDescriptorHeap* m_pSamplerHeap;
 	DXCommandAllocator* m_CommandAllocators[kBackBufferCount];
