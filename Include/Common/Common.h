@@ -27,6 +27,16 @@ static void DXVerify(HRESULT result)
 }
 
 template <typename T>
+static void SafeRelease(T*& pObject)
+{
+	if (pObject != nullptr)
+	{
+		pObject->Release();
+		pObject = nullptr;
+	}
+}
+
+template <typename T>
 static void SafeDelete(T*& pObject)
 {
 	delete pObject;
@@ -39,5 +49,3 @@ static void SafeArrayDelete(T*& pArrayObject)
 	delete[] pArrayObject;
 	pArrayObject = nullptr;
 }
-
-#define MS_ALIGN(n) __declspec(align(n))

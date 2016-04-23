@@ -216,28 +216,37 @@ struct DXTex2DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 class DXResource : public DXObject<ID3D12Resource>
 {
 public:
+	DXResource(ID3D12Resource* pDXObject, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+	DXResource(const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+	
 	DXResource(DXDevice* pDevice, const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS heapFlags,
 		const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName, const D3D12_CLEAR_VALUE* pClearValue = nullptr);
-
-	DXResource(ID3D12Resource* pDXObject, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+		
+		
+	UINT64 GetWidth() const { return m_Desc.Width; }
+	UINT GetHeight() const { return m_Desc.Height; }
 	
-	UINT64 GetWidth() const;
-	UINT GetHeight() const;
-
-	D3D12_RESOURCE_STATES GetState() const;
-	void SetState(D3D12_RESOURCE_STATES state);
-
-	DXGI_FORMAT GetFormat() const;
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress();
-			
+		
+	/////////////////////////////////////////////////
+
+public:
+	DXGI_FORMAT GetFormat() const { return m_Desc.Format; }
+	
+	D3D12_RESOURCE_STATES GetState() const { return m_State; }
+	void SetState(D3D12_RESOURCE_STATES state) { m_State = state; }
+
+	D3D12_RESOURCE_STATES GetReadState() const { return m_ReadState; }
+	D3D12_RESOURCE_STATES GetWriteState() const { return m_WriteState; }
+	
 	template <typename T>
 	void Write(const T* pInputData, SIZE_T numBytes);
-	
-private:
+
+protected:
+	D3D12_RESOURCE_DESC m_Desc;
 	D3D12_RESOURCE_STATES m_State;
-	DXGI_FORMAT m_Format;
-	UINT64 m_Width;
-	UINT m_Height;
+	D3D12_RESOURCE_STATES m_ReadState;
+	D3D12_RESOURCE_STATES m_WriteState;
 };
 
 template <typename T>
@@ -257,7 +266,7 @@ void DXResource::Write(const T* pInputData, SIZE_T numBytes)
 
 ///////////////////////////////////////////////////////
 
-class DXRenderTarget : public DXObject<ID3D12Resource>
+class DXRenderTarget : public DXResource
 {
 public:
 	DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -269,21 +278,31 @@ public:
 	DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXTex3DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
+	DXRenderTarget(DXRenderEnvironment* pEnv, ID3D12Resource* pDXObject,
+		D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+
+	UINT64 GetWidth() const { return m_Desc.Width; }
+	UINT GetHeight() const { return m_Desc.Height; }
+
 	DXDescriptorHandle GetRTVHandle() { return m_RTVHandle; }
 	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
 	DXDescriptorHandle GetUAVHandle() { return m_UAVHandle; }
-
+				
 private:
 	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
-		
+		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState);
+
+	void CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateTex2DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateTex3DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	
 private:
 	DXDescriptorHandle m_RTVHandle;
 	DXDescriptorHandle m_SRVHandle;
 	DXDescriptorHandle m_UAVHandle;
 };
 
-class DXDepthStencilTexture : public DXObject<ID3D12Resource>
+class DXDepthStencilTexture : public DXResource
 {
 public:
 	DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -298,20 +317,27 @@ public:
 		const DXTex3DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName);
 
+	UINT64 GetWidth() const { return m_Desc.Width; }
+	UINT GetHeight() const { return m_Desc.Height; }
+
 	DXDescriptorHandle GetDSVHandle() { return m_DSVHandle; }
 	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
 
 private:
 	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
-		const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName);
+		const DXDepthStencilClearValue* pOptimizedClearValue);
+
+	void CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateTex2DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateTex3DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 
 private:
 	DXDescriptorHandle m_DSVHandle;
 	DXDescriptorHandle m_SRVHandle;
 };
 
-class DXBuffer : public DXObject<ID3D12Resource>
+class DXBuffer : public DXResource
 {
 public:
 	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -329,29 +355,13 @@ public:
 	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
 	DXDescriptorHandle GetUAVHandle() { return m_UAVHandle; }
 
-	template <typename T>
-	void Write(const T* pInputData, SIZE_T numBytes);
-
 private:
 	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const D3D12_RESOURCE_DESC* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+		const D3D12_RESOURCE_DESC* pBufferDesc, D3D12_RESOURCE_STATES initialState);
+
+	void CreateStructuredBufferViews(DXRenderEnvironment* pEnv, const DXStructuredBufferDesc* pBufferDesc);
 
 private:
 	DXDescriptorHandle m_SRVHandle;
 	DXDescriptorHandle m_UAVHandle;
 };
-
-template <typename T>
-void DXBuffer::Write(const T* pInputData, SIZE_T numBytes)
-{
-	const UINT subresource = 0;
-	T* pResourceData = nullptr;
-
-	const DXRange readRange(0, 0);
-	DXVerify(GetDXObject()->Map(subresource, &readRange, reinterpret_cast<void**>(&pResourceData)));
-
-	std::memcpy(pResourceData, pInputData, numBytes);
-
-	const DXRange writtenRange(0, numBytes);
-	GetDXObject()->Unmap(subresource, &writtenRange);
-}

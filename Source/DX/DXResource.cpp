@@ -542,9 +542,7 @@ DXResource::DXResource(DXDevice* pDevice, const D3D12_HEAP_PROPERTIES* pHeapProp
 		initialState, pClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
 
 	m_State = initialState;
-	m_Format = pDesc->Format;
-	m_Width = pDesc->Width;
-	m_Height = pDesc->Height;
+	m_Desc = *pDesc;
 
 #ifdef _DEBUG
 	SetName(pName);
@@ -553,42 +551,25 @@ DXResource::DXResource(DXDevice* pDevice, const D3D12_HEAP_PROPERTIES* pHeapProp
 
 DXResource::DXResource(ID3D12Resource* pDXObject, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
 	: DXObject<ID3D12Resource>(pDXObject)
+	, m_Desc(pDXObject->GetDesc())
 	, m_State(initialState)
-	, m_Format(DXGI_FORMAT_UNKNOWN)
+	, m_ReadState(D3D12_RESOURCE_STATE_COMMON)
+	, m_WriteState(D3D12_RESOURCE_STATE_COMMON)
 {
-	D3D12_RESOURCE_DESC desc = pDXObject->GetDesc();
-	m_Format = desc.Format;
-	m_Width = desc.Width;
-	m_Height = desc.Height;
-
 #ifdef _DEBUG
 	SetName(pName);
 #endif
 }
 
-UINT64 DXResource::GetWidth() const
+DXResource::DXResource(const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: m_Desc(*pDesc)
+	, m_State(initialState)
+	, m_ReadState(D3D12_RESOURCE_STATE_COMMON)
+	, m_WriteState(D3D12_RESOURCE_STATE_COMMON)
 {
-	return m_Width;
-}
-
-UINT DXResource::GetHeight() const
-{
-	return m_Height;
-}
-
-D3D12_RESOURCE_STATES DXResource::GetState() const
-{
-	return m_State;
-}
-
-void DXResource::SetState(D3D12_RESOURCE_STATES state)
-{
-	m_State = state;
-}
-
-DXGI_FORMAT DXResource::GetFormat() const
-{
-	return m_Format;
+#ifdef _DEBUG
+	SetName(pName);
+#endif
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS DXResource::GetGPUVirtualAddress()
@@ -618,14 +599,59 @@ DXHeapProperties::DXHeapProperties(D3D12_CPU_PAGE_PROPERTY cpuPageProperty, D3D1
 
 DXRenderTarget::DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const DXTex1DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: DXResource(pTexDesc, initialState, pName)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pName);
+	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState);
+	CreateTex1DViews(pEnv, pTexDesc);
+}
+
+DXRenderTarget::DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const DXTex2DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: DXResource(pTexDesc, initialState, pName)
+{
+	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState);
+	CreateTex2DViews(pEnv, pTexDesc);
+}
+
+DXRenderTarget::DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const DXTex3DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: DXResource(pTexDesc, initialState, pName)
+{
+	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState);
+	CreateTex3DViews(pEnv, pTexDesc);
+}
+
+DXRenderTarget::DXRenderTarget(DXRenderEnvironment* pEnv, ID3D12Resource* pDXObject, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: DXResource(pDXObject, initialState, pName)
+{
+	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
+		CreateTex1DViews(pEnv, &m_Desc);
+	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+		CreateTex2DViews(pEnv, &m_Desc);
+	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+		CreateTex3DViews(pEnv, &m_Desc);
+}
+
+void DXRenderTarget::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState)
+{
+	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
+
+	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+	const D3D12_CLEAR_VALUE* pOptimizedClearValue = nullptr;
+
+	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
+		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+}
+
+void DXRenderTarget::CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc)
+{
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
 
 	// Kolya: Add missing impl
 	assert(pTexDesc->DepthOrArraySize == 1);
 	assert(pTexDesc->MipLevels == 0);
-	
+
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
 	{
 		m_RTVHandle = pEnv->m_pRTVDescriptorHeap->Allocate();
@@ -649,10 +675,8 @@ DXRenderTarget::DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPE
 	}
 }
 
-DXRenderTarget::DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const DXTex2DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+void DXRenderTarget::CreateTex2DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pName);
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
 
 	// Kolya: Add missing impl
@@ -684,11 +708,8 @@ DXRenderTarget::DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPE
 	}
 }
 
-DXRenderTarget::DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const DXTex3DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+void DXRenderTarget::CreateTex3DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pName);
-
 	assert(false && "Kolya: Needs impl");
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
 	{
@@ -701,28 +722,46 @@ DXRenderTarget::DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPE
 	}
 }
 
-void DXRenderTarget::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+DXDepthStencilTexture::DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const DXTex1DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
+	: DXResource(pTexDesc, initialState, pName)
+{
+	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearValue);
+	CreateTex1DViews(pEnv, pTexDesc);
+}
+
+DXDepthStencilTexture::DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const DXTex2DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
+	: DXResource(pTexDesc, initialState, pName)
+{
+	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearValue);
+	CreateTex2DViews(pEnv, pTexDesc);
+}
+
+DXDepthStencilTexture::DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const DXTex3DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
+	: DXResource(pTexDesc, initialState, pName)
+{
+	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearValue);
+	CreateTex3DViews(pEnv, pTexDesc);
+}
+
+void DXDepthStencilTexture::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const DXDepthStencilClearValue* pOptimizedClearValue)
 {
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
 
 	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
-	const D3D12_CLEAR_VALUE* pOptimizedClearValue = nullptr;
-
 	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
 		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
-
-#ifdef _DEBUG
-	SetName(pName);
-#endif
 }
 
-DXDepthStencilTexture::DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const DXTex1DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
+void DXDepthStencilTexture::CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearValue, pName);
-
 	assert(false && "Kolya: Needs impl");
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
 	{
@@ -732,13 +771,10 @@ DXDepthStencilTexture::DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3
 	}
 }
 
-DXDepthStencilTexture::DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const DXTex2DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
+void DXDepthStencilTexture::CreateTex2DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearValue, pName);
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
-	
+
 	// Kolya: Add missing impl
 	assert(pTexDesc->DepthOrArraySize == 1);
 	assert(pTexDesc->MipLevels == 0);
@@ -761,12 +797,8 @@ DXDepthStencilTexture::DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3
 	}
 }
 
-DXDepthStencilTexture::DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const DXTex3DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
+void DXDepthStencilTexture::CreateTex3DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearValue, pName);
-
 	assert(false && "Kolya: Needs impl");
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
 	{
@@ -776,43 +808,49 @@ DXDepthStencilTexture::DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3
 	}
 }
 
-void DXDepthStencilTexture::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
-	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
-{
-	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
-
-	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
-	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
-		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
-
-#ifdef _DEBUG
-	SetName(pName);
-#endif
-}
-
 DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const DXConstantBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: DXResource(pBufferDesc, initialState, pName)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState, pName);
+	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState);
 }
 
 DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const DXVertexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: DXResource(pBufferDesc, initialState, pName)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState, pName);
+	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState);
 }
 
 DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const DXIndexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: DXResource(pBufferDesc, initialState, pName)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState, pName);
+	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState);
 }
 
 DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const DXStructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: DXResource(pBufferDesc, initialState, pName)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState, pName);
+	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState);
+	CreateStructuredBufferViews(pEnv, pBufferDesc);
+}
+
+void DXBuffer::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const D3D12_RESOURCE_DESC* pBufferDesc, D3D12_RESOURCE_STATES initialState)
+{
+	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
+
+	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
+	const D3D12_CLEAR_VALUE* pOptimizedClearValue = nullptr;
+
+	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pBufferDesc,
+		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+}
+
+void DXBuffer::CreateStructuredBufferViews(DXRenderEnvironment* pEnv, const DXStructuredBufferDesc* pBufferDesc)
+{
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
 
 	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
@@ -829,20 +867,4 @@ DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeap
 		DXStructuredBufferUAVDesc viewDesc(0, pBufferDesc->NumElements, pBufferDesc->StructureByteStride);
 		pDXDevice->CreateUnorderedAccessView(GetDXObject(), nullptr, &viewDesc, m_UAVHandle);
 	}
-}
-
-void DXBuffer::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const D3D12_RESOURCE_DESC* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
-{
-	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
-
-	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS;
-	const D3D12_CLEAR_VALUE* pOptimizedClearValue = nullptr;
-
-	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pBufferDesc,
-		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
-
-#ifdef _DEBUG
-	SetName(pName);
-#endif
 }

@@ -14,6 +14,14 @@ struct DXRect;
 struct DXVertexBufferView;
 struct DXIndexBufferView;
 
+struct DXPendingResourceState
+{
+	DXPendingResourceState(DXResource* pResource, D3D12_RESOURCE_STATES nextState);
+
+	DXResource* m_pResource;
+	D3D12_RESOURCE_STATES m_NextState;
+};
+
 class DXCommandList : public DXObject<ID3D12GraphicsCommandList>
 {
 public:
@@ -51,8 +59,12 @@ public:
 	void ClearUnorderedAccessView(D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, DXResource* pResource, const FLOAT clearValue[4]);
 
 	void CopyResource(DXResource* pDest, DXResource* pSource);
-
 	void TransitionBarrier(DXResource* pResource, D3D12_RESOURCE_STATES newState);
+
+	std::size_t GetNumPendingResourceStates() const;
+	DXPendingResourceState* GetFirstPendingResourceState();
+	void PushPendingResourceState(DXResource* pResource, D3D12_RESOURCE_STATES nextState);
+	
+private:
+	std::vector<DXPendingResourceState> m_PendingResourceStates;
 };
-
-

@@ -25,6 +25,8 @@ void DXCommandList::Reset(DXCommandAllocator* pAllocator, DXPipelineState* pInit
 {
 	DXVerify(GetDXObject()->Reset(pAllocator->GetDXObject(),
 		(pInitialState != nullptr) ? pInitialState->GetDXObject() : nullptr));
+
+	m_PendingResourceStates.clear();
 }
 
 void DXCommandList::Close()
@@ -158,4 +160,25 @@ void DXCommandList::ClearStencilView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, UINT
 void DXCommandList::ClearUnorderedAccessView(D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, DXResource* pResource, const FLOAT clearValue[4])
 {
 	GetDXObject()->ClearUnorderedAccessViewFloat(gpuHandle, cpuHandle, pResource->GetDXObject(), clearValue, 0, nullptr);
+}
+
+DXPendingResourceState::DXPendingResourceState(DXResource* pResource, D3D12_RESOURCE_STATES nextState)
+	: m_pResource(pResource)
+	, m_NextState(nextState)
+{
+}
+
+std::size_t DXCommandList::GetNumPendingResourceStates() const
+{
+	return m_PendingResourceStates.size();
+}
+
+DXPendingResourceState* DXCommandList::GetFirstPendingResourceState()
+{
+	return &m_PendingResourceStates[0];
+}
+
+void DXCommandList::PushPendingResourceState(DXResource* pResource, D3D12_RESOURCE_STATES nextState)
+{
+	m_PendingResourceStates.emplace_back(pResource, nextState);
 }

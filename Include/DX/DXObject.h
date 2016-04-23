@@ -15,8 +15,7 @@ public:
 protected:
 	~DXObject()
 	{
-		if (m_pDXObject != nullptr)
-			m_pDXObject->Release();
+		SafeRelease(m_pDXObject);
 	}
 
 public:
