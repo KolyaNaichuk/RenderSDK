@@ -34,12 +34,7 @@ class DXDescriptorHeap : public DXObject<ID3D12DescriptorHeap>
 {
 public:
 	DXDescriptorHeap(DXDevice* pDevice, const DXDescriptorHeapDesc* pDesc, LPCWSTR pName);
-
-	// Kolya. Deprecated. Should be removed
-	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptor(UINT index);
-	// Kolya. Deprecated. Should be removed
-	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptor(UINT index);
-
+	
 	DXDescriptorHandle Allocate();
 	DXDescriptorHandle AllocateRange(UINT numDescriptors);
 

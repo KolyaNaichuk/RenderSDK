@@ -61,7 +61,7 @@ enum DSVHeapHandles
 
 enum SRVHeapHandles
 {
-	kNullHandle = 0,
+	kNullHandle = kBackBufferCount,
 	kObjectTransformCBVHandle,
 	kCameraTransformCBVHandle,
 	kGridConfigCBVHandle,
@@ -602,8 +602,8 @@ void DXApplication::OnRender()
 
 	DXColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVDescriptorHeap->GetCPUDescriptor(m_BackBufferIndex);
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDSVDescriptorHeap->GetCPUDescriptor(kDSVHandle);
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderTarget->GetRTVHandle();
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDepthTexture->GetDSVHandle();
 	
 	const u8 clearFlags = m_pCamera->GetClearFlags();
 	if (clearFlags != 0)

@@ -46,6 +46,7 @@ private:
 	DXSwapChain* m_pSwapChain;
 	DXCommandQueue* m_pCommandQueue;
 	DXDescriptorHeap* m_pRTVDescriptorHeap;
+	DXDescriptorHeap* m_pSRVDescriptorHeap;
 	DXRootSignature* m_pRootSignature;
 	DXPipelineState* m_pPipelineState;
 	DXCommandAllocator* m_CommandAllocators[kBackBufferCount];

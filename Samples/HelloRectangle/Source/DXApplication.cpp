@@ -21,6 +21,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
 	, m_pRTVDescriptorHeap(nullptr)
+	, m_pSRVDescriptorHeap(nullptr)
 	, m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 	, m_pCommandList(nullptr)
@@ -54,6 +55,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCommandList);
 	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
+	SafeDelete(m_pSRVDescriptorHeap);
 	SafeDelete(m_pRTVDescriptorHeap);
 	SafeDelete(m_pRootSignature);
 	SafeDelete(m_pPipelineState);
@@ -67,13 +69,17 @@ void DXApplication::OnInit()
 	DXFactory factory;
 	m_pDevice = new DXDevice(&factory, D3D_FEATURE_LEVEL_11_0);
 	
-	DXDescriptorHeapDesc descriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kBackBufferCount, false);
-	m_pRTVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &descriptorHeapDesc, L"m_pRTVDescriptorHeap");
+	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kBackBufferCount, false);
+	m_pRTVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pRTVDescriptorHeap");
+
+	DXDescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kBackBufferCount, true);
+	m_pSRVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pSRVDescriptorHeap");
 
 	m_pEnv->m_pDevice = m_pDevice;
 	m_pEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
 	m_pEnv->m_pUploadHeapProps = m_pUploadHeapProps;
 	m_pEnv->m_pRTVDescriptorHeap = m_pRTVDescriptorHeap;
+	m_pEnv->m_pSRVDescriptorHeap = m_pSRVDescriptorHeap;
 
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");

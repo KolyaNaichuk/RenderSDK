@@ -76,20 +76,6 @@ DXDescriptorHeap::DXDescriptorHeap(DXDevice* pDevice, const DXDescriptorHeapDesc
 #endif
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DXDescriptorHeap::GetCPUDescriptor(UINT index)
-{
-	DXDescriptorHandle descriptorHandle = m_FirstDescriptor;
-	descriptorHandle.Offset(index, m_DescriptorSize);
-	return descriptorHandle;
-}
-
-D3D12_GPU_DESCRIPTOR_HANDLE DXDescriptorHeap::GetGPUDescriptor(UINT index)
-{
-	DXDescriptorHandle descriptorHandle = m_FirstDescriptor;
-	descriptorHandle.Offset(index, m_DescriptorSize);
-	return descriptorHandle;
-}
-
 DXDescriptorHandle DXDescriptorHeap::Allocate()
 {
 	assert(m_UsedNumDescriptors < m_ReservedNumDescriptors);
