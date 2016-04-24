@@ -24,12 +24,12 @@ struct DXDepthStencilClearValue : D3D12_CLEAR_VALUE
 
 struct DXVertexBufferView : public D3D12_VERTEX_BUFFER_VIEW
 {
-	DXVertexBufferView(DXBuffer* pBuffer, UINT sizeInBytes, UINT strideInBytes);
+	DXVertexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes);
 };
 
 struct DXIndexBufferView : public D3D12_INDEX_BUFFER_VIEW
 {
-	DXIndexBufferView(DXBuffer* pBuffer, UINT sizeInBytes, UINT strideInBytes);
+	DXIndexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, DXGI_FORMAT format);
 };
 
 struct DXConstantBufferViewDesc : public D3D12_CONSTANT_BUFFER_VIEW_DESC
@@ -88,12 +88,18 @@ struct DXConstantBufferDesc : public D3D12_RESOURCE_DESC
 
 struct DXVertexBufferDesc : public D3D12_RESOURCE_DESC
 {
-	DXVertexBufferDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, UINT64 alignment = 0);
+	DXVertexBufferDesc(UINT numVertices, UINT strideInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, UINT64 alignment = 0);
+
+	UINT NumVertices;
+	UINT StrideInBytes;
 };
 
 struct DXIndexBufferDesc : public D3D12_RESOURCE_DESC
 {
-	DXIndexBufferDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, UINT64 alignment = 0);
+	DXIndexBufferDesc(UINT numIndices, UINT strideInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, UINT64 alignment = 0);
+
+	UINT NumIndices;
+	UINT StrideInBytes;
 };
 
 struct DXStructuredBufferDesc : public D3D12_RESOURCE_DESC
@@ -120,7 +126,7 @@ struct DXTex1DResourceDesc : public D3D12_RESOURCE_DESC
 {
 	DXTex1DResourceDesc(DXGI_FORMAT format, UINT64 width,
 		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE,
-		UINT16 arraySize = 1, UINT16 mipLevels = 0,
+		UINT16 arraySize = 1, UINT16 mipLevels = 1,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
 };
@@ -129,7 +135,7 @@ struct DXTex2DResourceDesc : public D3D12_RESOURCE_DESC
 {
 	DXTex2DResourceDesc(DXGI_FORMAT format, UINT64 width, UINT height,
 		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE,
-		UINT16 arraySize = 1, UINT16 mipLevels = 0,
+		UINT16 arraySize = 1, UINT16 mipLevels = 1,
 		UINT sampleCount = 1, UINT sampleQuality = 0,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
@@ -139,7 +145,7 @@ struct DXTex3DResourceDesc : public D3D12_RESOURCE_DESC
 {
 	DXTex3DResourceDesc(DXGI_FORMAT format, UINT64 width, UINT height, UINT16 depth,
 		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE,
-		UINT16 mipLevels = 0,
+		UINT16 mipLevels = 1,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
 };
@@ -265,9 +271,9 @@ public:
 	UINT64 GetWidth() const { return m_Desc.Width; }
 	UINT GetHeight() const { return m_Desc.Height; }
 
-	DXDescriptorHandle GetRTVHandle() { return m_RTVHandle; }
-	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
-	DXDescriptorHandle GetUAVHandle() { return m_UAVHandle; }
+	DXDescriptorHandle GetRTVHandle();
+	DXDescriptorHandle GetSRVHandle();
+	DXDescriptorHandle GetUAVHandle();
 				
 private:
 	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -301,8 +307,8 @@ public:
 	UINT64 GetWidth() const { return m_Desc.Width; }
 	UINT GetHeight() const { return m_Desc.Height; }
 
-	DXDescriptorHandle GetDSVHandle() { return m_DSVHandle; }
-	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
+	DXDescriptorHandle GetDSVHandle();
+	DXDescriptorHandle GetSRVHandle();
 
 private:
 	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -332,25 +338,31 @@ public:
 
 	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXStructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
-		
-	DXDescriptorHandle GetSRVHandle() { return m_SRVHandle; }
-	DXDescriptorHandle GetUAVHandle() { return m_UAVHandle; }
-	DXDescriptorHandle GetCBVHandle() { return m_CBVHandle; }
 
-	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() { return m_GPUVirtualAddress; }
+	~DXBuffer();
+		
+	DXDescriptorHandle GetSRVHandle();
+	DXDescriptorHandle GetUAVHandle();
+	DXDescriptorHandle GetCBVHandle();
+	
+	DXVertexBufferView* GetVBView();
+	DXIndexBufferView*  GetIBView();
 
 private:
 	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pBufferDesc, D3D12_RESOURCE_STATES initialState);
 
 	void CreateConstantBufferView(DXRenderEnvironment* pEnv, const DXConstantBufferDesc* pBufferDesc);
+	void CreateVertexBufferView(DXRenderEnvironment* pEnv, const DXVertexBufferDesc* pBufferDesc);
+	void CreateIndexBufferView(DXRenderEnvironment* pEnv, const DXIndexBufferDesc* pBufferDesc);
 	void CreateStructuredBufferViews(DXRenderEnvironment* pEnv, const DXStructuredBufferDesc* pBufferDesc);
 	
 private:
 	DXDescriptorHandle m_SRVHandle;
 	DXDescriptorHandle m_UAVHandle;
 	DXDescriptorHandle m_CBVHandle;
-	D3D12_GPU_VIRTUAL_ADDRESS m_GPUVirtualAddress;
+	DXVertexBufferView* m_pVBView;
+	DXIndexBufferView* m_pIBView;
 };
 
 class DXSampler

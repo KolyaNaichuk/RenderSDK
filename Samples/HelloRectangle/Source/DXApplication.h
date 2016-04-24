@@ -51,9 +51,7 @@ private:
 	DXCommandAllocator* m_CommandAllocators[kBackBufferCount];
 	DXCommandList* m_pCommandList;
 	DXBuffer* m_pVertexBuffer;
-	DXVertexBufferView* m_pVertexBufferView;
 	DXBuffer* m_pIndexBuffer;
-	DXIndexBufferView* m_pIndexBufferView;
 	DXHeapProperties* m_pDefaultHeapProps;
 	DXHeapProperties* m_pUploadHeapProps;
 	DXRenderEnvironment* m_pEnv;

@@ -114,4 +114,3 @@ void DXDescriptorHeap::Reset()
 {
 	m_UsedNumDescriptors = 0;
 }
-

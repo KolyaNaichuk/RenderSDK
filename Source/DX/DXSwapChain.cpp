@@ -46,8 +46,8 @@ DXSwapChain::DXSwapChain(DXFactory* pFactory, DXRenderEnvironment* pEnv, DXSwapC
 DXSwapChain::~DXSwapChain()
 {
 	for (UINT index = 0; index < m_BufferCount; ++index)
-		delete m_ppFirstBuffer[index];
-	delete[] m_ppFirstBuffer;
+		SafeDelete(m_ppFirstBuffer[index]);
+	SafeArrayDelete(m_ppFirstBuffer);
 }
 
 DXRenderTarget* DXSwapChain::GetBackBuffer(UINT index)

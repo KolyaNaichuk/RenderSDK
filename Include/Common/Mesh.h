@@ -35,10 +35,7 @@ public:
 	u8 GetVertexElementFlags() const;
 
 	DXBuffer* GetVertexBuffer();
-	DXVertexBufferView* GetVertexBufferView();
-	
 	DXBuffer* GetIndexBuffer();
-	DXIndexBufferView* GetIndexBufferView();
 	
 	u32 GetNumSubMeshes() const;
 	const SubMeshData* GetSubMeshes() const;
@@ -54,10 +51,7 @@ private:
 
 	DXBuffer* m_pDefaultHeapVB;	
 	DXBuffer* m_pDefaultHeapIB;
-	
-	DXVertexBufferView* m_pVBView;
-	DXIndexBufferView* m_pIBView;
-
+		
 	u8 m_VertexElementFlags;
 	
 	u32 m_NumSubMeshes;

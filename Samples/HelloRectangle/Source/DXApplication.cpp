@@ -25,9 +25,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pPipelineState(nullptr)
 	, m_pCommandList(nullptr)
 	, m_pVertexBuffer(nullptr)
-	, m_pVertexBufferView(nullptr)
 	, m_pIndexBuffer(nullptr)
-	, m_pIndexBufferView(nullptr)
 	, m_pDefaultHeapProps(new DXHeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new DXHeapProperties(D3D12_HEAP_TYPE_UPLOAD))
 	, m_pEnv(new DXRenderEnvironment())
@@ -51,9 +49,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pUploadHeapProps);
 	SafeDelete(m_pViewport);
 	SafeDelete(m_pScissorRect);
-	SafeDelete(m_pVertexBufferView);
 	SafeDelete(m_pVertexBuffer);
-	SafeDelete(m_pIndexBufferView);
 	SafeDelete(m_pIndexBuffer);
 	SafeDelete(m_pCommandList);
 	SafeDelete(m_pFenceEvent);
@@ -133,17 +129,15 @@ void DXApplication::OnInit()
 	};
 	const WORD indices[] = {0, 1, 3, 1, 2, 3};
 
-	DXVertexBufferDesc vertexBufferDesc(sizeof(vertices));
+	DXVertexBufferDesc vertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]));
 	m_pVertexBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pVertexBuffer");
-	m_pVertexBufferView = new DXVertexBufferView(m_pVertexBuffer, sizeof(vertices), sizeof(vertices[0]));
 	
 	DXBuffer uploadVertexBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadVertexBuffer");
 	uploadVertexBuffer.Write(vertices, sizeof(vertices));
 
-	DXIndexBufferDesc indexBufferDesc(sizeof(indices));
+	DXIndexBufferDesc indexBufferDesc(ARRAYSIZE(indices), sizeof(indices[0]));
 	m_pIndexBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pIndexBuffer");
-	m_pIndexBufferView = new DXIndexBufferView(m_pIndexBuffer, sizeof(indices), sizeof(indices[0]));
-
+	
 	DXBuffer uploadIndexBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadIndexBuffer");
 	uploadIndexBuffer.Write(indices, sizeof(indices));
 			
@@ -187,8 +181,8 @@ void DXApplication::OnRender()
 
 	m_pCommandList->OMSetRenderTargets(1, &rtvHandle);
 	m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_pCommandList->IASetVertexBuffers(0, 1, m_pVertexBufferView);
-	m_pCommandList->IASetIndexBuffer(m_pIndexBufferView);
+	m_pCommandList->IASetVertexBuffers(0, 1, m_pVertexBuffer->GetVBView());
+	m_pCommandList->IASetIndexBuffer(m_pIndexBuffer->GetIBView());
 	m_pCommandList->RSSetViewports(1, m_pViewport);
 	m_pCommandList->RSSetScissorRects(1, m_pScissorRect);
 	m_pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);

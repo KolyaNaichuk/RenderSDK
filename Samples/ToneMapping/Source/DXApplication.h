@@ -12,11 +12,11 @@ class DXRenderTarget;
 class DXFence;
 class DXEvent;
 
+struct DXRenderEnvironment;
+struct DXHeapProperties;
+
 class CopyTextureRecorder;
 class CalcTextureLuminanceRecorder;
-class DXRenderEnvironment;
-
-struct DXHeapProperties;
 
 enum DisplayResult
 {

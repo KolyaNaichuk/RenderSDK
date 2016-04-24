@@ -13,7 +13,7 @@ struct DXSwapChainDesc : public DXGI_SWAP_CHAIN_DESC
 	DXSwapChainDesc(UINT bufferCount, HWND hOutputWindow, UINT width, UINT height,
 		BOOL windowedMode = TRUE, DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM,
 		UINT sampleCount = 1, UINT sampleQuality = 0,
-		DXGI_USAGE bufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT);
+		DXGI_USAGE bufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT);
 };
 
 class DXSwapChain : public DXObject<IDXGISwapChain3>

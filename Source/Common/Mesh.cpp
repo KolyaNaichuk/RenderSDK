@@ -19,8 +19,6 @@ Mesh::Mesh(DXRenderEnvironment* pEnv, const MeshData* pMeshData)
 	, m_pUploadHeapIB(nullptr)
 	, m_pDefaultHeapVB(nullptr)
 	, m_pDefaultHeapIB(nullptr)
-	, m_pVBView(nullptr)
-	, m_pIBView(nullptr)
 	, m_VertexElementFlags(0)
 	, m_NumSubMeshes(0)
 	, m_pSubMeshes(nullptr)
@@ -36,8 +34,6 @@ Mesh::~Mesh()
 	SafeDelete(m_pUploadHeapIB);
 	SafeDelete(m_pDefaultHeapVB);
 	SafeDelete(m_pDefaultHeapIB);
-	SafeDelete(m_pVBView);
-	SafeDelete(m_pIBView);
 	SafeArrayDelete(m_pSubMeshes);
 }
 
@@ -66,19 +62,9 @@ DXBuffer* Mesh::GetVertexBuffer()
 	return m_pDefaultHeapVB;
 }
 
-DXVertexBufferView* Mesh::GetVertexBufferView()
-{
-	return m_pVBView;
-}
-
 DXBuffer* Mesh::GetIndexBuffer()
 {
 	return m_pDefaultHeapIB;
-}
-
-DXIndexBufferView* Mesh::GetIndexBufferView()
-{
-	return m_pIBView;
 }
 
 u32 Mesh::GetNumSubMeshes() const
@@ -169,11 +155,9 @@ void Mesh::InitVertexBuffer(DXRenderEnvironment* pEnv, const MeshData* pMeshData
 		vertexOffset += elementSizeInBytes;
 	}
 	
-	DXVertexBufferDesc bufferDesc(sizeInBytes);
-
+	DXVertexBufferDesc bufferDesc(numVertices, strideInBytes);
 	m_pDefaultHeapVB = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"Mesh::m_pDefaultHeapVB");
-	m_pVBView = new DXVertexBufferView(m_pDefaultHeapVB, sizeInBytes, strideInBytes);
-
+	
 	m_pUploadHeapVB = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"Mesh::m_pUploadHeapVB");
 	m_pUploadHeapVB->Write(pVertexData, sizeInBytes);
 	
@@ -193,11 +177,9 @@ void Mesh::InitIndexBuffer(DXRenderEnvironment* pEnv, const MeshData* pMeshData)
 	const u32 strideInBytes = is32BitIndices ? sizeof(u32) : sizeof(u16);
 	const u32 sizeInBytes = numIndices * strideInBytes;
 	
-	DXIndexBufferDesc bufferDesc(sizeInBytes);
-
+	DXIndexBufferDesc bufferDesc(numIndices, strideInBytes);
 	m_pDefaultHeapIB = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"Mesh::m_pDefaultHeapIB");
-	m_pIBView = new DXIndexBufferView(m_pDefaultHeapIB, sizeInBytes, strideInBytes);
-
+	
 	m_pUploadHeapIB = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"Mesh::m_pUploadHeapIB");
 	if (is32BitIndices)
 		m_pUploadHeapIB->Write(p32BitIndices, sizeInBytes);
