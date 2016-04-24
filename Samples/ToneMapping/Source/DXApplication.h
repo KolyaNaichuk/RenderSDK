@@ -8,7 +8,7 @@ class DXCommandQueue;
 class DXCommandList;
 class DXCommandAllocator;
 class DXDescriptorHeap;
-class DXRenderTarget;
+class DXColorTexture;
 class DXFence;
 class DXEvent;
 
@@ -58,7 +58,7 @@ private:
 	UINT64 m_FenceValues[kBackBufferCount];
 	UINT m_BackBufferIndex;
 
-	DXRenderTarget* m_pHDRTexture;
+	DXColorTexture* m_pHDRTexture;
 	CopyTextureRecorder* m_pCopyTextureRecorder;
 	CalcTextureLuminanceRecorder* m_pCalcTextureLuminanceRecorder;
 	CalcTextureLuminanceRecorder* m_pCalcTextureLogLuminanceRecorder;

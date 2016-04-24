@@ -83,12 +83,12 @@ struct DXRawBufferUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_D
 
 struct DXConstantBufferDesc : public D3D12_RESOURCE_DESC
 {
-	DXConstantBufferDesc(UINT64 sizeInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, UINT64 alignment = 0);
+	DXConstantBufferDesc(UINT64 sizeInBytes, UINT64 alignment = 0);
 };
 
 struct DXVertexBufferDesc : public D3D12_RESOURCE_DESC
 {
-	DXVertexBufferDesc(UINT numVertices, UINT strideInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, UINT64 alignment = 0);
+	DXVertexBufferDesc(UINT numVertices, UINT strideInBytes, UINT64 alignment = 0);
 
 	UINT NumVertices;
 	UINT StrideInBytes;
@@ -96,7 +96,7 @@ struct DXVertexBufferDesc : public D3D12_RESOURCE_DESC
 
 struct DXIndexBufferDesc : public D3D12_RESOURCE_DESC
 {
-	DXIndexBufferDesc(UINT numIndices, UINT strideInBytes, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, UINT64 alignment = 0);
+	DXIndexBufferDesc(UINT numIndices, UINT strideInBytes, UINT64 alignment = 0);
 
 	UINT NumIndices;
 	UINT StrideInBytes;
@@ -104,11 +104,12 @@ struct DXIndexBufferDesc : public D3D12_RESOURCE_DESC
 
 struct DXStructuredBufferDesc : public D3D12_RESOURCE_DESC
 {
-	DXStructuredBufferDesc(UINT numElements, UINT structureByteStride,
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE, UINT64 alignment = 0);
+	DXStructuredBufferDesc(UINT numElements, UINT structureByteStride, bool createSRV, bool createUAV, UINT64 alignment = 0);
 
 	UINT NumElements;
 	UINT StructureByteStride;
+	bool CreateSRV;
+	bool CreateUAV;
 };
 
 struct DXStructuredBufferSRVDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
@@ -122,32 +123,81 @@ struct DXStructuredBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 	DXStructuredBufferUAVDesc(UINT64 firstElement, UINT numElements, UINT structureByteStride);
 };
 
-struct DXTex1DResourceDesc : public D3D12_RESOURCE_DESC
+struct DXColorTexture1DDesc : public D3D12_RESOURCE_DESC
 {
-	DXTex1DResourceDesc(DXGI_FORMAT format, UINT64 width,
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE,
+	DXColorTexture1DDesc(DXGI_FORMAT format, UINT64 width,
+		bool createRTV, bool createSRV, bool createUAV,
 		UINT16 arraySize = 1, UINT16 mipLevels = 1,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
+
+	bool CreateRTV;
+	bool CreateSRV;
+	bool CreateUAV;
 };
 
-struct DXTex2DResourceDesc : public D3D12_RESOURCE_DESC
+struct DXColorTexture2DDesc : public D3D12_RESOURCE_DESC
 {
-	DXTex2DResourceDesc(DXGI_FORMAT format, UINT64 width, UINT height,
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE,
+	DXColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height,
+		bool createRTV, bool createSRV, bool createUAV,
 		UINT16 arraySize = 1, UINT16 mipLevels = 1,
 		UINT sampleCount = 1, UINT sampleQuality = 0,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
+
+	bool CreateRTV;
+	bool CreateSRV;
+	bool CreateUAV;
 };
 
-struct DXTex3DResourceDesc : public D3D12_RESOURCE_DESC
+struct DXColorTexture3DDesc : public D3D12_RESOURCE_DESC
 {
-	DXTex3DResourceDesc(DXGI_FORMAT format, UINT64 width, UINT height, UINT16 depth,
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE,
+	DXColorTexture3DDesc(DXGI_FORMAT format, UINT64 width, UINT height, UINT16 depth,
+		bool createRTV, bool createSRV, bool createUAV,
 		UINT16 mipLevels = 1,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
+
+	bool CreateRTV;
+	bool CreateSRV;
+	bool CreateUAV;
+};
+
+struct DXDepthTexture1DDesc : public D3D12_RESOURCE_DESC
+{
+	DXDepthTexture1DDesc(DXGI_FORMAT format, UINT64 width,
+		bool createDSV, bool createSRV,
+		UINT16 arraySize = 1, UINT16 mipLevels = 1,
+		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		UINT64 alignment = 0);
+
+	bool CreateDSV;
+	bool CreateSRV;
+};
+
+struct DXDepthTexture2DDesc : public D3D12_RESOURCE_DESC
+{
+	DXDepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height,
+		bool createDSV, bool createSRV,
+		UINT16 arraySize = 1, UINT16 mipLevels = 1,
+		UINT sampleCount = 1, UINT sampleQuality = 0,
+		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		UINT64 alignment = 0);
+
+	bool CreateDSV;
+	bool CreateSRV;
+};
+
+struct DXDepthTexture3DDesc : public D3D12_RESOURCE_DESC
+{
+	DXDepthTexture3DDesc(DXGI_FORMAT format, UINT64 width, UINT height, UINT16 depth,
+		bool createDSV, bool createSRV,
+		UINT16 mipLevels = 1,
+		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		UINT64 alignment = 0);
+
+	bool CreateDSV;
+	bool CreateSRV;
 };
 
 struct DXTex1DRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
@@ -253,19 +303,19 @@ void DXResource::Write(const T* pInputData, SIZE_T numBytes)
 	GetDXObject()->Unmap(subresource, &writtenRange);
 }
 
-class DXRenderTarget : public DXResource
+class DXColorTexture : public DXResource
 {
 public:
-	DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const DXTex1DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+	DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXColorTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
-	DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const DXTex2DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+	DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXColorTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
-	DXRenderTarget(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const DXTex3DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+	DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXColorTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
-	DXRenderTarget(DXRenderEnvironment* pEnv, ID3D12Resource* pDXObject,
+	DXColorTexture(DXRenderEnvironment* pEnv, ID3D12Resource* pDXObject,
 		D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
 	UINT64 GetWidth() const { return m_Desc.Width; }
@@ -279,9 +329,9 @@ private:
 	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState);
 
-	void CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-	void CreateTex2DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-	void CreateTex3DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateViews(DXRenderEnvironment* pEnv, const DXColorTexture1DDesc* pTexDesc);
+	void CreateViews(DXRenderEnvironment* pEnv, const DXColorTexture2DDesc* pTexDesc);
+	void CreateViews(DXRenderEnvironment* pEnv, const DXColorTexture3DDesc* pTexDesc);
 	
 private:
 	DXDescriptorHandle m_RTVHandle;
@@ -289,19 +339,19 @@ private:
 	DXDescriptorHandle m_UAVHandle;
 };
 
-class DXDepthStencilTexture : public DXResource
+class DXDepthTexture : public DXResource
 {
 public:
-	DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const DXTex1DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXDepthTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName);
 
-	DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const DXTex2DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXDepthTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName);
 
-	DXDepthStencilTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const DXTex3DResourceDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXDepthTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName);
 
 	UINT64 GetWidth() const { return m_Desc.Width; }
@@ -315,9 +365,9 @@ private:
 		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DXDepthStencilClearValue* pOptimizedClearValue);
 
-	void CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-	void CreateTex2DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-	void CreateTex3DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateViews(DXRenderEnvironment* pEnv, const DXDepthTexture1DDesc* pTexDesc);
+	void CreateViews(DXRenderEnvironment* pEnv, const DXDepthTexture2DDesc* pTexDesc);
+	void CreateViews(DXRenderEnvironment* pEnv, const DXDepthTexture3DDesc* pTexDesc);
 
 private:
 	DXDescriptorHandle m_DSVHandle;
@@ -340,14 +390,14 @@ public:
 		const DXStructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
 	~DXBuffer();
-		
-	DXDescriptorHandle GetSRVHandle();
-	DXDescriptorHandle GetUAVHandle();
-	DXDescriptorHandle GetCBVHandle();
 	
 	DXVertexBufferView* GetVBView();
 	DXIndexBufferView*  GetIBView();
 
+	DXDescriptorHandle GetSRVHandle();
+	DXDescriptorHandle GetUAVHandle();
+	DXDescriptorHandle GetCBVHandle();
+		
 private:
 	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pBufferDesc, D3D12_RESOURCE_STATES initialState);

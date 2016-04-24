@@ -4,7 +4,7 @@
 
 class DXFactory;
 class DXCommandQueue;
-class DXRenderTarget;
+class DXColorTexture;
 
 struct DXRenderEnvironment;
 
@@ -22,12 +22,12 @@ public:
 	DXSwapChain(DXFactory* pFactory, DXRenderEnvironment* pEnv, DXSwapChainDesc* pDesc, DXCommandQueue* pCommandQueue);
 	~DXSwapChain();
 
-	DXRenderTarget* GetBackBuffer(UINT index);
+	DXColorTexture* GetBackBuffer(UINT index);
 	UINT GetCurrentBackBufferIndex();
 
 	void Present(UINT syncInterval = 1, UINT flags = 0);
 
 private:
-	DXRenderTarget** m_ppFirstBuffer;
+	DXColorTexture** m_ppFirstBuffer;
 	UINT m_BufferCount;
 };

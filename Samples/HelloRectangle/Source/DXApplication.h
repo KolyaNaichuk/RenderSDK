@@ -11,7 +11,7 @@ class DXDescriptorHeap;
 class DXRootSignature;
 class DXPipelineState;
 class DXBuffer;
-class DXRenderTarget;
+class DXColorTexture;
 class DXFence;
 class DXEvent;
 

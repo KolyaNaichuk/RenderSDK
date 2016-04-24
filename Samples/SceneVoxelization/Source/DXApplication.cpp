@@ -242,21 +242,21 @@ void DXApplication::OnInit()
 	DXSamplerDesc anisoSamplerDesc(DXSamplerDesc::Anisotropic);
 	m_pAnisoSampler = new DXSampler(m_pEnv, &anisoSamplerDesc);
 	
-	DXTex2DResourceDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+	DXDepthTexture2DDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, bufferWidth, bufferHeight, true, true);
 	DXDepthStencilClearValue depthClearValue(GetDepthStencilViewFormat(depthTexDesc.Format));
-	m_pDepthTexture = new DXDepthStencilTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &depthTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthClearValue, L"m_pDepthTexture");
+	m_pDepthTexture = new DXDepthTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &depthTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthClearValue, L"m_pDepthTexture");
 	
-	DXTex2DResourceDesc diffuseTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
-	m_pDiffuseTexture = new DXRenderTarget(m_pEnv, m_pEnv->m_pDefaultHeapProps, &diffuseTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pDiffuseTexture");
+	DXColorTexture2DDesc diffuseTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, true, true, false);
+	m_pDiffuseTexture = new DXColorTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &diffuseTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pDiffuseTexture");
 	
-	DXTex2DResourceDesc normalTexDesc(DXGI_FORMAT_R8G8B8A8_SNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
-	m_pNormalTexture = new DXRenderTarget(m_pEnv, m_pEnv->m_pDefaultHeapProps, &normalTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pNormalTexture");
+	DXColorTexture2DDesc normalTexDesc(DXGI_FORMAT_R8G8B8A8_SNORM, bufferWidth, bufferHeight, true, true, false);
+	m_pNormalTexture = new DXColorTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &normalTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pNormalTexture");
 		
-	DXTex2DResourceDesc specularTexDesc(DXGI_FORMAT_R8G8B8A8_UNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
-	m_pSpecularTexture = new DXRenderTarget(m_pEnv, m_pEnv->m_pDefaultHeapProps, &specularTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pSpecularTexture");
+	DXColorTexture2DDesc specularTexDesc(DXGI_FORMAT_R8G8B8A8_UNORM, bufferWidth, bufferHeight, true, true, false);
+	m_pSpecularTexture = new DXColorTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &specularTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pSpecularTexture");
 
-	DXTex2DResourceDesc accumLightTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-	m_pAccumLightTexture = new DXRenderTarget(m_pEnv, m_pEnv->m_pDefaultHeapProps, &accumLightTexDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pAccumLightTexture");
+	DXColorTexture2DDesc accumLightTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, true, true, false);
+	m_pAccumLightTexture = new DXColorTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &accumLightTexDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pAccumLightTexture");
 	
 	DXConstantBufferDesc objectTransformBufferDesc(sizeof(ObjectTransform));
 	m_pObjectTransformBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &objectTransformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pObjectTransformBuffer");
@@ -268,7 +268,7 @@ void DXApplication::OnInit()
 	m_pGridConfigBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &gridConfigBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pGridConfigBuffer");
 	
 	const UINT numGridElements = kNumGridCellsX * kNumGridCellsY * kNumGridCellsZ;
-	DXStructuredBufferDesc gridBufferDesc(numGridElements, sizeof(Voxel), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+	DXStructuredBufferDesc gridBufferDesc(numGridElements, sizeof(Voxel), true, true);
 	m_pGridBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &gridBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pGridBuffer");
 	
 	for (UINT index = 0; index < kBackBufferCount; ++index)
@@ -600,7 +600,7 @@ void DXApplication::OnRender()
 	DXCommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
 	pCommandAllocator->Reset();
 
-	DXRenderTarget* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+	DXColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVDescriptorHeap->GetCPUDescriptor(m_BackBufferIndex);
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDSVDescriptorHeap->GetCPUDescriptor(kDSVHandle);

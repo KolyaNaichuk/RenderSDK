@@ -32,13 +32,13 @@ DXSwapChain::DXSwapChain(DXFactory* pFactory, DXRenderEnvironment* pEnv, DXSwapC
 	DXVerify(pDXObject->QueryInterface(IID_PPV_ARGS(GetDXObjectAddress())));
 	SafeRelease(pDXObject);
 
-	m_ppFirstBuffer = new DXRenderTarget* [m_BufferCount];
+	m_ppFirstBuffer = new DXColorTexture* [m_BufferCount];
 	for (UINT index = 0; index < m_BufferCount; ++index)
 	{
 		ID3D12Resource* pDXBuffer = nullptr;
 		DXVerify(GetDXObject()->GetBuffer(index, IID_PPV_ARGS(&pDXBuffer)));
 		
-		DXRenderTarget* pBuffer = new DXRenderTarget(pEnv, pDXBuffer, D3D12_RESOURCE_STATE_PRESENT, L"BackBuffer");
+		DXColorTexture* pBuffer = new DXColorTexture(pEnv, pDXBuffer, D3D12_RESOURCE_STATE_PRESENT, L"BackBuffer");
 		m_ppFirstBuffer[index] = pBuffer;
 	}
 }
@@ -50,7 +50,7 @@ DXSwapChain::~DXSwapChain()
 	SafeArrayDelete(m_ppFirstBuffer);
 }
 
-DXRenderTarget* DXSwapChain::GetBackBuffer(UINT index)
+DXColorTexture* DXSwapChain::GetBackBuffer(UINT index)
 {
 	assert(index < m_BufferCount);
 	return m_ppFirstBuffer[index];

@@ -6,8 +6,8 @@ class DXRootSignature;
 class DXPipelineState;
 class DXCommandList;
 class DXCommandAllocator;
-class DXRenderTarget;
-class DXDepthStencilTexture;
+class DXColorTexture;
+class DXDepthTexture;
 class DXBuffer;
 class DXSampler;
 class Mesh;
@@ -17,11 +17,11 @@ struct Material;
 
 struct GBuffer
 {
-	DXRenderTarget* m_pDiffuseTexture;
-	DXRenderTarget* m_pNormalTexture;
-	DXRenderTarget* m_pSpecularTexture;
-	DXRenderTarget* m_pAccumLightTexture;
-	DXDepthStencilTexture* m_pDepthTexture;
+	DXColorTexture* m_pDiffuseTexture;
+	DXColorTexture* m_pNormalTexture;
+	DXColorTexture* m_pSpecularTexture;
+	DXColorTexture* m_pAccumLightTexture;
+	DXDepthTexture* m_pDepthTexture;
 };
 
 struct MaterialBufferData

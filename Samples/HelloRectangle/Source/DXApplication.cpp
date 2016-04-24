@@ -172,7 +172,7 @@ void DXApplication::OnRender()
 	m_pCommandList->Reset(pCommandAllocator, m_pPipelineState);
 	m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 		
-	DXRenderTarget* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+	DXColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	m_pCommandList->TransitionBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	const FLOAT clearColor[4] = {0.1f, 0.7f, 0.4f, 1.0f};
