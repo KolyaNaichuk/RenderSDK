@@ -829,6 +829,7 @@ DXDepthTexture::DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPE
 {
 	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearValue, pName);
 	CreateTex1DViews(pEnv, pTexDesc);
+	DetermineResourceStates(pTexDesc);
 }
 
 DXDepthTexture::DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -838,6 +839,7 @@ DXDepthTexture::DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPE
 {
 	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearValue, pName);
 	CreateTex2DViews(pEnv, pTexDesc);
+	DetermineResourceStates(pTexDesc);
 }
 
 DXDepthTexture::DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -847,6 +849,7 @@ DXDepthTexture::DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPE
 {
 	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearValue, pName);
 	CreateTex3DViews(pEnv, pTexDesc);
+	DetermineResourceStates(pTexDesc);
 }
 
 DXDescriptorHandle DXDepthTexture::GetDSVHandle()
@@ -927,6 +930,21 @@ void DXDepthTexture::CreateTex3DViews(DXRenderEnvironment* pEnv, const D3D12_RES
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
 		assert(pEnv->m_pSRVDescriptorHeap != nullptr);
+	}
+}
+
+void DXDepthTexture::DetermineResourceStates(const D3D12_RESOURCE_DESC* pTexDesc)
+{
+	m_WriteState = D3D12_RESOURCE_STATE_COMMON;
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
+		m_WriteState |= D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	
+	m_ReadState = D3D12_RESOURCE_STATE_COMMON;
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+		m_ReadState |= D3D12_RESOURCE_STATE_DEPTH_READ;
+		m_ReadState |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+		m_ReadState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	}
 }
 
