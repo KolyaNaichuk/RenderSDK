@@ -649,6 +649,7 @@ DXColorTexture::DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPE
 {
 	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pName);
 	CreateTex1DViews(pEnv, pTexDesc);
+	DetermineResourceStates(pTexDesc);
 }
 
 DXColorTexture::DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -657,6 +658,7 @@ DXColorTexture::DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPE
 {
 	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pName);
 	CreateTex2DViews(pEnv, pTexDesc);
+	DetermineResourceStates(pTexDesc);
 }
 
 DXColorTexture::DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -665,6 +667,7 @@ DXColorTexture::DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPE
 {
 	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pName);
 	CreateTex3DViews(pEnv, pTexDesc);
+	DetermineResourceStates(pTexDesc);
 }
 
 DXColorTexture::DXColorTexture(DXRenderEnvironment* pEnv, ID3D12Resource* pDXObject, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
@@ -676,6 +679,8 @@ DXColorTexture::DXColorTexture(DXRenderEnvironment* pEnv, ID3D12Resource* pDXObj
 		CreateTex2DViews(pEnv, &m_Desc);
 	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
 		CreateTex3DViews(pEnv, &m_Desc);
+
+	DetermineResourceStates(&m_Desc);
 }
 
 DXDescriptorHandle DXColorTexture::GetRTVHandle()
@@ -710,6 +715,24 @@ void DXColorTexture::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3
 #ifdef _DEBUG
 	SetName(pName);
 #endif
+}
+
+void DXColorTexture::DetermineResourceStates(const D3D12_RESOURCE_DESC* pTexDesc)
+{
+	m_WriteState = D3D12_RESOURCE_STATE_COMMON;
+	
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
+		m_WriteState |= D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
+		m_WriteState |= D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+	m_ReadState = D3D12_RESOURCE_STATE_COMMON;
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+		m_ReadState |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+		m_ReadState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	}
 }
 
 void DXColorTexture::CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc)

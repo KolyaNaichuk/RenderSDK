@@ -309,7 +309,9 @@ private:
 	void CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	void CreateTex2DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	void CreateTex3DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-	
+
+	void DetermineResourceStates(const D3D12_RESOURCE_DESC* pTexDesc);
+
 private:
 	DXDescriptorHandle m_RTVHandle;
 	DXDescriptorHandle m_SRVHandle;
