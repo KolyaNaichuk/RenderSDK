@@ -27,6 +27,18 @@ Vector3f::Vector3f(f32 scalar)
 {
 }
 
+f32& Vector3f::operator[] (u8 index)
+{
+	assert(index < 3);
+	return *(&m_X + index);
+}
+
+const f32& Vector3f::operator[] (u8 index) const
+{
+	assert(index < 3);
+	return *(&m_X + index);
+}
+
 const Vector3f Vector3f::operator- () const
 {
 	return Vector3f(-m_X, -m_Y, -m_Z);
@@ -260,6 +272,18 @@ Vector3i::Vector3i(i32 scalar)
 {
 }
 
+i32& Vector3i::operator[] (u8 index)
+{
+	assert(index < 3);
+	return *(&m_X + index);
+}
+
+const i32& Vector3i::operator[] (u8 index) const
+{
+	assert(index < 3);
+	return *(&m_X + index);
+}
+
 const Vector3i Vector3i::operator- () const
 {
 	return Vector3i(-m_X, -m_Y, -m_Z);
@@ -283,4 +307,16 @@ Vector3u::Vector3u(u32 x, u32 y, u32 z)
 Vector3u::Vector3u(u32 scalar)
 	: Vector3u(scalar, scalar, scalar)
 {
+}
+
+u32& Vector3u::operator[] (u8 index)
+{
+	assert(index < 3);
+	return *(&m_X + index);
+}
+
+const u32& Vector3u::operator[] (u8 index) const
+{
+	assert(index < 3);
+	return *(&m_X + index);
 }

@@ -22,6 +22,18 @@ Vector4f::Vector4f(f32 scalar)
 {
 }
 
+f32& Vector4f::operator[] (u8 index)
+{
+	assert(index < 4);
+	return *(&m_X + index);
+}
+
+const f32& Vector4f::operator[] (u8 index) const
+{
+	assert(index < 4);
+	return *(&m_X + index);
+}
+
 const Vector4f Vector4f::operator- () const
 {
 	return Vector4f(-m_X, -m_Y, -m_Z, -m_W);
@@ -250,6 +262,18 @@ Vector4i::Vector4i(i32 scalar)
 {
 }
 
+i32& Vector4i::operator[] (u8 index)
+{
+	assert(index < 4);
+	return *(&m_X + index);
+}
+
+const i32& Vector4i::operator[] (u8 index) const
+{
+	assert(index < 4);
+	return *(&m_X + index);
+}
+
 const Vector4i Vector4i::operator- () const
 {
 	return Vector4i(-m_X, -m_Y, -m_Z, -m_W);
@@ -274,4 +298,16 @@ Vector4u::Vector4u(u32 x, u32 y, u32 z, u32 w)
 Vector4u::Vector4u(u32 scalar)
 	: Vector4u(scalar, scalar, scalar, scalar)
 {
+}
+
+u32& Vector4u::operator[] (u8 index)
+{
+	assert(index < 4);
+	return *(&m_X + index);
+}
+
+const u32& Vector4u::operator[] (u8 index) const
+{
+	assert(index < 4);
+	return *(&m_X + index);
 }

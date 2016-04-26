@@ -8,6 +8,9 @@ struct Vector2f
 	explicit Vector2f(f32 x, f32 y);
 	explicit Vector2f(f32 scalar);
 
+	f32& operator[] (u8 index);
+	const f32& operator[] (u8 index) const;
+
 	const Vector2f operator- () const;
 
 	f32 m_X;
@@ -66,6 +69,9 @@ struct Vector2i
 	explicit Vector2i(i32 x, i32 y);
 	explicit Vector2i(i32 scalar);
 
+	i32& operator[] (u8 index);
+	const i32& operator[] (u8 index) const;
+
 	const Vector2i operator- () const;
 
 	i32 m_X;
@@ -80,6 +86,9 @@ struct Vector2u
 	explicit Vector2u();
 	explicit Vector2u(u32 x, u32 y);
 	explicit Vector2u(u32 scalar);
+
+	u32& operator[] (u8 index);
+	const u32& operator[] (u8 index) const;
 
 	u32 m_X;
 	u32 m_Y;

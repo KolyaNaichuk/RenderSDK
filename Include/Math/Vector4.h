@@ -10,6 +10,9 @@ struct Vector4f
 	explicit Vector4f(f32 x, f32 y, f32 z, f32 w);
     explicit Vector4f(f32 scalar);
     
+	f32& operator[] (u8 index);
+	const f32& operator[] (u8 index) const;
+
 	const Vector4f operator- () const;
 
     f32 m_X;
@@ -67,6 +70,9 @@ struct Vector4i
 	explicit Vector4i();
 	explicit Vector4i(i32 x, i32 y, i32 z, i32 w);
 	explicit Vector4i(i32 scalar);
+	
+	i32& operator[] (u8 index);
+	const i32& operator[] (u8 index) const;
 
 	const Vector4i operator- () const;
 
@@ -84,6 +90,9 @@ struct Vector4u
 	explicit Vector4u();
 	explicit Vector4u(u32 x, u32 y, u32 z, u32 w);
 	explicit Vector4u(u32 scalar);
+
+	u32& operator[] (u8 index);
+	const u32& operator[] (u8 index) const;
 
 	u32 m_X;
 	u32 m_Y;

@@ -23,6 +23,18 @@ Vector2f::Vector2f(f32 scalar)
 {
 }
 
+f32& Vector2f::operator[] (u8 index)
+{
+	assert(index < 2);
+	return *(&m_X + index);
+}
+
+const f32& Vector2f::operator[] (u8 index) const
+{
+	assert(index < 2);
+	return *(&m_X + index);
+}
+
 const Vector2f Vector2f::operator- () const
 {
 	return Vector2f(-m_X, -m_Y);
@@ -220,6 +232,18 @@ Vector2i::Vector2i(i32 scalar)
 {
 }
 
+i32& Vector2i::operator[] (u8 index)
+{
+	assert(index < 2);
+	return *(&m_X + index);
+}
+
+const i32& Vector2i::operator[] (u8 index) const
+{
+	assert(index < 2);
+	return *(&m_X + index);
+}
+
 const Vector2i Vector2i::operator- () const
 {
 	return Vector2i(-m_X, -m_Y);
@@ -242,4 +266,16 @@ Vector2u::Vector2u(u32 x, u32 y)
 Vector2u::Vector2u(u32 scalar)
 	: Vector2u(scalar, scalar)
 {
+}
+
+u32& Vector2u::operator[] (u8 index)
+{
+	assert(index < 2);
+	return *(&m_X + index);
+}
+
+const u32& Vector2u::operator[] (u8 index) const
+{
+	assert(index < 2);
+	return *(&m_X + index);
 }
