@@ -954,6 +954,9 @@ DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeap
 {
 	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateConstantBufferView(pEnv, pBufferDesc);
+
+	m_WriteState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+	m_ReadState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 }
 
 DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -962,6 +965,9 @@ DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeap
 {
 	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateVertexBufferView(pEnv, pBufferDesc);
+
+	m_WriteState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+	m_ReadState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 }
 
 DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -970,6 +976,9 @@ DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeap
 {
 	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateIndexBufferView(pEnv, pBufferDesc);
+
+	m_WriteState = D3D12_RESOURCE_STATE_INDEX_BUFFER;
+	m_ReadState = D3D12_RESOURCE_STATE_INDEX_BUFFER;
 }
 
 DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -978,6 +987,17 @@ DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeap
 {
 	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateStructuredBufferViews(pEnv, pBufferDesc);
+
+	m_WriteState = D3D12_RESOURCE_STATE_COMMON;
+	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
+		m_WriteState |= D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+	m_ReadState = D3D12_RESOURCE_STATE_COMMON;
+	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+		m_ReadState |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+		m_ReadState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	}
 }
 
 DXBuffer::~DXBuffer()
