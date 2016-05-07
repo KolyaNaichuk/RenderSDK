@@ -204,6 +204,9 @@
     <ClInclude Include="..\Include\DX\DXRenderEnvironment.h">
       <Filter>DX</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\DX\DXResourceList.h">
+      <Filter>DX</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -373,6 +376,9 @@
     </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\ViewFrustumCullingRecorder.cpp">
       <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Include\DX\DXResourceList.cpp">
+      <Filter>DX</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

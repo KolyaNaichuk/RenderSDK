@@ -117,10 +117,10 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCommandList(nullptr)
 	, m_pDefaultHeapProps(new DXHeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new DXHeapProperties(D3D12_HEAP_TYPE_UPLOAD))
-	, m_pRTVDescriptorHeap(nullptr)
+	, m_pShaderInvisibleRTVHeap(nullptr)
 	, m_pDSVDescriptorHeap(nullptr)
-	, m_pSRVDescriptorHeap(nullptr)
-	, m_pSamplerDescriptorHeap(nullptr)
+	, m_pShaderInvisibleSRVHeap(nullptr)
+	, m_pShaderInvisibleSamplerHeap(nullptr)
 	, m_pDepthTexture(nullptr)
 	, m_pDiffuseTexture(nullptr)
 	, m_pNormalTexture(nullptr)
@@ -170,9 +170,9 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pDefaultHeapProps);
 	SafeDelete(m_pUploadHeapProps);
 	SafeDelete(m_pDSVDescriptorHeap);
-	SafeDelete(m_pSRVDescriptorHeap);
-	SafeDelete(m_pRTVDescriptorHeap);
-	SafeDelete(m_pSamplerDescriptorHeap);
+	SafeDelete(m_pShaderInvisibleSRVHeap);
+	SafeDelete(m_pShaderInvisibleRTVHeap);
+	SafeDelete(m_pShaderInvisibleSamplerHeap);
 	SafeDelete(m_pEnv);
 	SafeDelete(m_pAnisoSampler);
 	SafeDelete(m_pGridConfigBuffer);
@@ -204,13 +204,13 @@ void DXApplication::OnInit()
 	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
 
 	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kNumRTVHandles, false);
-	m_pRTVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pRTVDescriptorHeap");
+	m_pShaderInvisibleRTVHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	DXDescriptorHeapDesc samplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, kNumSamplerHandles, true);
-	m_pSamplerDescriptorHeap = new DXDescriptorHeap(m_pDevice, &samplerHeapDesc, L"m_pSamplerDescriptorHeap");
+	DXDescriptorHeapDesc samplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, kNumSamplerHandles, false);
+	m_pShaderInvisibleSamplerHeap = new DXDescriptorHeap(m_pDevice, &samplerHeapDesc, L"m_pShaderInvisibleSamplerHeap");
 
-	DXDescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kNumSRVHandles, true);
-	m_pSRVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pSRVDescriptorHeap");
+	DXDescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kNumSRVHandles, false);
+	m_pShaderInvisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
 	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, kNumDSVHandles, false);
 	m_pDSVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pDSVDescriptorHeap");
@@ -218,10 +218,10 @@ void DXApplication::OnInit()
 	m_pEnv->m_pDevice = m_pDevice;
 	m_pEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
 	m_pEnv->m_pUploadHeapProps = m_pUploadHeapProps;
-	m_pEnv->m_pRTVDescriptorHeap = m_pRTVDescriptorHeap;
-	m_pEnv->m_pSRVDescriptorHeap = m_pSRVDescriptorHeap;
-	m_pEnv->m_pDSVDescritoprHeap = m_pDSVDescriptorHeap;
-	m_pEnv->m_pSamplerDescriptorHeap = m_pSamplerDescriptorHeap;
+	m_pEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
+	m_pEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
+	m_pEnv->m_pShaderInvisibleDSVHeap = m_pDSVDescriptorHeap;
+	m_pEnv->m_pShaderInvisibleSamplerHeap = m_pShaderInvisibleSamplerHeap;
 
 	const RECT bufferRect = m_pWindow->GetClientRect();
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
@@ -612,16 +612,16 @@ void DXApplication::OnRender()
 
 		if (clearFlags & Camera::ClearFlag_Color)
 		{
-			if (pRenderTarget->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
-				m_pCommandList->TransitionBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			if (pRenderTarget->GetState() != pRenderTarget->GetWriteState())
+				m_pCommandList->TransitionBarrier(pRenderTarget, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
 
 			const Vector4f& clearColor = m_pCamera->GetBackgroundColor();
 			m_pCommandList->ClearRenderTargetView(rtvHandle, &clearColor.m_X);
 		}
 		if (clearFlags & Camera::ClearFlag_Depth)
 		{
-			if (m_pDepthTexture->GetState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
-				m_pCommandList->TransitionBarrier(m_pDepthTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+			if (m_pDepthTexture->GetState() != m_pDepthTexture->GetWriteState())
+				m_pCommandList->TransitionBarrier(m_pDepthTexture, m_pDepthTexture->GetState(), m_pDepthTexture->GetWriteState());
 
 			m_pCommandList->ClearDepthView(dsvHandle);
 		}

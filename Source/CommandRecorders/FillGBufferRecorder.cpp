@@ -117,7 +117,7 @@ void FillGBufferRecorder::Record(RenderPassParams* pParams)
 	if (pGBuffer->m_pDepthTexture->GetState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
 		pCommandList->TransitionBarrier(pGBuffer->m_pDepthTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 
-	pCommandList->SetDescriptorHeaps(pParams->m_pCBVDescriptorHeap, pParams->m_pSamplerDescriptorHeap);
+	pCommandList->SetDescriptorHeaps(pParams->m_pCBVDescriptorHeap, pParams->m_pShaderInvisibleSamplerHeap);
 	pCommandList->SetGraphicsRootDescriptorTable(m_TransformCBVRootParam, pParams->m_TransformCBVHandle);
 	pCommandList->SetGraphicsRootDescriptorTable(m_MaterialCBVRootParam, pParams->m_MaterialCBVHandle);
 

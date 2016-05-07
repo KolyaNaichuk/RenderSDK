@@ -40,10 +40,10 @@ Mesh::~Mesh()
 void Mesh::RecordDataForUpload(DXCommandList* pCommandList)
 {
 	pCommandList->CopyResource(m_pDefaultHeapVB, m_pUploadHeapVB);
-	pCommandList->TransitionBarrier(m_pDefaultHeapVB, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	pCommandList->TransitionBarrier(m_pDefaultHeapVB, m_pDefaultHeapVB->GetState(), m_pDefaultHeapVB->GetReadState());
 
 	pCommandList->CopyResource(m_pDefaultHeapIB, m_pUploadHeapIB);
-	pCommandList->TransitionBarrier(m_pDefaultHeapIB, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	pCommandList->TransitionBarrier(m_pDefaultHeapIB, m_pDefaultHeapIB->GetState(), m_pDefaultHeapIB->GetReadState());
 }
 
 void Mesh::RemoveDataForUpload()

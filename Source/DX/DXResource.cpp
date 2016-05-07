@@ -745,24 +745,24 @@ void DXColorTexture::CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RES
 
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
 	{
-		assert(pEnv->m_pRTVDescriptorHeap != nullptr);
-		m_RTVHandle = pEnv->m_pRTVDescriptorHeap->Allocate();
+		assert(pEnv->m_pShaderInvisibleRTVHeap != nullptr);
+		m_RTVHandle = pEnv->m_pShaderInvisibleRTVHeap->Allocate();
 
 		DXTex1DRenderTargetViewDesc viewDesc;
 		pDXDevice->CreateRenderTargetView(GetDXObject(), &viewDesc, m_RTVHandle);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
-		assert(pEnv->m_pSRVDescriptorHeap != nullptr);
-		m_SRVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+		assert(pEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_SRVHandle = pEnv->m_pShaderInvisibleSRVHeap->Allocate();
 
 		DXTex1DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format));
 		pDXDevice->CreateShaderResourceView(GetDXObject(), &viewDesc, m_SRVHandle);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
 	{
-		assert(pEnv->m_pSRVDescriptorHeap != nullptr);
-		m_UAVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+		assert(pEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_UAVHandle = pEnv->m_pShaderInvisibleSRVHeap->Allocate();
 
 		DXTex1DUnorderedAccessViewDesc viewDesc(GetUnorderedAccessViewFormat(pTexDesc->Format));
 		pDXDevice->CreateUnorderedAccessView(GetDXObject(), nullptr, &viewDesc, m_UAVHandle);
@@ -781,24 +781,24 @@ void DXColorTexture::CreateTex2DViews(DXRenderEnvironment* pEnv, const D3D12_RES
 
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
 	{
-		assert(pEnv->m_pRTVDescriptorHeap != nullptr);
-		m_RTVHandle = pEnv->m_pRTVDescriptorHeap->Allocate();
+		assert(pEnv->m_pShaderInvisibleRTVHeap != nullptr);
+		m_RTVHandle = pEnv->m_pShaderInvisibleRTVHeap->Allocate();
 
 		DXTex2DRenderTargetViewDesc viewDesc;
 		pDXDevice->CreateRenderTargetView(GetDXObject(), &viewDesc, m_RTVHandle);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
-		assert(pEnv->m_pSRVDescriptorHeap != nullptr);
-		m_SRVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+		assert(pEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_SRVHandle = pEnv->m_pShaderInvisibleSRVHeap->Allocate();
 
 		DXTex2DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format));
 		pDXDevice->CreateShaderResourceView(GetDXObject(), &viewDesc, m_SRVHandle);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
 	{
-		assert(pEnv->m_pSRVDescriptorHeap != nullptr);
-		m_UAVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+		assert(pEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_UAVHandle = pEnv->m_pShaderInvisibleSRVHeap->Allocate();
 
 		DXTex2DUnorderedAccessViewDesc viewDesc(GetUnorderedAccessViewFormat(pTexDesc->Format));
 		pDXDevice->CreateUnorderedAccessView(GetDXObject(), nullptr, &viewDesc, m_UAVHandle);
@@ -810,15 +810,15 @@ void DXColorTexture::CreateTex3DViews(DXRenderEnvironment* pEnv, const D3D12_RES
 	assert(false && "Kolya: Needs impl");
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
 	{
-		assert(pEnv->m_pRTVDescriptorHeap != nullptr);
+		assert(pEnv->m_pShaderInvisibleRTVHeap != nullptr);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
-		assert(pEnv->m_pSRVDescriptorHeap != nullptr);
+		assert(pEnv->m_pShaderInvisibleSRVHeap != nullptr);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
 	{
-		assert(pEnv->m_pSRVDescriptorHeap != nullptr);
+		assert(pEnv->m_pShaderInvisibleSRVHeap != nullptr);
 	}
 }
 
@@ -884,11 +884,11 @@ void DXDepthTexture::CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RES
 	assert(false && "Kolya: Needs impl");
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
 	{
-		assert(pEnv->m_pDSVDescritoprHeap != nullptr);
+		assert(pEnv->m_pShaderInvisibleDSVHeap != nullptr);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
-		assert(pEnv->m_pSRVDescriptorHeap != nullptr);
+		assert(pEnv->m_pShaderInvisibleSRVHeap != nullptr);
 	}
 }
 
@@ -904,16 +904,16 @@ void DXDepthTexture::CreateTex2DViews(DXRenderEnvironment* pEnv, const D3D12_RES
 
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
 	{
-		assert(pEnv->m_pDSVDescritoprHeap != nullptr);
-		m_DSVHandle = pEnv->m_pDSVDescritoprHeap->Allocate();
+		assert(pEnv->m_pShaderInvisibleDSVHeap != nullptr);
+		m_DSVHandle = pEnv->m_pShaderInvisibleDSVHeap->Allocate();
 
 		DXTex2DDepthStencilViewDesc viewDesc(GetDepthStencilViewFormat(pTexDesc->Format));
 		pDXDevice->CreateDepthStencilView(GetDXObject(), &viewDesc, m_DSVHandle);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
-		assert(pEnv->m_pSRVDescriptorHeap != nullptr);
-		m_SRVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+		assert(pEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_SRVHandle = pEnv->m_pShaderInvisibleSRVHeap->Allocate();
 
 		DXTex2DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format));
 		pDXDevice->CreateShaderResourceView(GetDXObject(), &viewDesc, m_SRVHandle);
@@ -925,11 +925,11 @@ void DXDepthTexture::CreateTex3DViews(DXRenderEnvironment* pEnv, const D3D12_RES
 	assert(false && "Kolya: Needs impl");
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
 	{
-		assert(pEnv->m_pDSVDescritoprHeap != nullptr);
+		assert(pEnv->m_pShaderInvisibleDSVHeap != nullptr);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
-		assert(pEnv->m_pSRVDescriptorHeap != nullptr);
+		assert(pEnv->m_pShaderInvisibleSRVHeap != nullptr);
 	}
 }
 
@@ -1058,7 +1058,7 @@ void DXBuffer::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HE
 void DXBuffer::CreateConstantBufferView(DXRenderEnvironment* pEnv, const DXConstantBufferDesc* pBufferDesc)
 {
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
-	m_CBVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+	m_CBVHandle = pEnv->m_pShaderInvisibleSRVHeap->Allocate();
 	
 	DXConstantBufferViewDesc viewDesc(GetDXObject()->GetGPUVirtualAddress(), (UINT)pBufferDesc->Width);
 	pDXDevice->CreateConstantBufferView(&viewDesc, m_CBVHandle);
@@ -1086,16 +1086,16 @@ void DXBuffer::CreateStructuredBufferViews(DXRenderEnvironment* pEnv, const DXSt
 
 	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
-		assert(pEnv->m_pSRVDescriptorHeap != nullptr);
-		m_SRVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+		assert(pEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_SRVHandle = pEnv->m_pShaderInvisibleSRVHeap->Allocate();
 
 		DXStructuredBufferSRVDesc viewDesc(0, pBufferDesc->NumElements, pBufferDesc->StructureByteStride);
 		pDXDevice->CreateShaderResourceView(GetDXObject(), &viewDesc, m_SRVHandle);
 	}
 	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
 	{
-		assert(pEnv->m_pSRVDescriptorHeap != nullptr);
-		m_UAVHandle = pEnv->m_pSRVDescriptorHeap->Allocate();
+		assert(pEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_UAVHandle = pEnv->m_pShaderInvisibleSRVHeap->Allocate();
 
 		DXStructuredBufferUAVDesc viewDesc(0, pBufferDesc->NumElements, pBufferDesc->StructureByteStride);
 		pDXDevice->CreateUnorderedAccessView(GetDXObject(), nullptr, &viewDesc, m_UAVHandle);
@@ -1104,8 +1104,8 @@ void DXBuffer::CreateStructuredBufferViews(DXRenderEnvironment* pEnv, const DXSt
 
 DXSampler::DXSampler(DXRenderEnvironment* pEnv, const D3D12_SAMPLER_DESC* pDesc)
 {
-	assert(pEnv->m_pSamplerDescriptorHeap != nullptr);
-	m_Handle = pEnv->m_pSamplerDescriptorHeap->Allocate();
+	assert(pEnv->m_pShaderInvisibleSamplerHeap != nullptr);
+	m_Handle = pEnv->m_pShaderInvisibleSamplerHeap->Allocate();
 
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
 	pDXDevice->CreateSampler(pDesc, m_Handle);

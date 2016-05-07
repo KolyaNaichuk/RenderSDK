@@ -32,9 +32,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pDevice(nullptr)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
-	, m_pRTVDescriptorHeap(nullptr)
-	, m_pSRVDescriptorHeap(nullptr)
-	, m_pSamplerDescriptorHeap(nullptr)
+	, m_pShaderInvisibleRTVHeap(nullptr)
+	, m_pShaderInvisibleSRVHeap(nullptr)
+	, m_pShaderInvisibleSamplerHeap(nullptr)
 	, m_pCommandList(nullptr)
 	, m_pFence(nullptr)
 	, m_pFenceEvent(nullptr)
@@ -57,13 +57,13 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCopyTextureRecorder);
 	SafeDelete(m_pCalcTextureLuminanceRecorder);
 	SafeDelete(m_pCalcTextureLogLuminanceRecorder);
-	SafeDelete(m_pSRVDescriptorHeap);
-	SafeDelete(m_pSamplerDescriptorHeap);
+	SafeDelete(m_pShaderInvisibleSRVHeap);
+	SafeDelete(m_pShaderInvisibleSamplerHeap);
 	SafeDelete(m_pHDRTexture);
 	SafeDelete(m_pCommandList);
 	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
-	SafeDelete(m_pRTVDescriptorHeap);
+	SafeDelete(m_pShaderInvisibleRTVHeap);
 	SafeDelete(m_pDevice);
 	SafeDelete(m_pSwapChain);
 	SafeDelete(m_pCommandQueue);
@@ -90,22 +90,22 @@ void DXApplication::OnInit()
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
 	DXDescriptorHeapDesc rtvDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kBackBufferCount, false);
-	m_pRTVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &rtvDescriptorHeapDesc, L"m_pRTVDescriptorHeap");
+	m_pShaderInvisibleRTVHeap = new DXDescriptorHeap(m_pDevice, &rtvDescriptorHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	DXDescriptorHeapDesc srvDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kSRVDescriptor_Count, true);
-	m_pSRVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &srvDescriptorHeapDesc, L"m_pSRVDescriptorHeap");
+	DXDescriptorHeapDesc srvDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kSRVDescriptor_Count, false);
+	m_pShaderInvisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &srvDescriptorHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
-	DXDescriptorHeapDesc samplerDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, kSamplerDescriptor_Count, true);
-	m_pSamplerDescriptorHeap = new DXDescriptorHeap(m_pDevice, &samplerDescriptorHeapDesc, L"m_pSamplerDescriptorHeap");
+	DXDescriptorHeapDesc samplerDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, kSamplerDescriptor_Count, false);
+	m_pShaderInvisibleSamplerHeap = new DXDescriptorHeap(m_pDevice, &samplerDescriptorHeapDesc, L"m_pShaderInvisibleSamplerHeap");
 
 	DXSamplerDesc pointSampler(DXSamplerDesc::Point);
-	m_pDevice->CreateSampler(&pointSampler, m_pSamplerDescriptorHeap->GetCPUDescriptor(kSamplerDescriptor_Point));
+	m_pDevice->CreateSampler(&pointSampler, m_pShaderInvisibleSamplerHeap->GetCPUDescriptor(kSamplerDescriptor_Point));
 	
 	DXTex2DRenderTargetViewDesc rtvDesc;
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 	{
 		DXResource* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVDescriptorHeap->GetCPUDescriptor(index);
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pShaderInvisibleRTVHeap->GetCPUDescriptor(index);
 
 		m_pDevice->CreateRenderTargetView(pRenderTarget, &rtvDesc, rtvHandle);
 	}
@@ -146,7 +146,7 @@ void DXApplication::OnInit()
 	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
 	WaitForGPU();
 
-	m_pDevice->CreateShaderResourceView(m_pHDRTexture, &srvView, m_pSRVDescriptorHeap->GetCPUDescriptor(kSRVDescriptor_HDRTexture));
+	m_pDevice->CreateShaderResourceView(m_pHDRTexture, &srvView, m_pShaderInvisibleSRVHeap->GetCPUDescriptor(kSRVDescriptor_HDRTexture));
 	*/
 }
 
@@ -168,25 +168,25 @@ void DXApplication::OnRender()
 	if (m_DisplayResult == DisplayResult_HDRImage)
 	{
 		m_pCopyTextureRecorder->Record(m_pCommandList, pCommandAllocator,
-			pRenderTarget, m_pRTVDescriptorHeap->GetCPUDescriptor(m_BackBufferIndex),
-			m_pSRVDescriptorHeap, m_pHDRTexture, m_pSRVDescriptorHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
-			m_pSamplerDescriptorHeap, m_pSamplerDescriptorHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
+			pRenderTarget, m_pShaderInvisibleRTVHeap->GetCPUDescriptor(m_BackBufferIndex),
+			m_pShaderInvisibleSRVHeap, m_pHDRTexture, m_pShaderInvisibleSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
+			m_pShaderInvisibleSamplerHeap, m_pShaderInvisibleSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
 			&rtvEndState);
 	}
 	else if (m_DisplayResult == DisplayResult_ImageLuminance)
 	{
 		m_pCalcTextureLuminanceRecorder->Record(m_pCommandList, pCommandAllocator,
-			pRenderTarget, m_pRTVDescriptorHeap->GetCPUDescriptor(m_BackBufferIndex),
-			m_pSRVDescriptorHeap, m_pHDRTexture, m_pSRVDescriptorHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
-			m_pSamplerDescriptorHeap, m_pSamplerDescriptorHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
+			pRenderTarget, m_pShaderInvisibleRTVHeap->GetCPUDescriptor(m_BackBufferIndex),
+			m_pShaderInvisibleSRVHeap, m_pHDRTexture, m_pShaderInvisibleSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
+			m_pShaderInvisibleSamplerHeap, m_pShaderInvisibleSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
 			&rtvEndState);
 	}
 	else if (m_DisplayResult == DisplayResult_ImageLogLuminance)
 	{
 		m_pCalcTextureLogLuminanceRecorder->Record(m_pCommandList, pCommandAllocator,
-			pRenderTarget, m_pRTVDescriptorHeap->GetCPUDescriptor(m_BackBufferIndex),
-			m_pSRVDescriptorHeap, m_pHDRTexture, m_pSRVDescriptorHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
-			m_pSamplerDescriptorHeap, m_pSamplerDescriptorHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
+			pRenderTarget, m_pShaderInvisibleRTVHeap->GetCPUDescriptor(m_BackBufferIndex),
+			m_pShaderInvisibleSRVHeap, m_pHDRTexture, m_pShaderInvisibleSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
+			m_pShaderInvisibleSamplerHeap, m_pShaderInvisibleSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
 			&rtvEndState);
 	}
 	

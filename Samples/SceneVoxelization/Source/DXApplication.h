@@ -59,10 +59,10 @@ private:
 	DXCommandList* m_pCommandList;
 	DXHeapProperties* m_pDefaultHeapProps;
 	DXHeapProperties* m_pUploadHeapProps;
-	DXDescriptorHeap* m_pRTVDescriptorHeap;
+	DXDescriptorHeap* m_pShaderInvisibleRTVHeap;
 	DXDescriptorHeap* m_pDSVDescriptorHeap;
-	DXDescriptorHeap* m_pSRVDescriptorHeap;
-	DXDescriptorHeap* m_pSamplerDescriptorHeap;
+	DXDescriptorHeap* m_pShaderInvisibleSRVHeap;
+	DXDescriptorHeap* m_pShaderInvisibleSamplerHeap;
 	DXDepthTexture* m_pDepthTexture;
 	DXColorTexture* m_pDiffuseTexture;
 	DXColorTexture* m_pNormalTexture;

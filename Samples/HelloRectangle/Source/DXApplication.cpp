@@ -20,8 +20,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pDevice(nullptr)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
-	, m_pRTVDescriptorHeap(nullptr)
-	, m_pSRVDescriptorHeap(nullptr)
+	, m_pShaderInvisibleRTVHeap(nullptr)
+	, m_pShaderInvisibleSRVHeap(nullptr)
 	, m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 	, m_pCommandList(nullptr)
@@ -55,8 +55,8 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCommandList);
 	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
-	SafeDelete(m_pSRVDescriptorHeap);
-	SafeDelete(m_pRTVDescriptorHeap);
+	SafeDelete(m_pShaderInvisibleSRVHeap);
+	SafeDelete(m_pShaderInvisibleRTVHeap);
 	SafeDelete(m_pRootSignature);
 	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pDevice);
@@ -70,16 +70,16 @@ void DXApplication::OnInit()
 	m_pDevice = new DXDevice(&factory, D3D_FEATURE_LEVEL_11_0);
 	
 	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kBackBufferCount, false);
-	m_pRTVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pRTVDescriptorHeap");
+	m_pShaderInvisibleRTVHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	DXDescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kBackBufferCount, true);
-	m_pSRVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pSRVDescriptorHeap");
+	DXDescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kBackBufferCount, false);
+	m_pShaderInvisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
 	m_pEnv->m_pDevice = m_pDevice;
 	m_pEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
 	m_pEnv->m_pUploadHeapProps = m_pUploadHeapProps;
-	m_pEnv->m_pRTVDescriptorHeap = m_pRTVDescriptorHeap;
-	m_pEnv->m_pSRVDescriptorHeap = m_pSRVDescriptorHeap;
+	m_pEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
+	m_pEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
 
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
@@ -154,10 +154,10 @@ void DXApplication::OnInit()
 	m_pCommandList = new DXCommandList(m_pDevice, m_CommandAllocators[m_BackBufferIndex], nullptr, L"m_pCommandList");
 
 	m_pCommandList->CopyResource(m_pVertexBuffer, &uploadVertexBuffer);
-	m_pCommandList->TransitionBarrier(m_pVertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	m_pCommandList->TransitionBarrier(m_pVertexBuffer, m_pVertexBuffer->GetState(), m_pVertexBuffer->GetReadState());
 
 	m_pCommandList->CopyResource(m_pIndexBuffer, &uploadIndexBuffer);
-	m_pCommandList->TransitionBarrier(m_pIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+	m_pCommandList->TransitionBarrier(m_pIndexBuffer, m_pIndexBuffer->GetState(), m_pIndexBuffer->GetReadState());
 
 	m_pCommandList->Close();
 
@@ -179,7 +179,7 @@ void DXApplication::OnRender()
 	m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 		
 	DXColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-	m_pCommandList->TransitionBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	m_pCommandList->TransitionBarrier(pRenderTarget, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
 
 	const FLOAT clearColor[4] = {0.1f, 0.7f, 0.4f, 1.0f};
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderTarget->GetRTVHandle();
@@ -193,7 +193,7 @@ void DXApplication::OnRender()
 	m_pCommandList->RSSetScissorRects(1, m_pScissorRect);
 	m_pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
-	m_pCommandList->TransitionBarrier(pRenderTarget, D3D12_RESOURCE_STATE_PRESENT);
+	m_pCommandList->TransitionBarrier(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
 	m_pCommandList->Close();
 
 	ID3D12CommandList* pDXCommandList = m_pCommandList->GetDXObject();

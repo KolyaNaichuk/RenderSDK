@@ -45,8 +45,8 @@ private:
 	DXDevice* m_pDevice;
 	DXSwapChain* m_pSwapChain;
 	DXCommandQueue* m_pCommandQueue;
-	DXDescriptorHeap* m_pRTVDescriptorHeap;
-	DXDescriptorHeap* m_pSRVDescriptorHeap;
+	DXDescriptorHeap* m_pShaderInvisibleRTVHeap;
+	DXDescriptorHeap* m_pShaderInvisibleSRVHeap;
 	DXRootSignature* m_pRootSignature;
 	DXPipelineState* m_pPipelineState;
 	DXCommandAllocator* m_CommandAllocators[kBackBufferCount];

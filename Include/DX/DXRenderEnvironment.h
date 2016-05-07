@@ -10,17 +10,24 @@ struct DXRenderEnvironment
 		: m_pDevice(nullptr)
 		, m_pUploadHeapProps(nullptr)
 		, m_pDefaultHeapProps(nullptr)
-		, m_pRTVDescriptorHeap(nullptr)
-		, m_pDSVDescritoprHeap(nullptr)
-		, m_pSRVDescriptorHeap(nullptr)
-		, m_pSamplerDescriptorHeap(nullptr)
+		, m_pShaderInvisibleRTVHeap(nullptr)
+		, m_pShaderInvisibleDSVHeap(nullptr)
+		, m_pShaderInvisibleSRVHeap(nullptr)
+		, m_pShaderInvisibleSamplerHeap(nullptr)
+		, m_pShaderVisibleSRVHeap(nullptr)
+		, m_pShaderVisibleSamplerHeap(nullptr)
 	{}
 
 	DXDevice* m_pDevice;
+
 	DXHeapProperties* m_pUploadHeapProps;
 	DXHeapProperties* m_pDefaultHeapProps;
-	DXDescriptorHeap* m_pRTVDescriptorHeap;
-	DXDescriptorHeap* m_pDSVDescritoprHeap;
-	DXDescriptorHeap* m_pSRVDescriptorHeap;
-	DXDescriptorHeap* m_pSamplerDescriptorHeap;
+
+	DXDescriptorHeap* m_pShaderInvisibleRTVHeap;
+	DXDescriptorHeap* m_pShaderInvisibleDSVHeap;
+	DXDescriptorHeap* m_pShaderInvisibleSRVHeap;
+	DXDescriptorHeap* m_pShaderInvisibleSamplerHeap;
+
+	DXDescriptorHeap* m_pShaderVisibleSRVHeap;
+	DXDescriptorHeap* m_pShaderVisibleSamplerHeap;
 };

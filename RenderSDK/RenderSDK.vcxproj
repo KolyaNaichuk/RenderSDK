@@ -184,6 +184,7 @@
     <ClInclude Include="..\Include\DX\DXPipelineState.h" />
     <ClInclude Include="..\Include\DX\DXRenderEnvironment.h" />
     <ClInclude Include="..\Include\DX\DXResource.h" />
+    <ClInclude Include="..\Include\DX\DXResourceList.h" />
     <ClInclude Include="..\Include\DX\DXRootSignature.h" />
     <ClInclude Include="..\Include\DX\DXSwapChain.h" />
     <ClInclude Include="..\Include\DX\DXUtils.h" />
@@ -209,6 +210,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp" />
+    <ClCompile Include="..\Include\DX\DXResourceList.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CalcTextureLuminanceRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\ClearVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CopyTextureRecorder.cpp" />
