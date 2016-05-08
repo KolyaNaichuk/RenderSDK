@@ -65,6 +65,16 @@ DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat)
 	return resourceFormat;
 }
 
+DXResourceTransitionBarrier::DXResourceTransitionBarrier(DXResource* pResource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter, UINT subresource, D3D12_RESOURCE_BARRIER_FLAGS flags)
+{
+	Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	Flags = flags;
+	Transition.pResource = pResource->GetDXObject();
+	Transition.StateBefore = stateBefore;
+	Transition.StateAfter = stateAfter;
+	Transition.Subresource = subresource;
+}
+
 DXVertexBufferView::DXVertexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes)
 {
 	BufferLocation = bufferLocation;

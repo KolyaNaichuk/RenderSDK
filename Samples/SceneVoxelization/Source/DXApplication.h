@@ -28,6 +28,7 @@ class ViewFrustumCullingRecorder;
 
 struct DXHeapProperties;
 struct DXRenderEnvironment;
+struct DXBindingResourceList;
 
 enum
 { 
@@ -63,6 +64,8 @@ private:
 	DXDescriptorHeap* m_pDSVDescriptorHeap;
 	DXDescriptorHeap* m_pShaderInvisibleSRVHeap;
 	DXDescriptorHeap* m_pShaderInvisibleSamplerHeap;
+	DXDescriptorHeap* m_pShaderVisibleSRVHeap;
+	DXDescriptorHeap* m_pShaderVisibleSamplerHeap;
 	DXDepthTexture* m_pDepthTexture;
 	DXColorTexture* m_pDiffuseTexture;
 	DXColorTexture* m_pNormalTexture;
@@ -81,7 +84,10 @@ private:
 
 	FillGBufferRecorder* m_pFillGBufferRecorder;
 	TiledShadingRecorder* m_pTiledShadingRecorder;
+
 	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;
+	DXBindingResourceList* m_pClearVoxelGridResources;
+
 	CreateVoxelGridRecorder* m_pCreateVoxelGridRecorder;
 	InjectVPLsIntoVoxelGridRecorder* m_pInjectVPLsIntoVoxelGridRecorder;
 	VisualizeVoxelGridRecorder* m_pVisualizeVoxelGridRecorder;

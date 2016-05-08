@@ -4,6 +4,7 @@
 
 class DXDevice;
 class DXBuffer;
+class DXResource;
 
 struct DXRenderEnvironment;
 
@@ -11,6 +12,12 @@ DXGI_FORMAT GetRenderTargetViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetDepthStencilViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetShaderResourceViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat);
+
+struct DXResourceTransitionBarrier : D3D12_RESOURCE_BARRIER
+{
+	DXResourceTransitionBarrier(DXResource* pResource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter,
+		UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+};
 
 struct DXColorClearValue : D3D12_CLEAR_VALUE
 {

@@ -1,11 +1,11 @@
 #include "VoxelGrid.hlsl"
 
-RWStructuredBuffer<Voxel> GridBuffer : register(u0);
-
 cbuffer GridConfigBuffer : register(b0)
 {
 	GridConfig g_GridConfig;
 }
+
+RWStructuredBuffer<Voxel> GridBuffer : register(u0);
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 void Main(int3 gridCell : SV_DispatchThreadID)

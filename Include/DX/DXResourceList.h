@@ -4,21 +4,19 @@
 
 class DXResource;
 
-struct ResourceTransitionList
+struct DXResourceTransition
 {
-	ResourceTransitionList(u32 numResources);
-	~ResourceTransitionList();
+	DXResourceTransition(DXResource* pResource, D3D12_RESOURCE_STATES expectedState);
 
-	u32 m_NumResources;
-	DXResource** m_ppResources;
-	D3D12_RESOURCE_STATES* m_pExpectedStates;
+	DXResource* m_pResource;
+	D3D12_RESOURCE_STATES m_ExpectedState;
 };
 
-struct BindingResourceList
-{
-	BindingResourceList(u32 numResourceTransitions);
+typedef std::vector<DXResourceTransition> DXResourceTransitionList;
 
-	ResourceTransitionList m_TransitionList;
+struct DXBindingResourceList
+{
+	DXResourceTransitionList m_ResourceTransitions;
 	DXDescriptorHandle m_RTVHeapStart;
 	DXDescriptorHandle m_DSVHeapStart;
 	DXDescriptorHandle m_SRVHeapStart;

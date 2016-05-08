@@ -48,3 +48,8 @@ void DXDevice::CheckFeatureSupport(D3D12_FEATURE feature, void* pFeatureSupportD
 {
 	DXVerify(GetDXObject()->CheckFeatureSupport(feature, pFeatureSupportData, featureSupportDataSize));
 }
+
+void DXDevice::CopyDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE destDescriptor, D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, D3D12_DESCRIPTOR_HEAP_TYPE descriptorHeapType)
+{
+	GetDXObject()->CopyDescriptorsSimple(1, destDescriptor, srcDescriptor, descriptorHeapType);
+}

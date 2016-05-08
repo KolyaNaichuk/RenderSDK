@@ -82,7 +82,7 @@ void DXApplication::OnInit()
 	m_pEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
 
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
+	m_pCommandQueue = new DXCommandQueue(m_pDevice, nullptr, &commandQueueDesc, L"m_pCommandQueue");
 		
 	const RECT bufferRect = m_pWindow->GetClientRect();
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
@@ -160,9 +160,8 @@ void DXApplication::OnInit()
 	m_pCommandList->TransitionBarrier(m_pIndexBuffer, m_pIndexBuffer->GetState(), m_pIndexBuffer->GetReadState());
 
 	m_pCommandList->Close();
+	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
 
-	ID3D12CommandList* pDXCommandList = m_pCommandList->GetDXObject();
-	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
 	WaitForGPU();
 }
 
@@ -196,8 +195,7 @@ void DXApplication::OnRender()
 	m_pCommandList->TransitionBarrier(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
 	m_pCommandList->Close();
 
-	ID3D12CommandList* pDXCommandList = m_pCommandList->GetDXObject();
-	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
 
 	m_pSwapChain->Present(1, 0);
 	MoveToNextFrame();

@@ -6,8 +6,8 @@ class DXCommandList;
 class DXCommandAllocator;
 class DXRootSignature;
 class DXPipelineState;
-class DXBuffer;
 struct DXRenderEnvironment;
+struct DXBindingResourceList;
 
 struct ClearVoxelGridInitParams
 {
@@ -22,8 +22,7 @@ struct ClearVoxelGridRecordParams
 	DXRenderEnvironment* m_pEnv;
 	DXCommandList* m_pCommandList;
 	DXCommandAllocator* m_pCommandAllocator;
-	DXBuffer* m_pGridBuffer;
-	DXBuffer* m_pGridConfigBuffer;
+	DXBindingResourceList* m_pResources;
 };
 
 class ClearVoxelGridRecorder

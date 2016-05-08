@@ -8,6 +8,7 @@
 #include "DX/DXUtils.h"
 
 DXCommandList::DXCommandList(DXDevice* pDevice, DXCommandAllocator* pAllocator, DXPipelineState* pInitialState, LPCWSTR pName)
+	: m_pResourceTransitions(nullptr)
 {
 	UINT nodeMask = 0;
 	DXVerify(pDevice->GetDXObject()->CreateCommandList(nodeMask,
@@ -25,6 +26,8 @@ void DXCommandList::Reset(DXCommandAllocator* pAllocator, DXPipelineState* pInit
 {
 	DXVerify(GetDXObject()->Reset(pAllocator->GetDXObject(),
 		(pInitialState != nullptr) ? pInitialState->GetDXObject() : nullptr));
+
+	m_pResourceTransitions = nullptr;
 }
 
 void DXCommandList::Close()
@@ -64,6 +67,21 @@ void DXCommandList::TransitionBarrier(DXResource* pResource, D3D12_RESOURCE_STAT
 
 	GetDXObject()->ResourceBarrier(1, &barrier);
 	pResource->SetState(nextState);
+}
+
+void DXCommandList::ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER* pBarriers)
+{
+	GetDXObject()->ResourceBarrier(numBarriers, pBarriers);
+}
+
+DXResourceTransitionList* DXCommandList::GetResourceTransitions()
+{
+	return m_pResourceTransitions;
+}
+
+void DXCommandList::SetResourceTransitions(DXResourceTransitionList* pResourceTransitions)
+{
+	m_pResourceTransitions = pResourceTransitions;
 }
 
 void DXCommandList::SetGraphicsRootSignature(DXRootSignature* pRootSignature)
@@ -158,4 +176,36 @@ void DXCommandList::ClearStencilView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, UINT
 void DXCommandList::ClearUnorderedAccessView(D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, DXResource* pResource, const FLOAT clearValue[4])
 {
 	GetDXObject()->ClearUnorderedAccessViewFloat(gpuHandle, cpuHandle, pResource->GetDXObject(), clearValue, 0, nullptr);
+}
+
+DXCommandListPool::DXCommandListPool()
+{
+	assert(false);
+}
+
+DXCommandListPool::~DXCommandListPool()
+{
+	assert(false);
+}
+
+DXCommandList* DXCommandListPool::CreateCommandList()
+{
+	assert(false);
+	return nullptr;
+}
+
+void DXCommandListPool::Release(DXCommandList* pCommandList)
+{
+	assert(false);
+}
+
+DXCommandAllocator* DXCommandListPool::CreateCommandAllocator()
+{
+	assert(false);
+	return nullptr;
+}
+
+void DXCommandListPool::Release(DXCommandAllocator* pCommandAllocator)
+{
+	assert(false);
 }

@@ -10,6 +10,7 @@
 #include "DX/DXFence.h"
 #include "DX/DXEvent.h"
 #include "DX/DXRenderEnvironment.h"
+#include "DX/DXResourceList.h"
 #include "CommandRecorders/FillGBufferRecorder.h"
 #include "CommandRecorders/TiledShadingRecorder.h"
 #include "CommandRecorders/ClearVoxelGridRecorder.h"
@@ -121,6 +122,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pDSVDescriptorHeap(nullptr)
 	, m_pShaderInvisibleSRVHeap(nullptr)
 	, m_pShaderInvisibleSamplerHeap(nullptr)
+	, m_pShaderVisibleSRVHeap(nullptr)
+	, m_pShaderVisibleSamplerHeap(nullptr)
 	, m_pDepthTexture(nullptr)
 	, m_pDiffuseTexture(nullptr)
 	, m_pNormalTexture(nullptr)
@@ -138,6 +141,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFillGBufferRecorder(nullptr)
 	, m_pTiledShadingRecorder(nullptr)
 	, m_pClearVoxelGridRecorder(nullptr)
+	, m_pClearVoxelGridResources(nullptr)
 	, m_pCreateVoxelGridRecorder(nullptr)
 	, m_pInjectVPLsIntoVoxelGridRecorder(nullptr)
 	, m_pVisualizeVoxelGridRecorder(nullptr)
@@ -158,6 +162,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pMesh);
 	SafeDelete(m_pClearVoxelGridRecorder);
+	SafeDelete(m_pClearVoxelGridResources);
 	SafeDelete(m_pCreateVoxelGridRecorder);
 	SafeDelete(m_pInjectVPLsIntoVoxelGridRecorder);
 	SafeDelete(m_pVisualizeVoxelGridRecorder);
@@ -173,6 +178,8 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pShaderInvisibleSRVHeap);
 	SafeDelete(m_pShaderInvisibleRTVHeap);
 	SafeDelete(m_pShaderInvisibleSamplerHeap);
+	SafeDelete(m_pShaderVisibleSRVHeap);
+	SafeDelete(m_pShaderVisibleSamplerHeap);
 	SafeDelete(m_pEnv);
 	SafeDelete(m_pAnisoSampler);
 	SafeDelete(m_pGridConfigBuffer);
@@ -201,16 +208,22 @@ void DXApplication::OnInit()
 	assert(supportedOptions.ROVsSupported == TRUE);
 	
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
+	m_pCommandQueue = new DXCommandQueue(m_pDevice, nullptr, &commandQueueDesc, L"m_pCommandQueue");
 
 	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kNumRTVHandles, false);
 	m_pShaderInvisibleRTVHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	DXDescriptorHeapDesc samplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, kNumSamplerHandles, false);
-	m_pShaderInvisibleSamplerHeap = new DXDescriptorHeap(m_pDevice, &samplerHeapDesc, L"m_pShaderInvisibleSamplerHeap");
+	DXDescriptorHeapDesc shaderInvisibleSamplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, kNumSamplerHandles, false);
+	m_pShaderInvisibleSamplerHeap = new DXDescriptorHeap(m_pDevice, &shaderInvisibleSamplerHeapDesc, L"m_pShaderInvisibleSamplerHeap");
 
-	DXDescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kNumSRVHandles, false);
-	m_pShaderInvisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pShaderInvisibleSRVHeap");
+	DXDescriptorHeapDesc shaderVisibleSamplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 2, true);
+	m_pShaderVisibleSamplerHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSamplerHeapDesc, L"m_pShaderVisibleSamplerHeap");
+
+	DXDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2, true);
+	m_pShaderVisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
+
+	DXDescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kNumSRVHandles, false);
+	m_pShaderInvisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
 	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, kNumDSVHandles, false);
 	m_pDSVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pDSVDescriptorHeap");
@@ -460,8 +473,7 @@ void DXApplication::OnInit()
 	m_pMesh->RecordDataForUpload(m_pCommandList);
 	m_pCommandList->Close();
 
-	ID3D12CommandList* pDXCommandList = m_pCommandList->GetDXObject();
-	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
 	
 	WaitForGPU();
 	m_pMesh->RemoveDataForUpload();
@@ -501,7 +513,13 @@ void DXApplication::OnInit()
 	clearGridParams.m_NumGridCellsZ = kNumGridCellsZ;
 
 	m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(&clearGridParams);
-	
+
+	m_pClearVoxelGridResources = new DXBindingResourceList;
+	m_pClearVoxelGridResources->m_ResourceTransitions.emplace_back(m_pGridBuffer, m_pGridBuffer->GetWriteState());
+	m_pClearVoxelGridResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+	m_pDevice->CopyDescriptor(m_pClearVoxelGridResources->m_SRVHeapStart, m_pGridConfigBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridConfigBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
 	CreateVoxelGridInitParams createGridParams;
 	createGridParams.m_pEnv = m_pEnv;
 	createGridParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
@@ -595,8 +613,6 @@ void DXApplication::OnUpdate()
 
 void DXApplication::OnRender()
 {
-	ID3D12CommandList* pDXCommandList = m_pCommandList->GetDXObject();
-
 	DXCommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
 	pCommandAllocator->Reset();
 
@@ -627,7 +643,7 @@ void DXApplication::OnRender()
 		}
 
 		m_pCommandList->Close();
-		m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+		m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
 		WaitForGPU();
 	}
 
@@ -650,7 +666,7 @@ void DXApplication::OnRender()
 	fillGBufferParams.m_pAnisoSampler = m_pAnisoSampler;
 	
 	m_pFillGBufferRecorder->Record(&fillGBufferParams);
-	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
 	WaitForGPU();
 
 	VisualizeMeshRecordParams visualizeMeshParams;
@@ -662,18 +678,17 @@ void DXApplication::OnRender()
 	visualizeMeshParams.m_pDepthTexture = m_pDepthTexture;
 	
 	m_pVisualizeMeshRecorder->Record(&visualizeMeshParams);
-	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
 	WaitForGPU();
 	
 	ClearVoxelGridRecordParams clearGridParams;
 	clearGridParams.m_pEnv = m_pEnv;
 	clearGridParams.m_pCommandAllocator = pCommandAllocator;
 	clearGridParams.m_pCommandList = m_pCommandList;
-	clearGridParams.m_pGridBuffer = m_pGridBuffer;
-	clearGridParams.m_pGridConfigBuffer = m_pGridConfigBuffer;
-
+	clearGridParams.m_pResources = m_pClearVoxelGridResources;
+	
 	m_pClearVoxelGridRecorder->Record(&clearGridParams);
-	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
 	WaitForGPU();
 
 	CreateVoxelGridRecordParams createGridParams;
@@ -693,7 +708,7 @@ void DXApplication::OnRender()
 #endif // HAS_TEXCOORD
 
 	m_pCreateVoxelGridRecorder->Record(&createGridParams);
-	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
 	WaitForGPU();
 
 	VisualizeVoxelGridRecordParams visualizeGridParams;
@@ -706,7 +721,7 @@ void DXApplication::OnRender()
 	visualizeGridParams.m_pCameraTransformBuffer = m_pCameraTransformBuffer;
 
 	m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
-	m_pCommandQueue->ExecuteCommandLists(1, &pDXCommandList);
+	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
 	
 	m_pSwapChain->Present(1, 0);
 	MoveToNextFrame();

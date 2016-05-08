@@ -2,6 +2,8 @@
 
 #include "DXObject.h"
 
+class DXCommandList;
+class DXCommandListPool;
 class DXDevice;
 class DXFence;
 
@@ -13,8 +15,11 @@ struct DXCommandQueueDesc : public D3D12_COMMAND_QUEUE_DESC
 class DXCommandQueue : public DXObject<ID3D12CommandQueue>
 {
 public:
-	DXCommandQueue(DXDevice* pDevice, const DXCommandQueueDesc* pDesc, LPCWSTR pName);
+	DXCommandQueue(DXDevice* pDevice, DXCommandListPool* pCommandListPool, const DXCommandQueueDesc* pDesc, LPCWSTR pName);
 	
-	void ExecuteCommandLists(UINT numCommandLists, ID3D12CommandList** ppDXCommandLists);
+	void ExecuteCommandLists(UINT numCommandLists, DXCommandList** ppCommandLists);
 	void Signal(DXFence* pFence, UINT64 value);
+
+private:
+	DXCommandListPool* m_pCommandListPool;
 };
