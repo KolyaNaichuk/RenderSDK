@@ -13,7 +13,6 @@ class DXPipelineState;
 class DXBuffer;
 class DXColorTexture;
 class DXFence;
-class DXEvent;
 
 struct DXHeapProperties;
 struct DXRenderEnvironment;
@@ -57,7 +56,6 @@ private:
 	DXHeapProperties* m_pUploadHeapProps;
 	DXRenderEnvironment* m_pEnv;
 	DXFence* m_pFence;
-	DXEvent* m_pFenceEvent;
 	UINT64 m_FenceValues[kBackBufferCount];
 	DXViewport* m_pViewport;
 	DXRect* m_pScissorRect;

@@ -9,7 +9,6 @@
 #include "DX/DXPipelineState.h"
 #include "DX/DXResource.h"
 #include "DX/DXFence.h"
-#include "DX/DXEvent.h"
 #include "DX/DXUtils.h"
 #include "DDSTextureLoader/DDSTextureLoader.h"
 #include "CommandRecorders/CopyTextureRecorder.h"
@@ -37,7 +36,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pShaderInvisibleSamplerHeap(nullptr)
 	, m_pCommandList(nullptr)
 	, m_pFence(nullptr)
-	, m_pFenceEvent(nullptr)
 	, m_BackBufferIndex(0)
 	, m_pHDRTexture(nullptr)
 	, m_pCopyTextureRecorder(nullptr)
@@ -61,7 +59,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pShaderInvisibleSamplerHeap);
 	SafeDelete(m_pHDRTexture);
 	SafeDelete(m_pCommandList);
-	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pShaderInvisibleRTVHeap);
 	SafeDelete(m_pDevice);
@@ -122,7 +119,6 @@ void DXApplication::OnInit()
 
 	DXHeapProperties defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 				
-	m_pFenceEvent = new DXEvent();
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
 
@@ -220,9 +216,7 @@ void DXApplication::OnKeyUp(UINT8 key)
 void DXApplication::WaitForGPU()
 {
 	m_pCommandQueue->Signal(m_pFence, m_FenceValues[m_BackBufferIndex]);
-
-	m_pFence->SetEventOnCompletion(m_FenceValues[m_BackBufferIndex], m_pFenceEvent);
-	m_pFenceEvent->Wait();
+	m_pFence->WaitForSignal(m_FenceValues[m_BackBufferIndex]);
 
 	++m_FenceValues[m_BackBufferIndex];
 }
@@ -231,13 +225,9 @@ void DXApplication::MoveToNextFrame()
 {
 	const UINT64 currentFenceValue = m_FenceValues[m_BackBufferIndex];
 	m_pCommandQueue->Signal(m_pFence, currentFenceValue);
-	
+
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-	if (m_pFence->GetCompletedValue() < m_FenceValues[m_BackBufferIndex])
-	{
-		m_pFence->SetEventOnCompletion(m_FenceValues[m_BackBufferIndex], m_pFenceEvent);
-		m_pFenceEvent->Wait();
-	}
+	m_pFence->WaitForSignal(m_FenceValues[m_BackBufferIndex]);
 
 	m_FenceValues[m_BackBufferIndex] = currentFenceValue + 1;
 }

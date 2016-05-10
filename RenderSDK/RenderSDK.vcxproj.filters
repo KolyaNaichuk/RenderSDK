@@ -48,9 +48,6 @@
     <ClInclude Include="..\Include\DX\DXDevice.h">
       <Filter>DX</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\DX\DXEvent.h">
-      <Filter>DX</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\DX\DXFactory.h">
       <Filter>DX</Filter>
     </ClInclude>
@@ -231,9 +228,6 @@
       <Filter>DX</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\DX\DXDevice.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXEvent.cpp">
       <Filter>DX</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\DX\DXFactory.cpp">

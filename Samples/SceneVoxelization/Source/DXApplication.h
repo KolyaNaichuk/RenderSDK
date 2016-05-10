@@ -13,7 +13,6 @@ class DXDepthTexture;
 class DXBuffer;
 class DXSampler;
 class DXFence;
-class DXEvent;
 
 class Mesh;
 class Camera;
@@ -78,7 +77,6 @@ private:
 	DXSampler* m_pAnisoSampler;
 	DXRenderEnvironment* m_pEnv;
 	DXFence* m_pFence;
-	DXEvent* m_pFenceEvent;
 	UINT64 m_FenceValues[kBackBufferCount];
 	UINT m_BackBufferIndex;
 

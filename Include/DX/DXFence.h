@@ -1,16 +1,19 @@
 #pragma once
 
-#include "DXObject.h"
+#include "DX/DXObject.h"
 
 class DXDevice;
-class DXEvent;
 
 class DXFence : public DXObject<ID3D12Fence>
 {
 public:
 	DXFence(DXDevice* pDevice, UINT64 initialValue, D3D12_FENCE_FLAGS flags = D3D12_FENCE_FLAG_NONE);
+	~DXFence();
 
-	UINT64 GetCompletedValue();
-	void Signal(UINT64 value);
-	void SetEventOnCompletion(UINT64 value, DXEvent* pEvent);
+	void Clear(UINT64 value);
+	void WaitForSignal(UINT64 value);
+	bool HasBeenSignaled(UINT64 value);
+
+private:
+	HANDLE m_hCompletionEvent;
 };

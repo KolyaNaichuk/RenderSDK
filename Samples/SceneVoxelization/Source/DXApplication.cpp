@@ -8,7 +8,6 @@
 #include "DX/DXDescriptorHeap.h"
 #include "DX/DXResource.h"
 #include "DX/DXFence.h"
-#include "DX/DXEvent.h"
 #include "DX/DXRenderEnvironment.h"
 #include "DX/DXResourceList.h"
 #include "CommandRecorders/FillGBufferRecorder.h"
@@ -136,7 +135,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pAnisoSampler(nullptr)
 	, m_pEnv(new DXRenderEnvironment())
 	, m_pFence(nullptr)
-	, m_pFenceEvent(nullptr)
 	, m_BackBufferIndex(0)
 	, m_pFillGBufferRecorder(nullptr)
 	, m_pTiledShadingRecorder(nullptr)
@@ -170,7 +168,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pTiledShadingRecorder);
 	SafeDelete(m_pFillGBufferRecorder);
 	SafeDelete(m_pViewFrustumCullingRecorder);
-	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pDefaultHeapProps);
 	SafeDelete(m_pUploadHeapProps);
@@ -287,7 +284,6 @@ void DXApplication::OnInit()
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 		m_CommandAllocators[index] = new DXCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
 
-	m_pFenceEvent = new DXEvent();
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
 
@@ -743,9 +739,7 @@ void DXApplication::OnKeyUp(UINT8 key)
 void DXApplication::WaitForGPU()
 {
 	m_pCommandQueue->Signal(m_pFence, m_FenceValues[m_BackBufferIndex]);
-
-	m_pFence->SetEventOnCompletion(m_FenceValues[m_BackBufferIndex], m_pFenceEvent);
-	m_pFenceEvent->Wait();
+	m_pFence->WaitForSignal(m_FenceValues[m_BackBufferIndex]);
 
 	++m_FenceValues[m_BackBufferIndex];
 }
@@ -756,11 +750,7 @@ void DXApplication::MoveToNextFrame()
 	m_pCommandQueue->Signal(m_pFence, currentFenceValue);
 
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-	if (m_pFence->GetCompletedValue() < m_FenceValues[m_BackBufferIndex])
-	{
-		m_pFence->SetEventOnCompletion(m_FenceValues[m_BackBufferIndex], m_pFenceEvent);
-		m_pFenceEvent->Wait();
-	}
+	m_pFence->WaitForSignal(m_FenceValues[m_BackBufferIndex]);
 
 	m_FenceValues[m_BackBufferIndex] = currentFenceValue + 1;
 }

@@ -11,7 +11,6 @@
 #include "DX/DXResource.h"
 #include "DX/DXRenderEnvironment.h"
 #include "DX/DXFence.h"
-#include "DX/DXEvent.h"
 #include "DX/DXUtils.h"
 #include "Math/Vector4.h"
 
@@ -31,7 +30,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pUploadHeapProps(new DXHeapProperties(D3D12_HEAP_TYPE_UPLOAD))
 	, m_pEnv(new DXRenderEnvironment())
 	, m_pFence(nullptr)
-	, m_pFenceEvent(nullptr)
 	, m_pViewport(nullptr)
 	, m_pScissorRect(nullptr)
 	, m_BackBufferIndex(0)
@@ -53,7 +51,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pVertexBuffer);
 	SafeDelete(m_pIndexBuffer);
 	SafeDelete(m_pCommandList);
-	SafeDelete(m_pFenceEvent);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pShaderInvisibleSRVHeap);
 	SafeDelete(m_pShaderInvisibleRTVHeap);
@@ -146,8 +143,7 @@ void DXApplication::OnInit()
 	
 	DXBuffer uploadIndexBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadIndexBuffer");
 	uploadIndexBuffer.Write(indices, sizeof(indices));
-			
-	m_pFenceEvent = new DXEvent();
+	
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
 
@@ -217,10 +213,8 @@ void DXApplication::OnKeyUp(UINT8 key)
 void DXApplication::WaitForGPU()
 {
 	m_pCommandQueue->Signal(m_pFence, m_FenceValues[m_BackBufferIndex]);
-
-	m_pFence->SetEventOnCompletion(m_FenceValues[m_BackBufferIndex], m_pFenceEvent);
-	m_pFenceEvent->Wait();
-
+	m_pFence->WaitForSignal(m_FenceValues[m_BackBufferIndex]);
+	
 	++m_FenceValues[m_BackBufferIndex];
 }
 
@@ -230,11 +224,7 @@ void DXApplication::MoveToNextFrame()
 	m_pCommandQueue->Signal(m_pFence, currentFenceValue);
 	
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-	if (m_pFence->GetCompletedValue() < m_FenceValues[m_BackBufferIndex])
-	{
-		m_pFence->SetEventOnCompletion(m_FenceValues[m_BackBufferIndex], m_pFenceEvent);
-		m_pFenceEvent->Wait();
-	}
-
+	m_pFence->WaitForSignal(m_FenceValues[m_BackBufferIndex]);
+	
 	m_FenceValues[m_BackBufferIndex] = currentFenceValue + 1;
 }

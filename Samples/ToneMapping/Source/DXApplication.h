@@ -10,7 +10,6 @@ class DXCommandAllocator;
 class DXDescriptorHeap;
 class DXColorTexture;
 class DXFence;
-class DXEvent;
 
 struct DXRenderEnvironment;
 struct DXHeapProperties;
@@ -54,7 +53,6 @@ private:
 	DXCommandAllocator* m_CommandAllocators[kBackBufferCount];
 	DXCommandList* m_pCommandList;
 	DXFence* m_pFence;
-	DXEvent* m_pFenceEvent;
 	UINT64 m_FenceValues[kBackBufferCount];
 	UINT m_BackBufferIndex;
 
