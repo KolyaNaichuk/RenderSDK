@@ -33,3 +33,20 @@ bool DXFence::HasBeenSignaled(UINT64 value)
 {
 	return (GetDXObject()->GetCompletedValue() >= value);
 }
+
+DXSyncPoint::DXSyncPoint(DXFence* pFence, UINT64 fenceValue)
+	: m_pFence(pFence)
+	, m_FenceValue(fenceValue)
+{
+	assert(m_pFence != nullptr);
+}
+
+bool DXSyncPoint::IsComplete()
+{
+	return m_pFence->HasBeenSignaled(m_FenceValue);
+}
+
+void DXSyncPoint::WaitForCompletion()
+{
+	m_pFence->WaitForSignal(m_FenceValue);
+}
