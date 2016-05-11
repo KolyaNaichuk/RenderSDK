@@ -205,7 +205,7 @@ void DXApplication::OnInit()
 	assert(supportedOptions.ROVsSupported == TRUE);
 	
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_pCommandQueue = new DXCommandQueue(m_pDevice, nullptr, &commandQueueDesc, L"m_pCommandQueue");
+	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
 
 	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kNumRTVHandles, false);
 	m_pShaderInvisibleRTVHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
@@ -469,7 +469,7 @@ void DXApplication::OnInit()
 	m_pMesh->RecordDataForUpload(m_pCommandList);
 	m_pCommandList->Close();
 
-	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
+//	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);
 	
 	WaitForGPU();
 	m_pMesh->RemoveDataForUpload();
@@ -639,7 +639,7 @@ void DXApplication::OnRender()
 		}
 
 		m_pCommandList->Close();
-		m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
+//		m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);
 		WaitForGPU();
 	}
 
@@ -662,7 +662,7 @@ void DXApplication::OnRender()
 	fillGBufferParams.m_pAnisoSampler = m_pAnisoSampler;
 	
 	m_pFillGBufferRecorder->Record(&fillGBufferParams);
-	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
+//	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);
 	WaitForGPU();
 
 	VisualizeMeshRecordParams visualizeMeshParams;
@@ -674,7 +674,7 @@ void DXApplication::OnRender()
 	visualizeMeshParams.m_pDepthTexture = m_pDepthTexture;
 	
 	m_pVisualizeMeshRecorder->Record(&visualizeMeshParams);
-	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
+//	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);
 	WaitForGPU();
 	
 	ClearVoxelGridRecordParams clearGridParams;
@@ -684,7 +684,7 @@ void DXApplication::OnRender()
 	clearGridParams.m_pResources = m_pClearVoxelGridResources;
 	
 	m_pClearVoxelGridRecorder->Record(&clearGridParams);
-	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
+//	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);
 	WaitForGPU();
 
 	CreateVoxelGridRecordParams createGridParams;
@@ -704,7 +704,7 @@ void DXApplication::OnRender()
 #endif // HAS_TEXCOORD
 
 	m_pCreateVoxelGridRecorder->Record(&createGridParams);
-	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
+//	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);
 	WaitForGPU();
 
 	VisualizeVoxelGridRecordParams visualizeGridParams;
@@ -717,7 +717,7 @@ void DXApplication::OnRender()
 	visualizeGridParams.m_pCameraTransformBuffer = m_pCameraTransformBuffer;
 
 	m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
-	m_pCommandQueue->ExecuteCommandLists(1, &m_pCommandList);
+//	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);
 	
 	m_pSwapChain->Present(1, 0);
 	MoveToNextFrame();

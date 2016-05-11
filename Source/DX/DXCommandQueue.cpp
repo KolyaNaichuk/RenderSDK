@@ -1,5 +1,7 @@
 #include "DX/DXCommandQueue.h"
 #include "DX/DXCommandList.h"
+#include "DX/DXCommandAllocator.h"
+#include "DX/DXRenderEnvironment.h"
 #include "DX/DXResource.h"
 #include "DX/DXDevice.h"
 #include "DX/DXFence.h"
@@ -12,8 +14,9 @@ DXCommandQueueDesc::DXCommandQueueDesc(D3D12_COMMAND_LIST_TYPE type)
 	NodeMask = 0;
 }
 
-DXCommandQueue::DXCommandQueue(DXDevice* pDevice, DXCommandListPool* pCommandListPool, const DXCommandQueueDesc* pDesc, LPCWSTR pName)
-	: m_pCommandListPool(pCommandListPool)
+DXCommandQueue::DXCommandQueue(DXDevice* pDevice, const DXCommandQueueDesc* pDesc, LPCWSTR pName)
+	: m_pFence(new DXFence(pDevice, 0))
+	, m_NextFenceValue(1)
 {
 	DXVerify(pDevice->GetDXObject()->CreateCommandQueue(pDesc, IID_PPV_ARGS(GetDXObjectAddress())));
 
@@ -22,19 +25,29 @@ DXCommandQueue::DXCommandQueue(DXDevice* pDevice, DXCommandListPool* pCommandLis
 #endif
 }
 
-void DXCommandQueue::ExecuteCommandLists(UINT numCommandLists, DXCommandList** ppCommandLists)
+DXCommandQueue::~DXCommandQueue()
 {
+	SafeDelete(m_pFence);
+}
+
+void DXCommandQueue::ExecuteCommandLists(DXRenderEnvironment* pEnv, UINT numCommandLists, DXCommandList** ppCommandLists, DXCommandAllocator* pBarrierCommandAllocator)
+{
+	DXCommandListPool* pCommandListPool = pEnv->m_pCommandListPool;
+
 	std::vector<ID3D12CommandList*> commandLists;
 	commandLists.reserve(numCommandLists);
 
-	for (UINT commandListIndex = 0; commandListIndex < numCommandLists; ++commandListIndex)
+	std::vector<DXCommandList*> barrierCommandLists;
+	barrierCommandLists.reserve(numCommandLists);
+
+	for (UINT listIndex = 0; listIndex < numCommandLists; ++listIndex)
 	{
-		DXCommandList* pCommandList = ppCommandLists[commandListIndex];
+		DXCommandList* pCommandList = ppCommandLists[listIndex];
 		DXResourceTransitionList* pResourceTransitions = pCommandList->GetResourceTransitions();
 		if (pResourceTransitions != nullptr)
 		{
-			std::vector<DXResourceTransitionBarrier> barriers;
-			barriers.reserve(pResourceTransitions->size());
+			std::vector<DXResourceTransitionBarrier> resourceBarriers;
+			resourceBarriers.reserve(pResourceTransitions->size());
 
 			for (std::size_t resourceIndex = 0; resourceIndex < pResourceTransitions->size(); ++resourceIndex)
 			{
@@ -46,24 +59,25 @@ void DXCommandQueue::ExecuteCommandLists(UINT numCommandLists, DXCommandList** p
 				
 				if (stateBefore != stateAfter)
 				{
-					barriers.emplace_back(pResource, stateBefore, stateAfter);
+					resourceBarriers.emplace_back(pResource, stateBefore, stateAfter);
 					pResource->SetState(stateAfter);
 				}
 			}
 
-			DXCommandList* pBarrierCommandList = m_pCommandListPool->CreateCommandList();
-			DXCommandAllocator* pBarrierCommandAllocator = m_pCommandListPool->CreateCommandAllocator();
-
-			pBarrierCommandList->Reset(pBarrierCommandAllocator, nullptr);
-			pBarrierCommandList->ResourceBarrier(barriers.size(), &barriers[0]);
+			DXCommandList* pBarrierCommandList = pCommandListPool->Create(pBarrierCommandAllocator, nullptr, L"pBarrierCommandList");			
+			pBarrierCommandList->ResourceBarrier(resourceBarriers.size(), &resourceBarriers[0]);
 			pBarrierCommandList->Close();
 
+			barrierCommandLists.emplace_back(pBarrierCommandList);
 			commandLists.emplace_back(pBarrierCommandList->GetDXObject());
 		}
 		commandLists.emplace_back(pCommandList->GetDXObject());
 	}
 	
 	GetDXObject()->ExecuteCommandLists(commandLists.size(), &commandLists[0]);
+
+	for (std::size_t listIndex = 0; listIndex < barrierCommandLists.size(); ++listIndex)
+		pCommandListPool->Release(barrierCommandLists[listIndex]);
 }
 
 void DXCommandQueue::Signal(DXFence* pFence, UINT64 value)

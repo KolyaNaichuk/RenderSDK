@@ -7,13 +7,13 @@
 #include "DX/DXDescriptorHeap.h"
 #include "DX/DXUtils.h"
 
-DXCommandList::DXCommandList(DXDevice* pDevice, DXCommandAllocator* pAllocator, DXPipelineState* pInitialState, LPCWSTR pName)
+DXCommandList::DXCommandList(DXDevice* pDevice, DXCommandAllocator* pCommandAllocator, DXPipelineState* pInitialState, LPCWSTR pName)
 	: m_pResourceTransitions(nullptr)
 {
 	UINT nodeMask = 0;
 	DXVerify(pDevice->GetDXObject()->CreateCommandList(nodeMask,
-		pAllocator->GetType(),
-		pAllocator->GetDXObject(),
+		pCommandAllocator->GetType(),
+		pCommandAllocator->GetDXObject(),
 	   (pInitialState != nullptr) ? pInitialState->GetDXObject() : nullptr,
 		IID_PPV_ARGS(GetDXObjectAddress())));
 
@@ -178,34 +178,40 @@ void DXCommandList::ClearUnorderedAccessView(D3D12_GPU_DESCRIPTOR_HANDLE gpuHand
 	GetDXObject()->ClearUnorderedAccessViewFloat(gpuHandle, cpuHandle, pResource->GetDXObject(), clearValue, 0, nullptr);
 }
 
-DXCommandListPool::DXCommandListPool()
+DXCommandListPool::DXCommandListPool(DXDevice* pDevice, D3D12_COMMAND_LIST_TYPE type)
+	: m_pDevice(pDevice)
+	, m_Type(type)
 {
-	assert(false);
 }
 
 DXCommandListPool::~DXCommandListPool()
 {
-	assert(false);
+	while (!m_CommandListQueue.empty())
+	{
+		DXCommandList* pCommandList = m_CommandListQueue.front();
+		m_CommandListQueue.pop();
+
+		SafeDelete(pCommandList);
+	}
 }
 
-DXCommandList* DXCommandListPool::CreateCommandList()
+DXCommandList* DXCommandListPool::Create(DXCommandAllocator* pCommandAllocator, DXPipelineState* pInitialState, LPCWSTR pName)
 {
-	assert(false);
-	return nullptr;
+	assert(m_Type == pCommandAllocator->GetType());
+	if (!m_CommandListQueue.empty())
+	{
+		DXCommandList* pCommandList = m_CommandListQueue.front();
+		m_CommandListQueue.pop();
+
+		pCommandList->Reset(pCommandAllocator, pInitialState);
+		pCommandList->SetName(pName);
+
+		return pCommandList;
+	}
+	return new DXCommandList(m_pDevice, pCommandAllocator, pInitialState, pName);
 }
 
 void DXCommandListPool::Release(DXCommandList* pCommandList)
 {
-	assert(false);
-}
-
-DXCommandAllocator* DXCommandListPool::CreateCommandAllocator()
-{
-	assert(false);
-	return nullptr;
-}
-
-void DXCommandListPool::Release(DXCommandAllocator* pCommandAllocator)
-{
-	assert(false);
+	m_CommandListQueue.push(pCommandList);
 }

@@ -2,12 +2,16 @@
 
 class DXDevice;
 class DXDescriptorHeap;
+class DXCommandListPool;
+class DXCommandAllocatorPool;
 struct DXHeapProperties;
 
 struct DXRenderEnvironment
 {
 	DXRenderEnvironment()
 		: m_pDevice(nullptr)
+		, m_pCommandListPool(nullptr)
+		, m_pCommandAllocatorPool(nullptr)
 		, m_pUploadHeapProps(nullptr)
 		, m_pDefaultHeapProps(nullptr)
 		, m_pShaderInvisibleRTVHeap(nullptr)
@@ -19,6 +23,9 @@ struct DXRenderEnvironment
 	{}
 
 	DXDevice* m_pDevice;
+
+	DXCommandListPool* m_pCommandListPool;
+	DXCommandAllocatorPool* m_pCommandAllocatorPool;
 
 	DXHeapProperties* m_pUploadHeapProps;
 	DXHeapProperties* m_pDefaultHeapProps;

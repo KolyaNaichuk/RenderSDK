@@ -18,7 +18,7 @@ struct DXIndexBufferView;
 class DXCommandList : public DXObject<ID3D12GraphicsCommandList>
 {
 public:
-	DXCommandList(DXDevice* pDevice, DXCommandAllocator* pAllocator, DXPipelineState* pInitialState, LPCWSTR pName);
+	DXCommandList(DXDevice* pDevice, DXCommandAllocator* pCommandAllocator, DXPipelineState* pInitialState, LPCWSTR pName);
 	
 	void Reset(DXCommandAllocator* pAllocator, DXPipelineState* pInitialState = nullptr);
 	void Close();
@@ -67,18 +67,14 @@ private:
 class DXCommandListPool
 {
 public:
-	DXCommandListPool();
+	DXCommandListPool(DXDevice* pDevice, D3D12_COMMAND_LIST_TYPE type);
 	~DXCommandListPool();
 
-	enum { kMaxSize = 10 };
-
-	DXCommandList* CreateCommandList();
+	DXCommandList* Create(DXCommandAllocator* pCommandAllocator, DXPipelineState* pInitialState, LPCWSTR pName);
 	void Release(DXCommandList* pCommandList);
 
-	DXCommandAllocator* CreateCommandAllocator();
-	void Release(DXCommandAllocator* pCommandAllocator);
-
 private:
-	DXCommandAllocator* m_CommandAllocators[kMaxSize];
-	DXCommandList* m_CommandLists[kMaxSize];
+	DXDevice* m_pDevice;
+	const D3D12_COMMAND_LIST_TYPE m_Type;
+	std::queue<DXCommandList*> m_CommandListQueue;
 };
