@@ -91,6 +91,7 @@ private:
 	VisualizeVoxelGridRecorder* m_pVisualizeVoxelGridRecorder;
 	VisualizeMeshRecorder* m_pVisualizeMeshRecorder;
 	ViewFrustumCullingRecorder* m_pViewFrustumCullingRecorder;
+	DXBindingResourceList* m_pViewFrustumCullingResources;
 
 	Mesh* m_pMesh;
 	Camera* m_pCamera;

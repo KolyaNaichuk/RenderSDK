@@ -25,11 +25,7 @@ ClearVoxelGridRecorder::ClearVoxelGridRecorder(ClearVoxelGridInitParams* pParams
 	m_NumThreadGroupsY = (u16)Ceil((f32)pParams->m_NumGridCellsY / (f32)numThreadsPerGroupY);
 	m_NumThreadGroupsZ = (u16)Ceil((f32)pParams->m_NumGridCellsZ / (f32)numThreadsPerGroupZ);
 	
-	D3D12_DESCRIPTOR_RANGE descriptorRanges[] =
-	{
-		DXCBVRange(1, 0),
-		DXUAVRange(1, 0)
-	};
+	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = {DXCBVRange(1, 0), DXUAVRange(1, 0)};
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kSRVRootParam] = DXRootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), &descriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
 		

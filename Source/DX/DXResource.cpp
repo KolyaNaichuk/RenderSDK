@@ -716,7 +716,7 @@ void DXColorTexture::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3
 {
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
 
-	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE;
 	const D3D12_CLEAR_VALUE* pOptimizedClearValue = nullptr;
 
 	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
@@ -880,7 +880,7 @@ void DXDepthTexture::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3
 {
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
 
-	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_ALLOW_ONLY_RT_DS_TEXTURES;
+	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE;
 	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
 		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
 
