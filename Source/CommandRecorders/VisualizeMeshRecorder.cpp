@@ -2,8 +2,9 @@
 #include "DX/DXRootSignature.h"
 #include "DX/DXPipelineState.h"
 #include "DX/DXCommandList.h"
-#include "DX/DXResource.h"
 #include "DX/DXUtils.h"
+#include "DX/DXResource.h"
+#include "DX/DXRenderEnvironment.h"
 #include "Common/MeshData.h"
 
 enum RootParams
@@ -12,13 +13,12 @@ enum RootParams
 	kNumRootParams
 };
 
-VisualizeMeshRecorder::VisualizeMeshRecorder(VisualizeMeshInitParams* pParams)
+VisualizeMeshRecorder::VisualizeMeshRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
-	// Kolya: fix me
-	assert(false);
-	/*
+	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+
 	u8 inputElementFlags = VertexElementFlag_Position;
 	DXShaderMacro shaderDefines[2];
 
@@ -48,12 +48,11 @@ VisualizeMeshRecorder::VisualizeMeshRecorder(VisualizeMeshInitParams* pParams)
 	DXShader pixelShader(L"Shaders//VisualizeMeshPS.hlsl", "Main", "ps_4_0", shaderDefines);
 
 	DXCBVRange cbvRange(1, 0);
-
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kCBVRootParam] = DXRootDescriptorTableParameter(1, &cbvRange, D3D12_SHADER_VISIBILITY_VERTEX);
 
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new DXRootSignature(pParams->m_pDevice, &rootSignatureDesc, L"VisualizeMeshRecorder::m_pRootSignature");
+	m_pRootSignature = new DXRootSignature(pEnv->m_pDevice, &rootSignatureDesc, L"VisualizeMeshRecorder::m_pRootSignature");
 
 	std::vector<DXInputElementDesc> inputElementDescs;
 	GenerateInputElements(inputElementDescs, inputElementFlags, pParams->m_VertexElementFlags);
@@ -67,8 +66,7 @@ VisualizeMeshRecorder::VisualizeMeshRecorder(VisualizeMeshInitParams* pParams)
 	pipelineStateDesc.DepthStencilState = DXDepthStencilDesc(DXDepthStencilDesc::Enabled);
 	pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat, pParams->m_DSVFormat);
 
-	m_pPipelineState = new DXPipelineState(pParams->m_pDevice, &pipelineStateDesc, L"VisualizeMeshRecorder::m_pPipelineState");
-	*/
+	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"VisualizeMeshRecorder::m_pPipelineState");
 }
 
 VisualizeMeshRecorder::~VisualizeMeshRecorder()
@@ -77,45 +75,38 @@ VisualizeMeshRecorder::~VisualizeMeshRecorder()
 	SafeDelete(m_pRootSignature);
 }
 
-void VisualizeMeshRecorder::Record(VisualizeMeshRecordParams* pParams)
+void VisualizeMeshRecorder::Record(RenderPassParams* pParams)
 {
-	// Kolya: fix me
-	assert(false);
-	/*
-	pParams->m_pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
-	
+	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXCommandList* pCommandList = pParams->m_pCommandList;
+	DXBindingResourceList* pResources = pParams->m_pResources;
+	Mesh* pMesh = pParams->m_pMesh;
+		
+	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	// Kolya: Has to force clear state - otherwise VS Graphics Debugger will fail to make capture
-	pParams->m_pCommandList->GetDXObject()->ClearState(m_pPipelineState->GetDXObject());
+	pCommandList->GetDXObject()->ClearState(m_pPipelineState->GetDXObject());
+	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
+	
+	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
+	pCommandList->SetDescriptorHeaps(pEnv->m_pShaderVisibleSRVHeap);
+	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParam, pResources->m_SRVHeapStart);
 
-	pParams->m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);
-
-	if (pParams->m_pRTVTexture->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
-		pParams->m_pCommandList->TransitionBarrier(pParams->m_pRTVTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	if (pParams->m_pDSVTexture->GetState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
-		pParams->m_pCommandList->TransitionBarrier(pParams->m_pDSVTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-
-	pParams->m_pCommandList->SetDescriptorHeaps(pParams->m_pCBVSRVUAVDescriptorHeap);
-	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParam, pParams->m_CBVHandle);
-
-	pParams->m_pCommandList->OMSetRenderTargets(1, &pParams->m_RTVHandle, TRUE, &pParams->m_DSVHandle);
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = pResources->m_RTVHeapStart;
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHeapStart = pResources->m_DSVHeapStart;
+	pCommandList->OMSetRenderTargets(1, &rtvHeapStart, TRUE, &dsvHeapStart);
 			
-	pParams->m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	pParams->m_pCommandList->IASetVertexBuffers(0, 1, pParams->m_pMesh->GetVertexBufferView());
-	pParams->m_pCommandList->IASetIndexBuffer(pParams->m_pMesh->GetIndexBufferView());
+	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	pCommandList->IASetVertexBuffers(0, 1, pMesh->GetVertexBuffer()->GetVBView());
+	pCommandList->IASetIndexBuffer(pMesh->GetIndexBuffer()->GetIBView());
 
-	DXViewport viewport(0.0f, 0.0f, FLOAT(pParams->m_pRTVTexture->GetWidth()), FLOAT(pParams->m_pRTVTexture->GetHeight()));
-	pParams->m_pCommandList->RSSetViewports(1, &viewport);
+	pCommandList->RSSetViewports(1, pParams->m_pViewport);
 
-	DXRect scissorRect(ExtractRect(viewport));
-	pParams->m_pCommandList->RSSetScissorRects(1, &scissorRect);
+	DXRect scissorRect(ExtractRect(pParams->m_pViewport));
+	pCommandList->RSSetScissorRects(1, &scissorRect);
+	
+	assert(pMesh->GetNumSubMeshes() == 1);
+	const SubMeshData* pSubMeshData = pMesh->GetSubMeshes();
+	pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
 
-	assert(pParams->m_pMesh->GetNumSubMeshes() == 1);
-	const SubMeshData* pSubMeshData = pParams->m_pMesh->GetSubMeshes();
-	pParams->m_pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
-
-	if (pParams->m_pRTVEndState != nullptr)
-		pParams->m_pCommandList->TransitionBarrier(pParams->m_pRTVTexture, *pParams->m_pRTVEndState);
-
-	pParams->m_pCommandList->Close();
-	*/
+	pCommandList->Close();
 }

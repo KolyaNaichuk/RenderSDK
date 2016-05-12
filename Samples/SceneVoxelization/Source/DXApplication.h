@@ -7,6 +7,7 @@ class DXSwapChain;
 class DXCommandQueue;
 class DXCommandAllocator;
 class DXCommandList;
+class DXCommandListPool;
 class DXDescriptorHeap;
 class DXColorTexture;
 class DXDepthTexture;
@@ -28,6 +29,7 @@ class ViewFrustumCullingRecorder;
 struct DXHeapProperties;
 struct DXRenderEnvironment;
 struct DXBindingResourceList;
+struct DXViewport;
 
 enum
 { 
@@ -57,6 +59,7 @@ private:
 	DXCommandQueue* m_pCommandQueue;
 	DXCommandAllocator* m_CommandAllocators[kBackBufferCount];
 	DXCommandList* m_pCommandList;
+	DXCommandListPool* m_pCommandListPool;
 	DXHeapProperties* m_pDefaultHeapProps;
 	DXHeapProperties* m_pUploadHeapProps;
 	DXDescriptorHeap* m_pShaderInvisibleRTVHeap;
@@ -70,6 +73,7 @@ private:
 	DXColorTexture* m_pNormalTexture;
 	DXColorTexture* m_pSpecularTexture;
 	DXColorTexture* m_pAccumLightTexture;
+	DXViewport* m_pViewport;
 	DXBuffer* m_pObjectTransformBuffer;
 	DXBuffer* m_pCameraTransformBuffer;
 	DXBuffer* m_pGridBuffer;
@@ -89,7 +93,10 @@ private:
 	CreateVoxelGridRecorder* m_pCreateVoxelGridRecorder;
 	InjectVPLsIntoVoxelGridRecorder* m_pInjectVPLsIntoVoxelGridRecorder;
 	VisualizeVoxelGridRecorder* m_pVisualizeVoxelGridRecorder;
+	
 	VisualizeMeshRecorder* m_pVisualizeMeshRecorder;
+	DXBindingResourceList* m_VisualizeMeshResources[kBackBufferCount];
+
 	ViewFrustumCullingRecorder* m_pViewFrustumCullingRecorder;
 	DXBindingResourceList* m_pViewFrustumCullingResources;
 

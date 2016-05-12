@@ -13,4 +13,4 @@ struct DXRect : public D3D12_RECT
 	DXRect(LONG upperLeftX, LONG upperLeftY, LONG lowerRightX, LONG lowerRightY);
 };
 
-const DXRect ExtractRect(const DXViewport& viewport);
+const DXRect ExtractRect(const DXViewport* viewport);

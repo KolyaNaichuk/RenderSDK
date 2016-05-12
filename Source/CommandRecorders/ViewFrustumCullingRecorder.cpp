@@ -14,6 +14,8 @@ ViewFrustumCullingRecorder::ViewFrustumCullingRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
+	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+
 	const u16 threadGroupSize = 64;
 	m_NumThreadGroupsX = (u16)Ceil((f32)pParams->m_NumMeshes / (f32)threadGroupSize);
 
@@ -30,13 +32,13 @@ ViewFrustumCullingRecorder::ViewFrustumCullingRecorder(InitParams* pParams)
 	rootParams[kSRVRootParam] = DXRootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), &descriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
 
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new DXRootSignature(pParams->m_pEnv->m_pDevice, &rootSignatureDesc, L"ViewFrustumCullingRecorder::m_pRootSignature");
+	m_pRootSignature = new DXRootSignature(pEnv->m_pDevice, &rootSignatureDesc, L"ViewFrustumCullingRecorder::m_pRootSignature");
 
 	DXComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
-	m_pPipelineState = new DXPipelineState(pParams->m_pEnv->m_pDevice, &pipelineStateDesc, L"ViewFrustumCullingRecorder::m_pPipelineState");
+	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"ViewFrustumCullingRecorder::m_pPipelineState");
 }
 
 ViewFrustumCullingRecorder::~ViewFrustumCullingRecorder()

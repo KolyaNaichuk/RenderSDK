@@ -17,6 +17,8 @@ ClearVoxelGridRecorder::ClearVoxelGridRecorder(ClearVoxelGridInitParams* pParams
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
+	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+
 	const u16 numThreadsPerGroupX = 8;
 	const u16 numThreadsPerGroupY = 8;
 	const u16 numThreadsPerGroupZ = 8;
@@ -30,7 +32,7 @@ ClearVoxelGridRecorder::ClearVoxelGridRecorder(ClearVoxelGridInitParams* pParams
 	rootParams[kSRVRootParam] = DXRootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), &descriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
 		
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new DXRootSignature(pParams->m_pEnv->m_pDevice, &rootSignatureDesc, L"ClearVoxelGridRecorder::m_pRootSignature");
+	m_pRootSignature = new DXRootSignature(pEnv->m_pDevice, &rootSignatureDesc, L"ClearVoxelGridRecorder::m_pRootSignature");
 
 	std::string numThreadsPerGroupXStr = std::to_string(numThreadsPerGroupX);
 	std::string numThreadsPerGroupYStr = std::to_string(numThreadsPerGroupY);
@@ -49,7 +51,7 @@ ClearVoxelGridRecorder::ClearVoxelGridRecorder(ClearVoxelGridInitParams* pParams
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
-	m_pPipelineState = new DXPipelineState(pParams->m_pEnv->m_pDevice, &pipelineStateDesc, L"ClearVoxelGridRecorder::m_pPipelineState");
+	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"ClearVoxelGridRecorder::m_pPipelineState");
 }
 
 ClearVoxelGridRecorder::~ClearVoxelGridRecorder()

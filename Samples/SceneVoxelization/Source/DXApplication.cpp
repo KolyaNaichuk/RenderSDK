@@ -9,6 +9,7 @@
 #include "DX/DXResource.h"
 #include "DX/DXFence.h"
 #include "DX/DXRenderEnvironment.h"
+#include "DX/DXUtils.h"
 #include "DX/DXResourceList.h"
 #include "CommandRecorders/FillGBufferRecorder.h"
 #include "CommandRecorders/TiledShadingRecorder.h"
@@ -115,6 +116,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
 	, m_pCommandList(nullptr)
+	, m_pCommandListPool(nullptr)
 	, m_pDefaultHeapProps(new DXHeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new DXHeapProperties(D3D12_HEAP_TYPE_UPLOAD))
 	, m_pShaderInvisibleRTVHeap(nullptr)
@@ -128,6 +130,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pNormalTexture(nullptr)
 	, m_pSpecularTexture(nullptr)
 	, m_pAccumLightTexture(nullptr)
+	, m_pViewport(nullptr)
 	, m_pObjectTransformBuffer(nullptr)
 	, m_pCameraTransformBuffer(nullptr)
 	, m_pGridBuffer(nullptr)
@@ -151,12 +154,16 @@ DXApplication::DXApplication(HINSTANCE hApp)
 {
 	std::memset(m_CommandAllocators, 0, sizeof(m_CommandAllocators));
 	std::memset(m_FenceValues, 0, sizeof(m_FenceValues));
+	std::memset(m_VisualizeMeshResources, 0, sizeof(m_VisualizeMeshResources));
 }
 
 DXApplication::~DXApplication()
 {
 	for (UINT index = 0; index < kBackBufferCount; ++index)
+	{
 		SafeDelete(m_CommandAllocators[index]);
+		SafeDelete(m_VisualizeMeshResources[index]);
+	}		
 
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pMesh);
@@ -192,8 +199,10 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pDepthTexture);
 	SafeDelete(m_pCommandQueue);
 	SafeDelete(m_pCommandList);
+	SafeDelete(m_pCommandListPool);
 	SafeDelete(m_pSwapChain);
 	SafeDelete(m_pDevice);
+	SafeDelete(m_pViewport);
 }
 
 void DXApplication::OnInit()
@@ -226,18 +235,28 @@ void DXApplication::OnInit()
 
 	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 4, false);
 	m_pDSVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pDSVDescriptorHeap");
+	
+	for (UINT index = 0; index < kBackBufferCount; ++index)
+		m_CommandAllocators[index] = new DXCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
 
+	m_pCommandListPool = new DXCommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pCommandList = new DXCommandList(m_pDevice, m_CommandAllocators[m_BackBufferIndex], nullptr, L"m_pCommandList");
+	
 	m_pEnv->m_pDevice = m_pDevice;
+	m_pEnv->m_pCommandListPool = m_pCommandListPool;
 	m_pEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
 	m_pEnv->m_pUploadHeapProps = m_pUploadHeapProps;
 	m_pEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
 	m_pEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
 	m_pEnv->m_pShaderInvisibleDSVHeap = m_pDSVDescriptorHeap;
 	m_pEnv->m_pShaderInvisibleSamplerHeap = m_pShaderInvisibleSamplerHeap;
+	m_pEnv->m_pShaderVisibleSRVHeap = m_pShaderVisibleSRVHeap;
 
 	const RECT bufferRect = m_pWindow->GetClientRect();
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
 	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
+
+	m_pViewport = new DXViewport(0.0f, 0.0f, (FLOAT)bufferWidth, (float)bufferHeight);
 	
 	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(bufferWidth) / FLOAT(bufferHeight));
 	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
@@ -283,13 +302,8 @@ void DXApplication::OnInit()
 	DXStructuredBufferDesc gridBufferDesc(numGridElements, sizeof(Voxel), true, true);
 	m_pGridBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &gridBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pGridBuffer");
 	
-	for (UINT index = 0; index < kBackBufferCount; ++index)
-		m_CommandAllocators[index] = new DXCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
-
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
-
-	m_pCommandList = new DXCommandList(m_pDevice, m_CommandAllocators[m_BackBufferIndex], nullptr, L"m_pCommandList");
 
 	const Vector3f positions[] =
 	{
@@ -538,14 +552,29 @@ void DXApplication::OnInit()
 
 	//m_pVisualizeVoxelGridRecorder = new VisualizeVoxelGridRecorder(&visualizeGridParams);
 
-	VisualizeMeshInitParams visualizeMeshParams;
+	VisualizeMeshRecorder::InitParams visualizeMeshParams;
 	visualizeMeshParams.m_pEnv = m_pEnv;
 	visualizeMeshParams.m_MeshDataElement = MeshDataElement_Normal;
 	visualizeMeshParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
 	visualizeMeshParams.m_RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	visualizeMeshParams.m_DSVFormat = DXGI_FORMAT_D32_FLOAT;
 		
-	//m_pVisualizeMeshRecorder = new VisualizeMeshRecorder(&visualizeMeshParams);
+	m_pVisualizeMeshRecorder = new VisualizeMeshRecorder(&visualizeMeshParams);
+
+	for (u8 index = 0; index < kBackBufferCount; ++index)
+	{
+		DXColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
+
+		m_VisualizeMeshResources[index] = new DXBindingResourceList();
+		m_VisualizeMeshResources[index]->m_ResourceTransitions.emplace_back(pRenderTarget, pRenderTarget->GetWriteState());
+		m_VisualizeMeshResources[index]->m_ResourceTransitions.emplace_back(m_pDepthTexture, m_pDepthTexture->GetWriteState());
+		
+		m_VisualizeMeshResources[index]->m_RTVHeapStart = pRenderTarget->GetRTVHandle();
+		m_VisualizeMeshResources[index]->m_DSVHeapStart = m_pDepthTexture->GetDSVHandle();
+		
+		m_VisualizeMeshResources[index]->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+		m_pDevice->CopyDescriptor(m_VisualizeMeshResources[index]->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
 
 	// Kolya: Should be moved to OnUpdate
 	// Temporarily moved constant buffer update here to overcome frame capture crash on AMD R9 290
@@ -667,19 +696,19 @@ void DXApplication::OnRender()
 //	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);
 //	WaitForGPU();
 
-	/*
-	VisualizeMeshRecordParams visualizeMeshParams;
+	VisualizeMeshRecorder::RenderPassParams visualizeMeshParams;
 	visualizeMeshParams.m_pEnv = m_pEnv;
-	visualizeMeshParams.m_pMesh = m_pMesh;
 	visualizeMeshParams.m_pCommandList = m_pCommandList;
 	visualizeMeshParams.m_pCommandAllocator = pCommandAllocator;
-	visualizeMeshParams.m_pRenderTarget = pRenderTarget;
-	visualizeMeshParams.m_pDepthTexture = m_pDepthTexture;
-	
+	visualizeMeshParams.m_pResources = m_VisualizeMeshResources[m_BackBufferIndex];
+	visualizeMeshParams.m_pViewport = m_pViewport;
+	visualizeMeshParams.m_pMesh = m_pMesh;
+
 	m_pVisualizeMeshRecorder->Record(&visualizeMeshParams);
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 	WaitForGPU();
-	
+
+	/*
 	ClearVoxelGridRecordParams clearGridParams;
 	clearGridParams.m_pEnv = m_pEnv;
 	clearGridParams.m_pCommandAllocator = pCommandAllocator;
@@ -721,7 +750,17 @@ void DXApplication::OnRender()
 
 	m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
 //	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);
-	*/	
+	*/
+	
+	if (pRenderTarget->GetState() != D3D12_RESOURCE_STATE_PRESENT)
+	{
+		m_pCommandList->Reset(pCommandAllocator, nullptr);
+		m_pCommandList->TransitionBarrier(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
+		m_pCommandList->Close();
+
+		m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, nullptr);
+	}
+
 	m_pSwapChain->Present(1, 0);
 	MoveToNextFrame();
 }

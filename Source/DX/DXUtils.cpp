@@ -18,9 +18,9 @@ DXRect::DXRect(LONG upperLeftX, LONG upperLeftY, LONG lowerRightX, LONG lowerRig
 	bottom = lowerRightY;
 }
 
-const DXRect ExtractRect(const DXViewport& viewport)
+const DXRect ExtractRect(const DXViewport* viewport)
 {
-	return DXRect(LONG(viewport.TopLeftX), LONG(viewport.TopLeftY),
-		LONG(viewport.TopLeftX + viewport.Width),
-		LONG(viewport.TopLeftY + viewport.Height));
+	return DXRect(LONG(viewport->TopLeftX), LONG(viewport->TopLeftY),
+		LONG(viewport->TopLeftX + viewport->Width),
+		LONG(viewport->TopLeftY + viewport->Height));
 }

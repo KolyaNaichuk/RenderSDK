@@ -64,12 +64,15 @@ void DXCommandQueue::ExecuteCommandLists(DXRenderEnvironment* pEnv, UINT numComm
 				}
 			}
 
-			DXCommandList* pBarrierCommandList = pCommandListPool->Create(pBarrierCommandAllocator, nullptr, L"pBarrierCommandList");			
-			pBarrierCommandList->ResourceBarrier(resourceBarriers.size(), &resourceBarriers[0]);
-			pBarrierCommandList->Close();
+			if (!resourceBarriers.empty())
+			{
+				DXCommandList* pBarrierCommandList = pCommandListPool->Create(pBarrierCommandAllocator, nullptr, L"pBarrierCommandList");
+				pBarrierCommandList->ResourceBarrier(resourceBarriers.size(), &resourceBarriers[0]);
+				pBarrierCommandList->Close();
 
-			barrierCommandLists.emplace_back(pBarrierCommandList);
-			commandLists.emplace_back(pBarrierCommandList->GetDXObject());
+				barrierCommandLists.emplace_back(pBarrierCommandList);
+				commandLists.emplace_back(pBarrierCommandList->GetDXObject());
+			}
 		}
 		commandLists.emplace_back(pCommandList->GetDXObject());
 	}

@@ -6,10 +6,9 @@ class DXCommandList;
 class DXCommandAllocator;
 class DXRootSignature;
 class DXPipelineState;
-class DXColorTexture;
-class DXDepthTexture;
-class DXBuffer;
 struct DXRenderEnvironment;
+struct DXBindingResourceList;
+struct DXViewport;
 
 enum MeshDataElement
 {
@@ -18,33 +17,31 @@ enum MeshDataElement
 	MeshDataElement_TexCoords
 };
 
-struct VisualizeMeshInitParams
-{
-	DXRenderEnvironment* m_pEnv;
-	DXGI_FORMAT m_RTVFormat;
-	DXGI_FORMAT m_DSVFormat;
-	MeshDataElement m_MeshDataElement;
-	u8 m_VertexElementFlags;
-};
-
-struct VisualizeMeshRecordParams
-{
-	DXRenderEnvironment* m_pEnv;
-	DXCommandList* m_pCommandList;
-	DXCommandAllocator* m_pCommandAllocator;
-	DXColorTexture* m_pRenderTarget;
-	DXDepthTexture* m_pDepthTexture;
-	DXBuffer* m_pTransformBuffer;
-	Mesh* m_pMesh;
-};
-
 class VisualizeMeshRecorder
 {
 public:
-	VisualizeMeshRecorder(VisualizeMeshInitParams* pParams);
+	struct InitParams
+	{
+		DXRenderEnvironment* m_pEnv;
+		DXGI_FORMAT m_RTVFormat;
+		DXGI_FORMAT m_DSVFormat;
+		MeshDataElement m_MeshDataElement;
+		u8 m_VertexElementFlags;
+	};
+	struct RenderPassParams
+	{
+		DXRenderEnvironment* m_pEnv;
+		DXCommandList* m_pCommandList;
+		DXCommandAllocator* m_pCommandAllocator;
+		DXBindingResourceList* m_pResources;
+		DXViewport* m_pViewport;
+		Mesh* m_pMesh;
+	};
+
+	VisualizeMeshRecorder(InitParams* pParams);
 	~VisualizeMeshRecorder();
 
-	void Record(VisualizeMeshRecordParams* pParams);
+	void Record(RenderPassParams* pParams);
 
 private:
 	DXRootSignature* m_pRootSignature;
