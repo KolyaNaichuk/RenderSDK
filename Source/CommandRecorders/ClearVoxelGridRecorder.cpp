@@ -75,6 +75,6 @@ void ClearVoxelGridRecorder::Record(ClearVoxelGridRecordParams* pParams)
 	
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, m_NumThreadGroupsZ);
 	
-	assert(false && "kGridBufferUAVRootParam should be set to nullHandle");	
+	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pEnv->m_NullSRVHeapStart);
 	pCommandList->Close();
 }

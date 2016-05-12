@@ -37,4 +37,6 @@ struct DXRenderEnvironment
 
 	DXDescriptorHeap* m_pShaderVisibleSRVHeap;
 	DXDescriptorHeap* m_pShaderVisibleSamplerHeap;
+
+	DXDescriptorHandle m_NullSRVHeapStart;
 };

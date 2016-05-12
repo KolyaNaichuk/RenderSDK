@@ -83,8 +83,6 @@ void VisualizeMeshRecorder::Record(RenderPassParams* pParams)
 	Mesh* pMesh = pParams->m_pMesh;
 		
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
-	// Kolya: Has to force clear state - otherwise VS Graphics Debugger will fail to make capture
-	pCommandList->GetDXObject()->ClearState(m_pPipelineState->GetDXObject());
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	
 	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);

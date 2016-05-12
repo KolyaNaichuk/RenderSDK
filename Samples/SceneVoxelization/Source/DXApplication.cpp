@@ -251,6 +251,7 @@ void DXApplication::OnInit()
 	m_pEnv->m_pShaderInvisibleDSVHeap = m_pDSVDescriptorHeap;
 	m_pEnv->m_pShaderInvisibleSamplerHeap = m_pShaderInvisibleSamplerHeap;
 	m_pEnv->m_pShaderVisibleSRVHeap = m_pShaderVisibleSRVHeap;
+	m_pEnv->m_NullSRVHeapStart = m_pShaderVisibleSRVHeap->AllocateRange(10);
 
 	const RECT bufferRect = m_pWindow->GetClientRect();
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
@@ -708,7 +709,6 @@ void DXApplication::OnRender()
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 	WaitForGPU();
 
-	/*
 	ClearVoxelGridRecordParams clearGridParams;
 	clearGridParams.m_pEnv = m_pEnv;
 	clearGridParams.m_pCommandAllocator = pCommandAllocator;
@@ -716,9 +716,10 @@ void DXApplication::OnRender()
 	clearGridParams.m_pResources = m_pClearVoxelGridResources;
 	
 	m_pClearVoxelGridRecorder->Record(&clearGridParams);
-//	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);
+	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 	WaitForGPU();
 
+	/*
 	CreateVoxelGridRecordParams createGridParams;
 	createGridParams.m_pEnv = m_pEnv;
 	createGridParams.m_pCommandList = m_pCommandList;
