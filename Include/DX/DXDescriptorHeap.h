@@ -7,22 +7,23 @@ class DXDevice;
 struct DXDescriptorHandle
 {
 	DXDescriptorHandle();
-	DXDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle);
+	DXDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, UINT descriptorSize);
 	DXDescriptorHandle(DXDescriptorHandle firstDescriptor, INT offsetInDescriptors, UINT descriptorSize);
-
+	
 	operator D3D12_CPU_DESCRIPTOR_HANDLE () const { return m_CPUHandle; }
 	operator D3D12_GPU_DESCRIPTOR_HANDLE () const { return m_GPUHandle; }
 
 	bool IsValid() const;
 	bool IsShaderVisible() const;
 
-	void Offset(INT offsetInDescriptors, UINT descriptorSize);
+	void Offset(UINT offsetInDescriptors);
 
 	void Reset(D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle);
 	void Reset();
 
 	D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE m_GPUHandle;
+	UINT m_DescriptorSize;
 };
 
 struct DXDescriptorHeapDesc : public D3D12_DESCRIPTOR_HEAP_DESC
@@ -43,6 +44,6 @@ public:
 private:
 	DXDescriptorHandle m_FirstDescriptor;	
 	UINT m_DescriptorSize;
-	UINT m_UsedNumDescriptors;
-	UINT m_ReservedNumDescriptors;
+	UINT m_NumUsedDescriptors;
+	UINT m_NumReservedDescriptors;
 };

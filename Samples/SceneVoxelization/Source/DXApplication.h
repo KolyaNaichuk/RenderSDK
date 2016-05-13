@@ -91,6 +91,8 @@ private:
 	DXBindingResourceList* m_pClearVoxelGridResources;
 
 	CreateVoxelGridRecorder* m_pCreateVoxelGridRecorder;
+	DXBindingResourceList* m_pCreateVoxelGridResources;
+
 	InjectVPLsIntoVoxelGridRecorder* m_pInjectVPLsIntoVoxelGridRecorder;
 	VisualizeVoxelGridRecorder* m_pVisualizeVoxelGridRecorder;
 	

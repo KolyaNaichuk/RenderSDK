@@ -5,15 +5,15 @@
 #include "DX/DXResource.h"
 #include "DX/DXUtils.h"
 #include "DX/DXDescriptorHeap.h"
+#include "DX/DXRenderEnvironment.h"
 #include "Common/Mesh.h"
 #include "Common/MeshData.h"
 
 enum RootParams
 {
-	kObjectTransformCBVRootParam = 0,
-	kCameraTransformCBVRootParam,
-	kGridConfigCBVRootParam,
-	kGridBufferUAVRootParam,
+	kCBVRootParamVS = 0,
+	kCBVRootParamGS,
+	kSRVRootParamPS,
 
 #ifdef HAS_TEXCOORD
 	kColorSRVRootParam,
@@ -23,13 +23,12 @@ enum RootParams
 	kNumRootParams
 };
 
-CreateVoxelGridRecorder::CreateVoxelGridRecorder(CreateVoxelGridInitParams* pParams)
+CreateVoxelGridRecorder::CreateVoxelGridRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
-	// Kolya: fix me
-	assert(false);
-	/*
+	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+
 	u8 inputElementFlags = 0;
 	inputElementFlags |= VertexElementFlag_Position;
 	inputElementFlags |= VertexElementFlag_Normal;
@@ -44,11 +43,10 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(CreateVoxelGridInitParams* pPar
 	DXShader vertexShader(L"Shaders//CreateVoxelGridVS.hlsl", "Main", "vs_4_0");
 	DXShader geometryShader(L"Shaders//CreateVoxelGridGS.hlsl", "Main", "gs_4_0");
 	DXShader pixelShader(L"Shaders//CreateVoxelGridPS.hlsl", "Main", "ps_5_1");
-
-	DXCBVRange objectTransformCBVRange(1, 0);
-	DXCBVRange cameraTransformCBVRange(1, 0);
-	DXCBVRange gridConfigCBVRange(1, 0);
-	DXUAVRange gridBufferUAVRange(1, 0);
+	
+	D3D12_DESCRIPTOR_RANGE descriptorRangesVS[] = {DXCBVRange(1, 0)};
+	D3D12_DESCRIPTOR_RANGE descriptorRangesGS[] = {DXCBVRange(1, 0)};
+	D3D12_DESCRIPTOR_RANGE descriptorRangesPS[] = {DXCBVRange(1, 0), DXUAVRange(1, 0)};
 
 #ifdef HAS_TEXCOORD
 	DXSRVRange colorSRVRange(1, 0);
@@ -56,18 +54,17 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(CreateVoxelGridInitParams* pPar
 #endif // HAS_TEXCOORD
 	
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kObjectTransformCBVRootParam] = DXRootDescriptorTableParameter(1, &objectTransformCBVRange, D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParams[kCameraTransformCBVRootParam] = DXRootDescriptorTableParameter(1, &cameraTransformCBVRange, D3D12_SHADER_VISIBILITY_GEOMETRY);
-	rootParams[kGridConfigCBVRootParam] = DXRootDescriptorTableParameter(1, &gridConfigCBVRange, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParams[kGridBufferUAVRootParam] = DXRootDescriptorTableParameter(1, &gridBufferUAVRange, D3D12_SHADER_VISIBILITY_PIXEL);
-
+	rootParams[kCBVRootParamVS] = DXRootDescriptorTableParameter(ARRAYSIZE(descriptorRangesVS), &descriptorRangesVS[0], D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParams[kCBVRootParamGS] = DXRootDescriptorTableParameter(ARRAYSIZE(descriptorRangesGS), &descriptorRangesGS[0], D3D12_SHADER_VISIBILITY_GEOMETRY);
+	rootParams[kSRVRootParamPS] = DXRootDescriptorTableParameter(ARRAYSIZE(descriptorRangesPS), &descriptorRangesPS[0], D3D12_SHADER_VISIBILITY_PIXEL);
+		
 #ifdef HAS_TEXCOORD
 	rootParams[kColorSRVRootParam] = DXRootDescriptorTableParameter(1, &colorSRVRange, D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParams[kLinearSamplerRootParam] = DXRootDescriptorTableParameter(1, &linearSamplerRange, D3D12_SHADER_VISIBILITY_PIXEL);
 #endif // HAS_TEXCOORD
 	
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new DXRootSignature(pParams->m_pDevice, &rootSignatureDesc, L"CreateVoxelGridRecorder::m_pRootSignature");
+	m_pRootSignature = new DXRootSignature(pEnv->m_pDevice, &rootSignatureDesc, L"CreateVoxelGridRecorder::m_pRootSignature");
 
 	std::vector<DXInputElementDesc> inputElementDescs;
 	GenerateInputElements(inputElementDescs, inputElementFlags, pParams->m_VertexElementFlags);
@@ -81,8 +78,7 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(CreateVoxelGridInitParams* pPar
 	pipelineStateDesc.SetInputLayout(inputElementDescs.size(), &inputElementDescs[0]);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	
-	m_pPipelineState = new DXPipelineState(pParams->m_pDevice, &pipelineStateDesc, L"CreateVoxelGridRecorder::m_pPipelineState");
-	*/
+	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"CreateVoxelGridRecorder::m_pPipelineState");
 }
 
 CreateVoxelGridRecorder::~CreateVoxelGridRecorder()
@@ -91,57 +87,43 @@ CreateVoxelGridRecorder::~CreateVoxelGridRecorder()
 	SafeDelete(m_pRootSignature);
 }
 
-void CreateVoxelGridRecorder::Record(CreateVoxelGridRecordParams* pParams)
+void CreateVoxelGridRecorder::Record(RenderPassParams* pParams)
 {
-	// Kolya: fix me
-	assert(false);
-	/*
-	pParams->m_pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
+	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXCommandList* pCommandList = pParams->m_pCommandList;
+	DXBindingResourceList* pResources = pParams->m_pResources;
+	Mesh* pMesh = pParams->m_pMesh;
+
+	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
+	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
+			
+	pCommandList->OMSetRenderTargets(0, nullptr);
 	
-	// Kolya: Has to force clear state - otherwise VS Graphics Debugger will fail to make capture
-	pParams->m_pCommandList->GetDXObject()->ClearState(m_pPipelineState->GetDXObject());
+	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
+	pCommandList->SetDescriptorHeaps(pEnv->m_pShaderVisibleSRVHeap);
 
-	pParams->m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);
+	DXDescriptorHandle srvHeapStart = pResources->m_SRVHeapStart;
+	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamVS, srvHeapStart);
+
+	srvHeapStart.Offset(1);
+	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamGS, srvHeapStart);
+
+	srvHeapStart.Offset(1);
+	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParamPS, srvHeapStart);	
 	
-	if (pParams->m_pGridBuffer->GetState() != D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
-		pParams->m_pCommandList->TransitionBarrier(pParams->m_pGridBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-#ifdef HAS_TEXCOORD
-	if (pParams->m_pColorTexture->GetState() != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
-		pParams->m_pCommandList->TransitionBarrier(pParams->m_pColorTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-#endif // HAS_TEXCOORD
-		
-	pParams->m_pCommandList->OMSetRenderTargets(0, nullptr);
-
-	pParams->m_pCommandList->SetDescriptorHeaps(pParams->m_pCBVSRVUAVDescriptorHeap);
-	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kObjectTransformCBVRootParam, pParams->m_ObjectTransformCBVHandle);
-	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kCameraTransformCBVRootParam, pParams->m_CameraTransformCBVHandle);
-	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kGridConfigCBVRootParam, pParams->m_GridConfigCBVHandle);
-	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kGridBufferUAVRootParam, pParams->m_GridBufferUAVHandle);
-
-#ifdef HAS_TEXCOORD
-	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kColorSRVRootParam, pParams->m_ColorSRVHandle);
-	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kLinearSamplerRootParam, pParams->m_LinearSamplerHandle);
-#endif // HAS_TEXCOORD
-
-	pParams->m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	pParams->m_pCommandList->IASetVertexBuffers(0, 1, pParams->m_pMesh->GetVertexBufferView());
-	pParams->m_pCommandList->IASetIndexBuffer(pParams->m_pMesh->GetIndexBufferView());
+	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	pCommandList->IASetVertexBuffers(0, 1, pMesh->GetVertexBuffer()->GetVBView());
+	pCommandList->IASetIndexBuffer(pMesh->GetIndexBuffer()->GetIBView());
 	
-	// Kolya: Hard-coding viewport size for now
-	DXViewport viewport(0.0f, 0.0f, 924.0f, 668.0f);
-	pParams->m_pCommandList->RSSetViewports(1, &viewport);
+	pCommandList->RSSetViewports(1, pParams->m_pViewport);
 	
-	DXRect scissorRect(ExtractRect(viewport));
-	pParams->m_pCommandList->RSSetScissorRects(1, &scissorRect);
+	DXRect scissorRect(ExtractRect(pParams->m_pViewport));
+	pCommandList->RSSetScissorRects(1, &scissorRect);
 	
-	assert(pParams->m_pMesh->GetNumSubMeshes() == 1);
-	const SubMeshData* pSubMeshData = pParams->m_pMesh->GetSubMeshes();
-	pParams->m_pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
+	assert(pMesh->GetNumSubMeshes() == 1);
+	const SubMeshData* pSubMeshData = pMesh->GetSubMeshes();
+	pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
 
-	D3D12_GPU_DESCRIPTOR_HANDLE nullHandle = pParams->m_pCBVSRVUAVDescriptorHeap->GetGPUDescriptor(0);
-	pParams->m_pCommandList->SetGraphicsRootDescriptorTable(kGridBufferUAVRootParam, nullHandle);
-
-	pParams->m_pCommandList->Close();
-	*/
+	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParamPS, pEnv->m_NullSRVHeapStart);
+	pCommandList->Close();
 }

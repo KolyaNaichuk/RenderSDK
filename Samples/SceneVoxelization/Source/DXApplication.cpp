@@ -144,6 +144,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pClearVoxelGridRecorder(nullptr)
 	, m_pClearVoxelGridResources(nullptr)
 	, m_pCreateVoxelGridRecorder(nullptr)
+	, m_pCreateVoxelGridResources(nullptr)
 	, m_pInjectVPLsIntoVoxelGridRecorder(nullptr)
 	, m_pVisualizeVoxelGridRecorder(nullptr)
 	, m_pVisualizeMeshRecorder(nullptr)
@@ -170,6 +171,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pClearVoxelGridRecorder);
 	SafeDelete(m_pClearVoxelGridResources);
 	SafeDelete(m_pCreateVoxelGridRecorder);
+	SafeDelete(m_pCreateVoxelGridResources);
 	SafeDelete(m_pInjectVPLsIntoVoxelGridRecorder);
 	SafeDelete(m_pVisualizeVoxelGridRecorder);
 	SafeDelete(m_pVisualizeMeshRecorder);
@@ -227,7 +229,7 @@ void DXApplication::OnInit()
 	DXDescriptorHeapDesc shaderVisibleSamplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 16, true);
 	m_pShaderVisibleSamplerHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSamplerHeapDesc, L"m_pShaderVisibleSamplerHeap");
 
-	DXDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 16, true);
+	DXDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32, true);
 	m_pShaderVisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
 	DXDescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 16, false);
@@ -533,11 +535,19 @@ void DXApplication::OnInit()
 	m_pDevice->CopyDescriptor(m_pClearVoxelGridResources->m_SRVHeapStart, m_pGridConfigBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	CreateVoxelGridInitParams createGridParams;
+	CreateVoxelGridRecorder::InitParams createGridParams;
 	createGridParams.m_pEnv = m_pEnv;
 	createGridParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
 
-	//m_pCreateVoxelGridRecorder = new CreateVoxelGridRecorder(&createGridParams);
+	m_pCreateVoxelGridRecorder = new CreateVoxelGridRecorder(&createGridParams);
+
+	m_pCreateVoxelGridResources = new DXBindingResourceList();
+	m_pCreateVoxelGridResources->m_ResourceTransitions.emplace_back(m_pGridBuffer, m_pGridBuffer->GetWriteState());
+	m_pCreateVoxelGridResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+	m_pDevice->CopyDescriptor(m_pCreateVoxelGridResources->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pCameraTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridConfigBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	InjectVPLsIntoVoxelGridRecorder::InitPrams injectVPLsParams;
 	injectVPLsParams.m_pEnv = m_pEnv;
@@ -719,15 +729,12 @@ void DXApplication::OnRender()
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 	WaitForGPU();
 
-	/*
-	CreateVoxelGridRecordParams createGridParams;
+	CreateVoxelGridRecorder::RenderPassParams createGridParams;
 	createGridParams.m_pEnv = m_pEnv;
 	createGridParams.m_pCommandList = m_pCommandList;
 	createGridParams.m_pCommandAllocator = pCommandAllocator;
-	createGridParams.m_pObjectTransformBuffer = m_pObjectTransformBuffer;
-	createGridParams.m_pCameraTransformBuffer = m_pCameraTransformBuffer;
-	createGridParams.m_pGridConfigBuffer = m_pGridConfigBuffer;
-	createGridParams.m_pGridBuffer = m_pGridBuffer;
+	createGridParams.m_pResources = m_pCreateVoxelGridResources;
+	createGridParams.m_pViewport = m_pViewport;
 	createGridParams.m_pMesh = m_pMesh;
 
 #ifdef HAS_TEXCOORD
@@ -737,9 +744,10 @@ void DXApplication::OnRender()
 #endif // HAS_TEXCOORD
 
 	m_pCreateVoxelGridRecorder->Record(&createGridParams);
-//	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);
+	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 	WaitForGPU();
-
+	
+	/*
 	VisualizeVoxelGridRecordParams visualizeGridParams;
 	visualizeGridParams.m_pCommandList = m_pCommandList;
 	visualizeGridParams.m_pCommandAllocator = pCommandAllocator;
