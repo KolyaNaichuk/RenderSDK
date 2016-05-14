@@ -1,7 +1,8 @@
 #pragma once
 
+#include "DX/DXDescriptorHeap.h"
+
 class DXDevice;
-class DXDescriptorHeap;
 class DXCommandListPool;
 class DXCommandAllocatorPool;
 struct DXHeapProperties;
