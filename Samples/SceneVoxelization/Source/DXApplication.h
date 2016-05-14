@@ -94,8 +94,10 @@ private:
 	DXBindingResourceList* m_pCreateVoxelGridResources;
 
 	InjectVPLsIntoVoxelGridRecorder* m_pInjectVPLsIntoVoxelGridRecorder;
+
 	VisualizeVoxelGridRecorder* m_pVisualizeVoxelGridRecorder;
-	
+	DXBindingResourceList* m_VisualizeVoxelGridResources[kBackBufferCount];
+
 	VisualizeMeshRecorder* m_pVisualizeMeshRecorder;
 	DXBindingResourceList* m_VisualizeMeshResources[kBackBufferCount];
 

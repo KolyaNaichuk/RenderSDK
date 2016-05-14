@@ -13,7 +13,7 @@ enum RootParams
 	kNumRootParams
 };
 
-ClearVoxelGridRecorder::ClearVoxelGridRecorder(ClearVoxelGridInitParams* pParams)
+ClearVoxelGridRecorder::ClearVoxelGridRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
@@ -60,7 +60,7 @@ ClearVoxelGridRecorder::~ClearVoxelGridRecorder()
 	SafeDelete(m_pRootSignature);
 }
 
-void ClearVoxelGridRecorder::Record(ClearVoxelGridRecordParams* pParams)
+void ClearVoxelGridRecorder::Record(RenderPassParams* pParams)
 {
 	DXRenderEnvironment* pEnv = pParams->m_pEnv;
 	DXCommandList* pCommandList = pParams->m_pCommandList;

@@ -9,29 +9,29 @@ class DXPipelineState;
 struct DXRenderEnvironment;
 struct DXBindingResourceList;
 
-struct ClearVoxelGridInitParams
-{
-	DXRenderEnvironment* m_pEnv;
-	u16 m_NumGridCellsX;
-	u16 m_NumGridCellsY;
-	u16 m_NumGridCellsZ;
-};
-
-struct ClearVoxelGridRecordParams
-{
-	DXRenderEnvironment* m_pEnv;
-	DXCommandList* m_pCommandList;
-	DXCommandAllocator* m_pCommandAllocator;
-	DXBindingResourceList* m_pResources;
-};
-
 class ClearVoxelGridRecorder
 {
 public:
-	ClearVoxelGridRecorder(ClearVoxelGridInitParams* pParams);
+	struct InitParams
+	{
+		DXRenderEnvironment* m_pEnv;
+		u16 m_NumGridCellsX;
+		u16 m_NumGridCellsY;
+		u16 m_NumGridCellsZ;
+	};
+
+	struct RenderPassParams
+	{
+		DXRenderEnvironment* m_pEnv;
+		DXCommandList* m_pCommandList;
+		DXCommandAllocator* m_pCommandAllocator;
+		DXBindingResourceList* m_pResources;
+	};
+
+	ClearVoxelGridRecorder(InitParams* pParams);
 	~ClearVoxelGridRecorder();
 
-	void Record(ClearVoxelGridRecordParams* pParams);
+	void Record(RenderPassParams* pParams);
 
 private:
 	DXRootSignature* m_pRootSignature;

@@ -6,36 +6,33 @@ class DXCommandList;
 class DXCommandAllocator;
 class DXRootSignature;
 class DXPipelineState;
-class DXColorTexture;
-class DXDepthTexture;
-class DXBuffer;
+
 struct DXRenderEnvironment;
-
-struct VisualizeVoxelGridInitParams
-{
-	DXRenderEnvironment* m_pEnv;
-	DXGI_FORMAT m_RTVFormat;
-};
-
-struct VisualizeVoxelGridRecordParams
-{
-	DXRenderEnvironment* m_pEnv;
-	DXCommandList* m_pCommandList;
-	DXCommandAllocator* m_pCommandAllocator;
-	DXColorTexture* m_pRenderTarget;
-	DXDepthTexture* m_pDepthTexture;
-	DXBuffer* m_pGridBuffer;
-	DXBuffer* m_pGridConfigBuffer;
-	DXBuffer* m_pCameraTransformBuffer;
-};
+struct DXBindingResourceList;
+struct DXViewport;
 
 class VisualizeVoxelGridRecorder
 {
 public:
-	VisualizeVoxelGridRecorder(VisualizeVoxelGridInitParams* pParams);
+	struct InitParams
+	{
+		DXRenderEnvironment* m_pEnv;
+		DXGI_FORMAT m_RTVFormat;
+	};
+	
+	struct RenderPassParams
+	{
+		DXRenderEnvironment* m_pEnv;
+		DXCommandList* m_pCommandList;
+		DXCommandAllocator* m_pCommandAllocator;
+		DXBindingResourceList* m_pResources;
+		DXViewport* m_pViewport;
+	};
+
+	VisualizeVoxelGridRecorder(InitParams* pParams);
 	~VisualizeVoxelGridRecorder();
 
-	void Record(VisualizeVoxelGridRecordParams* pParams);
+	void Record(RenderPassParams* pParams);
 
 private:
 	DXRootSignature* m_pRootSignature;

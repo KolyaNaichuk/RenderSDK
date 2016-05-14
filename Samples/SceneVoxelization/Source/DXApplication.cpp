@@ -156,6 +156,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	std::memset(m_CommandAllocators, 0, sizeof(m_CommandAllocators));
 	std::memset(m_FenceValues, 0, sizeof(m_FenceValues));
 	std::memset(m_VisualizeMeshResources, 0, sizeof(m_VisualizeMeshResources));
+	std::memset(m_VisualizeVoxelGridResources, 0, sizeof(m_VisualizeVoxelGridResources));
 }
 
 DXApplication::~DXApplication()
@@ -164,6 +165,7 @@ DXApplication::~DXApplication()
 	{
 		SafeDelete(m_CommandAllocators[index]);
 		SafeDelete(m_VisualizeMeshResources[index]);
+		SafeDelete(m_VisualizeVoxelGridResources[index]);
 	}		
 
 	SafeDelete(m_pCamera);
@@ -521,7 +523,7 @@ void DXApplication::OnInit()
 
 	//m_pTiledShadingRecorder = new TiledShadingRecorder(&tiledShadingParams);
 	
-	ClearVoxelGridInitParams clearGridParams;
+	ClearVoxelGridRecorder::InitParams clearGridParams;
 	clearGridParams.m_pEnv = m_pEnv;
 	clearGridParams.m_NumGridCellsX = kNumGridCellsX;
 	clearGridParams.m_NumGridCellsY = kNumGridCellsY;
@@ -557,18 +559,35 @@ void DXApplication::OnInit()
 
 	//m_pInjectVPLsIntoVoxelGridRecorder = new InjectVPLsIntoVoxelGridRecorder(&injectVPLsParams);
 
-	VisualizeVoxelGridInitParams visualizeGridParams;
+	VisualizeVoxelGridRecorder::InitParams visualizeGridParams;
 	visualizeGridParams.m_pEnv = m_pEnv;
-	visualizeGridParams.m_RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+	visualizeGridParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
+	
+	m_pVisualizeVoxelGridRecorder = new VisualizeVoxelGridRecorder(&visualizeGridParams);
 
-	//m_pVisualizeVoxelGridRecorder = new VisualizeVoxelGridRecorder(&visualizeGridParams);
+	for (u8 index = 0; index < kBackBufferCount; ++index)
+	{
+		DXColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
 
+		m_VisualizeVoxelGridResources[index] = new DXBindingResourceList();
+		m_VisualizeVoxelGridResources[index]->m_ResourceTransitions.emplace_back(pRenderTarget, pRenderTarget->GetWriteState());
+		m_VisualizeVoxelGridResources[index]->m_ResourceTransitions.emplace_back(m_pDepthTexture, m_pDepthTexture->GetReadState());
+
+		m_VisualizeVoxelGridResources[index]->m_RTVHeapStart = pRenderTarget->GetRTVHandle();
+		m_VisualizeVoxelGridResources[index]->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+
+		m_pDevice->CopyDescriptor(m_VisualizeVoxelGridResources[index]->m_SRVHeapStart, m_pGridConfigBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pCameraTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDepthTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
+	
 	VisualizeMeshRecorder::InitParams visualizeMeshParams;
 	visualizeMeshParams.m_pEnv = m_pEnv;
 	visualizeMeshParams.m_MeshDataElement = MeshDataElement_Normal;
 	visualizeMeshParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
-	visualizeMeshParams.m_RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-	visualizeMeshParams.m_DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	visualizeMeshParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
+	visualizeMeshParams.m_DSVFormat = GetDepthStencilViewFormat(m_pDepthTexture->GetFormat());
 		
 	m_pVisualizeMeshRecorder = new VisualizeMeshRecorder(&visualizeMeshParams);
 
@@ -582,8 +601,8 @@ void DXApplication::OnInit()
 		
 		m_VisualizeMeshResources[index]->m_RTVHeapStart = pRenderTarget->GetRTVHandle();
 		m_VisualizeMeshResources[index]->m_DSVHeapStart = m_pDepthTexture->GetDSVHandle();
-		
 		m_VisualizeMeshResources[index]->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+		
 		m_pDevice->CopyDescriptor(m_VisualizeMeshResources[index]->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 
@@ -719,7 +738,7 @@ void DXApplication::OnRender()
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 	WaitForGPU();
 
-	ClearVoxelGridRecordParams clearGridParams;
+	ClearVoxelGridRecorder::RenderPassParams clearGridParams;
 	clearGridParams.m_pEnv = m_pEnv;
 	clearGridParams.m_pCommandAllocator = pCommandAllocator;
 	clearGridParams.m_pCommandList = m_pCommandList;
@@ -736,31 +755,21 @@ void DXApplication::OnRender()
 	createGridParams.m_pResources = m_pCreateVoxelGridResources;
 	createGridParams.m_pViewport = m_pViewport;
 	createGridParams.m_pMesh = m_pMesh;
-
-#ifdef HAS_TEXCOORD
-	createGridParams.m_pColorTexture = 
-	createGridParams.m_ColorSRVHandle = 
-	createGridParams.m_LinearSamplerHandle = 
-#endif // HAS_TEXCOORD
-
+	
 	m_pCreateVoxelGridRecorder->Record(&createGridParams);
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 	WaitForGPU();
 	
-	/*
-	VisualizeVoxelGridRecordParams visualizeGridParams;
+	VisualizeVoxelGridRecorder::RenderPassParams visualizeGridParams;
+	visualizeGridParams.m_pEnv = m_pEnv;
 	visualizeGridParams.m_pCommandList = m_pCommandList;
 	visualizeGridParams.m_pCommandAllocator = pCommandAllocator;
-	visualizeGridParams.m_pRenderTarget = pRenderTarget;
-	visualizeGridParams.m_pDepthTexture = m_pDepthTexture;
-	visualizeGridParams.m_pGridBuffer = m_pGridBuffer;
-	visualizeGridParams.m_pGridConfigBuffer = m_pGridConfigBuffer;
-	visualizeGridParams.m_pCameraTransformBuffer = m_pCameraTransformBuffer;
-
-	m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
-//	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);
-	*/
+	visualizeGridParams.m_pResources = m_VisualizeVoxelGridResources[m_BackBufferIndex];
+	visualizeGridParams.m_pViewport = m_pViewport;
 	
+	m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
+	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+			
 	if (pRenderTarget->GetState() != D3D12_RESOURCE_STATE_PRESENT)
 	{
 		m_pCommandList->Reset(pCommandAllocator, nullptr);
