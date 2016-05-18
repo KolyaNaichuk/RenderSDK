@@ -5,8 +5,7 @@
 #include "DX/DXResource.h"
 #include "DX/DXUtils.h"
 #include "Common/Material.h"
-#include "Common/MeshData.h"
-#include "Common/Mesh.h"
+#include "Common/MeshBatch.h"
 
 FillGBufferRecorder::FillGBufferRecorder(InitParams* pParams)
 	: m_MaterialElementFlags(pParams->m_MaterialElementFlags)
@@ -157,7 +156,7 @@ void FillGBufferRecorder::Record(RenderPassParams* pParams)
 	};
 	pCommandList->OMSetRenderTargets(ARRAYSIZE(rtvHandles), rtvHandles, TRUE, &pGBuffer->m_DSVHandle);
 
-	Mesh* pMesh = pParams->m_pMesh;
+	Mesh* pMesh = pParams->m_pMeshBatch;
 	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	pCommandList->IASetVertexBuffers(0, 1, pMesh->GetVertexBufferView());
 	pCommandList->IASetIndexBuffer(pMesh->GetIndexBufferView());

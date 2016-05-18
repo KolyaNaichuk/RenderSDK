@@ -21,7 +21,8 @@
 #include "CommandRecorders/ViewFrustumCullingRecorder.h"
 #include "Common/MeshData.h"
 #include "Common/MeshDataUtilities.h"
-#include "Common/Mesh.h"
+#include "Common/MeshBatchData.h"
+#include "Common/MeshBatch.h"
 #include "Common/Color.h"
 #include "Common/Camera.h"
 #include "Math/Vector3.h"
@@ -150,7 +151,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pVisualizeMeshRecorder(nullptr)
 	, m_pViewFrustumCullingRecorder(nullptr)
 	, m_pViewFrustumCullingResources(nullptr)
-	, m_pMesh(nullptr)
+	, m_pMeshBatch(nullptr)
 	, m_pCamera(nullptr)
 {
 	std::memset(m_CommandAllocators, 0, sizeof(m_CommandAllocators));
@@ -169,7 +170,7 @@ DXApplication::~DXApplication()
 	}		
 
 	SafeDelete(m_pCamera);
-	SafeDelete(m_pMesh);
+	SafeDelete(m_pMeshBatch);
 	SafeDelete(m_pClearVoxelGridRecorder);
 	SafeDelete(m_pClearVoxelGridResources);
 	SafeDelete(m_pCreateVoxelGridRecorder);
@@ -312,12 +313,6 @@ void DXApplication::OnInit()
 
 	const Vector3f positions[] =
 	{
-		// Floor
-		Vector3f(552.8f,   0.0f,   0.0f),
-		Vector3f(  0.0f,   0.0f,   0.0f),
-		Vector3f(  0.0f,   0.0f, 559.2f),
-		Vector3f(549.6f,   0.0f, 559.2f),
-
 		// Ceiling
 		Vector3f(556.0f, 548.8f,   0.0f),
 		Vector3f(556.0f, 548.8f, 559.2f),
@@ -397,10 +392,6 @@ void DXApplication::OnInit()
 		
 	const Vector4f colors[] =
 	{
-		// Floor
-		Color::BISQUE, Color::BISQUE, Color::BISQUE, Color::BISQUE,
-		//Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
-
 		// Ceiling
 		Color::BLANCHED_ALMOND, Color::BLANCHED_ALMOND, Color::BLANCHED_ALMOND, Color::BLANCHED_ALMOND,
 		//Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
@@ -446,9 +437,6 @@ void DXApplication::OnInit()
 
 	const u16 indices[] =
 	{
-		// Floor
-		0, 1, 2, 2, 3, 0,
-
 		// Ceiling
 		4, 5, 6, 6, 7, 4,
 
@@ -476,7 +464,31 @@ void DXApplication::OnInit()
 		56, 57, 58, 58, 59, 56
 	};
 
+	MeshBatchData meshBatchData(VertexData::FormatFlag_Position, DXGI_FORMAT_R16_UINT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	{
+		// Floor
+		const Vector3f positions[] =
+		{
+			Vector3f(552.8f, 0.0f, 0.0f),
+			Vector3f(  0.0f, 0.0f, 0.0f),
+			Vector3f(  0.0f, 0.0f, 559.2f),
+			Vector3f(549.6f, 0.0f, 559.2f)
+		};
+		VertexData* pVertexData = new VertexData(ARRAYSIZE(positions), &positions[0]);
+
+		const u16 indices[] = {0, 1, 2, 2, 3, 0};
+		IndexData* pIndexData = new IndexData(ARRAYSIZE(indices), &indices[0]);
+
+		// Original: Color::WHITE
+		// Temp: Color::BISQUE
+		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0);
+		meshBatchData.Append(&meshData);
+	}
+	
+	/*
 	MeshData meshData;
+
+
 	meshData.SetVertexData(ARRAYSIZE(positions), positions, colors);
 	meshData.SetIndexData(ARRAYSIZE(indices), indices);
 	meshData.ComputeNormals();
@@ -485,19 +497,20 @@ void DXApplication::OnInit()
 	meshData.SetSubMeshData(1, &subMeshData);
 
 	ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-	m_pMesh = new Mesh(m_pEnv, &meshData);
-	
-	m_pMesh->RecordDataForUpload(m_pCommandList);
+	m_pMeshBatch = new Mesh(m_pEnv, &meshData);
+	*/
+
+	m_pMeshBatch->RecordDataForUpload(m_pCommandList);
 	m_pCommandList->Close();
 
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, nullptr);
 	
 	WaitForGPU();
-	m_pMesh->RemoveDataForUpload();
+	m_pMeshBatch->RemoveDataForUpload();
 
 	ViewFrustumCullingRecorder::InitParams viewFrustumCullingParams;
 	viewFrustumCullingParams.m_pEnv = m_pEnv;
-	viewFrustumCullingParams.m_NumMeshes = meshData.GetNumSubMeshes();
+	viewFrustumCullingParams.m_pMeshBatch = m_pMeshBatch;
 
 	m_pViewFrustumCullingRecorder = new ViewFrustumCullingRecorder(&viewFrustumCullingParams);
 		
@@ -507,7 +520,7 @@ void DXApplication::OnInit()
 	fillGBufferParams.m_NormalRTVFormat = GetRenderTargetViewFormat(m_pNormalTexture->GetFormat());
 	fillGBufferParams.m_SpecularRTVFormat = GetRenderTargetViewFormat(m_pSpecularTexture->GetFormat());
 	fillGBufferParams.m_DSVFormat = GetDepthStencilViewFormat(m_pDepthTexture->GetFormat());
-	fillGBufferParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
+	fillGBufferParams.m_pMeshBatch = m_pMeshBatch;
 	fillGBufferParams.m_MaterialElementFlags = 0;
 
 	//m_pFillGBufferRecorder = new FillGBufferRecorder(&fillGBufferParams);
@@ -539,7 +552,7 @@ void DXApplication::OnInit()
 
 	CreateVoxelGridRecorder::InitParams createGridParams;
 	createGridParams.m_pEnv = m_pEnv;
-	createGridParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
+	createGridParams.m_pMeshBatch = m_pMeshBatch;
 
 	m_pCreateVoxelGridRecorder = new CreateVoxelGridRecorder(&createGridParams);
 
@@ -585,7 +598,7 @@ void DXApplication::OnInit()
 	VisualizeMeshRecorder::InitParams visualizeMeshParams;
 	visualizeMeshParams.m_pEnv = m_pEnv;
 	visualizeMeshParams.m_MeshDataElement = MeshDataElement_Normal;
-	visualizeMeshParams.m_VertexElementFlags = m_pMesh->GetVertexElementFlags();
+	visualizeMeshParams.m_pMeshBatch = m_pMeshBatch;
 	visualizeMeshParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
 	visualizeMeshParams.m_DSVFormat = GetDepthStencilViewFormat(m_pDepthTexture->GetFormat());
 		
@@ -718,7 +731,7 @@ void DXApplication::OnRender()
 	fillGBufferParams.m_pCommandList = m_pCommandList;
 	fillGBufferParams.m_pCommandAllocator = pCommandAllocator;
 	fillGBufferParams.m_pGBuffer = &gBuffer;
-	fillGBufferParams.m_pMesh = m_pMesh;
+	fillGBufferParams.m_pMeshBatch = m_pMeshBatch;
 	//fillGBufferParams.m_pMaterial;
 	fillGBufferParams.m_pAnisoSampler = m_pAnisoSampler;
 	
@@ -732,7 +745,7 @@ void DXApplication::OnRender()
 	visualizeMeshParams.m_pCommandAllocator = pCommandAllocator;
 	visualizeMeshParams.m_pResources = m_VisualizeMeshResources[m_BackBufferIndex];
 	visualizeMeshParams.m_pViewport = m_pViewport;
-	visualizeMeshParams.m_pMesh = m_pMesh;
+	visualizeMeshParams.m_pMeshBatch = m_pMeshBatch;
 
 	m_pVisualizeMeshRecorder->Record(&visualizeMeshParams);
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
@@ -754,7 +767,7 @@ void DXApplication::OnRender()
 	createGridParams.m_pCommandAllocator = pCommandAllocator;
 	createGridParams.m_pResources = m_pCreateVoxelGridResources;
 	createGridParams.m_pViewport = m_pViewport;
-	createGridParams.m_pMesh = m_pMesh;
+	createGridParams.m_pMeshBatch = m_pMeshBatch;
 	
 	m_pCreateVoxelGridRecorder->Record(&createGridParams);
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);

@@ -4,6 +4,7 @@
 
 class DXRootSignature;
 class DXPipelineState;
+class MeshBatch;
 struct DXRenderEnvironment;
 
 class ViewFrustumCullingRecorder
@@ -12,7 +13,7 @@ public:
 	struct InitParams
 	{
 		DXRenderEnvironment* m_pEnv;
-		u16 m_NumMeshes;
+		MeshBatch* m_pMeshBatch;
 	};
 	struct RenderPassParams
 	{

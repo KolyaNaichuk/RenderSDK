@@ -282,11 +282,6 @@ void DXGraphicsPipelineStateDesc::SetGeometryShader(DXShader* pShader)
 	GS = pShader->GetBytecode();
 }
 
-void DXGraphicsPipelineStateDesc::SetInputLayout(UINT numElements, const DXInputElementDesc* pFirstElementDesc)
-{
-	InputLayout = DXInputLayoutDesc(numElements, pFirstElementDesc);
-}
-
 void DXGraphicsPipelineStateDesc::SetRenderTargetFormat(DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat)
 {
 	SetRenderTargetFormats(1, &rtvFormat, dsvFormat);

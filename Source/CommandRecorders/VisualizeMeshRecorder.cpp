@@ -17,6 +17,8 @@ VisualizeMeshRecorder::VisualizeMeshRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
+	assert(false);
+	/*
 	DXRenderEnvironment* pEnv = pParams->m_pEnv;
 
 	u8 inputElementFlags = VertexElementFlag_Position;
@@ -67,6 +69,7 @@ VisualizeMeshRecorder::VisualizeMeshRecorder(InitParams* pParams)
 	pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat, pParams->m_DSVFormat);
 
 	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"VisualizeMeshRecorder::m_pPipelineState");
+	*/
 }
 
 VisualizeMeshRecorder::~VisualizeMeshRecorder()
@@ -77,10 +80,12 @@ VisualizeMeshRecorder::~VisualizeMeshRecorder()
 
 void VisualizeMeshRecorder::Record(RenderPassParams* pParams)
 {
+	assert(false);
+	/*
 	DXRenderEnvironment* pEnv = pParams->m_pEnv;
 	DXCommandList* pCommandList = pParams->m_pCommandList;
 	DXBindingResourceList* pResources = pParams->m_pResources;
-	Mesh* pMesh = pParams->m_pMesh;
+	Mesh* pMesh = pParams->m_pMeshBatch;
 		
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
@@ -107,4 +112,5 @@ void VisualizeMeshRecorder::Record(RenderPassParams* pParams)
 	pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
 
 	pCommandList->Close();
+	*/
 }

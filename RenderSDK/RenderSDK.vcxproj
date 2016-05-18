@@ -162,7 +162,8 @@
     <ClInclude Include="..\Include\Common\Color.h" />
     <ClInclude Include="..\Include\Common\Common.h" />
     <ClInclude Include="..\Include\Common\Material.h" />
-    <ClInclude Include="..\Include\Common\Mesh.h" />
+    <ClInclude Include="..\Include\Common\MeshBatch.h" />
+    <ClInclude Include="..\Include\Common\MeshBatchData.h" />
     <ClInclude Include="..\Include\Common\MeshData.h" />
     <ClInclude Include="..\Include\Common\MeshDataFactory.h" />
     <ClInclude Include="..\Include\Common\MeshDataUtilities.h" />
@@ -225,7 +226,8 @@
     <ClCompile Include="..\Source\Common\Camera.cpp" />
     <ClCompile Include="..\Source\Common\Common.cpp" />
     <ClCompile Include="..\Source\Common\Light.cpp" />
-    <ClCompile Include="..\Source\Common\Mesh.cpp" />
+    <ClCompile Include="..\Source\Common\MeshBatch.cpp" />
+    <ClCompile Include="..\Source\Common\MeshBatchData.cpp" />
     <ClCompile Include="..\Source\Common\MeshData.cpp" />
     <ClCompile Include="..\Source\Common\MeshDataFactory.cpp" />
     <ClCompile Include="..\Source\Common\SceneObject.cpp" />

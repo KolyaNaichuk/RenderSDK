@@ -14,6 +14,8 @@ ViewFrustumCullingRecorder::ViewFrustumCullingRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
+	assert(false);
+	/*
 	DXRenderEnvironment* pEnv = pParams->m_pEnv;
 
 	const u16 threadGroupSize = 64;
@@ -39,6 +41,7 @@ ViewFrustumCullingRecorder::ViewFrustumCullingRecorder(InitParams* pParams)
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
 	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"ViewFrustumCullingRecorder::m_pPipelineState");
+	*/
 }
 
 ViewFrustumCullingRecorder::~ViewFrustumCullingRecorder()

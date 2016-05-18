@@ -7,7 +7,7 @@ class DXRootSignature;
 class DXPipelineState;
 class DXCommandList;
 class DXCommandAllocator;
-class Mesh;
+class MeshBatch;
 
 struct DXViewport;
 struct DXRenderEnvironment;
@@ -21,7 +21,7 @@ public:
 	struct InitParams
 	{
 		DXRenderEnvironment* m_pEnv;
-		u8 m_VertexElementFlags;
+		MeshBatch* m_pMeshBatch;
 	};
 
 	struct RenderPassParams
@@ -31,7 +31,7 @@ public:
 		DXCommandAllocator* m_pCommandAllocator;
 		DXBindingResourceList* m_pResources;
 		DXViewport* m_pViewport;
-		Mesh* m_pMesh;
+		MeshBatch* m_pMeshBatch;
 	};
 
 	CreateVoxelGridRecorder(InitParams* pParams);

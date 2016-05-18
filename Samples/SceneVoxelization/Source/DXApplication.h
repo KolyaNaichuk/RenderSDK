@@ -15,8 +15,8 @@ class DXBuffer;
 class DXSampler;
 class DXFence;
 
-class Mesh;
 class Camera;
+class MeshBatch;
 class FillGBufferRecorder;
 class ClearVoxelGridRecorder;
 class CreateVoxelGridRecorder;
@@ -104,6 +104,6 @@ private:
 	ViewFrustumCullingRecorder* m_pViewFrustumCullingRecorder;
 	DXBindingResourceList* m_pViewFrustumCullingResources;
 
-	Mesh* m_pMesh;
+	MeshBatch* m_pMeshBatch;
 	Camera* m_pCamera;
 };

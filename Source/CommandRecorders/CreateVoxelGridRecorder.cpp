@@ -6,8 +6,7 @@
 #include "DX/DXUtils.h"
 #include "DX/DXDescriptorHeap.h"
 #include "DX/DXRenderEnvironment.h"
-#include "Common/Mesh.h"
-#include "Common/MeshData.h"
+#include "Common/MeshBatch.h"
 
 enum RootParams
 {
@@ -28,17 +27,7 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(InitParams* pParams)
 	, m_pPipelineState(nullptr)
 {
 	DXRenderEnvironment* pEnv = pParams->m_pEnv;
-
-	u8 inputElementFlags = 0;
-	inputElementFlags |= VertexElementFlag_Position;
-	inputElementFlags |= VertexElementFlag_Normal;
-
-#ifdef HAS_TEXCOORD
-	inputElementFlags |= VertexElementFlag_TexCoords;
-	assert(false && "Needs further impl");
-#else // HAS_TEXCOORD	
-	inputElementFlags |= VertexElementFlag_Color;
-#endif // HAS_TEXCOORD
+	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 
 	DXShader vertexShader(L"Shaders//CreateVoxelGridVS.hlsl", "Main", "vs_4_0");
 	DXShader geometryShader(L"Shaders//CreateVoxelGridGS.hlsl", "Main", "gs_4_0");
@@ -65,18 +54,15 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(InitParams* pParams)
 	
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	m_pRootSignature = new DXRootSignature(pEnv->m_pDevice, &rootSignatureDesc, L"CreateVoxelGridRecorder::m_pRootSignature");
-
-	std::vector<DXInputElementDesc> inputElementDescs;
-	GenerateInputElements(inputElementDescs, inputElementFlags, pParams->m_VertexElementFlags);
-	
+		
 	DXGraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetGeometryShader(&geometryShader);
 	pipelineStateDesc.SetPixelShader(&pixelShader);
 	pipelineStateDesc.RasterizerState = DXRasterizerDesc(DXRasterizerDesc::CullNoneConservative);
-	pipelineStateDesc.SetInputLayout(inputElementDescs.size(), &inputElementDescs[0]);
-	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	pipelineStateDesc.InputLayout = *pMeshBatch->GetInputLayout();
+	pipelineStateDesc.PrimitiveTopologyType = pMeshBatch->GetPrimitiveTopologyType();
 	
 	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"CreateVoxelGridRecorder::m_pPipelineState");
 }
@@ -92,7 +78,7 @@ void CreateVoxelGridRecorder::Record(RenderPassParams* pParams)
 	DXRenderEnvironment* pEnv = pParams->m_pEnv;
 	DXCommandList* pCommandList = pParams->m_pCommandList;
 	DXBindingResourceList* pResources = pParams->m_pResources;
-	Mesh* pMesh = pParams->m_pMesh;
+	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
@@ -111,18 +97,17 @@ void CreateVoxelGridRecorder::Record(RenderPassParams* pParams)
 	srvHeapStart.Offset(1);
 	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParamPS, srvHeapStart);	
 	
-	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	pCommandList->IASetVertexBuffers(0, 1, pMesh->GetVertexBuffer()->GetVBView());
-	pCommandList->IASetIndexBuffer(pMesh->GetIndexBuffer()->GetIBView());
+	pCommandList->IASetPrimitiveTopology(pMeshBatch->GetPrimitiveTopology());
+	pCommandList->IASetVertexBuffers(0, 1, pMeshBatch->GetVertexBuffer()->GetVBView());
+	pCommandList->IASetIndexBuffer(pMeshBatch->GetIndexBuffer()->GetIBView());
 	
 	pCommandList->RSSetViewports(1, pParams->m_pViewport);
 	
 	DXRect scissorRect(ExtractRect(pParams->m_pViewport));
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 	
-	assert(pMesh->GetNumSubMeshes() == 1);
-	const SubMeshData* pSubMeshData = pMesh->GetSubMeshes();
-	pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
+	assert(false);
+	//pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
 
 	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParamPS, pEnv->m_NullSRVHeapStart);
 	pCommandList->Close();

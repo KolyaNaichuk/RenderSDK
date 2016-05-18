@@ -117,9 +117,6 @@
     <ClInclude Include="..\Include\Common\Material.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Common\Mesh.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Common\Color.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -203,6 +200,12 @@
     </ClInclude>
     <ClInclude Include="..\Include\DX\DXResourceList.h">
       <Filter>DX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\MeshBatchData.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\MeshBatch.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -293,9 +296,6 @@
     <ClCompile Include="..\Source\Common\MeshData.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\Common\Mesh.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
     <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp">
       <Filter>Common</Filter>
     </ClCompile>
@@ -373,6 +373,12 @@
     </ClCompile>
     <ClCompile Include="..\Include\DX\DXResourceList.cpp">
       <Filter>DX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\MeshBatchData.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\MeshBatch.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

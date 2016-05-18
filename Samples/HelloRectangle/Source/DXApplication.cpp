@@ -111,7 +111,7 @@ void DXApplication::OnInit()
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetPixelShader(&pixelShader);
-	pipelineStateDesc.SetInputLayout(ARRAYSIZE(inputElementDescs), inputElementDescs);
+	pipelineStateDesc.InputLayout = DXInputLayoutDesc(ARRAYSIZE(inputElementDescs), inputElementDescs);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.SetRenderTargetFormat(DXGI_FORMAT_R8G8B8A8_UNORM);
 		

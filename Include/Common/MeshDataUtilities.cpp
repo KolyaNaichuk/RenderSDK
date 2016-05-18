@@ -1,6 +1,5 @@
 #include "Common/MeshDataUtilities.h"
 #include "Common/MeshData.h"
-#include "Common/Mesh.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
@@ -18,72 +17,55 @@ namespace
 
 void ConvertMeshData(MeshData* pMeshData, u8 convertionFlags)
 {
-	const u32 numVertices = pMeshData->GetNumVertices();
+	VertexData* pVertexData = pMeshData->GetVertexData();
 
-	if (convertionFlags & ConvertionFlag_FlipZCoord)
+	const u32 numVertices = pVertexData->GetNumVertices();
+	const u8 vertexFormatFlags = pVertexData->GetFormatFlags();
+
+	if ((convertionFlags & ConvertionFlag_FlipZCoord) != 0)
 	{
-		Vector3f* pPositions = pMeshData->GetPositions();
-		assert(pPositions != nullptr);
+		assert((vertexFormatFlags & VertexData::FormatFlag_Position) != 0);
 		{
+			Vector3f* pPositions = pVertexData->GetPositions();
+
 			for (u32 index = 0; index < numVertices; ++index)
 				pPositions[index].m_Z *= -1.0f;
 		}
-
-		Vector3f* pNormals = pMeshData->GetNormals();
-		if (pNormals != nullptr)
+		if ((vertexFormatFlags & VertexData::FormatFlag_Normal) != 0)		
 		{
+			Vector3f* pNormals = pVertexData->GetNormals();
+
 			for (u32 index = 0; index < numVertices; ++index)
 				pNormals[index].m_Z *= -1.0f;
 		}
-
-		Vector3f* pTangents = pMeshData->GetTangents();
-		if (pTangents != nullptr)
+		if ((vertexFormatFlags & VertexData::FormatFlag_Tangent) != 0)
 		{
+			Vector3f* pTangents = pVertexData->GetTangents();
+
 			for (u32 index = 0; index < numVertices; ++index)
 				pTangents[index].m_Z *= -1.0f;
 		}
-
-		Vector3f* pBiTangents = pMeshData->GetBiTangents();
-		if (pBiTangents != nullptr)
-		{
-			for (u32 index = 0; index < numVertices; ++index)
-			{
-				pBiTangents[index].m_X *= -1.0f;
-				pBiTangents[index].m_Y *= -1.0f;
-			}			
-		}
 	}
-	
-	if (convertionFlags & ConvertionFlag_FlipTexCoords)
+
+	if ((convertionFlags & ConvertionFlag_FlipTexCoords) != 0)
 	{
-		Vector2f* pTexCoords = pMeshData->GetTexCoords();
-		if (pTexCoords != nullptr)
+		if ((vertexFormatFlags & VertexData::FormatFlag_TexCoords) != 0)
 		{
+			Vector2f* pTexCoords = pVertexData->GetTexCoords();
+
 			for (u32 index = 0; index < numVertices; ++index)
 				pTexCoords[index].m_Y = 1.0f - pTexCoords[index].m_Y;
 		}
 	}
-
+	
 	if (convertionFlags & ConvertionFlag_FlipWindingOrder)
 	{
-		const u32 numIndices = pMeshData->GetNumIndices();
+		IndexData* pIndexData = pMeshData->GetIndexData();
+		const u32 numIndices = pIndexData->GetNumIndices();
 
-		u16* pIndices16Bit = pMeshData->Get16BitIndices();
-		if (pIndices16Bit != nullptr)
-		{
-			FlipIndicesWindingOrder(numIndices, pIndices16Bit);
-		}
+		if (pIndexData->GetFormat() == DXGI_FORMAT_R16_UINT)
+			FlipIndicesWindingOrder(numIndices, pIndexData->Get16BitIndices());
 		else
-		{
-			u32* pIndices32Bit = pMeshData->Get32BitIndices();
-			if (pIndices32Bit != nullptr)
-			{
-				FlipIndicesWindingOrder(numIndices, pIndices32Bit);
-			}
-			else
-			{
-				assert(false);
-			}
-		} 
+			FlipIndicesWindingOrder(numIndices, pIndexData->Get32BitIndices()); 
 	}
 }

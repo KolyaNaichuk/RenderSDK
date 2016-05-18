@@ -1,11 +1,12 @@
 #pragma once
 
-#include "Common/Mesh.h"
+#include "Common/Common.h"
 
 class DXCommandList;
 class DXCommandAllocator;
 class DXRootSignature;
 class DXPipelineState;
+class MeshBatch;
 struct DXRenderEnvironment;
 struct DXBindingResourceList;
 struct DXViewport;
@@ -26,7 +27,7 @@ public:
 		DXGI_FORMAT m_RTVFormat;
 		DXGI_FORMAT m_DSVFormat;
 		MeshDataElement m_MeshDataElement;
-		u8 m_VertexElementFlags;
+		MeshBatch* m_pMeshBatch;
 	};
 	struct RenderPassParams
 	{
@@ -35,7 +36,7 @@ public:
 		DXCommandAllocator* m_pCommandAllocator;
 		DXBindingResourceList* m_pResources;
 		DXViewport* m_pViewport;
-		Mesh* m_pMesh;
+		MeshBatch* m_pMeshBatch;
 	};
 
 	VisualizeMeshRecorder(InitParams* pParams);

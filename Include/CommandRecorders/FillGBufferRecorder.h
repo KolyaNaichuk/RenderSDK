@@ -10,7 +10,7 @@ class DXColorTexture;
 class DXDepthTexture;
 class DXBuffer;
 class DXSampler;
-class Mesh;
+class MeshBatch;
 
 struct DXRenderEnvironment;
 struct Material;
@@ -44,7 +44,7 @@ public:
 		DXGI_FORMAT m_NormalRTVFormat;
 		DXGI_FORMAT m_SpecularRTVFormat;
 		DXGI_FORMAT m_DSVFormat;
-		u8 m_VertexElementFlags;
+		MeshBatch* m_pMeshBatch;
 		u8 m_MaterialElementFlags;
 	};
 	struct RenderPassParams
@@ -56,7 +56,7 @@ public:
 		DXBuffer* m_pMaterialBuffer;
 		DXSampler* m_pAnisoSampler;
 
-		Mesh* m_pMesh;
+		MeshBatch* m_pMeshBatch;
 		GBuffer* m_pGBuffer;
 		Material* m_pMaterial;
 	};

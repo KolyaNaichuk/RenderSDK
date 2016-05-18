@@ -99,9 +99,7 @@ struct DXGraphicsPipelineStateDesc : D3D12_GRAPHICS_PIPELINE_STATE_DESC
 	void SetDomainShader(DXShader* pShader);
 	void SetHullShader(DXShader* pShader);
 	void SetGeometryShader(DXShader* pShader);
-
-	void SetInputLayout(UINT numElements, const DXInputElementDesc* pFirstElementDesc);
-
+	
 	void SetRenderTargetFormat(DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat = DXGI_FORMAT_UNKNOWN);
 	void SetRenderTargetFormats(UINT numRenderTargets, const DXGI_FORMAT* rtvFormats, DXGI_FORMAT dsvFormat = DXGI_FORMAT_UNKNOWN);
 };
