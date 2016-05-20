@@ -2,53 +2,6 @@
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
-#include "Math/AxisAlignedBox.h"
-
-namespace
-{
-	template <typename Index>
-	void ComputeNormalsEqualWeight(u32 numVertices, const Vector3f* pPositions, u32 numIndices, const Index* pIndices, Vector3f* pNormals)
-	{
-		assert((pPositions != nullptr) && (pIndices != nullptr));
-		
-		for (u32 offset = 0; offset < numVertices; ++offset)
-			pNormals[offset] = Vector3f::ZERO;
-
-		for (u32 offset = 0; offset < numIndices; offset += 3)
-		{
-			const Index index0 = pIndices[offset + 0];
-			const Index index1 = pIndices[offset + 1];
-			const Index index2 = pIndices[offset + 2];
-
-			const Vector3f& point0 = pPositions[index0];
-			const Vector3f& point1 = pPositions[index1];
-			const Vector3f& point2 = pPositions[index2];
-
-			const Vector3f faceNormal = Normalize(Cross(point1 - point0, point2 - point0));
-			
-			pNormals[index0] += faceNormal;
-			pNormals[index1] += faceNormal;
-			pNormals[index2] += faceNormal;
-		}
-
-		for (u32 offset = 0; offset < numVertices; ++offset)
-			pNormals[offset] = Normalize(pNormals[offset]);
-	}
-
-	template <typename Index>
-	void ComputeNormalsWeightedByArea(u32 numVertices, const Vector3f* pPositions, u32 numIndices, const Index* pIndices, Vector3f* pNormals)
-	{
-		assert((pPositions != nullptr) && (pIndices != nullptr));
-		assert(false && "Needs impl");
-	}
-
-	template <typename Index>
-	void ComputeNormalsWeightedByAngle(u32 numVertices, const Vector3f* pPositions, u32 numIndices, const Index* pIndices, Vector3f* pNormals)
-	{
-		assert((pPositions != nullptr) && (pIndices != nullptr));
-		assert(false && "Needs impl");
-	}
-}
 
 VertexData::~VertexData()
 {
@@ -59,8 +12,8 @@ VertexData::~VertexData()
 	SafeArrayDelete(m_pTangents);
 }
 
-VertexData::VertexData(u32 numVertices, const Vector3f* pPositions, const Vector4f* pColors,
-	const Vector3f* pNormals, const Vector2f* pTexCoords, const Vector3f* pTangents)
+VertexData::VertexData(u32 numVertices, const Vector3f* pPositions, const Vector3f* pNormals,
+	const Vector4f* pColors, const Vector2f* pTexCoords, const Vector3f* pTangents)
 	: m_NumVertices(numVertices)
 	, m_FormatFlags(0)
 	, m_pPositions(nullptr)

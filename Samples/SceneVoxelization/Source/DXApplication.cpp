@@ -219,7 +219,7 @@ void DXApplication::OnInit()
 	m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &supportedOptions, sizeof(supportedOptions));
 	//assert(supportedOptions.ConservativeRasterizationTier != D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED);
 	assert(supportedOptions.ROVsSupported == TRUE);
-	
+
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
 
@@ -240,13 +240,13 @@ void DXApplication::OnInit()
 
 	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 4, false);
 	m_pDSVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pDSVDescriptorHeap");
-	
+
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 		m_CommandAllocators[index] = new DXCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
 
 	m_pCommandListPool = new DXCommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandList = new DXCommandList(m_pDevice, m_CommandAllocators[m_BackBufferIndex], nullptr, L"m_pCommandList");
-	
+
 	m_pEnv->m_pDevice = m_pDevice;
 	m_pEnv->m_pCommandListPool = m_pCommandListPool;
 	m_pEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
@@ -263,7 +263,7 @@ void DXApplication::OnInit()
 	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
 
 	m_pViewport = new DXViewport(0.0f, 0.0f, (FLOAT)bufferWidth, (float)bufferHeight);
-	
+
 	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(bufferWidth) / FLOAT(bufferHeight));
 	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
 	m_pCamera->SetBackgroundColor(Color::GRAY);
@@ -275,231 +275,302 @@ void DXApplication::OnInit()
 	DXSwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
 	m_pSwapChain = new DXSwapChain(&factory, m_pEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-		
+
 	DXSamplerDesc anisoSamplerDesc(DXSamplerDesc::Anisotropic);
 	m_pAnisoSampler = new DXSampler(m_pEnv, &anisoSamplerDesc);
-	
+
 	DXDepthTexture2DDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, bufferWidth, bufferHeight, true, true);
 	DXDepthStencilClearValue depthClearValue(GetDepthStencilViewFormat(depthTexDesc.Format));
 	m_pDepthTexture = new DXDepthTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &depthTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthClearValue, L"m_pDepthTexture");
-	
+
 	DXColorTexture2DDesc diffuseTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, true, true, false);
 	m_pDiffuseTexture = new DXColorTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &diffuseTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pDiffuseTexture");
-	
+
 	DXColorTexture2DDesc normalTexDesc(DXGI_FORMAT_R8G8B8A8_SNORM, bufferWidth, bufferHeight, true, true, false);
 	m_pNormalTexture = new DXColorTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &normalTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pNormalTexture");
-		
+
 	DXColorTexture2DDesc specularTexDesc(DXGI_FORMAT_R8G8B8A8_UNORM, bufferWidth, bufferHeight, true, true, false);
 	m_pSpecularTexture = new DXColorTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &specularTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, L"m_pSpecularTexture");
 
 	DXColorTexture2DDesc accumLightTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, true, true, true);
 	m_pAccumLightTexture = new DXColorTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &accumLightTexDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pAccumLightTexture");
-	
+
 	DXConstantBufferDesc objectTransformBufferDesc(sizeof(ObjectTransform));
 	m_pObjectTransformBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &objectTransformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pObjectTransformBuffer");
 
 	DXConstantBufferDesc cameraTransformBufferDesc(sizeof(CameraTransform));
 	m_pCameraTransformBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &cameraTransformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCameraTransformBuffer");
-	
+
 	DXConstantBufferDesc gridConfigBufferDesc(sizeof(GridConfig));
 	m_pGridConfigBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &gridConfigBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pGridConfigBuffer");
-	
+
 	const UINT numGridElements = kNumGridCellsX * kNumGridCellsY * kNumGridCellsZ;
 	DXStructuredBufferDesc gridBufferDesc(numGridElements, sizeof(Voxel), true, true);
 	m_pGridBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &gridBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pGridBuffer");
-	
+
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
-
-	const Vector3f positions[] =
-	{
-		// Ceiling
-		Vector3f(556.0f, 548.8f,   0.0f),
-		Vector3f(556.0f, 548.8f, 559.2f),
-		Vector3f(  0.0f, 548.8f, 559.2f),
-		Vector3f(  0.0f, 548.8f,   0.0f),
-
-		// Back wall
-		Vector3f(549.6f,   0.0f, 559.2f),
-		Vector3f(  0.0f,   0.0f, 559.2f),
-		Vector3f(  0.0f, 548.8f, 559.2f),
-		Vector3f(556.0f, 548.8f, 559.2f),
-
-		// Right wall
-		Vector3f(  0.0f,   0.0f, 559.2f),
-		Vector3f(  0.0f,   0.0f,   0.0f),
-		Vector3f(  0.0f, 548.8f,   0.0f),
-		Vector3f(  0.0f, 548.8f, 559.2f),
-
-		// Left wall
-		Vector3f(552.8f,   0.0f,   0.0f),
-		Vector3f(549.6f,   0.0f, 559.2f),
-		Vector3f(556.0f, 548.8f, 559.2f),
-		Vector3f(556.0f, 548.8f,   0.0f),
-
-		// Short block
-		Vector3f(130.0f, 165.0f,  65.0f),
-		Vector3f( 82.0f, 165.0f, 225.0f),
-		Vector3f(240.0f, 165.0f, 272.0f),
-		Vector3f(290.0f, 165.0f, 114.0f),
-
-		Vector3f(290.0f,   0.0f, 114.0f),
-		Vector3f(290.0f, 165.0f, 114.0f),
-		Vector3f(240.0f, 165.0f, 272.0f),
-		Vector3f(240.0f,   0.0f, 272.0f),
-
-		Vector3f(130.0f,   0.0f,  65.0f),
-		Vector3f(130.0f, 165.0f,  65.0f),
-		Vector3f(290.0f, 165.0f, 114.0f),
-		Vector3f(290.0f,   0.0f, 114.0f),
-
-		Vector3f( 82.0f,   0.0f, 225.0f),
-		Vector3f( 82.0f, 165.0f, 225.0f),
-		Vector3f(130.0f, 165.0f,  65.0f),
-		Vector3f(130.0f,   0.0f,  65.0f),
-
-		Vector3f(240.0f,   0.0f, 272.0f),
-		Vector3f(240.0f, 165.0f, 272.0f),
-		Vector3f( 82.0f, 165.0f, 225.0f),
-		Vector3f( 82.0f,   0.0f, 225.0f),
-
-		// Tall block
-		Vector3f(423.0f, 330.0f, 247.0f),
-		Vector3f(265.0f, 330.0f, 296.0f),
-		Vector3f(314.0f, 330.0f, 456.0f),
-		Vector3f(472.0f, 330.0f, 406.0f),
-
-		Vector3f(423.0f,   0.0f, 247.0f),
-		Vector3f(423.0f, 330.0f, 247.0f),
-		Vector3f(472.0f, 330.0f, 406.0f),
-		Vector3f(472.0f,   0.0f, 406.0f),
-
-		Vector3f(472.0f,   0.0f, 406.0f),
-		Vector3f(472.0f, 330.0f, 406.0f),
-		Vector3f(314.0f, 330.0f, 456.0f),
-		Vector3f(314.0f,   0.0f, 456.0f),
-
-		Vector3f(314.0f,   0.0f, 456.0f),
-		Vector3f(314.0f, 330.0f, 456.0f),
-		Vector3f(265.0f, 330.0f, 296.0f),
-		Vector3f(265.0f,   0.0f, 296.0f),
-
-		Vector3f(265.0f,   0.0f, 296.0f),
-		Vector3f(265.0f, 330.0f, 296.0f),
-		Vector3f(423.0f, 330.0f, 247.0f),
-		Vector3f(423.0f,   0.0f, 247.0f)
-	};
-		
-	const Vector4f colors[] =
-	{
-		// Ceiling
-		Color::BLANCHED_ALMOND, Color::BLANCHED_ALMOND, Color::BLANCHED_ALMOND, Color::BLANCHED_ALMOND,
-		//Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
-
-		// Back wall
-		Color::BLUE_VIOLET, Color::BLUE_VIOLET, Color::BLUE_VIOLET, Color::BLUE_VIOLET,
-		//Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
-				
-		// Right wall
-		Color::GREEN, Color::GREEN, Color::GREEN, Color::GREEN,	
-
-		// Left wall
-		Color::RED, Color::RED, Color::RED, Color::RED,
-
-		// Short block
-		Color::BLUE, Color::BLUE, Color::BLUE, Color::BLUE,
-		Color::BLUE, Color::BLUE, Color::BLUE, Color::BLUE,
-		Color::BLUE, Color::BLUE, Color::BLUE, Color::BLUE,
-		Color::BLUE, Color::BLUE, Color::BLUE, Color::BLUE,
-		Color::BLUE, Color::BLUE, Color::BLUE, Color::BLUE,
-		/*
-		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
-		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
-		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
-		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE, 
-		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
-		*/
-
-		// Tall block
-		Color::GOLD, Color::GOLD, Color::GOLD, Color::GOLD,
-		Color::GOLD, Color::GOLD, Color::GOLD, Color::GOLD,
-		Color::GOLD, Color::GOLD, Color::GOLD, Color::GOLD,
-		Color::GOLD, Color::GOLD, Color::GOLD, Color::GOLD,
-		Color::GOLD, Color::GOLD, Color::GOLD, Color::GOLD,
-		/*
-		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
-		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
-		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
-		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE,
-		Color::WHITE, Color::WHITE, Color::WHITE, Color::WHITE
-		*/
-	};
-
-	const u16 indices[] =
-	{
-		// Ceiling
-		4, 5, 6, 6, 7, 4,
-
-		// Back wall
-		8, 9, 10, 10, 11, 8,
-
-		// Right wall
-		12, 13, 14, 14, 15, 12,
-
-		// Left wall
-		16, 17, 18, 18, 19, 16,
-
-		// Short block
-		20, 21, 22, 22, 23, 20,
-		24, 25, 26, 26, 27, 24,
-		28, 29, 30, 30, 31, 28,
-		32, 33, 34, 34, 35, 32,
-		36, 37, 38, 38, 39, 36,
-
-		// Tall block
-		40, 41, 42, 42, 43, 40,
-		44, 45, 46, 46, 47, 44,
-		48, 49, 50, 50, 51, 48,
-		52, 53, 54, 54, 55, 52,
-		56, 57, 58, 58, 59, 56
-	};
 
 	MeshBatchData meshBatchData(VertexData::FormatFlag_Position, DXGI_FORMAT_R16_UINT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	{
 		// Floor
 		const Vector3f positions[] =
 		{
-			Vector3f(552.8f, 0.0f, 0.0f),
-			Vector3f(  0.0f, 0.0f, 0.0f),
+			Vector3f(552.8f, 0.0f,   0.0f),
+			Vector3f(  0.0f, 0.0f,   0.0f),
 			Vector3f(  0.0f, 0.0f, 559.2f),
 			Vector3f(549.6f, 0.0f, 559.2f)
 		};
-		VertexData* pVertexData = new VertexData(ARRAYSIZE(positions), &positions[0]);
+		const u32 numVertices = ARRAYSIZE(positions);
 
-		const u16 indices[] = {0, 1, 2, 2, 3, 0};
-		IndexData* pIndexData = new IndexData(ARRAYSIZE(indices), &indices[0]);
+		const u16 indices[] = {0, 1, 2, 2, 3, 0};		
+		const u32 numIndices = ARRAYSIZE(indices);
+			
+		Vector3f normals[numVertices];
+		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
 
+		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
+		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
+
+		assert(false);
 		// Original: Color::WHITE
 		// Temp: Color::BISQUE
+
 		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0);
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+
+		meshBatchData.Append(&meshData);
+	}
+	{
+		// Ceiling
+		const Vector3f positions[] = 
+		{
+			Vector3f(556.0f, 548.8f,   0.0f),
+			Vector3f(556.0f, 548.8f, 559.2f),
+			Vector3f(  0.0f, 548.8f, 559.2f),
+			Vector3f(  0.0f, 548.8f,   0.0f)
+		};
+		const u32 numVertices = ARRAYSIZE(positions);
+
+		const u16 indices[] = {0, 1, 2, 2, 3, 0};
+		const u32 numIndices = ARRAYSIZE(indices);
+		
+		Vector3f normals[numVertices];
+		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
+
+		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
+		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
+
+		assert(false);
+		// Original: Color::WHITE
+		// Temp: Color::BLANCHED_ALMOND
+		
+		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 1);
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+
+		meshBatchData.Append(&meshData);
+	}
+	{
+		// Back wall
+		const Vector3f positions[] =
+		{
+			Vector3f(549.6f,   0.0f, 559.2f),
+			Vector3f(  0.0f,   0.0f, 559.2f),
+			Vector3f(  0.0f, 548.8f, 559.2f),
+			Vector3f(556.0f, 548.8f, 559.2f)
+		};
+		const u32 numVertices = ARRAYSIZE(positions);
+				
+		const u16 indices[] = {0, 1, 2, 2, 3, 0};
+		const u32 numIndices = ARRAYSIZE(indices);
+		
+		Vector3f normals[numVertices];
+		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
+
+		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
+		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
+
+		assert(false);
+		// Original: Color::WHITE
+		// Temp: Color::BLUE_VIOLET
+		
+		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 2);
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+
+		meshBatchData.Append(&meshData);
+	}
+	{
+		// Right wall
+		const Vector3f positions[] =
+		{
+			Vector3f(0.0f,   0.0f, 559.2f),
+			Vector3f(0.0f,   0.0f,   0.0f),
+			Vector3f(0.0f, 548.8f,   0.0f),
+			Vector3f(0.0f, 548.8f, 559.2f)
+		};
+		const u32 numVertices = ARRAYSIZE(positions);
+
+		const u16 indices[] = {0, 1, 2, 2, 3, 0};
+		const u32 numIndices = ARRAYSIZE(indices);
+
+		Vector3f normals[numVertices];
+		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
+		
+		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
+		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
+		
+		assert(false);
+		// Color::GREEN
+
+		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 3);
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+
+		meshBatchData.Append(&meshData);
+	}
+	{
+		// Left wall
+		const Vector3f positions[] =
+		{
+			Vector3f(552.8f,   0.0f,   0.0f),
+			Vector3f(549.6f,   0.0f, 559.2f),
+			Vector3f(556.0f, 548.8f, 559.2f),
+			Vector3f(556.0f, 548.8f,   0.0f)
+		};
+		const u32 numVertices = ARRAYSIZE(positions);
+
+		const u16 indices[] = {0, 1, 2, 2, 3, 0};
+		const u32 numIndices = ARRAYSIZE(indices);
+		
+		Vector3f normals[numVertices];
+		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
+
+		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
+		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
+
+		assert(false);
+		// Color::RED
+
+		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 4);
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+
+		meshBatchData.Append(&meshData);
+	}
+	{
+		// Short block
+		const Vector3f positions[] =
+		{
+			Vector3f(130.0f, 165.0f,  65.0f),
+			Vector3f( 82.0f, 165.0f, 225.0f),
+			Vector3f(240.0f, 165.0f, 272.0f),
+			Vector3f(290.0f, 165.0f, 114.0f),
+
+			Vector3f(290.0f,   0.0f, 114.0f),
+			Vector3f(290.0f, 165.0f, 114.0f),
+			Vector3f(240.0f, 165.0f, 272.0f),
+			Vector3f(240.0f,   0.0f, 272.0f),
+
+			Vector3f(130.0f,   0.0f,  65.0f),
+			Vector3f(130.0f, 165.0f,  65.0f),
+			Vector3f(290.0f, 165.0f, 114.0f),
+			Vector3f(290.0f,   0.0f, 114.0f),
+
+			Vector3f( 82.0f,   0.0f, 225.0f),
+			Vector3f( 82.0f, 165.0f, 225.0f),
+			Vector3f(130.0f, 165.0f,  65.0f),
+			Vector3f(130.0f,   0.0f,  65.0f),
+
+			Vector3f(240.0f,   0.0f, 272.0f),
+			Vector3f(240.0f, 165.0f, 272.0f),
+			Vector3f( 82.0f, 165.0f, 225.0f),
+			Vector3f( 82.0f,   0.0f, 225.0f)
+		};
+		const u32 numVertices = ARRAYSIZE(positions);
+		
+		const u16 indices[] =
+		{
+			 0,  1,  2,  2,  3,  0,
+			 4,  5,  6,  6,  7,  4,
+			 8,  9, 10, 10, 11,  8,
+			12, 13, 14, 14, 15, 12,
+			16, 17, 18, 18, 19, 16
+		};
+		const u32 numIndices = ARRAYSIZE(indices);
+
+		Vector3f normals[numVertices];
+		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
+
+		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
+		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
+
+		assert(false);
+		// Original: Color::WHITE
+		// Temp: Color::BLUE
+
+		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 5);
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+
+		meshBatchData.Append(&meshData);
+	}
+	{
+		// Tall block
+		const Vector3f positions[] =
+		{
+			Vector3f(423.0f, 330.0f, 247.0f),
+			Vector3f(265.0f, 330.0f, 296.0f),
+			Vector3f(314.0f, 330.0f, 456.0f),
+			Vector3f(472.0f, 330.0f, 406.0f),
+
+			Vector3f(423.0f,   0.0f, 247.0f),
+			Vector3f(423.0f, 330.0f, 247.0f),
+			Vector3f(472.0f, 330.0f, 406.0f),
+			Vector3f(472.0f,   0.0f, 406.0f),
+
+			Vector3f(472.0f,   0.0f, 406.0f),
+			Vector3f(472.0f, 330.0f, 406.0f),
+			Vector3f(314.0f, 330.0f, 456.0f),
+			Vector3f(314.0f,   0.0f, 456.0f),
+
+			Vector3f(314.0f,   0.0f, 456.0f),
+			Vector3f(314.0f, 330.0f, 456.0f),
+			Vector3f(265.0f, 330.0f, 296.0f),
+			Vector3f(265.0f,   0.0f, 296.0f),
+
+			Vector3f(265.0f,   0.0f, 296.0f),
+			Vector3f(265.0f, 330.0f, 296.0f),
+			Vector3f(423.0f, 330.0f, 247.0f),
+			Vector3f(423.0f,   0.0f, 247.0f)
+		};
+		const u32 numVertices = ARRAYSIZE(positions);
+
+		const u16 indices[] =
+		{
+			 0,  1,  2,  2,  3,  0,
+			 4,  5,  6,  6,  7,  4,
+			 8,  9, 10, 10, 11,  8,
+			12, 13, 14, 14, 15, 12,
+			16, 17, 18, 18, 19, 16
+		};
+		const u32 numIndices = ARRAYSIZE(indices);
+
+		Vector3f normals[numVertices];
+		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
+
+		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
+		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
+
+		assert(false);
+		// Original: Color::WHITE
+		// Temp: Color::GOLD
+
+		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 6);
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+
 		meshBatchData.Append(&meshData);
 	}
 	
-	/*
-	MeshData meshData;
-
-
-	meshData.SetVertexData(ARRAYSIZE(positions), positions, colors);
-	meshData.SetIndexData(ARRAYSIZE(indices), indices);
-	meshData.ComputeNormals();
+	assert(false);
+	//m_pMeshBatch = new Mesh(m_pEnv, &meshData);
 	
-	SubMeshData subMeshData(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, 0, meshData.GetNumVertices(), 0, meshData.GetNumIndices());
-	meshData.SetSubMeshData(1, &subMeshData);
-
-	ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-	m_pMeshBatch = new Mesh(m_pEnv, &meshData);
-	*/
-
 	m_pMeshBatch->RecordDataForUpload(m_pCommandList);
 	m_pCommandList->Close();
 
