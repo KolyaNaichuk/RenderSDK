@@ -55,20 +55,6 @@ void DXCommandList::CopyResource(DXResource* pDest, DXResource* pSource)
 	GetDXObject()->CopyResource(pDest->GetDXObject(), pSource->GetDXObject());
 }
 
-void DXCommandList::TransitionBarrier(DXResource* pResource, D3D12_RESOURCE_STATES prevState, D3D12_RESOURCE_STATES nextState)
-{
-	D3D12_RESOURCE_BARRIER barrier;
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier.Transition.pResource = pResource->GetDXObject();
-	barrier.Transition.StateBefore = prevState;
-	barrier.Transition.StateAfter = nextState;
-	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
-	GetDXObject()->ResourceBarrier(1, &barrier);
-	pResource->SetState(nextState);
-}
-
 void DXCommandList::ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER* pBarriers)
 {
 	GetDXObject()->ResourceBarrier(numBarriers, pBarriers);

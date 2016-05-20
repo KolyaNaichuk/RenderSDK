@@ -767,23 +767,24 @@ void DXApplication::OnRender()
 	{
 		m_pCommandList->Reset(pCommandAllocator);
 
-		if (clearFlags & Camera::ClearFlag_Color)
+		std::vector<DXResourceTransitionBarrier> resourceTransitions;
+		if (pRenderTarget->GetState() != pRenderTarget->GetWriteState())
 		{
-			if (pRenderTarget->GetState() != pRenderTarget->GetWriteState())
-				m_pCommandList->TransitionBarrier(pRenderTarget, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
-
-			const Vector4f& clearColor = m_pCamera->GetBackgroundColor();
-			m_pCommandList->ClearRenderTargetView(rtvHandle, &clearColor.m_X);
+			resourceTransitions.emplace_back(pRenderTarget, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
+			pRenderTarget->SetState(pRenderTarget->GetWriteState());
 		}
-		if (clearFlags & Camera::ClearFlag_Depth)
+		if (m_pDepthTexture->GetState() != m_pDepthTexture->GetWriteState())
 		{
-			if (m_pDepthTexture->GetState() != m_pDepthTexture->GetWriteState())
-				m_pCommandList->TransitionBarrier(m_pDepthTexture, m_pDepthTexture->GetState(), m_pDepthTexture->GetWriteState());
-
-			m_pCommandList->ClearDepthView(dsvHandle);
+			resourceTransitions.emplace_back(m_pDepthTexture, m_pDepthTexture->GetState(), m_pDepthTexture->GetWriteState());
+			m_pDepthTexture->SetState(m_pDepthTexture->GetWriteState());
 		}
+		m_pCommandList->ResourceBarrier(resourceTransitions.size(), &resourceTransitions[0]);
 
+		const Vector4f& clearColor = m_pCamera->GetBackgroundColor();
+		m_pCommandList->ClearRenderTargetView(rtvHandle, &clearColor.m_X);
+		m_pCommandList->ClearDepthView(dsvHandle);				
 		m_pCommandList->Close();
+
 		m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 		WaitForGPU();
 	}
@@ -857,9 +858,12 @@ void DXApplication::OnRender()
 	if (pRenderTarget->GetState() != D3D12_RESOURCE_STATE_PRESENT)
 	{
 		m_pCommandList->Reset(pCommandAllocator, nullptr);
-		m_pCommandList->TransitionBarrier(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
-		m_pCommandList->Close();
 
+		DXResourceTransitionBarrier resourceTransition(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
+		m_pCommandList->ResourceBarrier(1, &resourceTransition);
+		pRenderTarget->SetState(D3D12_RESOURCE_STATE_PRESENT);
+
+		m_pCommandList->Close();
 		m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, nullptr);
 	}
 

@@ -150,10 +150,17 @@ void DXApplication::OnInit()
 	m_pCommandList = new DXCommandList(m_pDevice, m_CommandAllocators[m_BackBufferIndex], nullptr, L"m_pCommandList");
 
 	m_pCommandList->CopyResource(m_pVertexBuffer, &uploadVertexBuffer);
-	m_pCommandList->TransitionBarrier(m_pVertexBuffer, m_pVertexBuffer->GetState(), m_pVertexBuffer->GetReadState());
-
 	m_pCommandList->CopyResource(m_pIndexBuffer, &uploadIndexBuffer);
-	m_pCommandList->TransitionBarrier(m_pIndexBuffer, m_pIndexBuffer->GetState(), m_pIndexBuffer->GetReadState());
+	
+	const D3D12_RESOURCE_BARRIER resourceTransitions[] =
+	{
+		DXResourceTransitionBarrier(m_pVertexBuffer, m_pVertexBuffer->GetState(), m_pVertexBuffer->GetReadState()),
+		DXResourceTransitionBarrier(m_pIndexBuffer, m_pIndexBuffer->GetState(), m_pIndexBuffer->GetReadState())
+	};
+	m_pCommandList->ResourceBarrier(ARRAYSIZE(resourceTransitions), &resourceTransitions[0]);
+
+	m_pVertexBuffer->SetState(m_pVertexBuffer->GetReadState());
+	m_pIndexBuffer->SetState(m_pIndexBuffer->GetReadState());
 
 	m_pCommandList->Close();
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, nullptr);
@@ -174,8 +181,11 @@ void DXApplication::OnRender()
 	m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 		
 	DXColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-	m_pCommandList->TransitionBarrier(pRenderTarget, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
-
+		
+	DXResourceTransitionBarrier writeStateTransition(pRenderTarget, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
+	m_pCommandList->ResourceBarrier(1, &writeStateTransition);
+	pRenderTarget->SetState(pRenderTarget->GetWriteState());
+		
 	const FLOAT clearColor[4] = {0.1f, 0.7f, 0.4f, 1.0f};
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderTarget->GetRTVHandle();
 	m_pCommandList->ClearRenderTargetView(rtvHandle, clearColor);
@@ -188,7 +198,10 @@ void DXApplication::OnRender()
 	m_pCommandList->RSSetScissorRects(1, m_pScissorRect);
 	m_pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
-	m_pCommandList->TransitionBarrier(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
+	DXResourceTransitionBarrier presentStateTransition(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
+	m_pCommandList->ResourceBarrier(1, &presentStateTransition);
+	pRenderTarget->SetState(D3D12_RESOURCE_STATE_PRESENT);
+
 	m_pCommandList->Close();
 
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, nullptr);
