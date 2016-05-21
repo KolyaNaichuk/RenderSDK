@@ -1,14 +1,16 @@
 #pragma once
 
+#include "Common/Material.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
+#include "Math/AxisAlignedBox.h"
 
 class MeshData;
 
-struct BatchMeshData
+struct MeshDesc
 {
-	BatchMeshData(u32 numIndices, u32 startIndexLocation, i32 baseVertexLocation, u32 materialIndex);
+	MeshDesc(u32 numIndices, u32 startIndexLocation, i32 baseVertexLocation, u32 materialIndex);
 
 	u32 m_NumIndices;
 	u32 m_StartIndexLocation;
@@ -29,9 +31,11 @@ public:
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType() const { return m_PrimitiveTopologyType; }
 	D3D12_PRIMITIVE_TOPOLOGY GetPrimitiveTopology() const { return m_PrimitiveTopology; }
 		
-	u32 GetNumMeshes() { return m_BatchMeshes.size(); }
-	const BatchMeshData* GetMeshData(u32 meshIndex) const { return &m_BatchMeshes[meshIndex]; }
-	
+	u32 GetNumMeshes() const { return m_MeshDescs.size(); }
+	const MeshDesc* GetMeshDescs() const { return &m_MeshDescs[0]; }
+	const Material* GetMaterials() const { return &m_Materials[0]; }
+	const AxisAlignedBox* GetMeshAABBs() const { return &m_MeshAABBs[0]; }
+
 	u32 GetNumVertices() const;
 	const Vector3f* GetPositions() const;
 	const Vector3f* GetNormals() const;
@@ -58,5 +62,7 @@ private:
 	std::vector<u16> m_16BitIndices;
 	std::vector<u32> m_32BitIndices;
 
-	std::vector<BatchMeshData> m_BatchMeshes;
+	std::vector<MeshDesc> m_MeshDescs;
+	std::vector<Material> m_Materials;
+	std::vector<AxisAlignedBox> m_MeshAABBs;
 };

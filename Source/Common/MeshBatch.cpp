@@ -16,39 +16,70 @@ namespace
 }
 
 MeshBatch::MeshBatch(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData)
-	: m_pUploadHeapVB(nullptr)
-	, m_pUploadHeapIB(nullptr)
-	, m_pDefaultHeapVB(nullptr)
-	, m_pDefaultHeapIB(nullptr)
+	: m_pUploadVertexBuffer(nullptr)
+	, m_pUploadIndexBuffer(nullptr)
+	, m_pUploadMeshBoundsBuffer(nullptr)
+	, m_pUploadMeshDescBuffer(nullptr)
+	, m_pUploadMaterialBuffer(nullptr)
+	, m_pVertexBuffer(nullptr)
+	, m_pIndexBuffer(nullptr)
+	, m_pMeshBoundsBuffer(nullptr)
+	, m_pMeshDescBuffer(nullptr)
+	, m_pMaterialBuffer(nullptr)
 	, m_pInputLayout(nullptr)
 	, m_PrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED)
 	, m_PrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_UNDEFINED)
 {
 	InitVertexBuffer(pEnv, pBatchData);
 	InitIndexBuffer(pEnv, pBatchData);
+	InitMeshBoundsBuffer(pEnv, pBatchData);
+	InitMeshDescBuffer(pEnv, pBatchData);
+	InitMaterialBuffer(pEnv, pBatchData);
 }
 
 MeshBatch::~MeshBatch()
 {
-	SafeDelete(m_pUploadHeapVB);
-	SafeDelete(m_pUploadHeapIB);
-	SafeDelete(m_pDefaultHeapVB);
-	SafeDelete(m_pDefaultHeapIB);
+	RemoveDataForUpload();
+
+	SafeDelete(m_pVertexBuffer);
+	SafeDelete(m_pIndexBuffer);
+	SafeDelete(m_pMeshBoundsBuffer);
+	SafeDelete(m_pMeshDescBuffer);
+	SafeDelete(m_pMaterialBuffer);
 }
 
 void MeshBatch::RecordDataForUpload(DXCommandList* pCommandList)
 {
-	pCommandList->CopyResource(m_pDefaultHeapVB, m_pUploadHeapVB);
-	pCommandList->TransitionBarrier(m_pDefaultHeapVB, m_pDefaultHeapVB->GetState(), m_pDefaultHeapVB->GetReadState());
-
-	pCommandList->CopyResource(m_pDefaultHeapIB, m_pUploadHeapIB);
-	pCommandList->TransitionBarrier(m_pDefaultHeapIB, m_pDefaultHeapIB->GetState(), m_pDefaultHeapIB->GetReadState());
+	pCommandList->CopyResource(m_pVertexBuffer, m_pUploadVertexBuffer);
+	pCommandList->CopyResource(m_pIndexBuffer, m_pUploadIndexBuffer);
+	pCommandList->CopyResource(m_pMeshBoundsBuffer, m_pUploadMeshBoundsBuffer);
+	pCommandList->CopyResource(m_pMeshDescBuffer, m_pUploadMeshDescBuffer);
+	pCommandList->CopyResource(m_pMaterialBuffer, m_pUploadMaterialBuffer);
+	
+	const D3D12_RESOURCE_BARRIER resourceTransitions[] =
+	{
+		DXResourceTransitionBarrier(m_pVertexBuffer, m_pVertexBuffer->GetState(), m_pVertexBuffer->GetReadState()),
+		DXResourceTransitionBarrier(m_pIndexBuffer, m_pIndexBuffer->GetState(), m_pIndexBuffer->GetReadState()),
+		DXResourceTransitionBarrier(m_pMeshBoundsBuffer, m_pMeshBoundsBuffer->GetState(), m_pMeshBoundsBuffer->GetReadState()),
+		DXResourceTransitionBarrier(m_pMeshDescBuffer, m_pMeshDescBuffer->GetState(), m_pMeshDescBuffer->GetReadState()),
+		DXResourceTransitionBarrier(m_pMaterialBuffer, m_pMaterialBuffer->GetState(), m_pMaterialBuffer->GetReadState())
+	};
+	pCommandList->ResourceBarrier(ARRAYSIZE(resourceTransitions), &resourceTransitions[0]);
+	
+	m_pVertexBuffer->SetState(m_pVertexBuffer->GetReadState());
+	m_pIndexBuffer->SetState(m_pIndexBuffer->GetReadState());
+	m_pMeshBoundsBuffer->SetState(m_pMeshBoundsBuffer->GetReadState());
+	m_pMeshDescBuffer->SetState(m_pMeshDescBuffer->GetReadState());
+	m_pMaterialBuffer->SetState(m_pMaterialBuffer->GetReadState());
 }
 
 void MeshBatch::RemoveDataForUpload()
 {
-	SafeDelete(m_pUploadHeapVB);
-	SafeDelete(m_pUploadHeapIB);
+	SafeDelete(m_pUploadVertexBuffer);
+	SafeDelete(m_pUploadIndexBuffer);
+	SafeDelete(m_pUploadMeshBoundsBuffer);
+	SafeDelete(m_pUploadMeshDescBuffer);
+	SafeDelete(m_pUploadMaterialBuffer);
 }
 
 void MeshBatch::InitVertexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData)
@@ -119,10 +150,10 @@ void MeshBatch::InitVertexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData*
 	}
 	
 	DXVertexBufferDesc bufferDesc(numVertices, strideInBytes);
-	m_pDefaultHeapVB = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshBatch::m_pDefaultHeapVB");
+	m_pVertexBuffer = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshBatch::m_pVertexBuffer");
 	
-	m_pUploadHeapVB = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"MeshBatch::m_pUploadHeapVB");
-	m_pUploadHeapVB->Write(pVertexData, sizeInBytes);
+	m_pUploadVertexBuffer = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"MeshBatch::m_pUploadVertexBuffer");
+	m_pUploadVertexBuffer->Write(pVertexData, sizeInBytes);
 	
 	SafeArrayDelete(pVertexData);
 }
@@ -136,13 +167,49 @@ void MeshBatch::InitIndexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* 
 	const u32 sizeInBytes = numIndices * strideInBytes;
 	
 	DXIndexBufferDesc bufferDesc(numIndices, strideInBytes);
-	m_pDefaultHeapIB = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshBatch::m_pDefaultHeapIB");
+	m_pIndexBuffer = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshBatch::m_pIndexBuffer");
 	
-	m_pUploadHeapIB = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"MeshBatch::m_pUploadHeapIB");
+	m_pUploadIndexBuffer = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"MeshBatch::m_pUploadIndexBuffer");
 	if (use16BitIndices)
-		m_pUploadHeapIB->Write(pBatchData->Get16BitIndices(), sizeInBytes);
+		m_pUploadIndexBuffer->Write(pBatchData->Get16BitIndices(), sizeInBytes);
 	else
-		m_pUploadHeapIB->Write(pBatchData->Get32BitIndices(), sizeInBytes);
+		m_pUploadIndexBuffer->Write(pBatchData->Get32BitIndices(), sizeInBytes);
+}
+
+void MeshBatch::InitMeshBoundsBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData)
+{
+	const u32 numMeshes = pBatchData->GetNumMeshes();
+	const u32 structureByteStride = sizeof(AxisAlignedBox);
+
+	DXStructuredBufferDesc bufferDesc(numMeshes, structureByteStride, true, false);
+	m_pMeshBoundsBuffer = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshBatch::m_pMeshBoundsBuffer");
+
+	m_pUploadMeshBoundsBuffer = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"MeshBatch::m_pUploadMeshBoundsBuffer");
+	m_pUploadMeshBoundsBuffer->Write(pBatchData->GetMeshAABBs(), numMeshes * structureByteStride);
+}
+
+void MeshBatch::InitMeshDescBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData)
+{
+	const u32 numMeshes = pBatchData->GetNumMeshes();
+	const u32 structureByteStride = sizeof(MeshDesc);
+
+	DXStructuredBufferDesc bufferDesc(numMeshes, structureByteStride, true, false);
+	m_pMeshDescBuffer = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshBatch::m_pMeshDescBuffer");
+
+	m_pUploadMeshDescBuffer = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"MeshBatch::m_pUploadMeshDescBuffer");
+	m_pUploadMeshDescBuffer->Write(pBatchData->GetMeshDescs(), numMeshes * structureByteStride);
+}
+
+void MeshBatch::InitMaterialBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData)
+{
+	const u32 numMeshes = pBatchData->GetNumMeshes();
+	const u32 structureByteStride = sizeof(Material);
+
+	DXStructuredBufferDesc bufferDesc(numMeshes, structureByteStride, true, false);
+	m_pMaterialBuffer = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshBatch::m_pMaterialBuffer");
+
+	m_pUploadMaterialBuffer = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"MeshBatch::m_pUploadMaterialBuffer");
+	m_pUploadMaterialBuffer->Write(pBatchData->GetMaterials(), numMeshes * structureByteStride);
 }
 
 namespace

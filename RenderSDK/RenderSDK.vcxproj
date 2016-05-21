@@ -226,6 +226,7 @@
     <ClCompile Include="..\Source\Common\Camera.cpp" />
     <ClCompile Include="..\Source\Common\Common.cpp" />
     <ClCompile Include="..\Source\Common\Light.cpp" />
+    <ClCompile Include="..\Source\Common\Material.cpp" />
     <ClCompile Include="..\Source\Common\MeshBatch.cpp" />
     <ClCompile Include="..\Source\Common\MeshBatchData.cpp" />
     <ClCompile Include="..\Source\Common\MeshData.cpp" />

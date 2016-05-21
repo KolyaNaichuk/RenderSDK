@@ -1,7 +1,7 @@
 #include "Common/MeshBatchData.h"
 #include "Common/MeshData.h"
 
-BatchMeshData::BatchMeshData(u32 numIndices, u32 startIndexLocation, i32 baseVertexLocation, u32 materialIndex)
+MeshDesc::MeshDesc(u32 numIndices, u32 startIndexLocation, i32 baseVertexLocation, u32 materialIndex)
 	: m_NumIndices(numIndices)
 	, m_StartIndexLocation(startIndexLocation)
 	, m_BaseVertexLocation(baseVertexLocation)
@@ -28,7 +28,7 @@ void MeshBatchData::Append(const MeshData* pMeshData)
 	assert(m_VertexFormatFlags == (m_VertexFormatFlags & pVertexData->GetFormatFlags()));
 
 	const IndexData* pIndexData = pMeshData->GetIndexData();
-	assert(pIndexData != nullptr);	
+	assert(pIndexData != nullptr);
 	assert(m_IndexFormat == pIndexData->GetFormat());
 
 	const i32 baseVertexLocation = (i32)GetNumVertices();
@@ -73,7 +73,11 @@ void MeshBatchData::Append(const MeshData* pMeshData)
 		m_32BitIndices.insert(m_32BitIndices.end(), p32BitIndices, p32BitIndices + numIndices);
 	}
 
-	m_BatchMeshes.emplace_back(numIndices, startIndexLocation, baseVertexLocation, pMeshData->GetMaterialIndex());
+	const u32 materialIndex = m_Materials.size();
+	m_Materials.emplace_back(*pMeshData->GetMaterial());
+	
+	m_MeshDescs.emplace_back(numIndices, startIndexLocation, baseVertexLocation, materialIndex);
+	m_MeshAABBs.emplace_back(*pMeshData->GetAABB());
 }
 
 u32 MeshBatchData::GetNumVertices() const

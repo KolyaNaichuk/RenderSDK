@@ -380,6 +380,9 @@
     <ClCompile Include="..\Source\Common\MeshBatch.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\Common\Material.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">

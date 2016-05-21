@@ -1,7 +1,9 @@
 #include "Common/MeshData.h"
+#include "Common/Material.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
+#include "Math/AxisAlignedBox.h"
 
 VertexData::~VertexData()
 {
@@ -170,12 +172,13 @@ const u32* IndexData::Get32BitIndices() const
 	return m_p32BitIndices;
 }
 
-MeshData::MeshData(VertexData* pVertexData, IndexData* pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology, u32 materialIndex)
+MeshData::MeshData(VertexData* pVertexData, IndexData* pIndexData, Material* pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
 	: m_pVertexData(pVertexData)
 	, m_pIndexData(pIndexData)
+	, m_pMaterial(pMaterial)
+	, m_pAABB(new AxisAlignedBox(pVertexData->GetNumVertices(), pVertexData->GetPositions()))
 	, m_PrimitiveTopologyType(primitiveTopologyType)
 	, m_PrimitiveTopology(primitiveTopology)
-	, m_MaterialIndex(materialIndex)
 {
 }
 
@@ -183,4 +186,12 @@ MeshData::~MeshData()
 {
 	SafeDelete(m_pVertexData);
 	SafeDelete(m_pIndexData);
+	SafeDelete(m_pMaterial);
+	SafeDelete(m_pAABB);
+}
+
+void MeshData::RecalcAABB()
+{
+	SafeDelete(m_pAABB);
+	m_pAABB = new AxisAlignedBox(m_pVertexData->GetNumVertices(), m_pVertexData->GetPositions());
 }

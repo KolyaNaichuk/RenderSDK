@@ -5,6 +5,8 @@
 struct Vector2f;
 struct Vector3f;
 struct Vector4f;
+struct AxisAlignedBox;
+struct Material;
 
 class VertexData
 {
@@ -39,7 +41,7 @@ public:
 	
 	Vector3f* GetTangents();
 	const Vector3f* GetTangents() const;
-
+	
 private:
 	u32 m_NumVertices;
 	u8 m_FormatFlags;
@@ -76,7 +78,7 @@ private:
 class MeshData
 {
 public:
-	MeshData(VertexData* pVertexData, IndexData* pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology, u32 materialIndex);
+	MeshData(VertexData* pVertexData, IndexData* pIndexData, Material* pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
 	~MeshData();
 
 	VertexData* GetVertexData() { return m_pVertexData; }
@@ -85,15 +87,19 @@ public:
 	IndexData* GetIndexData() { return m_pIndexData; };
 	const IndexData* GetIndexData() const { return m_pIndexData; };
 
+	const AxisAlignedBox* GetAABB() const { return m_pAABB; }
+	void RecalcAABB();
+	
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType() const { return m_PrimitiveTopologyType; }
 	D3D12_PRIMITIVE_TOPOLOGY GetPrimitiveTopology() const { return m_PrimitiveTopology; }
 	
-	u32 GetMaterialIndex() const { return m_MaterialIndex; }
+	const Material* GetMaterial() const { return m_pMaterial; }
 	
 private:
 	VertexData* m_pVertexData;
 	IndexData* m_pIndexData;
+	Material* m_pMaterial;
+	AxisAlignedBox* m_pAABB;
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE m_PrimitiveTopologyType;
 	D3D12_PRIMITIVE_TOPOLOGY m_PrimitiveTopology;
-	u32 m_MaterialIndex;
 };

@@ -1,6 +1,6 @@
 #include "OverlapTest.hlsl"
 
-struct MeshData
+struct MeshDesc
 {
 	uint indexCount;
 	uint startIndexLocation;

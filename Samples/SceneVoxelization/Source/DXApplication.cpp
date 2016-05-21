@@ -331,12 +331,11 @@ void DXApplication::OnInit()
 
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-
-		assert(false);
-		// Original: Color::WHITE
-		// Temp: Color::BISQUE
-
-		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 0);
+		
+		// Color::WHITE
+		Material* pMaterial = new Material(Vector4f::ZERO, Color::BISQUE, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
+		
+		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 
 		meshBatchData.Append(&meshData);
@@ -360,12 +359,9 @@ void DXApplication::OnInit()
 
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-
-		assert(false);
-		// Original: Color::WHITE
-		// Temp: Color::BLANCHED_ALMOND
-		
-		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 1);
+		Material* pMaterial = new Material(Vector4f::ZERO, Color::BLANCHED_ALMOND/*Color::WHITE*/, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
+				
+		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 
 		meshBatchData.Append(&meshData);
@@ -389,12 +385,9 @@ void DXApplication::OnInit()
 
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-
-		assert(false);
-		// Original: Color::WHITE
-		// Temp: Color::BLUE_VIOLET
-		
-		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 2);
+		Material* pMaterial = new Material(Vector4f::ZERO, Color::BLUE_VIOLET/*Color::WHITE*/, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
+				
+		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 
 		meshBatchData.Append(&meshData);
@@ -418,11 +411,9 @@ void DXApplication::OnInit()
 		
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		
-		assert(false);
-		// Color::GREEN
+		Material* pMaterial = new Material(Vector4f::ZERO, Color::GREEN, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
 
-		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 3);
+		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 
 		meshBatchData.Append(&meshData);
@@ -446,11 +437,9 @@ void DXApplication::OnInit()
 
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-
-		assert(false);
-		// Color::RED
-
-		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 4);
+		Material* pMaterial = new Material(Vector4f::ZERO, Color::RED, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
+		
+		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 
 		meshBatchData.Append(&meshData);
@@ -501,12 +490,9 @@ void DXApplication::OnInit()
 
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-
-		assert(false);
-		// Original: Color::WHITE
-		// Temp: Color::BLUE
-
-		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 5);
+		Material* pMaterial = new Material(Vector4f::ZERO, Color::BLUE/*Color::WHITE*/, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
+		
+		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 
 		meshBatchData.Append(&meshData);
@@ -557,12 +543,9 @@ void DXApplication::OnInit()
 
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-
-		assert(false);
-		// Original: Color::WHITE
-		// Temp: Color::GOLD
-
-		MeshData meshData(pVertexData, pIndexData, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST, 6);
+		Material* pMaterial = new Material(Vector4f::ZERO, Color::GOLD/*Color::WHITE*/, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
+		
+		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 
 		meshBatchData.Append(&meshData);
