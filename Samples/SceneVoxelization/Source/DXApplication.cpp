@@ -551,9 +551,7 @@ void DXApplication::OnInit()
 		meshBatchData.Append(&meshData);
 	}
 	
-	assert(false);
-	//m_pMeshBatch = new Mesh(m_pEnv, &meshData);
-	
+	m_pMeshBatch = new MeshBatch(m_pEnv, &meshBatchData);
 	m_pMeshBatch->RecordDataForUpload(m_pCommandList);
 	m_pCommandList->Close();
 
