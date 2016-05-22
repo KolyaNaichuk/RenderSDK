@@ -78,6 +78,9 @@ private:
 	DXBuffer* m_pCameraTransformBuffer;
 	DXBuffer* m_pGridBuffer;
 	DXBuffer* m_pGridConfigBuffer;
+	DXBuffer* m_pCullingDataBuffer;
+	DXBuffer* m_pDrawCommandBuffer;
+	DXBuffer* m_pNumDrawsBuffer;
 	DXSampler* m_pAnisoSampler;
 	DXRenderEnvironment* m_pEnv;
 	DXFence* m_pFence;

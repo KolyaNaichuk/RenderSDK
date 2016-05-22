@@ -12,7 +12,7 @@ Degree::Degree(const Degree& degree)
 }
 
 Degree::Degree(const Radian& radian)
-	: m_Degree(RadiansToDegrees(radian.Get()))
+	: m_Degree(ToDegrees(radian.Get()))
 {
 }
 
@@ -35,7 +35,7 @@ Degree& Degree::operator= (const Degree& degree)
 
 Degree& Degree::operator= (const Radian& radian)
 {
-	m_Degree = RadiansToDegrees(radian.Get());
+	m_Degree = ToDegrees(radian.Get());
 	return *this;
 }
 
@@ -53,7 +53,7 @@ Degree& Degree::operator+= (const Degree& degree)
 
 Degree& Degree::operator+= (const Radian& radian)
 {
-	m_Degree += RadiansToDegrees(radian.Get());
+	m_Degree += ToDegrees(radian.Get());
 	return *this;
 }
 
@@ -64,7 +64,7 @@ const Degree Degree::operator+ (const Degree& degree)
 
 const Degree Degree::operator+ (const Radian& radian)
 {
-	return Degree(m_Degree + RadiansToDegrees(radian.Get()));
+	return Degree(m_Degree + ToDegrees(radian.Get()));
 }
 
 Degree& Degree::operator-= (f32 degree)
@@ -81,7 +81,7 @@ Degree& Degree::operator-= (const Degree& degree)
 
 Degree& Degree::operator-= (const Radian& radian)
 {
-	m_Degree -= RadiansToDegrees(radian.Get());
+	m_Degree -= ToDegrees(radian.Get());
 	return *this;
 }
 
@@ -92,7 +92,7 @@ const Degree Degree::operator- (const Degree& degree)
 
 const Degree Degree::operator- (const Radian& radian)
 {
-	return Degree(m_Degree - RadiansToDegrees(radian.Get()));
+	return Degree(m_Degree - ToDegrees(radian.Get()));
 }
 
 Degree& Degree::operator*= (f32 degree)
@@ -109,7 +109,7 @@ Degree& Degree::operator*= (const Degree& degree)
 
 Degree& Degree::operator*= (const Radian& radian)
 {
-	m_Degree *= RadiansToDegrees(radian.Get());
+	m_Degree *= ToDegrees(radian.Get());
 	return *this;
 }
 
@@ -120,7 +120,7 @@ const Degree Degree::operator* (const Degree& degree)
 
 const Degree Degree::operator* (const Radian& radian)
 {
-	return Degree(m_Degree * RadiansToDegrees(radian.Get()));
+	return Degree(m_Degree * ToDegrees(radian.Get()));
 }
 
 Degree& Degree::operator/= (f32 degree)
@@ -137,7 +137,7 @@ Degree& Degree::operator/= (const Degree& degree)
 
 Degree& Degree::operator/= (const Radian& radian)
 {
-	m_Degree /= RadiansToDegrees(radian.Get());
+	m_Degree /= ToDegrees(radian.Get());
 	return *this;
 }
 
@@ -148,7 +148,7 @@ const Degree Degree::operator/ (const Degree& degree)
 
 const Degree Degree::operator/ (const Radian& radian)
 {
-	return Degree(m_Degree / RadiansToDegrees(radian.Get()));
+	return Degree(m_Degree / ToDegrees(radian.Get()));
 }
 
 const Degree Degree::operator- () const

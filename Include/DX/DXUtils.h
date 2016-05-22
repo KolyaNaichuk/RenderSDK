@@ -14,3 +14,5 @@ struct DXRect : public D3D12_RECT
 };
 
 const DXRect ExtractRect(const DXViewport* viewport);
+
+UINT GetSizeInBytes(DXGI_FORMAT format);

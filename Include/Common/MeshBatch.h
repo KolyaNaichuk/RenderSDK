@@ -18,6 +18,8 @@ public:
 
 	void RecordDataForUpload(DXCommandList* pCommandList);
 	void RemoveDataForUpload();
+
+	u32 GetNumMeshes() const { return m_NumMeshes; }
 	
 	DXInputLayoutDesc* GetInputLayout() { return m_pInputLayout; }
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType() const { return m_PrimitiveTopologyType; }
@@ -37,6 +39,8 @@ private:
 	void InitMaterialBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData);
 	
 private:
+	u32 m_NumMeshes;
+
 	DXBuffer* m_pUploadVertexBuffer;
 	DXBuffer* m_pUploadIndexBuffer;
 	DXBuffer* m_pUploadMeshBoundsBuffer;

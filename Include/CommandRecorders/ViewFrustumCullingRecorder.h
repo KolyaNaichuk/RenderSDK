@@ -4,8 +4,12 @@
 
 class DXRootSignature;
 class DXPipelineState;
+class DXCommandList;
+class DXCommandAllocator;
+class DXBuffer;
 class MeshBatch;
 struct DXRenderEnvironment;
+struct DXBindingResourceList;
 
 class ViewFrustumCullingRecorder
 {
@@ -17,6 +21,11 @@ public:
 	};
 	struct RenderPassParams
 	{
+		DXRenderEnvironment* m_pEnv;
+		DXCommandList* m_pCommandList;
+		DXCommandAllocator* m_pCommandAllocator;
+		DXBindingResourceList* m_pResources;
+		DXBuffer* m_pNumDrawsBuffer;
 	};
 	
 	ViewFrustumCullingRecorder(InitParams* pParams);

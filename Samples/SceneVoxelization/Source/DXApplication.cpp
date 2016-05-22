@@ -106,6 +106,29 @@ struct GridConfig
 	Vector4f m_NotUsed[13];
 };
 
+struct CullingData
+{
+	Vector4f m_ViewFrustumPlanes[6];
+	u32 m_NumMeshes;
+	Vector3u m_NotUsed1;
+	Vector4f m_NotUsed2[9];
+};
+
+struct DrawIndexedArgs
+{
+	u32 m_IndexCountPerInstance;
+	u32 m_InstanceCount;
+	u32 m_StartIndexLocation;
+	i32 m_BaseVertexLocation;
+	u32 m_StartInstanceLocation;
+};
+
+struct DrawCommand
+{
+	u32 m_RootConstant;
+	DrawIndexedArgs m_DrawArgs;
+};
+
 struct Voxel
 {
 	Vector4f m_ColorAndNumOccluders;
@@ -136,6 +159,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCameraTransformBuffer(nullptr)
 	, m_pGridBuffer(nullptr)
 	, m_pGridConfigBuffer(nullptr)
+	, m_pCullingDataBuffer(nullptr)
+	, m_pDrawCommandBuffer(nullptr)
+	, m_pNumDrawsBuffer(nullptr)
 	, m_pAnisoSampler(nullptr)
 	, m_pEnv(new DXRenderEnvironment())
 	, m_pFence(nullptr)
@@ -193,6 +219,9 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pShaderVisibleSamplerHeap);
 	SafeDelete(m_pEnv);
 	SafeDelete(m_pAnisoSampler);
+	SafeDelete(m_pNumDrawsBuffer);
+	SafeDelete(m_pDrawCommandBuffer);
+	SafeDelete(m_pCullingDataBuffer);
 	SafeDelete(m_pGridConfigBuffer);
 	SafeDelete(m_pGridBuffer);
 	SafeDelete(m_pCameraTransformBuffer);
@@ -232,10 +261,10 @@ void DXApplication::OnInit()
 	DXDescriptorHeapDesc shaderVisibleSamplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 16, true);
 	m_pShaderVisibleSamplerHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSamplerHeapDesc, L"m_pShaderVisibleSamplerHeap");
 
-	DXDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32, true);
+	DXDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 36, true);
 	m_pShaderVisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
-	DXDescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 16, false);
+	DXDescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 24, false);
 	m_pShaderInvisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
 	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 4, false);
@@ -304,14 +333,21 @@ void DXApplication::OnInit()
 	DXConstantBufferDesc gridConfigBufferDesc(sizeof(GridConfig));
 	m_pGridConfigBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &gridConfigBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pGridConfigBuffer");
 
-	const UINT numGridElements = kNumGridCellsX * kNumGridCellsY * kNumGridCellsZ;
+	DXConstantBufferDesc cullingDataBufferDesc(sizeof(CullingData));
+	m_pCullingDataBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &cullingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCullingDataBuffer");
+
+	const u32 numGridElements = kNumGridCellsX * kNumGridCellsY * kNumGridCellsZ;
 	DXStructuredBufferDesc gridBufferDesc(numGridElements, sizeof(Voxel), true, true);
 	m_pGridBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &gridBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pGridBuffer");
+
+	DXStructuredBufferDesc numDrawCommandsBufferDesc(1, sizeof(u32), false, true);
+	m_pNumDrawsBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &numDrawCommandsBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumDrawsBuffer");
 
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
 
-	MeshBatchData meshBatchData(VertexData::FormatFlag_Position, DXGI_FORMAT_R16_UINT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	const u8 meshBatchVertexFormat = VertexData::FormatFlag_Position | VertexData::FormatFlag_Normal;
+	MeshBatchData meshBatchData(meshBatchVertexFormat, DXGI_FORMAT_R16_UINT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	{
 		// Floor
 		const Vector3f positions[] =
@@ -550,6 +586,9 @@ void DXApplication::OnInit()
 
 		meshBatchData.Append(&meshData);
 	}
+
+	DXStructuredBufferDesc drawCommandBufferDesc(meshBatchData.GetNumMeshes(), sizeof(DrawCommand), true, true);
+	m_pDrawCommandBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawCommandBuffer");
 	
 	m_pMeshBatch = new MeshBatch(m_pEnv, &meshBatchData);
 	m_pMeshBatch->RecordDataForUpload(m_pCommandList);
@@ -560,11 +599,27 @@ void DXApplication::OnInit()
 	WaitForGPU();
 	m_pMeshBatch->RemoveDataForUpload();
 
+	DXBuffer* pMeshBoundsBuffer = m_pMeshBatch->GetMeshBoundsBuffer();
+	DXBuffer* pMeshDescBuffer = m_pMeshBatch->GetMeshDescBuffer();
+
 	ViewFrustumCullingRecorder::InitParams viewFrustumCullingParams;
 	viewFrustumCullingParams.m_pEnv = m_pEnv;
 	viewFrustumCullingParams.m_pMeshBatch = m_pMeshBatch;
-
+	
 	m_pViewFrustumCullingRecorder = new ViewFrustumCullingRecorder(&viewFrustumCullingParams);
+		
+	m_pViewFrustumCullingResources = new DXBindingResourceList();
+	m_pViewFrustumCullingResources->m_ResourceTransitions.emplace_back(m_pNumDrawsBuffer, m_pNumDrawsBuffer->GetWriteState());
+	m_pViewFrustumCullingResources->m_ResourceTransitions.emplace_back(m_pDrawCommandBuffer, m_pDrawCommandBuffer->GetWriteState());
+	m_pViewFrustumCullingResources->m_ResourceTransitions.emplace_back(pMeshBoundsBuffer, pMeshBoundsBuffer->GetReadState());
+	m_pViewFrustumCullingResources->m_ResourceTransitions.emplace_back(pMeshDescBuffer, pMeshDescBuffer->GetReadState());
+
+	m_pViewFrustumCullingResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+	m_pDevice->CopyDescriptor(m_pViewFrustumCullingResources->m_SRVHeapStart, m_pNumDrawsBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDrawCommandBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMeshBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMeshDescBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		
 	FillGBufferRecorder::InitParams fillGBufferParams;
 	fillGBufferParams.m_pEnv = m_pEnv;
@@ -594,7 +649,7 @@ void DXApplication::OnInit()
 	clearGridParams.m_NumGridCellsY = kNumGridCellsY;
 	clearGridParams.m_NumGridCellsZ = kNumGridCellsZ;
 
-	m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(&clearGridParams);
+	//m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(&clearGridParams);
 
 	m_pClearVoxelGridResources = new DXBindingResourceList;
 	m_pClearVoxelGridResources->m_ResourceTransitions.emplace_back(m_pGridBuffer, m_pGridBuffer->GetWriteState());
@@ -606,7 +661,7 @@ void DXApplication::OnInit()
 	createGridParams.m_pEnv = m_pEnv;
 	createGridParams.m_pMeshBatch = m_pMeshBatch;
 
-	m_pCreateVoxelGridRecorder = new CreateVoxelGridRecorder(&createGridParams);
+	//m_pCreateVoxelGridRecorder = new CreateVoxelGridRecorder(&createGridParams);
 
 	m_pCreateVoxelGridResources = new DXBindingResourceList();
 	m_pCreateVoxelGridResources->m_ResourceTransitions.emplace_back(m_pGridBuffer, m_pGridBuffer->GetWriteState());
@@ -628,7 +683,7 @@ void DXApplication::OnInit()
 	visualizeGridParams.m_pEnv = m_pEnv;
 	visualizeGridParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
 	
-	m_pVisualizeVoxelGridRecorder = new VisualizeVoxelGridRecorder(&visualizeGridParams);
+	//m_pVisualizeVoxelGridRecorder = new VisualizeVoxelGridRecorder(&visualizeGridParams);
 
 	for (u8 index = 0; index < kBackBufferCount; ++index)
 	{
@@ -654,7 +709,7 @@ void DXApplication::OnInit()
 	visualizeMeshParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
 	visualizeMeshParams.m_DSVFormat = GetDepthStencilViewFormat(m_pDepthTexture->GetFormat());
 		
-	m_pVisualizeMeshRecorder = new VisualizeMeshRecorder(&visualizeMeshParams);
+	//m_pVisualizeMeshRecorder = new VisualizeMeshRecorder(&visualizeMeshParams);
 
 	for (u8 index = 0; index < kBackBufferCount; ++index)
 	{
@@ -676,6 +731,7 @@ void DXApplication::OnInit()
 	const Vector3f& mainCameraPos = m_pCamera->GetTransform().GetPosition();
 	const Quaternion& mainCameraRotation = m_pCamera->GetTransform().GetRotation();
 	const Matrix4f mainViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
+	const Frustum mainCameraFrustum = ExtractWorldFrustum(*m_pCamera);
 
 	ObjectTransform objectTransform;
 	objectTransform.m_WorldPosMatrix = Matrix4f::IDENTITY;
@@ -727,6 +783,12 @@ void DXApplication::OnInit()
 	cameraTransform.m_ViewProjMatrices[2] = zAxisCamera.GetViewMatrix() * zAxisCamera.GetProjMatrix();
 
 	m_pCameraTransformBuffer->Write(&cameraTransform, sizeof(cameraTransform));
+			
+	CullingData cullingData;
+	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
+		cullingData.m_ViewFrustumPlanes[planeIndex] = ToVector4f(mainCameraFrustum.m_Planes[planeIndex]);
+	cullingData.m_NumMeshes = m_pMeshBatch->GetNumMeshes();
+	m_pCullingDataBuffer->Write(&cullingData, sizeof(CullingData));
 }
 
 void DXApplication::OnUpdate()
@@ -770,6 +832,17 @@ void DXApplication::OnRender()
 		WaitForGPU();
 	}
 
+	ViewFrustumCullingRecorder::RenderPassParams viewFrustumCullingParams;
+	viewFrustumCullingParams.m_pEnv = m_pEnv;
+	viewFrustumCullingParams.m_pCommandList = m_pCommandList;
+	viewFrustumCullingParams.m_pCommandAllocator = pCommandAllocator;
+	viewFrustumCullingParams.m_pResources = m_pViewFrustumCullingResources;
+	viewFrustumCullingParams.m_pNumDrawsBuffer = m_pNumDrawsBuffer;
+
+	m_pViewFrustumCullingRecorder->Record(&viewFrustumCullingParams);
+	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	WaitForGPU();
+
 	GBuffer gBuffer;
 	gBuffer.m_pDiffuseTexture = m_pDiffuseTexture;
 	gBuffer.m_pNormalTexture = m_pNormalTexture;
@@ -777,8 +850,6 @@ void DXApplication::OnRender()
 	gBuffer.m_pAccumLightTexture = m_pAccumLightTexture;
 	gBuffer.m_pDepthTexture = m_pDepthTexture;
 	
-	D3D12_RESOURCE_STATES renderTargetEndState = D3D12_RESOURCE_STATE_PRESENT;
-
 	FillGBufferRecorder::RenderPassParams fillGBufferParams;
 	fillGBufferParams.m_pEnv = m_pEnv;
 	fillGBufferParams.m_pCommandList = m_pCommandList;
@@ -800,9 +871,9 @@ void DXApplication::OnRender()
 	visualizeMeshParams.m_pViewport = m_pViewport;
 	visualizeMeshParams.m_pMeshBatch = m_pMeshBatch;
 
-	m_pVisualizeMeshRecorder->Record(&visualizeMeshParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
-	WaitForGPU();
+	//m_pVisualizeMeshRecorder->Record(&visualizeMeshParams);
+	//m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	//WaitForGPU();
 
 	ClearVoxelGridRecorder::RenderPassParams clearGridParams;
 	clearGridParams.m_pEnv = m_pEnv;
@@ -810,9 +881,9 @@ void DXApplication::OnRender()
 	clearGridParams.m_pCommandList = m_pCommandList;
 	clearGridParams.m_pResources = m_pClearVoxelGridResources;
 	
-	m_pClearVoxelGridRecorder->Record(&clearGridParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
-	WaitForGPU();
+	//m_pClearVoxelGridRecorder->Record(&clearGridParams);
+	//m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	//WaitForGPU();
 
 	CreateVoxelGridRecorder::RenderPassParams createGridParams;
 	createGridParams.m_pEnv = m_pEnv;
@@ -822,9 +893,9 @@ void DXApplication::OnRender()
 	createGridParams.m_pViewport = m_pViewport;
 	createGridParams.m_pMeshBatch = m_pMeshBatch;
 	
-	m_pCreateVoxelGridRecorder->Record(&createGridParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
-	WaitForGPU();
+	//m_pCreateVoxelGridRecorder->Record(&createGridParams);
+	//m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	//WaitForGPU();
 	
 	VisualizeVoxelGridRecorder::RenderPassParams visualizeGridParams;
 	visualizeGridParams.m_pEnv = m_pEnv;
@@ -833,8 +904,8 @@ void DXApplication::OnRender()
 	visualizeGridParams.m_pResources = m_VisualizeVoxelGridResources[m_BackBufferIndex];
 	visualizeGridParams.m_pViewport = m_pViewport;
 	
-	m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	//m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
+	//m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 			
 	if (pRenderTarget->GetState() != D3D12_RESOURCE_STATE_PRESENT)
 	{

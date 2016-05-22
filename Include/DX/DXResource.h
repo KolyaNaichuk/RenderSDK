@@ -56,12 +56,6 @@ struct DXHeapProperties : public D3D12_HEAP_PROPERTIES
 };
 
 // Kolya: should verify if the following structures are used
-struct DXBufferShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
-{
-	DXBufferShaderResourceViewDesc(UINT64 firstElement, UINT numElements,
-		UINT structureByteStride, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN,
-		UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
-};
 
 struct DXRawBufferShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 {
@@ -376,7 +370,7 @@ public:
 
 	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXStructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
-
+	
 	~DXBuffer();
 	
 	DXVertexBufferView* GetVBView();
@@ -394,7 +388,7 @@ private:
 	void CreateVertexBufferView(DXRenderEnvironment* pEnv, const DXVertexBufferDesc* pBufferDesc);
 	void CreateIndexBufferView(DXRenderEnvironment* pEnv, const DXIndexBufferDesc* pBufferDesc);
 	void CreateStructuredBufferViews(DXRenderEnvironment* pEnv, const DXStructuredBufferDesc* pBufferDesc);
-	
+		
 private:
 	DXDescriptorHandle m_SRVHandle;
 	DXDescriptorHandle m_UAVHandle;

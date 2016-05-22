@@ -1,6 +1,7 @@
 #include "DX/DXResource.h"
 #include "DX/DXDevice.h"
 #include "DX/DXRenderEnvironment.h"
+#include "DX/DXUtils.h"
 
 DXColorClearValue::DXColorClearValue(DXGI_FORMAT format, const FLOAT color[4])
 {
@@ -196,18 +197,6 @@ DXStructuredBufferUAVDesc::DXStructuredBufferUAVDesc(UINT64 firstElement, UINT n
 	Buffer.StructureByteStride = structureByteStride;
 	Buffer.CounterOffsetInBytes = 0;
 	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-}
-
-DXBufferShaderResourceViewDesc::DXBufferShaderResourceViewDesc(UINT64 firstElement, UINT numElements,
-	UINT structureByteStride, DXGI_FORMAT format, UINT shader4ComponentMapping)
-{
-	Format = format;
-	ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-	Shader4ComponentMapping = shader4ComponentMapping;
-	Buffer.FirstElement = firstElement;
-	Buffer.NumElements = numElements;
-	Buffer.StructureByteStride = structureByteStride;
-	Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 }
 
 DXRawBufferShaderResourceViewDesc::DXRawBufferShaderResourceViewDesc(UINT64 firstElement, UINT numElements, UINT shader4ComponentMapping)

@@ -5,18 +5,19 @@
 #include "DX/DXCommandList.h"
 #include "DX/DXPipelineState.h"
 #include "DX/DXRenderEnvironment.h"
+#include "DX/DXUtils.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 
 namespace
 {
-	u32 GetBytesPerElement(DXGI_FORMAT format);
 	DXInputLayoutDesc* CreateInputLayout(u8 vertexFormatFlags, u32* pOutStrideInBytes = nullptr);
 }
 
 MeshBatch::MeshBatch(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData)
-	: m_pUploadVertexBuffer(nullptr)
+	: m_NumMeshes(pBatchData->GetNumMeshes())
+	, m_pUploadVertexBuffer(nullptr)
 	, m_pUploadIndexBuffer(nullptr)
 	, m_pUploadMeshBoundsBuffer(nullptr)
 	, m_pUploadMeshDescBuffer(nullptr)
@@ -27,8 +28,8 @@ MeshBatch::MeshBatch(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData)
 	, m_pMeshDescBuffer(nullptr)
 	, m_pMaterialBuffer(nullptr)
 	, m_pInputLayout(nullptr)
-	, m_PrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED)
-	, m_PrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_UNDEFINED)
+	, m_PrimitiveTopologyType(pBatchData->GetPrimitiveTopologyType())
+	, m_PrimitiveTopology(pBatchData->GetPrimitiveTopology())
 {
 	InitVertexBuffer(pEnv, pBatchData);
 	InitIndexBuffer(pEnv, pBatchData);
@@ -89,10 +90,7 @@ void MeshBatch::InitVertexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData*
 
 	u32 strideInBytes = 0;
 	m_pInputLayout = CreateInputLayout(vertexFormatFlags, &strideInBytes);
-
-	m_PrimitiveTopologyType = pBatchData->GetPrimitiveTopologyType();
-	m_PrimitiveTopology = pBatchData->GetPrimitiveTopology();
-
+	
 	const u32 sizeInBytes = numVertices * strideInBytes;
 	
 	u8* pVertexData = new u8[sizeInBytes];
@@ -214,77 +212,6 @@ void MeshBatch::InitMaterialBuffer(DXRenderEnvironment* pEnv, const MeshBatchDat
 
 namespace
 {
-	u32 GetBytesPerElement(DXGI_FORMAT format)
-	{
-		switch (format)
-		{
-		case DXGI_FORMAT_R32G32B32A32_FLOAT:
-		case DXGI_FORMAT_R32G32B32A32_UINT:
-		case DXGI_FORMAT_R32G32B32A32_SINT:
-			return 16;
-
-		case DXGI_FORMAT_R32G32B32_FLOAT:
-		case DXGI_FORMAT_R32G32B32_UINT:
-		case DXGI_FORMAT_R32G32B32_SINT:
-			return 12;
-
-		case DXGI_FORMAT_R16G16B16A16_FLOAT:
-		case DXGI_FORMAT_R16G16B16A16_UNORM:
-		case DXGI_FORMAT_R16G16B16A16_UINT:
-		case DXGI_FORMAT_R16G16B16A16_SNORM:
-		case DXGI_FORMAT_R16G16B16A16_SINT:
-		case DXGI_FORMAT_R32G32_FLOAT:
-		case DXGI_FORMAT_R32G32_UINT:
-		case DXGI_FORMAT_R32G32_SINT:
-			return 8;
-
-		case DXGI_FORMAT_R10G10B10A2_UNORM:
-		case DXGI_FORMAT_R10G10B10A2_UINT:
-		case DXGI_FORMAT_R11G11B10_FLOAT:
-		case DXGI_FORMAT_R8G8B8A8_UNORM:
-		case DXGI_FORMAT_R8G8B8A8_UINT:
-		case DXGI_FORMAT_R8G8B8A8_SNORM:
-		case DXGI_FORMAT_R8G8B8A8_SINT:
-		case DXGI_FORMAT_R16G16_FLOAT:
-		case DXGI_FORMAT_R16G16_UNORM:
-		case DXGI_FORMAT_R16G16_UINT:
-		case DXGI_FORMAT_R16G16_SNORM:
-		case DXGI_FORMAT_R16G16_SINT:
-		case DXGI_FORMAT_R32_FLOAT:
-		case DXGI_FORMAT_R32_UINT:
-		case DXGI_FORMAT_R32_SINT:
-		case DXGI_FORMAT_B8G8R8A8_UNORM:
-		case DXGI_FORMAT_B8G8R8X8_UNORM:
-			return 4;
-
-		case DXGI_FORMAT_R8G8_UNORM:
-		case DXGI_FORMAT_R8G8_UINT:
-		case DXGI_FORMAT_R8G8_SNORM:
-		case DXGI_FORMAT_R8G8_SINT:
-		case DXGI_FORMAT_R16_FLOAT:
-		case DXGI_FORMAT_R16_UNORM:
-		case DXGI_FORMAT_R16_UINT:
-		case DXGI_FORMAT_R16_SNORM:
-		case DXGI_FORMAT_R16_SINT:
-		case DXGI_FORMAT_B5G6R5_UNORM:
-		case DXGI_FORMAT_B5G5R5A1_UNORM:
-			return 2;
-
-		case DXGI_FORMAT_R8_UNORM:
-		case DXGI_FORMAT_R8_UINT:
-		case DXGI_FORMAT_R8_SNORM:
-		case DXGI_FORMAT_R8_SINT:
-			return 1;
-
-		case DXGI_FORMAT_B4G4R4A4_UNORM:
-			return 2;
-
-		default:
-			assert(false);
-			return 0;
-		}
-	}
-
 	DXInputLayoutDesc* CreateInputLayout(u8 vertexFormatFlags, u32* pOutStrideInBytes)
 	{
 		std::vector<DXInputElementDesc> inputElements;
@@ -296,35 +223,35 @@ namespace
 			const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
 			inputElements.emplace_back("POSITION", 0, format, 0, byteOffset);
 
-			byteOffset += GetBytesPerElement(format);
+			byteOffset += GetSizeInBytes(format);
 		}
 		if ((vertexFormatFlags & VertexData::FormatFlag_Normal) != 0)
 		{
 			const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
 			inputElements.emplace_back("NORMAL", 0, format, 0, byteOffset);
 
-			byteOffset += GetBytesPerElement(format);
+			byteOffset += GetSizeInBytes(format);
 		}
 		if ((vertexFormatFlags & VertexData::FormatFlag_Color) != 0)
 		{
 			const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 			inputElements.emplace_back("COLOR", 0, format, 0, byteOffset);
 
-			byteOffset += GetBytesPerElement(format);
+			byteOffset += GetSizeInBytes(format);
 		}
 		if ((vertexFormatFlags & VertexData::FormatFlag_Tangent) != 0)
 		{
 			const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
 			inputElements.emplace_back("TANGENT", 0, format, 0, byteOffset);
 
-			byteOffset += GetBytesPerElement(format);
+			byteOffset += GetSizeInBytes(format);
 		}
 		if ((vertexFormatFlags & VertexData::FormatFlag_TexCoords) != 0)
 		{
 			const DXGI_FORMAT format = DXGI_FORMAT_R32G32_FLOAT;
 			inputElements.emplace_back("TEXCOORD", 0, format, 0, byteOffset);
 
-			byteOffset += GetBytesPerElement(format);
+			byteOffset += GetSizeInBytes(format);
 		}
 		if (pOutStrideInBytes != nullptr)
 			*pOutStrideInBytes = byteOffset;
