@@ -628,9 +628,8 @@ void DXApplication::OnInit()
 	fillGBufferParams.m_SpecularRTVFormat = GetRenderTargetViewFormat(m_pSpecularTexture->GetFormat());
 	fillGBufferParams.m_DSVFormat = GetDepthStencilViewFormat(m_pDepthTexture->GetFormat());
 	fillGBufferParams.m_pMeshBatch = m_pMeshBatch;
-	fillGBufferParams.m_MaterialElementFlags = 0;
-
-	//m_pFillGBufferRecorder = new FillGBufferRecorder(&fillGBufferParams);
+	
+	m_pFillGBufferRecorder = new FillGBufferRecorder(&fillGBufferParams);
 
 	TiledShadingRecorder::InitParams tiledShadingParams;
 	tiledShadingParams.m_pEnv = m_pEnv;
@@ -842,22 +841,12 @@ void DXApplication::OnRender()
 	m_pViewFrustumCullingRecorder->Record(&viewFrustumCullingParams);
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 	WaitForGPU();
-
-	GBuffer gBuffer;
-	gBuffer.m_pDiffuseTexture = m_pDiffuseTexture;
-	gBuffer.m_pNormalTexture = m_pNormalTexture;
-	gBuffer.m_pSpecularTexture = m_pSpecularTexture;
-	gBuffer.m_pAccumLightTexture = m_pAccumLightTexture;
-	gBuffer.m_pDepthTexture = m_pDepthTexture;
-	
+		
 	FillGBufferRecorder::RenderPassParams fillGBufferParams;
 	fillGBufferParams.m_pEnv = m_pEnv;
 	fillGBufferParams.m_pCommandList = m_pCommandList;
 	fillGBufferParams.m_pCommandAllocator = pCommandAllocator;
-	fillGBufferParams.m_pGBuffer = &gBuffer;
 	fillGBufferParams.m_pMeshBatch = m_pMeshBatch;
-	//fillGBufferParams.m_pMaterial;
-	fillGBufferParams.m_pAnisoSampler = m_pAnisoSampler;
 	
 //	m_pFillGBufferRecorder->Record(&fillGBufferParams);
 //	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);

@@ -215,7 +215,7 @@ namespace
 	DXInputLayoutDesc* CreateInputLayout(u8 vertexFormatFlags, u32* pOutStrideInBytes)
 	{
 		std::vector<DXInputElementDesc> inputElements;
-		inputElements.reserve(6);
+		inputElements.reserve(5);
 
 		u32 byteOffset = 0;
 		assert((vertexFormatFlags & VertexData::FormatFlag_Position) != 0);

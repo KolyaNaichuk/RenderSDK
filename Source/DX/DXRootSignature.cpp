@@ -77,6 +77,15 @@ DXRootUAVParameter::DXRootUAVParameter(UINT shaderRegister, D3D12_SHADER_VISIBIL
 	ShaderVisibility = shaderVisibility;
 }
 
+DXRoot32BitConstantsParameter::DXRoot32BitConstantsParameter(UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT num32BitValues, UINT registerSpace)
+{
+	ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	Constants.ShaderRegister = shaderRegister;
+	Constants.RegisterSpace = registerSpace;
+	Constants.Num32BitValues = num32BitValues;
+	ShaderVisibility = shaderVisibility;
+}
+
 DXRootSignatureDesc::DXRootSignatureDesc()
 	: DXRootSignatureDesc(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE)
 {

@@ -23,7 +23,7 @@ struct GridConfig
 
 struct ObjectTransform
 {
-	matrix worldPosMatrix;
+	matrix worldPositionMatrix;
 	matrix worldNormalMatrix;
 	matrix worldViewProjMatrix;
 	float4 notUsed[4];

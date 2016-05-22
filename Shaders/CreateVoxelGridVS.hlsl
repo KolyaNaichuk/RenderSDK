@@ -32,7 +32,7 @@ cbuffer TransformBuffer : register(b0)
 VSOutput Main(VSInput input)
 {
 	VSOutput output;
-	output.worldSpacePos = mul(float4(input.localSpacePos.xyz, 1.0f), g_Transform.worldPosMatrix);
+	output.worldSpacePos = mul(float4(input.localSpacePos.xyz, 1.0f), g_Transform.worldPositionMatrix);
 	output.worldSpaceNormal = mul(float4(input.localSpaceNormal.xyz, 0.0f), g_Transform.worldNormalMatrix);
 	
 #ifdef HAS_TEXCOORD

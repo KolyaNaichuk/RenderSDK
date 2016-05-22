@@ -45,6 +45,11 @@ struct DXRootUAVParameter : public D3D12_ROOT_PARAMETER
 	DXRootUAVParameter(UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace = 0);
 };
 
+struct DXRoot32BitConstantsParameter : public D3D12_ROOT_PARAMETER
+{
+	DXRoot32BitConstantsParameter(UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT num32BitValues, UINT registerSpace = 0);
+};
+
 struct DXRootSignatureDesc : public D3D12_ROOT_SIGNATURE_DESC
 {
 	DXRootSignatureDesc();
