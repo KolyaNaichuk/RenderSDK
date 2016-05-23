@@ -2,7 +2,9 @@
 #include "Common/MeshBatch.h"
 #include "DX/DXPipelineState.h"
 #include "DX/DXRootSignature.h"
+#include "DX/DXCommandSignature.h"
 #include "DX/DXCommandList.h"
+#include "DX/DXResource.h"
 #include "DX/DXUtils.h"
 #include "DX/DXRenderEnvironment.h"
 
@@ -17,6 +19,7 @@ enum RootParams
 FillGBufferRecorder::FillGBufferRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
+	, m_pCommandSignature(nullptr)
 {
 	DXRenderEnvironment* pEnv = pParams->m_pEnv;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
@@ -47,94 +50,58 @@ FillGBufferRecorder::FillGBufferRecorder(InitParams* pParams)
 	pipelineStateDesc.SetRenderTargetFormats(ARRAYSIZE(rtvFormats), rtvFormats, pParams->m_DSVFormat);
 
 	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"FillGBufferRecorder::m_pPipelineState");
+
+	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] = 
+	{
+		DX32BitConstantsArgument(k32BitConstantRootParamPS, 0, 1),
+		DXDrawIndexedArgument()
+	};
+	DXCommandSignatureDesc commandSignatureDesc(sizeof(FillGBufferCommand), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
+	m_pCommandSignature = new DXCommandSignature(pEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"FillGBufferRecorder::m_pCommandSignature");
 }
 
 FillGBufferRecorder::~FillGBufferRecorder()
 {
+	SafeDelete(m_pCommandSignature);
 	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pRootSignature);
 }
 
 void FillGBufferRecorder::Record(RenderPassParams* pParams)
 {
-	// Kolya: fix me
-	assert(false);
-	/*
+	DXRenderEnvironment* pEnv = pParams->m_pEnv;
 	DXCommandList* pCommandList = pParams->m_pCommandList;
-	
+	DXBindingResourceList* pResources = pParams->m_pResources;
+	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
+
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
-	// Kolya: Has to force clear state - otherwise VS Graphics Debugger will fail to make capture
-	pCommandList->GetDXObject()->ClearState(m_pPipelineState->GetDXObject());
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
-	
-	GBuffer* pGBuffer = pParams->m_pGBuffer;
-	if (pGBuffer->m_pDiffuseTexture->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
-		pCommandList->TransitionBarrier(pGBuffer->m_pDiffuseTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	
-	if (pGBuffer->m_pNormalTexture->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
-		pCommandList->TransitionBarrier(pGBuffer->m_pNormalTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-	if (pGBuffer->m_pSpecularTexture->GetState() != D3D12_RESOURCE_STATE_RENDER_TARGET)
-		pCommandList->TransitionBarrier(pGBuffer->m_pSpecularTexture, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	
-	if (pGBuffer->m_pDepthTexture->GetState() != D3D12_RESOURCE_STATE_DEPTH_WRITE)
-		pCommandList->TransitionBarrier(pGBuffer->m_pDepthTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
+	pCommandList->SetDescriptorHeaps(pEnv->m_pShaderVisibleSRVHeap);
 
-	pCommandList->SetDescriptorHeaps(pParams->m_pCBVDescriptorHeap, pParams->m_pShaderInvisibleSamplerHeap);
-	pCommandList->SetGraphicsRootDescriptorTable(m_TransformCBVRootParam, pParams->m_TransformCBVHandle);
-	pCommandList->SetGraphicsRootDescriptorTable(m_MaterialCBVRootParam, pParams->m_MaterialCBVHandle);
+	assert(false && "Clear RTV and DSV");
 
-	if (m_MaterialElementFlags != 0)
-	{
-		Material* pMaterial = pParams->m_pMaterial;
-		pCommandList->SetGraphicsRootDescriptorTable(m_AnisoSamplerRootParam, pParams->m_AnisoSamplerHandle);
-		
-		if (m_MaterialElementFlags & MaterialElementFlag_DiffuseMap)
-		{
-			if (pMaterial->m_pDiffuseMap->GetState() != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
-				pCommandList->TransitionBarrier(pMaterial->m_pDiffuseMap, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-			
-			pCommandList->SetGraphicsRootDescriptorTable(m_DiffuseSRVRootParam, pMaterial->m_DiffuseSRVHandle);
-		}
-		if (m_MaterialElementFlags & MaterialElementFlag_NormalMap)
-		{
-			if (pMaterial->m_pNormalMap->GetState() != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
-				pCommandList->TransitionBarrier(pMaterial->m_pNormalMap, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	DXDescriptorHandle srvHeapStart = pResources->m_SRVHeapStart;
+	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamVS, srvHeapStart);
 
-			pCommandList->SetGraphicsRootDescriptorTable(m_NormalSRVRootParam, pMaterial->m_NormalSRVHandle);
-		}
-		if (m_MaterialElementFlags & MaterialElementFlag_SpecularMap)
-		{
-			if (pMaterial->m_pSpecularMap->GetState() != D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE)
-				pCommandList->TransitionBarrier(pMaterial->m_pSpecularMap, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	srvHeapStart.Offset(1);
+	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParamPS, srvHeapStart);
 
-			pCommandList->SetGraphicsRootDescriptorTable(m_NormalSRVRootParam, pMaterial->m_SpecualSRVHandle);
-		}
-	}
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = pResources->m_RTVHeapStart;
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHeapStart = pResources->m_DSVHeapStart;
+	pCommandList->OMSetRenderTargets(1, &rtvHeapStart, TRUE, &dsvHeapStart);
 
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[] =
-	{
-		pGBuffer->m_DiffuseRTVHandle,
-		pGBuffer->m_NormalRTVHandle,
-		pGBuffer->m_SpecularRTVHandle
-	};
-	pCommandList->OMSetRenderTargets(ARRAYSIZE(rtvHandles), rtvHandles, TRUE, &pGBuffer->m_DSVHandle);
+	pCommandList->IASetPrimitiveTopology(pMeshBatch->GetPrimitiveTopology());
+	pCommandList->IASetVertexBuffers(0, 1, pMeshBatch->GetVertexBuffer()->GetVBView());
+	pCommandList->IASetIndexBuffer(pMeshBatch->GetIndexBuffer()->GetIBView());
 
-	Mesh* pMesh = pParams->m_pMeshBatch;
-	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	pCommandList->IASetVertexBuffers(0, 1, pMesh->GetVertexBufferView());
-	pCommandList->IASetIndexBuffer(pMesh->GetIndexBufferView());
+	pCommandList->RSSetViewports(1, pParams->m_pViewport);
 
-	DXViewport viewport(0.0f, 0.0f, FLOAT(pGBuffer->m_pDiffuseTexture->GetWidth()), FLOAT(pGBuffer->m_pDiffuseTexture->GetHeight()));
-	pCommandList->RSSetViewports(1, &viewport);
-
-	DXRect scissorRect(ExtractRect(viewport));
+	DXRect scissorRect(ExtractRect(pParams->m_pViewport));
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
-	assert(pMesh->GetNumSubMeshes() == 1);
-	const SubMeshData* pSubMeshData = pMesh->GetSubMeshes();
-	pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
+	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshBatch->GetNumMeshes(), pParams->m_pDrawCommandBuffer, 0, pParams->m_pNumDrawsBuffer, 0);
 
 	pCommandList->Close();
-	*/
 }

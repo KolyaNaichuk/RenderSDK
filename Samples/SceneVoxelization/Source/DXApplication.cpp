@@ -114,21 +114,6 @@ struct CullingData
 	Vector4f m_NotUsed2[9];
 };
 
-struct DrawIndexedArgs
-{
-	u32 m_IndexCountPerInstance;
-	u32 m_InstanceCount;
-	u32 m_StartIndexLocation;
-	i32 m_BaseVertexLocation;
-	u32 m_StartInstanceLocation;
-};
-
-struct DrawCommand
-{
-	u32 m_RootConstant;
-	DrawIndexedArgs m_DrawArgs;
-};
-
 struct Voxel
 {
 	Vector4f m_ColorAndNumOccluders;
@@ -144,7 +129,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pDefaultHeapProps(new DXHeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new DXHeapProperties(D3D12_HEAP_TYPE_UPLOAD))
 	, m_pShaderInvisibleRTVHeap(nullptr)
-	, m_pDSVDescriptorHeap(nullptr)
+	, m_pShaderInvisibleDSVHeap(nullptr)
 	, m_pShaderInvisibleSRVHeap(nullptr)
 	, m_pShaderInvisibleSamplerHeap(nullptr)
 	, m_pShaderVisibleSRVHeap(nullptr)
@@ -167,6 +152,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFence(nullptr)
 	, m_BackBufferIndex(0)
 	, m_pFillGBufferRecorder(nullptr)
+	, m_pFillGBufferResources(nullptr)
 	, m_pTiledShadingRecorder(nullptr)
 	, m_pClearVoxelGridRecorder(nullptr)
 	, m_pClearVoxelGridResources(nullptr)
@@ -206,12 +192,13 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pVisualizeMeshRecorder);
 	SafeDelete(m_pTiledShadingRecorder);
 	SafeDelete(m_pFillGBufferRecorder);
+	SafeDelete(m_pFillGBufferResources);
 	SafeDelete(m_pViewFrustumCullingRecorder);
 	SafeDelete(m_pViewFrustumCullingResources);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pDefaultHeapProps);
 	SafeDelete(m_pUploadHeapProps);
-	SafeDelete(m_pDSVDescriptorHeap);
+	SafeDelete(m_pShaderInvisibleDSVHeap);
 	SafeDelete(m_pShaderInvisibleSRVHeap);
 	SafeDelete(m_pShaderInvisibleRTVHeap);
 	SafeDelete(m_pShaderInvisibleSamplerHeap);
@@ -261,14 +248,14 @@ void DXApplication::OnInit()
 	DXDescriptorHeapDesc shaderVisibleSamplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 16, true);
 	m_pShaderVisibleSamplerHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSamplerHeapDesc, L"m_pShaderVisibleSamplerHeap");
 
-	DXDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 36, true);
+	DXDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 40, true);
 	m_pShaderVisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
 	DXDescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 24, false);
 	m_pShaderInvisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
 	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 4, false);
-	m_pDSVDescriptorHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pDSVDescriptorHeap");
+	m_pShaderInvisibleDSVHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pShaderInvisibleDSVHeap");
 
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 		m_CommandAllocators[index] = new DXCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
@@ -282,7 +269,7 @@ void DXApplication::OnInit()
 	m_pEnv->m_pUploadHeapProps = m_pUploadHeapProps;
 	m_pEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
 	m_pEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
-	m_pEnv->m_pShaderInvisibleDSVHeap = m_pDSVDescriptorHeap;
+	m_pEnv->m_pShaderInvisibleDSVHeap = m_pShaderInvisibleDSVHeap;
 	m_pEnv->m_pShaderInvisibleSamplerHeap = m_pShaderInvisibleSamplerHeap;
 	m_pEnv->m_pShaderVisibleSRVHeap = m_pShaderVisibleSRVHeap;
 	m_pEnv->m_NullSRVHeapStart = m_pShaderVisibleSRVHeap->AllocateRange(10);
@@ -587,7 +574,7 @@ void DXApplication::OnInit()
 		meshBatchData.Append(&meshData);
 	}
 
-	DXStructuredBufferDesc drawCommandBufferDesc(meshBatchData.GetNumMeshes(), sizeof(DrawCommand), true, true);
+	DXStructuredBufferDesc drawCommandBufferDesc(meshBatchData.GetNumMeshes(), sizeof(FillGBufferCommand), true, true);
 	m_pDrawCommandBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawCommandBuffer");
 	
 	m_pMeshBatch = new MeshBatch(m_pEnv, &meshBatchData);
@@ -601,6 +588,7 @@ void DXApplication::OnInit()
 
 	DXBuffer* pMeshBoundsBuffer = m_pMeshBatch->GetMeshBoundsBuffer();
 	DXBuffer* pMeshDescBuffer = m_pMeshBatch->GetMeshDescBuffer();
+	DXBuffer* pMaterialBuffer = m_pMeshBatch->GetMaterialBuffer();
 
 	ViewFrustumCullingRecorder::InitParams viewFrustumCullingParams;
 	viewFrustumCullingParams.m_pEnv = m_pEnv;
@@ -623,13 +611,29 @@ void DXApplication::OnInit()
 		
 	FillGBufferRecorder::InitParams fillGBufferParams;
 	fillGBufferParams.m_pEnv = m_pEnv;
-	fillGBufferParams.m_DiffuseRTVFormat = GetRenderTargetViewFormat(m_pDiffuseTexture->GetFormat());
 	fillGBufferParams.m_NormalRTVFormat = GetRenderTargetViewFormat(m_pNormalTexture->GetFormat());
+	fillGBufferParams.m_DiffuseRTVFormat = GetRenderTargetViewFormat(m_pDiffuseTexture->GetFormat());
 	fillGBufferParams.m_SpecularRTVFormat = GetRenderTargetViewFormat(m_pSpecularTexture->GetFormat());
 	fillGBufferParams.m_DSVFormat = GetDepthStencilViewFormat(m_pDepthTexture->GetFormat());
 	fillGBufferParams.m_pMeshBatch = m_pMeshBatch;
 	
 	m_pFillGBufferRecorder = new FillGBufferRecorder(&fillGBufferParams);
+
+	m_pFillGBufferResources = new DXBindingResourceList();
+	m_pFillGBufferResources->m_ResourceTransitions.emplace_back(m_pNormalTexture, m_pNormalTexture->GetWriteState());
+	m_pFillGBufferResources->m_ResourceTransitions.emplace_back(m_pDiffuseTexture, m_pDiffuseTexture->GetWriteState());
+	m_pFillGBufferResources->m_ResourceTransitions.emplace_back(m_pSpecularTexture, m_pSpecularTexture->GetWriteState());
+	m_pFillGBufferResources->m_ResourceTransitions.emplace_back(m_pDepthTexture, m_pDepthTexture->GetWriteState());
+	m_pFillGBufferResources->m_ResourceTransitions.emplace_back(pMaterialBuffer, pMaterialBuffer->GetReadState());
+	
+	m_pFillGBufferResources->m_RTVHeapStart = m_pShaderInvisibleRTVHeap->Allocate();
+	m_pFillGBufferResources->m_DSVHeapStart = m_pDepthTexture->GetDSVHandle();
+	m_pFillGBufferResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+	m_pDevice->CopyDescriptor(m_pFillGBufferResources->m_RTVHeapStart, m_pNormalTexture->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	m_pDevice->CopyDescriptor(m_pShaderInvisibleRTVHeap->Allocate(), m_pDiffuseTexture->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	m_pDevice->CopyDescriptor(m_pShaderInvisibleRTVHeap->Allocate(), m_pSpecularTexture->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	m_pDevice->CopyDescriptor(m_pFillGBufferResources->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMaterialBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	TiledShadingRecorder::InitParams tiledShadingParams;
 	tiledShadingParams.m_pEnv = m_pEnv;
@@ -846,11 +850,15 @@ void DXApplication::OnRender()
 	fillGBufferParams.m_pEnv = m_pEnv;
 	fillGBufferParams.m_pCommandList = m_pCommandList;
 	fillGBufferParams.m_pCommandAllocator = pCommandAllocator;
+	fillGBufferParams.m_pResources = m_pFillGBufferResources;
+	fillGBufferParams.m_pViewport = m_pViewport;
 	fillGBufferParams.m_pMeshBatch = m_pMeshBatch;
+	fillGBufferParams.m_pDrawCommandBuffer = m_pDrawCommandBuffer;
+	fillGBufferParams.m_pNumDrawsBuffer = m_pNumDrawsBuffer;
 	
-//	m_pFillGBufferRecorder->Record(&fillGBufferParams);
-//	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList);
-//	WaitForGPU();
+	m_pFillGBufferRecorder->Record(&fillGBufferParams);
+	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	WaitForGPU();
 
 	VisualizeMeshRecorder::RenderPassParams visualizeMeshParams;
 	visualizeMeshParams.m_pEnv = m_pEnv;

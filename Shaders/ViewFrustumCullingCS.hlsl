@@ -19,7 +19,7 @@ struct DrawIndexedArgs
 
 struct DrawCommand
 {
-	uint rootConstant;
+	uint root32BitConstant;
 	DrawIndexedArgs drawArgs;
 };
 
@@ -81,7 +81,7 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 		uint argsIndex = localIndex + g_OutArgsOffset;
 		uint meshIndex = g_VisibleMeshIndices[localIndex];
 
-		g_DrawCommandBuffer[argsIndex].rootConstant = g_MeshDescBuffer[meshIndex].materialIndex;
+		g_DrawCommandBuffer[argsIndex].root32BitConstant = g_MeshDescBuffer[meshIndex].materialIndex;
 		g_DrawCommandBuffer[argsIndex].drawArgs.indexCountPerInstance = g_MeshDescBuffer[meshIndex].indexCount;
 		g_DrawCommandBuffer[argsIndex].drawArgs.instanceCount = 1;
 		g_DrawCommandBuffer[argsIndex].drawArgs.startIndexLocation = g_MeshDescBuffer[meshIndex].startIndexLocation;

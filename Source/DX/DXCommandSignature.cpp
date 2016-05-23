@@ -28,6 +28,14 @@ DXDispatchArgument::DXDispatchArgument()
 	Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
 }
 
+DX32BitConstantsArgument::DX32BitConstantsArgument(UINT rootParameterIndex, UINT destOffsetIn32BitValues, UINT num32BitValues)
+{
+	Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
+	Constant.RootParameterIndex = rootParameterIndex;
+	Constant.DestOffsetIn32BitValues = destOffsetIn32BitValues;
+	Constant.Num32BitValuesToSet = num32BitValues;
+}
+
 DXCBVArgument::DXCBVArgument(UINT rootParamIndex)
 {
 	Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW;

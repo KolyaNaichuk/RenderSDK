@@ -4,8 +4,11 @@
 #include "DX/DXResourceList.h"
 
 class DXDevice;
+class DXBuffer;
 class DXCommandAllocator;
+class DXCommandSignature;
 class DXPipelineState;
+class DXRootSignature;
 class DXRootSignature;
 class DXResource;
 class DXDescriptorHeap;
@@ -44,6 +47,10 @@ public:
 	void DrawInstanced(UINT vertexCountPerInstance, UINT instanceCount, UINT startVertexLocation, UINT startInstanceLocation);
 	void DrawIndexedInstanced(UINT indexCountPerInstance, UINT instanceCount, UINT startIndexLocation, INT baseVertexLocation, UINT startInstanceLocation);
 	void Dispatch(UINT numThreadGroupsX, UINT numThreadGroupsY, UINT numThreadGroupsZ);
+	
+	void ExecuteIndirect(DXCommandSignature* pCommandSignature, UINT maxCommandCount,
+		DXBuffer* pArgumentBuffer, UINT64 argumentBufferOffset,
+		DXBuffer* pCountBuffer, UINT64 countBufferOffset);
 
 	void ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, const FLOAT clearColor[4]);
 	void ClearDepthStencilView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, FLOAT depth = 1.0f, UINT8 stencil = 0);

@@ -1,5 +1,6 @@
 #include "DX/DXCommandList.h"
 #include "DX/DXCommandAllocator.h"
+#include "DX/DXCommandSignature.h"
 #include "DX/DXPipelineState.h"
 #include "DX/DXResource.h"
 #include "DX/DXRootSignature.h"
@@ -137,6 +138,15 @@ void DXCommandList::DrawIndexedInstanced(UINT indexCountPerInstance, UINT instan
 void DXCommandList::Dispatch(UINT numThreadGroupsX, UINT numThreadGroupsY, UINT numThreadGroupsZ)
 {
 	GetDXObject()->Dispatch(numThreadGroupsX, numThreadGroupsY, numThreadGroupsZ);
+}
+
+void DXCommandList::ExecuteIndirect(DXCommandSignature* pCommandSignature, UINT maxCommandCount,
+	DXBuffer* pArgumentBuffer, UINT64 argumentBufferOffset,
+	DXBuffer* pCountBuffer, UINT64 countBufferOffset)
+{
+	GetDXObject()->ExecuteIndirect(pCommandSignature->GetDXObject(), maxCommandCount,
+		pArgumentBuffer->GetDXObject(), argumentBufferOffset,
+		pCountBuffer->GetDXObject(), countBufferOffset);
 }
 
 void DXCommandList::ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, const FLOAT clearColor[4])

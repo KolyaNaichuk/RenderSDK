@@ -63,7 +63,7 @@ private:
 	DXHeapProperties* m_pDefaultHeapProps;
 	DXHeapProperties* m_pUploadHeapProps;
 	DXDescriptorHeap* m_pShaderInvisibleRTVHeap;
-	DXDescriptorHeap* m_pDSVDescriptorHeap;
+	DXDescriptorHeap* m_pShaderInvisibleDSVHeap;
 	DXDescriptorHeap* m_pShaderInvisibleSRVHeap;
 	DXDescriptorHeap* m_pShaderInvisibleSamplerHeap;
 	DXDescriptorHeap* m_pShaderVisibleSRVHeap;
@@ -88,6 +88,8 @@ private:
 	UINT m_BackBufferIndex;
 
 	FillGBufferRecorder* m_pFillGBufferRecorder;
+	DXBindingResourceList* m_pFillGBufferResources;
+
 	TiledShadingRecorder* m_pTiledShadingRecorder;
 
 	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;

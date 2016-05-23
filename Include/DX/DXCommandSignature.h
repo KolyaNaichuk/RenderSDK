@@ -20,6 +20,11 @@ struct DXDispatchArgument : public D3D12_INDIRECT_ARGUMENT_DESC
 	DXDispatchArgument();
 };
 
+struct DX32BitConstantsArgument : public D3D12_INDIRECT_ARGUMENT_DESC
+{
+	DX32BitConstantsArgument(UINT rootParameterIndex, UINT destOffsetIn32BitValues, UINT num32BitValues);
+};
+
 struct DXCBVArgument : public D3D12_INDIRECT_ARGUMENT_DESC
 {
 	DXCBVArgument(UINT rootParamIndex);
