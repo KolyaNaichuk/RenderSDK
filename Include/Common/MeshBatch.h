@@ -32,6 +32,7 @@ public:
 	DXBuffer* GetMaterialBuffer() { return m_pMaterialBuffer; }
 					
 private:
+	void InitInputLayout(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData);
 	void InitVertexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData);
 	void InitIndexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData);
 	void InitMeshBoundsBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData);
@@ -40,6 +41,12 @@ private:
 	
 private:
 	u32 m_NumMeshes;
+
+	u32 m_VertexStrideInBytes;
+	std::vector<DXInputElementDesc> m_InputElements;
+	DXInputLayoutDesc* m_pInputLayout;
+	D3D12_PRIMITIVE_TOPOLOGY_TYPE m_PrimitiveTopologyType;
+	D3D12_PRIMITIVE_TOPOLOGY m_PrimitiveTopology;
 
 	DXBuffer* m_pUploadVertexBuffer;
 	DXBuffer* m_pUploadIndexBuffer;
@@ -52,8 +59,4 @@ private:
 	DXBuffer* m_pMeshBoundsBuffer;
 	DXBuffer* m_pMeshDescBuffer;
 	DXBuffer* m_pMaterialBuffer;
-	
-	DXInputLayoutDesc* m_pInputLayout;
-	D3D12_PRIMITIVE_TOPOLOGY_TYPE m_PrimitiveTopologyType;
-	D3D12_PRIMITIVE_TOPOLOGY m_PrimitiveTopology;
 };

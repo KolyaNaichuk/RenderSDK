@@ -10,13 +10,12 @@
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 
-namespace
-{
-	DXInputLayoutDesc* CreateInputLayout(u8 vertexFormatFlags, u32* pOutStrideInBytes = nullptr);
-}
-
 MeshBatch::MeshBatch(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData)
 	: m_NumMeshes(pBatchData->GetNumMeshes())
+	, m_VertexStrideInBytes(0)
+	, m_pInputLayout(nullptr)
+	, m_PrimitiveTopologyType(pBatchData->GetPrimitiveTopologyType())
+	, m_PrimitiveTopology(pBatchData->GetPrimitiveTopology())
 	, m_pUploadVertexBuffer(nullptr)
 	, m_pUploadIndexBuffer(nullptr)
 	, m_pUploadMeshBoundsBuffer(nullptr)
@@ -27,10 +26,8 @@ MeshBatch::MeshBatch(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData)
 	, m_pMeshBoundsBuffer(nullptr)
 	, m_pMeshDescBuffer(nullptr)
 	, m_pMaterialBuffer(nullptr)
-	, m_pInputLayout(nullptr)
-	, m_PrimitiveTopologyType(pBatchData->GetPrimitiveTopologyType())
-	, m_PrimitiveTopology(pBatchData->GetPrimitiveTopology())
 {
+	InitInputLayout(pEnv, pBatchData);
 	InitVertexBuffer(pEnv, pBatchData);
 	InitIndexBuffer(pEnv, pBatchData);
 	InitMeshBoundsBuffer(pEnv, pBatchData);
@@ -83,15 +80,61 @@ void MeshBatch::RemoveDataForUpload()
 	SafeDelete(m_pUploadMaterialBuffer);
 }
 
+void MeshBatch::InitInputLayout(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData)
+{
+	const u8 vertexFormatFlags = pBatchData->GetVertexFormatFlags();
+	
+	assert(m_InputElements.empty());
+	m_InputElements.reserve(5);
+
+	u32 byteOffset = 0;
+	assert((vertexFormatFlags & VertexData::FormatFlag_Position) != 0);
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
+		m_InputElements.emplace_back("POSITION", 0, format, 0, byteOffset);
+
+		byteOffset += GetSizeInBytes(format);
+	}
+	if ((vertexFormatFlags & VertexData::FormatFlag_Normal) != 0)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
+		m_InputElements.emplace_back("NORMAL", 0, format, 0, byteOffset);
+
+		byteOffset += GetSizeInBytes(format);
+	}
+	if ((vertexFormatFlags & VertexData::FormatFlag_Color) != 0)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		m_InputElements.emplace_back("COLOR", 0, format, 0, byteOffset);
+
+		byteOffset += GetSizeInBytes(format);
+	}
+	if ((vertexFormatFlags & VertexData::FormatFlag_Tangent) != 0)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
+		m_InputElements.emplace_back("TANGENT", 0, format, 0, byteOffset);
+
+		byteOffset += GetSizeInBytes(format);
+	}
+	if ((vertexFormatFlags & VertexData::FormatFlag_TexCoords) != 0)
+	{
+		const DXGI_FORMAT format = DXGI_FORMAT_R32G32_FLOAT;
+		m_InputElements.emplace_back("TEXCOORD", 0, format, 0, byteOffset);
+
+		byteOffset += GetSizeInBytes(format);
+	}
+
+	m_VertexStrideInBytes = byteOffset;
+	m_pInputLayout = new DXInputLayoutDesc(m_InputElements.size(), &m_InputElements[0]);
+}
+
 void MeshBatch::InitVertexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData)
 {
 	const u32 numVertices = pBatchData->GetNumVertices();
 	const u8 vertexFormatFlags = pBatchData->GetVertexFormatFlags();
-
-	u32 strideInBytes = 0;
-	m_pInputLayout = CreateInputLayout(vertexFormatFlags, &strideInBytes);
-	
-	const u32 sizeInBytes = numVertices * strideInBytes;
+		
+	assert(m_VertexStrideInBytes > 0);
+	const u32 sizeInBytes = numVertices * m_VertexStrideInBytes;
 	
 	u8* pVertexData = new u8[sizeInBytes];
 	u32 vertexOffset = 0;
@@ -102,7 +145,7 @@ void MeshBatch::InitVertexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData*
 		const u32 elementSizeInBytes = sizeof(pPositions[0]);
 
 		for (u32 index = 0; index < numVertices; ++index)
-			std::memcpy(pVertexData + index * strideInBytes + vertexOffset, &pPositions[index], elementSizeInBytes);
+			std::memcpy(pVertexData + index * m_VertexStrideInBytes + vertexOffset, &pPositions[index], elementSizeInBytes);
 
 		vertexOffset += elementSizeInBytes;
 	}
@@ -112,7 +155,7 @@ void MeshBatch::InitVertexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData*
 		const u32 elementSizeInBytes = sizeof(pNormals[0]);
 
 		for (u32 index = 0; index < numVertices; ++index)
-			std::memcpy(pVertexData + index * strideInBytes + vertexOffset, &pNormals[index], elementSizeInBytes);
+			std::memcpy(pVertexData + index * m_VertexStrideInBytes + vertexOffset, &pNormals[index], elementSizeInBytes);
 
 		vertexOffset += elementSizeInBytes;
 	}
@@ -122,7 +165,7 @@ void MeshBatch::InitVertexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData*
 		const u32 elementSizeInBytes = sizeof(pColors[0]);
 
 		for (u32 index = 0; index < numVertices; ++index)
-			std::memcpy(pVertexData + index * strideInBytes + vertexOffset, &pColors[index], elementSizeInBytes);
+			std::memcpy(pVertexData + index * m_VertexStrideInBytes + vertexOffset, &pColors[index], elementSizeInBytes);
 		
 		vertexOffset += elementSizeInBytes;
 	}
@@ -132,7 +175,7 @@ void MeshBatch::InitVertexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData*
 		const u32 elementSizeInBytes = sizeof(pTangents[0]);
 
 		for (u32 index = 0; index < numVertices; ++index)
-			std::memcpy(pVertexData + index * strideInBytes + vertexOffset, &pTangents[index], elementSizeInBytes);
+			std::memcpy(pVertexData + index * m_VertexStrideInBytes + vertexOffset, &pTangents[index], elementSizeInBytes);
 		
 		vertexOffset += elementSizeInBytes;
 	}
@@ -142,12 +185,12 @@ void MeshBatch::InitVertexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData*
 		const u32 elementSizeInBytes = sizeof(pTexCoords[0]);
 
 		for (u32 index = 0; index < numVertices; ++index)
-			std::memcpy(pVertexData + index * strideInBytes + vertexOffset, &pTexCoords[index], elementSizeInBytes);
+			std::memcpy(pVertexData + index * m_VertexStrideInBytes + vertexOffset, &pTexCoords[index], elementSizeInBytes);
 
 		vertexOffset += elementSizeInBytes;
 	}
 	
-	DXVertexBufferDesc bufferDesc(numVertices, strideInBytes);
+	DXVertexBufferDesc bufferDesc(numVertices, m_VertexStrideInBytes);
 	m_pVertexBuffer = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshBatch::m_pVertexBuffer");
 	
 	m_pUploadVertexBuffer = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"MeshBatch::m_pUploadVertexBuffer");
@@ -208,54 +251,4 @@ void MeshBatch::InitMaterialBuffer(DXRenderEnvironment* pEnv, const MeshBatchDat
 
 	m_pUploadMaterialBuffer = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"MeshBatch::m_pUploadMaterialBuffer");
 	m_pUploadMaterialBuffer->Write(pBatchData->GetMaterials(), numMeshes * structureByteStride);
-}
-
-namespace
-{
-	DXInputLayoutDesc* CreateInputLayout(u8 vertexFormatFlags, u32* pOutStrideInBytes)
-	{
-		std::vector<DXInputElementDesc> inputElements;
-		inputElements.reserve(5);
-
-		u32 byteOffset = 0;
-		assert((vertexFormatFlags & VertexData::FormatFlag_Position) != 0);
-		{
-			const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
-			inputElements.emplace_back("POSITION", 0, format, 0, byteOffset);
-
-			byteOffset += GetSizeInBytes(format);
-		}
-		if ((vertexFormatFlags & VertexData::FormatFlag_Normal) != 0)
-		{
-			const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
-			inputElements.emplace_back("NORMAL", 0, format, 0, byteOffset);
-
-			byteOffset += GetSizeInBytes(format);
-		}
-		if ((vertexFormatFlags & VertexData::FormatFlag_Color) != 0)
-		{
-			const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-			inputElements.emplace_back("COLOR", 0, format, 0, byteOffset);
-
-			byteOffset += GetSizeInBytes(format);
-		}
-		if ((vertexFormatFlags & VertexData::FormatFlag_Tangent) != 0)
-		{
-			const DXGI_FORMAT format = DXGI_FORMAT_R32G32B32_FLOAT;
-			inputElements.emplace_back("TANGENT", 0, format, 0, byteOffset);
-
-			byteOffset += GetSizeInBytes(format);
-		}
-		if ((vertexFormatFlags & VertexData::FormatFlag_TexCoords) != 0)
-		{
-			const DXGI_FORMAT format = DXGI_FORMAT_R32G32_FLOAT;
-			inputElements.emplace_back("TEXCOORD", 0, format, 0, byteOffset);
-
-			byteOffset += GetSizeInBytes(format);
-		}
-		if (pOutStrideInBytes != nullptr)
-			*pOutStrideInBytes = byteOffset;
-
-		return new DXInputLayoutDesc(inputElements.size(), &inputElements[0]);
-	}
 }
