@@ -75,23 +75,25 @@ void FillGBufferRecorder::Record(RenderPassParams* pParams)
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
+	pCommandList->GetDXObject()->ClearState(m_pPipelineState->GetDXObject());
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
 	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
 	pCommandList->SetDescriptorHeaps(pEnv->m_pShaderVisibleSRVHeap);
 
-	assert(false && "Clear RTV and DSV");
+	const FLOAT clearColor[4] = {0.0f, 0.0f, 0.0f, 0.0f};	
+	pCommandList->ClearRenderTargetView(pResources->m_RTVHeapStart, clearColor);
+	pCommandList->ClearRenderTargetView(DXDescriptorHandle(pResources->m_RTVHeapStart, 1), clearColor);
+	pCommandList->ClearRenderTargetView(DXDescriptorHandle(pResources->m_RTVHeapStart, 2), clearColor);
+	pCommandList->ClearDepthStencilView(pResources->m_DSVHeapStart, 1.0f);
 
-	DXDescriptorHandle srvHeapStart = pResources->m_SRVHeapStart;
-	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamVS, srvHeapStart);
-
-	srvHeapStart.Offset(1);
-	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParamPS, srvHeapStart);
+	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamVS, pResources->m_SRVHeapStart);
+	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParamPS, DXDescriptorHandle(pResources->m_SRVHeapStart, 1));
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = pResources->m_RTVHeapStart;
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHeapStart = pResources->m_DSVHeapStart;
 	pCommandList->OMSetRenderTargets(1, &rtvHeapStart, TRUE, &dsvHeapStart);
-
+	
 	pCommandList->IASetPrimitiveTopology(pMeshBatch->GetPrimitiveTopology());
 	pCommandList->IASetVertexBuffers(0, 1, pMeshBatch->GetVertexBuffer()->GetVBView());
 	pCommandList->IASetIndexBuffer(pMeshBatch->GetIndexBuffer()->GetIBView());

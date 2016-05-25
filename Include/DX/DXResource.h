@@ -19,14 +19,15 @@ struct DXResourceTransitionBarrier : D3D12_RESOURCE_BARRIER
 		UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 };
 
-struct DXColorClearValue : D3D12_CLEAR_VALUE
+struct DXDepthStencilValue : public D3D12_DEPTH_STENCIL_VALUE
 {
-	DXColorClearValue(DXGI_FORMAT format, const FLOAT color[4]);
+	DXDepthStencilValue(FLOAT depth = 1.0f, UINT8 stencil = 0);
 };
 
-struct DXDepthStencilClearValue : D3D12_CLEAR_VALUE
+struct DXClearValue : D3D12_CLEAR_VALUE
 {
-	DXDepthStencilClearValue(DXGI_FORMAT format, FLOAT depth = 1.0f, UINT8 stencil = 0);
+	DXClearValue(DXGI_FORMAT format, const FLOAT color[4]);
+	DXClearValue(DXGI_FORMAT format, const DXDepthStencilValue* pDepthStencilValue);
 };
 
 struct DXVertexBufferView : public D3D12_VERTEX_BUFFER_VIEW
@@ -285,13 +286,16 @@ class DXColorTexture : public DXResource
 {
 public:
 	DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const DXColorTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+		const DXColorTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
 	DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const DXColorTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+		const DXColorTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
 	DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const DXColorTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+		const DXColorTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
 	DXColorTexture(DXRenderEnvironment* pEnv, ID3D12Resource* pDXObject,
 		D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
@@ -305,7 +309,8 @@ public:
 				
 private:
 	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
+		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
 	void CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	void CreateTex2DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
@@ -324,15 +329,15 @@ class DXDepthTexture : public DXResource
 public:
 	DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXDepthTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-		const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName);
+		const DXDepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
 	DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXDepthTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-		const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName);
+		const DXDepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
 	DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXDepthTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-		const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName);
+		const DXDepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
 	UINT64 GetWidth() const { return m_Desc.Width; }
 	UINT GetHeight() const { return m_Desc.Height; }
@@ -343,7 +348,7 @@ public:
 private:
 	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
-		const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName);
+		const DXDepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
 	void CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	void CreateTex2DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);

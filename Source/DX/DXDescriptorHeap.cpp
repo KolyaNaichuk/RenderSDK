@@ -14,10 +14,10 @@ DXDescriptorHandle::DXDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle, D3
 {
 }
 
-DXDescriptorHandle::DXDescriptorHandle(DXDescriptorHandle firstDescriptor, INT offsetInDescriptors, UINT descriptorSize)
+DXDescriptorHandle::DXDescriptorHandle(DXDescriptorHandle firstDescriptor, INT offsetInDescriptors)
 	: m_CPUHandle(firstDescriptor.m_CPUHandle)
 	, m_GPUHandle(firstDescriptor.m_GPUHandle)
-	, m_DescriptorSize(descriptorSize)
+	, m_DescriptorSize(firstDescriptor.m_DescriptorSize)
 {
 	Offset(offsetInDescriptors);
 }
@@ -67,10 +67,12 @@ DXDescriptorHeap::DXDescriptorHeap(DXDevice* pDevice, const DXDescriptorHeapDesc
 	DXVerify(pDXDevice->CreateDescriptorHeap(pDesc, IID_PPV_ARGS(GetDXObjectAddress())));
 	
 	m_FirstDescriptor.m_CPUHandle = GetDXObject()->GetCPUDescriptorHandleForHeapStart();
+	
 	if (pDesc->Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
 		m_FirstDescriptor.m_GPUHandle = GetDXObject()->GetGPUDescriptorHandleForHeapStart();
-	
-	m_DescriptorSize = pDXDevice->GetDescriptorHandleIncrementSize(pDesc->Type);
+
+	m_FirstDescriptor.m_DescriptorSize = pDXDevice->GetDescriptorHandleIncrementSize(pDesc->Type);
+
 	m_NumUsedDescriptors = 0;
 	m_NumReservedDescriptors = pDesc->NumDescriptors;
 
@@ -86,7 +88,7 @@ DXDescriptorHandle DXDescriptorHeap::Allocate()
 	INT offsetInDescriptors = m_NumUsedDescriptors;
 	++m_NumUsedDescriptors;
 
-	return DXDescriptorHandle(m_FirstDescriptor, offsetInDescriptors, m_DescriptorSize);
+	return DXDescriptorHandle(m_FirstDescriptor, offsetInDescriptors);
 }
 
 DXDescriptorHandle DXDescriptorHeap::AllocateRange(UINT numDescriptors)
@@ -96,7 +98,7 @@ DXDescriptorHandle DXDescriptorHeap::AllocateRange(UINT numDescriptors)
 	INT offsetInDescriptors = m_NumUsedDescriptors;
 	m_NumUsedDescriptors += numDescriptors;
 
-	return DXDescriptorHandle(m_FirstDescriptor, offsetInDescriptors, m_DescriptorSize);
+	return DXDescriptorHandle(m_FirstDescriptor, offsetInDescriptors);
 }
 
 void DXDescriptorHeap::Reset()

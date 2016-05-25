@@ -3,17 +3,25 @@
 #include "DX/DXRenderEnvironment.h"
 #include "DX/DXUtils.h"
 
-DXColorClearValue::DXColorClearValue(DXGI_FORMAT format, const FLOAT color[4])
+DXDepthStencilValue::DXDepthStencilValue(FLOAT depth, UINT8 stencil)
 {
-	Format = format;
-	std::memcpy(Color, color, sizeof(color));
+	Depth = depth;
+	Stencil = stencil;
 }
 
-DXDepthStencilClearValue::DXDepthStencilClearValue(DXGI_FORMAT format, FLOAT depth, UINT8 stencil)
+DXClearValue::DXClearValue(DXGI_FORMAT format, const FLOAT color[4])
 {
 	Format = format;
-	DepthStencil.Depth = depth;
-	DepthStencil.Stencil = stencil;
+	Color[0] = color[0];
+	Color[1] = color[1];
+	Color[2] = color[2];
+	Color[3] = color[3];
+}
+
+DXClearValue::DXClearValue(DXGI_FORMAT format, const DXDepthStencilValue* pDepthStencilValue)
+{
+	Format = format;
+	DepthStencil = *pDepthStencilValue;
 }
 
 DXGI_FORMAT GetRenderTargetViewFormat(DXGI_FORMAT resourceFormat)
@@ -643,28 +651,31 @@ DXHeapProperties::DXHeapProperties(D3D12_CPU_PAGE_PROPERTY cpuPageProperty, D3D1
 }
 
 DXColorTexture::DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const DXColorTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	const DXColorTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const FLOAT optimizedClearColor[4], LPCWSTR pName)
 	: DXResource(pTexDesc, initialState)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pName);
+	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
 	CreateTex1DViews(pEnv, pTexDesc);
 	DetermineResourceStates(pTexDesc);
 }
 
 DXColorTexture::DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const DXColorTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	const DXColorTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const FLOAT optimizedClearColor[4], LPCWSTR pName)
 	: DXResource(pTexDesc, initialState)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pName);
+	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
 	CreateTex2DViews(pEnv, pTexDesc);
 	DetermineResourceStates(pTexDesc);
 }
 
 DXColorTexture::DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const DXColorTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	const DXColorTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const FLOAT optimizedClearColor[4], LPCWSTR pName)
 	: DXResource(pTexDesc, initialState)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pName);
+	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
 	CreateTex3DViews(pEnv, pTexDesc);
 	DetermineResourceStates(pTexDesc);
 }
@@ -701,15 +712,16 @@ DXDescriptorHandle DXColorTexture::GetUAVHandle()
 }
 
 void DXColorTexture::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const FLOAT optimizedClearColor[4], LPCWSTR pName)
 {
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
 
 	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE;
-	const D3D12_CLEAR_VALUE* pOptimizedClearValue = nullptr;
-
+	DXClearValue optimizedClearValue(GetRenderTargetViewFormat(pTexDesc->Format), optimizedClearColor);
+	
 	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
-		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+		initialState, &optimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
 
 #ifdef _DEBUG
 	SetName(pName);
@@ -823,30 +835,30 @@ void DXColorTexture::CreateTex3DViews(DXRenderEnvironment* pEnv, const D3D12_RES
 
 DXDepthTexture::DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const DXDepthTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
+	const DXDepthStencilValue* pOptimizedClearDepth, LPCWSTR pName)
 	: DXResource(pTexDesc, initialState)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearValue, pName);
+	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
 	CreateTex1DViews(pEnv, pTexDesc);
 	DetermineResourceStates(pTexDesc);
 }
 
 DXDepthTexture::DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const DXDepthTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
+	const DXDepthStencilValue* pOptimizedClearDepth, LPCWSTR pName)
 	: DXResource(pTexDesc, initialState)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearValue, pName);
+	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
 	CreateTex2DViews(pEnv, pTexDesc);
 	DetermineResourceStates(pTexDesc);
 }
 
 DXDepthTexture::DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const DXDepthTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
+	const DXDepthStencilValue* pOptimizedClearDepth, LPCWSTR pName)
 	: DXResource(pTexDesc, initialState)
 {
-	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearValue, pName);
+	CreateCommittedResource(pEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
 	CreateTex3DViews(pEnv, pTexDesc);
 	DetermineResourceStates(pTexDesc);
 }
@@ -865,13 +877,15 @@ DXDescriptorHandle DXDepthTexture::GetSRVHandle()
 
 void DXDepthTexture::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
-	const DXDepthStencilClearValue* pOptimizedClearValue, LPCWSTR pName)
+	const DXDepthStencilValue* pOptimizedClearDepth, LPCWSTR pName)
 {
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
-
+	
 	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE;
+	DXClearValue optimizedClearValue(GetDepthStencilViewFormat(pTexDesc->Format), pOptimizedClearDepth);
+
 	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
-		initialState, pOptimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+		initialState, &optimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
 
 #ifdef _DEBUG
 	SetName(pName);
