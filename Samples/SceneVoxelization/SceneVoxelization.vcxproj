@@ -153,7 +153,10 @@ COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples
 COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ViewFrustumCullingCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\OverlapTest.hlsl"
-COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\OverlapTest.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\OverlapTest.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CopyTexturePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CopyTexturePS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CopyTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CopyTexturePS.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

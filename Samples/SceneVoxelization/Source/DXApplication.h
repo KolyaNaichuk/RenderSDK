@@ -23,6 +23,7 @@ class CreateVoxelGridRecorder;
 class InjectVPLsIntoVoxelGridRecorder;
 class VisualizeVoxelGridRecorder;
 class VisualizeMeshRecorder;
+class CopyTextureRecorder;
 class TiledShadingRecorder;
 class ViewFrustumCullingRecorder;
 
@@ -108,6 +109,9 @@ private:
 
 	ViewFrustumCullingRecorder* m_pViewFrustumCullingRecorder;
 	DXBindingResourceList* m_pViewFrustumCullingResources;
+
+	CopyTextureRecorder* m_pCopyTextureRecorder;
+	DXBindingResourceList* m_CopyTextureResources[kBackBufferCount];
 
 	MeshBatch* m_pMeshBatch;
 	Camera* m_pCamera;

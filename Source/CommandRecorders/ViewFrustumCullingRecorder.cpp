@@ -69,7 +69,5 @@ void ViewFrustumCullingRecorder::Record(RenderPassParams* pParams)
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 
 	pCommandList->Dispatch(m_NumThreadGroupsX, 1, 1);
-
-	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pEnv->m_NullSRVHeapStart);
 	pCommandList->Close();
 }

@@ -214,6 +214,50 @@ DXSamplerDesc::DXSamplerDesc(Id id)
 	}
 }
 
+DXStaticSamplerDesc::DXStaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace)
+{
+	if (id == DXStaticSamplerDesc::Linear)
+	{
+		Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		MipLODBias = 0.0f;
+		MaxAnisotropy = 1;
+		ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		MinLOD = -D3D12_FLOAT32_MAX;
+		MaxLOD = D3D12_FLOAT32_MAX;
+	}
+	else if (id == DXStaticSamplerDesc::Point)
+	{
+		Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		MipLODBias = 0.0f;
+		MaxAnisotropy = 1;
+		ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		MinLOD = -D3D12_FLOAT32_MAX;
+		MaxLOD = D3D12_FLOAT32_MAX;
+	}
+	else if (id == DXStaticSamplerDesc::Anisotropic)
+	{
+		Filter = D3D12_FILTER_ANISOTROPIC;
+		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		MipLODBias = 0.0f;
+		MaxAnisotropy = 16;
+		ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		MinLOD = 0.0f;
+		MaxLOD = D3D12_FLOAT32_MAX;
+	}
+	else
+	{
+		assert(false);
+	}
+	ShaderRegister = shaderRegister;
+	ShaderVisibility = shaderVisibility;
+	RegisterSpace = registerSpace;
+}
+
 DXInputLayoutDesc::DXInputLayoutDesc(UINT numElements, const DXInputElementDesc* pFirstInputElementDesc)
 {
 	pInputElementDescs = pFirstInputElementDesc;

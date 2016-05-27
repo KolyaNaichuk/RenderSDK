@@ -108,7 +108,5 @@ void CreateVoxelGridRecorder::Record(RenderPassParams* pParams)
 	
 	assert(false);
 	//pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
-
-	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParamPS, pEnv->m_NullSRVHeapStart);
 	pCommandList->Close();
 }

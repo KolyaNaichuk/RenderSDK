@@ -92,7 +92,7 @@ void FillGBufferRecorder::Record(RenderPassParams* pParams)
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = pResources->m_RTVHeapStart;
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHeapStart = pResources->m_DSVHeapStart;
-	pCommandList->OMSetRenderTargets(1, &rtvHeapStart, TRUE, &dsvHeapStart);
+	pCommandList->OMSetRenderTargets(3, &rtvHeapStart, TRUE, &dsvHeapStart);
 	
 	pCommandList->IASetPrimitiveTopology(pMeshBatch->GetPrimitiveTopology());
 	pCommandList->IASetVertexBuffers(0, 1, pMeshBatch->GetVertexBuffer()->GetVBView());
@@ -104,6 +104,5 @@ void FillGBufferRecorder::Record(RenderPassParams* pParams)
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshBatch->GetNumMeshes(), pParams->m_pDrawCommandBuffer, 0, pParams->m_pNumDrawsBuffer, 0);
-
 	pCommandList->Close();
 }

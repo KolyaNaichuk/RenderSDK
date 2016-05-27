@@ -78,6 +78,17 @@ struct DXSamplerDesc : public D3D12_SAMPLER_DESC
 	DXSamplerDesc(Id id);
 };
 
+struct DXStaticSamplerDesc : public D3D12_STATIC_SAMPLER_DESC
+{
+	enum Id
+	{
+		Point,
+		Linear,
+		Anisotropic
+	};
+	DXStaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace = 0);
+};
+
 struct DXInputElementDesc : public D3D12_INPUT_ELEMENT_DESC
 {
 	DXInputElementDesc(LPCSTR pSemanticName, UINT semanticIndex, DXGI_FORMAT format, UINT inputSlot, UINT alignedByteOffset, bool perVertexData = true);

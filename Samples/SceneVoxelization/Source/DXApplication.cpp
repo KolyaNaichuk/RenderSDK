@@ -19,6 +19,7 @@
 #include "CommandRecorders/VisualizeVoxelGridRecorder.h"
 #include "CommandRecorders/VisualizeMeshRecorder.h"
 #include "CommandRecorders/ViewFrustumCullingRecorder.h"
+#include "CommandRecorders/CopyTextureRecorder.h"
 #include "Common/MeshData.h"
 #include "Common/MeshDataUtilities.h"
 #include "Common/MeshBatchData.h"
@@ -163,6 +164,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pVisualizeMeshRecorder(nullptr)
 	, m_pViewFrustumCullingRecorder(nullptr)
 	, m_pViewFrustumCullingResources(nullptr)
+	, m_pCopyTextureRecorder(nullptr)
 	, m_pMeshBatch(nullptr)
 	, m_pCamera(nullptr)
 {
@@ -170,6 +172,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	std::memset(m_FenceValues, 0, sizeof(m_FenceValues));
 	std::memset(m_VisualizeMeshResources, 0, sizeof(m_VisualizeMeshResources));
 	std::memset(m_VisualizeVoxelGridResources, 0, sizeof(m_VisualizeVoxelGridResources));
+	std::memset(m_CopyTextureResources, 0, sizeof(m_CopyTextureResources));
 }
 
 DXApplication::~DXApplication()
@@ -179,10 +182,12 @@ DXApplication::~DXApplication()
 		SafeDelete(m_CommandAllocators[index]);
 		SafeDelete(m_VisualizeMeshResources[index]);
 		SafeDelete(m_VisualizeVoxelGridResources[index]);
+		SafeDelete(m_CopyTextureResources[index]);
 	}		
 
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pMeshBatch);
+	SafeDelete(m_pCopyTextureRecorder);
 	SafeDelete(m_pClearVoxelGridRecorder);
 	SafeDelete(m_pClearVoxelGridResources);
 	SafeDelete(m_pCreateVoxelGridRecorder);
@@ -239,7 +244,7 @@ void DXApplication::OnInit()
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
 
-	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, false);
+	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 24, false);
 	m_pShaderInvisibleRTVHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
 	DXDescriptorHeapDesc shaderInvisibleSamplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 4, false);
@@ -272,8 +277,7 @@ void DXApplication::OnInit()
 	m_pEnv->m_pShaderInvisibleDSVHeap = m_pShaderInvisibleDSVHeap;
 	m_pEnv->m_pShaderInvisibleSamplerHeap = m_pShaderInvisibleSamplerHeap;
 	m_pEnv->m_pShaderVisibleSRVHeap = m_pShaderVisibleSRVHeap;
-	m_pEnv->m_NullSRVHeapStart = m_pShaderVisibleSRVHeap->AllocateRange(10);
-
+	
 	const RECT bufferRect = m_pWindow->GetClientRect();
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
 	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
@@ -730,6 +734,28 @@ void DXApplication::OnInit()
 		m_pDevice->CopyDescriptor(m_VisualizeMeshResources[index]->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 
+	DXColorTexture* pCopyTexture = m_pDiffuseTexture;
+
+	CopyTextureRecorder::InitParams copyTextureParams;
+	copyTextureParams.m_pEnv = m_pEnv;
+	copyTextureParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(0)->GetFormat());
+	
+	m_pCopyTextureRecorder = new CopyTextureRecorder(&copyTextureParams);
+
+	for (u8 index = 0; index < kBackBufferCount; ++index)
+	{
+		DXColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
+
+		m_CopyTextureResources[index] = new DXBindingResourceList();
+		m_CopyTextureResources[index]->m_ResourceTransitions.emplace_back(pRenderTarget, pRenderTarget->GetWriteState());
+		m_CopyTextureResources[index]->m_ResourceTransitions.emplace_back(pCopyTexture, pCopyTexture->GetReadState());
+
+		m_CopyTextureResources[index]->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+		m_CopyTextureResources[index]->m_RTVHeapStart = pRenderTarget->GetRTVHandle();
+
+		m_pDevice->CopyDescriptor(m_CopyTextureResources[index]->m_SRVHeapStart, pCopyTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
+
 	// Kolya: Should be moved to OnUpdate
 	// Temporarily moved constant buffer update here to overcome frame capture crash on AMD R9 290
 	const Vector3f& mainCameraPos = m_pCamera->GetTransform().GetPosition();
@@ -858,6 +884,17 @@ void DXApplication::OnRender()
 	fillGBufferParams.m_pNumDrawsBuffer = m_pNumDrawsBuffer;
 	
 	m_pFillGBufferRecorder->Record(&fillGBufferParams);
+	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	WaitForGPU();
+
+	CopyTextureRecorder::RenderPassParams copyTextureParams;
+	copyTextureParams.m_pEnv = m_pEnv;
+	copyTextureParams.m_pCommandList = m_pCommandList;
+	copyTextureParams.m_pCommandAllocator = pCommandAllocator;
+	copyTextureParams.m_pResources = m_CopyTextureResources[m_BackBufferIndex];
+	copyTextureParams.m_pViewport = m_pViewport;
+
+	m_pCopyTextureRecorder->Record(&copyTextureParams);
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 	WaitForGPU();
 

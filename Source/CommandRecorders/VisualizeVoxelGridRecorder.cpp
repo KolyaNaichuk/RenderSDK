@@ -71,7 +71,5 @@ void VisualizeVoxelGridRecorder::Record(RenderPassParams* pParams)
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	pCommandList->DrawInstanced(3, 1, 0, 0);
-
-	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParam, pEnv->m_NullSRVHeapStart);
 	pCommandList->Close();
 }

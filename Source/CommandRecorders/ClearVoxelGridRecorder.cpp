@@ -74,7 +74,5 @@ void ClearVoxelGridRecorder::Record(RenderPassParams* pParams)
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 	
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, m_NumThreadGroupsZ);
-	
-	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pEnv->m_NullSRVHeapStart);
 	pCommandList->Close();
 }
