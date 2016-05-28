@@ -207,6 +207,12 @@
     <ClInclude Include="..\Include\Common\MeshBatch.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Common\Scene.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\SceneLoader.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -381,6 +387,12 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\Material.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\Scene.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\SceneLoader.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>

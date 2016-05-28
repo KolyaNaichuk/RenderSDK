@@ -21,11 +21,12 @@
 #include "CommandRecorders/ViewFrustumCullingRecorder.h"
 #include "CommandRecorders/CopyTextureRecorder.h"
 #include "Common/MeshData.h"
-#include "Common/MeshDataUtilities.h"
 #include "Common/MeshBatchData.h"
 #include "Common/MeshBatch.h"
 #include "Common/Color.h"
 #include "Common/Camera.h"
+#include "Common/Scene.h"
+#include "Common/SceneLoader.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 #include "Math/Matrix4.h"
@@ -338,251 +339,15 @@ void DXApplication::OnInit()
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
 
-	const u8 meshBatchVertexFormat = VertexData::FormatFlag_Position | VertexData::FormatFlag_Normal;
-	MeshBatchData meshBatchData(meshBatchVertexFormat, DXGI_FORMAT_R16_UINT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	{
-		// Floor
-		const Vector3f positions[] =
-		{
-			Vector3f(552.8f, 0.0f,   0.0f),
-			Vector3f(  0.0f, 0.0f,   0.0f),
-			Vector3f(  0.0f, 0.0f, 559.2f),
-			Vector3f(549.6f, 0.0f, 559.2f)
-		};
-		const u32 numVertices = ARRAYSIZE(positions);
-
-		const u16 indices[] = {0, 1, 2, 2, 3, 0};		
-		const u32 numIndices = ARRAYSIZE(indices);
-			
-		Vector3f normals[numVertices];
-		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
-
-		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
-		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		
-		// Color::WHITE
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::BISQUE, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
-		
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-
-		meshBatchData.Append(&meshData);
-	}
-	{
-		// Ceiling
-		const Vector3f positions[] = 
-		{
-			Vector3f(556.0f, 548.8f,   0.0f),
-			Vector3f(556.0f, 548.8f, 559.2f),
-			Vector3f(  0.0f, 548.8f, 559.2f),
-			Vector3f(  0.0f, 548.8f,   0.0f)
-		};
-		const u32 numVertices = ARRAYSIZE(positions);
-
-		const u16 indices[] = {0, 1, 2, 2, 3, 0};
-		const u32 numIndices = ARRAYSIZE(indices);
-		
-		Vector3f normals[numVertices];
-		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
-
-		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
-		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::BLANCHED_ALMOND/*Color::WHITE*/, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
-				
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-
-		meshBatchData.Append(&meshData);
-	}
-	{
-		// Back wall
-		const Vector3f positions[] =
-		{
-			Vector3f(549.6f,   0.0f, 559.2f),
-			Vector3f(  0.0f,   0.0f, 559.2f),
-			Vector3f(  0.0f, 548.8f, 559.2f),
-			Vector3f(556.0f, 548.8f, 559.2f)
-		};
-		const u32 numVertices = ARRAYSIZE(positions);
-				
-		const u16 indices[] = {0, 1, 2, 2, 3, 0};
-		const u32 numIndices = ARRAYSIZE(indices);
-		
-		Vector3f normals[numVertices];
-		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
-
-		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
-		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::BLUE_VIOLET/*Color::WHITE*/, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
-				
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-
-		meshBatchData.Append(&meshData);
-	}
-	{
-		// Right wall
-		const Vector3f positions[] =
-		{
-			Vector3f(0.0f,   0.0f, 559.2f),
-			Vector3f(0.0f,   0.0f,   0.0f),
-			Vector3f(0.0f, 548.8f,   0.0f),
-			Vector3f(0.0f, 548.8f, 559.2f)
-		};
-		const u32 numVertices = ARRAYSIZE(positions);
-
-		const u16 indices[] = {0, 1, 2, 2, 3, 0};
-		const u32 numIndices = ARRAYSIZE(indices);
-
-		Vector3f normals[numVertices];
-		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
-		
-		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
-		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::GREEN, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
-
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-
-		meshBatchData.Append(&meshData);
-	}
-	{
-		// Left wall
-		const Vector3f positions[] =
-		{
-			Vector3f(552.8f,   0.0f,   0.0f),
-			Vector3f(549.6f,   0.0f, 559.2f),
-			Vector3f(556.0f, 548.8f, 559.2f),
-			Vector3f(556.0f, 548.8f,   0.0f)
-		};
-		const u32 numVertices = ARRAYSIZE(positions);
-
-		const u16 indices[] = {0, 1, 2, 2, 3, 0};
-		const u32 numIndices = ARRAYSIZE(indices);
-		
-		Vector3f normals[numVertices];
-		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
-
-		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
-		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::RED, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
-		
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-
-		meshBatchData.Append(&meshData);
-	}
-	{
-		// Short block
-		const Vector3f positions[] =
-		{
-			Vector3f(130.0f, 165.0f,  65.0f),
-			Vector3f( 82.0f, 165.0f, 225.0f),
-			Vector3f(240.0f, 165.0f, 272.0f),
-			Vector3f(290.0f, 165.0f, 114.0f),
-
-			Vector3f(290.0f,   0.0f, 114.0f),
-			Vector3f(290.0f, 165.0f, 114.0f),
-			Vector3f(240.0f, 165.0f, 272.0f),
-			Vector3f(240.0f,   0.0f, 272.0f),
-
-			Vector3f(130.0f,   0.0f,  65.0f),
-			Vector3f(130.0f, 165.0f,  65.0f),
-			Vector3f(290.0f, 165.0f, 114.0f),
-			Vector3f(290.0f,   0.0f, 114.0f),
-
-			Vector3f( 82.0f,   0.0f, 225.0f),
-			Vector3f( 82.0f, 165.0f, 225.0f),
-			Vector3f(130.0f, 165.0f,  65.0f),
-			Vector3f(130.0f,   0.0f,  65.0f),
-
-			Vector3f(240.0f,   0.0f, 272.0f),
-			Vector3f(240.0f, 165.0f, 272.0f),
-			Vector3f( 82.0f, 165.0f, 225.0f),
-			Vector3f( 82.0f,   0.0f, 225.0f)
-		};
-		const u32 numVertices = ARRAYSIZE(positions);
-		
-		const u16 indices[] =
-		{
-			 0,  1,  2,  2,  3,  0,
-			 4,  5,  6,  6,  7,  4,
-			 8,  9, 10, 10, 11,  8,
-			12, 13, 14, 14, 15, 12,
-			16, 17, 18, 18, 19, 16
-		};
-		const u32 numIndices = ARRAYSIZE(indices);
-
-		Vector3f normals[numVertices];
-		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
-
-		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
-		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::BLUE/*Color::WHITE*/, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
-		
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-
-		meshBatchData.Append(&meshData);
-	}
-	{
-		// Tall block
-		const Vector3f positions[] =
-		{
-			Vector3f(423.0f, 330.0f, 247.0f),
-			Vector3f(265.0f, 330.0f, 296.0f),
-			Vector3f(314.0f, 330.0f, 456.0f),
-			Vector3f(472.0f, 330.0f, 406.0f),
-
-			Vector3f(423.0f,   0.0f, 247.0f),
-			Vector3f(423.0f, 330.0f, 247.0f),
-			Vector3f(472.0f, 330.0f, 406.0f),
-			Vector3f(472.0f,   0.0f, 406.0f),
-
-			Vector3f(472.0f,   0.0f, 406.0f),
-			Vector3f(472.0f, 330.0f, 406.0f),
-			Vector3f(314.0f, 330.0f, 456.0f),
-			Vector3f(314.0f,   0.0f, 456.0f),
-
-			Vector3f(314.0f,   0.0f, 456.0f),
-			Vector3f(314.0f, 330.0f, 456.0f),
-			Vector3f(265.0f, 330.0f, 296.0f),
-			Vector3f(265.0f,   0.0f, 296.0f),
-
-			Vector3f(265.0f,   0.0f, 296.0f),
-			Vector3f(265.0f, 330.0f, 296.0f),
-			Vector3f(423.0f, 330.0f, 247.0f),
-			Vector3f(423.0f,   0.0f, 247.0f)
-		};
-		const u32 numVertices = ARRAYSIZE(positions);
-
-		const u16 indices[] =
-		{
-			 0,  1,  2,  2,  3,  0,
-			 4,  5,  6,  6,  7,  4,
-			 8,  9, 10, 10, 11,  8,
-			12, 13, 14, 14, 15, 12,
-			16, 17, 18, 18, 19, 16
-		};
-		const u32 numIndices = ARRAYSIZE(indices);
-
-		Vector3f normals[numVertices];
-		ComputeNormals(numVertices, &positions[0], numIndices, &indices[0], &normals[0]);
-
-		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
-		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::GOLD/*Color::WHITE*/, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
-		
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-
-		meshBatchData.Append(&meshData);
-	}
-
-	DXStructuredBufferDesc drawCommandBufferDesc(meshBatchData.GetNumMeshes(), sizeof(FillGBufferCommand), true, true);
+	Scene* pScene = SceneLoader::LoadCornellBox();
+	
+	assert(pScene->GetNumMeshBatches() == 1);
+	MeshBatchData* pMeshBatchData = *pScene->GetMeshBatches();
+	
+	DXStructuredBufferDesc drawCommandBufferDesc(pMeshBatchData->GetNumMeshes(), sizeof(FillGBufferCommand), true, true);
 	m_pDrawCommandBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawCommandBuffer");
 	
-	m_pMeshBatch = new MeshBatch(m_pEnv, &meshBatchData);
+	m_pMeshBatch = new MeshBatch(m_pEnv, pMeshBatchData);
 	m_pMeshBatch->RecordDataForUpload(m_pCommandList);
 	m_pCommandList->Close();
 
@@ -819,6 +584,8 @@ void DXApplication::OnInit()
 		cullingData.m_ViewFrustumPlanes[planeIndex] = ToVector4f(mainCameraFrustum.m_Planes[planeIndex]);
 	cullingData.m_NumMeshes = m_pMeshBatch->GetNumMeshes();
 	m_pCullingDataBuffer->Write(&cullingData, sizeof(CullingData));
+
+	SafeDelete(pScene);
 }
 
 void DXApplication::OnUpdate()
