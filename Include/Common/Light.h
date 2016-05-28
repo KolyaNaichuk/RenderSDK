@@ -16,8 +16,8 @@ public:
 	f32 GetIntensity() const;
 	void SetIntensity(f32 inensity);
 
-	const Vector4f& GetColor() const;
-	void SetColor(const Vector4f& color);
+	const Vector3f& GetColor() const;
+	void SetColor(const Vector3f& color);
 
 	bool CastsShadows() const;
 	void SetCastsShadows(bool castsShadows);
@@ -28,7 +28,7 @@ public:
 private:
 	bool m_AffectsWorld;
 	f32 m_Intensity;
-	Vector4f m_Color;	
+	Vector3f m_Color;
 	bool m_CastsShadows;
 	f32 m_ShadowBias;
 };

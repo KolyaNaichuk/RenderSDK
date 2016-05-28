@@ -31,8 +31,8 @@ PSOutput Main(PSInput input)
 	PSOutput output;
 
 	output.worldSpaceNormal = normalize(input.worldSpaceNormal);
-	output.diffuseColor = g_MaterialBuffer[g_MaterialIndex].diffuseColor;
-	output.specularColor = g_MaterialBuffer[g_MaterialIndex].specularColor;	                                        
+	output.diffuseColor = float4(g_MaterialBuffer[g_MaterialIndex].diffuseColor.rgb, 1.0f);
+	output.specularColor = float4(g_MaterialBuffer[g_MaterialIndex].specularColor.rgb, g_MaterialBuffer[g_MaterialIndex].specularPower);
 
 	return output;
 }

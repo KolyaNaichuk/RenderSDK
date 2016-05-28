@@ -5,7 +5,7 @@ Light::Light(const std::string& name)
 	: SceneObject(name)
 	, m_AffectsWorld(true)
 	, m_Intensity(1.0f)
-	, m_Color(Color::WHITE)
+	, m_Color(Vector3f::ONE)
 	, m_CastsShadows(false)
 	, m_ShadowBias(0.0f)
 {
@@ -31,12 +31,12 @@ void Light::SetIntensity(f32 inensity)
 	m_Intensity = inensity;
 }
 
-const Vector4f& Light::GetColor() const
+const Vector3f& Light::GetColor() const
 {
 	return m_Color;
 }
 
-void Light::SetColor(const Vector4f& color)
+void Light::SetColor(const Vector3f& color)
 {
 	m_Color = color;
 }
