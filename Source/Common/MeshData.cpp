@@ -180,6 +180,7 @@ MeshData::MeshData(VertexData* pVertexData, IndexData* pIndexData, Material* pMa
 	, m_PrimitiveTopologyType(primitiveTopologyType)
 	, m_PrimitiveTopology(primitiveTopology)
 {
+	RecalcAABB();
 }
 
 MeshData::~MeshData()
