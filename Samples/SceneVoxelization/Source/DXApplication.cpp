@@ -50,43 +50,6 @@ enum
 	kNumGridCellsZ = 64
 };
 
-enum RTVHeapHandles
-{
-	kDiffuseRTVHandle = kBackBufferCount,
-	kNormalRTVHandle,
-	kSpecularRTVHandle,
-	kNumRTVHandles
-};
-
-enum DSVHeapHandles
-{
-	kDSVHandle = 0,
-	kNumDSVHandles
-};
-
-enum SRVHeapHandles
-{
-	kNullHandle = kBackBufferCount,
-	kObjectTransformCBVHandle,
-	kCameraTransformCBVHandle,
-	kGridConfigCBVHandle,
-	kGridBufferUAVHandle,
-	kGridBufferSRVHandle,
-	kDepthSRVHandle,
-	kDiffuseSRVHandle,
-	kNormalSRVHandle,
-	kSpecularSRVHandle,
-	kAccumLightSRVHandle,
-	kAccumLightUAVHandle,
-	kNumSRVHandles
-};
-
-enum SamplerHandles
-{
-	kAnisoSamplerHandle = 0,
-	kNumSamplerHandles
-};
-
 struct ObjectTransform
 {
 	Matrix4f m_WorldPosMatrix;

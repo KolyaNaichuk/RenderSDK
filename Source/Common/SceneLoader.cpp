@@ -5,7 +5,6 @@
 #include "Common/MeshDataUtilities.h"
 #include "Common/Light.h"
 #include "Common/Color.h"
-
 #include "Math/BasisAxes.h"
 
 Scene* SceneLoader::LoadCornellBox()
@@ -260,7 +259,7 @@ Scene* SceneLoader::LoadCornellBox()
 	// 0 < y < 548
 	// -559 (back wall) < z < 0
 	
-	SpotLight* pSpotLight = new SpotLight("SpotLight", 550.0f, Radian(PI_DIV_TWO), Radian(PI_DIV_FOUR));
+	SpotLight* pSpotLight = new SpotLight("SpotLight", 550.0f, Radian(PI_DIV_FOUR), Radian(PI_DIV_TWO));
 	pSpotLight->GetTransform().SetPosition(Vector3f(275.0f, 540.0f, -280.0f));
 	pSpotLight->GetTransform().SetRotation(CreateRotationXQuaternion(Radian(PI_DIV_TWO)));
 
