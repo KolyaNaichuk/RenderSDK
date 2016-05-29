@@ -114,8 +114,10 @@ LightBuffer::LightBuffer(DXRenderEnvironment* pEnv, u32 numSpotLights, SpotLight
 
 		const Transform& lightTransform = pSpotLight->GetTransform();
 		const Vector3f& lightPos = lightTransform.GetPosition();
-		const Vector3f lightDir = ExtractBasisAxes(lightTransform.GetRotation()).m_ZAxis;
-
+		
+		const BasisAxes lightBasis = ExtractBasisAxes(lightTransform.GetRotation());
+		const Vector3f lightDir = Normalize(lightBasis.m_ZAxis);
+		
 		lightGeometry.emplace_back(lightPos, lightDir, pSpotLight->GetAttenEndRange());
 
 		f32 cosHalfInnerConeAngle = Cos(0.5f * pSpotLight->GetInnerConeAngle());

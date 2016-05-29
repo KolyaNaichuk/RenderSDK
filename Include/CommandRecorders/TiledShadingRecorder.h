@@ -6,10 +6,10 @@ class DXRootSignature;
 class DXPipelineState;
 class DXCommandList;
 class DXCommandAllocator;
-class DXBuffer;
+class DXColorTexture;
 
-struct GBuffer;
 struct DXRenderEnvironment;
+struct DXBindingResourceList;
 
 enum ShadingMode
 {
@@ -30,17 +30,14 @@ public:
 		u16 m_NumSpotLights;
 		bool m_UseDirectLight;
 	};
+
 	struct RenderPassParams
 	{
 		DXRenderEnvironment* m_pEnv;
 		DXCommandList* m_pCommandList;
 		DXCommandAllocator* m_pCommandAllocator;
-		DXBuffer* m_pShadingDataBuffer;
-		DXBuffer* m_pPointLightGeometryBuffer;
-		DXBuffer* m_pPointLightPropsBuffer;
-		DXBuffer* m_pSpotLightGeometryBuffer;
-		DXBuffer* m_pSpotLightPropsBuffer;		
-		GBuffer* m_pGBuffer;
+		DXBindingResourceList* m_pResources;
+		DXColorTexture* m_pAccumLightTexture;
 	};
 	
 	TiledShadingRecorder(InitParams* pParams);
@@ -54,15 +51,4 @@ private:
 
 	u16 m_NumThreadGroupsX;
 	u16 m_NumThreadGroupsY;
-
-	u8 m_ShadingDataCBVRootParam;
-	u8 m_AccumLightUAVRootParam;
-	u8 m_DepthSRVRootParam;
-	u8 m_NormalSRVRootParam;
-	u8 m_DiffuseSRVRootParam;
-	u8 m_SpecularSRVRootParam;
-	u8 m_PointLightGeometrySRVRootParam;
-	u8 m_PointLightPropsSRVRootParam;
-	u8 m_SpotLightGeometrySRVRootParam;
-	u8 m_SpotLightPropsSRVRootParam;
 };

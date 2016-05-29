@@ -718,10 +718,19 @@ void DXColorTexture::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
 
 	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE;
-	DXClearValue optimizedClearValue(GetRenderTargetViewFormat(pTexDesc->Format), optimizedClearColor);
-	
-	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
-		initialState, &optimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
+	{
+		DXGI_FORMAT rtvFormat = GetRenderTargetViewFormat(pTexDesc->Format);
+		DXClearValue optimizedClearValue(rtvFormat, optimizedClearColor);
+
+		DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
+			initialState, &optimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));
+	}
+	else
+	{
+		DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
+			initialState, nullptr, IID_PPV_ARGS(GetDXObjectAddress())));
+	}
 
 #ifdef _DEBUG
 	SetName(pName);
@@ -882,7 +891,8 @@ void DXDepthTexture::CreateCommittedResource(DXRenderEnvironment* pEnv, const D3
 	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
 	
 	D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE;
-	DXClearValue optimizedClearValue(GetDepthStencilViewFormat(pTexDesc->Format), pOptimizedClearDepth);
+	DXGI_FORMAT dsvFormat = GetDepthStencilViewFormat(pTexDesc->Format);
+	DXClearValue optimizedClearValue(dsvFormat, pOptimizedClearDepth);
 
 	DXVerify(pDXDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
 		initialState, &optimizedClearValue, IID_PPV_ARGS(GetDXObjectAddress())));

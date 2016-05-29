@@ -17,6 +17,7 @@ class DXFence;
 
 class Camera;
 class MeshBatch;
+class LightBuffer;
 class FillGBufferRecorder;
 class ClearVoxelGridRecorder;
 class CreateVoxelGridRecorder;
@@ -80,6 +81,7 @@ private:
 	DXBuffer* m_pGridBuffer;
 	DXBuffer* m_pGridConfigBuffer;
 	DXBuffer* m_pCullingDataBuffer;
+	DXBuffer* m_pShadingDataBuffer;
 	DXBuffer* m_pDrawCommandBuffer;
 	DXBuffer* m_pNumDrawsBuffer;
 	DXSampler* m_pAnisoSampler;
@@ -92,6 +94,7 @@ private:
 	DXBindingResourceList* m_pFillGBufferResources;
 
 	TiledShadingRecorder* m_pTiledShadingRecorder;
+	DXBindingResourceList* m_pTiledShadingResources;
 
 	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;
 	DXBindingResourceList* m_pClearVoxelGridResources;
@@ -114,5 +117,7 @@ private:
 	DXBindingResourceList* m_CopyTextureResources[kBackBufferCount];
 
 	MeshBatch* m_pMeshBatch;
+	LightBuffer* m_pSpotLightBuffer;
+	LightBuffer* m_pPointLightBuffer;
 	Camera* m_pCamera;
 };

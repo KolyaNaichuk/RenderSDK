@@ -23,6 +23,7 @@
 #include "Common/MeshData.h"
 #include "Common/MeshBatchData.h"
 #include "Common/MeshBatch.h"
+#include "Common/LightBuffer.h"
 #include "Common/Color.h"
 #include "Common/Camera.h"
 #include "Common/Scene.h"
@@ -116,6 +117,23 @@ struct CullingData
 	Vector4f m_NotUsed2[9];
 };
 
+struct ShadingData
+{
+	Vector2f m_RcpScreenSize;
+	Vector2f m_NotUsed1;
+	Vector3f m_WorldSpaceLightDir;
+	f32 m_NotUsed2;
+	Vector3f m_DirectLightColor;
+	f32 m_NotUsed3;
+	Vector3f m_WorldSpaceCameraPos;
+	f32 m_NotUsed4;
+	Matrix4f m_ViewMatrix;
+	Matrix4f m_ProjMatrix;
+	Matrix4f m_ProjInvMatrix;
+	Matrix4f m_ViewProjInvMatrix;
+	Matrix4f m_NotUsed5[3];
+};
+
 struct Voxel
 {
 	Vector4f m_ColorAndNumOccluders;
@@ -147,6 +165,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pGridBuffer(nullptr)
 	, m_pGridConfigBuffer(nullptr)
 	, m_pCullingDataBuffer(nullptr)
+	, m_pShadingDataBuffer(nullptr)
 	, m_pDrawCommandBuffer(nullptr)
 	, m_pNumDrawsBuffer(nullptr)
 	, m_pAnisoSampler(nullptr)
@@ -156,6 +175,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFillGBufferRecorder(nullptr)
 	, m_pFillGBufferResources(nullptr)
 	, m_pTiledShadingRecorder(nullptr)
+	, m_pTiledShadingResources(nullptr)
 	, m_pClearVoxelGridRecorder(nullptr)
 	, m_pClearVoxelGridResources(nullptr)
 	, m_pCreateVoxelGridRecorder(nullptr)
@@ -167,6 +187,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pViewFrustumCullingResources(nullptr)
 	, m_pCopyTextureRecorder(nullptr)
 	, m_pMeshBatch(nullptr)
+	, m_pSpotLightBuffer(nullptr)
+	, m_pPointLightBuffer(nullptr)
 	, m_pCamera(nullptr)
 {
 	std::memset(m_CommandAllocators, 0, sizeof(m_CommandAllocators));
@@ -184,9 +206,11 @@ DXApplication::~DXApplication()
 		SafeDelete(m_VisualizeMeshResources[index]);
 		SafeDelete(m_VisualizeVoxelGridResources[index]);
 		SafeDelete(m_CopyTextureResources[index]);
-	}		
+	}
 
 	SafeDelete(m_pCamera);
+	SafeDelete(m_pSpotLightBuffer);
+	SafeDelete(m_pPointLightBuffer);
 	SafeDelete(m_pMeshBatch);
 	SafeDelete(m_pCopyTextureRecorder);
 	SafeDelete(m_pClearVoxelGridRecorder);
@@ -197,6 +221,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pVisualizeVoxelGridRecorder);
 	SafeDelete(m_pVisualizeMeshRecorder);
 	SafeDelete(m_pTiledShadingRecorder);
+	SafeDelete(m_pTiledShadingResources);
 	SafeDelete(m_pFillGBufferRecorder);
 	SafeDelete(m_pFillGBufferResources);
 	SafeDelete(m_pViewFrustumCullingRecorder);
@@ -215,6 +240,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pNumDrawsBuffer);
 	SafeDelete(m_pDrawCommandBuffer);
 	SafeDelete(m_pCullingDataBuffer);
+	SafeDelete(m_pShadingDataBuffer);
 	SafeDelete(m_pGridConfigBuffer);
 	SafeDelete(m_pGridBuffer);
 	SafeDelete(m_pCameraTransformBuffer);
@@ -257,7 +283,7 @@ void DXApplication::OnInit()
 	DXDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 40, true);
 	m_pShaderVisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
-	DXDescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 24, false);
+	DXDescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 36, false);
 	m_pShaderInvisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
 	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 4, false);
@@ -314,7 +340,7 @@ void DXApplication::OnInit()
 	DXColorTexture2DDesc specularTexDesc(DXGI_FORMAT_R8G8B8A8_UNORM, bufferWidth, bufferHeight, true, true, false);
 	m_pSpecularTexture = new DXColorTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &specularTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pSpecularTexture");
 
-	DXColorTexture2DDesc accumLightTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, true, true, true);
+	DXColorTexture2DDesc accumLightTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, false, true, true);
 	m_pAccumLightTexture = new DXColorTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &accumLightTexDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pAccumLightTexture");
 
 	DXConstantBufferDesc objectTransformBufferDesc(sizeof(ObjectTransform));
@@ -328,6 +354,9 @@ void DXApplication::OnInit()
 
 	DXConstantBufferDesc cullingDataBufferDesc(sizeof(CullingData));
 	m_pCullingDataBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &cullingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCullingDataBuffer");
+
+	DXConstantBufferDesc shadingDataBufferDesc(sizeof(ShadingData));
+	m_pShadingDataBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &shadingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pShadingDataBuffer");
 
 	const u32 numGridElements = kNumGridCellsX * kNumGridCellsY * kNumGridCellsZ;
 	DXStructuredBufferDesc gridBufferDesc(numGridElements, sizeof(Voxel), true, true);
@@ -349,12 +378,16 @@ void DXApplication::OnInit()
 	
 	m_pMeshBatch = new MeshBatch(m_pEnv, pMeshBatchData);
 	m_pMeshBatch->RecordDataForUpload(m_pCommandList);
-	m_pCommandList->Close();
 
+	m_pSpotLightBuffer = new LightBuffer(m_pEnv, pScene->GetNumSpotLights(), pScene->GetSpotLights());
+	m_pSpotLightBuffer->RecordDataForUpload(m_pCommandList);
+
+	m_pCommandList->Close();
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, nullptr);
-	
 	WaitForGPU();
+
 	m_pMeshBatch->RemoveDataForUpload();
+	m_pSpotLightBuffer->RemoveDataForUpload();
 
 	DXBuffer* pMeshBoundsBuffer = m_pMeshBatch->GetMeshBoundsBuffer();
 	DXBuffer* pMeshDescBuffer = m_pMeshBatch->GetMeshDescBuffer();
@@ -410,12 +443,51 @@ void DXApplication::OnInit()
 	tiledShadingParams.m_ShadingMode = ShadingMode_Phong;
 	tiledShadingParams.m_NumTilesX = kNumTilesX;
 	tiledShadingParams.m_NumTilesY = kNumTilesY;
-	tiledShadingParams.m_NumPointLights = 1;
-	tiledShadingParams.m_NumSpotLights = 0;
+	tiledShadingParams.m_NumPointLights = (m_pPointLightBuffer != nullptr) ? m_pPointLightBuffer->GetNumLights() : 0;
+	tiledShadingParams.m_NumSpotLights = (m_pSpotLightBuffer != nullptr) ? m_pSpotLightBuffer->GetNumLights() : 0;
 	tiledShadingParams.m_UseDirectLight = false;
 
-	//m_pTiledShadingRecorder = new TiledShadingRecorder(&tiledShadingParams);
+	m_pTiledShadingRecorder = new TiledShadingRecorder(&tiledShadingParams);
+
+	m_pTiledShadingResources = new DXBindingResourceList();
+	m_pTiledShadingResources->m_ResourceTransitions.emplace_back(m_pAccumLightTexture, m_pAccumLightTexture->GetWriteState());
+	m_pTiledShadingResources->m_ResourceTransitions.emplace_back(m_pDepthTexture, m_pDepthTexture->GetReadState());
+	m_pTiledShadingResources->m_ResourceTransitions.emplace_back(m_pNormalTexture, m_pNormalTexture->GetReadState());
+	m_pTiledShadingResources->m_ResourceTransitions.emplace_back(m_pDiffuseTexture, m_pDiffuseTexture->GetReadState());
+	m_pTiledShadingResources->m_ResourceTransitions.emplace_back(m_pSpecularTexture, m_pSpecularTexture->GetReadState());
+
+	m_pTiledShadingResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+	m_pDevice->CopyDescriptor(m_pTiledShadingResources->m_SRVHeapStart, m_pAccumLightTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pShadingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDepthTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pNormalTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDiffuseTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpecularTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	if (m_pPointLightBuffer != nullptr)
+	{
+		DXBuffer* pLightGeometryBuffer = m_pPointLightBuffer->GetLightGeometryBuffer();
+		DXBuffer* pLightPropsBuffer = m_pPointLightBuffer->GetLightPropsBuffer();
+
+		m_pTiledShadingResources->m_ResourceTransitions.emplace_back(pLightGeometryBuffer, pLightGeometryBuffer->GetReadState());
+		m_pTiledShadingResources->m_ResourceTransitions.emplace_back(pLightPropsBuffer, pLightPropsBuffer->GetReadState());
+
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightGeometryBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
 	
+	if (m_pSpotLightBuffer != nullptr)
+	{
+		DXBuffer* pLightGeometryBuffer = m_pSpotLightBuffer->GetLightGeometryBuffer();
+		DXBuffer* pLightPropsBuffer = m_pSpotLightBuffer->GetLightPropsBuffer();
+
+		m_pTiledShadingResources->m_ResourceTransitions.emplace_back(pLightGeometryBuffer, pLightGeometryBuffer->GetReadState());
+		m_pTiledShadingResources->m_ResourceTransitions.emplace_back(pLightPropsBuffer, pLightPropsBuffer->GetReadState());
+
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightGeometryBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
+		
 	ClearVoxelGridRecorder::InitParams clearGridParams;
 	clearGridParams.m_pEnv = m_pEnv;
 	clearGridParams.m_NumGridCellsX = kNumGridCellsX;
@@ -499,7 +571,7 @@ void DXApplication::OnInit()
 		m_pDevice->CopyDescriptor(m_VisualizeMeshResources[index]->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 
-	DXColorTexture* pCopyTexture = m_pDiffuseTexture;
+	DXColorTexture* pCopyTexture = m_pAccumLightTexture;
 
 	CopyTextureRecorder::InitParams copyTextureParams;
 	copyTextureParams.m_pEnv = m_pEnv;
@@ -554,7 +626,7 @@ void DXApplication::OnInit()
 	gridConfig.m_RcpCellSize = Vector4f(gridRcpCellSize.m_X, gridRcpCellSize.m_Y, gridRcpCellSize.m_Z, 0.0f);
 	gridConfig.m_NumCells = Vector4i(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, 0);
 
-	m_pGridConfigBuffer->Write(&gridConfig, sizeof(GridConfig));
+	m_pGridConfigBuffer->Write(&gridConfig, sizeof(gridConfig));
 
 	Camera xAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_X, gridSize.m_Z / gridSize.m_Y);
 	xAxisCamera.SetSizeY(gridSize.m_Y);
@@ -583,7 +655,19 @@ void DXApplication::OnInit()
 	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
 		cullingData.m_ViewFrustumPlanes[planeIndex] = ToVector4f(mainCameraFrustum.m_Planes[planeIndex]);
 	cullingData.m_NumMeshes = m_pMeshBatch->GetNumMeshes();
-	m_pCullingDataBuffer->Write(&cullingData, sizeof(CullingData));
+	m_pCullingDataBuffer->Write(&cullingData, sizeof(cullingData));
+
+	ShadingData shadingData;
+	shadingData.m_RcpScreenSize = Rcp(Vector2f((f32)bufferWidth, (f32)bufferHeight));
+	shadingData.m_WorldSpaceLightDir = Vector3f::ZERO;
+	shadingData.m_DirectLightColor = Vector3f::ZERO;
+	shadingData.m_WorldSpaceCameraPos = mainCameraPos;
+	shadingData.m_ViewMatrix = m_pCamera->GetViewMatrix();
+	shadingData.m_ProjMatrix = m_pCamera->GetProjMatrix();
+	shadingData.m_ProjInvMatrix = Inverse(m_pCamera->GetProjMatrix());
+	shadingData.m_ViewProjInvMatrix = Inverse(m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix());
+
+	m_pShadingDataBuffer->Write(&shadingData, sizeof(shadingData));
 
 	SafeDelete(pScene);
 }
@@ -651,6 +735,17 @@ void DXApplication::OnRender()
 	fillGBufferParams.m_pNumDrawsBuffer = m_pNumDrawsBuffer;
 	
 	m_pFillGBufferRecorder->Record(&fillGBufferParams);
+	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	WaitForGPU();
+
+	TiledShadingRecorder::RenderPassParams tiledShadingParams;
+	tiledShadingParams.m_pEnv = m_pEnv;
+	tiledShadingParams.m_pCommandList = m_pCommandList;
+	tiledShadingParams.m_pCommandAllocator = pCommandAllocator;
+	tiledShadingParams.m_pResources = m_pTiledShadingResources;
+	tiledShadingParams.m_pAccumLightTexture = m_pAccumLightTexture;
+	
+	m_pTiledShadingRecorder->Record(&tiledShadingParams);
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 	WaitForGPU();
 

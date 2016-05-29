@@ -3,7 +3,10 @@
 #include "Common/MeshBatchData.h"
 #include "Common/MeshData.h"
 #include "Common/MeshDataUtilities.h"
+#include "Common/Light.h"
 #include "Common/Color.h"
+
+#include "Math/BasisAxes.h"
 
 Scene* SceneLoader::LoadCornellBox()
 {
@@ -251,5 +254,17 @@ Scene* SceneLoader::LoadCornellBox()
 	}
 
 	pScene->AddMeshBatch(pMeshBatchData);
+
+	// Cornell box bounds in left-handed coordinate system
+	// 0 < x < 549
+	// 0 < y < 548
+	// -559 (back wall) < z < 0
+	
+	SpotLight* pSpotLight = new SpotLight("SpotLight", 550.0f, Radian(PI_DIV_TWO), Radian(PI_DIV_FOUR));
+	pSpotLight->GetTransform().SetPosition(Vector3f(275.0f, 540.0f, -280.0f));
+	pSpotLight->GetTransform().SetRotation(CreateRotationXQuaternion(Radian(PI_DIV_TWO)));
+
+	pScene->AddSpotLight(pSpotLight);
+
 	return pScene;
 }

@@ -16,6 +16,7 @@ struct ShadingData
 	matrix projMatrix;
 	matrix projInvMatrix;
 	matrix viewProjInvMatrix;
+	matrix notUsed5[3];
 };
 
 #define NUM_THREADS_PER_TILE	(TILE_SIZE * TILE_SIZE)
@@ -184,7 +185,7 @@ float3 CalcSpotLightsContribution(float3 worldSpaceDirToViewer, float3 worldSpac
 	float3 diffuseAlbedo, float3 specularAlbedo, float specularPower)
 {
 	float3 lightContrib = float3(0.0f, 0.0f, 0.0f);
-	for (uint lightIndexPerTile = 0; lightIndexPerTile < g_NumPointLightsPerTile; ++lightIndexPerTile)
+	for (uint lightIndexPerTile = 0; lightIndexPerTile < g_NumSpotLightsPerTile; ++lightIndexPerTile)
 	{
 		uint lightIndex = g_SpotLightIndicesPerTile[lightIndexPerTile];
 
