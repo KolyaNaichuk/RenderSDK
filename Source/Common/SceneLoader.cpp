@@ -7,7 +7,7 @@
 #include "Common/Color.h"
 #include "Math/BasisAxes.h"
 
-Scene* SceneLoader::LoadCornellBox()
+Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 {
 	Scene* pScene = new Scene();
 
@@ -32,9 +32,28 @@ Scene* SceneLoader::LoadCornellBox()
 
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-
-		// Color::WHITE
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::BISQUE, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
+				
+		Material* pMaterial = nullptr;
+		if (settings == CornellBoxSettings_Original)
+		{
+			pMaterial = new Material(
+				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
+				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else if (settings == CornellBoxSettings_Test1)
+		{
+			pMaterial = new Material(
+				Vector4f::ZERO,
+				Color::BISQUE,
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else 
+		{
+			assert(false);
+		}
 
 		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
@@ -60,8 +79,29 @@ Scene* SceneLoader::LoadCornellBox()
 
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::BLANCHED_ALMOND/*Color::WHITE*/, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
-
+		
+		Material* pMaterial = nullptr;
+		if (settings == CornellBoxSettings_Original)
+		{
+			pMaterial = new Material(
+				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
+				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else if (settings == CornellBoxSettings_Test1)
+		{
+			pMaterial = new Material(
+				Vector4f::ZERO,
+				Color::BLANCHED_ALMOND,
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else
+		{
+			assert(false);
+		}
+		
 		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 
@@ -86,8 +126,29 @@ Scene* SceneLoader::LoadCornellBox()
 
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::BLUE_VIOLET/*Color::WHITE*/, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
-
+		
+		Material* pMaterial = nullptr;
+		if (settings == CornellBoxSettings_Original)
+		{
+			pMaterial = new Material(
+				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
+				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else if (settings == CornellBoxSettings_Test1)
+		{
+			pMaterial = new Material(
+				Vector4f::ZERO,
+				Color::BLUE_VIOLET,
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else
+		{
+			assert(false);
+		}
+		
 		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 
@@ -112,8 +173,29 @@ Scene* SceneLoader::LoadCornellBox()
 
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::GREEN, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
-
+		
+		Material* pMaterial = nullptr;
+		if (settings == CornellBoxSettings_Original)
+		{
+			pMaterial = new Material(
+				Vector4f(0.14f, 0.45f, 0.091f, 1.0f),
+				Vector4f(0.14f, 0.45f, 0.091f, 1.0f),
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else if (settings == CornellBoxSettings_Test1)
+		{
+			pMaterial = new Material(
+				Vector4f(0.14f, 0.45f, 0.091f, 1.0f),
+				Vector4f(0.14f, 0.45f, 0.091f, 1.0f),
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else
+		{
+			assert(false);
+		}
+		
 		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 
@@ -138,7 +220,28 @@ Scene* SceneLoader::LoadCornellBox()
 
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::RED, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
+		
+		Material* pMaterial = nullptr;
+		if (settings == CornellBoxSettings_Original)
+		{
+			pMaterial = new Material(
+				Vector4f(0.63f, 0.065f, 0.05f, 1.0f),
+				Vector4f(0.63f, 0.065f, 0.05f, 1.0f),
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else if (settings == CornellBoxSettings_Test1)
+		{
+			pMaterial = new Material(
+				Vector4f(0.63f, 0.065f, 0.05f, 1.0f),
+				Vector4f(0.63f, 0.065f, 0.05f, 1.0f),
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else
+		{
+			assert(false);
+		}
 
 		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
@@ -191,8 +294,29 @@ Scene* SceneLoader::LoadCornellBox()
 
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::BLUE/*Color::WHITE*/, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
-
+		
+		Material* pMaterial = nullptr;
+		if (settings == CornellBoxSettings_Original)
+		{
+			pMaterial = new Material(
+				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
+				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else if (settings == CornellBoxSettings_Test1)
+		{
+			pMaterial = new Material(
+				Vector4f::ZERO,
+				Color::BLUE,
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else
+		{
+			assert(false);
+		}
+		
 		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 
@@ -244,8 +368,29 @@ Scene* SceneLoader::LoadCornellBox()
 
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
-		Material* pMaterial = new Material(Vector4f::ZERO, Color::GOLD/*Color::WHITE*/, Vector4f::ZERO, 0.0f, Vector4f::ZERO);
-
+		
+		Material* pMaterial = nullptr;
+		if (settings == CornellBoxSettings_Original)
+		{
+			pMaterial = new Material(
+				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
+				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else if (settings == CornellBoxSettings_Test1)
+		{
+			pMaterial = new Material(
+				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
+				Color::GOLD,
+				Vector4f::ZERO, 0.0f,
+				Vector4f::ZERO);
+		}
+		else
+		{
+			assert(false);
+		}
+		
 		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 
@@ -259,11 +404,26 @@ Scene* SceneLoader::LoadCornellBox()
 	// 0 < y < 548
 	// -559 (back wall) < z < 0
 	
-	SpotLight* pSpotLight = new SpotLight("SpotLight", 550.0f, Radian(PI_DIV_FOUR), Radian(PI_DIV_TWO));
-	pSpotLight->GetTransform().SetPosition(Vector3f(275.0f, 540.0f, -280.0f));
-	pSpotLight->GetTransform().SetRotation(CreateRotationXQuaternion(Radian(PI_DIV_TWO)));
+	SpotLight* pSpotLight = nullptr;
+	if (settings == CornellBoxSettings_Original)
+	{
+		pSpotLight = new SpotLight("SpotLight", 550.0f, Radian(0.5 * PI_DIV_FOUR), Radian(PI_DIV_FOUR));
+		pSpotLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
+		pSpotLight->GetTransform().SetPosition(Vector3f(275.0f, 540.0f, -280.0f));
+		pSpotLight->GetTransform().SetRotation(CreateRotationXQuaternion(Radian(PI_DIV_TWO)));
+	}
+	else if (settings == CornellBoxSettings_Test1)
+	{
+		pSpotLight = new SpotLight("SpotLight", 550.0f, Radian(0.5 * PI_DIV_FOUR), Radian(PI_DIV_FOUR));
+		pSpotLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
+		pSpotLight->GetTransform().SetPosition(Vector3f(275.0f, 540.0f, -280.0f));
+		pSpotLight->GetTransform().SetRotation(CreateRotationXQuaternion(Radian(PI_DIV_TWO)));
+	}
+	else
+	{
+		assert(false);
+	}
 
 	pScene->AddSpotLight(pSpotLight);
-
 	return pScene;
 }
