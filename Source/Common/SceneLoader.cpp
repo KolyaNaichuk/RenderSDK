@@ -45,9 +45,9 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		else if (settings == CornellBoxSettings_Test1)
 		{
 			pMaterial = new Material(
-				Vector4f::ZERO,
-				Color::BISQUE,
-				Vector4f::ZERO, 0.0f,
+				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
 				Vector4f::ZERO);
 		}
 		else 
@@ -92,9 +92,9 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		else if (settings == CornellBoxSettings_Test1)
 		{
 			pMaterial = new Material(
-				Vector4f::ZERO,
-				Color::BLANCHED_ALMOND,
-				Vector4f::ZERO, 0.0f,
+				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
 				Vector4f::ZERO);
 		}
 		else
@@ -139,9 +139,9 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		else if (settings == CornellBoxSettings_Test1)
 		{
 			pMaterial = new Material(
-				Vector4f::ZERO,
-				Color::BLUE_VIOLET,
-				Vector4f::ZERO, 0.0f,
+				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
 				Vector4f::ZERO);
 		}
 		else
@@ -186,9 +186,9 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		else if (settings == CornellBoxSettings_Test1)
 		{
 			pMaterial = new Material(
-				Vector4f(0.14f, 0.45f, 0.091f, 1.0f),
-				Vector4f(0.14f, 0.45f, 0.091f, 1.0f),
-				Vector4f::ZERO, 0.0f,
+				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
 				Vector4f::ZERO);
 		}
 		else
@@ -233,9 +233,9 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		else if (settings == CornellBoxSettings_Test1)
 		{
 			pMaterial = new Material(
-				Vector4f(0.63f, 0.065f, 0.05f, 1.0f),
-				Vector4f(0.63f, 0.065f, 0.05f, 1.0f),
-				Vector4f::ZERO, 0.0f,
+				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
 				Vector4f::ZERO);
 		}
 		else
@@ -307,9 +307,9 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		else if (settings == CornellBoxSettings_Test1)
 		{
 			pMaterial = new Material(
-				Vector4f::ZERO,
-				Color::BLUE,
-				Vector4f::ZERO, 0.0f,
+				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
 				Vector4f::ZERO);
 		}
 		else
@@ -381,9 +381,9 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		else if (settings == CornellBoxSettings_Test1)
 		{
 			pMaterial = new Material(
-				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
-				Color::GOLD,
-				Vector4f::ZERO, 0.0f,
+				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
+				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
 				Vector4f::ZERO);
 		}
 		else
@@ -414,7 +414,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 	}
 	else if (settings == CornellBoxSettings_Test1)
 	{
-		pSpotLight = new SpotLight("SpotLight", 550.0f, Radian(0.5 * PI_DIV_FOUR), Radian(PI_DIV_FOUR));
+		pSpotLight = new SpotLight("SpotLight", 650.0f, Radian(PI_DIV_TWO), Radian(PI));
 		pSpotLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 		pSpotLight->GetTransform().SetPosition(Vector3f(275.0f, 540.0f, -280.0f));
 		pSpotLight->GetTransform().SetRotation(CreateRotationXQuaternion(Radian(PI_DIV_TWO)));
