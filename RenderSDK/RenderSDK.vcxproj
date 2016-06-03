@@ -193,6 +193,7 @@
     <ClInclude Include="..\Include\DX\DXUtils.h" />
     <ClInclude Include="..\Include\Math\AxisAngle.h" />
     <ClInclude Include="..\Include\Math\BasisAxes.h" />
+    <ClInclude Include="..\Include\Math\Cone.h" />
     <ClInclude Include="..\Include\Math\Degree.h" />
     <ClInclude Include="..\Include\Math\AxisAlignedBox.h" />
     <ClInclude Include="..\Include\Math\Frustum.h" />
@@ -257,6 +258,7 @@
     <ClCompile Include="..\Source\Math\AxisAngle.cpp" />
     <ClCompile Include="..\Source\Math\BasisAxes.cpp" />
     <ClCompile Include="..\Source\Math\AxisAlignedBox.cpp" />
+    <ClCompile Include="..\Source\Math\Cone.cpp" />
     <ClCompile Include="..\Source\Math\Frustum.cpp" />
     <ClCompile Include="..\Source\Math\OrientedBox.cpp" />
     <ClCompile Include="..\Source\Math\Sphere.cpp" />
