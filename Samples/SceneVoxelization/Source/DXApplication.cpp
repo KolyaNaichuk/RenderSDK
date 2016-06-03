@@ -457,7 +457,7 @@ void DXApplication::OnInit()
 	clearGridParams.m_NumGridCellsY = kNumGridCellsY;
 	clearGridParams.m_NumGridCellsZ = kNumGridCellsZ;
 
-	//m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(&clearGridParams);
+	m_pClearVoxelGridRecorder = new ClearVoxelGridRecorder(&clearGridParams);
 
 	m_pClearVoxelGridResources = new DXBindingResourceList;
 	m_pClearVoxelGridResources->m_ResourceTransitions.emplace_back(m_pGridBuffer, m_pGridBuffer->GetWriteState());
@@ -723,6 +723,7 @@ void DXApplication::OnRender()
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 	WaitForGPU();
 
+	/*
 	VisualizeMeshRecorder::RenderPassParams visualizeMeshParams;
 	visualizeMeshParams.m_pEnv = m_pEnv;
 	visualizeMeshParams.m_pCommandList = m_pCommandList;
@@ -731,9 +732,10 @@ void DXApplication::OnRender()
 	visualizeMeshParams.m_pViewport = m_pViewport;
 	visualizeMeshParams.m_pMeshBatch = m_pMeshBatch;
 
-	//m_pVisualizeMeshRecorder->Record(&visualizeMeshParams);
-	//m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
-	//WaitForGPU();
+	m_pVisualizeMeshRecorder->Record(&visualizeMeshParams);
+	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	WaitForGPU();
+	*/
 
 	ClearVoxelGridRecorder::RenderPassParams clearGridParams;
 	clearGridParams.m_pEnv = m_pEnv;
@@ -741,9 +743,9 @@ void DXApplication::OnRender()
 	clearGridParams.m_pCommandList = m_pCommandList;
 	clearGridParams.m_pResources = m_pClearVoxelGridResources;
 	
-	//m_pClearVoxelGridRecorder->Record(&clearGridParams);
-	//m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
-	//WaitForGPU();
+	m_pClearVoxelGridRecorder->Record(&clearGridParams);
+	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	WaitForGPU();
 
 	CreateVoxelGridRecorder::RenderPassParams createGridParams;
 	createGridParams.m_pEnv = m_pEnv;
