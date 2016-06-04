@@ -482,8 +482,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 	{
 		PointLight* pPointLight = new PointLight("PointLight", 650.0f);
 		pPointLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
-		pPointLight->GetTransform().SetPosition(Vector3f(275.0f, 274.0f, -280.0f));
-		pPointLight->GetTransform().SetRotation(CreateRotationXQuaternion(Radian(PI_DIV_TWO)));
+		pPointLight->GetTransform().SetPosition(Vector3f(275.0f, 400.0f, -280.0f));
 
 		pScene->AddPointLight(pPointLight);
 	}

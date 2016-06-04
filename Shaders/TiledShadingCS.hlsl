@@ -55,7 +55,7 @@ struct SpotLightProps
 
 float4 CreatePlanePassingThroughOrigin(float3 pt1, float3 pt2)
 {
-	float3 planeNormal = cross(pt1, pt2);
+	float3 planeNormal = normalize(cross(pt1, pt2));
 	float signedDistFromOrigin = 0.0f;
 
 	return float4(planeNormal, signedDistFromOrigin);
@@ -176,7 +176,7 @@ void CullSpotLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePla
 		float3 viewSpaceSphereCenter = mul(float4(worldSpaceSphereCenter.xyz, 1.0f), viewMatrix).xyz;
 		float sphereRadius = g_SpotLightBoundsBuffer[lightIndex].sphereRadius;
 
-		//if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceSphereCenter, sphereRadius))
+		if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceSphereCenter, sphereRadius))
 		{
 			uint listIndex;
 			InterlockedAdd(g_NumSpotLightsPerTile, 1, listIndex);
