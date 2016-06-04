@@ -22,10 +22,10 @@ struct ShadingData
 #define NUM_THREADS_PER_TILE	(TILE_SIZE * TILE_SIZE)
 
 #if NUM_POINT_LIGHTS > 0
-struct PointLightGeometry
+struct PointLightBounds
 {
-	float3 worldSpacePos;
-	float attenEndRange;
+	float3 worldSpaceSphereCenter;
+	float sphereRadius;
 };
 
 struct PointLightProps
@@ -36,17 +36,18 @@ struct PointLightProps
 #endif
 
 #if NUM_SPOT_LIGHTS > 0
-struct SpotLightGeometry
+struct SpotLightBounds
 {
-	float3 worldSpacePos;
-	float3 worldSpaceDir;
-	float attenEndRange;
+	float3 worldSpaceSphereCenter;
+	float sphereRadius;
 };
 
 struct SpotLightProps
 {
 	float3 color;
+	float3 worldSpaceDir;
 	float attenStartRange;
+	float attenEndRange;
 	float cosHalfInnerConeAngle;
 	float cosHalfOuterConeAngle;
 };
@@ -104,12 +105,12 @@ Texture2D g_DiffuseTexture : register(t2);
 Texture2D g_SpecularTexture : register(t3);
 
 #if NUM_POINT_LIGHTS > 0
-StructuredBuffer<PointLightGeometry> g_PointLightGeometryBuffer : register(t4);
+StructuredBuffer<PointLightBounds> g_PointLightBoundsBuffer : register(t4);
 StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t5);
 #endif
 
 #if NUM_SPOT_LIGHTS > 0
-StructuredBuffer<SpotLightGeometry> g_SpotLightGeometryBuffer : register(t6);
+StructuredBuffer<SpotLightBounds> g_SpotLightBoundsBuffer : register(t6);
 StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t7);
 #endif
 
@@ -133,11 +134,11 @@ void CullPointLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePl
 {
 	for (uint lightIndex = localThreadIndex; lightIndex < NUM_POINT_LIGHTS; lightIndex += NUM_THREADS_PER_TILE)
 	{
-		float3 worldSpaceLightPos = g_PointLightGeometryBuffer[lightIndex].worldSpacePos;
-		float3 viewSpaceLightPos = mul(float4(worldSpaceLightPos.xyz, 1.0f), viewMatrix).xyz;
-		float lightRadius = g_PointLightGeometryBuffer[lightIndex].attenEndRange;
+		float3 worldSpaceSphereCenter = g_PointLightBoundsBuffer[lightIndex].worldSpaceSphereCenter;
+		float3 viewSpaceSphereCenter = mul(float4(worldSpaceSphereCenter.xyz, 1.0f), viewMatrix).xyz;
+		float sphereRadius = g_PointLightBoundsBuffer[lightIndex].sphereRadius;
 
-		if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceLightPos, lightRadius))
+		if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceSphereCenter, sphereRadius))
 		{
 			uint listIndex;
 			InterlockedAdd(g_NumPointLightsPerTile, 1, listIndex);
@@ -154,8 +155,8 @@ float3 CalcPointLightsContribution(float3 worldSpaceDirToViewer, float3 worldSpa
 	{
 		uint lightIndex = g_PointLightIndicesPerTile[lightIndexPerTile];
 
-		float3 worldSpaceLightPos = g_PointLightGeometryBuffer[lightIndex].worldSpacePos;
-		float attenEndRange = g_PointLightGeometryBuffer[lightIndex].attenEndRange;
+		float3 worldSpaceLightPos = g_PointLightBoundsBuffer[lightIndex].worldSpaceSphereCenter;
+		float attenEndRange = g_PointLightBoundsBuffer[lightIndex].sphereRadius;
 		float attenStartRange = g_PointLightPropsBuffer[lightIndex].attenStartRange;
 		float3 lightColor = g_PointLightPropsBuffer[lightIndex].color;
 
@@ -167,12 +168,15 @@ float3 CalcPointLightsContribution(float3 worldSpaceDirToViewer, float3 worldSpa
 #endif
 
 #if NUM_SPOT_LIGHTS > 0
-void CullSpotLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth)
+void CullSpotLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth, matrix viewMatrix)
 {
 	for (uint lightIndex = localThreadIndex; lightIndex < NUM_SPOT_LIGHTS; lightIndex += NUM_THREADS_PER_TILE)
 	{
-		SpotLightGeometry lightGeometry = g_SpotLightGeometryBuffer[lightIndex];
-		if (insideOrOverlap)
+		float3 worldSpaceSphereCenter = g_SpotLightBoundsBuffer[lightIndex].worldSpaceSphereCenter;
+		float3 viewSpaceSphereCenter = mul(float4(worldSpaceSphereCenter.xyz, 1.0f), viewMatrix).xyz;
+		float sphereRadius = g_SpotLightBoundsBuffer[lightIndex].sphereRadius;
+
+		//if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceSphereCenter, sphereRadius))
 		{
 			uint listIndex;
 			InterlockedAdd(g_NumSpotLightsPerTile, 1, listIndex);
@@ -188,10 +192,11 @@ float3 CalcSpotLightsContribution(float3 worldSpaceDirToViewer, float3 worldSpac
 	for (uint lightIndexPerTile = 0; lightIndexPerTile < g_NumSpotLightsPerTile; ++lightIndexPerTile)
 	{
 		uint lightIndex = g_SpotLightIndicesPerTile[lightIndexPerTile];
-
-		float3 worldSpaceLightPos = g_SpotLightGeometryBuffer[lightIndex].worldSpacePos;
-		float3 worldSpaceLightDir = g_SpotLightGeometryBuffer[lightIndex].worldSpaceDir;
-		float attenEndRange = g_SpotLightGeometryBuffer[lightIndex].attenEndRange;
+		
+		SpotLightBounds lightBounds = g_SpotLightBoundsBuffer[lightIndex];
+		float3 worldSpaceLightDir = g_SpotLightPropsBuffer[lightIndex].worldSpaceDir;
+		float3 worldSpaceLightPos = lightBounds.worldSpaceSphereCenter - lightBounds.sphereRadius * worldSpaceLightDir;
+		float attenEndRange = g_SpotLightPropsBuffer[lightIndex].attenEndRange;
 		float attenStartRange = g_SpotLightPropsBuffer[lightIndex].attenStartRange;
 		float3 lightColor = g_SpotLightPropsBuffer[lightIndex].color;
 		float cosHalfInnerConeAngle = g_SpotLightPropsBuffer[lightIndex].cosHalfInnerConeAngle;
@@ -249,7 +254,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 #endif
 
 #if NUM_SPOT_LIGHTS > 0
-	CullSpotLightsPerTile(localThreadIndex, viewSpaceFrusumSidePlanes, viewSpaceMinDepthPerTile, viewSpaceMaxDepthPerTile);
+	CullSpotLightsPerTile(localThreadIndex, viewSpaceFrusumSidePlanes, viewSpaceMinDepthPerTile, viewSpaceMaxDepthPerTile, g_ShadingData.viewMatrix);
 	GroupMemoryBarrierWithGroupSync();
 #endif
 

@@ -5,7 +5,8 @@ class Scene;
 enum CornellBoxSettings
 {
 	CornellBoxSettings_Original,
-	CornellBoxSettings_Test1
+	CornellBoxSettings_Test1,
+	CornellBoxSettings_Test2
 };
 
 class SceneLoader

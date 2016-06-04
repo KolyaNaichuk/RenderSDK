@@ -331,7 +331,7 @@ void DXApplication::OnInit()
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
 
-	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test1);
+	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test2);
 	
 	assert(pScene->GetNumMeshBatches() == 1);
 	MeshBatchData* pMeshBatchData = *pScene->GetMeshBatches();
@@ -342,16 +342,29 @@ void DXApplication::OnInit()
 	m_pMeshBatch = new MeshBatch(m_pEnv, pMeshBatchData);
 	m_pMeshBatch->RecordDataForUpload(m_pCommandList);
 
-	m_pSpotLightBuffer = new LightBuffer(m_pEnv, pScene->GetNumSpotLights(), pScene->GetSpotLights());
-	m_pSpotLightBuffer->RecordDataForUpload(m_pCommandList);
-
+	if (pScene->GetNumPointLights() > 0)
+	{
+		m_pPointLightBuffer = new LightBuffer(m_pEnv, pScene->GetNumPointLights(), pScene->GetPointLights());
+		m_pPointLightBuffer->RecordDataForUpload(m_pCommandList);
+	}
+	if (pScene->GetNumSpotLights() > 0)
+	{
+		m_pSpotLightBuffer = new LightBuffer(m_pEnv, pScene->GetNumSpotLights(), pScene->GetSpotLights());
+		m_pSpotLightBuffer->RecordDataForUpload(m_pCommandList);
+	}
+	
 	m_pCommandList->Close();
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, nullptr);
 	WaitForGPU();
 
 	m_pMeshBatch->RemoveDataForUpload();
-	m_pSpotLightBuffer->RemoveDataForUpload();
+	
+	if (m_pPointLightBuffer != nullptr)
+		m_pPointLightBuffer->RemoveDataForUpload();
 
+	if (m_pSpotLightBuffer != nullptr)
+		m_pSpotLightBuffer->RemoveDataForUpload();
+		
 	DXBuffer* pMeshBoundsBuffer = m_pMeshBatch->GetMeshBoundsBuffer();
 	DXBuffer* pMeshDescBuffer = m_pMeshBatch->GetMeshDescBuffer();
 	DXBuffer* pMaterialBuffer = m_pMeshBatch->GetMaterialBuffer();
@@ -429,25 +442,24 @@ void DXApplication::OnInit()
 
 	if (m_pPointLightBuffer != nullptr)
 	{
-		DXBuffer* pLightGeometryBuffer = m_pPointLightBuffer->GetLightGeometryBuffer();
+		DXBuffer* pLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
 		DXBuffer* pLightPropsBuffer = m_pPointLightBuffer->GetLightPropsBuffer();
 
-		m_pTiledShadingResources->m_ResourceTransitions.emplace_back(pLightGeometryBuffer, pLightGeometryBuffer->GetReadState());
+		m_pTiledShadingResources->m_ResourceTransitions.emplace_back(pLightBoundsBuffer, pLightBoundsBuffer->GetReadState());
 		m_pTiledShadingResources->m_ResourceTransitions.emplace_back(pLightPropsBuffer, pLightPropsBuffer->GetReadState());
 
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightGeometryBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
-	
 	if (m_pSpotLightBuffer != nullptr)
 	{
-		DXBuffer* pLightGeometryBuffer = m_pSpotLightBuffer->GetLightGeometryBuffer();
+		DXBuffer* pLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
 		DXBuffer* pLightPropsBuffer = m_pSpotLightBuffer->GetLightPropsBuffer();
 
-		m_pTiledShadingResources->m_ResourceTransitions.emplace_back(pLightGeometryBuffer, pLightGeometryBuffer->GetReadState());
+		m_pTiledShadingResources->m_ResourceTransitions.emplace_back(pLightBoundsBuffer, pLightBoundsBuffer->GetReadState());
 		m_pTiledShadingResources->m_ResourceTransitions.emplace_back(pLightPropsBuffer, pLightPropsBuffer->GetReadState());
 
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightGeometryBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 		

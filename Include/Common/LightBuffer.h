@@ -22,15 +22,15 @@ public:
 
 	u32 GetNumLights() const { return m_NumLights; }
 
-	DXBuffer* GetLightGeometryBuffer() { return m_pLightGeometryBuffer; }
+	DXBuffer* GetLightBoundsBuffer() { return m_pLightBoundsBuffer; }
 	DXBuffer* GetLightPropsBuffer() { return m_pLightPropsBuffer; }
 
 private:
 	u32 m_NumLights;
 	
-	DXBuffer* m_pUploadLightGeometryBuffer;
+	DXBuffer* m_pUploadLightBoundsBuffer;
 	DXBuffer* m_pUploadLightPropsBuffer;
 
-	DXBuffer* m_pLightGeometryBuffer;
+	DXBuffer* m_pLightBoundsBuffer;
 	DXBuffer* m_pLightPropsBuffer;
 };
