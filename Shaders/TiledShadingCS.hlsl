@@ -8,7 +8,7 @@ struct ShadingData
 	float2 notUsed1;
 	float3 worldSpaceLightDir;
 	float  notUsed2;
-	float3 directLightColor;
+	float3 lightColor;
 	float  notUsed3;
 	float3 worldSpaceCameraPos;
 	float  notUsed4;
@@ -277,13 +277,13 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 	float3 spotLightsContrib = float3(0.0f, 0.0f, 0.0f);
 #endif
 
-#if USE_DIRECT_LIGHT == 1
-	float3 directLightContrib = CalcDirectionalLightContribution(g_ShadingData.worldSpaceLightDir, g_ShadingData.directLightColor, worldSpaceDirToViewer,
+#if USE_DIRECTIONAL_LIGHT == 1
+	float3 directionalLightContrib = CalcDirectionalLightContribution(g_ShadingData.worldSpaceLightDir, g_ShadingData.lightColor, worldSpaceDirToViewer,
 		worldSpaceNormal, diffuseAlbedo, specularAlbedo.rgb, specularAlbedo.a);
 #else
-	float3 directLightContrib = float3(0.0f, 0.0f, 0.0f);
+	float3 directionalLightContrib = float3(0.0f, 0.0f, 0.0f);
 #endif
 
-	float3 accumLight = pointLightsContrib + spotLightsContrib + directLightContrib;
+	float3 accumLight = pointLightsContrib + spotLightsContrib + directionalLightContrib;
 	g_AccumLightTexture[globalThreadId.xy] = float4(accumLight, 1.0f);
 }

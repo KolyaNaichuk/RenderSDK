@@ -28,7 +28,7 @@ public:
 		u16 m_NumTilesY;
 		u16 m_NumPointLights;
 		u16 m_NumSpotLights;
-		bool m_UseDirectLight;
+		bool m_UseDirectionalLight;
 	};
 
 	struct RenderPassParams

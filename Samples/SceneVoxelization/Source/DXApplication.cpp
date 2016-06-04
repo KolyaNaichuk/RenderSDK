@@ -86,7 +86,7 @@ struct ShadingData
 	Vector2f m_NotUsed1;
 	Vector3f m_WorldSpaceLightDir;
 	f32 m_NotUsed2;
-	Vector3f m_DirectLightColor;
+	Vector3f m_LightColor;
 	f32 m_NotUsed3;
 	Vector3f m_WorldSpaceCameraPos;
 	f32 m_NotUsed4;
@@ -331,7 +331,7 @@ void DXApplication::OnInit()
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
 
-	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test2);
+	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test3);
 	
 	assert(pScene->GetNumMeshBatches() == 1);
 	MeshBatchData* pMeshBatchData = *pScene->GetMeshBatches();
@@ -421,7 +421,7 @@ void DXApplication::OnInit()
 	tiledShadingParams.m_NumTilesY = kNumTilesY;
 	tiledShadingParams.m_NumPointLights = (m_pPointLightBuffer != nullptr) ? m_pPointLightBuffer->GetNumLights() : 0;
 	tiledShadingParams.m_NumSpotLights = (m_pSpotLightBuffer != nullptr) ? m_pSpotLightBuffer->GetNumLights() : 0;
-	tiledShadingParams.m_UseDirectLight = false;
+	tiledShadingParams.m_UseDirectionalLight = pScene->GetDirectionalLight() != nullptr;
 
 	m_pTiledShadingRecorder = new TiledShadingRecorder(&tiledShadingParams);
 
@@ -634,13 +634,20 @@ void DXApplication::OnInit()
 
 	ShadingData shadingData;
 	shadingData.m_RcpScreenSize = Rcp(Vector2f((f32)bufferWidth, (f32)bufferHeight));
-	shadingData.m_WorldSpaceLightDir = Vector3f::ZERO;
-	shadingData.m_DirectLightColor = Vector3f::ZERO;
 	shadingData.m_WorldSpaceCameraPos = mainCameraPos;
 	shadingData.m_ViewMatrix = m_pCamera->GetViewMatrix();
 	shadingData.m_ProjMatrix = m_pCamera->GetProjMatrix();
 	shadingData.m_ProjInvMatrix = Inverse(m_pCamera->GetProjMatrix());
 	shadingData.m_ViewProjInvMatrix = Inverse(m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix());
+
+	const DirectionalLight* pDirectionalLight = pScene->GetDirectionalLight();
+	if (pDirectionalLight != nullptr)
+	{
+		const BasisAxes lightBasis = ExtractBasisAxes(pDirectionalLight->GetTransform().GetRotation());
+
+		shadingData.m_WorldSpaceLightDir = Normalize(lightBasis.m_ZAxis);
+		shadingData.m_LightColor = pDirectionalLight->GetColor();
+	}
 
 	m_pShadingDataBuffer->Write(&shadingData, sizeof(shadingData));
 

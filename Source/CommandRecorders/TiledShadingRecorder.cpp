@@ -26,7 +26,7 @@ TiledShadingRecorder::TiledShadingRecorder(InitParams* pParams)
 	std::string shadingModeStr = std::to_string(pParams->m_ShadingMode);
 	std::string numPointLightsStr = std::to_string(pParams->m_NumPointLights);
 	std::string numSpotLightsStr = std::to_string(pParams->m_NumSpotLights);
-	std::string useDirectLightStr = std::to_string(pParams->m_UseDirectLight ? 1 : 0);
+	std::string useDirectionalLightStr = std::to_string(pParams->m_UseDirectionalLight ? 1 : 0);
 	
 	const DXShaderMacro shaderDefines[] =
 	{
@@ -34,7 +34,7 @@ TiledShadingRecorder::TiledShadingRecorder(InitParams* pParams)
 		DXShaderMacro("SHADING_MODE", shadingModeStr.c_str()),
 		DXShaderMacro("NUM_POINT_LIGHTS", numPointLightsStr.c_str()),
 		DXShaderMacro("NUM_SPOT_LIGHTS", numSpotLightsStr.c_str()),
-		DXShaderMacro("USE_DIRECT_LIGHT", useDirectLightStr.c_str()),
+		DXShaderMacro("USE_DIRECTIONAL_LIGHT", useDirectionalLightStr.c_str()),
 		DXShaderMacro()
 	};
 	DXShader computeShader(L"Shaders//TiledShadingCS.hlsl", "Main", "cs_5_0", shaderDefines);
