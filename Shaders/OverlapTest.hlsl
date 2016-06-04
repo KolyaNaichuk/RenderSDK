@@ -48,4 +48,13 @@ bool TestSphereAgainstFrustum(float4 frustumPlanes[6], float3 sphereCenter, floa
 	return insideOrOverlap;
 }
 
+bool TestSphereAgainstAABB(AABB aabb, float3 sphereCenter, float sphereRadius)
+{
+	float3 delta = max(0.0f, abs(aabb.center - sphereCenter) - sphereRadius);
+	float sqDist = dot(delta, delta);
+	bool insideOrOverlap = sqDist <= (sphereRadius * sphereRadius);
+	
+	return insideOrOverlap;
+}
+
 #endif // __OVERLAP_TEST__
