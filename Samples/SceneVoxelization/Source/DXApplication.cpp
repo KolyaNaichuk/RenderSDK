@@ -332,7 +332,7 @@ void DXApplication::OnInit()
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
 
-	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test2);
+	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Original);
 	
 	assert(pScene->GetNumMeshBatches() == 1);
 	MeshBatchData* pMeshBatchData = *pScene->GetMeshBatches();
@@ -507,7 +507,7 @@ void DXApplication::OnInit()
 	visualizeGridParams.m_pEnv = m_pEnv;
 	visualizeGridParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
 	
-	//m_pVisualizeVoxelGridRecorder = new VisualizeVoxelGridRecorder(&visualizeGridParams);
+	m_pVisualizeVoxelGridRecorder = new VisualizeVoxelGridRecorder(&visualizeGridParams);
 
 	for (u8 index = 0; index < kBackBufferCount; ++index)
 	{
@@ -791,9 +791,9 @@ void DXApplication::OnRender()
 	visualizeGridParams.m_pResources = m_VisualizeVoxelGridResources[m_BackBufferIndex];
 	visualizeGridParams.m_pViewport = m_pViewport;
 	
-	//m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
-	//m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
-			
+	m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
+	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	
 	if (pRenderTarget->GetState() != D3D12_RESOURCE_STATE_PRESENT)
 	{
 		m_pCommandList->Reset(pCommandAllocator, nullptr);
