@@ -7,13 +7,13 @@ class DXRootSignature;
 class DXPipelineState;
 class DXCommandList;
 class DXCommandAllocator;
+class DXCommandSignature;
+class DXBuffer;
 class MeshBatch;
 
 struct DXViewport;
 struct DXRenderEnvironment;
 struct DXBindingResourceList;
-
-//#define HAS_TEXCOORD
 
 class CreateVoxelGridRecorder
 {
@@ -32,6 +32,8 @@ public:
 		DXBindingResourceList* m_pResources;
 		DXViewport* m_pViewport;
 		MeshBatch* m_pMeshBatch;
+		DXBuffer* m_pDrawCommandBuffer;
+		DXBuffer* m_pNumDrawsBuffer;
 	};
 
 	CreateVoxelGridRecorder(InitParams* pParams);
@@ -42,4 +44,5 @@ public:
 private:
 	DXRootSignature* m_pRootSignature;
 	DXPipelineState* m_pPipelineState;
+	DXCommandSignature* m_pCommandSignature;
 };

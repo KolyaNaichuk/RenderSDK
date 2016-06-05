@@ -14,12 +14,6 @@ struct DXViewport;
 struct DXRenderEnvironment;
 struct DXBindingResourceList;
 
-struct FillGBufferCommand
-{
-	UINT m_Root32BitConstant;
-	D3D12_DRAW_INDEXED_ARGUMENTS m_DrawArgs;
-};
-
 class FillGBufferRecorder
 {
 public:

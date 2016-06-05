@@ -11,6 +11,7 @@
 #include "DX/DXRenderEnvironment.h"
 #include "DX/DXUtils.h"
 #include "DX/DXResourceList.h"
+#include "DX/DXCommandSignature.h"
 #include "CommandRecorders/FillGBufferRecorder.h"
 #include "CommandRecorders/TiledShadingRecorder.h"
 #include "CommandRecorders/ClearVoxelGridRecorder.h"
@@ -331,12 +332,12 @@ void DXApplication::OnInit()
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
 
-	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test3);
+	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test2);
 	
 	assert(pScene->GetNumMeshBatches() == 1);
 	MeshBatchData* pMeshBatchData = *pScene->GetMeshBatches();
 	
-	DXStructuredBufferDesc drawCommandBufferDesc(pMeshBatchData->GetNumMeshes(), sizeof(FillGBufferCommand), true, true);
+	DXStructuredBufferDesc drawCommandBufferDesc(pMeshBatchData->GetNumMeshes(), sizeof(DrawIndexedCommand), true, true);
 	m_pDrawCommandBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawCommandBuffer");
 	
 	m_pMeshBatch = new MeshBatch(m_pEnv, pMeshBatchData);
@@ -481,14 +482,17 @@ void DXApplication::OnInit()
 	createGridParams.m_pEnv = m_pEnv;
 	createGridParams.m_pMeshBatch = m_pMeshBatch;
 
-	//m_pCreateVoxelGridRecorder = new CreateVoxelGridRecorder(&createGridParams);
+	m_pCreateVoxelGridRecorder = new CreateVoxelGridRecorder(&createGridParams);
 
 	m_pCreateVoxelGridResources = new DXBindingResourceList();
-	m_pCreateVoxelGridResources->m_ResourceTransitions.emplace_back(m_pGridBuffer, m_pGridBuffer->GetWriteState());
+	m_pCreateVoxelGridResources->m_ResourceTransitions.emplace_back(pMaterialBuffer, pMaterialBuffer->GetReadState());
+	m_pCreateVoxelGridResources->m_ResourceTransitions.emplace_back(m_pGridBuffer, m_pGridBuffer->GetWriteState());	
 	m_pCreateVoxelGridResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+	
 	m_pDevice->CopyDescriptor(m_pCreateVoxelGridResources->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pCameraTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridConfigBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMaterialBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	InjectVPLsIntoVoxelGridRecorder::InitPrams injectVPLsParams;
@@ -773,10 +777,12 @@ void DXApplication::OnRender()
 	createGridParams.m_pResources = m_pCreateVoxelGridResources;
 	createGridParams.m_pViewport = m_pViewport;
 	createGridParams.m_pMeshBatch = m_pMeshBatch;
+	createGridParams.m_pDrawCommandBuffer = m_pDrawCommandBuffer;
+	createGridParams.m_pNumDrawsBuffer = m_pNumDrawsBuffer;
 	
-	//m_pCreateVoxelGridRecorder->Record(&createGridParams);
-	//m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
-	//WaitForGPU();
+	m_pCreateVoxelGridRecorder->Record(&createGridParams);
+	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	WaitForGPU();
 	
 	VisualizeVoxelGridRecorder::RenderPassParams visualizeGridParams;
 	visualizeGridParams.m_pEnv = m_pEnv;

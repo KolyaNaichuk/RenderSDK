@@ -5,6 +5,12 @@
 class DXDevice;
 class DXRootSignature;
 
+struct DrawIndexedCommand
+{
+	UINT m_Root32BitConstant;
+	D3D12_DRAW_INDEXED_ARGUMENTS m_DrawArgs;
+};
+
 struct DXDrawArgument : public D3D12_INDIRECT_ARGUMENT_DESC
 {
 	DXDrawArgument();

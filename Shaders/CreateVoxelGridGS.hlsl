@@ -7,8 +7,6 @@ struct GSInput
 
 #ifdef HAS_TEXCOORD
 	float2 texCoord				: TEXCOORD;
-#else // HAS_COLOR
-	float4 color				: COLOR;
 #endif // HAS_TEXCOORD
 };
 
@@ -20,8 +18,6 @@ struct GSOutput
 
 #ifdef HAS_TEXCOORD
 	float2 texCoord				: TEXCOORD;
-#else // HAS_COLOR
-	float4 color				: COLOR;
 #endif // HAS_TEXCOORD
 };
 
@@ -49,19 +45,17 @@ int FindViewDirectionWithLargestProjectedArea(float3 worldSpaceFaceNormal)
 void Main(triangle GSInput input[3], inout TriangleStream<GSOutput> outputStream)
 {
 	float3 worldSpaceFaceNormal = normalize(input[0].worldSpaceNormal + input[1].worldSpaceNormal + input[2].worldSpaceNormal);
-	int viewDirectionIndex = FindViewDirectionWithLargestProjectedArea(worldSpaceFaceNormal);
+	int viewDirIndex = FindViewDirectionWithLargestProjectedArea(worldSpaceFaceNormal);
 	
 	for (int index = 0; index < 3; ++index)
 	{
 		GSOutput output;
-		output.clipSpacePos = mul(input[index].worldSpacePos, g_Transform.viewProjMatrices[viewDirectionIndex]);
+		output.clipSpacePos = mul(input[index].worldSpacePos, g_Transform.viewProjMatrices[viewDirIndex]);
 		output.worldSpacePos = input[index].worldSpacePos;
 		output.worldSpaceNormal = input[index].worldSpaceNormal;
 
 #ifdef HAS_TEXCOORD
 		output.texCoord = input[index].texCoord;
-#else // HAS_COLOR
-		output.color = input[index].color;
 #endif // HAS_TEXCOORD
 
 		outputStream.Append(output);

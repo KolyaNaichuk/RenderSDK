@@ -1,3 +1,5 @@
+#include "Material.hlsl"
+
 struct PSInput
 {
 	float4 screenSpacePos		: SV_Position;
@@ -9,15 +11,6 @@ struct PSOutput
 	float3 worldSpaceNormal		: SV_Target0;
 	float4 diffuseColor			: SV_Target1;
 	float4 specularColor		: SV_Target2;
-};
-
-struct Material
-{
-	float4 ambientColor;
-	float4 diffuseColor;
-	float4 specularColor;
-	float  specularPower;
-	float4 emissiveColor;
 };
 
 cbuffer MaterialIndexBuffer : register(b0)

@@ -7,8 +7,6 @@ struct VSInput
 
 #ifdef HAS_TEXCOORD
 	float2 texCoord				: TEXCOORD;
-#else // HAS_COLOR
-	float4 color				: COLOR;
 #endif // HAS_TEXCOORD
 };
 
@@ -19,8 +17,6 @@ struct VSOutput
 
 #ifdef HAS_TEXCOORD
 	float2 texCoord				: TEXCOORD;
-#else // HAS_COLOR
-	float4 color				: COLOR;
 #endif // HAS_TEXCOORD
 };
 
@@ -34,11 +30,9 @@ VSOutput Main(VSInput input)
 	VSOutput output;
 	output.worldSpacePos = mul(float4(input.localSpacePos.xyz, 1.0f), g_Transform.worldPositionMatrix);
 	output.worldSpaceNormal = mul(float4(input.localSpaceNormal.xyz, 0.0f), g_Transform.worldNormalMatrix);
-	
+
 #ifdef HAS_TEXCOORD
 	output.texCoord = input.texCoord;
-#else // HAS_COLOR
-	output.color = input.color;
 #endif // HAS_TEXCOORD
 	
 	return output;

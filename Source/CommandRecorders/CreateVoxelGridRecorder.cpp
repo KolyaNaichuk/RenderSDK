@@ -1,6 +1,7 @@
 #include "CommandRecorders/CreateVoxelGridRecorder.h"
 #include "DX/DXPipelineState.h"
 #include "DX/DXRootSignature.h"
+#include "DX/DXCommandSignature.h"
 #include "DX/DXCommandList.h"
 #include "DX/DXResource.h"
 #include "DX/DXUtils.h"
@@ -8,11 +9,14 @@
 #include "DX/DXRenderEnvironment.h"
 #include "Common/MeshBatch.h"
 
+//#define HAS_TEXCOORD
+
 enum RootParams
 {
 	kCBVRootParamVS = 0,
 	kCBVRootParamGS,
 	kSRVRootParamPS,
+	k32BitConstantRootParamPS,
 
 #ifdef HAS_TEXCOORD
 	kColorSRVRootParam,
@@ -25,6 +29,7 @@ enum RootParams
 CreateVoxelGridRecorder::CreateVoxelGridRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
+	, m_pCommandSignature(nullptr)
 {
 	DXRenderEnvironment* pEnv = pParams->m_pEnv;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
@@ -35,7 +40,7 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(InitParams* pParams)
 	
 	D3D12_DESCRIPTOR_RANGE descriptorRangesVS[] = {DXCBVRange(1, 0)};
 	D3D12_DESCRIPTOR_RANGE descriptorRangesGS[] = {DXCBVRange(1, 0)};
-	D3D12_DESCRIPTOR_RANGE descriptorRangesPS[] = {DXCBVRange(1, 0), DXUAVRange(1, 0)};
+	D3D12_DESCRIPTOR_RANGE descriptorRangesPS[] = {DXCBVRange(1, 0), DXSRVRange(1, 0), DXUAVRange(1, 0)};
 
 #ifdef HAS_TEXCOORD
 	DXSRVRange colorSRVRange(1, 0);
@@ -46,6 +51,7 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(InitParams* pParams)
 	rootParams[kCBVRootParamVS] = DXRootDescriptorTableParameter(ARRAYSIZE(descriptorRangesVS), &descriptorRangesVS[0], D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParams[kCBVRootParamGS] = DXRootDescriptorTableParameter(ARRAYSIZE(descriptorRangesGS), &descriptorRangesGS[0], D3D12_SHADER_VISIBILITY_GEOMETRY);
 	rootParams[kSRVRootParamPS] = DXRootDescriptorTableParameter(ARRAYSIZE(descriptorRangesPS), &descriptorRangesPS[0], D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParams[k32BitConstantRootParamPS] = DXRoot32BitConstantsParameter(1, D3D12_SHADER_VISIBILITY_PIXEL, 1);
 		
 #ifdef HAS_TEXCOORD
 	rootParams[kColorSRVRootParam] = DXRootDescriptorTableParameter(1, &colorSRVRange, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -65,10 +71,19 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(InitParams* pParams)
 	pipelineStateDesc.PrimitiveTopologyType = pMeshBatch->GetPrimitiveTopologyType();
 	
 	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"CreateVoxelGridRecorder::m_pPipelineState");
+
+	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] =
+	{
+		DX32BitConstantsArgument(k32BitConstantRootParamPS, 0, 1),
+		DXDrawIndexedArgument()
+	};
+	DXCommandSignatureDesc commandSignatureDesc(sizeof(DrawIndexedCommand), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
+	m_pCommandSignature = new DXCommandSignature(pEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"FillGBufferRecorder::m_pCommandSignature");
 }
 
 CreateVoxelGridRecorder::~CreateVoxelGridRecorder()
 {
+	SafeDelete(m_pCommandSignature);
 	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pRootSignature);
 }
@@ -88,14 +103,9 @@ void CreateVoxelGridRecorder::Record(RenderPassParams* pParams)
 	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
 	pCommandList->SetDescriptorHeaps(pEnv->m_pShaderVisibleSRVHeap);
 
-	DXDescriptorHandle srvHeapStart = pResources->m_SRVHeapStart;
-	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamVS, srvHeapStart);
-
-	srvHeapStart.Offset(1);
-	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamGS, srvHeapStart);
-
-	srvHeapStart.Offset(1);
-	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParamPS, srvHeapStart);	
+	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamVS, pResources->m_SRVHeapStart);
+	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamGS, DXDescriptorHandle(pResources->m_SRVHeapStart, 1));
+	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParamPS, DXDescriptorHandle(pResources->m_SRVHeapStart, 2));
 	
 	pCommandList->IASetPrimitiveTopology(pMeshBatch->GetPrimitiveTopology());
 	pCommandList->IASetVertexBuffers(0, 1, pMeshBatch->GetVertexBuffer()->GetVBView());
@@ -106,7 +116,6 @@ void CreateVoxelGridRecorder::Record(RenderPassParams* pParams)
 	DXRect scissorRect(ExtractRect(pParams->m_pViewport));
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 	
-	assert(false);
-	//pCommandList->DrawIndexedInstanced(pSubMeshData->m_NumIndices, 1, pSubMeshData->m_IndexStart, 0, 0);
+	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshBatch->GetNumMeshes(), pParams->m_pDrawCommandBuffer, 0, pParams->m_pNumDrawsBuffer, 0);
 	pCommandList->Close();
 }

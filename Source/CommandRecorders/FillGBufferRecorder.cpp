@@ -56,7 +56,7 @@ FillGBufferRecorder::FillGBufferRecorder(InitParams* pParams)
 		DX32BitConstantsArgument(k32BitConstantRootParamPS, 0, 1),
 		DXDrawIndexedArgument()
 	};
-	DXCommandSignatureDesc commandSignatureDesc(sizeof(FillGBufferCommand), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
+	DXCommandSignatureDesc commandSignatureDesc(sizeof(DrawIndexedCommand), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
 	m_pCommandSignature = new DXCommandSignature(pEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"FillGBufferRecorder::m_pCommandSignature");
 }
 
