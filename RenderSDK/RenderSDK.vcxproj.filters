@@ -39,9 +39,6 @@
     <ClInclude Include="..\Include\DX\DXCommandQueue.h">
       <Filter>DX</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\DX\DXDebug.h">
-      <Filter>DX</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\DX\DXDescriptorHeap.h">
       <Filter>DX</Filter>
     </ClInclude>
@@ -234,9 +231,6 @@
       <Filter>DX</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\DX\DXCommandQueue.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXDebug.cpp">
       <Filter>DX</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\DX\DXDescriptorHeap.cpp">

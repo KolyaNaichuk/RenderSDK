@@ -178,7 +178,6 @@
     <ClInclude Include="..\Include\DX\DXCommandList.h" />
     <ClInclude Include="..\Include\DX\DXCommandQueue.h" />
     <ClInclude Include="..\Include\DX\DXCommandSignature.h" />
-    <ClInclude Include="..\Include\DX\DXDebug.h" />
     <ClInclude Include="..\Include\DX\DXDescriptorHeap.h" />
     <ClInclude Include="..\Include\DX\DXDevice.h" />
     <ClInclude Include="..\Include\DX\DXFactory.h" />
@@ -245,7 +244,6 @@
     <ClCompile Include="..\Source\DX\DXCommandList.cpp" />
     <ClCompile Include="..\Source\DX\DXCommandQueue.cpp" />
     <ClCompile Include="..\Source\DX\DXCommandSignature.cpp" />
-    <ClCompile Include="..\Source\DX\DXDebug.cpp" />
     <ClCompile Include="..\Source\DX\DXDescriptorHeap.cpp" />
     <ClCompile Include="..\Source\DX\DXDevice.cpp" />
     <ClCompile Include="..\Source\DX\DXFactory.cpp" />
