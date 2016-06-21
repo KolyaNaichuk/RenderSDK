@@ -133,9 +133,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pShaderInvisibleRTVHeap(nullptr)
 	, m_pShaderInvisibleDSVHeap(nullptr)
 	, m_pShaderInvisibleSRVHeap(nullptr)
-	, m_pShaderInvisibleSamplerHeap(nullptr)
 	, m_pShaderVisibleSRVHeap(nullptr)
-	, m_pShaderVisibleSamplerHeap(nullptr)
 	, m_pDepthTexture(nullptr)
 	, m_pDiffuseTexture(nullptr)
 	, m_pNormalTexture(nullptr)
@@ -151,7 +149,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pDrawCommandBuffer(nullptr)
 	, m_pNumVisibleMeshesBuffer(nullptr)
 	, m_pVisibleMeshIndexBuffer(nullptr)
-	, m_pAnisoSampler(nullptr)
 	, m_pEnv(new DXRenderEnvironment())
 	, m_pFence(nullptr)
 	, m_BackBufferIndex(0)
@@ -219,11 +216,8 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pShaderInvisibleDSVHeap);
 	SafeDelete(m_pShaderInvisibleSRVHeap);
 	SafeDelete(m_pShaderInvisibleRTVHeap);
-	SafeDelete(m_pShaderInvisibleSamplerHeap);
 	SafeDelete(m_pShaderVisibleSRVHeap);
-	SafeDelete(m_pShaderVisibleSamplerHeap);
 	SafeDelete(m_pEnv);
-	SafeDelete(m_pAnisoSampler);
 	SafeDelete(m_pNumVisibleMeshesBuffer);
 	SafeDelete(m_pVisibleMeshIndexBuffer);
 	SafeDelete(m_pDrawCommandBuffer);
@@ -259,22 +253,16 @@ void DXApplication::OnInit()
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
 
-	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 24, false);
+	DXDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 9, false);
 	m_pShaderInvisibleRTVHeap = new DXDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	DXDescriptorHeapDesc shaderInvisibleSamplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 4, false);
-	m_pShaderInvisibleSamplerHeap = new DXDescriptorHeap(m_pDevice, &shaderInvisibleSamplerHeapDesc, L"m_pShaderInvisibleSamplerHeap");
-
-	DXDescriptorHeapDesc shaderVisibleSamplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 16, true);
-	m_pShaderVisibleSamplerHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSamplerHeapDesc, L"m_pShaderVisibleSamplerHeap");
-
-	DXDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 45, true);
+	DXDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 43, true);
 	m_pShaderVisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
-	DXDescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 36, false);
+	DXDescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32, false);
 	m_pShaderInvisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
-	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 4, false);
+	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
 	m_pShaderInvisibleDSVHeap = new DXDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pShaderInvisibleDSVHeap");
 
 	for (UINT index = 0; index < kBackBufferCount; ++index)
@@ -290,7 +278,6 @@ void DXApplication::OnInit()
 	m_pEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
 	m_pEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
 	m_pEnv->m_pShaderInvisibleDSVHeap = m_pShaderInvisibleDSVHeap;
-	m_pEnv->m_pShaderInvisibleSamplerHeap = m_pShaderInvisibleSamplerHeap;
 	m_pEnv->m_pShaderVisibleSRVHeap = m_pShaderVisibleSRVHeap;
 	
 	const RECT bufferRect = m_pWindow->GetClientRect();
@@ -310,10 +297,7 @@ void DXApplication::OnInit()
 	DXSwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
 	m_pSwapChain = new DXSwapChain(&factory, m_pEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-
-	DXSamplerDesc anisoSamplerDesc(DXSamplerDesc::Anisotropic);
-	m_pAnisoSampler = new DXSampler(m_pEnv, &anisoSamplerDesc);
-
+	
 	DXDepthTexture2DDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, bufferWidth, bufferHeight, true, true);
 	DXDepthStencilValue optimizedClearDepth(1.0f);
 	m_pDepthTexture = new DXDepthTexture(m_pEnv, m_pEnv->m_pDefaultHeapProps, &depthTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pDepthTexture");

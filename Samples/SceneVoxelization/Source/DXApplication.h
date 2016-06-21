@@ -12,7 +12,6 @@ class DXDescriptorHeap;
 class DXColorTexture;
 class DXDepthTexture;
 class DXBuffer;
-class DXSampler;
 class DXFence;
 
 class Camera;
@@ -68,9 +67,7 @@ private:
 	DXDescriptorHeap* m_pShaderInvisibleRTVHeap;
 	DXDescriptorHeap* m_pShaderInvisibleDSVHeap;
 	DXDescriptorHeap* m_pShaderInvisibleSRVHeap;
-	DXDescriptorHeap* m_pShaderInvisibleSamplerHeap;
 	DXDescriptorHeap* m_pShaderVisibleSRVHeap;
-	DXDescriptorHeap* m_pShaderVisibleSamplerHeap;
 	DXDepthTexture* m_pDepthTexture;
 	DXColorTexture* m_pDiffuseTexture;
 	DXColorTexture* m_pNormalTexture;
@@ -86,7 +83,6 @@ private:
 	DXBuffer* m_pDrawCommandBuffer;
 	DXBuffer* m_pNumVisibleMeshesBuffer;
 	DXBuffer* m_pVisibleMeshIndexBuffer;
-	DXSampler* m_pAnisoSampler;
 	DXRenderEnvironment* m_pEnv;
 	DXFence* m_pFence;
 	UINT64 m_FenceValues[kBackBufferCount];
