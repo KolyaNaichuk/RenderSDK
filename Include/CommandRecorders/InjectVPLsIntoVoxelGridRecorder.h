@@ -16,7 +16,7 @@ class InjectVPLsIntoVoxelGridRecorder
 public:
 	struct InitPrams
 	{
-		DXRenderEnvironment* m_pEnv;
+		DXRenderEnvironment* m_pRenderEnv;
 		u16 m_NumGridCellsX;
 		u16 m_NumGridCellsY;
 		u16 m_NumGridCellsZ;

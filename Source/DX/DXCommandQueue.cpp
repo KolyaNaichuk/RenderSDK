@@ -30,9 +30,9 @@ DXCommandQueue::~DXCommandQueue()
 	SafeDelete(m_pFence);
 }
 
-void DXCommandQueue::ExecuteCommandLists(DXRenderEnvironment* pEnv, UINT numCommandLists, DXCommandList** ppCommandLists, DXCommandAllocator* pBarrierCommandAllocator)
+void DXCommandQueue::ExecuteCommandLists(DXRenderEnvironment* pRenderEnv, UINT numCommandLists, DXCommandList** ppCommandLists, DXCommandAllocator* pBarrierCommandAllocator)
 {
-	DXCommandListPool* pCommandListPool = pEnv->m_pCommandListPool;
+	DXCommandListPool* pCommandListPool = pRenderEnv->m_pCommandListPool;
 
 	std::vector<ID3D12CommandList*> commandLists;
 	commandLists.reserve(numCommandLists);

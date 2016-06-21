@@ -43,7 +43,7 @@ LightBuffer::~LightBuffer()
 	SafeDelete(m_pLightPropsBuffer);
 }
 
-LightBuffer::LightBuffer(DXRenderEnvironment* pEnv, u32 numPointLights, PointLight** ppPointLights)
+LightBuffer::LightBuffer(DXRenderEnvironment* pRenderEnv, u32 numPointLights, PointLight** ppPointLights)
 	: m_NumLights(numPointLights)
 	, m_pUploadLightBoundsBuffer(nullptr)
 	, m_pUploadLightPropsBuffer(nullptr)
@@ -67,17 +67,17 @@ LightBuffer::LightBuffer(DXRenderEnvironment* pEnv, u32 numPointLights, PointLig
 	DXStructuredBufferDesc lightBoundsBufferDesc(m_NumLights, sizeof(Sphere), true, false);
 	DXStructuredBufferDesc lightPropsBufferDesc(m_NumLights, sizeof(PointLightProps), true, false);
 
-	m_pLightBoundsBuffer = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightBoundsBuffer");
-	m_pLightPropsBuffer = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightPropsBuffer");
+	m_pLightBoundsBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightBoundsBuffer");
+	m_pLightPropsBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightPropsBuffer");
 
-	m_pUploadLightBoundsBuffer = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightBoundsBuffer");
+	m_pUploadLightBoundsBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightBoundsBuffer");
 	m_pUploadLightBoundsBuffer->Write(lightBounds.data(), m_NumLights * sizeof(Sphere));
 
-	m_pUploadLightPropsBuffer = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightPropsBuffer");
+	m_pUploadLightPropsBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightPropsBuffer");
 	m_pUploadLightPropsBuffer->Write(lightProps.data(), m_NumLights * sizeof(PointLightProps));
 }
 
-LightBuffer::LightBuffer(DXRenderEnvironment* pEnv, u32 numSpotLights, SpotLight** ppSpotLights)
+LightBuffer::LightBuffer(DXRenderEnvironment* pRenderEnv, u32 numSpotLights, SpotLight** ppSpotLights)
 	: m_NumLights(numSpotLights)
 	, m_pUploadLightBoundsBuffer(nullptr)
 	, m_pUploadLightPropsBuffer(nullptr)
@@ -112,13 +112,13 @@ LightBuffer::LightBuffer(DXRenderEnvironment* pEnv, u32 numSpotLights, SpotLight
 	DXStructuredBufferDesc lightBoundsBufferDesc(m_NumLights, sizeof(Sphere), true, false);
 	DXStructuredBufferDesc lightPropsBufferDesc(m_NumLights, sizeof(SpotLightProps), true, false);
 
-	m_pLightBoundsBuffer = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightBoundsBuffer");
-	m_pLightPropsBuffer = new DXBuffer(pEnv, pEnv->m_pDefaultHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightPropsBuffer");
+	m_pLightBoundsBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightBoundsBuffer");
+	m_pLightPropsBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightPropsBuffer");
 
-	m_pUploadLightBoundsBuffer = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightBoundsBuffer");
+	m_pUploadLightBoundsBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightBoundsBuffer");
 	m_pUploadLightBoundsBuffer->Write(lightBounds.data(), m_NumLights * sizeof(Sphere));
 
-	m_pUploadLightPropsBuffer = new DXBuffer(pEnv, pEnv->m_pUploadHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightPropsBuffer");
+	m_pUploadLightPropsBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightPropsBuffer");
 	m_pUploadLightPropsBuffer->Write(lightProps.data(), m_NumLights * sizeof(SpotLightProps));
 }
 

@@ -22,7 +22,7 @@ class TiledShadingRecorder
 public:
 	struct InitParams
 	{
-		DXRenderEnvironment* m_pEnv;
+		DXRenderEnvironment* m_pRenderEnv;
 		ShadingMode m_ShadingMode;
 		u16 m_NumTilesX;
 		u16 m_NumTilesY;
@@ -33,7 +33,7 @@ public:
 
 	struct RenderPassParams
 	{
-		DXRenderEnvironment* m_pEnv;
+		DXRenderEnvironment* m_pRenderEnv;
 		DXCommandList* m_pCommandList;
 		DXCommandAllocator* m_pCommandAllocator;
 		DXBindingResourceList* m_pResources;

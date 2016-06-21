@@ -23,7 +23,7 @@ class VisualizeMeshRecorder
 public:
 	struct InitParams
 	{
-		DXRenderEnvironment* m_pEnv;
+		DXRenderEnvironment* m_pRenderEnv;
 		DXGI_FORMAT m_RTVFormat;
 		DXGI_FORMAT m_DSVFormat;
 		MeshDataElement m_MeshDataElement;
@@ -31,7 +31,7 @@ public:
 	};
 	struct RenderPassParams
 	{
-		DXRenderEnvironment* m_pEnv;
+		DXRenderEnvironment* m_pRenderEnv;
 		DXCommandList* m_pCommandList;
 		DXCommandAllocator* m_pCommandAllocator;
 		DXBindingResourceList* m_pResources;

@@ -16,7 +16,7 @@ DetectVisibleMeshesRecorder::DetectVisibleMeshesRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
-	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 
 	const u16 threadGroupSize = 64;
 	m_NumThreadGroupsX = (u16)Ceil((f32)pParams->m_NumMeshesInBatch / (f32)threadGroupSize);
@@ -34,13 +34,13 @@ DetectVisibleMeshesRecorder::DetectVisibleMeshesRecorder(InitParams* pParams)
 	rootParams[kSRVRootParam] = DXRootDescriptorTableParameter(ARRAYSIZE(srvDescriptorRanges), &srvDescriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
 
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new DXRootSignature(pEnv->m_pDevice, &rootSignatureDesc, L"DetectVisibleMeshesRecorder::m_pRootSignature");
+	m_pRootSignature = new DXRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"DetectVisibleMeshesRecorder::m_pRootSignature");
 
 	DXComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
-	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"DetectVisibleMeshesRecorder::m_pPipelineState");
+	m_pPipelineState = new DXPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"DetectVisibleMeshesRecorder::m_pPipelineState");
 }
 
 DetectVisibleMeshesRecorder::~DetectVisibleMeshesRecorder()
@@ -51,7 +51,7 @@ DetectVisibleMeshesRecorder::~DetectVisibleMeshesRecorder()
 
 void DetectVisibleMeshesRecorder::Record(RenderPassParams* pParams)
 {
-	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 	DXCommandList* pCommandList = pParams->m_pCommandList;
 	DXBindingResourceList* pResources = pParams->m_pResources;
 	DXBuffer* pNumVisibleMeshesBuffer = pParams->m_pNumVisibleMeshesBuffer;
@@ -63,7 +63,7 @@ void DetectVisibleMeshesRecorder::Record(RenderPassParams* pParams)
 	pCommandList->ClearUnorderedAccessView(pResources->m_SRVHeapStart, pNumVisibleMeshesBuffer->GetUAVHandle(), pNumVisibleMeshesBuffer, numMeshesClearValue);
 
 	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
-	pCommandList->SetDescriptorHeaps(pEnv->m_pShaderVisibleSRVHeap);
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 
 	pCommandList->Dispatch(m_NumThreadGroupsX, 1, 1);

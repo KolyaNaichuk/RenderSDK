@@ -54,7 +54,7 @@ private:
 	DXBuffer* m_pIndexBuffer;
 	DXHeapProperties* m_pDefaultHeapProps;
 	DXHeapProperties* m_pUploadHeapProps;
-	DXRenderEnvironment* m_pEnv;
+	DXRenderEnvironment* m_pRenderEnv;
 	DXFence* m_pFence;
 	UINT64 m_FenceValues[kBackBufferCount];
 	DXViewport* m_pViewport;

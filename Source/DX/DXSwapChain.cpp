@@ -23,7 +23,7 @@ DXSwapChainDesc::DXSwapChainDesc(UINT bufferCount, HWND hOutputWindow, UINT widt
 	Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 }
 
-DXSwapChain::DXSwapChain(DXFactory* pFactory, DXRenderEnvironment* pEnv, DXSwapChainDesc* pDesc, DXCommandQueue* pCommandQueue)
+DXSwapChain::DXSwapChain(DXFactory* pFactory, DXRenderEnvironment* pRenderEnv, DXSwapChainDesc* pDesc, DXCommandQueue* pCommandQueue)
 	: m_ppFirstBuffer(nullptr)
 	, m_BufferCount(pDesc->BufferCount)
 {
@@ -38,7 +38,7 @@ DXSwapChain::DXSwapChain(DXFactory* pFactory, DXRenderEnvironment* pEnv, DXSwapC
 		ID3D12Resource* pDXBuffer = nullptr;
 		DXVerify(GetDXObject()->GetBuffer(index, IID_PPV_ARGS(&pDXBuffer)));
 		
-		DXColorTexture* pBuffer = new DXColorTexture(pEnv, pDXBuffer, D3D12_RESOURCE_STATE_PRESENT, L"BackBuffer");
+		DXColorTexture* pBuffer = new DXColorTexture(pRenderEnv, pDXBuffer, D3D12_RESOURCE_STATE_PRESENT, L"BackBuffer");
 		m_ppFirstBuffer[index] = pBuffer;
 	}
 }

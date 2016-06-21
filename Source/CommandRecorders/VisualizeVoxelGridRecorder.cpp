@@ -17,7 +17,7 @@ VisualizeVoxelGridRecorder::VisualizeVoxelGridRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
-	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 
 	DXShader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
 	DXShader pixelShader(L"Shaders//VisualizeVoxelGridPS.hlsl", "Main", "ps_4_0");
@@ -27,7 +27,7 @@ VisualizeVoxelGridRecorder::VisualizeVoxelGridRecorder(InitParams* pParams)
 	rootParams[kSRVRootParam] = DXRootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), &descriptorRanges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 	
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new DXRootSignature(pEnv->m_pDevice, &rootSignatureDesc, L"VisualizeVoxelGridRecorder::m_pRootSignature");
+	m_pRootSignature = new DXRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"VisualizeVoxelGridRecorder::m_pRootSignature");
 
 	DXGraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
@@ -36,7 +36,7 @@ VisualizeVoxelGridRecorder::VisualizeVoxelGridRecorder(InitParams* pParams)
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat);
 
-	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"VisualizeVoxelGridRecorder::m_pPipelineState");
+	m_pPipelineState = new DXPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeVoxelGridRecorder::m_pPipelineState");
 }
 
 VisualizeVoxelGridRecorder::~VisualizeVoxelGridRecorder()
@@ -47,7 +47,7 @@ VisualizeVoxelGridRecorder::~VisualizeVoxelGridRecorder()
 
 void VisualizeVoxelGridRecorder::Record(RenderPassParams* pParams)
 {
-	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 	DXCommandList* pCommandList = pParams->m_pCommandList;
 	DXBindingResourceList* pResources = pParams->m_pResources;
 
@@ -55,7 +55,7 @@ void VisualizeVoxelGridRecorder::Record(RenderPassParams* pParams)
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
 	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
-	pCommandList->SetDescriptorHeaps(pEnv->m_pShaderVisibleSRVHeap);
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 	
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = pResources->m_RTVHeapStart;

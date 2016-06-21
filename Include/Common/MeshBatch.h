@@ -13,7 +13,7 @@ class MeshBatchData;
 class MeshBatch
 {
 public:
-	MeshBatch(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData);
+	MeshBatch(DXRenderEnvironment* pRenderEnv, const MeshBatchData* pBatchData);
 	~MeshBatch();
 
 	void RecordDataForUpload(DXCommandList* pCommandList);
@@ -32,12 +32,12 @@ public:
 	DXBuffer* GetMaterialBuffer() { return m_pMaterialBuffer; }
 					
 private:
-	void InitInputLayout(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData);
-	void InitVertexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData);
-	void InitIndexBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData);
-	void InitMeshBoundsBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData);
-	void InitMeshDescBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData);
-	void InitMaterialBuffer(DXRenderEnvironment* pEnv, const MeshBatchData* pBatchData);
+	void InitInputLayout(DXRenderEnvironment* pRenderEnv, const MeshBatchData* pBatchData);
+	void InitVertexBuffer(DXRenderEnvironment* pRenderEnv, const MeshBatchData* pBatchData);
+	void InitIndexBuffer(DXRenderEnvironment* pRenderEnv, const MeshBatchData* pBatchData);
+	void InitMeshBoundsBuffer(DXRenderEnvironment* pRenderEnv, const MeshBatchData* pBatchData);
+	void InitMeshDescBuffer(DXRenderEnvironment* pRenderEnv, const MeshBatchData* pBatchData);
+	void InitMaterialBuffer(DXRenderEnvironment* pRenderEnv, const MeshBatchData* pBatchData);
 	
 private:
 	u32 m_NumMeshes;

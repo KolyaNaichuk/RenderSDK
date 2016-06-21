@@ -21,7 +21,7 @@ FillGBufferRecorder::FillGBufferRecorder(InitParams* pParams)
 	, m_pPipelineState(nullptr)
 	, m_pCommandSignature(nullptr)
 {
-	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 
 	DXShader vertexShader(L"Shaders//FillGBufferVS.hlsl", "Main", "vs_4_0");
@@ -36,7 +36,7 @@ FillGBufferRecorder::FillGBufferRecorder(InitParams* pParams)
 	rootParams[kSRVRootParamPS] = DXRootDescriptorTableParameter(ARRAYSIZE(descriptorRangesPS), &descriptorRangesPS[0], D3D12_SHADER_VISIBILITY_PIXEL);
 	
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, &rootParams[0], D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new DXRootSignature(pEnv->m_pDevice, &rootSignatureDesc, L"FillGBufferRecorder::m_pRootSignature");
+	m_pRootSignature = new DXRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"FillGBufferRecorder::m_pRootSignature");
 		
 	DXGraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
@@ -49,7 +49,7 @@ FillGBufferRecorder::FillGBufferRecorder(InitParams* pParams)
 	const DXGI_FORMAT rtvFormats[] = {pParams->m_NormalRTVFormat, pParams->m_DiffuseRTVFormat, pParams->m_SpecularRTVFormat};
 	pipelineStateDesc.SetRenderTargetFormats(ARRAYSIZE(rtvFormats), rtvFormats, pParams->m_DSVFormat);
 
-	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"FillGBufferRecorder::m_pPipelineState");
+	m_pPipelineState = new DXPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FillGBufferRecorder::m_pPipelineState");
 
 	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] = 
 	{
@@ -57,7 +57,7 @@ FillGBufferRecorder::FillGBufferRecorder(InitParams* pParams)
 		DXDrawIndexedArgument()
 	};
 	DXCommandSignatureDesc commandSignatureDesc(sizeof(DrawIndexedCommand), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
-	m_pCommandSignature = new DXCommandSignature(pEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"FillGBufferRecorder::m_pCommandSignature");
+	m_pCommandSignature = new DXCommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"FillGBufferRecorder::m_pCommandSignature");
 }
 
 FillGBufferRecorder::~FillGBufferRecorder()
@@ -69,7 +69,7 @@ FillGBufferRecorder::~FillGBufferRecorder()
 
 void FillGBufferRecorder::Record(RenderPassParams* pParams)
 {
-	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 	DXCommandList* pCommandList = pParams->m_pCommandList;
 	DXBindingResourceList* pResources = pParams->m_pResources;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
@@ -79,7 +79,7 @@ void FillGBufferRecorder::Record(RenderPassParams* pParams)
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
 	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
-	pCommandList->SetDescriptorHeaps(pEnv->m_pShaderVisibleSRVHeap);
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
 	const FLOAT clearColor[4] = {0.0f, 0.0f, 0.0f, 0.0f};	
 	pCommandList->ClearRenderTargetView(pResources->m_RTVHeapStart, clearColor);

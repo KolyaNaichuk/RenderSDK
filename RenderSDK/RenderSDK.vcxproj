@@ -145,6 +145,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\Include\CommandRecorders\AssignLightsPerTileRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\CalcTextureLuminanceRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\ClearVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\CopyTextureRecorder.h" />
@@ -153,6 +154,8 @@
     <ClInclude Include="..\Include\CommandRecorders\FillGBufferRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\DetectVisibleMeshesRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\CreateRenderShadowMapCommandsRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapsRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\ScaleTextureRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\TiledShadingRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\VisualizeMeshRecorder.h" />
@@ -215,14 +218,17 @@
   <ItemGroup>
     <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp" />
     <ClCompile Include="..\Include\DX\DXResourceList.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\AssignLightsPerTileRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CalcTextureLuminanceRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\ClearVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CopyTextureRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\CreateRenderShadowMapCommandsRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CreateVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\FillGBufferRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CreateFillGBufferCommandsRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\DetectVisibleMeshesRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapsRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\ScaleTextureRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\TiledShadingRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\VisualizeMeshRecorder.cpp" />

@@ -83,7 +83,13 @@ private:
 	DXBuffer* m_pDrawCommandBuffer;
 	DXBuffer* m_pNumVisibleMeshesBuffer;
 	DXBuffer* m_pVisibleMeshIndexBuffer;
-	DXRenderEnvironment* m_pEnv;
+	DXBuffer* m_pLightIndicesPerTileBuffer;
+	DXBuffer* m_pNumLightIndicesForAllTilesBuffer;
+	DXBuffer* m_pRenderShadowMapCommandBuffer;
+	DXBuffer* m_pNumRenderShadowMapCommandsBuffer;
+	DXBuffer* m_pLightIndicesPerMeshBuffer;
+	DXBuffer* m_pNumLightIndicesForAllMeshesBuffer;
+	DXRenderEnvironment* m_pRenderEnv;
 	DXFence* m_pFence;
 	UINT64 m_FenceValues[kBackBufferCount];
 	UINT m_BackBufferIndex;

@@ -219,6 +219,15 @@
     <ClInclude Include="..\Include\CommandRecorders\DetectVisibleMeshesRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\CreateRenderShadowMapCommandsRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapsRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\AssignLightsPerTileRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -405,6 +414,15 @@
       <Filter>CommandRecorders</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\DetectVisibleMeshesRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\CreateRenderShadowMapCommandsRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapsRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\AssignLightsPerTileRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
   </ItemGroup>

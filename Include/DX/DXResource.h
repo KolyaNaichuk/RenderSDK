@@ -295,19 +295,19 @@ void DXResource::Write(const T* pInputData, SIZE_T numBytes)
 class DXColorTexture : public DXResource
 {
 public:
-	DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DXColorTexture(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXColorTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
-	DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DXColorTexture(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXColorTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
-	DXColorTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DXColorTexture(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXColorTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
-	DXColorTexture(DXRenderEnvironment* pEnv, ID3D12Resource* pDXObject,
+	DXColorTexture(DXRenderEnvironment* pRenderEnv, ID3D12Resource* pDXObject,
 		D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
 	UINT64 GetWidth() const { return m_Desc.Width; }
@@ -318,13 +318,13 @@ public:
 	DXDescriptorHandle GetUAVHandle();
 				
 private:
-	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	void CreateCommittedResource(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
-	void CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-	void CreateTex2DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-	void CreateTex3DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateTex1DViews(DXRenderEnvironment* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateTex2DViews(DXRenderEnvironment* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateTex3DViews(DXRenderEnvironment* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 
 	void DetermineResourceStates(const D3D12_RESOURCE_DESC* pTexDesc);
 
@@ -337,15 +337,15 @@ private:
 class DXDepthTexture : public DXResource
 {
 public:
-	DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DXDepthTexture(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXDepthTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DXDepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
-	DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DXDepthTexture(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXDepthTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DXDepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
-	DXDepthTexture(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DXDepthTexture(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXDepthTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DXDepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
@@ -356,13 +356,13 @@ public:
 	DXDescriptorHandle GetSRVHandle();
 
 private:
-	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	void CreateCommittedResource(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DXDepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
-	void CreateTex1DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-	void CreateTex2DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-	void CreateTex3DViews(DXRenderEnvironment* pEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateTex1DViews(DXRenderEnvironment* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateTex2DViews(DXRenderEnvironment* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateTex3DViews(DXRenderEnvironment* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 
 	void DetermineResourceStates(const D3D12_RESOURCE_DESC* pTexDesc);
 
@@ -374,19 +374,19 @@ private:
 class DXBuffer : public DXResource
 {
 public:
-	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DXBuffer(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXConstantBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
-	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DXBuffer(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXVertexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
-	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DXBuffer(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXIndexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
-	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DXBuffer(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXStructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
-	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DXBuffer(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXFormattedBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 	
 	~DXBuffer();
@@ -399,14 +399,14 @@ public:
 	DXDescriptorHandle GetCBVHandle();
 		
 private:
-	void CreateCommittedResource(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	void CreateCommittedResource(DXRenderEnvironment* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
-	void CreateConstantBufferView(DXRenderEnvironment* pEnv, const DXConstantBufferDesc* pBufferDesc);
-	void CreateVertexBufferView(DXRenderEnvironment* pEnv, const DXVertexBufferDesc* pBufferDesc);
-	void CreateIndexBufferView(DXRenderEnvironment* pEnv, const DXIndexBufferDesc* pBufferDesc);
-	void CreateStructuredBufferViews(DXRenderEnvironment* pEnv, const DXStructuredBufferDesc* pBufferDesc);
-	void CreateFormattedBufferViews(DXRenderEnvironment* pEnv, const DXFormattedBufferDesc* pBufferDesc);
+	void CreateConstantBufferView(DXRenderEnvironment* pRenderEnv, const DXConstantBufferDesc* pBufferDesc);
+	void CreateVertexBufferView(DXRenderEnvironment* pRenderEnv, const DXVertexBufferDesc* pBufferDesc);
+	void CreateIndexBufferView(DXRenderEnvironment* pRenderEnv, const DXIndexBufferDesc* pBufferDesc);
+	void CreateStructuredBufferViews(DXRenderEnvironment* pRenderEnv, const DXStructuredBufferDesc* pBufferDesc);
+	void CreateFormattedBufferViews(DXRenderEnvironment* pRenderEnv, const DXFormattedBufferDesc* pBufferDesc);
 		
 private:
 	DXDescriptorHandle m_SRVHandle;
@@ -419,7 +419,7 @@ private:
 class DXSampler
 {
 public:
-	DXSampler(DXRenderEnvironment* pEnv, const D3D12_SAMPLER_DESC* pDesc);
+	DXSampler(DXRenderEnvironment* pRenderEnv, const D3D12_SAMPLER_DESC* pDesc);
 	DXDescriptorHandle GetHandle() { return m_Handle; }
 
 private:

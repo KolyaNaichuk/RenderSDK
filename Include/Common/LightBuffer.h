@@ -12,8 +12,8 @@ class SpotLight;
 class LightBuffer
 {
 public:
-	LightBuffer(DXRenderEnvironment* pEnv, u32 numPointLights, PointLight** ppPointLights);
-	LightBuffer(DXRenderEnvironment* pEnv, u32 numSpotLights, SpotLight** ppSpotLights);
+	LightBuffer(DXRenderEnvironment* pRenderEnv, u32 numPointLights, PointLight** ppPointLights);
+	LightBuffer(DXRenderEnvironment* pRenderEnv, u32 numSpotLights, SpotLight** ppSpotLights);
 
 	~LightBuffer();
 

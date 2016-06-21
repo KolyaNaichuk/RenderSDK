@@ -19,7 +19,7 @@ VisualizeMeshRecorder::VisualizeMeshRecorder(InitParams* pParams)
 {
 	assert(false);
 	/*
-	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 
 	u8 inputElementFlags = VertexElementFlag_Position;
 	DXShaderMacro shaderDefines[2];
@@ -54,7 +54,7 @@ VisualizeMeshRecorder::VisualizeMeshRecorder(InitParams* pParams)
 	rootParams[kCBVRootParam] = DXRootDescriptorTableParameter(1, &cbvRange, D3D12_SHADER_VISIBILITY_VERTEX);
 
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new DXRootSignature(pEnv->m_pDevice, &rootSignatureDesc, L"VisualizeMeshRecorder::m_pRootSignature");
+	m_pRootSignature = new DXRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"VisualizeMeshRecorder::m_pRootSignature");
 
 	std::vector<DXInputElementDesc> inputElementDescs;
 	GenerateInputElements(inputElementDescs, inputElementFlags, pParams->m_VertexElementFlags);
@@ -68,7 +68,7 @@ VisualizeMeshRecorder::VisualizeMeshRecorder(InitParams* pParams)
 	pipelineStateDesc.DepthStencilState = DXDepthStencilDesc(DXDepthStencilDesc::Enabled);
 	pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat, pParams->m_DSVFormat);
 
-	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"VisualizeMeshRecorder::m_pPipelineState");
+	m_pPipelineState = new DXPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeMeshRecorder::m_pPipelineState");
 	*/
 }
 
@@ -82,7 +82,7 @@ void VisualizeMeshRecorder::Record(RenderPassParams* pParams)
 {
 	assert(false);
 	/*
-	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 	DXCommandList* pCommandList = pParams->m_pCommandList;
 	DXBindingResourceList* pResources = pParams->m_pResources;
 	Mesh* pMesh = pParams->m_pMeshBatch;
@@ -91,7 +91,7 @@ void VisualizeMeshRecorder::Record(RenderPassParams* pParams)
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	
 	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
-	pCommandList->SetDescriptorHeaps(pEnv->m_pShaderVisibleSRVHeap);
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParam, pResources->m_SRVHeapStart);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = pResources->m_RTVHeapStart;

@@ -28,7 +28,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pIndexBuffer(nullptr)
 	, m_pDefaultHeapProps(new DXHeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new DXHeapProperties(D3D12_HEAP_TYPE_UPLOAD))
-	, m_pEnv(new DXRenderEnvironment())
+	, m_pRenderEnv(new DXRenderEnvironment())
 	, m_pFence(nullptr)
 	, m_pViewport(nullptr)
 	, m_pScissorRect(nullptr)
@@ -43,7 +43,7 @@ DXApplication::~DXApplication()
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 		SafeDelete(m_CommandAllocators[index]);
 
-	SafeDelete(m_pEnv);
+	SafeDelete(m_pRenderEnv);
 	SafeDelete(m_pDefaultHeapProps);
 	SafeDelete(m_pUploadHeapProps);
 	SafeDelete(m_pViewport);
@@ -72,11 +72,11 @@ void DXApplication::OnInit()
 	DXDescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kBackBufferCount, false);
 	m_pShaderInvisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
-	m_pEnv->m_pDevice = m_pDevice;
-	m_pEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
-	m_pEnv->m_pUploadHeapProps = m_pUploadHeapProps;
-	m_pEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
-	m_pEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
+	m_pRenderEnv->m_pDevice = m_pDevice;
+	m_pRenderEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
+	m_pRenderEnv->m_pUploadHeapProps = m_pUploadHeapProps;
+	m_pRenderEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
+	m_pRenderEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
 
 	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
@@ -89,7 +89,7 @@ void DXApplication::OnInit()
 	m_pScissorRect = new DXRect(0, 0, bufferWidth, bufferHeight);
 
 	DXSwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
-	m_pSwapChain = new DXSwapChain(&factory, m_pEnv, &swapChainDesc, m_pCommandQueue);
+	m_pSwapChain = new DXSwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 	
 	for (UINT index = 0; index < kBackBufferCount; ++index)
@@ -133,15 +133,15 @@ void DXApplication::OnInit()
 	const WORD indices[] = {0, 1, 3, 1, 2, 3};
 
 	DXVertexBufferDesc vertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]));
-	m_pVertexBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pVertexBuffer");
+	m_pVertexBuffer = new DXBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pVertexBuffer");
 	
-	DXBuffer uploadVertexBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadVertexBuffer");
+	DXBuffer uploadVertexBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadVertexBuffer");
 	uploadVertexBuffer.Write(vertices, sizeof(vertices));
 
 	DXIndexBufferDesc indexBufferDesc(ARRAYSIZE(indices), sizeof(indices[0]));
-	m_pIndexBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pIndexBuffer");
+	m_pIndexBuffer = new DXBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pIndexBuffer");
 	
-	DXBuffer uploadIndexBuffer(m_pEnv, m_pEnv->m_pUploadHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadIndexBuffer");
+	DXBuffer uploadIndexBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadIndexBuffer");
 	uploadIndexBuffer.Write(indices, sizeof(indices));
 	
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
@@ -163,7 +163,7 @@ void DXApplication::OnInit()
 	m_pIndexBuffer->SetState(m_pIndexBuffer->GetReadState());
 
 	m_pCommandList->Close();
-	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, nullptr);
+	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &m_pCommandList, nullptr);
 
 	WaitForGPU();
 }
@@ -204,7 +204,7 @@ void DXApplication::OnRender()
 
 	m_pCommandList->Close();
 
-	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, nullptr);
+	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &m_pCommandList, nullptr);
 
 	m_pSwapChain->Present(1, 0);
 	MoveToNextFrame();

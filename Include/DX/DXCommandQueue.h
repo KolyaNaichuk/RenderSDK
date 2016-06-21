@@ -19,7 +19,7 @@ public:
 	DXCommandQueue(DXDevice* pDevice, const DXCommandQueueDesc* pDesc, LPCWSTR pName);
 	~DXCommandQueue();
 
-	void ExecuteCommandLists(DXRenderEnvironment* pEnv, UINT numCommandLists, DXCommandList** ppCommandLists, DXCommandAllocator* pBarrierCommandAllocator);
+	void ExecuteCommandLists(DXRenderEnvironment* pRenderEnv, UINT numCommandLists, DXCommandList** ppCommandLists, DXCommandAllocator* pBarrierCommandAllocator);
 	void Signal(DXFence* pFence, UINT64 value);
 
 private:

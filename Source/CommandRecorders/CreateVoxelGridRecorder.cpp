@@ -31,7 +31,7 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(InitParams* pParams)
 	, m_pPipelineState(nullptr)
 	, m_pCommandSignature(nullptr)
 {
-	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 
 	DXShader vertexShader(L"Shaders//CreateVoxelGridVS.hlsl", "Main", "vs_4_0");
@@ -59,7 +59,7 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(InitParams* pParams)
 #endif // HAS_TEXCOORD
 	
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new DXRootSignature(pEnv->m_pDevice, &rootSignatureDesc, L"CreateVoxelGridRecorder::m_pRootSignature");
+	m_pRootSignature = new DXRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CreateVoxelGridRecorder::m_pRootSignature");
 		
 	DXGraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
@@ -70,7 +70,7 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(InitParams* pParams)
 	pipelineStateDesc.InputLayout = *pMeshBatch->GetInputLayout();
 	pipelineStateDesc.PrimitiveTopologyType = pMeshBatch->GetPrimitiveTopologyType();
 	
-	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"CreateVoxelGridRecorder::m_pPipelineState");
+	m_pPipelineState = new DXPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CreateVoxelGridRecorder::m_pPipelineState");
 
 	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] =
 	{
@@ -78,7 +78,7 @@ CreateVoxelGridRecorder::CreateVoxelGridRecorder(InitParams* pParams)
 		DXDrawIndexedArgument()
 	};
 	DXCommandSignatureDesc commandSignatureDesc(sizeof(DrawIndexedCommand), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
-	m_pCommandSignature = new DXCommandSignature(pEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"FillGBufferRecorder::m_pCommandSignature");
+	m_pCommandSignature = new DXCommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"FillGBufferRecorder::m_pCommandSignature");
 }
 
 CreateVoxelGridRecorder::~CreateVoxelGridRecorder()
@@ -90,7 +90,7 @@ CreateVoxelGridRecorder::~CreateVoxelGridRecorder()
 
 void CreateVoxelGridRecorder::Record(RenderPassParams* pParams)
 {
-	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 	DXCommandList* pCommandList = pParams->m_pCommandList;
 	DXBindingResourceList* pResources = pParams->m_pResources;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
@@ -101,7 +101,7 @@ void CreateVoxelGridRecorder::Record(RenderPassParams* pParams)
 	pCommandList->OMSetRenderTargets(0, nullptr);
 	
 	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
-	pCommandList->SetDescriptorHeaps(pEnv->m_pShaderVisibleSRVHeap);
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
 	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamVS, pResources->m_SRVHeapStart);
 	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamGS, DXDescriptorHandle(pResources->m_SRVHeapStart, 1));

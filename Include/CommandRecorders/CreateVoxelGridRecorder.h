@@ -20,13 +20,13 @@ class CreateVoxelGridRecorder
 public:
 	struct InitParams
 	{
-		DXRenderEnvironment* m_pEnv;
+		DXRenderEnvironment* m_pRenderEnv;
 		MeshBatch* m_pMeshBatch;
 	};
 
 	struct RenderPassParams
 	{
-		DXRenderEnvironment* m_pEnv;
+		DXRenderEnvironment* m_pRenderEnv;
 		DXCommandList* m_pCommandList;
 		DXCommandAllocator* m_pCommandAllocator;
 		DXBindingResourceList* m_pResources;

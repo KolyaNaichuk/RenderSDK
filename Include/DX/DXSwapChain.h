@@ -19,7 +19,7 @@ struct DXSwapChainDesc : public DXGI_SWAP_CHAIN_DESC
 class DXSwapChain : public DXObject<IDXGISwapChain3>
 {
 public:
-	DXSwapChain(DXFactory* pFactory, DXRenderEnvironment* pEnv, DXSwapChainDesc* pDesc, DXCommandQueue* pCommandQueue);
+	DXSwapChain(DXFactory* pFactory, DXRenderEnvironment* pRenderEnv, DXSwapChainDesc* pDesc, DXCommandQueue* pCommandQueue);
 	~DXSwapChain();
 
 	DXColorTexture* GetBackBuffer(UINT index);

@@ -14,7 +14,7 @@ class ClearVoxelGridRecorder
 public:
 	struct InitParams
 	{
-		DXRenderEnvironment* m_pEnv;
+		DXRenderEnvironment* m_pRenderEnv;
 		u16 m_NumGridCellsX;
 		u16 m_NumGridCellsY;
 		u16 m_NumGridCellsZ;
@@ -22,7 +22,7 @@ public:
 
 	struct RenderPassParams
 	{
-		DXRenderEnvironment* m_pEnv;
+		DXRenderEnvironment* m_pRenderEnv;
 		DXCommandList* m_pCommandList;
 		DXCommandAllocator* m_pCommandAllocator;
 		DXBindingResourceList* m_pResources;

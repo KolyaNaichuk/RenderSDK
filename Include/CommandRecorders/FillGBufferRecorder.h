@@ -19,7 +19,7 @@ class FillGBufferRecorder
 public:
 	struct InitParams
 	{
-		DXRenderEnvironment* m_pEnv;
+		DXRenderEnvironment* m_pRenderEnv;
 		DXGI_FORMAT m_NormalRTVFormat;
 		DXGI_FORMAT m_DiffuseRTVFormat;
 		DXGI_FORMAT m_SpecularRTVFormat;
@@ -28,7 +28,7 @@ public:
 	};
 	struct RenderPassParams
 	{
-		DXRenderEnvironment* m_pEnv;
+		DXRenderEnvironment* m_pRenderEnv;
 		DXCommandList* m_pCommandList;
 		DXCommandAllocator* m_pCommandAllocator;
 		DXBindingResourceList* m_pResources;

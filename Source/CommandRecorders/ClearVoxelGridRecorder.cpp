@@ -17,7 +17,7 @@ ClearVoxelGridRecorder::ClearVoxelGridRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
-	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 
 	const u16 numThreadsPerGroupX = 8;
 	const u16 numThreadsPerGroupY = 8;
@@ -32,7 +32,7 @@ ClearVoxelGridRecorder::ClearVoxelGridRecorder(InitParams* pParams)
 	rootParams[kSRVRootParam] = DXRootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), &descriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
 		
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new DXRootSignature(pEnv->m_pDevice, &rootSignatureDesc, L"ClearVoxelGridRecorder::m_pRootSignature");
+	m_pRootSignature = new DXRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"ClearVoxelGridRecorder::m_pRootSignature");
 
 	std::string numThreadsPerGroupXStr = std::to_string(numThreadsPerGroupX);
 	std::string numThreadsPerGroupYStr = std::to_string(numThreadsPerGroupY);
@@ -51,7 +51,7 @@ ClearVoxelGridRecorder::ClearVoxelGridRecorder(InitParams* pParams)
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
-	m_pPipelineState = new DXPipelineState(pEnv->m_pDevice, &pipelineStateDesc, L"ClearVoxelGridRecorder::m_pPipelineState");
+	m_pPipelineState = new DXPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"ClearVoxelGridRecorder::m_pPipelineState");
 }
 
 ClearVoxelGridRecorder::~ClearVoxelGridRecorder()
@@ -62,7 +62,7 @@ ClearVoxelGridRecorder::~ClearVoxelGridRecorder()
 
 void ClearVoxelGridRecorder::Record(RenderPassParams* pParams)
 {
-	DXRenderEnvironment* pEnv = pParams->m_pEnv;
+	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 	DXCommandList* pCommandList = pParams->m_pCommandList;
 	DXBindingResourceList* pResources = pParams->m_pResources;
 	
@@ -70,7 +70,7 @@ void ClearVoxelGridRecorder::Record(RenderPassParams* pParams)
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 	
 	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
-	pCommandList->SetDescriptorHeaps(pEnv->m_pShaderVisibleSRVHeap);
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 	
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, m_NumThreadGroupsZ);
