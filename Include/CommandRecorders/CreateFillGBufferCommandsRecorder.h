@@ -6,18 +6,16 @@ class DXRootSignature;
 class DXPipelineState;
 class DXCommandList;
 class DXCommandAllocator;
-class DXBuffer;
-class MeshBatch;
 struct DXRenderEnvironment;
 struct DXBindingResourceList;
 
-class ViewFrustumCullingRecorder
+class CreateFillGBufferCommandsRecorder
 {
 public:
 	struct InitParams
 	{
 		DXRenderEnvironment* m_pEnv;
-		MeshBatch* m_pMeshBatch;
+		u32 m_NumMeshesInBatch;
 	};
 	struct RenderPassParams
 	{
@@ -25,11 +23,10 @@ public:
 		DXCommandList* m_pCommandList;
 		DXCommandAllocator* m_pCommandAllocator;
 		DXBindingResourceList* m_pResources;
-		DXBuffer* m_pNumDrawsBuffer;
 	};
-	
-	ViewFrustumCullingRecorder(InitParams* pParams);
-	~ViewFrustumCullingRecorder();
+
+	CreateFillGBufferCommandsRecorder(InitParams* pParams);
+	~CreateFillGBufferCommandsRecorder();
 
 	void Record(RenderPassParams* pParams);
 

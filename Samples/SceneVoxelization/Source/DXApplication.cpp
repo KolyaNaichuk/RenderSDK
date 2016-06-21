@@ -19,7 +19,8 @@
 #include "CommandRecorders/InjectVPLsIntoVoxelGridRecorder.h"
 #include "CommandRecorders/VisualizeVoxelGridRecorder.h"
 #include "CommandRecorders/VisualizeMeshRecorder.h"
-#include "CommandRecorders/ViewFrustumCullingRecorder.h"
+#include "CommandRecorders/DetectVisibleMeshesRecorder.h"
+#include "CommandRecorders/CreateFillGBufferCommandsRecorder.h"
 #include "CommandRecorders/CopyTextureRecorder.h"
 #include "Common/MeshData.h"
 #include "Common/MeshBatchData.h"
@@ -35,6 +36,23 @@
 #include "Math/Transform.h"
 #include "Math/BasisAxes.h"
 #include "Math/Radian.h"
+
+/*
+1.Run view frustum culling of meshes. Generate visible mesh indices (GPU side)
+2.Generate render G-Buffer indirect draw commands (GPU side)
+3.Render G-Buffer with visible meshes (GPU side)
+
+4.Run view frustum culling of light bounding spheres (CPU side)
+5.Assign shadow map tile for each visible light (CPU side)
+5.1.Detect screen space area of visible lights (CPU side)
+5.2.Sort light list based on affecting screen space area (CPU side)
+5.3.Assign shadow map tile using tile quad tree (CPU side)
+6.Copy visible lights to GPU-visible light buffer (CPU side)
+
+6.1.Assign visible lights per each screen space tile (GPU side)
+6.2.Render shadow maps for visible lights (GPU side)
+7.Run tile deferred shading using assigned lights for each tile and rendered shadow maps (GPU side)
+*/
 
 enum
 {
@@ -131,7 +149,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCullingDataBuffer(nullptr)
 	, m_pShadingDataBuffer(nullptr)
 	, m_pDrawCommandBuffer(nullptr)
-	, m_pNumDrawsBuffer(nullptr)
+	, m_pNumVisibleMeshesBuffer(nullptr)
+	, m_pVisibleMeshIndexBuffer(nullptr)
 	, m_pAnisoSampler(nullptr)
 	, m_pEnv(new DXRenderEnvironment())
 	, m_pFence(nullptr)
@@ -147,8 +166,10 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pInjectVPLsIntoVoxelGridRecorder(nullptr)
 	, m_pVisualizeVoxelGridRecorder(nullptr)
 	, m_pVisualizeMeshRecorder(nullptr)
-	, m_pViewFrustumCullingRecorder(nullptr)
-	, m_pViewFrustumCullingResources(nullptr)
+	, m_pDetectVisibleMeshesRecorder(nullptr)
+	, m_pDetectVisibleMeshesResources(nullptr)
+	, m_pCreateFillGBufferCommandsRecorder(nullptr)
+	, m_pCreateFillGBufferCommandsResources(nullptr)
 	, m_pCopyTextureRecorder(nullptr)
 	, m_pMeshBatch(nullptr)
 	, m_pSpotLightBuffer(nullptr)
@@ -188,8 +209,10 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pTiledShadingResources);
 	SafeDelete(m_pFillGBufferRecorder);
 	SafeDelete(m_pFillGBufferResources);
-	SafeDelete(m_pViewFrustumCullingRecorder);
-	SafeDelete(m_pViewFrustumCullingResources);
+	SafeDelete(m_pCreateFillGBufferCommandsRecorder);
+	SafeDelete(m_pCreateFillGBufferCommandsResources);
+	SafeDelete(m_pDetectVisibleMeshesRecorder);
+	SafeDelete(m_pDetectVisibleMeshesResources);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pDefaultHeapProps);
 	SafeDelete(m_pUploadHeapProps);
@@ -201,7 +224,8 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pShaderVisibleSamplerHeap);
 	SafeDelete(m_pEnv);
 	SafeDelete(m_pAnisoSampler);
-	SafeDelete(m_pNumDrawsBuffer);
+	SafeDelete(m_pNumVisibleMeshesBuffer);
+	SafeDelete(m_pVisibleMeshIndexBuffer);
 	SafeDelete(m_pDrawCommandBuffer);
 	SafeDelete(m_pCullingDataBuffer);
 	SafeDelete(m_pShadingDataBuffer);
@@ -244,7 +268,7 @@ void DXApplication::OnInit()
 	DXDescriptorHeapDesc shaderVisibleSamplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 16, true);
 	m_pShaderVisibleSamplerHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSamplerHeapDesc, L"m_pShaderVisibleSamplerHeap");
 
-	DXDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 40, true);
+	DXDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 45, true);
 	m_pShaderVisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
 	DXDescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 36, false);
@@ -326,13 +350,10 @@ void DXApplication::OnInit()
 	DXStructuredBufferDesc gridBufferDesc(numGridElements, sizeof(Voxel), true, true);
 	m_pGridBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &gridBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pGridBuffer");
 
-	DXStructuredBufferDesc numDrawCommandsBufferDesc(1, sizeof(u32), false, true);
-	m_pNumDrawsBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &numDrawCommandsBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumDrawsBuffer");
-
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
 
-	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Original);
+	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test2);
 	
 	assert(pScene->GetNumMeshBatches() == 1);
 	MeshBatchData* pMeshBatchData = *pScene->GetMeshBatches();
@@ -365,30 +386,52 @@ void DXApplication::OnInit()
 
 	if (m_pSpotLightBuffer != nullptr)
 		m_pSpotLightBuffer->RemoveDataForUpload();
-		
+
+	DXFormattedBufferDesc numVisibleMeshesBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
+	m_pNumVisibleMeshesBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &numVisibleMeshesBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumCommandsBuffer");
+
+	DXFormattedBufferDesc visibleMeshIndexBufferDesc(m_pMeshBatch->GetNumMeshes(), DXGI_FORMAT_R32_UINT, true, true);
+	m_pVisibleMeshIndexBuffer = new DXBuffer(m_pEnv, m_pEnv->m_pDefaultHeapProps, &visibleMeshIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pVisibleMeshIndexBuffer");
+	
 	DXBuffer* pMeshBoundsBuffer = m_pMeshBatch->GetMeshBoundsBuffer();
 	DXBuffer* pMeshDescBuffer = m_pMeshBatch->GetMeshDescBuffer();
 	DXBuffer* pMaterialBuffer = m_pMeshBatch->GetMaterialBuffer();
 
-	ViewFrustumCullingRecorder::InitParams viewFrustumCullingParams;
-	viewFrustumCullingParams.m_pEnv = m_pEnv;
-	viewFrustumCullingParams.m_pMeshBatch = m_pMeshBatch;
+	DetectVisibleMeshesRecorder::InitParams detectVisibleMeshesParams;
+	detectVisibleMeshesParams.m_pEnv = m_pEnv;
+	detectVisibleMeshesParams.m_NumMeshesInBatch = m_pMeshBatch->GetNumMeshes();
 	
-	m_pViewFrustumCullingRecorder = new ViewFrustumCullingRecorder(&viewFrustumCullingParams);
-		
-	m_pViewFrustumCullingResources = new DXBindingResourceList();
-	m_pViewFrustumCullingResources->m_ResourceTransitions.emplace_back(m_pNumDrawsBuffer, m_pNumDrawsBuffer->GetWriteState());
-	m_pViewFrustumCullingResources->m_ResourceTransitions.emplace_back(m_pDrawCommandBuffer, m_pDrawCommandBuffer->GetWriteState());
-	m_pViewFrustumCullingResources->m_ResourceTransitions.emplace_back(pMeshBoundsBuffer, pMeshBoundsBuffer->GetReadState());
-	m_pViewFrustumCullingResources->m_ResourceTransitions.emplace_back(pMeshDescBuffer, pMeshDescBuffer->GetReadState());
-
-	m_pViewFrustumCullingResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
-	m_pDevice->CopyDescriptor(m_pViewFrustumCullingResources->m_SRVHeapStart, m_pNumDrawsBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDrawCommandBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDetectVisibleMeshesRecorder = new DetectVisibleMeshesRecorder(&detectVisibleMeshesParams);
+	
+	m_pDetectVisibleMeshesResources = new DXBindingResourceList();
+	m_pDetectVisibleMeshesResources->m_ResourceTransitions.emplace_back(m_pNumVisibleMeshesBuffer, m_pNumVisibleMeshesBuffer->GetWriteState());
+	m_pDetectVisibleMeshesResources->m_ResourceTransitions.emplace_back(m_pVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer->GetWriteState());
+	m_pDetectVisibleMeshesResources->m_ResourceTransitions.emplace_back(pMeshBoundsBuffer, pMeshBoundsBuffer->GetReadState());
+	
+	m_pDetectVisibleMeshesResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+	m_pDevice->CopyDescriptor(m_pDetectVisibleMeshesResources->m_SRVHeapStart, m_pNumVisibleMeshesBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisibleMeshIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMeshBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMeshDescBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		
+	
+	CreateFillGBufferCommandsRecorder::InitParams createFillGBufferCommandsParams;
+	createFillGBufferCommandsParams.m_pEnv = m_pEnv;
+	createFillGBufferCommandsParams.m_NumMeshesInBatch = m_pMeshBatch->GetNumMeshes();
+	
+	m_pCreateFillGBufferCommandsRecorder = new CreateFillGBufferCommandsRecorder(&createFillGBufferCommandsParams);
+
+	m_pCreateFillGBufferCommandsResources = new DXBindingResourceList();
+	m_pCreateFillGBufferCommandsResources->m_ResourceTransitions.emplace_back(m_pNumVisibleMeshesBuffer, m_pNumVisibleMeshesBuffer->GetReadState());
+	m_pCreateFillGBufferCommandsResources->m_ResourceTransitions.emplace_back(m_pVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer->GetReadState());
+	m_pCreateFillGBufferCommandsResources->m_ResourceTransitions.emplace_back(pMeshDescBuffer, pMeshDescBuffer->GetReadState());
+	m_pCreateFillGBufferCommandsResources->m_ResourceTransitions.emplace_back(m_pDrawCommandBuffer, m_pDrawCommandBuffer->GetWriteState());
+	
+	m_pCreateFillGBufferCommandsResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+	m_pDevice->CopyDescriptor(m_pCreateFillGBufferCommandsResources->m_SRVHeapStart, m_pNumVisibleMeshesBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisibleMeshIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMeshDescBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDrawCommandBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
 	FillGBufferRecorder::InitParams fillGBufferParams;
 	fillGBufferParams.m_pEnv = m_pEnv;
 	fillGBufferParams.m_NormalRTVFormat = GetRenderTargetViewFormat(m_pNormalTexture->GetFormat());
@@ -699,17 +742,27 @@ void DXApplication::OnRender()
 		WaitForGPU();
 	}
 
-	ViewFrustumCullingRecorder::RenderPassParams viewFrustumCullingParams;
-	viewFrustumCullingParams.m_pEnv = m_pEnv;
-	viewFrustumCullingParams.m_pCommandList = m_pCommandList;
-	viewFrustumCullingParams.m_pCommandAllocator = pCommandAllocator;
-	viewFrustumCullingParams.m_pResources = m_pViewFrustumCullingResources;
-	viewFrustumCullingParams.m_pNumDrawsBuffer = m_pNumDrawsBuffer;
+	DetectVisibleMeshesRecorder::RenderPassParams detectVisibleMeshesParams;
+	detectVisibleMeshesParams.m_pEnv = m_pEnv;
+	detectVisibleMeshesParams.m_pCommandList = m_pCommandList;
+	detectVisibleMeshesParams.m_pCommandAllocator = pCommandAllocator;
+	detectVisibleMeshesParams.m_pResources = m_pDetectVisibleMeshesResources;
+	detectVisibleMeshesParams.m_pNumVisibleMeshesBuffer = m_pNumVisibleMeshesBuffer;
 
-	m_pViewFrustumCullingRecorder->Record(&viewFrustumCullingParams);
+	m_pDetectVisibleMeshesRecorder->Record(&detectVisibleMeshesParams);
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 	WaitForGPU();
-		
+	
+	CreateFillGBufferCommandsRecorder::RenderPassParams createFillGBufferCommandsParams;
+	createFillGBufferCommandsParams.m_pEnv = m_pEnv;
+	createFillGBufferCommandsParams.m_pCommandList = m_pCommandList;
+	createFillGBufferCommandsParams.m_pCommandAllocator = pCommandAllocator;
+	createFillGBufferCommandsParams.m_pResources = m_pCreateFillGBufferCommandsResources;
+
+	m_pCreateFillGBufferCommandsRecorder->Record(&createFillGBufferCommandsParams);
+	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	WaitForGPU();
+
 	FillGBufferRecorder::RenderPassParams fillGBufferParams;
 	fillGBufferParams.m_pEnv = m_pEnv;
 	fillGBufferParams.m_pCommandList = m_pCommandList;
@@ -718,7 +771,7 @@ void DXApplication::OnRender()
 	fillGBufferParams.m_pViewport = m_pViewport;
 	fillGBufferParams.m_pMeshBatch = m_pMeshBatch;
 	fillGBufferParams.m_pDrawCommandBuffer = m_pDrawCommandBuffer;
-	fillGBufferParams.m_pNumDrawsBuffer = m_pNumDrawsBuffer;
+	fillGBufferParams.m_pNumCommandsBuffer = m_pNumVisibleMeshesBuffer;
 	
 	m_pFillGBufferRecorder->Record(&fillGBufferParams);
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
@@ -778,7 +831,7 @@ void DXApplication::OnRender()
 	createGridParams.m_pViewport = m_pViewport;
 	createGridParams.m_pMeshBatch = m_pMeshBatch;
 	createGridParams.m_pDrawCommandBuffer = m_pDrawCommandBuffer;
-	createGridParams.m_pNumDrawsBuffer = m_pNumDrawsBuffer;
+	createGridParams.m_pNumCommandsBuffer = m_pNumVisibleMeshesBuffer;
 	
 	m_pCreateVoxelGridRecorder->Record(&createGridParams);
 	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
@@ -792,7 +845,7 @@ void DXApplication::OnRender()
 	visualizeGridParams.m_pViewport = m_pViewport;
 	
 	m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
+	//m_pCommandQueue->ExecuteCommandLists(m_pEnv, 1, &m_pCommandList, pCommandAllocator);
 	
 	if (pRenderTarget->GetState() != D3D12_RESOURCE_STATE_PRESENT)
 	{

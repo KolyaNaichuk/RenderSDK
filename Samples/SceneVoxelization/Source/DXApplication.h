@@ -26,7 +26,8 @@ class VisualizeVoxelGridRecorder;
 class VisualizeMeshRecorder;
 class CopyTextureRecorder;
 class TiledShadingRecorder;
-class ViewFrustumCullingRecorder;
+class DetectVisibleMeshesRecorder;
+class CreateFillGBufferCommandsRecorder;
 
 struct DXHeapProperties;
 struct DXRenderEnvironment;
@@ -83,7 +84,8 @@ private:
 	DXBuffer* m_pCullingDataBuffer;
 	DXBuffer* m_pShadingDataBuffer;
 	DXBuffer* m_pDrawCommandBuffer;
-	DXBuffer* m_pNumDrawsBuffer;
+	DXBuffer* m_pNumVisibleMeshesBuffer;
+	DXBuffer* m_pVisibleMeshIndexBuffer;
 	DXSampler* m_pAnisoSampler;
 	DXRenderEnvironment* m_pEnv;
 	DXFence* m_pFence;
@@ -110,8 +112,11 @@ private:
 	VisualizeMeshRecorder* m_pVisualizeMeshRecorder;
 	DXBindingResourceList* m_VisualizeMeshResources[kBackBufferCount];
 
-	ViewFrustumCullingRecorder* m_pViewFrustumCullingRecorder;
-	DXBindingResourceList* m_pViewFrustumCullingResources;
+	DetectVisibleMeshesRecorder* m_pDetectVisibleMeshesRecorder;
+	DXBindingResourceList* m_pDetectVisibleMeshesResources;
+
+	CreateFillGBufferCommandsRecorder* m_pCreateFillGBufferCommandsRecorder;
+	DXBindingResourceList* m_pCreateFillGBufferCommandsResources;
 
 	CopyTextureRecorder* m_pCopyTextureRecorder;
 	DXBindingResourceList* m_CopyTextureResources[kBackBufferCount];

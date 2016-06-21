@@ -149,8 +149,8 @@ COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\Bin\$
 COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Lighting.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Lighting.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ViewFrustumCullingCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ViewFrustumCullingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\DetectVisibleMeshesCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DetectVisibleMeshesCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\DetectVisibleMeshesCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DetectVisibleMeshesCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\OverlapTest.hlsl"
 COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\OverlapTest.hlsl"
@@ -159,7 +159,10 @@ COPY /Y "$(SolutionDir)Shaders\CopyTexturePS.hlsl" "$(SolutionDir)Samples\$(Proj
 COPY /Y "$(SolutionDir)Shaders\CopyTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CopyTexturePS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\Material.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Material.hlsl"
-COPY /Y "$(SolutionDir)Shaders\Material.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Material.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\Material.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Material.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateFillGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateFillGBufferCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateFillGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateFillGBufferCommandsCS.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

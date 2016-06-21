@@ -207,7 +207,54 @@ DXStructuredBufferUAVDesc::DXStructuredBufferUAVDesc(UINT64 firstElement, UINT n
 	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 }
 
-DXRawBufferShaderResourceViewDesc::DXRawBufferShaderResourceViewDesc(UINT64 firstElement, UINT numElements, UINT shader4ComponentMapping)
+DXFormattedBufferDesc::DXFormattedBufferDesc(UINT numElements, DXGI_FORMAT format, bool createSRV, bool createUAV, UINT64 alignment)
+{
+	Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	Alignment = alignment;
+	Width = numElements * GetSizeInBytes(format);
+	Height = 1;
+	DepthOrArraySize = 1;
+	MipLevels = 1;
+	Format = DXGI_FORMAT_UNKNOWN;
+	SampleDesc.Count = 1;
+	SampleDesc.Quality = 0;
+	Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	Flags = D3D12_RESOURCE_FLAG_NONE;
+	if (createUAV)
+		Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	if (!createSRV)
+		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+
+	NumElements = numElements;
+	SRVFormat = format;
+	UAVFormat = format;
+}
+
+DXFormattedBufferSRVDesc::DXFormattedBufferSRVDesc(UINT64 firstElement, UINT numElements,
+	DXGI_FORMAT format, UINT shader4ComponentMapping)
+{
+	Format = format;
+	ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	Shader4ComponentMapping = shader4ComponentMapping;
+	Buffer.FirstElement = firstElement;
+	Buffer.NumElements = numElements;
+	Buffer.StructureByteStride = 0;
+	Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+}
+
+DXFormattedBufferUAVDesc::DXFormattedBufferUAVDesc(UINT64 firstElement, UINT numElements, DXGI_FORMAT format)
+{
+	Format = format;
+	ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+	Buffer.FirstElement = firstElement;
+	Buffer.NumElements = numElements;
+	Buffer.StructureByteStride = 0;
+	Buffer.CounterOffsetInBytes = 0;
+	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+}
+
+DXRawBufferSRVDesc::DXRawBufferSRVDesc(UINT64 firstElement, UINT numElements, UINT shader4ComponentMapping)
 {
 	Format = DXGI_FORMAT_R32_TYPELESS;
 	ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
@@ -218,19 +265,18 @@ DXRawBufferShaderResourceViewDesc::DXRawBufferShaderResourceViewDesc(UINT64 firs
 	Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
 }
 
-DXBufferUnorderedAccessViewDesc::DXBufferUnorderedAccessViewDesc(UINT64 firstElement, UINT numElements,
-	UINT structureByteStride, DXGI_FORMAT format)
+DXRawBufferUAVDesc::DXRawBufferUAVDesc(UINT64 firstElement, UINT numElements)
 {
-	Format = format;
+	Format = DXGI_FORMAT_R32_TYPELESS;
 	ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
 	Buffer.FirstElement = firstElement;
 	Buffer.NumElements = numElements;
-	Buffer.StructureByteStride = structureByteStride;
+	Buffer.StructureByteStride = 0;
 	Buffer.CounterOffsetInBytes = 0;
-	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
 }
 
-DXCounterBufferUnorderedAccessViewDesc::DXCounterBufferUnorderedAccessViewDesc(UINT64 firstElement, UINT numElements,
+DXCounterBufferUAVDesc::DXCounterBufferUAVDesc(UINT64 firstElement, UINT numElements,
 	UINT structureByteStride, UINT64 counterOffsetInBytes)
 {
 	Format = DXGI_FORMAT_UNKNOWN;
@@ -240,17 +286,6 @@ DXCounterBufferUnorderedAccessViewDesc::DXCounterBufferUnorderedAccessViewDesc(U
 	Buffer.StructureByteStride = structureByteStride;
 	Buffer.CounterOffsetInBytes = counterOffsetInBytes;
 	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-}
-
-DXRawBufferUnorderedAccessViewDesc::DXRawBufferUnorderedAccessViewDesc(UINT64 firstElement, UINT numElements)
-{
-	Format = DXGI_FORMAT_R32_TYPELESS;
-	ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-	Buffer.FirstElement = firstElement;
-	Buffer.NumElements = numElements;
-	Buffer.StructureByteStride = 0;
-	Buffer.CounterOffsetInBytes = 0;
-	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
 }
 
 DXColorTexture1DDesc::DXColorTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool createRTV, bool createSRV, bool createUAV,
@@ -1023,6 +1058,25 @@ DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeap
 	}
 }
 
+DXBuffer::DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const DXFormattedBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: DXResource(pBufferDesc, initialState)
+{
+	CreateCommittedResource(pEnv, pHeapProps, pBufferDesc, initialState, pName);
+	CreateFormattedBufferViews(pEnv, pBufferDesc);
+
+	m_WriteState = D3D12_RESOURCE_STATE_COMMON;
+	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
+		m_WriteState |= D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+	m_ReadState = D3D12_RESOURCE_STATE_COMMON;
+	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+		m_ReadState |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+		m_ReadState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	}
+}
+
 DXBuffer::~DXBuffer()
 {
 	SafeDelete(m_pVBView);
@@ -1121,6 +1175,28 @@ void DXBuffer::CreateStructuredBufferViews(DXRenderEnvironment* pEnv, const DXSt
 		m_UAVHandle = pEnv->m_pShaderInvisibleSRVHeap->Allocate();
 
 		DXStructuredBufferUAVDesc viewDesc(0, pBufferDesc->NumElements, pBufferDesc->StructureByteStride);
+		pDXDevice->CreateUnorderedAccessView(GetDXObject(), nullptr, &viewDesc, m_UAVHandle);
+	}
+}
+
+void DXBuffer::CreateFormattedBufferViews(DXRenderEnvironment* pEnv, const DXFormattedBufferDesc* pBufferDesc)
+{
+	ID3D12Device* pDXDevice = pEnv->m_pDevice->GetDXObject();
+
+	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+		assert(pEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_SRVHandle = pEnv->m_pShaderInvisibleSRVHeap->Allocate();
+
+		DXFormattedBufferSRVDesc viewDesc(0, pBufferDesc->NumElements, pBufferDesc->SRVFormat);
+		pDXDevice->CreateShaderResourceView(GetDXObject(), &viewDesc, m_SRVHandle);
+	}
+	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
+	{
+		assert(pEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_UAVHandle = pEnv->m_pShaderInvisibleSRVHeap->Allocate();
+
+		DXFormattedBufferUAVDesc viewDesc(0, pBufferDesc->NumElements, pBufferDesc->UAVFormat);
 		pDXDevice->CreateUnorderedAccessView(GetDXObject(), nullptr, &viewDesc, m_UAVHandle);
 	}
 }

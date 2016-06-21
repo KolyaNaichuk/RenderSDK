@@ -189,9 +189,6 @@
     <ClInclude Include="..\Include\CommandRecorders\TiledShadingRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\ViewFrustumCullingRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\DX\DXRenderEnvironment.h">
       <Filter>DX</Filter>
     </ClInclude>
@@ -215,6 +212,12 @@
     </ClInclude>
     <ClInclude Include="..\Include\Math\Cone.h">
       <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\CreateFillGBufferCommandsRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\DetectVisibleMeshesRecorder.h">
+      <Filter>CommandRecorders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -374,9 +377,6 @@
     <ClCompile Include="..\Source\CommandRecorders\TiledShadingRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\ViewFrustumCullingRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
     <ClCompile Include="..\Include\DX\DXResourceList.cpp">
       <Filter>DX</Filter>
     </ClCompile>
@@ -400,6 +400,12 @@
     </ClCompile>
     <ClCompile Include="..\Source\Math\Cone.cpp">
       <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\CreateFillGBufferCommandsRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\DetectVisibleMeshesRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -469,10 +475,13 @@
     <None Include="..\Shaders\OverlapTest.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\ViewFrustumCullingCS.hlsl">
+    <None Include="..\Shaders\Material.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\Material.hlsl">
+    <None Include="..\Shaders\DetectVisibleMeshesCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateFillGBufferCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -33,7 +33,7 @@ public:
 		DXViewport* m_pViewport;
 		MeshBatch* m_pMeshBatch;
 		DXBuffer* m_pDrawCommandBuffer;
-		DXBuffer* m_pNumDrawsBuffer;
+		DXBuffer* m_pNumCommandsBuffer;
 	};
 
 	CreateVoxelGridRecorder(InitParams* pParams);

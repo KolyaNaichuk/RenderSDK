@@ -56,33 +56,6 @@ struct DXHeapProperties : public D3D12_HEAP_PROPERTIES
 	DXHeapProperties(D3D12_CPU_PAGE_PROPERTY cpuPageProperty, D3D12_MEMORY_POOL memoryPoolPreference);
 };
 
-// Kolya: should verify if the following structures are used
-
-struct DXRawBufferShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
-{
-	DXRawBufferShaderResourceViewDesc(UINT64 firstElement, UINT numElements,
-		UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
-};
-
-struct DXBufferUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
-{
-	DXBufferUnorderedAccessViewDesc(UINT64 firstElement, UINT numElements,
-		UINT structureByteStride, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
-};
-
-struct DXCounterBufferUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
-{
-	DXCounterBufferUnorderedAccessViewDesc(UINT64 firstElement, UINT numElements,
-		UINT structureByteStride, UINT64 counterOffsetInBytes);
-};
-
-struct DXRawBufferUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
-{
-	DXRawBufferUnorderedAccessViewDesc(UINT64 firstElement, UINT numElements);
-};
-
-///////////////////////////////////////////////////////////////////////////////////////////
-
 struct DXConstantBufferDesc : public D3D12_RESOURCE_DESC
 {
 	DXConstantBufferDesc(UINT64 sizeInBytes, UINT64 alignment = 0);
@@ -121,6 +94,43 @@ struct DXStructuredBufferSRVDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 struct DXStructuredBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 {
 	DXStructuredBufferUAVDesc(UINT64 firstElement, UINT numElements, UINT structureByteStride);
+};
+
+struct DXFormattedBufferDesc : public D3D12_RESOURCE_DESC
+{
+	DXFormattedBufferDesc(UINT numElements, DXGI_FORMAT format, bool createSRV, bool createUAV, UINT64 alignment = 0);
+
+	UINT NumElements;
+	DXGI_FORMAT SRVFormat;
+	DXGI_FORMAT UAVFormat;
+};
+
+struct DXFormattedBufferSRVDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
+{
+	DXFormattedBufferSRVDesc(UINT64 firstElement, UINT numElements,
+		DXGI_FORMAT format, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
+};
+
+struct DXFormattedBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	DXFormattedBufferUAVDesc(UINT64 firstElement, UINT numElements, DXGI_FORMAT format);
+};
+
+struct DXRawBufferSRVDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
+{
+	DXRawBufferSRVDesc(UINT64 firstElement, UINT numElements,
+		UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
+};
+
+struct DXRawBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	DXRawBufferUAVDesc(UINT64 firstElement, UINT numElements);
+};
+
+struct DXCounterBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	DXCounterBufferUAVDesc(UINT64 firstElement, UINT numElements,
+		UINT structureByteStride, UINT64 counterOffsetInBytes);
 };
 
 struct DXColorTexture1DDesc : public D3D12_RESOURCE_DESC
@@ -375,6 +385,9 @@ public:
 
 	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const DXStructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+
+	DXBuffer(DXRenderEnvironment* pEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const DXFormattedBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 	
 	~DXBuffer();
 	
@@ -393,6 +406,7 @@ private:
 	void CreateVertexBufferView(DXRenderEnvironment* pEnv, const DXVertexBufferDesc* pBufferDesc);
 	void CreateIndexBufferView(DXRenderEnvironment* pEnv, const DXIndexBufferDesc* pBufferDesc);
 	void CreateStructuredBufferViews(DXRenderEnvironment* pEnv, const DXStructuredBufferDesc* pBufferDesc);
+	void CreateFormattedBufferViews(DXRenderEnvironment* pEnv, const DXFormattedBufferDesc* pBufferDesc);
 		
 private:
 	DXDescriptorHandle m_SRVHandle;

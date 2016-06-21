@@ -1,30 +1,22 @@
 #pragma once
 
-#include "Math/Vector4.h"
+#include "Common/Common.h"
 
 class DXRootSignature;
 class DXPipelineState;
-class DXCommandSignature;
 class DXCommandList;
 class DXCommandAllocator;
 class DXBuffer;
-class MeshBatch;
-
-struct DXViewport;
 struct DXRenderEnvironment;
 struct DXBindingResourceList;
 
-class FillGBufferRecorder
+class DetectVisibleMeshesRecorder
 {
 public:
 	struct InitParams
 	{
 		DXRenderEnvironment* m_pEnv;
-		DXGI_FORMAT m_NormalRTVFormat;
-		DXGI_FORMAT m_DiffuseRTVFormat;
-		DXGI_FORMAT m_SpecularRTVFormat;
-		DXGI_FORMAT m_DSVFormat;
-		MeshBatch* m_pMeshBatch;
+		u32 m_NumMeshesInBatch;
 	};
 	struct RenderPassParams
 	{
@@ -32,19 +24,17 @@ public:
 		DXCommandList* m_pCommandList;
 		DXCommandAllocator* m_pCommandAllocator;
 		DXBindingResourceList* m_pResources;
-		DXViewport* m_pViewport;
-		MeshBatch* m_pMeshBatch;
-		DXBuffer* m_pDrawCommandBuffer;
-		DXBuffer* m_pNumCommandsBuffer;
+		DXBuffer* m_pNumVisibleMeshesBuffer;
 	};
-
-	FillGBufferRecorder(InitParams* pParams);
-	~FillGBufferRecorder();
+	
+	DetectVisibleMeshesRecorder(InitParams* pParams);
+	~DetectVisibleMeshesRecorder();
 
 	void Record(RenderPassParams* pParams);
 
 private:
 	DXRootSignature* m_pRootSignature;
 	DXPipelineState* m_pPipelineState;
-	DXCommandSignature* m_pCommandSignature;
+
+	u16 m_NumThreadGroupsX;
 };

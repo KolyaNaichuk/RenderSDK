@@ -103,6 +103,6 @@ void FillGBufferRecorder::Record(RenderPassParams* pParams)
 	DXRect scissorRect(ExtractRect(pParams->m_pViewport));
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
-	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshBatch->GetNumMeshes(), pParams->m_pDrawCommandBuffer, 0, pParams->m_pNumDrawsBuffer, 0);
+	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshBatch->GetNumMeshes(), pParams->m_pDrawCommandBuffer, 0, pParams->m_pNumCommandsBuffer, 0);
 	pCommandList->Close();
 }
