@@ -34,8 +34,8 @@ public:
 		DXBindingResourceList* m_pResources;
 		DXViewport* m_pViewport;
 		MeshBatch* m_pMeshBatch;
-		DXBuffer* m_pDrawCommandBuffer;
-		DXBuffer* m_pNumCommandsBuffer;
+		DXBuffer* m_pDrawMeshCommandBuffer;
+		DXBuffer* m_pNumDrawMeshesBuffer;
 	};
 
 	FillGBufferRecorder(InitParams* pParams);

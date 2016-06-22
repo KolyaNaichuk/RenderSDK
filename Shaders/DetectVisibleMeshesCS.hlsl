@@ -19,7 +19,7 @@ RWBuffer<uint> g_VisibleMeshIndexBuffer : register(u1);
 
 groupshared uint g_NumVisibleMeshes;
 groupshared uint g_VisibleMeshIndices[THREAD_GROUP_SIZE];
-groupshared uint g_OutIndicesOffset;
+groupshared uint g_WriteMeshIndicesOffset;
 
 [numthreads(THREAD_GROUP_SIZE, 1, 1)]
 void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
@@ -27,7 +27,7 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 	if (localIndex == 0)
 	{
 		g_NumVisibleMeshes = 0;
-		g_OutIndicesOffset = 0;
+		g_WriteMeshIndicesOffset = 0;
 	}
 	GroupMemoryBarrierWithGroupSync();
 
@@ -46,18 +46,18 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 
 	if (localIndex == 0)
 	{
-		uint outIndicesOffset;
-		InterlockedAdd(g_NumVisibleMeshesBuffer[0], g_NumVisibleMeshes, outIndicesOffset);
+		uint writeMeshIndicesOffset;
+		InterlockedAdd(g_NumVisibleMeshesBuffer[0], g_NumVisibleMeshes, writeMeshIndicesOffset);
 
-		g_OutIndicesOffset = outIndicesOffset;
+		g_WriteMeshIndicesOffset = writeMeshIndicesOffset;
 	}
 	GroupMemoryBarrierWithGroupSync();
 
 	if (localIndex < g_NumVisibleMeshes)
 	{
-		uint outIndex = localIndex + g_OutIndicesOffset;
+		uint writeIndex = localIndex + g_WriteMeshIndicesOffset;
 		uint meshIndex = g_VisibleMeshIndices[localIndex];
 
-		g_VisibleMeshIndexBuffer[outIndex] = meshIndex;
+		g_VisibleMeshIndexBuffer[writeIndex] = meshIndex;
 	}
 }

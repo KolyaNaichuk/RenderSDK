@@ -502,5 +502,8 @@
     <None Include="..\Shaders\CreateFillGBufferCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\Shaders\CreateRenderShadowMapCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

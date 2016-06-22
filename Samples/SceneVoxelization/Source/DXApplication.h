@@ -80,7 +80,7 @@ private:
 	DXBuffer* m_pGridConfigBuffer;
 	DXBuffer* m_pCullingDataBuffer;
 	DXBuffer* m_pShadingDataBuffer;
-	DXBuffer* m_pDrawCommandBuffer;
+	DXBuffer* m_pDrawMeshCommandBuffer;
 	DXBuffer* m_pNumVisibleMeshesBuffer;
 	DXBuffer* m_pVisibleMeshIndexBuffer;
 	DXBuffer* m_pLightIndicesPerTileBuffer;

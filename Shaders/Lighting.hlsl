@@ -4,6 +4,34 @@
 #define SHADING_MODE_PHONG			1
 #define SHADING_MODE_BLINN_PHONG	2
 
+struct PointLightBounds
+{
+	float3 worldSpaceSphereCenter;
+	float sphereRadius;
+};
+
+struct PointLightProps
+{
+	float3 color;
+	float attenStartRange;
+};
+
+struct SpotLightBounds
+{
+	float3 worldSpaceSphereCenter;
+	float sphereRadius;
+};
+
+struct SpotLightProps
+{
+	float3 color;
+	float3 worldSpaceDir;
+	float attenStartRange;
+	float attenEndRange;
+	float cosHalfInnerConeAngle;
+	float cosHalfOuterConeAngle;
+};
+
 float3 CalcPhongLighting(float3 dirToViewer, float3 dirToLight, float3 lightColor,
 	float3 normal, float3 diffuseAlbedo, float3 specularAlbedo, float specularPower)
 {

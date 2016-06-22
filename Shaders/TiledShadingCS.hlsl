@@ -21,38 +21,6 @@ struct ShadingData
 
 #define NUM_THREADS_PER_TILE	(TILE_SIZE * TILE_SIZE)
 
-#if NUM_POINT_LIGHTS > 0
-struct PointLightBounds
-{
-	float3 worldSpaceSphereCenter;
-	float sphereRadius;
-};
-
-struct PointLightProps
-{
-	float3 color;
-	float attenStartRange;
-};
-#endif
-
-#if NUM_SPOT_LIGHTS > 0
-struct SpotLightBounds
-{
-	float3 worldSpaceSphereCenter;
-	float sphereRadius;
-};
-
-struct SpotLightProps
-{
-	float3 color;
-	float3 worldSpaceDir;
-	float attenStartRange;
-	float attenEndRange;
-	float cosHalfInnerConeAngle;
-	float cosHalfOuterConeAngle;
-};
-#endif
-
 float4 CreatePlanePassingThroughOrigin(float3 pt1, float3 pt2)
 {
 	float3 planeNormal = normalize(cross(pt1, pt2));

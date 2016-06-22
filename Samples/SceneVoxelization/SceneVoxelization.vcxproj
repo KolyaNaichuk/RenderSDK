@@ -162,7 +162,10 @@ COPY /Y "$(SolutionDir)Shaders\Material.hlsl" "$(SolutionDir)Samples\$(ProjectNa
 COPY /Y "$(SolutionDir)Shaders\Material.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Material.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\CreateFillGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateFillGBufferCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateFillGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateFillGBufferCommandsCS.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\CreateFillGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateFillGBufferCommandsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
