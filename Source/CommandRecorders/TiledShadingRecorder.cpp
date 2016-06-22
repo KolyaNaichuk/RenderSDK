@@ -79,13 +79,12 @@ void TiledShadingRecorder::Record(RenderPassParams* pParams)
 
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
-
-	const FLOAT accumLightClearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
-	pCommandList->ClearUnorderedAccessView(pResources->m_SRVHeapStart, pAccumLightTexture->GetUAVHandle(), pAccumLightTexture, accumLightClearColor);
-
 	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
+
+	const FLOAT accumLightClearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
+	pCommandList->ClearUnorderedAccessView(pResources->m_SRVHeapStart, pAccumLightTexture->GetUAVHandle(), pAccumLightTexture, accumLightClearColor);
 
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
 	pCommandList->Close();

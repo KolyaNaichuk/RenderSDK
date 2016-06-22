@@ -58,13 +58,12 @@ void DetectVisibleMeshesRecorder::Record(RenderPassParams* pParams)
 
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
-
-	const UINT numMeshesClearValue[4] = {0, 0, 0, 0};
-	pCommandList->ClearUnorderedAccessView(pResources->m_SRVHeapStart, pNumVisibleMeshesBuffer->GetUAVHandle(), pNumVisibleMeshesBuffer, numMeshesClearValue);
-
 	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
+
+	const UINT numMeshesClearValue[4] = {0, 0, 0, 0};
+	pCommandList->ClearUnorderedAccessView(pResources->m_SRVHeapStart, pNumVisibleMeshesBuffer->GetUAVHandle(), pNumVisibleMeshesBuffer, numMeshesClearValue);
 
 	pCommandList->Dispatch(m_NumThreadGroupsX, 1, 1);
 	pCommandList->Close();
