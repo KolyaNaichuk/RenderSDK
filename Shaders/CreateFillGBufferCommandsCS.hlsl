@@ -1,30 +1,10 @@
-struct MeshDesc
-{
-	uint indexCount;
-	uint startIndexLocation;
-	int  baseVertexLocation;
-	uint materialIndex;
-};
-
-struct DrawIndexedArgs
-{
-	uint indexCountPerInstance;
-	uint instanceCount;
-	uint startIndexLocation;
-	int  baseVertexLocation;
-	uint startInstanceLocation;
-};
-
-struct DrawCommand
-{
-	uint root32BitConstant;
-	DrawIndexedArgs drawArgs;
-};
+#include "Mesh.hlsl"
+#include "IndirectDraw.hlsl"
 
 Buffer<uint> g_NumMeshesBuffer : register(t0);
 Buffer<uint> g_MeshIndexBuffer : register(t1);
 StructuredBuffer<MeshDesc> g_MeshDescBuffer : register(t2);
-RWStructuredBuffer<DrawCommand> g_DrawMeshCommandBuffer : register(u0);
+RWStructuredBuffer<DrawMeshCommand> g_DrawMeshCommandBuffer : register(u0);
 
 [numthreads(THREAD_GROUP_SIZE, 1, 1)]
 void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)

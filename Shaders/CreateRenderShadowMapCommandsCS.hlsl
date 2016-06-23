@@ -1,19 +1,20 @@
 #include "Lighting.hlsl"
 #include "OverlapTest.hlsl"
+#include "Mesh.hlsl"
+#include "IndirectDraw.hlsl"
 
-Buffer<uint> g_NumMeshesBuffer : register(t0);
-Buffer<uint> g_MeshIndexBuffer : register(t1);
-StructuredBuffer<AABB> g_MeshBoundsBuffer : register(t2);
-StructuredBuffer<MeshDesc> g_MeshDescBuffer : register(t3);
+Buffer<uint> g_MeshIndexBuffer : register(t0);
+StructuredBuffer<AABB> g_MeshBoundsBuffer : register(t1);
+StructuredBuffer<MeshDesc> g_MeshDescBuffer : register(t2);
 
-#if USE_POINT_LIGHTS == 1
-StructuredBuffer<PointLightBounds> g_PointLightBoundsBuffer : register(t4);
-Buffer<uint> g_NumPointLightsBuffer : register(t5);
+#if ENABLE_POINT_LIGHTS == 1
+StructuredBuffer<PointLightBounds> g_PointLightBoundsBuffer : register(t3);
+Buffer<uint> g_NumPointLightsBuffer : register(t4);
 
 RWBuffer<uint> g_ShadowCastingPointLightIndexBuffer : register(u0);
-RWBuffer<uint> g_NumShadowCastingPointLightIndicesBuffer : register(u1);
+RWBuffer<uint> g_NumShadowCastingPointLightsBuffer : register(u1);
 
-RWBuffer<DrawCommand> g_DrawPointLightShadowCasterCommandBuffer : register(u2);
+RWStructuredBuffer<DrawMeshCommand> g_DrawPointLightShadowCasterCommandBuffer : register(u2);
 RWBuffer<uint> g_NumDrawPointLightShadowCastersBuffer : register(u3);
 
 groupshared uint g_PointLightIndicesPerShadowCaster[MAX_NUM_POINT_LIGHTS_PER_SHADOW_CASTER];
@@ -21,14 +22,14 @@ groupshared uint g_NumPointLightsPerShadowCaster;
 groupshared uint g_ShadowCastingPointLightOffset;
 #endif
 
-#if USE_SPOT_LIGHTS == 1
-StructuredBuffer<SpotLightBounds> g_SpotLightBoundsBuffer : register(t6);
-Buffer<uint> g_NumSpotLightsBuffer : register(t7);
+#if ENABLE_SPOT_LIGHTS == 1
+StructuredBuffer<SpotLightBounds> g_SpotLightBoundsBuffer : register(t5);
+Buffer<uint> g_NumSpotLightsBuffer : register(t6);
 
 RWBuffer<uint> g_ShadowCastingSpotLightIndexBuffer : register(u4);
-RWBuffer<uint> g_NumShadowCastingSpotLightIndicesBuffer : register(u5);
+RWBuffer<uint> g_NumShadowCastingSpotLightsBuffer : register(u5);
 
-RWBuffer<DrawCommand> g_DrawSpotLightShadowCasterCommandBuffer : register(u6);
+RWStructuredBuffer<DrawMeshCommand> g_DrawSpotLightShadowCasterCommandBuffer : register(u6);
 RWBuffer<uint> g_NumDrawSpotLightShadowCastersBuffer : register(u7);
 
 groupshared uint g_SpotLightIndicesPerShadowCaster[MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER];
@@ -36,7 +37,7 @@ groupshared uint g_NumSpotLightsPerShadowCaster;
 groupshared uint g_ShadowCastingSpotLightOffset;
 #endif
 
-#if USE_POINT_LIGHTS == 1
+#if ENABLE_POINT_LIGHTS == 1
 void FindPointLightsPerShadowCaster(uint localThreadIndex, AABB meshBounds)
 {
 	for (uint lightIndex = localThreadIndex; lightIndex < g_NumPointLightsBuffer[0]; lightIndex += THREAD_GROUP_SIZE)
@@ -54,7 +55,7 @@ void FindPointLightsPerShadowCaster(uint localThreadIndex, AABB meshBounds)
 }
 #endif
 
-#if USE_SPOT_LIGHTS == 1
+#if ENABLE_SPOT_LIGHTS == 1
 void FindSpotLightsPerShadowCaster(uint localThreadIndex, AABB meshBounds)
 {
 	for (uint lightIndex = localThreadIndex; lightIndex < g_NumSpotLightsBuffer[0]; lightIndex += THREAD_GROUP_SIZE)
@@ -75,44 +76,41 @@ void FindSpotLightsPerShadowCaster(uint localThreadIndex, AABB meshBounds)
 [numthreads(THREAD_GROUP_SIZE, 1, 1)]
 void Main(uint3 groupId : SV_GroupID, uint localThreadIndex : SV_GroupIndex)
 {
-	uint globalThreadIndex = groupId.x * THREAD_GROUP_SIZE + localThreadIndex;
-	if (!(globalThreadIndex < g_NumMeshesBuffer[0]))
-		return;
-
 	if (localThreadIndex == 0)
 	{
-#if USE_POINT_LIGHTS == 1
+#if ENABLE_POINT_LIGHTS == 1
 		g_NumPointLightsPerShadowCaster = 0;
 		g_ShadowCastingPointLightOffset = 0;
 #endif
 
-#if USE_SPOT_LIGHTS == 1
+#if ENABLE_SPOT_LIGHTS == 1
 		g_NumSpotLightsPerShadowCaster = 0;
 		g_ShadowCastingSpotLightOffset = 0;
 #endif
 	}
 	GroupMemoryBarrierWithGroupSync();
 
+	uint globalThreadIndex = groupId.x;
 	uint meshIndex = g_MeshIndexBuffer[globalThreadIndex];
 	AABB meshBounds = g_MeshBoundsBuffer[meshIndex];
 
-#if USE_POINT_LIGHTS == 1
+#if ENABLE_POINT_LIGHTS == 1
 	FindPointLightsPerShadowCaster(localThreadIndex, meshBounds);
 	GroupMemoryBarrierWithGroupSync();
 #endif
 
-#if USE_SPOT_LIGHTS == 1
+#if ENABLE_SPOT_LIGHTS == 1
 	FindSpotLightsPerShadowCaster(localThreadIndex, meshBounds);
 	GroupMemoryBarrierWithGroupSync();
 #endif
 
 	if (localThreadIndex == 0)
 	{
-#if USE_POINT_LIGHTS == 1
+#if ENABLE_POINT_LIGHTS == 1
 		if (g_NumPointLightsPerShadowCaster > 0)
 		{
 			uint pointLightOffset;
-			InterlockedAdd(g_NumShadowCastingPointLightIndicesBuffer[0], g_NumPointLightsPerShadowCaster, pointLightOffset);
+			InterlockedAdd(g_NumShadowCastingPointLightsBuffer[0], g_NumPointLightsPerShadowCaster, pointLightOffset);
 			g_ShadowCastingPointLightOffset = pointLightOffset;
 
 			uint commandOffset;
@@ -127,11 +125,11 @@ void Main(uint3 groupId : SV_GroupID, uint localThreadIndex : SV_GroupIndex)
 		}
 #endif
 
-#if USE_SPOT_LIGHTS == 1
+#if ENABLE_SPOT_LIGHTS == 1
 		if (g_NumSpotLightsPerShadowCaster > 0)
 		{
 			uint spotLightOffset;
-			InterlockedAdd(g_NumShadowCastingSpotLightIndicesBuffer[0], g_NumSpotLightsPerShadowCaster, spotLightOffset);
+			InterlockedAdd(g_NumShadowCastingSpotLightsBuffer[0], g_NumSpotLightsPerShadowCaster, spotLightOffset);
 			g_ShadowCastingSpotLightOffset = spotLightOffset;
 
 			uint commandOffset;
@@ -148,7 +146,7 @@ void Main(uint3 groupId : SV_GroupID, uint localThreadIndex : SV_GroupIndex)
 	}
 	GroupMemoryBarrierWithGroupSync();
 
-#if USE_POINT_LIGHTS == 1
+#if ENABLE_POINT_LIGHTS == 1
 	for (uint index = localThreadIndex; index < g_NumPointLightsPerShadowCaster; index += THREAD_GROUP_SIZE)
 	{
 		uint writeIndex = index + g_ShadowCastingPointLightOffset;
@@ -158,7 +156,7 @@ void Main(uint3 groupId : SV_GroupID, uint localThreadIndex : SV_GroupIndex)
 	}
 #endif
 
-#if USE_SPOT_LIGHTS == 1
+#if ENABLE_SPOT_LIGHTS == 1
 	for (uint index = localThreadIndex; index < g_NumSpotLightsPerShadowCaster; index += THREAD_GROUP_SIZE)
 	{
 		uint writeIndex = index + g_ShadowCastingSpotLightOffset;

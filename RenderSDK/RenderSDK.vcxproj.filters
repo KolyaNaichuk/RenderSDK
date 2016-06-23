@@ -505,5 +505,11 @@
     <None Include="..\Shaders\CreateRenderShadowMapCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\Shaders\Mesh.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\IndirectDraw.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

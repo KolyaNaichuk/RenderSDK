@@ -10,6 +10,9 @@ The Basics of GPU Voxelization
 
 GPU Pro 4:
 Hawar Doghramachi, Rasterized Voxel-Based Dynamic Global Illumination
+
+GPU Pro 6:
+Hawar Doghramachi, Tile-Based Omnidirectional Shadows
 */
 
 #include "DXApplication.h"

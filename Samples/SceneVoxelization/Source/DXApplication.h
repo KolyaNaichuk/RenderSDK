@@ -27,6 +27,7 @@ class CopyTextureRecorder;
 class TiledShadingRecorder;
 class DetectVisibleMeshesRecorder;
 class CreateFillGBufferCommandsRecorder;
+class CreateRenderShadowMapCommandsRecorder;
 
 struct DXHeapProperties;
 struct DXRenderEnvironment;
@@ -83,12 +84,14 @@ private:
 	DXBuffer* m_pDrawMeshCommandBuffer;
 	DXBuffer* m_pNumVisibleMeshesBuffer;
 	DXBuffer* m_pVisibleMeshIndexBuffer;
-	DXBuffer* m_pLightIndicesPerTileBuffer;
-	DXBuffer* m_pNumLightIndicesForAllTilesBuffer;
-	DXBuffer* m_pRenderShadowMapCommandBuffer;
-	DXBuffer* m_pNumRenderShadowMapCommandsBuffer;
-	DXBuffer* m_pLightIndicesPerMeshBuffer;
-	DXBuffer* m_pNumLightIndicesForAllMeshesBuffer;
+	DXBuffer* m_pShadowCastingPointLightIndexBuffer;
+	DXBuffer* m_pNumShadowCastingPointLightsBuffer;
+	DXBuffer* m_pDrawPointLightShadowCasterCommandBuffer;
+	DXBuffer* m_pNumDrawPointLightShadowCastersBuffer;
+	DXBuffer* m_pShadowCastingSpotLightIndexBuffer;
+	DXBuffer* m_pNumShadowCastingSpotLightsBuffer;
+	DXBuffer* m_pDrawSpotLightShadowCasterCommandBuffer;
+	DXBuffer* m_pNumDrawSpotLightShadowCastersBuffer;
 	DXRenderEnvironment* m_pRenderEnv;
 	DXFence* m_pFence;
 	UINT64 m_FenceValues[kBackBufferCount];
@@ -120,11 +123,16 @@ private:
 	CreateFillGBufferCommandsRecorder* m_pCreateFillGBufferCommandsRecorder;
 	DXBindingResourceList* m_pCreateFillGBufferCommandsResources;
 
+	CreateRenderShadowMapCommandsRecorder* m_pCreateRenderShadowMapCommandsRecorder;
+	DXBindingResourceList* m_pCreateRenderShadowMapCommandsResources;
+
 	CopyTextureRecorder* m_pCopyTextureRecorder;
 	DXBindingResourceList* m_CopyTextureResources[kBackBufferCount];
 
 	MeshBatch* m_pMeshBatch;
-	LightBuffer* m_pSpotLightBuffer;
 	LightBuffer* m_pPointLightBuffer;
+	LightBuffer* m_pSpotLightBuffer;
+	DXBuffer* m_pNumVisiblePointLightsBuffer;
+	DXBuffer* m_pNumVisibleSpotLightsBuffer;
 	Camera* m_pCamera;
 };
