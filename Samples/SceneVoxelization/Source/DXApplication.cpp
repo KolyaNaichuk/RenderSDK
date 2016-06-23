@@ -535,6 +535,7 @@ void DXApplication::OnInit()
 	{
 		DXBuffer* pPointLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
 
+		assert(false && "m_pNumVisiblePointLightsBuffer is not initialized");
 		m_pCreateRenderShadowMapCommandsResources->m_ResourceTransitions.emplace_back(pPointLightBoundsBuffer, pPointLightBoundsBuffer->GetReadState());
 		m_pCreateRenderShadowMapCommandsResources->m_ResourceTransitions.emplace_back(m_pNumVisiblePointLightsBuffer, m_pNumVisiblePointLightsBuffer->GetReadState());
 		m_pCreateRenderShadowMapCommandsResources->m_ResourceTransitions.emplace_back(m_pShadowCastingPointLightIndexBuffer, m_pShadowCastingPointLightIndexBuffer->GetWriteState());
@@ -554,6 +555,7 @@ void DXApplication::OnInit()
 	{
 		DXBuffer* pSpotLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
 
+		assert(false && "m_pNumVisibleSpotLightsBuffer is not initialized");
 		m_pCreateRenderShadowMapCommandsResources->m_ResourceTransitions.emplace_back(pSpotLightBoundsBuffer, pSpotLightBoundsBuffer->GetReadState());
 		m_pCreateRenderShadowMapCommandsResources->m_ResourceTransitions.emplace_back(m_pNumVisibleSpotLightsBuffer, m_pNumVisibleSpotLightsBuffer->GetReadState());
 		m_pCreateRenderShadowMapCommandsResources->m_ResourceTransitions.emplace_back(m_pShadowCastingSpotLightIndexBuffer, m_pShadowCastingSpotLightIndexBuffer->GetWriteState());
