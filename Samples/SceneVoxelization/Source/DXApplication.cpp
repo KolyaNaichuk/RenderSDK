@@ -470,7 +470,9 @@ void DXApplication::OnInit()
 	m_pFillGBufferResources->m_ResourceTransitions.emplace_back(m_pSpecularTexture, m_pSpecularTexture->GetWriteState());
 	m_pFillGBufferResources->m_ResourceTransitions.emplace_back(m_pDepthTexture, m_pDepthTexture->GetWriteState());
 	m_pFillGBufferResources->m_ResourceTransitions.emplace_back(pMaterialBuffer, pMaterialBuffer->GetReadState());
-	
+	m_pFillGBufferResources->m_ResourceTransitions.emplace_back(m_pDrawMeshCommandBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	m_pFillGBufferResources->m_ResourceTransitions.emplace_back(m_pNumVisibleMeshesBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+
 	m_pFillGBufferResources->m_RTVHeapStart = m_pShaderInvisibleRTVHeap->Allocate();
 	m_pFillGBufferResources->m_DSVHeapStart = m_pDepthTexture->GetDSVHandle();
 	m_pFillGBufferResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
@@ -639,8 +641,10 @@ void DXApplication::OnInit()
 	m_pCreateVoxelGridResources = new DXBindingResourceList();
 	m_pCreateVoxelGridResources->m_ResourceTransitions.emplace_back(pMaterialBuffer, pMaterialBuffer->GetReadState());
 	m_pCreateVoxelGridResources->m_ResourceTransitions.emplace_back(m_pGridBuffer, m_pGridBuffer->GetWriteState());	
-	m_pCreateVoxelGridResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+	m_pCreateVoxelGridResources->m_ResourceTransitions.emplace_back(m_pDrawMeshCommandBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	m_pCreateVoxelGridResources->m_ResourceTransitions.emplace_back(m_pNumVisibleMeshesBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 	
+	m_pCreateVoxelGridResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
 	m_pDevice->CopyDescriptor(m_pCreateVoxelGridResources->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pCameraTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridConfigBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
