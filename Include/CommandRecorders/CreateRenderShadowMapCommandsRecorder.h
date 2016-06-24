@@ -45,6 +45,7 @@ private:
 	DXRootSignature* m_pRootSignature;
 	DXPipelineState* m_pPipelineState;
 	DXCommandSignature* m_pCommandSignature;
+	DXBuffer* m_pIndirectArgumentBuffer;
 
 	bool m_EnablePointLights;
 	bool m_EnableSpotLights;

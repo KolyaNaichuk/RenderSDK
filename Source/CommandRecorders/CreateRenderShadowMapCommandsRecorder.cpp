@@ -17,6 +17,7 @@ CreateRenderShadowMapCommandsRecorder::CreateRenderShadowMapCommandsRecorder(Ini
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 	, m_pCommandSignature(nullptr)
+	, m_pIndirectArgumentBuffer(nullptr)
 	, m_EnablePointLights(pParams->m_EnablePointLights)
 	, m_EnableSpotLights(pParams->m_EnableSpotLights)
 {
@@ -76,6 +77,7 @@ CreateRenderShadowMapCommandsRecorder::~CreateRenderShadowMapCommandsRecorder()
 	SafeDelete(m_pCommandSignature);
 	SafeDelete(m_pRootSignature);
 	SafeDelete(m_pPipelineState);
+	SafeDelete(m_pIndirectArgumentBuffer);
 }
 
 void CreateRenderShadowMapCommandsRecorder::Record(RenderPassParams* pParams)
