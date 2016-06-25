@@ -29,7 +29,7 @@ public:
 		DXCommandList* m_pCommandList;
 		DXCommandAllocator* m_pCommandAllocator;
 		DXBindingResourceList* m_pResources;
-		DXBuffer* m_pNumMeshes;
+		DXBuffer* m_pIndirectArgumentBuffer;
 		DXBuffer* m_pNumShadowCastingPointLightsBuffer;
 		DXBuffer* m_pNumDrawPointLightShadowCastersBuffer;
 		DXBuffer* m_pNumShadowCastingSpotLightsBuffer;
@@ -45,7 +45,6 @@ private:
 	DXRootSignature* m_pRootSignature;
 	DXPipelineState* m_pPipelineState;
 	DXCommandSignature* m_pCommandSignature;
-	DXBuffer* m_pIndirectArgumentBuffer;
 
 	bool m_EnablePointLights;
 	bool m_EnableSpotLights;

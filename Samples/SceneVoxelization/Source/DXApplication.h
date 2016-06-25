@@ -125,6 +125,7 @@ private:
 
 	RenderShadowMapCommandsRecorder* m_pRenderShadowMapCommandsRecorder;
 	DXBindingResourceList* m_pRenderShadowMapCommandsResources;
+	DXBuffer* m_pRenderShadowMapCommandsArgumentBuffer;
 
 	CopyTextureRecorder* m_pCopyTextureRecorder;
 	DXBindingResourceList* m_CopyTextureResources[kBackBufferCount];

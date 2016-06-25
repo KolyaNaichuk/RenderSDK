@@ -17,7 +17,6 @@ RenderShadowMapCommandsRecorder::RenderShadowMapCommandsRecorder(InitParams* pPa
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 	, m_pCommandSignature(nullptr)
-	, m_pIndirectArgumentBuffer(nullptr)
 	, m_EnablePointLights(pParams->m_EnablePointLights)
 	, m_EnableSpotLights(pParams->m_EnableSpotLights)
 {
@@ -39,7 +38,7 @@ RenderShadowMapCommandsRecorder::RenderShadowMapCommandsRecorder(InitParams* pPa
 		DXShaderMacro("MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER", maxNumSpotLightsPerShadowCasterStr.c_str()),
 		DXShaderMacro()
 	};
-	DXShader computeShader(L"Shaders//CreateRenderShadowMapCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	DXShader computeShader(L"Shaders//RenderShadowMapCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
 
 	std::vector<D3D12_DESCRIPTOR_RANGE> srvDescriptorRanges;
 	srvDescriptorRanges.push_back(DXSRVRange(3, 0));
@@ -77,7 +76,6 @@ RenderShadowMapCommandsRecorder::~RenderShadowMapCommandsRecorder()
 	SafeDelete(m_pCommandSignature);
 	SafeDelete(m_pRootSignature);
 	SafeDelete(m_pPipelineState);
-	SafeDelete(m_pIndirectArgumentBuffer);
 }
 
 void RenderShadowMapCommandsRecorder::Record(RenderPassParams* pParams)
@@ -116,7 +114,6 @@ void RenderShadowMapCommandsRecorder::Record(RenderPassParams* pParams)
 		pCommandList->ClearUnorderedAccessView(numShadowCastersUAVHandle, pNumShadowCastersBuffer->GetUAVHandle(), pNumShadowCastersBuffer, numClearValue);
 	}
 
-	assert(false && "Invalid pArgumentBuffer");
-	pCommandList->ExecuteIndirect(m_pCommandSignature, 1, /*pArgumentBuffer*/nullptr, 0, nullptr, 0);
+	pCommandList->ExecuteIndirect(m_pCommandSignature, 1, pParams->m_pIndirectArgumentBuffer, 0, nullptr, 0);
 	pCommandList->Close();
 }

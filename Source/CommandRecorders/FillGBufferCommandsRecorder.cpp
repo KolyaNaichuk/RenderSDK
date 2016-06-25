@@ -26,7 +26,7 @@ FillGBufferCommandsRecorder::FillGBufferCommandsRecorder(InitParams* pParams)
 		DXShaderMacro("THREAD_GROUP_SIZE", threadGroupSizeStr.c_str()),
 		DXShaderMacro()
 	};
-	DXShader computeShader(L"Shaders//CreateFillGBufferCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	DXShader computeShader(L"Shaders//FillGBufferCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
 
 	D3D12_DESCRIPTOR_RANGE srvDescriptorRanges[] = {DXSRVRange(3, 0), DXUAVRange(1, 0)};
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
