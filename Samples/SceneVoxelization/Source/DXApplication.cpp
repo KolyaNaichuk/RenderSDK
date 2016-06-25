@@ -399,14 +399,14 @@ void DXApplication::OnInit()
 		m_pNumVisibleSpotLightsBuffer = new DXBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numVisibleLightsBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumVisibleSpotLightsBuffer");
 	}
 	
-	DXStructuredBufferDesc renderShadowMapCommandsArgumentBufferDesc(1, sizeof(Vector3u), false, false);
-	m_pRenderShadowMapCommandsArgumentBuffer = new DXBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &renderShadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pRenderShadowMapCommandsArgumentBuffer");
+	DXStructuredBufferDesc shadowMapCommandsArgumentBufferDesc(1, sizeof(Vector3u), false, false);
+	m_pRenderShadowMapCommandsArgumentBuffer = new DXBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pRenderShadowMapCommandsArgumentBuffer");
 
-	Vector3u renderShadowMapsArgumentBufferInitValues(0, 1, 1);
-	DXBuffer uploadRenderShadowMapCommandsArgumentBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &renderShadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, L"m_pRenderShadowMapCommandsArgumentBuffer");
-	uploadRenderShadowMapCommandsArgumentBuffer.Write(&renderShadowMapsArgumentBufferInitValues, sizeof(Vector3u));
+	Vector3u shadowMapCommandsArgumentBufferInitValues(0, 1, 1);
+	DXBuffer uploadRenderShadowMapCommandsArgumentBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &shadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pRenderShadowMapCommandsArgumentBuffer");
+	uploadRenderShadowMapCommandsArgumentBuffer.Write(&shadowMapCommandsArgumentBufferInitValues, sizeof(Vector3u));
 
-
+	m_pCommandList->CopyResource(m_pRenderShadowMapCommandsArgumentBuffer, &uploadRenderShadowMapCommandsArgumentBuffer);
 
 	m_pCommandList->Close();
 	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &m_pCommandList, nullptr);
@@ -845,8 +845,6 @@ void DXApplication::OnRender()
 	const u8 clearFlags = m_pCamera->GetClearFlags();
 	if (clearFlags != 0)
 	{
-		m_pCommandList->Reset(pCommandAllocator);
-
 		std::vector<DXResourceTransitionBarrier> resourceTransitions;
 		if (pRenderTarget->GetState() != pRenderTarget->GetWriteState())
 		{
@@ -858,9 +856,11 @@ void DXApplication::OnRender()
 			resourceTransitions.emplace_back(m_pDepthTexture, m_pDepthTexture->GetState(), m_pDepthTexture->GetWriteState());
 			m_pDepthTexture->SetState(m_pDepthTexture->GetWriteState());
 		}
-		m_pCommandList->ResourceBarrier(resourceTransitions.size(), &resourceTransitions[0]);
-
+		
 		const Vector4f& clearColor = m_pCamera->GetBackgroundColor();
+
+		m_pCommandList->Reset(pCommandAllocator);
+		m_pCommandList->ResourceBarrier(resourceTransitions.size(), &resourceTransitions[0]);
 		m_pCommandList->ClearRenderTargetView(rtvHandle, &clearColor.m_X);
 		m_pCommandList->ClearDepthView(dsvHandle);				
 		m_pCommandList->Close();
@@ -903,6 +903,28 @@ void DXApplication::OnRender()
 	m_pFillGBufferRecorder->Record(&fillGBufferParams);
 	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &m_pCommandList, pCommandAllocator);
 	WaitForGPU();
+
+	{
+		std::vector<DXResourceTransitionBarrier> resourceTransitions;
+		if (m_pRenderShadowMapCommandsArgumentBuffer->GetState() != D3D12_RESOURCE_STATE_COPY_DEST)
+		{
+			resourceTransitions.emplace_back(m_pRenderShadowMapCommandsArgumentBuffer, m_pRenderShadowMapCommandsArgumentBuffer->GetState(), D3D12_RESOURCE_STATE_COPY_DEST);
+			m_pRenderShadowMapCommandsArgumentBuffer->SetState(D3D12_RESOURCE_STATE_COPY_DEST);
+		}
+		if (m_pNumVisibleMeshesBuffer->GetState() != D3D12_RESOURCE_STATE_COPY_SOURCE)
+		{
+			resourceTransitions.emplace_back(m_pNumVisibleMeshesBuffer, m_pNumVisibleMeshesBuffer->GetState(), D3D12_RESOURCE_STATE_COPY_SOURCE);
+			m_pNumVisibleMeshesBuffer->SetState(D3D12_RESOURCE_STATE_COPY_SOURCE);
+		}
+
+		m_pCommandList->Reset(pCommandAllocator, nullptr);
+		m_pCommandList->ResourceBarrier(resourceTransitions.size(), &resourceTransitions[0]);
+		m_pCommandList->CopyBufferRegion(m_pRenderShadowMapCommandsArgumentBuffer, 0, m_pNumVisibleMeshesBuffer, 0, sizeof(u32));
+		m_pCommandList->Close();
+
+		m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &m_pCommandList, pCommandAllocator);
+		WaitForGPU();
+	}
 
 	RenderShadowMapCommandsRecorder::RenderPassParams renderShadowMapCommandsParams;
 	renderShadowMapCommandsParams.m_pRenderEnv = m_pRenderEnv;

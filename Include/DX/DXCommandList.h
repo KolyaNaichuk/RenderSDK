@@ -59,7 +59,9 @@ public:
 	void ClearUnorderedAccessView(D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, DXResource* pResource, const UINT clearValue[4]);
 	void ClearUnorderedAccessView(D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, DXResource* pResource, const FLOAT clearValue[4]);
 	
-	void CopyResource(DXResource* pDest, DXResource* pSource);
+	void CopyResource(DXResource* pDestResouce, DXResource* pSourceResource);
+	void CopyBufferRegion(DXBuffer* pDestBuffer, UINT64 destOffset, DXBuffer* pSourceBuffer, UINT64 sourceOffset, UINT64 numBytes);
+
 	void ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER* pBarriers);
 
 	DXResourceTransitionList* GetResourceTransitions();

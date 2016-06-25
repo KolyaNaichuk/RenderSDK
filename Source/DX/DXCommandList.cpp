@@ -51,9 +51,14 @@ void DXCommandList::IASetIndexBuffer(const DXIndexBufferView* pView)
 	GetDXObject()->IASetIndexBuffer(pView);
 }
 
-void DXCommandList::CopyResource(DXResource* pDest, DXResource* pSource)
+void DXCommandList::CopyResource(DXResource* pDestResource, DXResource* pSourceResource)
 {
-	GetDXObject()->CopyResource(pDest->GetDXObject(), pSource->GetDXObject());
+	GetDXObject()->CopyResource(pDestResource->GetDXObject(), pSourceResource->GetDXObject());
+}
+
+void DXCommandList::CopyBufferRegion(DXBuffer* pDestBuffer, UINT64 destOffset, DXBuffer* pSourceBuffer, UINT64 sourceOffset, UINT64 numBytes)
+{
+	GetDXObject()->CopyBufferRegion(pDestBuffer->GetDXObject(), destOffset, pSourceBuffer->GetDXObject(), sourceOffset, numBytes);
 }
 
 void DXCommandList::ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER* pBarriers)
