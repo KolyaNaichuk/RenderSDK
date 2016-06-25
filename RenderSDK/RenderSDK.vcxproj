@@ -149,12 +149,12 @@
     <ClInclude Include="..\Include\CommandRecorders\CalcTextureLuminanceRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\ClearVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\CopyTextureRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\CreateFillGBufferCommandsRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\FillGBufferCommandsRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\CreateVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\FillGBufferRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\DetectVisibleMeshesRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\CreateRenderShadowMapCommandsRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapCommandsRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapsRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\ScaleTextureRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\TiledShadingRecorder.h" />
@@ -222,10 +222,10 @@
     <ClCompile Include="..\Source\CommandRecorders\CalcTextureLuminanceRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\ClearVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CopyTextureRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\CreateRenderShadowMapCommandsRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapCommandsRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CreateVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\FillGBufferRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\CreateFillGBufferCommandsRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\FillGBufferCommandsRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\DetectVisibleMeshesRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapsRecorder.cpp" />
@@ -464,7 +464,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\CreateFillGBufferCommandsCS.hlsl">
+    <None Include="..\Shaders\FillGBufferCommandsCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
@@ -477,7 +477,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\CreateRenderShadowMapCommandsCS.hlsl">
+    <None Include="..\Shaders\RenderShadowMapCommandsCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>

@@ -1,4 +1,4 @@
-#include "CommandRecorders/CreateRenderShadowMapCommandsRecorder.h"
+#include "CommandRecorders/RenderShadowMapCommandsRecorder.h"
 #include "DX/DXRootSignature.h"
 #include "DX/DXPipelineState.h"
 #include "DX/DXRenderEnvironment.h"
@@ -13,7 +13,7 @@ enum RootParams
 	kNumRootParams
 };
 
-CreateRenderShadowMapCommandsRecorder::CreateRenderShadowMapCommandsRecorder(InitParams* pParams)
+RenderShadowMapCommandsRecorder::RenderShadowMapCommandsRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 	, m_pCommandSignature(nullptr)
@@ -59,20 +59,20 @@ CreateRenderShadowMapCommandsRecorder::CreateRenderShadowMapCommandsRecorder(Ini
 	rootParams[kSRVRootParam] = DXRootDescriptorTableParameter(srvDescriptorRanges.size(), &srvDescriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
 
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new DXRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CreateRenderShadowMapCommandsRecorder::m_pRootSignature");
+	m_pRootSignature = new DXRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"RenderShadowMapCommandsRecorder::m_pRootSignature");
 
 	DXComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
-	m_pPipelineState = new DXPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CreateRenderShadowMapCommandsRecorder::m_pPipelineState");
+	m_pPipelineState = new DXPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"RenderShadowMapCommandsRecorder::m_pPipelineState");
 
 	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] = {DXDispatchArgument()};
 	DXCommandSignatureDesc commandSignatureDesc(sizeof(D3D12_DISPATCH_ARGUMENTS), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
-	m_pCommandSignature = new DXCommandSignature(pRenderEnv->m_pDevice, nullptr, &commandSignatureDesc, L"CreateRenderShadowMapCommandsRecorder::m_pCommandSignature");
+	m_pCommandSignature = new DXCommandSignature(pRenderEnv->m_pDevice, nullptr, &commandSignatureDesc, L"RenderShadowMapCommandsRecorder::m_pCommandSignature");
 }
 
-CreateRenderShadowMapCommandsRecorder::~CreateRenderShadowMapCommandsRecorder()
+RenderShadowMapCommandsRecorder::~RenderShadowMapCommandsRecorder()
 {
 	SafeDelete(m_pCommandSignature);
 	SafeDelete(m_pRootSignature);
@@ -80,7 +80,7 @@ CreateRenderShadowMapCommandsRecorder::~CreateRenderShadowMapCommandsRecorder()
 	SafeDelete(m_pIndirectArgumentBuffer);
 }
 
-void CreateRenderShadowMapCommandsRecorder::Record(RenderPassParams* pParams)
+void RenderShadowMapCommandsRecorder::Record(RenderPassParams* pParams)
 {
 	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 	DXCommandList* pCommandList = pParams->m_pCommandList;

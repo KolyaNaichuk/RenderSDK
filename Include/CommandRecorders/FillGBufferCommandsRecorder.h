@@ -9,7 +9,7 @@ class DXCommandAllocator;
 struct DXRenderEnvironment;
 struct DXBindingResourceList;
 
-class CreateFillGBufferCommandsRecorder
+class FillGBufferCommandsRecorder
 {
 public:
 	struct InitParams
@@ -25,8 +25,8 @@ public:
 		DXBindingResourceList* m_pResources;
 	};
 
-	CreateFillGBufferCommandsRecorder(InitParams* pParams);
-	~CreateFillGBufferCommandsRecorder();
+	FillGBufferCommandsRecorder(InitParams* pParams);
+	~FillGBufferCommandsRecorder();
 
 	void Record(RenderPassParams* pParams);
 

@@ -26,8 +26,8 @@ class VisualizeMeshRecorder;
 class CopyTextureRecorder;
 class TiledShadingRecorder;
 class DetectVisibleMeshesRecorder;
-class CreateFillGBufferCommandsRecorder;
-class CreateRenderShadowMapCommandsRecorder;
+class FillGBufferCommandsRecorder;
+class RenderShadowMapCommandsRecorder;
 
 struct DXHeapProperties;
 struct DXRenderEnvironment;
@@ -120,11 +120,11 @@ private:
 	DetectVisibleMeshesRecorder* m_pDetectVisibleMeshesRecorder;
 	DXBindingResourceList* m_pDetectVisibleMeshesResources;
 
-	CreateFillGBufferCommandsRecorder* m_pCreateFillGBufferCommandsRecorder;
-	DXBindingResourceList* m_pCreateFillGBufferCommandsResources;
+	FillGBufferCommandsRecorder* m_pFillGBufferCommandsRecorder;
+	DXBindingResourceList* m_pFillGBufferCommandsResources;
 
-	CreateRenderShadowMapCommandsRecorder* m_pCreateRenderShadowMapCommandsRecorder;
-	DXBindingResourceList* m_pCreateRenderShadowMapCommandsResources;
+	RenderShadowMapCommandsRecorder* m_pRenderShadowMapCommandsRecorder;
+	DXBindingResourceList* m_pRenderShadowMapCommandsResources;
 
 	CopyTextureRecorder* m_pCopyTextureRecorder;
 	DXBindingResourceList* m_CopyTextureResources[kBackBufferCount];

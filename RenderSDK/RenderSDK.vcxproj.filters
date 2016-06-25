@@ -213,19 +213,19 @@
     <ClInclude Include="..\Include\Math\Cone.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\CreateFillGBufferCommandsRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\CommandRecorders\DetectVisibleMeshesRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\CreateRenderShadowMapCommandsRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapsRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\CommandRecorders\AssignLightsPerTileRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\FillGBufferCommandsRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapCommandsRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
   </ItemGroup>
@@ -410,19 +410,19 @@
     <ClCompile Include="..\Source\Math\Cone.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\CreateFillGBufferCommandsRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\DetectVisibleMeshesRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\CreateRenderShadowMapCommandsRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapsRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\AssignLightsPerTileRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\FillGBufferCommandsRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapCommandsRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
   </ItemGroup>
@@ -499,16 +499,16 @@
     <None Include="..\Shaders\DetectVisibleMeshesCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\CreateFillGBufferCommandsCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CreateRenderShadowMapCommandsCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\Mesh.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\IndirectDraw.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\FillGBufferCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\RenderShadowMapCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -1,4 +1,4 @@
-#include "CommandRecorders/CreateFillGBufferCommandsRecorder.h"
+#include "CommandRecorders/FillGBufferCommandsRecorder.h"
 #include "DX/DXRootSignature.h"
 #include "DX/DXPipelineState.h"
 #include "DX/DXRenderEnvironment.h"
@@ -11,7 +11,7 @@ enum RootParams
 	kNumRootParams
 };
 
-CreateFillGBufferCommandsRecorder::CreateFillGBufferCommandsRecorder(InitParams* pParams)
+FillGBufferCommandsRecorder::FillGBufferCommandsRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
@@ -33,22 +33,22 @@ CreateFillGBufferCommandsRecorder::CreateFillGBufferCommandsRecorder(InitParams*
 	rootParams[kSRVRootParam] = DXRootDescriptorTableParameter(ARRAYSIZE(srvDescriptorRanges), &srvDescriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
 
 	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new DXRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CreateFillGBufferCommandsRecorder::m_pRootSignature");
+	m_pRootSignature = new DXRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"FillGBufferCommandsRecorder::m_pRootSignature");
 
 	DXComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
-	m_pPipelineState = new DXPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CreateFillGBufferCommandsRecorder::m_pPipelineState");
+	m_pPipelineState = new DXPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FillGBufferCommandsRecorder::m_pPipelineState");
 }
 
-CreateFillGBufferCommandsRecorder::~CreateFillGBufferCommandsRecorder()
+FillGBufferCommandsRecorder::~FillGBufferCommandsRecorder()
 {
 	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pRootSignature);
 }
 
-void CreateFillGBufferCommandsRecorder::Record(RenderPassParams* pParams)
+void FillGBufferCommandsRecorder::Record(RenderPassParams* pParams)
 {
 	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 	DXCommandList* pCommandList = pParams->m_pCommandList;

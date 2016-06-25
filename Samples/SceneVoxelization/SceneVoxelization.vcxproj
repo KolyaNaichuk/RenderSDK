@@ -161,11 +161,11 @@ COPY /Y "$(SolutionDir)Shaders\CopyTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(
 COPY /Y "$(SolutionDir)Shaders\Material.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Material.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Material.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Material.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateFillGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateFillGBufferCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateFillGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateFillGBufferCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillGBufferCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillGBufferCommandsCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderShadowMapCommandsCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\Mesh.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Mesh.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Mesh.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Mesh.hlsl"

@@ -11,7 +11,7 @@ class DXBuffer;
 struct DXRenderEnvironment;
 struct DXBindingResourceList;
 
-class CreateRenderShadowMapCommandsRecorder
+class RenderShadowMapCommandsRecorder
 {
 public:
 	struct InitParams
@@ -36,8 +36,8 @@ public:
 		DXBuffer* m_pNumDrawSpotLightShadowCastersBuffer;
 	};
 
-	CreateRenderShadowMapCommandsRecorder(InitParams* pParams);
-	~CreateRenderShadowMapCommandsRecorder();
+	RenderShadowMapCommandsRecorder(InitParams* pParams);
+	~RenderShadowMapCommandsRecorder();
 
 	void Record(RenderPassParams* pParams);
 
