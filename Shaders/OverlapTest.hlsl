@@ -7,6 +7,12 @@ struct AABB
 	float3 radius;
 };
 
+struct Sphere
+{
+	float3 center;
+	float radius;
+};
+
 bool TestAABBAgainstPlane(float4 plane, AABB aabb)
 {
 	float maxRadiusProj = dot(aabb.radius, abs(plane.xyz));
@@ -16,11 +22,11 @@ bool TestAABBAgainstPlane(float4 plane, AABB aabb)
 	return !fullyInsideBackHalfSpace;
 }
 
-bool TestSphereAgainstPlane(float4 plane, float3 sphereCenter, float sphereRadius)
+bool TestSphereAgainstPlane(float4 plane, Sphere sphere)
 {
-	float signedDist = dot(plane, float4(sphereCenter, 1.0f));
+	float signedDist = dot(plane, float4(sphere.center, 1.0f));
 
-	bool fullyInsideBackHalfSpace = (signedDist + sphereRadius) < 0.0f;
+	bool fullyInsideBackHalfSpace = (signedDist + sphere.radius) < 0.0f;
 	return !fullyInsideBackHalfSpace;
 }
 
@@ -36,23 +42,23 @@ bool TestAABBAgainstFrustum(float4 frustumPlanes[6], AABB aabb)
 	return insideOrOverlap;
 }
 
-bool TestSphereAgainstFrustum(float4 frustumPlanes[6], float3 sphereCenter, float sphereRadius)
+bool TestSphereAgainstFrustum(float4 frustumPlanes[6], Sphere sphere)
 {
-	bool insideOrOverlap = TestSphereAgainstPlane(frustumPlanes[0], sphereCenter, sphereRadius) &&
-		TestSphereAgainstPlane(frustumPlanes[1], sphereCenter, sphereRadius) &&
-		TestSphereAgainstPlane(frustumPlanes[2], sphereCenter, sphereRadius) &&
-		TestSphereAgainstPlane(frustumPlanes[3], sphereCenter, sphereRadius) &&
-		TestSphereAgainstPlane(frustumPlanes[4], sphereCenter, sphereRadius) &&
-		TestSphereAgainstPlane(frustumPlanes[5], sphereCenter, sphereRadius);
+	bool insideOrOverlap = TestSphereAgainstPlane(frustumPlanes[0], sphere) &&
+		TestSphereAgainstPlane(frustumPlanes[1], sphere) &&
+		TestSphereAgainstPlane(frustumPlanes[2], sphere) &&
+		TestSphereAgainstPlane(frustumPlanes[3], sphere) &&
+		TestSphereAgainstPlane(frustumPlanes[4], sphere) &&
+		TestSphereAgainstPlane(frustumPlanes[5], sphere);
 
 	return insideOrOverlap;
 }
 
-bool TestSphereAgainstAABB(AABB aabb, float3 sphereCenter, float sphereRadius)
+bool TestSphereAgainstAABB(AABB aabb, Sphere sphere)
 {
-	float3 delta = max(0.0f, abs(aabb.center - sphereCenter) - sphereRadius);
+	float3 delta = max(0.0f, abs(aabb.center - sphere.center) - sphere.radius);
 	float sqDist = dot(delta, delta);
-	bool insideOrOverlap = sqDist <= (sphereRadius * sphereRadius);
+	bool insideOrOverlap = sqDist <= (sphere.radius * sphere.radius);
 	
 	return insideOrOverlap;
 }

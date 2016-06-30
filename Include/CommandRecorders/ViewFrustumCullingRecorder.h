@@ -10,13 +10,20 @@ class DXBuffer;
 struct DXRenderEnvironment;
 struct DXBindingResourceList;
 
-class DetectVisibleMeshesRecorder
+enum ObjectBoundsType
+{
+	ObjectBoundsType_AABB = 1,
+	ObjectBoundsType_Sphere = 2
+};
+
+class ViewFrustumCullingRecorder
 {
 public:
 	struct InitParams
 	{
 		DXRenderEnvironment* m_pRenderEnv;
-		u32 m_NumMeshesInBatch;
+		ObjectBoundsType m_ObjectBoundsType;
+		u32 m_NumObjects;
 	};
 	struct RenderPassParams
 	{
@@ -24,11 +31,11 @@ public:
 		DXCommandList* m_pCommandList;
 		DXCommandAllocator* m_pCommandAllocator;
 		DXBindingResourceList* m_pResources;
-		DXBuffer* m_pNumVisibleMeshesBuffer;
+		DXBuffer* m_pNumVisibleObjectsBuffer;
 	};
 	
-	DetectVisibleMeshesRecorder(InitParams* pParams);
-	~DetectVisibleMeshesRecorder();
+	ViewFrustumCullingRecorder(InitParams* pParams);
+	~ViewFrustumCullingRecorder();
 
 	void Record(RenderPassParams* pParams);
 

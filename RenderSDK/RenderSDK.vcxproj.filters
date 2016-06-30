@@ -213,9 +213,6 @@
     <ClInclude Include="..\Include\Math\Cone.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\DetectVisibleMeshesRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapsRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
@@ -226,6 +223,9 @@
       <Filter>CommandRecorders</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapCommandsRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\ViewFrustumCullingRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
   </ItemGroup>
@@ -410,9 +410,6 @@
     <ClCompile Include="..\Source\Math\Cone.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\DetectVisibleMeshesRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapsRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
@@ -423,6 +420,9 @@
       <Filter>CommandRecorders</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapCommandsRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\ViewFrustumCullingRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
   </ItemGroup>
@@ -496,9 +496,6 @@
     <None Include="..\Shaders\Material.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\DetectVisibleMeshesCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\Mesh.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -509,6 +506,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\RenderShadowMapCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\ViewFrustumCullingCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

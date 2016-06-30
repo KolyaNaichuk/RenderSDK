@@ -152,7 +152,7 @@
     <ClInclude Include="..\Include\CommandRecorders\FillGBufferCommandsRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\CreateVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\FillGBufferRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\DetectVisibleMeshesRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\ViewFrustumCullingRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapCommandsRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapsRecorder.h" />
@@ -226,7 +226,7 @@
     <ClCompile Include="..\Source\CommandRecorders\CreateVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\FillGBufferRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\FillGBufferCommandsRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\DetectVisibleMeshesRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\ViewFrustumCullingRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapsRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\ScaleTextureRecorder.cpp" />
@@ -443,7 +443,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\DetectVisibleMeshesCS.hlsl">
+    <None Include="..\Shaders\ViewFrustumCullingCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>

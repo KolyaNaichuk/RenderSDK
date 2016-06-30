@@ -1,6 +1,5 @@
-#include "Lighting.hlsl"
-#include "OverlapTest.hlsl"
 #include "Mesh.hlsl"
+#include "OverlapTest.hlsl"
 #include "IndirectDraw.hlsl"
 
 Buffer<uint> g_MeshIndexBuffer : register(t0);
@@ -8,7 +7,7 @@ StructuredBuffer<AABB> g_MeshBoundsBuffer : register(t1);
 StructuredBuffer<MeshDesc> g_MeshDescBuffer : register(t2);
 
 #if ENABLE_POINT_LIGHTS == 1
-StructuredBuffer<PointLightBounds> g_PointLightBoundsBuffer : register(t3);
+StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t3);
 Buffer<uint> g_NumPointLightsBuffer : register(t4);
 
 RWBuffer<uint> g_ShadowCastingPointLightIndexBuffer : register(u0);
@@ -23,7 +22,7 @@ groupshared uint g_ShadowCastingPointLightOffset;
 #endif
 
 #if ENABLE_SPOT_LIGHTS == 1
-StructuredBuffer<SpotLightBounds> g_SpotLightBoundsBuffer : register(t5);
+StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t5);
 Buffer<uint> g_NumSpotLightsBuffer : register(t6);
 
 RWBuffer<uint> g_ShadowCastingSpotLightIndexBuffer : register(u4);
@@ -42,10 +41,7 @@ void FindPointLightsPerShadowCaster(uint localThreadIndex, AABB meshBounds)
 {
 	for (uint lightIndex = localThreadIndex; lightIndex < g_NumPointLightsBuffer[0]; lightIndex += THREAD_GROUP_SIZE)
 	{
-		float3 worldSpaceSphereCenter = g_PointLightBoundsBuffer[lightIndex].worldSpaceSphereCenter;
-		float sphereRadius = g_PointLightBoundsBuffer[lightIndex].sphereRadius;
-
-		if (TestSphereAgainstAABB(meshBounds, worldSpaceSphereCenter, sphereRadius))
+		if (TestSphereAgainstAABB(meshBounds, g_PointLightBoundsBuffer[lightIndex]))
 		{
 			uint listIndex;
 			InterlockedAdd(g_NumPointLightsPerShadowCaster, 1, listIndex);
@@ -60,10 +56,7 @@ void FindSpotLightsPerShadowCaster(uint localThreadIndex, AABB meshBounds)
 {
 	for (uint lightIndex = localThreadIndex; lightIndex < g_NumSpotLightsBuffer[0]; lightIndex += THREAD_GROUP_SIZE)
 	{
-		float3 worldSpaceSphereCenter = g_SpotLightBoundsBuffer[lightIndex].worldSpaceSphereCenter;
-		float sphereRadius = g_SpotLightBoundsBuffer[lightIndex].sphereRadius;
-
-		if (TestSphereAgainstAABB(meshBounds, worldSpaceSphereCenter, sphereRadius))
+		if (TestSphereAgainstAABB(meshBounds, g_SpotLightBoundsBuffer[lightIndex]))
 		{
 			uint listIndex;
 			InterlockedAdd(g_NumSpotLightsPerShadowCaster, 1, listIndex);
@@ -148,21 +141,11 @@ void Main(uint3 groupId : SV_GroupID, uint localThreadIndex : SV_GroupIndex)
 
 #if ENABLE_POINT_LIGHTS == 1
 	for (uint index = localThreadIndex; index < g_NumPointLightsPerShadowCaster; index += THREAD_GROUP_SIZE)
-	{
-		uint writeIndex = index + g_ShadowCastingPointLightOffset;
-		uint lightIndex = g_PointLightIndicesPerShadowCaster[index];
-
-		g_ShadowCastingPointLightIndexBuffer[writeIndex] = lightIndex;
-	}
+		g_ShadowCastingPointLightIndexBuffer[g_ShadowCastingPointLightOffset + index] = g_PointLightIndicesPerShadowCaster[index];
 #endif
 
 #if ENABLE_SPOT_LIGHTS == 1
 	for (uint index = localThreadIndex; index < g_NumSpotLightsPerShadowCaster; index += THREAD_GROUP_SIZE)
-	{
-		uint writeIndex = index + g_ShadowCastingSpotLightOffset;
-		uint lightIndex = g_SpotLightIndicesPerShadowCaster[index];
-
-		g_ShadowCastingSpotLightIndexBuffer[writeIndex] = lightIndex;
-	}
+		g_ShadowCastingSpotLightIndexBuffer[g_ShadowCastingSpotLightOffset + index] = g_SpotLightIndicesPerShadowCaster[index];
 #endif
 }

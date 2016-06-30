@@ -4,22 +4,10 @@
 #define SHADING_MODE_PHONG			1
 #define SHADING_MODE_BLINN_PHONG	2
 
-struct PointLightBounds
-{
-	float3 worldSpaceSphereCenter;
-	float sphereRadius;
-};
-
 struct PointLightProps
 {
 	float3 color;
 	float attenStartRange;
-};
-
-struct SpotLightBounds
-{
-	float3 worldSpaceSphereCenter;
-	float sphereRadius;
 };
 
 struct SpotLightProps

@@ -25,7 +25,7 @@ class VisualizeVoxelGridRecorder;
 class VisualizeMeshRecorder;
 class CopyTextureRecorder;
 class TiledShadingRecorder;
-class DetectVisibleMeshesRecorder;
+class ViewFrustumCullingRecorder;
 class FillGBufferCommandsRecorder;
 class RenderShadowMapCommandsRecorder;
 
@@ -117,8 +117,14 @@ private:
 	VisualizeMeshRecorder* m_pVisualizeMeshRecorder;
 	DXBindingResourceList* m_VisualizeMeshResources[kBackBufferCount];
 
-	DetectVisibleMeshesRecorder* m_pDetectVisibleMeshesRecorder;
+	ViewFrustumCullingRecorder* m_pDetectVisibleMeshesRecorder;
 	DXBindingResourceList* m_pDetectVisibleMeshesResources;
+
+	ViewFrustumCullingRecorder* m_pDetectVisiblePointLightsRecorder;
+	DXBindingResourceList* m_pDetectVisiblePointLightsResources;
+
+	ViewFrustumCullingRecorder* m_pDetectVisibleSpotLightsRecorder;
+	DXBindingResourceList* m_pDetectVisibleSpotLightsResources;
 
 	FillGBufferCommandsRecorder* m_pFillGBufferCommandsRecorder;
 	DXBindingResourceList* m_pFillGBufferCommandsResources;
@@ -131,9 +137,14 @@ private:
 	DXBindingResourceList* m_CopyTextureResources[kBackBufferCount];
 
 	MeshBatch* m_pMeshBatch;
+	
 	LightBuffer* m_pPointLightBuffer;
-	LightBuffer* m_pSpotLightBuffer;
 	DXBuffer* m_pNumVisiblePointLightsBuffer;
+	DXBuffer* m_pVisiblePointLightIndexBuffer;
+
+	LightBuffer* m_pSpotLightBuffer;
 	DXBuffer* m_pNumVisibleSpotLightsBuffer;
+	DXBuffer* m_pVisibleSpotLightIndexBuffer;
+	
 	Camera* m_pCamera;
 };

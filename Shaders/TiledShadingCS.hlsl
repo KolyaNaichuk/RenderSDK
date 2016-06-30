@@ -73,12 +73,12 @@ Texture2D g_DiffuseTexture : register(t2);
 Texture2D g_SpecularTexture : register(t3);
 
 #if NUM_POINT_LIGHTS > 0
-StructuredBuffer<PointLightBounds> g_PointLightBoundsBuffer : register(t4);
+StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t4);
 StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t5);
 #endif
 
 #if NUM_SPOT_LIGHTS > 0
-StructuredBuffer<SpotLightBounds> g_SpotLightBoundsBuffer : register(t6);
+StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t6);
 StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t7);
 #endif
 

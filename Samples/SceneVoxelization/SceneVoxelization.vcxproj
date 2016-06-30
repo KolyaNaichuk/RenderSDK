@@ -149,8 +149,8 @@ COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\Bin\$
 COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Lighting.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Lighting.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\DetectVisibleMeshesCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DetectVisibleMeshesCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\DetectVisibleMeshesCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DetectVisibleMeshesCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ViewFrustumCullingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ViewFrustumCullingCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\OverlapTest.hlsl"
 COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\OverlapTest.hlsl"
