@@ -1,6 +1,7 @@
-#include "Reconstruction.hlsl"
 #include "Lighting.hlsl"
 #include "OverlapTest.hlsl"
+#include "Reconstruction.hlsl"
+#include "Foundation.hlsl"
 
 struct TiledShadingData
 {
@@ -12,55 +13,11 @@ struct TiledShadingData
 	float  notUsed3;
 	float3 worldSpaceCameraPos;
 	float  notUsed4;
-	matrix viewMatrix;
-	matrix projMatrix;
-	matrix projInvMatrix;
 	matrix viewProjInvMatrix;
-	matrix notUsed5[3];
+	matrix notUsed5[2];
 };
 
 #define NUM_THREADS_PER_TILE	(TILE_SIZE * TILE_SIZE)
-
-float4 CreatePlanePassingThroughOrigin(float3 pt1, float3 pt2)
-{
-	float3 planeNormal = normalize(cross(pt1, pt2));
-	float signedDistFromOrigin = 0.0f;
-
-	return float4(planeNormal, signedDistFromOrigin);
-}
-
-void BuildFrustumSidePlanes(out float4 viewSpaceFrusumSidePlanes[4], uint2 tileId, float2 rcpScreenSize, matrix projInvMatrix)
-{
-	uint2 screenSpaceTileTLCorner = tileId.xy * TILE_SIZE;
-	uint2 screenSpaceTileBRCorner = screenSpaceTileTLCorner.xy + TILE_SIZE;
-
-	float2 texSpaceTileTLCorner = (float2(screenSpaceTileTLCorner.xy) + 0.5f) * rcpScreenSize;
-	float2 texSpaceTileBRCorner = (float2(screenSpaceTileBRCorner.xy) + 0.5f) * rcpScreenSize;
-	float2 texSpaceTileTRCorner =  float2(texSpaceTileBRCorner.x, texSpaceTileTLCorner.y);
-	float2 texSpaceTileBLCorner =  float2(texSpaceTileTLCorner.x, texSpaceTileBRCorner.y);
-
-	float3 viewSpaceTileTLCorner = ComputeViewSpacePosition(texSpaceTileTLCorner, 1.0f, projInvMatrix).xyz;
-	float3 viewSpaceTileTRCorner = ComputeViewSpacePosition(texSpaceTileTRCorner, 1.0f, projInvMatrix).xyz;
-	float3 viewSpaceTileBLCorner = ComputeViewSpacePosition(texSpaceTileBLCorner, 1.0f, projInvMatrix).xyz;
-	float3 viewSpaceTileBRCorner = ComputeViewSpacePosition(texSpaceTileBRCorner, 1.0f, projInvMatrix).xyz;
-
-	viewSpaceFrusumSidePlanes[0] = CreatePlanePassingThroughOrigin(viewSpaceTileTRCorner, viewSpaceTileTLCorner);
-	viewSpaceFrusumSidePlanes[1] = CreatePlanePassingThroughOrigin(viewSpaceTileBLCorner, viewSpaceTileBRCorner);
-	viewSpaceFrusumSidePlanes[2] = CreatePlanePassingThroughOrigin(viewSpaceTileTLCorner, viewSpaceTileBLCorner);
-	viewSpaceFrusumSidePlanes[3] = CreatePlanePassingThroughOrigin(viewSpaceTileBRCorner, viewSpaceTileTRCorner);
-}
-
-bool TestSphereAgainstFrustum(float4 frustumSidePlanes[4], float frustumMinZ, float frustumMaxZ, float3 sphereCenter, float sphereRadius)
-{
-	bool insideOrOverlap = TestSphereAgainstPlane(frustumSidePlanes[0], sphereCenter, sphereRadius) &&
-		TestSphereAgainstPlane(frustumSidePlanes[1], sphereCenter, sphereRadius) &&
-		TestSphereAgainstPlane(frustumSidePlanes[2], sphereCenter, sphereRadius) &&
-		TestSphereAgainstPlane(frustumSidePlanes[3], sphereCenter, sphereRadius) &&
-		(frustumMinZ < sphereCenter.z + sphereRadius) &&
-		(frustumMaxZ > sphereCenter.z - sphereRadius);
-
-	return insideOrOverlap;
-}
 
 cbuffer TiledShadingDataBuffer : register(b0)
 {
@@ -72,59 +29,36 @@ Texture2D g_NormalTexture : register(t1);
 Texture2D g_DiffuseTexture : register(t2);
 Texture2D g_SpecularTexture : register(t3);
 
-#if NUM_POINT_LIGHTS > 0
+#if ENABLE_POINT_LIGHTS == 1
 StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t4);
 StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t5);
+Buffer<uint> g_PointLightIndexPerTileBuffer : register(t6);
+StructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(t7);
 #endif
 
-#if NUM_SPOT_LIGHTS > 0
-StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t6);
-StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t7);
+#if ENABLE_SPOT_LIGHTS == 1
+StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t8);
+StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t9);
+Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t10);
+StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t11);
 #endif
 
 RWTexture2D<float4> g_AccumLightTexture : register(u0);
 
-groupshared uint g_ViewSpaceMinDepthIntPerTile;
-groupshared uint g_ViewSpaceMaxDepthIntPerTile;
-
-#if NUM_POINT_LIGHTS > 0
-groupshared uint g_NumPointLightsPerTile;
-groupshared uint g_PointLightIndicesPerTile[NUM_POINT_LIGHTS];
-#endif
-
-#if NUM_SPOT_LIGHTS > 0
-groupshared uint g_NumSpotLightsPerTile;
-groupshared uint g_SpotLightIndicesPerTile[NUM_SPOT_LIGHTS];
-#endif
-
-#if NUM_POINT_LIGHTS > 0
-void CullPointLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth, matrix viewMatrix)
-{
-	for (uint lightIndex = localThreadIndex; lightIndex < NUM_POINT_LIGHTS; lightIndex += NUM_THREADS_PER_TILE)
-	{
-		float3 worldSpaceSphereCenter = g_PointLightBoundsBuffer[lightIndex].worldSpaceSphereCenter;
-		float3 viewSpaceSphereCenter = mul(float4(worldSpaceSphereCenter.xyz, 1.0f), viewMatrix).xyz;
-		float sphereRadius = g_PointLightBoundsBuffer[lightIndex].sphereRadius;
-
-		if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceSphereCenter, sphereRadius))
-		{
-			uint listIndex;
-			InterlockedAdd(g_NumPointLightsPerTile, 1, listIndex);
-			g_PointLightIndicesPerTile[listIndex] = lightIndex;
-		}
-	}
-}
-
-float3 CalcPointLightsContribution(float3 worldSpaceDirToViewer, float3 worldSpacePos, float3 worldSpaceNormal,
+#if ENABLE_POINT_LIGHTS == 1
+float3 CalcPointLightsContribution(uint tileIndex, float3 worldSpaceDirToViewer, float3 worldSpacePos, float3 worldSpaceNormal,
 	float3 diffuseAlbedo, float3 specularAlbedo, float specularPower)
 {
-	float3 lightContrib = float3(0.0f, 0.0f, 0.0f);
-	for (uint lightIndexPerTile = 0; lightIndexPerTile < g_NumPointLightsPerTile; ++lightIndexPerTile)
-	{
-		uint lightIndex = g_PointLightIndicesPerTile[lightIndexPerTile];
+	uint lightIndexPerTileStart = g_PointLightRangePerTileBuffer[tileIndex].start;
+	uint lightIndexPerTileEnd = lightIndexPerTileStart + g_PointLightRangePerTileBuffer[tileIndex].length;
 
-		float3 worldSpaceLightPos = g_PointLightBoundsBuffer[lightIndex].worldSpaceSphereCenter;
-		float attenEndRange = g_PointLightBoundsBuffer[lightIndex].sphereRadius;
+	float3 lightContrib = float3(0.0f, 0.0f, 0.0f);
+	for (uint lightIndexPerTile = lightIndexPerTileStart; lightIndexPerTile < lightIndexPerTileEnd; ++lightIndexPerTile)
+	{
+		uint lightIndex = g_PointLightIndexPerTileBuffer[lightIndexPerTile];
+
+		float3 worldSpaceLightPos = g_PointLightBoundsBuffer[lightIndex].center;
+		float attenEndRange = g_PointLightBoundsBuffer[lightIndex].radius;
 		float attenStartRange = g_PointLightPropsBuffer[lightIndex].attenStartRange;
 		float3 lightColor = g_PointLightPropsBuffer[lightIndex].color;
 
@@ -135,35 +69,21 @@ float3 CalcPointLightsContribution(float3 worldSpaceDirToViewer, float3 worldSpa
 }
 #endif
 
-#if NUM_SPOT_LIGHTS > 0
-void CullSpotLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth, matrix viewMatrix)
-{
-	for (uint lightIndex = localThreadIndex; lightIndex < NUM_SPOT_LIGHTS; lightIndex += NUM_THREADS_PER_TILE)
-	{
-		float3 worldSpaceSphereCenter = g_SpotLightBoundsBuffer[lightIndex].worldSpaceSphereCenter;
-		float3 viewSpaceSphereCenter = mul(float4(worldSpaceSphereCenter.xyz, 1.0f), viewMatrix).xyz;
-		float sphereRadius = g_SpotLightBoundsBuffer[lightIndex].sphereRadius;
-
-		if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceSphereCenter, sphereRadius))
-		{
-			uint listIndex;
-			InterlockedAdd(g_NumSpotLightsPerTile, 1, listIndex);
-			g_SpotLightIndicesPerTile[listIndex] = lightIndex;
-		}
-	}
-}
-
-float3 CalcSpotLightsContribution(float3 worldSpaceDirToViewer, float3 worldSpacePos, float3 worldSpaceNormal,
+#if ENABLE_SPOT_LIGHTS == 1
+float3 CalcSpotLightsContribution(uint tileIndex, float3 worldSpaceDirToViewer, float3 worldSpacePos, float3 worldSpaceNormal,
 	float3 diffuseAlbedo, float3 specularAlbedo, float specularPower)
 {
+	uint lightIndexPerTileStart = g_SpotLightRangePerTileBuffer[tileIndex].start;
+	uint lightIndexPerTileEnd = lightIndexPerTileStart + g_SpotLightRangePerTileBuffer[tileIndex].length;
+
 	float3 lightContrib = float3(0.0f, 0.0f, 0.0f);
-	for (uint lightIndexPerTile = 0; lightIndexPerTile < g_NumSpotLightsPerTile; ++lightIndexPerTile)
+	for (uint lightIndexPerTile = lightIndexPerTileStart; lightIndexPerTile < lightIndexPerTileEnd; ++lightIndexPerTile)
 	{
-		uint lightIndex = g_SpotLightIndicesPerTile[lightIndexPerTile];
+		uint lightIndex = g_SpotLightIndexPerTileBuffer[lightIndexPerTile];
 		
-		SpotLightBounds lightBounds = g_SpotLightBoundsBuffer[lightIndex];
+		Sphere lightBounds = g_SpotLightBoundsBuffer[lightIndex];
 		float3 worldSpaceLightDir = g_SpotLightPropsBuffer[lightIndex].worldSpaceDir;
-		float3 worldSpaceLightPos = lightBounds.worldSpaceSphereCenter - lightBounds.sphereRadius * worldSpaceLightDir;
+		float3 worldSpaceLightPos = lightBounds.center - lightBounds.radius * worldSpaceLightDir;
 		float attenEndRange = g_SpotLightPropsBuffer[lightIndex].attenEndRange;
 		float attenStartRange = g_SpotLightPropsBuffer[lightIndex].attenStartRange;
 		float3 lightColor = g_SpotLightPropsBuffer[lightIndex].color;
@@ -179,53 +99,9 @@ float3 CalcSpotLightsContribution(float3 worldSpaceDirToViewer, float3 worldSpac
 #endif
 
 [numthreads(TILE_SIZE, TILE_SIZE, 1)]
-void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID, uint localThreadIndex : SV_GroupIndex)
+void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID)
 {
-	if (localThreadIndex == 0)
-	{
-		g_ViewSpaceMinDepthIntPerTile = 0x7F7FFFFF;
-		g_ViewSpaceMaxDepthIntPerTile = 0;
-
-#if NUM_POINT_LIGHTS > 0
-		g_NumPointLightsPerTile = 0;
-#endif
-
-#if NUM_SPOT_LIGHTS > 0
-		g_NumSpotLightsPerTile = 0;
-#endif
-	}
-	GroupMemoryBarrierWithGroupSync();
-
-	float hardwareDepth = g_DepthTexture[globalThreadId.xy].x;
-	float viewSpaceDepth = ComputeViewSpaceDepth(hardwareDepth, g_ShadingData.projMatrix);
-
-	if (hardwareDepth != 1.0f)
-	{
-		uint viewSpaceDepthInt = asuint(viewSpaceDepth);
-
-		InterlockedMin(g_ViewSpaceMinDepthIntPerTile, viewSpaceDepthInt);
-		InterlockedMax(g_ViewSpaceMaxDepthIntPerTile, viewSpaceDepthInt);
-	}
-	GroupMemoryBarrierWithGroupSync();
-
-	float viewSpaceMinDepthPerTile = asfloat(g_ViewSpaceMinDepthIntPerTile);
-	float viewSpaceMaxDepthPerTile = asfloat(g_ViewSpaceMaxDepthIntPerTile);
-
-#if (NUM_POINT_LIGHTS > 0) || (NUM_SPOT_LIGHTS > 0)
-	float4 viewSpaceFrusumSidePlanes[4];
-	BuildFrustumSidePlanes(viewSpaceFrusumSidePlanes, tileId.xy, g_ShadingData.rcpScreenSize, g_ShadingData.projInvMatrix);
-#endif
-
-#if NUM_POINT_LIGHTS > 0
-	CullPointLightsPerTile(localThreadIndex, viewSpaceFrusumSidePlanes, viewSpaceMinDepthPerTile, viewSpaceMaxDepthPerTile, g_ShadingData.viewMatrix);
-	GroupMemoryBarrierWithGroupSync();
-#endif
-
-#if NUM_SPOT_LIGHTS > 0
-	CullSpotLightsPerTile(localThreadIndex, viewSpaceFrusumSidePlanes, viewSpaceMinDepthPerTile, viewSpaceMaxDepthPerTile, g_ShadingData.viewMatrix);
-	GroupMemoryBarrierWithGroupSync();
-#endif
-
+	float  hardwareDepth = g_DepthTexture[globalThreadId.xy].x;
 	float2 texCoord = (float2(globalThreadId.xy) + 0.5f) * g_ShadingData.rcpScreenSize;
 	float3 worldSpacePos = ComputeWorldSpacePosition(texCoord, hardwareDepth, g_ShadingData.viewProjInvMatrix).xyz;
 	float3 worldSpaceDirToViewer = normalize(g_ShadingData.worldSpaceCameraPos - worldSpacePos);
@@ -233,20 +109,22 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 	float3 diffuseAlbedo = g_DiffuseTexture[globalThreadId.xy].rgb;
 	float4 specularAlbedo = g_SpecularTexture[globalThreadId.xy].rgba;
 
-#if NUM_POINT_LIGHTS > 0
-	float3 pointLightsContrib = CalcPointLightsContribution(worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal, diffuseAlbedo, specularAlbedo.rgb, specularAlbedo.a);
+	uint tileIndex = tileId.y * NUM_TILES_X + tileId.x;
+
+#if ENABLE_POINT_LIGHTS == 1
+	float3 pointLightsContrib = CalcPointLightsContribution(tileIndex, worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal, diffuseAlbedo, specularAlbedo.rgb, specularAlbedo.a);
 #else
 	float3 pointLightsContrib = float3(0.0f, 0.0f, 0.0f);
 #endif
 
-#if NUM_SPOT_LIGHTS > 0
-	float3 spotLightsContrib = CalcSpotLightsContribution(worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal, diffuseAlbedo, specularAlbedo.rgb, specularAlbedo.a);
+#if ENABLE_SPOT_LIGHTS == 1
+	float3 spotLightsContrib = CalcSpotLightsContribution(tileIndex, worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal, diffuseAlbedo, specularAlbedo.rgb, specularAlbedo.a);
 #else
 	float3 spotLightsContrib = float3(0.0f, 0.0f, 0.0f);
 #endif
 
-#if USE_DIRECTIONAL_LIGHT == 1
-	float3 directionalLightContrib = CalcDirectionalLightContribution(g_ShadingData.worldSpaceLightDir, g_ShadingData.lightColor, worldSpaceDirToViewer,
+#if ENABLE_DIRECTIONAL_LIGHT == 1
+	float3 directionalLightContrib = CalcDirectionalLightContribution(tileIndex, g_ShadingData.worldSpaceLightDir, g_ShadingData.lightColor, worldSpaceDirToViewer,
 		worldSpaceNormal, diffuseAlbedo, specularAlbedo.rgb, specularAlbedo.a);
 #else
 	float3 directionalLightContrib = float3(0.0f, 0.0f, 0.0f);

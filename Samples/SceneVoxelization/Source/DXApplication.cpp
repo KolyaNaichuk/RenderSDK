@@ -136,11 +136,8 @@ struct TiledShadingData
 	f32 m_NotUsed3;
 	Vector3f m_WorldSpaceCameraPos;
 	f32 m_NotUsed4;
-	Matrix4f m_ViewMatrix;
-	Matrix4f m_ProjMatrix;
-	Matrix4f m_ProjInvMatrix;
 	Matrix4f m_ViewProjInvMatrix;
-	Matrix4f m_NotUsed5[3];
+	Matrix4f m_NotUsed5[2];
 };
 
 struct Voxel
@@ -995,15 +992,13 @@ void DXApplication::OnInit()
 	TiledShadingData tiledShadingData;
 	tiledShadingData.m_RcpScreenSize = Rcp(Vector2f((f32)bufferWidth, (f32)bufferHeight));
 	tiledShadingData.m_WorldSpaceCameraPos = mainCameraPos;
-	tiledShadingData.m_ViewMatrix = m_pCamera->GetViewMatrix();
-	tiledShadingData.m_ProjMatrix = m_pCamera->GetProjMatrix();
-	tiledShadingData.m_ProjInvMatrix = Inverse(m_pCamera->GetProjMatrix());
 	tiledShadingData.m_ViewProjInvMatrix = Inverse(m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix());
-
+	
 	const DirectionalLight* pDirectionalLight = pScene->GetDirectionalLight();
 	if (pDirectionalLight != nullptr)
 	{
 		const BasisAxes lightBasis = ExtractBasisAxes(pDirectionalLight->GetTransform().GetRotation());
+		
 		tiledShadingData.m_WorldSpaceLightDir = Normalize(lightBasis.m_ZAxis);
 		tiledShadingData.m_LightColor = pDirectionalLight->GetColor();
 	}
