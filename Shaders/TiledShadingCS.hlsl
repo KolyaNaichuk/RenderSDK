@@ -2,7 +2,7 @@
 #include "Lighting.hlsl"
 #include "OverlapTest.hlsl"
 
-struct ShadingData
+struct TiledShadingData
 {
 	float2 rcpScreenSize;
 	float2 notUsed1;
@@ -62,9 +62,9 @@ bool TestSphereAgainstFrustum(float4 frustumSidePlanes[4], float frustumMinZ, fl
 	return insideOrOverlap;
 }
 
-cbuffer ShadingDataBuffer : register(b0)
+cbuffer TiledShadingDataBuffer : register(b0)
 {
-	ShadingData g_ShadingData;
+	TiledShadingData g_ShadingData;
 }
 
 Texture2D g_DepthTexture : register(t0);

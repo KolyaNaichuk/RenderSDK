@@ -3,7 +3,7 @@
 #define OBJECT_BOUNDS_TYPE_AABB		1
 #define OBJECT_BOUNDS_TYPE_SPHERE	2
 
-struct CullingData
+struct ViewFrustumCullingData
 {
 	float4 viewFrustumPlanes[6];
 	uint numObjects;
@@ -11,9 +11,9 @@ struct CullingData
 	float4 notUsed2[9];
 };
 
-cbuffer CullingDataBuffer : register(b0)
+cbuffer ViewFrustumCullingDataBuffer : register(b0)
 {
-	CullingData g_CullingData;
+	ViewFrustumCullingData g_CullingData;
 };
 
 #if OBJECT_BOUNDS_TYPE == OBJECT_BOUNDS_TYPE_AABB
