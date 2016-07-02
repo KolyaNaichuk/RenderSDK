@@ -1,4 +1,4 @@
-#include "Material.hlsl"
+#include "Foundation.hlsl"
 
 struct PSInput
 {

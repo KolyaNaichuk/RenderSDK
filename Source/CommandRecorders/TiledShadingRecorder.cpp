@@ -1,5 +1,4 @@
 #include "CommandRecorders/TiledShadingRecorder.h"
-#include "CommandRecorders/FillGBufferRecorder.h"
 #include "DX/DXPipelineState.h"
 #include "DX/DXRootSignature.h"
 #include "DX/DXResource.h"
@@ -21,8 +20,7 @@ TiledShadingRecorder::TiledShadingRecorder(InitParams* pParams)
 {
 	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 
-	const u16 tileSize = 16;
-	std::string tileSizeStr = std::to_string(tileSize);
+	std::string tileSizeStr = std::to_string(pParams->m_TileSize);
 	std::string shadingModeStr = std::to_string(pParams->m_ShadingMode);
 	std::string numPointLightsStr = std::to_string(pParams->m_NumPointLights);
 	std::string numSpotLightsStr = std::to_string(pParams->m_NumSpotLights);

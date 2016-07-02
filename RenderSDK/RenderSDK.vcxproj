@@ -145,7 +145,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Include\CommandRecorders\AssignLightsPerTileRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\TiledLightCullingRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\CalcTextureLuminanceRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\ClearVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\CopyTextureRecorder.h" />
@@ -218,7 +218,7 @@
   <ItemGroup>
     <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp" />
     <ClCompile Include="..\Include\DX\DXResourceList.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\AssignLightsPerTileRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\TiledLightCullingRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CalcTextureLuminanceRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\ClearVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\CopyTextureRecorder.cpp" />
@@ -459,11 +459,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\Material.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Shaders\FillGBufferCommandsCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
@@ -490,12 +485,18 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\Mesh.hlsl">
+    <None Include="..\Shaders\Foundation.hlsl">
       <FileType>Document</FileType>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Shaders\IndirectDraw.hlsl">
+    <None Include="..\Shaders\TiledLightCullingCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

@@ -96,6 +96,9 @@ void RenderShadowMapCommandsRecorder::Record(RenderPassParams* pParams)
 		DXBuffer* pNumShadowCastingLightsBuffer = pParams->m_pNumShadowCastingPointLightsBuffer;
 		DXBuffer* pNumShadowCastersBuffer = pParams->m_pNumDrawPointLightShadowCastersBuffer;
 
+		assert(pNumShadowCastingLightsBuffer != nullptr);
+		assert(pNumShadowCastersBuffer != nullptr);
+
 		DXDescriptorHandle numShadowCastingLightsUAVHandle(pResources->m_SRVHeapStart, 6);
 		pCommandList->ClearUnorderedAccessView(numShadowCastingLightsUAVHandle, pNumShadowCastingLightsBuffer->GetUAVHandle(), pNumShadowCastingLightsBuffer, numClearValue);
 
@@ -106,6 +109,9 @@ void RenderShadowMapCommandsRecorder::Record(RenderPassParams* pParams)
 	{
 		DXBuffer* pNumShadowCastingLightsBuffer = pParams->m_pNumShadowCastingSpotLightsBuffer;
 		DXBuffer* pNumShadowCastersBuffer = pParams->m_pNumDrawSpotLightShadowCastersBuffer;
+
+		assert(pNumShadowCastingLightsBuffer != nullptr);
+		assert(pNumShadowCastersBuffer != nullptr);
 
 		DXDescriptorHandle numShadowCastingLightsUAVHandle(pResources->m_SRVHeapStart, m_EnablePointLights ? 12 : 6);
 		pCommandList->ClearUnorderedAccessView(numShadowCastingLightsUAVHandle, pNumShadowCastingLightsBuffer->GetUAVHandle(), pNumShadowCastingLightsBuffer, numClearValue);

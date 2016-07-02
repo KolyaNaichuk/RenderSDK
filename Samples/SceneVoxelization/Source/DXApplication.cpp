@@ -13,6 +13,7 @@
 #include "DX/DXResourceList.h"
 #include "DX/DXCommandSignature.h"
 #include "CommandRecorders/FillGBufferRecorder.h"
+#include "CommandRecorders/TiledLightCullingRecorder.h"
 #include "CommandRecorders/TiledShadingRecorder.h"
 #include "CommandRecorders/ClearVoxelGridRecorder.h"
 #include "CommandRecorders/CreateVoxelGridRecorder.h"
@@ -170,6 +171,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_BackBufferIndex(0)
 	, m_pFillGBufferRecorder(nullptr)
 	, m_pFillGBufferResources(nullptr)
+	, m_pTiledLightCullingRecorder(nullptr)
+	, m_pTiledLightCullingResources(nullptr)
 	, m_pTiledShadingRecorder(nullptr)
 	, m_pTiledShadingResources(nullptr)
 	, m_pClearVoxelGridRecorder(nullptr)
@@ -241,6 +244,8 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pInjectVPLsIntoVoxelGridRecorder);
 	SafeDelete(m_pVisualizeVoxelGridRecorder);
 	SafeDelete(m_pVisualizeMeshRecorder);
+	SafeDelete(m_pTiledLightCullingRecorder);
+	SafeDelete(m_pTiledLightCullingResources);
 	SafeDelete(m_pTiledShadingRecorder);
 	SafeDelete(m_pTiledShadingResources);
 	SafeDelete(m_pFillGBufferRecorder);
@@ -510,6 +515,16 @@ void DXApplication::OnInit()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 	
+	TiledLightCullingRecorder::InitParams tiledLightCullingParams;
+	tiledLightCullingParams.m_pRenderEnv = m_pRenderEnv;
+	tiledLightCullingParams.m_TileSize = kTileSize;
+	tiledLightCullingParams.m_NumTilesX = kNumTilesX;
+	tiledLightCullingParams.m_NumTilesY = kNumTilesY;
+	tiledLightCullingParams.m_MaxNumPointLights = (m_pPointLightBuffer != nullptr) ? m_pPointLightBuffer->GetNumLights() : 0;
+	tiledLightCullingParams.m_MaxNumSpotLights = (m_pSpotLightBuffer != nullptr) ? m_pSpotLightBuffer->GetNumLights() : 0;
+
+	m_pTiledLightCullingRecorder = new TiledLightCullingRecorder(&tiledLightCullingParams);
+
 	FillGBufferCommandsRecorder::InitParams fillGBufferCommandsParams;
 	fillGBufferCommandsParams.m_pRenderEnv = m_pRenderEnv;
 	fillGBufferCommandsParams.m_NumMeshesInBatch = m_pMeshBatch->GetNumMeshes();
@@ -649,6 +664,7 @@ void DXApplication::OnInit()
 	TiledShadingRecorder::InitParams tiledShadingParams;
 	tiledShadingParams.m_pRenderEnv = m_pRenderEnv;
 	tiledShadingParams.m_ShadingMode = ShadingMode_Phong;
+	tiledShadingParams.m_TileSize = kTileSize;
 	tiledShadingParams.m_NumTilesX = kNumTilesX;
 	tiledShadingParams.m_NumTilesY = kNumTilesY;
 	tiledShadingParams.m_NumPointLights = (m_pPointLightBuffer != nullptr) ? m_pPointLightBuffer->GetNumLights() : 0;

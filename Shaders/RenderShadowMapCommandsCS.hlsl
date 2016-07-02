@@ -1,6 +1,5 @@
-#include "Mesh.hlsl"
+#include "Foundation.hlsl"
 #include "OverlapTest.hlsl"
-#include "IndirectDraw.hlsl"
 
 Buffer<uint> g_MeshIndexBuffer : register(t0);
 StructuredBuffer<AABB> g_MeshBoundsBuffer : register(t1);

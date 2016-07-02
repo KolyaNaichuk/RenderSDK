@@ -216,9 +216,6 @@
     <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapsRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\AssignLightsPerTileRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\CommandRecorders\FillGBufferCommandsRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
@@ -226,6 +223,9 @@
       <Filter>CommandRecorders</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\CommandRecorders\ViewFrustumCullingRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\TiledLightCullingRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
   </ItemGroup>
@@ -413,9 +413,6 @@
     <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapsRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\AssignLightsPerTileRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\FillGBufferCommandsRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
@@ -423,6 +420,9 @@
       <Filter>CommandRecorders</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\ViewFrustumCullingRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\TiledLightCullingRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
   </ItemGroup>
@@ -493,15 +493,6 @@
     <None Include="..\Shaders\OverlapTest.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\Material.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\Mesh.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\IndirectDraw.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\FillGBufferCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -509,6 +500,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\ViewFrustumCullingCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\Foundation.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\TiledLightCullingCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

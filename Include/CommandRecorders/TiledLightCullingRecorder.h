@@ -6,30 +6,22 @@ class DXRootSignature;
 class DXPipelineState;
 class DXCommandList;
 class DXCommandAllocator;
-class DXColorTexture;
+class DXBuffer;
 
 struct DXRenderEnvironment;
 struct DXBindingResourceList;
 
-enum ShadingMode
-{
-	ShadingMode_Phong = 1,
-	ShadingMode_BlinnPhong = 2
-};
-
-class TiledShadingRecorder
+class TiledLightCullingRecorder
 {
 public:
 	struct InitParams
 	{
 		DXRenderEnvironment* m_pRenderEnv;
-		ShadingMode m_ShadingMode;
 		u16 m_TileSize;
 		u16 m_NumTilesX;
 		u16 m_NumTilesY;
-		u16 m_NumPointLights;
-		u16 m_NumSpotLights;
-		bool m_UseDirectionalLight;
+		u32 m_MaxNumPointLights;
+		u32 m_MaxNumSpotLights;
 	};
 
 	struct RenderPassParams
@@ -38,11 +30,12 @@ public:
 		DXCommandList* m_pCommandList;
 		DXCommandAllocator* m_pCommandAllocator;
 		DXBindingResourceList* m_pResources;
-		DXColorTexture* m_pAccumLightTexture;
+		DXBuffer* m_pNumPointLightsPerTileBuffer;
+		DXBuffer* m_pNumSpotLightsPerTileBuffer;
 	};
-	
-	TiledShadingRecorder(InitParams* pParams);
-	~TiledShadingRecorder();
+
+	TiledLightCullingRecorder(InitParams* pParams);
+	~TiledLightCullingRecorder();
 
 	void Record(RenderPassParams* pParams);
 
@@ -52,4 +45,7 @@ private:
 
 	u16 m_NumThreadGroupsX;
 	u16 m_NumThreadGroupsY;
+	
+	bool m_CullPointLights;
+	bool m_CullSpotLights;
 };

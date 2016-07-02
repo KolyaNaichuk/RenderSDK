@@ -24,6 +24,7 @@ class InjectVPLsIntoVoxelGridRecorder;
 class VisualizeVoxelGridRecorder;
 class VisualizeMeshRecorder;
 class CopyTextureRecorder;
+class TiledLightCullingRecorder;
 class TiledShadingRecorder;
 class ViewFrustumCullingRecorder;
 class FillGBufferCommandsRecorder;
@@ -99,6 +100,9 @@ private:
 
 	FillGBufferRecorder* m_pFillGBufferRecorder;
 	DXBindingResourceList* m_pFillGBufferResources;
+
+	TiledLightCullingRecorder* m_pTiledLightCullingRecorder;
+	DXBindingResourceList* m_pTiledLightCullingResources;
 
 	TiledShadingRecorder* m_pTiledShadingRecorder;
 	DXBindingResourceList* m_pTiledShadingResources;

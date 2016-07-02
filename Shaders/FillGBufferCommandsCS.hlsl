@@ -1,5 +1,4 @@
-#include "Mesh.hlsl"
-#include "IndirectDraw.hlsl"
+#include "Foundation.hlsl"
 
 Buffer<uint> g_NumMeshesBuffer : register(t0);
 Buffer<uint> g_MeshIndexBuffer : register(t1);

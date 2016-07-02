@@ -143,6 +143,9 @@ COPY /Y "$(SolutionDir)Shaders\FillGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(
 COPY /Y "$(SolutionDir)Shaders\InjectVPLsIntoVoxelGridCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\InjectVPLsIntoVoxelGridCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\InjectVPLsIntoVoxelGridCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\InjectVPLsIntoVoxelGridCS.hlsl"
 
+COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
+
 COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledShadingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledShadingCS.hlsl"
 
@@ -158,20 +161,14 @@ COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(Pr
 COPY /Y "$(SolutionDir)Shaders\CopyTexturePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CopyTexturePS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\CopyTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CopyTexturePS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\Material.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Material.hlsl"
-COPY /Y "$(SolutionDir)Shaders\Material.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Material.hlsl"
-
 COPY /Y "$(SolutionDir)Shaders\FillGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillGBufferCommandsCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\FillGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillGBufferCommandsCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\RenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderShadowMapCommandsCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderShadowMapCommandsCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\Mesh.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Mesh.hlsl"
-COPY /Y "$(SolutionDir)Shaders\Mesh.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Mesh.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\IndirectDraw.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\IndirectDraw.hlsl"
-COPY /Y "$(SolutionDir)Shaders\IndirectDraw.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\IndirectDraw.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Foundation.hlsl"
+COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Foundation.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
