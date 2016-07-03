@@ -45,12 +45,12 @@ RenderShadowMapCommandsRecorder::RenderShadowMapCommandsRecorder(InitParams* pPa
 
 	if (m_EnablePointLights)
 	{
-		srvDescriptorRanges.push_back(DXSRVRange(2, 3));
+		srvDescriptorRanges.push_back(DXSRVRange(3, 3));
 		srvDescriptorRanges.push_back(DXUAVRange(4, 0));
 	}
 	if (m_EnableSpotLights)
 	{
-		srvDescriptorRanges.push_back(DXSRVRange(2, 5));
+		srvDescriptorRanges.push_back(DXSRVRange(3, 6));
 		srvDescriptorRanges.push_back(DXUAVRange(4, 4));
 	}
 	
@@ -99,12 +99,13 @@ void RenderShadowMapCommandsRecorder::Record(RenderPassParams* pParams)
 		assert(pNumShadowCastingLightsBuffer != nullptr);
 		assert(pNumShadowCastersBuffer != nullptr);
 
-		DXDescriptorHandle numShadowCastingLightsUAVHandle(pResources->m_SRVHeapStart, 6);
+		DXDescriptorHandle numShadowCastingLightsUAVHandle(pResources->m_SRVHeapStart, 7);
 		pCommandList->ClearUnorderedAccessView(numShadowCastingLightsUAVHandle, pNumShadowCastingLightsBuffer->GetUAVHandle(), pNumShadowCastingLightsBuffer, numClearValue);
 
-		DXDescriptorHandle numShadowCastersUAVHandle(pResources->m_SRVHeapStart, 8);
+		DXDescriptorHandle numShadowCastersUAVHandle(pResources->m_SRVHeapStart, 9);
 		pCommandList->ClearUnorderedAccessView(numShadowCastersUAVHandle, pNumShadowCastersBuffer->GetUAVHandle(), pNumShadowCastersBuffer, numClearValue);
 	}
+
 	if (m_EnableSpotLights)
 	{
 		DXBuffer* pNumShadowCastingLightsBuffer = pParams->m_pNumShadowCastingSpotLightsBuffer;
@@ -113,10 +114,10 @@ void RenderShadowMapCommandsRecorder::Record(RenderPassParams* pParams)
 		assert(pNumShadowCastingLightsBuffer != nullptr);
 		assert(pNumShadowCastersBuffer != nullptr);
 
-		DXDescriptorHandle numShadowCastingLightsUAVHandle(pResources->m_SRVHeapStart, m_EnablePointLights ? 12 : 6);
+		DXDescriptorHandle numShadowCastingLightsUAVHandle(pResources->m_SRVHeapStart, m_EnablePointLights ? 14 : 7);
 		pCommandList->ClearUnorderedAccessView(numShadowCastingLightsUAVHandle, pNumShadowCastingLightsBuffer->GetUAVHandle(), pNumShadowCastingLightsBuffer, numClearValue);
 
-		DXDescriptorHandle numShadowCastersUAVHandle(pResources->m_SRVHeapStart, m_EnablePointLights ? 14 : 8);
+		DXDescriptorHandle numShadowCastersUAVHandle(pResources->m_SRVHeapStart, m_EnablePointLights ? 16 : 9);
 		pCommandList->ClearUnorderedAccessView(numShadowCastersUAVHandle, pNumShadowCastersBuffer->GetUAVHandle(), pNumShadowCastersBuffer, numClearValue);
 	}
 

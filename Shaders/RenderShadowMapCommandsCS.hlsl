@@ -8,6 +8,7 @@ StructuredBuffer<MeshDesc> g_MeshDescBuffer : register(t2);
 #if ENABLE_POINT_LIGHTS == 1
 StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t3);
 Buffer<uint> g_NumPointLightsBuffer : register(t4);
+Buffer<uint> g_PointLightIndexBuffer : register(t5);
 
 RWBuffer<uint> g_ShadowCastingPointLightIndexBuffer : register(u0);
 RWBuffer<uint> g_NumShadowCastingPointLightsBuffer : register(u1);
@@ -21,8 +22,9 @@ groupshared uint g_ShadowCastingPointLightOffset;
 #endif
 
 #if ENABLE_SPOT_LIGHTS == 1
-StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t5);
-Buffer<uint> g_NumSpotLightsBuffer : register(t6);
+StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t6);
+Buffer<uint> g_NumSpotLightsBuffer : register(t7);
+Buffer<uint> g_SpotLightIndexBuffer : register(t8);
 
 RWBuffer<uint> g_ShadowCastingSpotLightIndexBuffer : register(u4);
 RWBuffer<uint> g_NumShadowCastingSpotLightsBuffer : register(u5);
@@ -38,8 +40,9 @@ groupshared uint g_ShadowCastingSpotLightOffset;
 #if ENABLE_POINT_LIGHTS == 1
 void FindPointLightsPerShadowCaster(uint localThreadIndex, AABB meshBounds)
 {
-	for (uint lightIndex = localThreadIndex; lightIndex < g_NumPointLightsBuffer[0]; lightIndex += THREAD_GROUP_SIZE)
+	for (uint index = localThreadIndex; index < g_NumPointLightsBuffer[0]; index += THREAD_GROUP_SIZE)
 	{
+		uint lightIndex = g_PointLightIndexBuffer[index];
 		if (TestSphereAgainstAABB(meshBounds, g_PointLightBoundsBuffer[lightIndex]))
 		{
 			uint listIndex;
@@ -53,8 +56,9 @@ void FindPointLightsPerShadowCaster(uint localThreadIndex, AABB meshBounds)
 #if ENABLE_SPOT_LIGHTS == 1
 void FindSpotLightsPerShadowCaster(uint localThreadIndex, AABB meshBounds)
 {
-	for (uint lightIndex = localThreadIndex; lightIndex < g_NumSpotLightsBuffer[0]; lightIndex += THREAD_GROUP_SIZE)
+	for (uint index = localThreadIndex; index < g_NumSpotLightsBuffer[0]; index += THREAD_GROUP_SIZE)
 	{
+		uint lightIndex = g_SpotLightIndexBuffer[index];
 		if (TestSphereAgainstAABB(meshBounds, g_SpotLightBoundsBuffer[lightIndex]))
 		{
 			uint listIndex;
