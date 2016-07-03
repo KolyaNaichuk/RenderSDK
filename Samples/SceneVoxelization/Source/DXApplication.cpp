@@ -1235,7 +1235,7 @@ void DXApplication::OnRender()
 	visualizeGridParams.m_pResources = m_VisualizeVoxelGridResources[m_BackBufferIndex];
 	visualizeGridParams.m_pViewport = m_pViewport;
 	
-	m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
+	//m_pVisualizeVoxelGridRecorder->Record(&visualizeGridParams);
 	//m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &m_pCommandList, pCommandAllocator);
 	
 	if (pRenderTarget->GetState() != D3D12_RESOURCE_STATE_PRESENT)
