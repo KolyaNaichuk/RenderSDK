@@ -17,8 +17,6 @@ struct TiledShadingData
 	matrix notUsed5[2];
 };
 
-#define NUM_THREADS_PER_TILE	(TILE_SIZE * TILE_SIZE)
-
 cbuffer TiledShadingDataBuffer : register(b0)
 {
 	TiledShadingData g_ShadingData;
@@ -124,7 +122,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID)
 #endif
 
 #if ENABLE_DIRECTIONAL_LIGHT == 1
-	float3 directionalLightContrib = CalcDirectionalLightContribution(tileIndex, g_ShadingData.worldSpaceLightDir, g_ShadingData.lightColor, worldSpaceDirToViewer,
+	float3 directionalLightContrib = CalcDirectionalLightContribution(g_ShadingData.worldSpaceLightDir, g_ShadingData.lightColor, worldSpaceDirToViewer,
 		worldSpaceNormal, diffuseAlbedo, specularAlbedo.rgb, specularAlbedo.a);
 #else
 	float3 directionalLightContrib = float3(0.0f, 0.0f, 0.0f);

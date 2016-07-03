@@ -21,33 +21,33 @@ TiledShadingRecorder::TiledShadingRecorder(InitParams* pParams)
 	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
 
 	std::string tileSizeStr = std::to_string(pParams->m_TileSize);
+	std::string numTilesXStr = std::to_string(pParams->m_NumTilesX);
 	std::string shadingModeStr = std::to_string(pParams->m_ShadingMode);
-	std::string numPointLightsStr = std::to_string(pParams->m_NumPointLights);
-	std::string numSpotLightsStr = std::to_string(pParams->m_NumSpotLights);
-	std::string useDirectionalLightStr = std::to_string(pParams->m_UseDirectionalLight ? 1 : 0);
+	std::string enablePointLightsStr = std::to_string(pParams->m_EnablePointLights ? 1 : 0);
+	std::string enableSpotLightsStr = std::to_string(pParams->m_EnableSpotLights ? 1 : 0);
+	std::string enableDirectionalLightStr = std::to_string(pParams->m_EnableDirectionalLight ? 1 : 0);
 	
 	const DXShaderMacro shaderDefines[] =
 	{
 		DXShaderMacro("TILE_SIZE", tileSizeStr.c_str()),
+		DXShaderMacro("NUM_TILES_X", numTilesXStr.c_str()),
 		DXShaderMacro("SHADING_MODE", shadingModeStr.c_str()),
-		DXShaderMacro("NUM_POINT_LIGHTS", numPointLightsStr.c_str()),
-		DXShaderMacro("NUM_SPOT_LIGHTS", numSpotLightsStr.c_str()),
-		DXShaderMacro("USE_DIRECTIONAL_LIGHT", useDirectionalLightStr.c_str()),
+		DXShaderMacro("ENABLE_POINT_LIGHTS", enablePointLightsStr.c_str()),
+		DXShaderMacro("ENABLE_SPOT_LIGHTS", enableSpotLightsStr.c_str()),
+		DXShaderMacro("ENABLE_DIRECTIONAL_LIGHT", enableDirectionalLightStr.c_str()),
 		DXShaderMacro()
 	};
 	DXShader computeShader(L"Shaders//TiledShadingCS.hlsl", "Main", "cs_5_0", shaderDefines);
 
 	std::vector<D3D12_DESCRIPTOR_RANGE> srvDescriptorRanges;
-	srvDescriptorRanges.reserve(5);
-
 	srvDescriptorRanges.push_back(DXUAVRange(1, 0));
 	srvDescriptorRanges.push_back(DXCBVRange(1, 0));
 	srvDescriptorRanges.push_back(DXSRVRange(4, 0));
 	
-	if (pParams->m_NumPointLights > 0)
-		srvDescriptorRanges.push_back(DXSRVRange(2, 4));
-	if (pParams->m_NumSpotLights > 0)
-		srvDescriptorRanges.push_back(DXSRVRange(2, 6));
+	if (pParams->m_EnablePointLights)
+		srvDescriptorRanges.push_back(DXSRVRange(4, 4));
+	if (pParams->m_EnableSpotLights)
+		srvDescriptorRanges.push_back(DXSRVRange(4, 8));
 	
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kSRVRootParam] = DXRootDescriptorTableParameter(srvDescriptorRanges.size(), srvDescriptorRanges.data(), D3D12_SHADER_VISIBILITY_ALL);

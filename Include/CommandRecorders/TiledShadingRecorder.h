@@ -27,9 +27,9 @@ public:
 		u16 m_TileSize;
 		u16 m_NumTilesX;
 		u16 m_NumTilesY;
-		u16 m_NumPointLights;
-		u16 m_NumSpotLights;
-		bool m_UseDirectionalLight;
+		bool m_EnablePointLights;
+		bool m_EnableSpotLights;
+		bool m_EnableDirectionalLight;
 	};
 
 	struct RenderPassParams
