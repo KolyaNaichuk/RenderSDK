@@ -168,7 +168,13 @@ COPY /Y "$(SolutionDir)Shaders\RenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Sa
 COPY /Y "$(SolutionDir)Shaders\RenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderShadowMapCommandsCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Foundation.hlsl"
-COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Foundation.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Foundation.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
