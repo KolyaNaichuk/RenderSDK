@@ -155,7 +155,7 @@
     <ClInclude Include="..\Include\CommandRecorders\ViewFrustumCullingRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapCommandsRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapsRecorder.h" />
+    <ClInclude Include="..\Include\CommandRecorders\RenderTiledShadowMapRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\ScaleTextureRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\TiledShadingRecorder.h" />
     <ClInclude Include="..\Include\CommandRecorders\VisualizeMeshRecorder.h" />
@@ -228,7 +228,7 @@
     <ClCompile Include="..\Source\CommandRecorders\FillGBufferCommandsRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\ViewFrustumCullingRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapsRecorder.cpp" />
+    <ClCompile Include="..\Source\CommandRecorders\RenderTiledShadowMapRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\ScaleTextureRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\TiledShadingRecorder.cpp" />
     <ClCompile Include="..\Source\CommandRecorders\VisualizeMeshRecorder.cpp" />
@@ -497,6 +497,26 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\RenderTiledShadowMapGS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Geometry</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Geometry</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Geometry</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Geometry</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\RenderTiledShadowMapVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

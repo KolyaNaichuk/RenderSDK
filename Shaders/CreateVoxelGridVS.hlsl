@@ -20,7 +20,7 @@ struct VSOutput
 #endif // HAS_TEXCOORD
 };
 
-cbuffer TransformBuffer : register(b0)
+cbuffer ObjectTransformBuffer : register(b0)
 {
 	ObjectTransform g_Transform;
 }

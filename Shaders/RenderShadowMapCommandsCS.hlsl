@@ -8,6 +8,7 @@ StructuredBuffer<MeshDesc> g_MeshDescBuffer : register(t2);
 #if ENABLE_POINT_LIGHTS == 1
 StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t3);
 Buffer<uint> g_NumPointLightsBuffer : register(t4);
+Buffer<uint> g_PointLightIndexBuffer : register(t5);
 
 RWBuffer<uint> g_ShadowCastingPointLightIndexBuffer : register(u0);
 RWBuffer<uint> g_NumShadowCastingPointLightsBuffer : register(u1);
@@ -17,12 +18,13 @@ RWBuffer<uint> g_NumDrawPointLightShadowCastersBuffer : register(u3);
 
 groupshared uint g_PointLightIndicesPerShadowCaster[MAX_NUM_POINT_LIGHTS_PER_SHADOW_CASTER];
 groupshared uint g_NumPointLightsPerShadowCaster;
-groupshared uint g_ShadowCastingPointLightOffset;
+groupshared uint g_ShadowCastingPointLightIndexOffset;
 #endif
 
 #if ENABLE_SPOT_LIGHTS == 1
-StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t5);
-Buffer<uint> g_NumSpotLightsBuffer : register(t6);
+StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t6);
+Buffer<uint> g_NumSpotLightsBuffer : register(t7);
+Buffer<uint> g_SpotLightIndexBuffer : register(t8);
 
 RWBuffer<uint> g_ShadowCastingSpotLightIndexBuffer : register(u4);
 RWBuffer<uint> g_NumShadowCastingSpotLightsBuffer : register(u5);
@@ -32,14 +34,15 @@ RWBuffer<uint> g_NumDrawSpotLightShadowCastersBuffer : register(u7);
 
 groupshared uint g_SpotLightIndicesPerShadowCaster[MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER];
 groupshared uint g_NumSpotLightsPerShadowCaster;
-groupshared uint g_ShadowCastingSpotLightOffset;
+groupshared uint g_ShadowCastingSpotLightIndexOffset;
 #endif
 
 #if ENABLE_POINT_LIGHTS == 1
 void FindPointLightsPerShadowCaster(uint localThreadIndex, AABB meshBounds)
 {
-	for (uint lightIndex = localThreadIndex; lightIndex < g_NumPointLightsBuffer[0]; lightIndex += THREAD_GROUP_SIZE)
+	for (uint index = localThreadIndex; index < g_NumPointLightsBuffer[0]; index += THREAD_GROUP_SIZE)
 	{
+		uint lightIndex = g_PointLightIndexBuffer[index];
 		if (TestSphereAgainstAABB(meshBounds, g_PointLightBoundsBuffer[lightIndex]))
 		{
 			uint listIndex;
@@ -53,8 +56,9 @@ void FindPointLightsPerShadowCaster(uint localThreadIndex, AABB meshBounds)
 #if ENABLE_SPOT_LIGHTS == 1
 void FindSpotLightsPerShadowCaster(uint localThreadIndex, AABB meshBounds)
 {
-	for (uint lightIndex = localThreadIndex; lightIndex < g_NumSpotLightsBuffer[0]; lightIndex += THREAD_GROUP_SIZE)
+	for (uint index = localThreadIndex; index < g_NumSpotLightsBuffer[0]; index += THREAD_GROUP_SIZE)
 	{
+		uint lightIndex = g_SpotLightIndexBuffer[index];
 		if (TestSphereAgainstAABB(meshBounds, g_SpotLightBoundsBuffer[lightIndex]))
 		{
 			uint listIndex;
@@ -72,12 +76,12 @@ void Main(uint3 groupId : SV_GroupID, uint localThreadIndex : SV_GroupIndex)
 	{
 #if ENABLE_POINT_LIGHTS == 1
 		g_NumPointLightsPerShadowCaster = 0;
-		g_ShadowCastingPointLightOffset = 0;
+		g_ShadowCastingPointLightIndexOffset = 0;
 #endif
 
 #if ENABLE_SPOT_LIGHTS == 1
 		g_NumSpotLightsPerShadowCaster = 0;
-		g_ShadowCastingSpotLightOffset = 0;
+		g_ShadowCastingSpotLightIndexOffset = 0;
 #endif
 	}
 	GroupMemoryBarrierWithGroupSync();
@@ -101,14 +105,14 @@ void Main(uint3 groupId : SV_GroupID, uint localThreadIndex : SV_GroupIndex)
 #if ENABLE_POINT_LIGHTS == 1
 		if (g_NumPointLightsPerShadowCaster > 0)
 		{
-			uint pointLightOffset;
-			InterlockedAdd(g_NumShadowCastingPointLightsBuffer[0], g_NumPointLightsPerShadowCaster, pointLightOffset);
-			g_ShadowCastingPointLightOffset = pointLightOffset;
+			uint lightIndexOffset;
+			InterlockedAdd(g_NumShadowCastingPointLightsBuffer[0], g_NumPointLightsPerShadowCaster, lightIndexOffset);
+			g_ShadowCastingPointLightIndexOffset = lightIndexOffset;
 
 			uint commandOffset;
 			InterlockedAdd(g_NumDrawPointLightShadowCastersBuffer[0], 1, commandOffset);
 
-			g_DrawPointLightShadowCasterCommandBuffer[commandOffset].root32BitConstant = pointLightOffset;
+			g_DrawPointLightShadowCasterCommandBuffer[commandOffset].root32BitConstant = lightIndexOffset;
 			g_DrawPointLightShadowCasterCommandBuffer[commandOffset].drawArgs.indexCountPerInstance = g_MeshDescBuffer[meshIndex].indexCount;
 			g_DrawPointLightShadowCasterCommandBuffer[commandOffset].drawArgs.instanceCount = g_NumPointLightsPerShadowCaster;
 			g_DrawPointLightShadowCasterCommandBuffer[commandOffset].drawArgs.startIndexLocation = g_MeshDescBuffer[meshIndex].startIndexLocation;
@@ -120,14 +124,14 @@ void Main(uint3 groupId : SV_GroupID, uint localThreadIndex : SV_GroupIndex)
 #if ENABLE_SPOT_LIGHTS == 1
 		if (g_NumSpotLightsPerShadowCaster > 0)
 		{
-			uint spotLightOffset;
-			InterlockedAdd(g_NumShadowCastingSpotLightsBuffer[0], g_NumSpotLightsPerShadowCaster, spotLightOffset);
-			g_ShadowCastingSpotLightOffset = spotLightOffset;
+			uint lightIndexOffset;
+			InterlockedAdd(g_NumShadowCastingSpotLightsBuffer[0], g_NumSpotLightsPerShadowCaster, lightIndexOffset);
+			g_ShadowCastingSpotLightIndexOffset = lightIndexOffset;
 
 			uint commandOffset;
 			InterlockedAdd(g_NumDrawSpotLightShadowCastersBuffer[0], 1, commandOffset);
 
-			g_DrawSpotLightShadowCasterCommandBuffer[commandOffset].root32BitConstant = spotLightOffset;
+			g_DrawSpotLightShadowCasterCommandBuffer[commandOffset].root32BitConstant = lightIndexOffset;
 			g_DrawSpotLightShadowCasterCommandBuffer[commandOffset].drawArgs.indexCountPerInstance = g_MeshDescBuffer[meshIndex].indexCount;
 			g_DrawSpotLightShadowCasterCommandBuffer[commandOffset].drawArgs.instanceCount = g_NumSpotLightsPerShadowCaster;
 			g_DrawSpotLightShadowCasterCommandBuffer[commandOffset].drawArgs.startIndexLocation = g_MeshDescBuffer[meshIndex].startIndexLocation;
@@ -140,11 +144,11 @@ void Main(uint3 groupId : SV_GroupID, uint localThreadIndex : SV_GroupIndex)
 
 #if ENABLE_POINT_LIGHTS == 1
 	for (uint index = localThreadIndex; index < g_NumPointLightsPerShadowCaster; index += THREAD_GROUP_SIZE)
-		g_ShadowCastingPointLightIndexBuffer[g_ShadowCastingPointLightOffset + index] = g_PointLightIndicesPerShadowCaster[index];
+		g_ShadowCastingPointLightIndexBuffer[g_ShadowCastingPointLightIndexOffset + index] = g_PointLightIndicesPerShadowCaster[index];
 #endif
 
 #if ENABLE_SPOT_LIGHTS == 1
 	for (uint index = localThreadIndex; index < g_NumSpotLightsPerShadowCaster; index += THREAD_GROUP_SIZE)
-		g_ShadowCastingSpotLightIndexBuffer[g_ShadowCastingSpotLightOffset + index] = g_SpotLightIndicesPerShadowCaster[index];
+		g_ShadowCastingSpotLightIndexBuffer[g_ShadowCastingSpotLightIndexOffset + index] = g_SpotLightIndicesPerShadowCaster[index];
 #endif
 }

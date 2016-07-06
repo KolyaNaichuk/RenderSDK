@@ -18,7 +18,7 @@ struct ObjectTransform
 	float4 notUsed[4];
 };
 
-cbuffer TransformBuffer : register(b0)
+cbuffer ObjectTransformBuffer : register(b0)
 {
 	ObjectTransform g_Transform;
 }

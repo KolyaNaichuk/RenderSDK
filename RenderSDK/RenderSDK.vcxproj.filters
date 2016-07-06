@@ -213,9 +213,6 @@
     <ClInclude Include="..\Include\Math\Cone.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapsRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\CommandRecorders\FillGBufferCommandsRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
@@ -226,6 +223,9 @@
       <Filter>CommandRecorders</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\CommandRecorders\TiledLightCullingRecorder.h">
+      <Filter>CommandRecorders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\CommandRecorders\RenderTiledShadowMapRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
   </ItemGroup>
@@ -410,9 +410,6 @@
     <ClCompile Include="..\Source\Math\Cone.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapsRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\FillGBufferCommandsRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
@@ -423,6 +420,9 @@
       <Filter>CommandRecorders</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\TiledLightCullingRecorder.cpp">
+      <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\CommandRecorders\RenderTiledShadowMapRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
   </ItemGroup>
@@ -506,6 +506,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\TiledLightCullingCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\RenderTiledShadowMapVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\RenderTiledShadowMapGS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

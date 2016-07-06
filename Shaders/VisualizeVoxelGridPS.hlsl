@@ -12,7 +12,7 @@ cbuffer GridConfigBuffer : register(b0)
 	GridConfig g_GridConfig;
 }
 
-cbuffer TransformBuffer : register(b1)
+cbuffer CameraTransformBuffer : register(b1)
 {
 	CameraTransform g_Transform;
 }
