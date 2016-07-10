@@ -111,7 +111,7 @@ struct Range
 
 struct ViewFrustumCullingData
 {
-	Vector4f m_ViewFrustumPlanes[6];
+	Plane m_ViewFrustumPlanes[6];
 	u32 m_NumMeshes;
 	Vector3u m_NotUsed1;
 	Vector4f m_NotUsed2[9];
@@ -1000,7 +1000,7 @@ void DXApplication::OnInit()
 			
 	ViewFrustumCullingData viewFrustumCullingData;
 	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
-		viewFrustumCullingData.m_ViewFrustumPlanes[planeIndex] = ToVector4f(mainCameraFrustum.m_Planes[planeIndex]);
+		viewFrustumCullingData.m_ViewFrustumPlanes[planeIndex] = mainCameraFrustum.m_Planes[planeIndex];
 	viewFrustumCullingData.m_NumMeshes = m_pMeshBatch->GetNumMeshes();
 
 	m_pViewFrustumCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));

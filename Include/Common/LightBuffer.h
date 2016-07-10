@@ -24,13 +24,16 @@ public:
 
 	DXBuffer* GetLightBoundsBuffer() { return m_pLightBoundsBuffer; }
 	DXBuffer* GetLightPropsBuffer() { return m_pLightPropsBuffer; }
+	DXBuffer* GetLightFrustumBuffer() { return m_pLightFrustumBuffer; }
 
 private:
 	u32 m_NumLights;
 	
 	DXBuffer* m_pUploadLightBoundsBuffer;
 	DXBuffer* m_pUploadLightPropsBuffer;
+	DXBuffer* m_pUploadLightFrustumBuffer;
 
 	DXBuffer* m_pLightBoundsBuffer;
 	DXBuffer* m_pLightPropsBuffer;
+	DXBuffer* m_pLightFrustumBuffer;
 };
