@@ -55,9 +55,11 @@ LightBuffer::LightBuffer(DXRenderEnvironment* pRenderEnv, u32 numPointLights, Po
 	, m_pUploadLightBoundsBuffer(nullptr)
 	, m_pUploadLightPropsBuffer(nullptr)
 	, m_pUploadLightFrustumBuffer(nullptr)
+	, m_pUploadLightViewProjMatrixBuffer(nullptr)
 	, m_pLightBoundsBuffer(nullptr)
 	, m_pLightPropsBuffer(nullptr)
 	, m_pLightFrustumBuffer(nullptr)
+	, m_pLightViewProjMatrixBuffer(nullptr)
 {
 	std::vector<Sphere> lightBounds;
 	std::vector<PointLightProps> lightProps;
@@ -94,17 +96,21 @@ LightBuffer::LightBuffer(DXRenderEnvironment* pRenderEnv, u32 numSpotLights, Spo
 	, m_pUploadLightBoundsBuffer(nullptr)
 	, m_pUploadLightPropsBuffer(nullptr)
 	, m_pUploadLightFrustumBuffer(nullptr)
+	, m_pUploadLightViewProjMatrixBuffer(nullptr)
 	, m_pLightBoundsBuffer(nullptr)
 	, m_pLightPropsBuffer(nullptr)
 	, m_pLightFrustumBuffer(nullptr)
+	, m_pLightViewProjMatrixBuffer(nullptr)
 {
 	std::vector<Sphere> lightBounds;
 	std::vector<SpotLightProps> lightProps;
 	std::vector<LightFrustum> lightFrustums;
+	std::vector<Matrix4f> lightViewProjMatrices;
 
 	lightBounds.reserve(m_NumLights);
 	lightProps.reserve(m_NumLights);
 	lightFrustums.reserve(m_NumLights);
+	lightViewProjMatrices.reserve(m_NumLights);
 		
 	for (u32 lightIndex = 0; lightIndex < m_NumLights; ++lightIndex)
 	{
@@ -137,15 +143,18 @@ LightBuffer::LightBuffer(DXRenderEnvironment* pRenderEnv, u32 numSpotLights, Spo
 		lightFrustums.emplace_back(leftWorldSpacePlane, rightWorldSpacePlane, topWorldSpacePlane, bottomWorldSpacePlane);
 			
 		Matrix4f lightViewProjMatrix = lightWorldSpaceTransform.GetWorldToLocalMatrix() * lightProjMatrix;
+		lightViewProjMatrices.emplace_back(lightViewProjMatrix);
 	}
 
 	DXStructuredBufferDesc lightBoundsBufferDesc(m_NumLights, sizeof(Sphere), true, false);
 	DXStructuredBufferDesc lightPropsBufferDesc(m_NumLights, sizeof(SpotLightProps), true, false);
 	DXStructuredBufferDesc lightFrustumBufferDesc(m_NumLights, sizeof(LightFrustum), true, false);
+	DXStructuredBufferDesc lightViewProjMatrixBufferDesc(m_NumLights, sizeof(Matrix4f), true, false);
 
 	m_pLightBoundsBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightBoundsBuffer");
 	m_pLightPropsBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightPropsBuffer");
 	m_pLightFrustumBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightFrustumBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightFrustumBuffer");
+	m_pLightViewProjMatrixBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightViewProjMatrixBuffer");
 
 	m_pUploadLightBoundsBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightBoundsBuffer");
 	m_pUploadLightBoundsBuffer->Write(lightBounds.data(), m_NumLights * sizeof(Sphere));
@@ -153,8 +162,11 @@ LightBuffer::LightBuffer(DXRenderEnvironment* pRenderEnv, u32 numSpotLights, Spo
 	m_pUploadLightPropsBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightPropsBuffer");
 	m_pUploadLightPropsBuffer->Write(lightProps.data(), m_NumLights * sizeof(SpotLightProps));
 
-	m_pUploadLightFrustumBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightFrustumBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightFrustumBuffer");
+	m_pUploadLightFrustumBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightFrustumBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightFrustumBuffer");
 	m_pUploadLightFrustumBuffer->Write(lightFrustums.data(), m_NumLights * sizeof(LightFrustum));
+
+	m_pUploadLightViewProjMatrixBuffer = new DXBuffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightViewProjMatrixBuffer");
+	m_pUploadLightViewProjMatrixBuffer->Write(lightViewProjMatrices.data(), m_NumLights * sizeof(Matrix4f));
 }
 
 LightBuffer::~LightBuffer()
@@ -164,6 +176,7 @@ LightBuffer::~LightBuffer()
 	SafeDelete(m_pLightBoundsBuffer);
 	SafeDelete(m_pLightPropsBuffer);
 	SafeDelete(m_pLightFrustumBuffer);
+	SafeDelete(m_pLightViewProjMatrixBuffer);
 }
 
 void LightBuffer::RecordDataForUpload(DXCommandList* pCommandList)
@@ -171,18 +184,21 @@ void LightBuffer::RecordDataForUpload(DXCommandList* pCommandList)
 	pCommandList->CopyResource(m_pLightBoundsBuffer, m_pUploadLightBoundsBuffer);
 	pCommandList->CopyResource(m_pLightPropsBuffer, m_pUploadLightPropsBuffer);
 	pCommandList->CopyResource(m_pLightFrustumBuffer, m_pUploadLightFrustumBuffer);
+	pCommandList->CopyResource(m_pLightViewProjMatrixBuffer, m_pUploadLightViewProjMatrixBuffer);
 
 	const D3D12_RESOURCE_BARRIER resourceTransitions[] =
 	{
 		DXResourceTransitionBarrier(m_pLightBoundsBuffer, m_pLightBoundsBuffer->GetState(), m_pLightBoundsBuffer->GetReadState()),
 		DXResourceTransitionBarrier(m_pLightPropsBuffer, m_pLightPropsBuffer->GetState(), m_pLightPropsBuffer->GetReadState()),
-		DXResourceTransitionBarrier(m_pLightFrustumBuffer, m_pLightFrustumBuffer->GetState(), m_pLightFrustumBuffer->GetReadState())
+		DXResourceTransitionBarrier(m_pLightFrustumBuffer, m_pLightFrustumBuffer->GetState(), m_pLightFrustumBuffer->GetReadState()),
+		DXResourceTransitionBarrier(m_pLightViewProjMatrixBuffer, m_pLightViewProjMatrixBuffer->GetState(), m_pLightViewProjMatrixBuffer->GetReadState())
 	};
 	pCommandList->ResourceBarrier(ARRAYSIZE(resourceTransitions), &resourceTransitions[0]);
 
 	m_pLightBoundsBuffer->SetState(m_pLightBoundsBuffer->GetReadState());
 	m_pLightPropsBuffer->SetState(m_pLightPropsBuffer->GetReadState());
 	m_pLightFrustumBuffer->SetState(m_pLightFrustumBuffer->GetReadState());
+	m_pLightViewProjMatrixBuffer->SetState(m_pLightViewProjMatrixBuffer->GetReadState());
 }
 
 void LightBuffer::RemoveDataForUpload()
@@ -190,4 +206,5 @@ void LightBuffer::RemoveDataForUpload()
 	SafeDelete(m_pUploadLightBoundsBuffer);
 	SafeDelete(m_pUploadLightPropsBuffer);
 	SafeDelete(m_pUploadLightFrustumBuffer);
+	SafeDelete(m_pUploadLightViewProjMatrixBuffer);
 }
