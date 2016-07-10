@@ -17,6 +17,7 @@ class DXFence;
 class Camera;
 class MeshBatch;
 class LightBuffer;
+class FillGBufferCommandsRecorder;
 class FillGBufferRecorder;
 class ClearVoxelGridRecorder;
 class CreateVoxelGridRecorder;
@@ -27,8 +28,8 @@ class CopyTextureRecorder;
 class TiledLightCullingRecorder;
 class TiledShadingRecorder;
 class ViewFrustumCullingRecorder;
-class FillGBufferCommandsRecorder;
 class RenderShadowMapCommandsRecorder;
+class RenderTiledShadowMapRecorder;
 
 struct DXHeapProperties;
 struct DXRenderEnvironment;
@@ -71,6 +72,7 @@ private:
 	DXDescriptorHeap* m_pShaderInvisibleSRVHeap;
 	DXDescriptorHeap* m_pShaderVisibleSRVHeap;
 	DXDepthTexture* m_pDepthTexture;
+	DXDepthTexture* m_pSpotLightTiledShadowMap;
 	DXColorTexture* m_pDiffuseTexture;
 	DXColorTexture* m_pNormalTexture;
 	DXColorTexture* m_pSpecularTexture;
@@ -143,6 +145,9 @@ private:
 	RenderShadowMapCommandsRecorder* m_pRenderShadowMapCommandsRecorder;
 	DXBindingResourceList* m_pRenderShadowMapCommandsResources;
 	DXBuffer* m_pRenderShadowMapCommandsArgumentBuffer;
+
+	RenderTiledShadowMapRecorder* m_pRenderSpotLightTiledShadowMapRecorder;
+	DXBindingResourceList* m_pRenderSpotLightTiledShadowMapResources;
 
 	CopyTextureRecorder* m_pCopyTextureRecorder;
 	DXBindingResourceList* m_CopyTextureResources[kBackBufferCount];

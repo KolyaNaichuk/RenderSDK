@@ -30,9 +30,9 @@ bool TestSphereAgainstPlane(float4 plane, Sphere sphere)
 	return !fullyInsideBackHalfSpace;
 }
 
-bool TestPointAgainstPlane(float4 plane, float3 point)
+bool TestPointAgainstPlane(float4 plane, float3 pt)
 {
-	float signedDist = dot(plane, float4(point, 1.0f));
+	float signedDist = dot(plane, float4(pt, 1.0f));
 
 	bool fullyInsideBackHalfSpace = signedDist < 0.0f;
 	return !fullyInsideBackHalfSpace;

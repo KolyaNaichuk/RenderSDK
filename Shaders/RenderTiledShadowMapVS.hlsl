@@ -18,15 +18,15 @@ struct ObjectTransform
 	matrix worldViewProjMatrix;
 	float4 notUsed[4];
 };
- 
-cbuffer LightIndexOffsetBuffer : register(b0)
-{
-	uint g_LightIndexOffset;
-}
 
-cbuffer ObjectTransformBuffer : register(b1)
+cbuffer ObjectTransformBuffer : register(b0)
 {
 	ObjectTransform g_Transform;
+}
+
+cbuffer LightIndexOffsetBuffer : register(b1)
+{
+	uint g_LightIndexOffset;
 }
 
 VSOutput Main(VSInput input)

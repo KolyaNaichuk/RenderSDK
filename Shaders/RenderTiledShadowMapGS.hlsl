@@ -63,7 +63,7 @@ void Main(triangle GSInput input[3], inout TriangleStream<GSOutput> outputStream
 		tileClipSignedDist[vertexIndex].w = dot(lightWorldSpaceFrustum.bottomPlane, input[vertexIndex].worldSpacePos);
 	}
 	
-	bool isFaceInvisible = all(tileClipSignedDist[0] < 0.0f) && all(tileClipSignedDist[1] < 0.0f) && all(tileClipSignedDist[2] < 0.0f);
+	bool isFaceInvisible = (all(tileClipSignedDist[0] < 0.0f) && all(tileClipSignedDist[1] < 0.0f) && all(tileClipSignedDist[2] < 0.0f));
 	if (isFaceInvisible)
 		return;
 

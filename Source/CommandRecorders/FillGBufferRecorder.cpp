@@ -75,7 +75,6 @@ void FillGBufferRecorder::Record(RenderPassParams* pParams)
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
-	pCommandList->GetDXObject()->ClearState(m_pPipelineState->GetDXObject());
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
 	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);

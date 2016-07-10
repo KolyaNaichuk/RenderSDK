@@ -16,8 +16,8 @@ struct DXBindingResourceList;
 
 enum LightType
 {
-	LightType_Point,
-	LightType_Spot
+	LightType_Point = 1,
+	LightType_Spot = 2
 };
 
 class RenderTiledShadowMapRecorder
@@ -39,6 +39,8 @@ public:
 		DXBindingResourceList* m_pResources;
 		DXViewport* m_pViewport;
 		MeshBatch* m_pMeshBatch;
+		DXBuffer* m_pDrawShadowCasterCommandBuffer;
+		DXBuffer* m_pNumDrawShadowCastersBuffer;
 	};
 
 	RenderTiledShadowMapRecorder(InitParams* pParams);
