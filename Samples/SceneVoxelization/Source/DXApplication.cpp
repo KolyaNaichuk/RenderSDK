@@ -351,7 +351,7 @@ void DXApplication::OnInit()
 	DXDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 70, true);
 	m_pShaderVisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
-	DXDescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 50, false);
+	DXDescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 60, false);
 	m_pShaderInvisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
 	DXDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2, false);
@@ -436,7 +436,7 @@ void DXApplication::OnInit()
 	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
 
-	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test2);
+	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test1);
 	
 	assert(pScene->GetNumMeshBatches() == 1);
 	MeshBatchData* pMeshBatchData = *pScene->GetMeshBatches();
@@ -1106,7 +1106,7 @@ void DXApplication::OnRender()
 		detectVisibleLightsParams.m_pResources = m_pDetectVisibleSpotLightsResources;
 		detectVisibleLightsParams.m_pNumVisibleObjectsBuffer = m_pNumVisibleSpotLightsBuffer;
 
-		m_pDetectVisiblePointLightsRecorder->Record(&detectVisibleLightsParams);
+		m_pDetectVisibleSpotLightsRecorder->Record(&detectVisibleLightsParams);
 		m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &m_pCommandList, pCommandAllocator);
 		WaitForGPU();
 	}
