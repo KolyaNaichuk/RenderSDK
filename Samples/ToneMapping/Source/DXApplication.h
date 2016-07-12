@@ -14,8 +14,8 @@ class D3DFence;
 struct D3DRenderEnv;
 struct D3DHeapProperties;
 
-class CopyTextureRecorder;
-class CalcTextureLuminanceRecorder;
+class CopyTexturePass;
+class CalcTextureLuminancePass;
 
 enum DisplayResult
 {
@@ -57,9 +57,9 @@ private:
 	UINT m_BackBufferIndex;
 
 	D3DColorTexture* m_pHDRTexture;
-	CopyTextureRecorder* m_pCopyTextureRecorder;
-	CalcTextureLuminanceRecorder* m_pCalcTextureLuminanceRecorder;
-	CalcTextureLuminanceRecorder* m_pCalcTextureLogLuminanceRecorder;
+	CopyTexturePass* m_pCopyTexturePass;
+	CalcTextureLuminancePass* m_pCalcTextureLuminancePass;
+	CalcTextureLuminancePass* m_pCalcTextureLogLuminancePass;
 
 	DisplayResult m_DisplayResult;
 };

@@ -145,21 +145,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Include\CommandRecorders\TiledLightCullingRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\CalcTextureLuminanceRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\ClearVoxelGridRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\CopyTextureRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\FillGBufferCommandsRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\CreateVoxelGridRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\FillGBufferRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\ViewFrustumCullingRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapCommandsRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\RenderTiledShadowMapRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\ScaleTextureRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\TiledShadingRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\VisualizeMeshRecorder.h" />
-    <ClInclude Include="..\Include\CommandRecorders\VisualizeVoxelGridRecorder.h" />
     <ClInclude Include="..\Include\Common\Application.h" />
     <ClInclude Include="..\Include\Common\BasicTypes.h" />
     <ClInclude Include="..\Include\Common\Camera.h" />
@@ -214,24 +199,24 @@
     <ClInclude Include="..\Include\Math\Vector2.h" />
     <ClInclude Include="..\Include\Math\Vector3.h" />
     <ClInclude Include="..\Include\Math\Vector4.h" />
+    <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
+    <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CopyTexturePass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\RenderGBufferCommandsPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\InjectVPLsIntoVoxelGridPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\RenderShadowMapCommandsPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\RenderTiledShadowMapPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\ScaleTexturePass.h" />
+    <ClInclude Include="..\Include\RenderPasses\TiledLightCullingPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\TiledShadingPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\ViewFrustumCullingPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\VisualizeMeshPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\TiledLightCullingRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\CalcTextureLuminanceRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\ClearVoxelGridRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\CopyTextureRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapCommandsRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\CreateVoxelGridRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\FillGBufferRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\FillGBufferCommandsRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\ViewFrustumCullingRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\RenderTiledShadowMapRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\ScaleTextureRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\TiledShadingRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\VisualizeMeshRecorder.cpp" />
-    <ClCompile Include="..\Source\CommandRecorders\VisualizeVoxelGridRecorder.cpp" />
     <ClCompile Include="..\Source\Common\Application.cpp" />
     <ClCompile Include="..\Source\Common\Camera.cpp" />
     <ClCompile Include="..\Source\Common\Common.cpp" />
@@ -280,6 +265,21 @@
     <ClCompile Include="..\Source\Math\Vector2.cpp" />
     <ClCompile Include="..\Source\Math\Vector3.cpp" />
     <ClCompile Include="..\Source\Math\Vector4.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CopyTexturePass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\RenderGBufferCommandsPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\InjectVPLsIntoVoxelGridPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\RenderShadowMapCommandsPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\RenderTiledShadowMapPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\ScaleTexturePass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\TiledLightCullingPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\TiledShadingPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\ViewFrustumCullingPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\VisualizeMeshPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelGridPass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">

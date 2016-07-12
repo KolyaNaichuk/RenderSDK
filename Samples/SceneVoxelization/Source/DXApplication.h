@@ -17,19 +17,19 @@ class D3DFence;
 class Camera;
 class MeshBatch;
 class LightBuffer;
-class FillGBufferCommandsRecorder;
-class FillGBufferRecorder;
-class ClearVoxelGridRecorder;
-class CreateVoxelGridRecorder;
-class InjectVPLsIntoVoxelGridRecorder;
-class VisualizeVoxelGridRecorder;
-class VisualizeMeshRecorder;
-class CopyTextureRecorder;
-class TiledLightCullingRecorder;
-class TiledShadingRecorder;
-class ViewFrustumCullingRecorder;
-class RenderShadowMapCommandsRecorder;
-class RenderTiledShadowMapRecorder;
+class RenderGBufferCommandsPass;
+class RenderGBufferPass;
+class ClearVoxelGridPass;
+class CreateVoxelGridPass;
+class InjectVPLsIntoVoxelGridPass;
+class VisualizeVoxelGridPass;
+class VisualizeMeshPass;
+class CopyTexturePass;
+class TiledLightCullingPass;
+class TiledShadingPass;
+class ViewFrustumCullingPass;
+class RenderShadowMapCommandsPass;
+class RenderTiledShadowMapPass;
 
 struct D3DHeapProperties;
 struct D3DRenderEnv;
@@ -107,49 +107,49 @@ private:
 	UINT64 m_FenceValues[kBackBufferCount];
 	UINT m_BackBufferIndex;
 
-	FillGBufferRecorder* m_pFillGBufferRecorder;
-	D3DResourceList* m_pFillGBufferResources;
+	RenderGBufferPass* m_pRenderGBufferPass;
+	D3DResourceList* m_pRenderGBufferResources;
 
-	TiledLightCullingRecorder* m_pTiledLightCullingRecorder;
+	TiledLightCullingPass* m_pTiledLightCullingPass;
 	D3DResourceList* m_pTiledLightCullingResources;
 
-	TiledShadingRecorder* m_pTiledShadingRecorder;
+	TiledShadingPass* m_pTiledShadingPass;
 	D3DResourceList* m_pTiledShadingResources;
 
-	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;
+	ClearVoxelGridPass* m_pClearVoxelGridPass;
 	D3DResourceList* m_pClearVoxelGridResources;
 
-	CreateVoxelGridRecorder* m_pCreateVoxelGridRecorder;
+	CreateVoxelGridPass* m_pCreateVoxelGridPass;
 	D3DResourceList* m_pCreateVoxelGridResources;
 
-	InjectVPLsIntoVoxelGridRecorder* m_pInjectVPLsIntoVoxelGridRecorder;
+	InjectVPLsIntoVoxelGridPass* m_pInjectVPLsIntoVoxelGridPass;
 
-	VisualizeVoxelGridRecorder* m_pVisualizeVoxelGridRecorder;
+	VisualizeVoxelGridPass* m_pVisualizeVoxelGridPass;
 	D3DResourceList* m_VisualizeVoxelGridResources[kBackBufferCount];
 
-	VisualizeMeshRecorder* m_pVisualizeMeshRecorder;
+	VisualizeMeshPass* m_pVisualizeMeshPass;
 	D3DResourceList* m_VisualizeMeshResources[kBackBufferCount];
 
-	ViewFrustumCullingRecorder* m_pDetectVisibleMeshesRecorder;
+	ViewFrustumCullingPass* m_pDetectVisibleMeshesPass;
 	D3DResourceList* m_pDetectVisibleMeshesResources;
 
-	ViewFrustumCullingRecorder* m_pDetectVisiblePointLightsRecorder;
+	ViewFrustumCullingPass* m_pDetectVisiblePointLightsPass;
 	D3DResourceList* m_pDetectVisiblePointLightsResources;
 
-	ViewFrustumCullingRecorder* m_pDetectVisibleSpotLightsRecorder;
+	ViewFrustumCullingPass* m_pDetectVisibleSpotLightsPass;
 	D3DResourceList* m_pDetectVisibleSpotLightsResources;
 
-	FillGBufferCommandsRecorder* m_pFillGBufferCommandsRecorder;
-	D3DResourceList* m_pFillGBufferCommandsResources;
+	RenderGBufferCommandsPass* m_pRenderGBufferCommandsPass;
+	D3DResourceList* m_pRenderGBufferCommandsResources;
 
-	RenderShadowMapCommandsRecorder* m_pRenderShadowMapCommandsRecorder;
+	RenderShadowMapCommandsPass* m_pRenderShadowMapCommandsPass;
 	D3DResourceList* m_pRenderShadowMapCommandsResources;
 	D3DBuffer* m_pRenderShadowMapCommandsArgumentBuffer;
 
-	RenderTiledShadowMapRecorder* m_pRenderSpotLightTiledShadowMapRecorder;
+	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass;
 	D3DResourceList* m_pRenderSpotLightTiledShadowMapResources;
 
-	CopyTextureRecorder* m_pCopyTextureRecorder;
+	CopyTexturePass* m_pCopyTexturePass;
 	D3DResourceList* m_CopyTextureResources[kBackBufferCount];
 
 	MeshBatch* m_pMeshBatch;

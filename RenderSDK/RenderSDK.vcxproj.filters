@@ -10,14 +10,14 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{cdfc8819-7e01-4a64-ad55-d4d9eee98bb6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="CommandRecorders">
-      <UniqueIdentifier>{b02df4a5-0490-4ee5-850e-5486e84ea2c7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="DDSTextureLoader">
       <UniqueIdentifier>{719216ed-8ae2-47b7-8ce1-405c4d23ebc8}</UniqueIdentifier>
     </Filter>
     <Filter Include="D3DWrapper">
       <UniqueIdentifier>{df923963-1277-46f8-b455-1351c2a4b4c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderPasses">
+      <UniqueIdentifier>{b02df4a5-0490-4ee5-850e-5486e84ea2c7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -42,29 +42,11 @@
     <ClInclude Include="..\Include\Common\Common.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\CopyTextureRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\CreateVoxelGridRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\ClearVoxelGridRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\VisualizeVoxelGridRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Math\OverlapTest.h">
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\DDSTextureLoader\DDSTextureLoader.h">
       <Filter>DDSTextureLoader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\CalcTextureLuminanceRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\ScaleTextureRecorder.h">
-      <Filter>CommandRecorders</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\Common\MeshData.h">
       <Filter>Common</Filter>
@@ -80,9 +62,6 @@
     </ClInclude>
     <ClInclude Include="..\Include\Common\MeshDataUtilities.h">
       <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\VisualizeMeshRecorder.h">
-      <Filter>CommandRecorders</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\Common\Camera.h">
       <Filter>Common</Filter>
@@ -135,17 +114,8 @@
     <ClInclude Include="..\Include\Math\SphericalHarmonics.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\FillGBufferRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Common\Light.h">
       <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\TiledShadingRecorder.h">
-      <Filter>CommandRecorders</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\Common\MeshBatchData.h">
       <Filter>Common</Filter>
@@ -164,21 +134,6 @@
     </ClInclude>
     <ClInclude Include="..\Include\Math\Cone.h">
       <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\FillGBufferCommandsRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\RenderShadowMapCommandsRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\ViewFrustumCullingRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\TiledLightCullingRecorder.h">
-      <Filter>CommandRecorders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\CommandRecorders\RenderTiledShadowMapRecorder.h">
-      <Filter>CommandRecorders</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\D3DWrapper\D3DCommandAllocator.h">
       <Filter>D3DWrapper</Filter>
@@ -228,6 +183,51 @@
     <ClInclude Include="..\Include\D3DWrapper\DXObject.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CopyTexturePass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\InjectVPLsIntoVoxelGridPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\RenderShadowMapCommandsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\RenderTiledShadowMapPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\ScaleTexturePass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\TiledLightCullingPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\TiledShadingPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\ViewFrustumCullingPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\VisualizeMeshPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\RenderGBufferCommandsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -248,29 +248,11 @@
     <ClCompile Include="..\Source\Common\Common.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\CopyTextureRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\CreateVoxelGridRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\ClearVoxelGridRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\VisualizeVoxelGridRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\Math\OverlapTest.cpp">
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\DDSTextureLoader\DDSTextureLoader.cpp">
       <Filter>DDSTextureLoader</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\CalcTextureLuminanceRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\ScaleTextureRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\MeshDataFactory.cpp">
       <Filter>Common</Filter>
@@ -280,9 +262,6 @@
     </ClCompile>
     <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp">
       <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\VisualizeMeshRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\Camera.cpp">
       <Filter>Common</Filter>
@@ -335,17 +314,8 @@
     <ClCompile Include="..\Source\Math\SphericalHarmonics.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\FillGBufferRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\InjectVPLsIntoVoxelGridRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\Common\Light.cpp">
       <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\TiledShadingRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\MeshBatchData.cpp">
       <Filter>Common</Filter>
@@ -367,21 +337,6 @@
     </ClCompile>
     <ClCompile Include="..\Source\Math\Cone.cpp">
       <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\FillGBufferCommandsRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\RenderShadowMapCommandsRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\ViewFrustumCullingRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\TiledLightCullingRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\CommandRecorders\RenderTiledShadowMapRecorder.cpp">
-      <Filter>CommandRecorders</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\D3DWrapper\D3DCommandAllocator.cpp">
       <Filter>D3DWrapper</Filter>
@@ -421,6 +376,51 @@
     </ClCompile>
     <ClCompile Include="..\Source\D3DWrapper\D3DUtils.cpp">
       <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CopyTexturePass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\InjectVPLsIntoVoxelGridPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\RenderShadowMapCommandsPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\RenderTiledShadowMapPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\ScaleTexturePass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\TiledLightCullingPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\TiledShadingPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\ViewFrustumCullingPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\VisualizeMeshPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelGridPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\RenderGBufferCommandsPass.cpp">
+      <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

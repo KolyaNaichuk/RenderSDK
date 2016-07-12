@@ -11,8 +11,8 @@
 #include "D3DWrapper/D3DFence.h"
 #include "D3DWrapper/D3DUtils.h"
 #include "DDSTextureLoader/DDSTextureLoader.h"
-#include "CommandRecorders/CopyTextureRecorder.h"
-#include "CommandRecorders/CalcTextureLuminanceRecorder.h"
+#include "RenderPasses/CopyTexturePass.h"
+#include "RenderPasses/CalcTextureLuminancePass.h"
 
 enum SRVDescriptors
 {
@@ -38,9 +38,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFence(nullptr)
 	, m_BackBufferIndex(0)
 	, m_pHDRTexture(nullptr)
-	, m_pCopyTextureRecorder(nullptr)
-	, m_pCalcTextureLuminanceRecorder(nullptr)
-	, m_pCalcTextureLogLuminanceRecorder(nullptr)
+	, m_pCopyTexturePass(nullptr)
+	, m_pCalcTextureLuminancePass(nullptr)
+	, m_pCalcTextureLogLuminancePass(nullptr)
 	, m_DisplayResult(DisplayResult_HDRImage)
 {
 	std::memset(m_CommandAllocators, 0, sizeof(m_CommandAllocators));
@@ -52,9 +52,9 @@ DXApplication::~DXApplication()
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 		SafeDelete(m_CommandAllocators[index]);
 
-	SafeDelete(m_pCopyTextureRecorder);
-	SafeDelete(m_pCalcTextureLuminanceRecorder);
-	SafeDelete(m_pCalcTextureLogLuminanceRecorder);
+	SafeDelete(m_pCopyTexturePass);
+	SafeDelete(m_pCalcTextureLuminancePass);
+	SafeDelete(m_pCalcTextureLogLuminancePass);
 	SafeDelete(m_pShaderInvisibleSRVHeap);
 	SafeDelete(m_pShaderInvisibleSamplerHeap);
 	SafeDelete(m_pHDRTexture);
@@ -110,9 +110,9 @@ void DXApplication::OnInit()
 	D3DResource* pFirstRenderTarget = m_pSwapChain->GetBackBuffer(0);
 	const DXGI_FORMAT rtvFormat = GetRenderTargetViewFormat(pFirstRenderTarget->GetFormat());
 
-	m_pCopyTextureRecorder = new CopyTextureRecorder(m_pDevice, rtvFormat);
-	m_pCalcTextureLuminanceRecorder = new CalcTextureLuminanceRecorder(m_pDevice, rtvFormat);
-	m_pCalcTextureLogLuminanceRecorder = new CalcTextureLuminanceRecorder(m_pDevice, rtvFormat, true);
+	m_pCopyTexturePass = new CopyTexturePass(m_pDevice, rtvFormat);
+	m_pCalcTextureLuminancePass = new CalcTextureLuminancePass(m_pDevice, rtvFormat);
+	m_pCalcTextureLogLuminancePass = new CalcTextureLuminancePass(m_pDevice, rtvFormat, true);
 
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 		m_CommandAllocators[index] = new D3DCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
@@ -163,7 +163,7 @@ void DXApplication::OnRender()
 
 	if (m_DisplayResult == DisplayResult_HDRImage)
 	{
-		m_pCopyTextureRecorder->Record(m_pCommandList, pCommandAllocator,
+		m_pCopyTexturePass->Record(m_pCommandList, pCommandAllocator,
 			pRenderTarget, m_pShaderInvisibleRTVHeap->GetCPUDescriptor(m_BackBufferIndex),
 			m_pShaderInvisibleSRVHeap, m_pHDRTexture, m_pShaderInvisibleSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
 			m_pShaderInvisibleSamplerHeap, m_pShaderInvisibleSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
@@ -171,7 +171,7 @@ void DXApplication::OnRender()
 	}
 	else if (m_DisplayResult == DisplayResult_ImageLuminance)
 	{
-		m_pCalcTextureLuminanceRecorder->Record(m_pCommandList, pCommandAllocator,
+		m_pCalcTextureLuminancePass->Record(m_pCommandList, pCommandAllocator,
 			pRenderTarget, m_pShaderInvisibleRTVHeap->GetCPUDescriptor(m_BackBufferIndex),
 			m_pShaderInvisibleSRVHeap, m_pHDRTexture, m_pShaderInvisibleSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
 			m_pShaderInvisibleSamplerHeap, m_pShaderInvisibleSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
@@ -179,7 +179,7 @@ void DXApplication::OnRender()
 	}
 	else if (m_DisplayResult == DisplayResult_ImageLogLuminance)
 	{
-		m_pCalcTextureLogLuminanceRecorder->Record(m_pCommandList, pCommandAllocator,
+		m_pCalcTextureLogLuminancePass->Record(m_pCommandList, pCommandAllocator,
 			pRenderTarget, m_pShaderInvisibleRTVHeap->GetCPUDescriptor(m_BackBufferIndex),
 			m_pShaderInvisibleSRVHeap, m_pHDRTexture, m_pShaderInvisibleSRVHeap->GetGPUDescriptor(kSRVDescriptor_HDRTexture),
 			m_pShaderInvisibleSamplerHeap, m_pShaderInvisibleSamplerHeap->GetGPUDescriptor(kSamplerDescriptor_Point),
