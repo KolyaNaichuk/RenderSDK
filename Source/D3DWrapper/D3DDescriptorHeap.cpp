@@ -1,20 +1,20 @@
-#include "DX/DXDescriptorHeap.h"
-#include "DX/DXDevice.h"
+#include "D3DWrapper/D3DDescriptorHeap.h"
+#include "D3DWrapper/D3DDevice.h"
 
-DXDescriptorHandle::DXDescriptorHandle()
+D3DDescriptorHandle::D3DDescriptorHandle()
 	: m_DescriptorSize(0)
 {
 	Reset();
 }
 
-DXDescriptorHandle::DXDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, UINT descriptorSize)
+D3DDescriptorHandle::D3DDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, UINT descriptorSize)
 	: m_CPUHandle(CPUHandle)
 	, m_GPUHandle(GPUHandle)
 	, m_DescriptorSize(descriptorSize)
 {
 }
 
-DXDescriptorHandle::DXDescriptorHandle(DXDescriptorHandle firstDescriptor, INT offsetInDescriptors)
+D3DDescriptorHandle::D3DDescriptorHandle(D3DDescriptorHandle firstDescriptor, INT offsetInDescriptors)
 	: m_CPUHandle(firstDescriptor.m_CPUHandle)
 	, m_GPUHandle(firstDescriptor.m_GPUHandle)
 	, m_DescriptorSize(firstDescriptor.m_DescriptorSize)
@@ -22,7 +22,7 @@ DXDescriptorHandle::DXDescriptorHandle(DXDescriptorHandle firstDescriptor, INT o
 	Offset(offsetInDescriptors);
 }
 
-void DXDescriptorHandle::Offset(UINT offsetInDescriptors)
+void D3DDescriptorHandle::Offset(UINT offsetInDescriptors)
 {
 	assert(IsValid());
 	m_CPUHandle.ptr += offsetInDescriptors * m_DescriptorSize;
@@ -31,29 +31,29 @@ void DXDescriptorHandle::Offset(UINT offsetInDescriptors)
 		m_GPUHandle.ptr += offsetInDescriptors * m_DescriptorSize;
 }
 
-bool DXDescriptorHandle::IsValid() const
+bool D3DDescriptorHandle::IsValid() const
 {
 	return (m_CPUHandle.ptr != 0);
 }
 
-bool DXDescriptorHandle::IsShaderVisible() const
+bool D3DDescriptorHandle::IsShaderVisible() const
 {
 	return (m_GPUHandle.ptr != 0);
 }
 
-void DXDescriptorHandle::Reset(D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle)
+void D3DDescriptorHandle::Reset(D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle)
 {
 	m_CPUHandle = CPUHandle;
 	m_GPUHandle = GPUHandle;
 }
 
-void DXDescriptorHandle::Reset()
+void D3DDescriptorHandle::Reset()
 {
 	m_CPUHandle.ptr = 0;
 	m_GPUHandle.ptr = 0;
 }
 
-DXDescriptorHeapDesc::DXDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE type, UINT numDescriptors, bool shaderVisible)
+D3DDescriptorHeapDesc::D3DDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE type, UINT numDescriptors, bool shaderVisible)
 {
 	Type = type;
 	NumDescriptors = numDescriptors;
@@ -61,7 +61,7 @@ DXDescriptorHeapDesc::DXDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE type, UINT
 	NodeMask = 0;
 }
 
-DXDescriptorHeap::DXDescriptorHeap(DXDevice* pDevice, const DXDescriptorHeapDesc* pDesc, LPCWSTR pName)
+D3DDescriptorHeap::D3DDescriptorHeap(D3DDevice* pDevice, const D3DDescriptorHeapDesc* pDesc, LPCWSTR pName)
 {
 	ID3D12Device* pDXDevice = pDevice->GetDXObject();
 	DXVerify(pDXDevice->CreateDescriptorHeap(pDesc, IID_PPV_ARGS(GetDXObjectAddress())));
@@ -81,27 +81,27 @@ DXDescriptorHeap::DXDescriptorHeap(DXDevice* pDevice, const DXDescriptorHeapDesc
 #endif
 }
 
-DXDescriptorHandle DXDescriptorHeap::Allocate()
+D3DDescriptorHandle D3DDescriptorHeap::Allocate()
 {
 	assert(m_NumUsedDescriptors < m_NumReservedDescriptors);
 	
 	INT offsetInDescriptors = m_NumUsedDescriptors;
 	++m_NumUsedDescriptors;
 
-	return DXDescriptorHandle(m_FirstDescriptor, offsetInDescriptors);
+	return D3DDescriptorHandle(m_FirstDescriptor, offsetInDescriptors);
 }
 
-DXDescriptorHandle DXDescriptorHeap::AllocateRange(UINT numDescriptors)
+D3DDescriptorHandle D3DDescriptorHeap::AllocateRange(UINT numDescriptors)
 {
 	assert(m_NumUsedDescriptors + numDescriptors <= m_NumReservedDescriptors);
 
 	INT offsetInDescriptors = m_NumUsedDescriptors;
 	m_NumUsedDescriptors += numDescriptors;
 
-	return DXDescriptorHandle(m_FirstDescriptor, offsetInDescriptors);
+	return D3DDescriptorHandle(m_FirstDescriptor, offsetInDescriptors);
 }
 
-void DXDescriptorHeap::Reset()
+void D3DDescriptorHeap::Reset()
 {
 	m_NumUsedDescriptors = 0;
 }

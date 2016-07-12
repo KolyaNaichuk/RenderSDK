@@ -2,21 +2,21 @@
 
 #include "Common/Common.h"
 
-class DXRootSignature;
-class DXPipelineState;
-class DXCommandList;
-class DXCommandAllocator;
-class DXBuffer;
+class D3DRootSignature;
+class D3DPipelineState;
+class D3DCommandList;
+class D3DCommandAllocator;
+class D3DBuffer;
 
-struct DXRenderEnvironment;
-struct DXBindingResourceList;
+struct D3DRenderEnv;
+struct D3DResourceList;
 
 class TiledLightCullingRecorder
 {
 public:
 	struct InitParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
+		D3DRenderEnv* m_pRenderEnv;
 		u16 m_TileSize;
 		u16 m_NumTilesX;
 		u16 m_NumTilesY;
@@ -26,12 +26,12 @@ public:
 
 	struct RenderPassParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
-		DXCommandList* m_pCommandList;
-		DXCommandAllocator* m_pCommandAllocator;
-		DXBindingResourceList* m_pResources;
-		DXBuffer* m_pNumPointLightsPerTileBuffer;
-		DXBuffer* m_pNumSpotLightsPerTileBuffer;
+		D3DRenderEnv* m_pRenderEnv;
+		D3DCommandList* m_pCommandList;
+		D3DCommandAllocator* m_pCommandAllocator;
+		D3DResourceList* m_pResources;
+		D3DBuffer* m_pNumPointLightsPerTileBuffer;
+		D3DBuffer* m_pNumSpotLightsPerTileBuffer;
 	};
 
 	TiledLightCullingRecorder(InitParams* pParams);
@@ -40,8 +40,8 @@ public:
 	void Record(RenderPassParams* pParams);
 
 private:
-	DXRootSignature* m_pRootSignature;
-	DXPipelineState* m_pPipelineState;
+	D3DRootSignature* m_pRootSignature;
+	D3DPipelineState* m_pPipelineState;
 
 	u16 m_NumThreadGroupsX;
 	u16 m_NumThreadGroupsY;

@@ -2,24 +2,24 @@
 
 #include "Math/Vector4.h"
 
-class DXRootSignature;
-class DXPipelineState;
-class DXCommandSignature;
-class DXCommandList;
-class DXCommandAllocator;
-class DXBuffer;
+class D3DRootSignature;
+class D3DPipelineState;
+class D3DCommandSignature;
+class D3DCommandList;
+class D3DCommandAllocator;
+class D3DBuffer;
 class MeshBatch;
 
-struct DXViewport;
-struct DXRenderEnvironment;
-struct DXBindingResourceList;
+struct D3DViewport;
+struct D3DRenderEnv;
+struct D3DResourceList;
 
 class FillGBufferRecorder
 {
 public:
 	struct InitParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
+		D3DRenderEnv* m_pRenderEnv;
 		DXGI_FORMAT m_NormalRTVFormat;
 		DXGI_FORMAT m_DiffuseRTVFormat;
 		DXGI_FORMAT m_SpecularRTVFormat;
@@ -28,14 +28,14 @@ public:
 	};
 	struct RenderPassParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
-		DXCommandList* m_pCommandList;
-		DXCommandAllocator* m_pCommandAllocator;
-		DXBindingResourceList* m_pResources;
-		DXViewport* m_pViewport;
+		D3DRenderEnv* m_pRenderEnv;
+		D3DCommandList* m_pCommandList;
+		D3DCommandAllocator* m_pCommandAllocator;
+		D3DResourceList* m_pResources;
+		D3DViewport* m_pViewport;
 		MeshBatch* m_pMeshBatch;
-		DXBuffer* m_pDrawMeshCommandBuffer;
-		DXBuffer* m_pNumDrawMeshesBuffer;
+		D3DBuffer* m_pDrawMeshCommandBuffer;
+		D3DBuffer* m_pNumDrawMeshesBuffer;
 	};
 
 	FillGBufferRecorder(InitParams* pParams);
@@ -44,7 +44,7 @@ public:
 	void Record(RenderPassParams* pParams);
 
 private:
-	DXRootSignature* m_pRootSignature;
-	DXPipelineState* m_pPipelineState;
-	DXCommandSignature* m_pCommandSignature;
+	D3DRootSignature* m_pRootSignature;
+	D3DPipelineState* m_pPipelineState;
+	D3DCommandSignature* m_pCommandSignature;
 };

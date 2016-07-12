@@ -1,12 +1,12 @@
-#include "DX/DXDevice.h"
-#include "DX/DXFactory.h"
-#include "DX/DXCommandQueue.h"
-#include "DX/DXCommandAllocator.h"
-#include "DX/DXCommandList.h"
-#include "DX/DXFence.h"
-#include "DX/DXResource.h"
+#include "D3DWrapper/D3DDevice.h"
+#include "D3DWrapper/D3DFactory.h"
+#include "D3DWrapper/D3DCommandQueue.h"
+#include "D3DWrapper/D3DCommandAllocator.h"
+#include "D3DWrapper/D3DCommandList.h"
+#include "D3DWrapper/D3DFence.h"
+#include "D3DWrapper/D3DResource.h"
 
-void GetHardwareAdapter(DXFactory* pFactory, D3D_FEATURE_LEVEL minFeatureLevel, IDXGIAdapter1** ppAdapter)
+void GetHardwareAdapter(D3DFactory* pFactory, D3D_FEATURE_LEVEL minFeatureLevel, IDXGIAdapter1** ppAdapter)
 {
 	ComPtr<IDXGIAdapter1> adapter;
 	*ppAdapter = nullptr;
@@ -26,7 +26,7 @@ void GetHardwareAdapter(DXFactory* pFactory, D3D_FEATURE_LEVEL minFeatureLevel, 
 	*ppAdapter = adapter.Detach();
 }
 
-DXDevice::DXDevice(DXFactory* pFactory, D3D_FEATURE_LEVEL minFeatureLevel, bool useWarpAdapter)
+D3DDevice::D3DDevice(D3DFactory* pFactory, D3D_FEATURE_LEVEL minFeatureLevel, bool useWarpAdapter)
 {
 #ifdef _DEBUG
 	ComPtr<ID3D12Debug> d3dDebug;
@@ -61,12 +61,12 @@ DXDevice::DXDevice(DXFactory* pFactory, D3D_FEATURE_LEVEL minFeatureLevel, bool 
 #endif
 }
 
-void DXDevice::CheckFeatureSupport(D3D12_FEATURE feature, void* pFeatureSupportData, UINT featureSupportDataSize)
+void D3DDevice::CheckFeatureSupport(D3D12_FEATURE feature, void* pFeatureSupportData, UINT featureSupportDataSize)
 {
 	DXVerify(GetDXObject()->CheckFeatureSupport(feature, pFeatureSupportData, featureSupportDataSize));
 }
 
-void DXDevice::CopyDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE destDescriptor, D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, D3D12_DESCRIPTOR_HEAP_TYPE descriptorHeapType)
+void D3DDevice::CopyDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE destDescriptor, D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, D3D12_DESCRIPTOR_HEAP_TYPE descriptorHeapType)
 {
 	GetDXObject()->CopyDescriptorsSimple(1, destDescriptor, srcDescriptor, descriptorHeapType);
 }

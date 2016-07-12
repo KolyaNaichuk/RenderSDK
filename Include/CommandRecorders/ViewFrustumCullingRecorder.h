@@ -2,13 +2,13 @@
 
 #include "Common/Common.h"
 
-class DXRootSignature;
-class DXPipelineState;
-class DXCommandList;
-class DXCommandAllocator;
-class DXBuffer;
-struct DXRenderEnvironment;
-struct DXBindingResourceList;
+class D3DRootSignature;
+class D3DPipelineState;
+class D3DCommandList;
+class D3DCommandAllocator;
+class D3DBuffer;
+struct D3DRenderEnv;
+struct D3DResourceList;
 
 enum ObjectBoundsType
 {
@@ -21,17 +21,17 @@ class ViewFrustumCullingRecorder
 public:
 	struct InitParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
+		D3DRenderEnv* m_pRenderEnv;
 		ObjectBoundsType m_ObjectBoundsType;
 		u32 m_NumObjects;
 	};
 	struct RenderPassParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
-		DXCommandList* m_pCommandList;
-		DXCommandAllocator* m_pCommandAllocator;
-		DXBindingResourceList* m_pResources;
-		DXBuffer* m_pNumVisibleObjectsBuffer;
+		D3DRenderEnv* m_pRenderEnv;
+		D3DCommandList* m_pCommandList;
+		D3DCommandAllocator* m_pCommandAllocator;
+		D3DResourceList* m_pResources;
+		D3DBuffer* m_pNumVisibleObjectsBuffer;
 	};
 	
 	ViewFrustumCullingRecorder(InitParams* pParams);
@@ -40,8 +40,8 @@ public:
 	void Record(RenderPassParams* pParams);
 
 private:
-	DXRootSignature* m_pRootSignature;
-	DXPipelineState* m_pPipelineState;
+	D3DRootSignature* m_pRootSignature;
+	D3DPipelineState* m_pPipelineState;
 
 	u16 m_NumThreadGroupsX;
 };

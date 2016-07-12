@@ -1,8 +1,8 @@
 #pragma once
 
-class DXDevice;
-class DXPipelineState;
-class DXRootSignature;
+class D3DDevice;
+class D3DPipelineState;
+class D3DRootSignature;
 
 enum ScaleFactor
 {
@@ -18,10 +18,10 @@ enum ScaleFactor
 class ScaleTextureRecorder
 {
 public:
-	ScaleTextureRecorder(DXDevice* pDevice, ScaleFactor scaleFactor);
+	ScaleTextureRecorder(D3DDevice* pDevice, ScaleFactor scaleFactor);
 	~ScaleTextureRecorder();
 
 private:
-	DXRootSignature* m_pRootSignature;
-	DXPipelineState* m_pPipelineState;
+	D3DRootSignature* m_pRootSignature;
+	D3DPipelineState* m_pPipelineState;
 };

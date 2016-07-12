@@ -2,31 +2,31 @@
 
 #include "Common/Common.h"
 
-class DXCommandList;
-class DXCommandAllocator;
-class DXRootSignature;
-class DXPipelineState;
+class D3DCommandList;
+class D3DCommandAllocator;
+class D3DRootSignature;
+class D3DPipelineState;
 
-struct DXRenderEnvironment;
-struct DXBindingResourceList;
-struct DXViewport;
+struct D3DRenderEnv;
+struct D3DResourceList;
+struct D3DViewport;
 
 class VisualizeVoxelGridRecorder
 {
 public:
 	struct InitParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
+		D3DRenderEnv* m_pRenderEnv;
 		DXGI_FORMAT m_RTVFormat;
 	};
 	
 	struct RenderPassParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
-		DXCommandList* m_pCommandList;
-		DXCommandAllocator* m_pCommandAllocator;
-		DXBindingResourceList* m_pResources;
-		DXViewport* m_pViewport;
+		D3DRenderEnv* m_pRenderEnv;
+		D3DCommandList* m_pCommandList;
+		D3DCommandAllocator* m_pCommandAllocator;
+		D3DResourceList* m_pResources;
+		D3DViewport* m_pViewport;
 	};
 
 	VisualizeVoxelGridRecorder(InitParams* pParams);
@@ -35,6 +35,6 @@ public:
 	void Record(RenderPassParams* pParams);
 
 private:
-	DXRootSignature* m_pRootSignature;
-	DXPipelineState* m_pPipelineState;
+	D3DRootSignature* m_pRootSignature;
+	D3DPipelineState* m_pPipelineState;
 };

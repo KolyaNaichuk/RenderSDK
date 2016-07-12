@@ -1,6 +1,6 @@
-#include "DX/DXFactory.h"
+#include "D3DWrapper/D3DFactory.h"
 
-DXFactory::DXFactory()
+D3DFactory::D3DFactory()
 {
 	DXVerify(CreateDXGIFactory1(IID_PPV_ARGS(GetDXObjectAddress())));
 }

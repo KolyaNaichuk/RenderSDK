@@ -2,21 +2,21 @@
 
 #include "Common/Common.h"
 
-class DXDevice;
-class DXCommandList;
-class DXCommandAllocator;
-class DXRootSignature;
-class DXPipelineState;
-class DXResource;
+class D3DDevice;
+class D3DCommandList;
+class D3DCommandAllocator;
+class D3DRootSignature;
+class D3DPipelineState;
+class D3DResource;
 
-struct DXRenderEnvironment;
+struct D3DRenderEnv;
 
 class InjectVPLsIntoVoxelGridRecorder
 {
 public:
 	struct InitPrams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
+		D3DRenderEnv* m_pRenderEnv;
 		u16 m_NumGridCellsX;
 		u16 m_NumGridCellsY;
 		u16 m_NumGridCellsZ;
@@ -32,8 +32,8 @@ public:
 	void Record(RenderPassParams* pParams);
 
 private:
-	DXRootSignature* m_pRootSignature;
-	DXPipelineState* m_pPipelineState;
+	D3DRootSignature* m_pRootSignature;
+	D3DPipelineState* m_pPipelineState;
 
 	u16 m_NumThreadGroupsX;
 	u16 m_NumThreadGroupsY;

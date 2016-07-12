@@ -1,9 +1,9 @@
 #include "CommandRecorders/ViewFrustumCullingRecorder.h"
-#include "DX/DXRootSignature.h"
-#include "DX/DXPipelineState.h"
-#include "DX/DXRenderEnvironment.h"
-#include "DX/DXResource.h"
-#include "DX/DXCommandList.h"
+#include "D3DWrapper/D3DRootSignature.h"
+#include "D3DWrapper/D3DPipelineState.h"
+#include "D3DWrapper/D3DRenderEnv.h"
+#include "D3DWrapper/D3DResource.h"
+#include "D3DWrapper/D3DCommandList.h"
 #include "Math/Math.h"
 
 enum RootParams
@@ -16,7 +16,7 @@ ViewFrustumCullingRecorder::ViewFrustumCullingRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
-	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
+	D3DRenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	const u16 threadGroupSize = 64;
 	m_NumThreadGroupsX = (u16)Ceil((f32)pParams->m_NumObjects / (f32)threadGroupSize);
@@ -24,26 +24,26 @@ ViewFrustumCullingRecorder::ViewFrustumCullingRecorder(InitParams* pParams)
 	std::string threadGroupSizeStr = std::to_string(threadGroupSize);
 	std::string objectBoundsTypeStr = std::to_string(pParams->m_ObjectBoundsType);
 
-	const DXShaderMacro shaderDefines[] =
+	const D3DShaderMacro shaderDefines[] =
 	{
-		DXShaderMacro("THREAD_GROUP_SIZE", threadGroupSizeStr.c_str()),
-		DXShaderMacro("OBJECT_BOUNDS_TYPE", objectBoundsTypeStr.c_str()),
-		DXShaderMacro()
+		D3DShaderMacro("THREAD_GROUP_SIZE", threadGroupSizeStr.c_str()),
+		D3DShaderMacro("OBJECT_BOUNDS_TYPE", objectBoundsTypeStr.c_str()),
+		D3DShaderMacro()
 	};
-	DXShader computeShader(L"Shaders//ViewFrustumCullingCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	D3DShader computeShader(L"Shaders//ViewFrustumCullingCS.hlsl", "Main", "cs_5_0", shaderDefines);
 
-	D3D12_DESCRIPTOR_RANGE srvDescriptorRanges[] = {DXUAVRange(2, 0), DXSRVRange(1, 0), DXCBVRange(1, 0)};
+	D3D12_DESCRIPTOR_RANGE srvDescriptorRanges[] = {D3DUAVRange(2, 0), D3DSRVRange(1, 0), D3DCBVRange(1, 0)};
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kSRVRootParam] = DXRootDescriptorTableParameter(ARRAYSIZE(srvDescriptorRanges), &srvDescriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
+	rootParams[kSRVRootParam] = D3DRootDescriptorTableParameter(ARRAYSIZE(srvDescriptorRanges), &srvDescriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
 
-	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new DXRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"ViewFrustumCullingRecorder::m_pRootSignature");
+	D3DRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
+	m_pRootSignature = new D3DRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"ViewFrustumCullingRecorder::m_pRootSignature");
 
-	DXComputePipelineStateDesc pipelineStateDesc;
+	D3DComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
-	m_pPipelineState = new DXPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"ViewFrustumCullingRecorder::m_pPipelineState");
+	m_pPipelineState = new D3DPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"ViewFrustumCullingRecorder::m_pPipelineState");
 }
 
 ViewFrustumCullingRecorder::~ViewFrustumCullingRecorder()
@@ -54,14 +54,14 @@ ViewFrustumCullingRecorder::~ViewFrustumCullingRecorder()
 
 void ViewFrustumCullingRecorder::Record(RenderPassParams* pParams)
 {
-	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
-	DXCommandList* pCommandList = pParams->m_pCommandList;
-	DXBindingResourceList* pResources = pParams->m_pResources;
-	DXBuffer* pNumVisibleObjectsBuffer = pParams->m_pNumVisibleObjectsBuffer;
+	D3DRenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	D3DCommandList* pCommandList = pParams->m_pCommandList;
+	D3DResourceList* pResources = pParams->m_pResources;
+	D3DBuffer* pNumVisibleObjectsBuffer = pParams->m_pNumVisibleObjectsBuffer;
 
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
-	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
+	pCommandList->SetResourceTransitions(&pResources->m_RequiredResourceStates);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 

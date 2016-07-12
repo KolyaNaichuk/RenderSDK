@@ -2,21 +2,21 @@
 
 #include "Common/Common.h"
 
-class DXRootSignature;
-class DXPipelineState;
-class DXCommandList;
-class DXCommandAllocator;
-class DXCommandSignature;
-class DXBuffer;
-struct DXRenderEnvironment;
-struct DXBindingResourceList;
+class D3DRootSignature;
+class D3DPipelineState;
+class D3DCommandList;
+class D3DCommandAllocator;
+class D3DCommandSignature;
+class D3DBuffer;
+struct D3DRenderEnv;
+struct D3DResourceList;
 
 class RenderShadowMapCommandsRecorder
 {
 public:
 	struct InitParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
+		D3DRenderEnv* m_pRenderEnv;
 		bool m_EnablePointLights;
 		u32 m_MaxNumPointLightsPerShadowCaster;
 		bool m_EnableSpotLights;
@@ -25,15 +25,15 @@ public:
 
 	struct RenderPassParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
-		DXCommandList* m_pCommandList;
-		DXCommandAllocator* m_pCommandAllocator;
-		DXBindingResourceList* m_pResources;
-		DXBuffer* m_pIndirectArgumentBuffer;
-		DXBuffer* m_pNumShadowCastingPointLightsBuffer;
-		DXBuffer* m_pNumDrawPointLightShadowCastersBuffer;
-		DXBuffer* m_pNumShadowCastingSpotLightsBuffer;
-		DXBuffer* m_pNumDrawSpotLightShadowCastersBuffer;
+		D3DRenderEnv* m_pRenderEnv;
+		D3DCommandList* m_pCommandList;
+		D3DCommandAllocator* m_pCommandAllocator;
+		D3DResourceList* m_pResources;
+		D3DBuffer* m_pIndirectArgumentBuffer;
+		D3DBuffer* m_pNumShadowCastingPointLightsBuffer;
+		D3DBuffer* m_pNumDrawPointLightShadowCastersBuffer;
+		D3DBuffer* m_pNumShadowCastingSpotLightsBuffer;
+		D3DBuffer* m_pNumDrawSpotLightShadowCastersBuffer;
 	};
 
 	RenderShadowMapCommandsRecorder(InitParams* pParams);
@@ -42,9 +42,9 @@ public:
 	void Record(RenderPassParams* pParams);
 
 private:
-	DXRootSignature* m_pRootSignature;
-	DXPipelineState* m_pPipelineState;
-	DXCommandSignature* m_pCommandSignature;
+	D3DRootSignature* m_pRootSignature;
+	D3DPipelineState* m_pPipelineState;
+	D3DCommandSignature* m_pCommandSignature;
 
 	bool m_EnablePointLights;
 	bool m_EnableSpotLights;

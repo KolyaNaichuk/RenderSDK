@@ -2,17 +2,17 @@
 
 #include "Common/Application.h"
 
-class DXDevice;
-class DXSwapChain;
-class DXCommandQueue;
-class DXCommandList;
-class DXCommandAllocator;
-class DXDescriptorHeap;
-class DXColorTexture;
-class DXFence;
+class D3DDevice;
+class D3DSwapChain;
+class D3DCommandQueue;
+class D3DCommandList;
+class D3DCommandAllocator;
+class D3DDescriptorHeap;
+class D3DColorTexture;
+class D3DFence;
 
-struct DXRenderEnvironment;
-struct DXHeapProperties;
+struct D3DRenderEnv;
+struct D3DHeapProperties;
 
 class CopyTextureRecorder;
 class CalcTextureLuminanceRecorder;
@@ -44,19 +44,19 @@ private:
 private:
 	enum { kBackBufferCount = 3 };
 
-	DXDevice* m_pDevice;
-	DXSwapChain* m_pSwapChain;
-	DXCommandQueue* m_pCommandQueue;
-	DXDescriptorHeap* m_pShaderInvisibleRTVHeap;
-	DXDescriptorHeap* m_pShaderInvisibleSRVHeap;
-	DXDescriptorHeap* m_pShaderInvisibleSamplerHeap;
-	DXCommandAllocator* m_CommandAllocators[kBackBufferCount];
-	DXCommandList* m_pCommandList;
-	DXFence* m_pFence;
+	D3DDevice* m_pDevice;
+	D3DSwapChain* m_pSwapChain;
+	D3DCommandQueue* m_pCommandQueue;
+	D3DDescriptorHeap* m_pShaderInvisibleRTVHeap;
+	D3DDescriptorHeap* m_pShaderInvisibleSRVHeap;
+	D3DDescriptorHeap* m_pShaderInvisibleSamplerHeap;
+	D3DCommandAllocator* m_CommandAllocators[kBackBufferCount];
+	D3DCommandList* m_pCommandList;
+	D3DFence* m_pFence;
 	UINT64 m_FenceValues[kBackBufferCount];
 	UINT m_BackBufferIndex;
 
-	DXColorTexture* m_pHDRTexture;
+	D3DColorTexture* m_pHDRTexture;
 	CopyTextureRecorder* m_pCopyTextureRecorder;
 	CalcTextureLuminanceRecorder* m_pCalcTextureLuminanceRecorder;
 	CalcTextureLuminanceRecorder* m_pCalcTextureLogLuminanceRecorder;

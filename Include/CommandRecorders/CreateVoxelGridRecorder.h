@@ -2,38 +2,38 @@
 
 #include "Common/Common.h"
 
-class DXDevice;
-class DXRootSignature;
-class DXPipelineState;
-class DXCommandList;
-class DXCommandAllocator;
-class DXCommandSignature;
-class DXBuffer;
+class D3DDevice;
+class D3DRootSignature;
+class D3DPipelineState;
+class D3DCommandList;
+class D3DCommandAllocator;
+class D3DCommandSignature;
+class D3DBuffer;
 class MeshBatch;
 
-struct DXViewport;
-struct DXRenderEnvironment;
-struct DXBindingResourceList;
+struct D3DViewport;
+struct D3DRenderEnv;
+struct D3DResourceList;
 
 class CreateVoxelGridRecorder
 {
 public:
 	struct InitParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
+		D3DRenderEnv* m_pRenderEnv;
 		MeshBatch* m_pMeshBatch;
 	};
 
 	struct RenderPassParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
-		DXCommandList* m_pCommandList;
-		DXCommandAllocator* m_pCommandAllocator;
-		DXBindingResourceList* m_pResources;
-		DXViewport* m_pViewport;
+		D3DRenderEnv* m_pRenderEnv;
+		D3DCommandList* m_pCommandList;
+		D3DCommandAllocator* m_pCommandAllocator;
+		D3DResourceList* m_pResources;
+		D3DViewport* m_pViewport;
 		MeshBatch* m_pMeshBatch;
-		DXBuffer* m_pDrawMeshCommandBuffer;
-		DXBuffer* m_pNumDrawMeshesBuffer;
+		D3DBuffer* m_pDrawMeshCommandBuffer;
+		D3DBuffer* m_pNumDrawMeshesBuffer;
 	};
 
 	CreateVoxelGridRecorder(InitParams* pParams);
@@ -42,7 +42,7 @@ public:
 	void Record(RenderPassParams* pParams);
 
 private:
-	DXRootSignature* m_pRootSignature;
-	DXPipelineState* m_pPipelineState;
-	DXCommandSignature* m_pCommandSignature;
+	D3DRootSignature* m_pRootSignature;
+	D3DPipelineState* m_pPipelineState;
+	D3DCommandSignature* m_pCommandSignature;
 };

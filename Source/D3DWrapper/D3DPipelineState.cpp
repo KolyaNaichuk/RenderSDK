@@ -1,26 +1,26 @@
-#include "DX/DXPipelineState.h"
-#include "DX/DXDevice.h"
-#include "DX/DXRootSignature.h"
+#include "D3DWrapper/D3DPipelineState.h"
+#include "D3DWrapper/D3DDevice.h"
+#include "D3DWrapper/D3DRootSignature.h"
 
-DXShaderBytecode::DXShaderBytecode(const void* pBytecode, SIZE_T bytecodeLength)
+D3DShaderBytecode::D3DShaderBytecode(const void* pBytecode, SIZE_T bytecodeLength)
 {
 	pShaderBytecode = pBytecode;
 	BytecodeLength = bytecodeLength;
 }
 
-DXShaderMacro::DXShaderMacro()
+D3DShaderMacro::D3DShaderMacro()
 {
 	Name = nullptr;
 	Definition = nullptr;
 }
 
-DXShaderMacro::DXShaderMacro(LPCSTR pName, LPCSTR pDefinition)
+D3DShaderMacro::D3DShaderMacro(LPCSTR pName, LPCSTR pDefinition)
 {
 	Name = pName;
 	Definition = pDefinition;
 }
 
-DXShader::DXShader(LPCWSTR pFileName, LPCSTR pEntryPoint, LPCSTR pShaderModel, const DXShaderMacro* pDefines)
+D3DShader::D3DShader(LPCWSTR pFileName, LPCSTR pEntryPoint, LPCSTR pShaderModel, const D3DShaderMacro* pDefines)
 {
 	UINT compileFlags = 0;
 	compileFlags |= D3DCOMPILE_ENABLE_STRICTNESS;
@@ -31,35 +31,35 @@ DXShader::DXShader(LPCWSTR pFileName, LPCSTR pEntryPoint, LPCSTR pShaderModel, c
 	compileFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	ComPtr<ID3DBlob> errorBlob;
+	ComPtr<ID3DBlob> d3dErrorBlob;
 	HRESULT result = D3DCompileFromFile(pFileName, pDefines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		pEntryPoint, pShaderModel, compileFlags, 0, GetDXObjectAddress(), &errorBlob);
+		pEntryPoint, pShaderModel, compileFlags, 0, GetDXObjectAddress(), &d3dErrorBlob);
 
 	if (FAILED(result))
 	{
-		OutputDebugStringA((LPCSTR)errorBlob->GetBufferPointer());
+		OutputDebugStringA((LPCSTR)d3dErrorBlob->GetBufferPointer());
 		assert(false);
 	}
 }
 
-DXShaderBytecode DXShader::GetBytecode()
+D3DShaderBytecode D3DShader::GetBytecode()
 {
-	return DXShaderBytecode(GetDXObject()->GetBufferPointer(), GetDXObject()->GetBufferSize());
+	return D3DShaderBytecode(GetDXObject()->GetBufferPointer(), GetDXObject()->GetBufferSize());
 }
 
-DXCachedPipelineState::DXCachedPipelineState(const void* pBlob, SIZE_T blobSizeInBytes)
+D3DCachedPipelineState::D3DCachedPipelineState(const void* pBlob, SIZE_T blobSizeInBytes)
 {
 	pCachedBlob = pBlob;
 	CachedBlobSizeInBytes = blobSizeInBytes;
 }
 
-DXSampleDesc::DXSampleDesc(UINT count, UINT quality)
+D3DSampleDesc::D3DSampleDesc(UINT count, UINT quality)
 {
 	Count = count;
 	Quality = quality;
 }
 
-DXStreamOutputDesc::DXStreamOutputDesc()
+D3DStreamOutputDesc::D3DStreamOutputDesc()
 {
 	pSODeclaration = nullptr;
 	NumEntries = 0;
@@ -68,9 +68,9 @@ DXStreamOutputDesc::DXStreamOutputDesc()
 	RasterizedStream = 0;
 }
 
-DXBlendDesc::DXBlendDesc(Id id)
+D3DBlendDesc::D3DBlendDesc(Id id)
 {
-	if (id == DXBlendDesc::Disabled)
+	if (id == D3DBlendDesc::Disabled)
 	{
 		AlphaToCoverageEnable = FALSE;
 		IndependentBlendEnable = FALSE;
@@ -95,9 +95,9 @@ DXBlendDesc::DXBlendDesc(Id id)
 	}
 }
 
-DXRasterizerDesc::DXRasterizerDesc(Id id)
+D3DRasterizerDesc::D3DRasterizerDesc(Id id)
 {
-	if (id == DXRasterizerDesc::Default)
+	if (id == D3DRasterizerDesc::Default)
 	{
 		FillMode = D3D12_FILL_MODE_SOLID;
 		CullMode = D3D12_CULL_MODE_BACK;
@@ -111,7 +111,7 @@ DXRasterizerDesc::DXRasterizerDesc(Id id)
 		ForcedSampleCount = 0;
 		ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 	}
-	else if (id == DXRasterizerDesc::CullNoneConservative)
+	else if (id == D3DRasterizerDesc::CullNoneConservative)
 	{
 		FillMode = D3D12_FILL_MODE_SOLID;
 		CullMode = D3D12_CULL_MODE_NONE;
@@ -131,9 +131,9 @@ DXRasterizerDesc::DXRasterizerDesc(Id id)
 	}
 }
 
-DXDepthStencilDesc::DXDepthStencilDesc(Id id)
+D3DDepthStencilDesc::D3DDepthStencilDesc(Id id)
 {
-	if (id == DXDepthStencilDesc::Disabled)
+	if (id == D3DDepthStencilDesc::Disabled)
 	{
 		DepthEnable = FALSE;
 		DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
@@ -150,7 +150,7 @@ DXDepthStencilDesc::DXDepthStencilDesc(Id id)
 		BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
 		BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 	}
-	else if (id == DXDepthStencilDesc::Enabled)
+	else if (id == D3DDepthStencilDesc::Enabled)
 	{
 		DepthEnable = TRUE;
 		DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
@@ -173,9 +173,9 @@ DXDepthStencilDesc::DXDepthStencilDesc(Id id)
 	}
 }
 
-DXSamplerDesc::DXSamplerDesc(Id id)
+D3DSamplerDesc::D3DSamplerDesc(Id id)
 {
-	if (id == DXSamplerDesc::Linear)
+	if (id == D3DSamplerDesc::Linear)
 	{
 		Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -186,7 +186,7 @@ DXSamplerDesc::DXSamplerDesc(Id id)
 		MinLOD = -D3D12_FLOAT32_MAX;
 		MaxLOD = D3D12_FLOAT32_MAX;
 	}
-	else if (id == DXSamplerDesc::Point)
+	else if (id == D3DSamplerDesc::Point)
 	{
 		Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
 		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -197,7 +197,7 @@ DXSamplerDesc::DXSamplerDesc(Id id)
 		MinLOD = -D3D12_FLOAT32_MAX;
 		MaxLOD = D3D12_FLOAT32_MAX;
 	}
-	else if (id == DXSamplerDesc::Anisotropic)
+	else if (id == D3DSamplerDesc::Anisotropic)
 	{
 		Filter = D3D12_FILTER_ANISOTROPIC;
 		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -214,9 +214,9 @@ DXSamplerDesc::DXSamplerDesc(Id id)
 	}
 }
 
-DXStaticSamplerDesc::DXStaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace)
+D3DStaticSamplerDesc::D3DStaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace)
 {
-	if (id == DXStaticSamplerDesc::Linear)
+	if (id == D3DStaticSamplerDesc::Linear)
 	{
 		Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -227,7 +227,7 @@ DXStaticSamplerDesc::DXStaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADE
 		MinLOD = -D3D12_FLOAT32_MAX;
 		MaxLOD = D3D12_FLOAT32_MAX;
 	}
-	else if (id == DXStaticSamplerDesc::Point)
+	else if (id == D3DStaticSamplerDesc::Point)
 	{
 		Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
 		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -238,7 +238,7 @@ DXStaticSamplerDesc::DXStaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADE
 		MinLOD = -D3D12_FLOAT32_MAX;
 		MaxLOD = D3D12_FLOAT32_MAX;
 	}
-	else if (id == DXStaticSamplerDesc::Anisotropic)
+	else if (id == D3DStaticSamplerDesc::Anisotropic)
 	{
 		Filter = D3D12_FILTER_ANISOTROPIC;
 		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -258,80 +258,80 @@ DXStaticSamplerDesc::DXStaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADE
 	RegisterSpace = registerSpace;
 }
 
-DXInputLayoutDesc::DXInputLayoutDesc(UINT numElements, const DXInputElementDesc* pFirstInputElementDesc)
+D3DInputLayoutDesc::D3DInputLayoutDesc(UINT numElements, const D3DInputElementDesc* pFirstInputElementDesc)
 {
 	pInputElementDescs = pFirstInputElementDesc;
 	NumElements = numElements;
 }
 
-DXGraphicsPipelineStateDesc::DXGraphicsPipelineStateDesc()
+D3DGraphicsPipelineStateDesc::D3DGraphicsPipelineStateDesc()
 {
 	pRootSignature = nullptr;
 
-	VS = DXShaderBytecode();
-	PS = DXShaderBytecode();
-	DS = DXShaderBytecode();
-	HS = DXShaderBytecode();
-	GS = DXShaderBytecode();
+	VS = D3DShaderBytecode();
+	PS = D3DShaderBytecode();
+	DS = D3DShaderBytecode();
+	HS = D3DShaderBytecode();
+	GS = D3DShaderBytecode();
 
-	StreamOutput = DXStreamOutputDesc();
+	StreamOutput = D3DStreamOutputDesc();
 
-	BlendState = DXBlendDesc();
+	BlendState = D3DBlendDesc();
 	SampleMask = UINT_MAX;
 	
-	RasterizerState = DXRasterizerDesc();
-	DepthStencilState = DXDepthStencilDesc();
+	RasterizerState = D3DRasterizerDesc();
+	DepthStencilState = D3DDepthStencilDesc();
 	
-	InputLayout = DXInputLayoutDesc();
+	InputLayout = D3DInputLayoutDesc();
 	
 	IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
 	PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
 
 	SetRenderTargetFormats(0, nullptr);
 	
-	SampleDesc = DXSampleDesc();
-	CachedPSO = DXCachedPipelineState();
+	SampleDesc = D3DSampleDesc();
+	CachedPSO = D3DCachedPipelineState();
 	
 	NodeMask = 0;
 	Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 }
 
-void DXGraphicsPipelineStateDesc::SetRootSignature(DXRootSignature* pSignature)
+void D3DGraphicsPipelineStateDesc::SetRootSignature(D3DRootSignature* pSignature)
 {
 	pRootSignature = pSignature->GetDXObject();
 }
 
-void DXGraphicsPipelineStateDesc::SetVertexShader(DXShader* pShader)
+void D3DGraphicsPipelineStateDesc::SetVertexShader(D3DShader* pShader)
 {
 	VS = pShader->GetBytecode();
 }
 
-void DXGraphicsPipelineStateDesc::SetPixelShader(DXShader* pShader)
+void D3DGraphicsPipelineStateDesc::SetPixelShader(D3DShader* pShader)
 {
 	PS = pShader->GetBytecode();
 }
 
-void DXGraphicsPipelineStateDesc::SetDomainShader(DXShader* pShader)
+void D3DGraphicsPipelineStateDesc::SetDomainShader(D3DShader* pShader)
 {
 	DS = pShader->GetBytecode();
 }
 
-void DXGraphicsPipelineStateDesc::SetHullShader(DXShader* pShader)
+void D3DGraphicsPipelineStateDesc::SetHullShader(D3DShader* pShader)
 {
 	HS = pShader->GetBytecode();
 }
 
-void DXGraphicsPipelineStateDesc::SetGeometryShader(DXShader* pShader)
+void D3DGraphicsPipelineStateDesc::SetGeometryShader(D3DShader* pShader)
 {
 	GS = pShader->GetBytecode();
 }
 
-void DXGraphicsPipelineStateDesc::SetRenderTargetFormat(DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat)
+void D3DGraphicsPipelineStateDesc::SetRenderTargetFormat(DXGI_FORMAT rtvFormat, DXGI_FORMAT dsvFormat)
 {
 	SetRenderTargetFormats(1, &rtvFormat, dsvFormat);
 }
 
-void DXGraphicsPipelineStateDesc::SetRenderTargetFormats(UINT numRenderTargets, const DXGI_FORMAT* rtvFormats, DXGI_FORMAT dsvFormat)
+void D3DGraphicsPipelineStateDesc::SetRenderTargetFormats(UINT numRenderTargets, const DXGI_FORMAT* rtvFormats, DXGI_FORMAT dsvFormat)
 {
 	NumRenderTargets = numRenderTargets;
 	for (UINT i = 0; i < numRenderTargets; ++i)
@@ -342,26 +342,26 @@ void DXGraphicsPipelineStateDesc::SetRenderTargetFormats(UINT numRenderTargets, 
 	DSVFormat = dsvFormat;
 }
 
-DXComputePipelineStateDesc::DXComputePipelineStateDesc()
+D3DComputePipelineStateDesc::D3DComputePipelineStateDesc()
 {
 	pRootSignature = nullptr;
-	CS = DXShaderBytecode();
-	CachedPSO = DXCachedPipelineState();
+	CS = D3DShaderBytecode();
+	CachedPSO = D3DCachedPipelineState();
 	NodeMask = 0;
 	Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 }
 
-void DXComputePipelineStateDesc::SetRootSignature(DXRootSignature* pSignature)
+void D3DComputePipelineStateDesc::SetRootSignature(D3DRootSignature* pSignature)
 {
 	pRootSignature = pSignature->GetDXObject();
 }
 
-void DXComputePipelineStateDesc::SetComputeShader(DXShader* pShader)
+void D3DComputePipelineStateDesc::SetComputeShader(D3DShader* pShader)
 {
 	CS = pShader->GetBytecode();
 }
 
-DXInputElementDesc::DXInputElementDesc(LPCSTR pSemanticName, UINT semanticIndex, DXGI_FORMAT format, UINT inputSlot, UINT alignedByteOffset, bool perVertexData)
+D3DInputElementDesc::D3DInputElementDesc(LPCSTR pSemanticName, UINT semanticIndex, DXGI_FORMAT format, UINT inputSlot, UINT alignedByteOffset, bool perVertexData)
 {
 	SemanticName = pSemanticName;
 	SemanticIndex = semanticIndex;
@@ -381,7 +381,7 @@ DXInputElementDesc::DXInputElementDesc(LPCSTR pSemanticName, UINT semanticIndex,
 	}
 }
 
-DXPipelineState::DXPipelineState(DXDevice* pDevice, const DXGraphicsPipelineStateDesc* pDesc, LPCWSTR pName)
+D3DPipelineState::D3DPipelineState(D3DDevice* pDevice, const D3DGraphicsPipelineStateDesc* pDesc, LPCWSTR pName)
 {
 	DXVerify(pDevice->GetDXObject()->CreateGraphicsPipelineState(pDesc, IID_PPV_ARGS(GetDXObjectAddress())));
 
@@ -390,7 +390,7 @@ DXPipelineState::DXPipelineState(DXDevice* pDevice, const DXGraphicsPipelineStat
 #endif
 }
 
-DXPipelineState::DXPipelineState(DXDevice* pDevice, const DXComputePipelineStateDesc* pDesc, LPCWSTR pName)
+D3DPipelineState::D3DPipelineState(D3DDevice* pDevice, const D3DComputePipelineStateDesc* pDesc, LPCWSTR pName)
 {
 	DXVerify(pDevice->GetDXObject()->CreateComputePipelineState(pDesc, IID_PPV_ARGS(GetDXObjectAddress())));
 

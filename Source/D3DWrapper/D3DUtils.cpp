@@ -1,6 +1,6 @@
-#include "DX/DXUtils.h"
+#include "D3DWrapper/D3DUtils.h"
 
-DXViewport::DXViewport(FLOAT topLeftX, FLOAT topLeftY, FLOAT width, FLOAT height, FLOAT minDepth, FLOAT maxDepth)
+D3DViewport::D3DViewport(FLOAT topLeftX, FLOAT topLeftY, FLOAT width, FLOAT height, FLOAT minDepth, FLOAT maxDepth)
 {
 	TopLeftX = topLeftX;
 	TopLeftY = topLeftY;
@@ -10,7 +10,7 @@ DXViewport::DXViewport(FLOAT topLeftX, FLOAT topLeftY, FLOAT width, FLOAT height
 	MaxDepth = maxDepth;
 }
 
-DXRect::DXRect(LONG upperLeftX, LONG upperLeftY, LONG lowerRightX, LONG lowerRightY)
+D3DRect::D3DRect(LONG upperLeftX, LONG upperLeftY, LONG lowerRightX, LONG lowerRightY)
 {
 	left = upperLeftX;
 	top = upperLeftY;
@@ -18,9 +18,9 @@ DXRect::DXRect(LONG upperLeftX, LONG upperLeftY, LONG lowerRightX, LONG lowerRig
 	bottom = lowerRightY;
 }
 
-const DXRect ExtractRect(const DXViewport* viewport)
+const D3DRect ExtractRect(const D3DViewport* viewport)
 {
-	return DXRect(LONG(viewport->TopLeftX), LONG(viewport->TopLeftY),
+	return D3DRect(LONG(viewport->TopLeftX), LONG(viewport->TopLeftY),
 		LONG(viewport->TopLeftX + viewport->Width),
 		LONG(viewport->TopLeftY + viewport->Height));
 }

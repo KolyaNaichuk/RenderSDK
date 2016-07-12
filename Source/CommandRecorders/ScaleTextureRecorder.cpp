@@ -1,8 +1,8 @@
 #include "CommandRecorders/ScaleTextureRecorder.h"
-#include "DX/DXRootSignature.h"
-#include "DX/DXPipelineState.h"
+#include "D3DWrapper/D3DRootSignature.h"
+#include "D3DWrapper/D3DPipelineState.h"
 
-ScaleTextureRecorder::ScaleTextureRecorder(DXDevice* pDevice, ScaleFactor scaleFactor)
+ScaleTextureRecorder::ScaleTextureRecorder(D3DDevice* pDevice, ScaleFactor scaleFactor)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {

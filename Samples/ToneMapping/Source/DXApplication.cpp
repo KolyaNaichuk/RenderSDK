@@ -1,15 +1,15 @@
 #include "DXApplication.h"
-#include "DX/DXFactory.h"
-#include "DX/DXDevice.h"
-#include "DX/DXSwapChain.h"
-#include "DX/DXCommandQueue.h"
-#include "DX/DXCommandAllocator.h"
-#include "DX/DXCommandList.h"
-#include "DX/DXDescriptorHeap.h"
-#include "DX/DXPipelineState.h"
-#include "DX/DXResource.h"
-#include "DX/DXFence.h"
-#include "DX/DXUtils.h"
+#include "D3DWrapper/D3DFactory.h"
+#include "D3DWrapper/D3DDevice.h"
+#include "D3DWrapper/D3DSwapChain.h"
+#include "D3DWrapper/D3DCommandQueue.h"
+#include "D3DWrapper/D3DCommandAllocator.h"
+#include "D3DWrapper/D3DCommandList.h"
+#include "D3DWrapper/D3DDescriptorHeap.h"
+#include "D3DWrapper/D3DPipelineState.h"
+#include "D3DWrapper/D3DResource.h"
+#include "D3DWrapper/D3DFence.h"
+#include "D3DWrapper/D3DUtils.h"
 #include "DDSTextureLoader/DDSTextureLoader.h"
 #include "CommandRecorders/CopyTextureRecorder.h"
 #include "CommandRecorders/CalcTextureLuminanceRecorder.h"
@@ -71,43 +71,43 @@ void DXApplication::OnInit()
 	// Kolya: fix me
 	assert(false);
 	/*
-	DXFactory factory;
+	D3DFactory factory;
 
-	m_pDevice = new DXDevice(&factory, D3D_FEATURE_LEVEL_11_0, true);
+	m_pDevice = new D3DDevice(&factory, D3D_FEATURE_LEVEL_11_0, true);
 	
-	DXCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_pCommandQueue = new DXCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
+	D3DCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pCommandQueue = new D3DCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
 		
 	const RECT bufferRect = m_pWindow->GetClientRect();
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
 	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
 
-	DXSwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
-	m_pSwapChain = new DXSwapChain(&factory, &swapChainDesc, m_pCommandQueue);
+	D3DSwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
+	m_pSwapChain = new D3DSwapChain(&factory, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
-	DXDescriptorHeapDesc rtvDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kBackBufferCount, false);
-	m_pShaderInvisibleRTVHeap = new DXDescriptorHeap(m_pDevice, &rtvDescriptorHeapDesc, L"m_pShaderInvisibleRTVHeap");
+	D3DDescriptorHeapDesc rtvDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kBackBufferCount, false);
+	m_pShaderInvisibleRTVHeap = new D3DDescriptorHeap(m_pDevice, &rtvDescriptorHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	DXDescriptorHeapDesc srvDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kSRVDescriptor_Count, false);
-	m_pShaderInvisibleSRVHeap = new DXDescriptorHeap(m_pDevice, &srvDescriptorHeapDesc, L"m_pShaderInvisibleSRVHeap");
+	D3DDescriptorHeapDesc srvDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kSRVDescriptor_Count, false);
+	m_pShaderInvisibleSRVHeap = new D3DDescriptorHeap(m_pDevice, &srvDescriptorHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
-	DXDescriptorHeapDesc samplerDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, kSamplerDescriptor_Count, false);
-	m_pShaderInvisibleSamplerHeap = new DXDescriptorHeap(m_pDevice, &samplerDescriptorHeapDesc, L"m_pShaderInvisibleSamplerHeap");
+	D3DDescriptorHeapDesc samplerDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, kSamplerDescriptor_Count, false);
+	m_pShaderInvisibleSamplerHeap = new D3DDescriptorHeap(m_pDevice, &samplerDescriptorHeapDesc, L"m_pShaderInvisibleSamplerHeap");
 
-	DXSamplerDesc pointSampler(DXSamplerDesc::Point);
+	D3DSamplerDesc pointSampler(D3DSamplerDesc::Point);
 	m_pDevice->CreateSampler(&pointSampler, m_pShaderInvisibleSamplerHeap->GetCPUDescriptor(kSamplerDescriptor_Point));
 	
-	DXTex2DRenderTargetViewDesc rtvDesc;
+	D3DTex2DRenderTargetViewDesc rtvDesc;
 	for (UINT index = 0; index < kBackBufferCount; ++index)
 	{
-		DXResource* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
+		D3DResource* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pShaderInvisibleRTVHeap->GetCPUDescriptor(index);
 
 		m_pDevice->CreateRenderTargetView(pRenderTarget, &rtvDesc, rtvHandle);
 	}
 
-	DXResource* pFirstRenderTarget = m_pSwapChain->GetBackBuffer(0);
+	D3DResource* pFirstRenderTarget = m_pSwapChain->GetBackBuffer(0);
 	const DXGI_FORMAT rtvFormat = GetRenderTargetViewFormat(pFirstRenderTarget->GetFormat());
 
 	m_pCopyTextureRecorder = new CopyTextureRecorder(m_pDevice, rtvFormat);
@@ -115,22 +115,22 @@ void DXApplication::OnInit()
 	m_pCalcTextureLogLuminanceRecorder = new CalcTextureLuminanceRecorder(m_pDevice, rtvFormat, true);
 
 	for (UINT index = 0; index < kBackBufferCount; ++index)
-		m_CommandAllocators[index] = new DXCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
+		m_CommandAllocators[index] = new D3DCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
 
-	DXHeapProperties defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
+	D3DHeapProperties defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
 				
-	m_pFence = new DXFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
+	m_pFence = new D3DFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
 	++m_FenceValues[m_BackBufferIndex];
 
-	m_pCommandList = new DXCommandList(m_pDevice, m_CommandAllocators[m_BackBufferIndex], nullptr, L"m_pCommandList");
+	m_pCommandList = new D3DCommandList(m_pDevice, m_CommandAllocators[m_BackBufferIndex], nullptr, L"m_pCommandList");
 		
 	ID3D12Resource* pDXUploadTexture = nullptr;
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvView;
 	DXVerify(DirectX::CreateDDSTextureFromFileEx(m_pDevice->GetDXObject(), L"cornellbox.dds", 0, true, &pDXUploadTexture, &srvView));
-	DXResource uploadTexture(pDXUploadTexture, D3D12_RESOURCE_STATE_COMMON, L"pDXUploadTexture");
+	D3DResource uploadTexture(pDXUploadTexture, D3D12_RESOURCE_STATE_COMMON, L"pDXUploadTexture");
 
 	D3D12_RESOURCE_DESC texDesc = pDXUploadTexture->GetDesc();
-	m_pHDRTexture = new DXResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &texDesc, D3D12_RESOURCE_STATE_COMMON, L"m_pHDRTexture");
+	m_pHDRTexture = new D3DResource(m_pDevice, &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &texDesc, D3D12_RESOURCE_STATE_COMMON, L"m_pHDRTexture");
 	
 	m_pCommandList->TransitionBarrier(m_pHDRTexture, D3D12_RESOURCE_STATE_COPY_DEST);
 	m_pCommandList->CopyResource(m_pHDRTexture, &uploadTexture);
@@ -155,10 +155,10 @@ void DXApplication::OnRender()
 	// Kolya: fix me
 	assert(false);
 	/*
-	DXCommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
+	D3DCommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
 	pCommandAllocator->Reset();
 	
-	DXResource* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+	D3DResource* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	D3D12_RESOURCE_STATES rtvEndState = D3D12_RESOURCE_STATE_PRESENT;
 
 	if (m_DisplayResult == DisplayResult_HDRImage)

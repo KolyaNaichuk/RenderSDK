@@ -2,19 +2,19 @@
 
 #include "Common/Common.h"
 
-class DXCommandList;
-class DXCommandAllocator;
-class DXRootSignature;
-class DXPipelineState;
-struct DXRenderEnvironment;
-struct DXBindingResourceList;
+class D3DCommandList;
+class D3DCommandAllocator;
+class D3DRootSignature;
+class D3DPipelineState;
+struct D3DRenderEnv;
+struct D3DResourceList;
 
 class ClearVoxelGridRecorder
 {
 public:
 	struct InitParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
+		D3DRenderEnv* m_pRenderEnv;
 		u16 m_NumGridCellsX;
 		u16 m_NumGridCellsY;
 		u16 m_NumGridCellsZ;
@@ -22,10 +22,10 @@ public:
 
 	struct RenderPassParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
-		DXCommandList* m_pCommandList;
-		DXCommandAllocator* m_pCommandAllocator;
-		DXBindingResourceList* m_pResources;
+		D3DRenderEnv* m_pRenderEnv;
+		D3DCommandList* m_pCommandList;
+		D3DCommandAllocator* m_pCommandAllocator;
+		D3DResourceList* m_pResources;
 	};
 
 	ClearVoxelGridRecorder(InitParams* pParams);
@@ -34,8 +34,8 @@ public:
 	void Record(RenderPassParams* pParams);
 
 private:
-	DXRootSignature* m_pRootSignature;
-	DXPipelineState* m_pPipelineState;
+	D3DRootSignature* m_pRootSignature;
+	D3DPipelineState* m_pPipelineState;
 
 	u16 m_NumThreadGroupsX;
 	u16 m_NumThreadGroupsY;

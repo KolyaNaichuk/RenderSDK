@@ -2,14 +2,14 @@
 
 #include "Common/Common.h"
 
-class DXRootSignature;
-class DXPipelineState;
-class DXCommandList;
-class DXCommandAllocator;
-class DXColorTexture;
+class D3DRootSignature;
+class D3DPipelineState;
+class D3DCommandList;
+class D3DCommandAllocator;
+class D3DColorTexture;
 
-struct DXRenderEnvironment;
-struct DXBindingResourceList;
+struct D3DRenderEnv;
+struct D3DResourceList;
 
 enum ShadingMode
 {
@@ -22,7 +22,7 @@ class TiledShadingRecorder
 public:
 	struct InitParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
+		D3DRenderEnv* m_pRenderEnv;
 		ShadingMode m_ShadingMode;
 		u16 m_TileSize;
 		u16 m_NumTilesX;
@@ -34,11 +34,11 @@ public:
 
 	struct RenderPassParams
 	{
-		DXRenderEnvironment* m_pRenderEnv;
-		DXCommandList* m_pCommandList;
-		DXCommandAllocator* m_pCommandAllocator;
-		DXBindingResourceList* m_pResources;
-		DXColorTexture* m_pAccumLightTexture;
+		D3DRenderEnv* m_pRenderEnv;
+		D3DCommandList* m_pCommandList;
+		D3DCommandAllocator* m_pCommandAllocator;
+		D3DResourceList* m_pResources;
+		D3DColorTexture* m_pAccumLightTexture;
 	};
 	
 	TiledShadingRecorder(InitParams* pParams);
@@ -47,8 +47,8 @@ public:
 	void Record(RenderPassParams* pParams);
 
 private:
-	DXRootSignature* m_pRootSignature;
-	DXPipelineState* m_pPipelineState;
+	D3DRootSignature* m_pRootSignature;
+	D3DPipelineState* m_pPipelineState;
 
 	u16 m_NumThreadGroupsX;
 	u16 m_NumThreadGroupsY;

@@ -1,9 +1,9 @@
 #include "CommandRecorders/CalcTextureLuminanceRecorder.h"
-#include "DX/DXPipelineState.h"
-#include "DX/DXRootSignature.h"
-#include "DX/DXCommandList.h"
-#include "DX/DXResource.h"
-#include "DX/DXUtils.h"
+#include "D3DWrapper/D3DPipelineState.h"
+#include "D3DWrapper/D3DRootSignature.h"
+#include "D3DWrapper/D3DCommandList.h"
+#include "D3DWrapper/D3DResource.h"
+#include "D3DWrapper/D3DUtils.h"
 
 enum RootParams
 {
@@ -12,39 +12,39 @@ enum RootParams
 	kNumRootParams
 };
 
-CalcTextureLuminanceRecorder::CalcTextureLuminanceRecorder(DXDevice* pDevice, DXGI_FORMAT rtvFormat, bool logLuminance)
+CalcTextureLuminanceRecorder::CalcTextureLuminanceRecorder(D3DDevice* pDevice, DXGI_FORMAT rtvFormat, bool logLuminance)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
-	DXShader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
+	D3DShader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
 
 	// Kolya: fix me
 	/*
-	const DXShaderMacro pixelShaderDefines[] =
+	const D3DShaderMacro pixelShaderDefines[] =
 	{
-		DXShaderMacro("LOG_LUMINANCE", logLuminance ? "1" : "0"),
-		DXShaderMacro()
+		D3DShaderMacro("LOG_LUMINANCE", logLuminance ? "1" : "0"),
+		D3DShaderMacro()
 	};
-	DXShader pixelShader(L"Shaders//CalcTextureLuminancePS.hlsl", "Main", "ps_4_0", pixelShaderDefines);
+	D3DShader pixelShader(L"Shaders//CalcTextureLuminancePS.hlsl", "Main", "ps_4_0", pixelShaderDefines);
 
-	DXSRVRange srvRange(1, 0);
-	DXSamplerRange samplerRange(1, 0);
+	D3DSRVRange srvRange(1, 0);
+	D3DSamplerRange samplerRange(1, 0);
 
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kSRVRootParam] = DXRootDescriptorTableParameter(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParams[kSamplerRootParam] = DXRootDescriptorTableParameter(1, &samplerRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParams[kSRVRootParam] = D3DRootDescriptorTableParameter(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParams[kSamplerRootParam] = D3DRootDescriptorTableParameter(1, &samplerRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new DXRootSignature(pDevice, &rootSignatureDesc, L"CalcTextureLuminanceRecorder::m_pRootSignature");
+	D3DRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	m_pRootSignature = new D3DRootSignature(pDevice, &rootSignatureDesc, L"CalcTextureLuminanceRecorder::m_pRootSignature");
 
-	DXGraphicsPipelineStateDesc pipelineStateDesc;
+	D3DGraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetPixelShader(&pixelShader);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.SetRenderTargetFormat(rtvFormat);
 
-	m_pPipelineState = new DXPipelineState(pDevice, &pipelineStateDesc, L"CalcTextureLuminanceRecorder::m_pPipelineState");
+	m_pPipelineState = new D3DPipelineState(pDevice, &pipelineStateDesc, L"CalcTextureLuminanceRecorder::m_pPipelineState");
 	*/
 }
 
@@ -54,10 +54,10 @@ CalcTextureLuminanceRecorder::~CalcTextureLuminanceRecorder()
 	SafeDelete(m_pRootSignature);
 }
 
-void CalcTextureLuminanceRecorder::Record(DXCommandList* pCommandList, DXCommandAllocator* pCommandAllocator,
-	DXResource* pRTVTexture, D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor,
-	DXDescriptorHeap* pSRVDescriptorHeap, DXResource* pSRVTexture, D3D12_GPU_DESCRIPTOR_HANDLE srvDescriptor,
-	DXDescriptorHeap* pSamplerDescriptorHeap, D3D12_GPU_DESCRIPTOR_HANDLE samplerDescriptor,
+void CalcTextureLuminanceRecorder::Record(D3DCommandList* pCommandList, D3DCommandAllocator* pCommandAllocator,
+	D3DResource* pRTVTexture, D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor,
+	D3DDescriptorHeap* pSRVDescriptorHeap, D3DResource* pSRVTexture, D3D12_GPU_DESCRIPTOR_HANDLE srvDescriptor,
+	D3DDescriptorHeap* pSamplerDescriptorHeap, D3D12_GPU_DESCRIPTOR_HANDLE samplerDescriptor,
 	const D3D12_RESOURCE_STATES* pRTVEndState, const D3D12_RESOURCE_STATES* pSRVEndState)
 {
 	// Kolya: fix me
@@ -78,16 +78,16 @@ void CalcTextureLuminanceRecorder::Record(DXCommandList* pCommandList, DXCommand
 
 	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	DXVertexBufferView* pVertexBufferView = nullptr;
+	D3DVertexBufferView* pVertexBufferView = nullptr;
 	pCommandList->IASetVertexBuffers(0, 1, pVertexBufferView);
 
-	DXIndexBufferView* pIndexBufferView = nullptr;
+	D3DIndexBufferView* pIndexBufferView = nullptr;
 	pCommandList->IASetIndexBuffer(pIndexBufferView);
 
-	DXViewport viewport(0.0f, 0.0f, FLOAT(pRTVTexture->GetWidth()), FLOAT(pRTVTexture->GetHeight()));
+	D3DViewport viewport(0.0f, 0.0f, FLOAT(pRTVTexture->GetWidth()), FLOAT(pRTVTexture->GetHeight()));
 	pCommandList->RSSetViewports(1, &viewport);
 
-	DXRect scissorRect(ExtractRect(viewport));
+	D3DRect scissorRect(ExtractRect(viewport));
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	pCommandList->DrawInstanced(3, 1, 0, 0);

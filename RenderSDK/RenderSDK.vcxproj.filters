@@ -4,9 +4,6 @@
     <Filter Include="Math">
       <UniqueIdentifier>{14bcef22-15a5-4213-8ad6-d6d5dfe4a9c6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="DX">
-      <UniqueIdentifier>{df923963-1277-46f8-b455-1351c2a4b4c5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Common">
       <UniqueIdentifier>{bf37ed69-4348-40cb-a5f8-05b6e254df7b}</UniqueIdentifier>
     </Filter>
@@ -19,6 +16,9 @@
     <Filter Include="DDSTextureLoader">
       <UniqueIdentifier>{719216ed-8ae2-47b7-8ce1-405c4d23ebc8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="D3DWrapper">
+      <UniqueIdentifier>{df923963-1277-46f8-b455-1351c2a4b4c5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Include\Math\Math.h">
@@ -29,45 +29,6 @@
     </ClInclude>
     <ClInclude Include="..\Include\Math\Transform.h">
       <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXCommandAllocator.h">
-      <Filter>DX</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXCommandList.h">
-      <Filter>DX</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXCommandQueue.h">
-      <Filter>DX</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXDescriptorHeap.h">
-      <Filter>DX</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXDevice.h">
-      <Filter>DX</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXFactory.h">
-      <Filter>DX</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXFence.h">
-      <Filter>DX</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXObject.h">
-      <Filter>DX</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXPipelineState.h">
-      <Filter>DX</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXResource.h">
-      <Filter>DX</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXRootSignature.h">
-      <Filter>DX</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXSwapChain.h">
-      <Filter>DX</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXUtils.h">
-      <Filter>DX</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\Common\Window.h">
       <Filter>Common</Filter>
@@ -122,9 +83,6 @@
     </ClInclude>
     <ClInclude Include="..\Include\CommandRecorders\VisualizeMeshRecorder.h">
       <Filter>CommandRecorders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXCommandSignature.h">
-      <Filter>DX</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\Common\Camera.h">
       <Filter>Common</Filter>
@@ -189,12 +147,6 @@
     <ClInclude Include="..\Include\CommandRecorders\TiledShadingRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\DX\DXRenderEnvironment.h">
-      <Filter>DX</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DX\DXResourceList.h">
-      <Filter>DX</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Common\MeshBatchData.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -228,6 +180,54 @@
     <ClInclude Include="..\Include\CommandRecorders\RenderTiledShadowMapRecorder.h">
       <Filter>CommandRecorders</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DCommandAllocator.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DCommandList.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DCommandQueue.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DCommandSignature.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DDescriptorHeap.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DDevice.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DFactory.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DFence.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DPipelineState.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DRenderEnv.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DResource.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DResourceList.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DRootSignature.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DSwapChain.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\D3DUtils.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\DXObject.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -235,42 +235,6 @@
     </ClCompile>
     <ClCompile Include="..\Source\Math\Transform.cpp">
       <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXCommandAllocator.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXCommandList.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXCommandQueue.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXDescriptorHeap.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXDevice.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXFactory.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXFence.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXPipelineState.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXResource.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXRootSignature.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXSwapChain.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXUtils.cpp">
-      <Filter>DX</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Math\Plane.cpp">
       <Filter>Math</Filter>
@@ -319,9 +283,6 @@
     </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\VisualizeMeshRecorder.cpp">
       <Filter>CommandRecorders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DX\DXCommandSignature.cpp">
-      <Filter>DX</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\Camera.cpp">
       <Filter>Common</Filter>
@@ -386,9 +347,6 @@
     <ClCompile Include="..\Source\CommandRecorders\TiledShadingRecorder.cpp">
       <Filter>CommandRecorders</Filter>
     </ClCompile>
-    <ClCompile Include="..\Include\DX\DXResourceList.cpp">
-      <Filter>DX</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\Common\MeshBatchData.cpp">
       <Filter>Common</Filter>
     </ClCompile>
@@ -424,6 +382,45 @@
     </ClCompile>
     <ClCompile Include="..\Source\CommandRecorders\RenderTiledShadowMapRecorder.cpp">
       <Filter>CommandRecorders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\D3DCommandAllocator.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\D3DCommandList.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\D3DCommandQueue.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\D3DCommandSignature.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\D3DDescriptorHeap.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\D3DDevice.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\D3DFactory.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\D3DFence.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\D3DPipelineState.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\D3DResource.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\D3DRootSignature.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\D3DSwapChain.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\D3DUtils.cpp">
+      <Filter>D3DWrapper</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

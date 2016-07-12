@@ -1,9 +1,9 @@
 #include "CommandRecorders/CopyTextureRecorder.h"
-#include "DX/DXCommandList.h"
-#include "DX/DXRenderEnvironment.h"
-#include "DX/DXPipelineState.h"
-#include "DX/DXRootSignature.h"
-#include "DX/DXUtils.h"
+#include "D3DWrapper/D3DCommandList.h"
+#include "D3DWrapper/D3DRenderEnv.h"
+#include "D3DWrapper/D3DPipelineState.h"
+#include "D3DWrapper/D3DRootSignature.h"
+#include "D3DWrapper/D3DUtils.h"
 
 enum RootParams
 {
@@ -15,29 +15,29 @@ CopyTextureRecorder::CopyTextureRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
-	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
+	D3DRenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	DXShader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
-	DXShader pixelShader(L"Shaders//CopyTexturePS.hlsl", "Main", "ps_4_0");
+	D3DShader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
+	D3DShader pixelShader(L"Shaders//CopyTexturePS.hlsl", "Main", "ps_4_0");
 
-	DXSRVRange srvRange(1, 0);
+	D3DSRVRange srvRange(1, 0);
 	
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kSRVRootParam] = DXRootDescriptorTableParameter(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParams[kSRVRootParam] = D3DRootDescriptorTableParameter(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-	DXStaticSamplerDesc samplerDesc(DXStaticSamplerDesc::Linear, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+	D3DStaticSamplerDesc samplerDesc(D3DStaticSamplerDesc::Linear, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 	
-	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, 1, &samplerDesc, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new DXRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CopyTextureRecorder::m_pRootSignature");
+	D3DRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, 1, &samplerDesc, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	m_pRootSignature = new D3DRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CopyTextureRecorder::m_pRootSignature");
 	
-	DXGraphicsPipelineStateDesc pipelineStateDesc;
+	D3DGraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetPixelShader(&pixelShader);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat);
 
-	m_pPipelineState = new DXPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CopyTextureRecorder::m_pPipelineState");
+	m_pPipelineState = new D3DPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CopyTextureRecorder::m_pPipelineState");
 }
 
 CopyTextureRecorder::~CopyTextureRecorder()
@@ -48,14 +48,14 @@ CopyTextureRecorder::~CopyTextureRecorder()
 
 void CopyTextureRecorder::Record(RenderPassParams* pParams)
 {
-	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
-	DXCommandList* pCommandList = pParams->m_pCommandList;
-	DXBindingResourceList* pResources = pParams->m_pResources;
+	D3DRenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	D3DCommandList* pCommandList = pParams->m_pCommandList;
+	D3DResourceList* pResources = pParams->m_pResources;
 	
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
-	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
+	pCommandList->SetResourceTransitions(&pResources->m_RequiredResourceStates);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 	
@@ -68,7 +68,7 @@ void CopyTextureRecorder::Record(RenderPassParams* pParams)
 
 	pCommandList->RSSetViewports(1, pParams->m_pViewport);
 
-	DXRect scissorRect(ExtractRect(pParams->m_pViewport));
+	D3DRect scissorRect(ExtractRect(pParams->m_pViewport));
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	pCommandList->DrawInstanced(3, 1, 0, 0);

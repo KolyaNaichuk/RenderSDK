@@ -1,8 +1,8 @@
 #include "CommandRecorders/FillGBufferCommandsRecorder.h"
-#include "DX/DXRootSignature.h"
-#include "DX/DXPipelineState.h"
-#include "DX/DXRenderEnvironment.h"
-#include "DX/DXCommandList.h"
+#include "D3DWrapper/D3DRootSignature.h"
+#include "D3DWrapper/D3DPipelineState.h"
+#include "D3DWrapper/D3DRenderEnv.h"
+#include "D3DWrapper/D3DCommandList.h"
 #include "Math/Math.h"
 
 enum RootParams
@@ -15,31 +15,31 @@ FillGBufferCommandsRecorder::FillGBufferCommandsRecorder(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
-	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
+	D3DRenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	const u16 threadGroupSize = 64;
 	m_NumThreadGroupsX = (u16)Ceil((f32)pParams->m_NumMeshesInBatch / (f32)threadGroupSize);
 
 	std::string threadGroupSizeStr = std::to_string(threadGroupSize);
-	const DXShaderMacro shaderDefines[] =
+	const D3DShaderMacro shaderDefines[] =
 	{
-		DXShaderMacro("THREAD_GROUP_SIZE", threadGroupSizeStr.c_str()),
-		DXShaderMacro()
+		D3DShaderMacro("THREAD_GROUP_SIZE", threadGroupSizeStr.c_str()),
+		D3DShaderMacro()
 	};
-	DXShader computeShader(L"Shaders//FillGBufferCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	D3DShader computeShader(L"Shaders//FillGBufferCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
 
-	D3D12_DESCRIPTOR_RANGE srvDescriptorRanges[] = {DXSRVRange(3, 0), DXUAVRange(1, 0)};
+	D3D12_DESCRIPTOR_RANGE srvDescriptorRanges[] = {D3DSRVRange(3, 0), D3DUAVRange(1, 0)};
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kSRVRootParam] = DXRootDescriptorTableParameter(ARRAYSIZE(srvDescriptorRanges), &srvDescriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
+	rootParams[kSRVRootParam] = D3DRootDescriptorTableParameter(ARRAYSIZE(srvDescriptorRanges), &srvDescriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
 
-	DXRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new DXRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"FillGBufferCommandsRecorder::m_pRootSignature");
+	D3DRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
+	m_pRootSignature = new D3DRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"FillGBufferCommandsRecorder::m_pRootSignature");
 
-	DXComputePipelineStateDesc pipelineStateDesc;
+	D3DComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
-	m_pPipelineState = new DXPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FillGBufferCommandsRecorder::m_pPipelineState");
+	m_pPipelineState = new D3DPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FillGBufferCommandsRecorder::m_pPipelineState");
 }
 
 FillGBufferCommandsRecorder::~FillGBufferCommandsRecorder()
@@ -50,14 +50,14 @@ FillGBufferCommandsRecorder::~FillGBufferCommandsRecorder()
 
 void FillGBufferCommandsRecorder::Record(RenderPassParams* pParams)
 {
-	DXRenderEnvironment* pRenderEnv = pParams->m_pRenderEnv;
-	DXCommandList* pCommandList = pParams->m_pCommandList;
-	DXBindingResourceList* pResources = pParams->m_pResources;
+	D3DRenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	D3DCommandList* pCommandList = pParams->m_pCommandList;
+	D3DResourceList* pResources = pParams->m_pResources;
 
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 
-	pCommandList->SetResourceTransitions(&pResources->m_ResourceTransitions);
+	pCommandList->SetResourceTransitions(&pResources->m_RequiredResourceStates);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 

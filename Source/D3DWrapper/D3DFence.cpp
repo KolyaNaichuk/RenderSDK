@@ -1,7 +1,7 @@
-#include "DX/DXFence.h"
-#include "DX/DXDevice.h"
+#include "D3DWrapper/D3DFence.h"
+#include "D3DWrapper/D3DDevice.h"
 
-DXFence::DXFence(DXDevice* pDevice, UINT64 initialValue, D3D12_FENCE_FLAGS flags)
+D3DFence::D3DFence(D3DDevice* pDevice, UINT64 initialValue, D3D12_FENCE_FLAGS flags)
 	: m_hCompletionEvent(INVALID_HANDLE_VALUE)
 {
 	DXVerify(pDevice->GetDXObject()->CreateFence(initialValue, flags, IID_PPV_ARGS(GetDXObjectAddress())));
@@ -10,17 +10,17 @@ DXFence::DXFence(DXDevice* pDevice, UINT64 initialValue, D3D12_FENCE_FLAGS flags
 	assert(m_hCompletionEvent != INVALID_HANDLE_VALUE);
 }
 
-DXFence::~DXFence()
+D3DFence::~D3DFence()
 {
 	::CloseHandle(m_hCompletionEvent);
 }
 
-void DXFence::Clear(UINT64 value)
+void D3DFence::Clear(UINT64 value)
 {
 	DXVerify(GetDXObject()->Signal(value));
 }
 
-void DXFence::WaitForSignal(UINT64 value)
+void D3DFence::WaitForSignal(UINT64 value)
 {
 	if (HasBeenSignaled(value))
 		return;
@@ -29,24 +29,24 @@ void DXFence::WaitForSignal(UINT64 value)
 	::WaitForSingleObject(m_hCompletionEvent, INFINITE);
 }
 
-bool DXFence::HasBeenSignaled(UINT64 value)
+bool D3DFence::HasBeenSignaled(UINT64 value)
 {
 	return (GetDXObject()->GetCompletedValue() >= value);
 }
 
-DXSyncPoint::DXSyncPoint(DXFence* pFence, UINT64 fenceValue)
+D3DSyncPoint::D3DSyncPoint(D3DFence* pFence, UINT64 fenceValue)
 	: m_pFence(pFence)
 	, m_FenceValue(fenceValue)
 {
 	assert(m_pFence != nullptr);
 }
 
-bool DXSyncPoint::IsComplete()
+bool D3DSyncPoint::IsComplete()
 {
 	return m_pFence->HasBeenSignaled(m_FenceValue);
 }
 
-void DXSyncPoint::WaitForCompletion()
+void D3DSyncPoint::WaitForCompletion()
 {
 	m_pFence->WaitForSignal(m_FenceValue);
 }

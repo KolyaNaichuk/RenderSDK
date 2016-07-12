@@ -2,17 +2,17 @@
 
 #include "Common/Application.h"
 
-class DXDevice;
-class DXSwapChain;
-class DXCommandQueue;
-class DXCommandAllocator;
-class DXCommandList;
-class DXCommandListPool;
-class DXDescriptorHeap;
-class DXColorTexture;
-class DXDepthTexture;
-class DXBuffer;
-class DXFence;
+class D3DDevice;
+class D3DSwapChain;
+class D3DCommandQueue;
+class D3DCommandAllocator;
+class D3DCommandList;
+class D3DCommandListPool;
+class D3DDescriptorHeap;
+class D3DColorTexture;
+class D3DDepthTexture;
+class D3DBuffer;
+class D3DFence;
 
 class Camera;
 class MeshBatch;
@@ -31,10 +31,10 @@ class ViewFrustumCullingRecorder;
 class RenderShadowMapCommandsRecorder;
 class RenderTiledShadowMapRecorder;
 
-struct DXHeapProperties;
-struct DXRenderEnvironment;
-struct DXBindingResourceList;
-struct DXViewport;
+struct D3DHeapProperties;
+struct D3DRenderEnv;
+struct D3DResourceList;
+struct D3DViewport;
 
 enum
 { 
@@ -59,108 +59,108 @@ private:
 	void MoveToNextFrame();
 
 private:
-	DXDevice* m_pDevice;
-	DXSwapChain* m_pSwapChain;
-	DXCommandQueue* m_pCommandQueue;
-	DXCommandAllocator* m_CommandAllocators[kBackBufferCount];
-	DXCommandList* m_pCommandList;
-	DXCommandListPool* m_pCommandListPool;
-	DXHeapProperties* m_pDefaultHeapProps;
-	DXHeapProperties* m_pUploadHeapProps;
-	DXDescriptorHeap* m_pShaderInvisibleRTVHeap;
-	DXDescriptorHeap* m_pShaderInvisibleDSVHeap;
-	DXDescriptorHeap* m_pShaderInvisibleSRVHeap;
-	DXDescriptorHeap* m_pShaderVisibleSRVHeap;
-	DXDepthTexture* m_pDepthTexture;
-	DXDepthTexture* m_pSpotLightTiledShadowMap;
-	DXColorTexture* m_pDiffuseTexture;
-	DXColorTexture* m_pNormalTexture;
-	DXColorTexture* m_pSpecularTexture;
-	DXColorTexture* m_pAccumLightTexture;
-	DXViewport* m_pViewport;
-	DXBuffer* m_pObjectTransformBuffer;
-	DXBuffer* m_pCameraTransformBuffer;
-	DXBuffer* m_pGridBuffer;
-	DXBuffer* m_pGridConfigBuffer;
-	DXBuffer* m_pViewFrustumCullingDataBuffer;
-	DXBuffer* m_pTiledLightCullingDataBuffer;
-	DXBuffer* m_pTiledShadingDataBuffer;
-	DXBuffer* m_pDrawMeshCommandBuffer;
-	DXBuffer* m_pNumVisibleMeshesBuffer;
-	DXBuffer* m_pVisibleMeshIndexBuffer;
-	DXBuffer* m_pNumPointLightsPerTileBuffer;
-	DXBuffer* m_pPointLightIndexPerTileBuffer;
-	DXBuffer* m_pPointLightRangePerTileBuffer;
-	DXBuffer* m_pNumSpotLightsPerTileBuffer;
-	DXBuffer* m_pSpotLightIndexPerTileBuffer;
-	DXBuffer* m_pSpotLightRangePerTileBuffer;
-	DXBuffer* m_pShadowCastingPointLightIndexBuffer;
-	DXBuffer* m_pNumShadowCastingPointLightsBuffer;
-	DXBuffer* m_pDrawPointLightShadowCasterCommandBuffer;
-	DXBuffer* m_pNumDrawPointLightShadowCastersBuffer;
-	DXBuffer* m_pShadowCastingSpotLightIndexBuffer;
-	DXBuffer* m_pNumShadowCastingSpotLightsBuffer;
-	DXBuffer* m_pDrawSpotLightShadowCasterCommandBuffer;
-	DXBuffer* m_pNumDrawSpotLightShadowCastersBuffer;
-	DXRenderEnvironment* m_pRenderEnv;
-	DXFence* m_pFence;
+	D3DDevice* m_pDevice;
+	D3DSwapChain* m_pSwapChain;
+	D3DCommandQueue* m_pCommandQueue;
+	D3DCommandAllocator* m_CommandAllocators[kBackBufferCount];
+	D3DCommandList* m_pCommandList;
+	D3DCommandListPool* m_pCommandListPool;
+	D3DHeapProperties* m_pDefaultHeapProps;
+	D3DHeapProperties* m_pUploadHeapProps;
+	D3DDescriptorHeap* m_pShaderInvisibleRTVHeap;
+	D3DDescriptorHeap* m_pShaderInvisibleDSVHeap;
+	D3DDescriptorHeap* m_pShaderInvisibleSRVHeap;
+	D3DDescriptorHeap* m_pShaderVisibleSRVHeap;
+	D3DDepthTexture* m_pDepthTexture;
+	D3DDepthTexture* m_pSpotLightTiledShadowMap;
+	D3DColorTexture* m_pDiffuseTexture;
+	D3DColorTexture* m_pNormalTexture;
+	D3DColorTexture* m_pSpecularTexture;
+	D3DColorTexture* m_pAccumLightTexture;
+	D3DViewport* m_pViewport;
+	D3DBuffer* m_pObjectTransformBuffer;
+	D3DBuffer* m_pCameraTransformBuffer;
+	D3DBuffer* m_pGridBuffer;
+	D3DBuffer* m_pGridConfigBuffer;
+	D3DBuffer* m_pViewFrustumCullingDataBuffer;
+	D3DBuffer* m_pTiledLightCullingDataBuffer;
+	D3DBuffer* m_pTiledShadingDataBuffer;
+	D3DBuffer* m_pDrawMeshCommandBuffer;
+	D3DBuffer* m_pNumVisibleMeshesBuffer;
+	D3DBuffer* m_pVisibleMeshIndexBuffer;
+	D3DBuffer* m_pNumPointLightsPerTileBuffer;
+	D3DBuffer* m_pPointLightIndexPerTileBuffer;
+	D3DBuffer* m_pPointLightRangePerTileBuffer;
+	D3DBuffer* m_pNumSpotLightsPerTileBuffer;
+	D3DBuffer* m_pSpotLightIndexPerTileBuffer;
+	D3DBuffer* m_pSpotLightRangePerTileBuffer;
+	D3DBuffer* m_pShadowCastingPointLightIndexBuffer;
+	D3DBuffer* m_pNumShadowCastingPointLightsBuffer;
+	D3DBuffer* m_pDrawPointLightShadowCasterCommandBuffer;
+	D3DBuffer* m_pNumDrawPointLightShadowCastersBuffer;
+	D3DBuffer* m_pShadowCastingSpotLightIndexBuffer;
+	D3DBuffer* m_pNumShadowCastingSpotLightsBuffer;
+	D3DBuffer* m_pDrawSpotLightShadowCasterCommandBuffer;
+	D3DBuffer* m_pNumDrawSpotLightShadowCastersBuffer;
+	D3DRenderEnv* m_pRenderEnv;
+	D3DFence* m_pFence;
 	UINT64 m_FenceValues[kBackBufferCount];
 	UINT m_BackBufferIndex;
 
 	FillGBufferRecorder* m_pFillGBufferRecorder;
-	DXBindingResourceList* m_pFillGBufferResources;
+	D3DResourceList* m_pFillGBufferResources;
 
 	TiledLightCullingRecorder* m_pTiledLightCullingRecorder;
-	DXBindingResourceList* m_pTiledLightCullingResources;
+	D3DResourceList* m_pTiledLightCullingResources;
 
 	TiledShadingRecorder* m_pTiledShadingRecorder;
-	DXBindingResourceList* m_pTiledShadingResources;
+	D3DResourceList* m_pTiledShadingResources;
 
 	ClearVoxelGridRecorder* m_pClearVoxelGridRecorder;
-	DXBindingResourceList* m_pClearVoxelGridResources;
+	D3DResourceList* m_pClearVoxelGridResources;
 
 	CreateVoxelGridRecorder* m_pCreateVoxelGridRecorder;
-	DXBindingResourceList* m_pCreateVoxelGridResources;
+	D3DResourceList* m_pCreateVoxelGridResources;
 
 	InjectVPLsIntoVoxelGridRecorder* m_pInjectVPLsIntoVoxelGridRecorder;
 
 	VisualizeVoxelGridRecorder* m_pVisualizeVoxelGridRecorder;
-	DXBindingResourceList* m_VisualizeVoxelGridResources[kBackBufferCount];
+	D3DResourceList* m_VisualizeVoxelGridResources[kBackBufferCount];
 
 	VisualizeMeshRecorder* m_pVisualizeMeshRecorder;
-	DXBindingResourceList* m_VisualizeMeshResources[kBackBufferCount];
+	D3DResourceList* m_VisualizeMeshResources[kBackBufferCount];
 
 	ViewFrustumCullingRecorder* m_pDetectVisibleMeshesRecorder;
-	DXBindingResourceList* m_pDetectVisibleMeshesResources;
+	D3DResourceList* m_pDetectVisibleMeshesResources;
 
 	ViewFrustumCullingRecorder* m_pDetectVisiblePointLightsRecorder;
-	DXBindingResourceList* m_pDetectVisiblePointLightsResources;
+	D3DResourceList* m_pDetectVisiblePointLightsResources;
 
 	ViewFrustumCullingRecorder* m_pDetectVisibleSpotLightsRecorder;
-	DXBindingResourceList* m_pDetectVisibleSpotLightsResources;
+	D3DResourceList* m_pDetectVisibleSpotLightsResources;
 
 	FillGBufferCommandsRecorder* m_pFillGBufferCommandsRecorder;
-	DXBindingResourceList* m_pFillGBufferCommandsResources;
+	D3DResourceList* m_pFillGBufferCommandsResources;
 
 	RenderShadowMapCommandsRecorder* m_pRenderShadowMapCommandsRecorder;
-	DXBindingResourceList* m_pRenderShadowMapCommandsResources;
-	DXBuffer* m_pRenderShadowMapCommandsArgumentBuffer;
+	D3DResourceList* m_pRenderShadowMapCommandsResources;
+	D3DBuffer* m_pRenderShadowMapCommandsArgumentBuffer;
 
 	RenderTiledShadowMapRecorder* m_pRenderSpotLightTiledShadowMapRecorder;
-	DXBindingResourceList* m_pRenderSpotLightTiledShadowMapResources;
+	D3DResourceList* m_pRenderSpotLightTiledShadowMapResources;
 
 	CopyTextureRecorder* m_pCopyTextureRecorder;
-	DXBindingResourceList* m_CopyTextureResources[kBackBufferCount];
+	D3DResourceList* m_CopyTextureResources[kBackBufferCount];
 
 	MeshBatch* m_pMeshBatch;
 	
 	LightBuffer* m_pPointLightBuffer;
-	DXBuffer* m_pNumVisiblePointLightsBuffer;
-	DXBuffer* m_pVisiblePointLightIndexBuffer;
+	D3DBuffer* m_pNumVisiblePointLightsBuffer;
+	D3DBuffer* m_pVisiblePointLightIndexBuffer;
 
 	LightBuffer* m_pSpotLightBuffer;
-	DXBuffer* m_pNumVisibleSpotLightsBuffer;
-	DXBuffer* m_pVisibleSpotLightIndexBuffer;
+	D3DBuffer* m_pNumVisibleSpotLightsBuffer;
+	D3DBuffer* m_pVisibleSpotLightIndexBuffer;
 	
 	Camera* m_pCamera;
 };
