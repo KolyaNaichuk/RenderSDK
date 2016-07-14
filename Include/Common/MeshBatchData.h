@@ -5,6 +5,7 @@
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 #include "Math/AxisAlignedBox.h"
+#include "D3DWrapper/Common.h"
 
 class MeshData;
 

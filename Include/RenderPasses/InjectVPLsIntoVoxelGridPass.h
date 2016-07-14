@@ -1,22 +1,22 @@
 #pragma once
 
-#include "Common/Common.h"
+#include "D3DWrapper/Common.h"
 
-class D3DDevice;
-class D3DCommandList;
-class D3DCommandAllocator;
-class D3DRootSignature;
-class D3DPipelineState;
-class D3DResource;
+class GraphicsDevice;
+class CommandList;
+class CommandAllocator;
+class RootSignature;
+class PipelineState;
+class GraphicsResource;
 
-struct D3DRenderEnv;
+struct RenderEnv;
 
 class InjectVPLsIntoVoxelGridPass
 {
 public:
 	struct InitPrams
 	{
-		D3DRenderEnv* m_pRenderEnv;
+		RenderEnv* m_pRenderEnv;
 		u16 m_NumGridCellsX;
 		u16 m_NumGridCellsY;
 		u16 m_NumGridCellsZ;
@@ -32,8 +32,8 @@ public:
 	void Record(RenderParams* pParams);
 
 private:
-	D3DRootSignature* m_pRootSignature;
-	D3DPipelineState* m_pPipelineState;
+	RootSignature* m_pRootSignature;
+	PipelineState* m_pPipelineState;
 
 	u16 m_NumThreadGroupsX;
 	u16 m_NumThreadGroupsY;

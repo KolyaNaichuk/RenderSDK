@@ -1,8 +1,10 @@
 #pragma once
 
-class D3DDevice;
-class D3DPipelineState;
-class D3DRootSignature;
+#include "D3DWrapper/Common.h"
+
+class GraphicsDevice;
+class PipelineState;
+class RootSignature;
 
 enum ScaleFactor
 {
@@ -18,10 +20,10 @@ enum ScaleFactor
 class ScaleTexturePass
 {
 public:
-	ScaleTexturePass(D3DDevice* pDevice, ScaleFactor scaleFactor);
+	ScaleTexturePass(GraphicsDevice* pDevice, ScaleFactor scaleFactor);
 	~ScaleTexturePass();
 
 private:
-	D3DRootSignature* m_pRootSignature;
-	D3DPipelineState* m_pPipelineState;
+	RootSignature* m_pRootSignature;
+	PipelineState* m_pPipelineState;
 };

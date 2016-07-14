@@ -1,10 +1,10 @@
 #include "RenderPasses/VisualizeMeshPass.h"
-#include "D3DWrapper/D3DRootSignature.h"
-#include "D3DWrapper/D3DPipelineState.h"
-#include "D3DWrapper/D3DCommandList.h"
-#include "D3DWrapper/D3DUtils.h"
-#include "D3DWrapper/D3DResource.h"
-#include "D3DWrapper/D3DRenderEnv.h"
+#include "D3DWrapper/RootSignature.h"
+#include "D3DWrapper/PipelineState.h"
+#include "D3DWrapper/CommandList.h"
+#include "D3DWrapper/GraphicsUtils.h"
+#include "D3DWrapper/GraphicsResource.h"
+#include "D3DWrapper/RenderEnv.h"
 #include "Common/MeshData.h"
 
 enum RootParams
@@ -19,24 +19,24 @@ VisualizeMeshPass::VisualizeMeshPass(InitParams* pParams)
 {
 	assert(false);
 	/*
-	D3DRenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	u8 inputElementFlags = VertexElementFlag_Position;
-	D3DShaderMacro shaderDefines[2];
+	ShaderMacro shaderDefines[2];
 
 	if (pParams->m_MeshDataElement == MeshDataElement_Color)
 	{
-		shaderDefines[0] = D3DShaderMacro("HAS_COLOR", "1");
+		shaderDefines[0] = ShaderMacro("HAS_COLOR", "1");
 		inputElementFlags |= VertexElementFlag_Color;
 	}
 	else if (pParams->m_MeshDataElement == MeshDataElement_Normal)
 	{
-		shaderDefines[0] = D3DShaderMacro("HAS_NORMAL", "1");
+		shaderDefines[0] = ShaderMacro("HAS_NORMAL", "1");
 		inputElementFlags |= VertexElementFlag_Normal;
 	}
 	else if (pParams->m_MeshDataElement == MeshDataElement_TexCoords)
 	{
-		shaderDefines[0] = D3DShaderMacro("HAS_TEXCOORD", "1");
+		shaderDefines[0] = ShaderMacro("HAS_TEXCOORD", "1");
 		inputElementFlags |= VertexElementFlag_TexCoords;
 	}
 	else
@@ -44,31 +44,31 @@ VisualizeMeshPass::VisualizeMeshPass(InitParams* pParams)
 		assert(false);
 	}
 
-	shaderDefines[1] = D3DShaderMacro();
+	shaderDefines[1] = ShaderMacro();
 
-	D3DShader vertexShader(L"Shaders//VisualizeMeshVS.hlsl", "Main", "vs_4_0", shaderDefines);
-	D3DShader pixelShader(L"Shaders//VisualizeMeshPS.hlsl", "Main", "ps_4_0", shaderDefines);
+	Shader vertexShader(L"Shaders//VisualizeMeshVS.hlsl", "Main", "vs_4_0", shaderDefines);
+	Shader pixelShader(L"Shaders//VisualizeMeshPS.hlsl", "Main", "ps_4_0", shaderDefines);
 
-	D3DCBVRange cbvRange(1, 0);
+	CBVDescriptorRange cbvRange(1, 0);
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kCBVRootParam] = D3DRootDescriptorTableParameter(1, &cbvRange, D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParams[kCBVRootParam] = RootDescriptorTableParameter(1, &cbvRange, D3D12_SHADER_VISIBILITY_VERTEX);
 
-	D3DRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new D3DRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"VisualizeMeshPass::m_pRootSignature");
+	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"VisualizeMeshPass::m_pRootSignature");
 
-	std::vector<D3DInputElementDesc> inputElementDescs;
+	std::vector<InputElementDesc> inputElementDescs;
 	GenerateInputElements(inputElementDescs, inputElementFlags, pParams->m_VertexElementFlags);
 
-	D3DGraphicsPipelineStateDesc pipelineStateDesc;
+	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetPixelShader(&pixelShader);
 	pipelineStateDesc.SetInputLayout(inputElementDescs.size(), &inputElementDescs[0]);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipelineStateDesc.DepthStencilState = D3DDepthStencilDesc(D3DDepthStencilDesc::Enabled);
+	pipelineStateDesc.DepthStencilState = DepthStencilDesc(DepthStencilDesc::Enabled);
 	pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat, pParams->m_DSVFormat);
 
-	m_pPipelineState = new D3DPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeMeshPass::m_pPipelineState");
+	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeMeshPass::m_pPipelineState");
 	*/
 }
 
@@ -82,15 +82,15 @@ void VisualizeMeshPass::Record(RenderParams* pParams)
 {
 	assert(false);
 	/*
-	D3DRenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-	D3DCommandList* pCommandList = pParams->m_pCommandList;
-	D3DResourceList* pResources = pParams->m_pResources;
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	CommandList* pCommandList = pParams->m_pCommandList;
+	BindingResourceList* pResources = pParams->m_pResources;
 	Mesh* pMesh = pParams->m_pMeshBatch;
 		
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	
-	pCommandList->SetResourceTransitions(&pResources->m_RequiredResourceStates);
+	pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParam, pResources->m_SRVHeapStart);
 
@@ -104,7 +104,7 @@ void VisualizeMeshPass::Record(RenderParams* pParams)
 
 	pCommandList->RSSetViewports(1, pParams->m_pViewport);
 
-	D3DRect scissorRect(ExtractRect(pParams->m_pViewport));
+	Rect scissorRect(ExtractRect(pParams->m_pViewport));
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 	
 	assert(pMesh->GetNumSubMeshes() == 1);

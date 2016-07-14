@@ -1,17 +1,17 @@
 #include "DXApplication.h"
-#include "D3DWrapper/D3DFactory.h"
-#include "D3DWrapper/D3DDevice.h"
-#include "D3DWrapper/D3DSwapChain.h"
-#include "D3DWrapper/D3DCommandQueue.h"
-#include "D3DWrapper/D3DCommandAllocator.h"
-#include "D3DWrapper/D3DCommandList.h"
-#include "D3DWrapper/D3DDescriptorHeap.h"
-#include "D3DWrapper/D3DRootSignature.h"
-#include "D3DWrapper/D3DPipelineState.h"
-#include "D3DWrapper/D3DResource.h"
-#include "D3DWrapper/D3DRenderEnv.h"
-#include "D3DWrapper/D3DFence.h"
-#include "D3DWrapper/D3DUtils.h"
+#include "D3DWrapper/GraphicsFactory.h"
+#include "D3DWrapper/GraphicsDevice.h"
+#include "D3DWrapper/SwapChain.h"
+#include "D3DWrapper/CommandQueue.h"
+#include "D3DWrapper/CommandAllocator.h"
+#include "D3DWrapper/CommandList.h"
+#include "D3DWrapper/DescriptorHeap.h"
+#include "D3DWrapper/RootSignature.h"
+#include "D3DWrapper/PipelineState.h"
+#include "D3DWrapper/GraphicsResource.h"
+#include "D3DWrapper/RenderEnv.h"
+#include "D3DWrapper/Fence.h"
+#include "D3DWrapper/GraphicsUtils.h"
 #include "Math/Vector4.h"
 
 DXApplication::DXApplication(HINSTANCE hApp)
@@ -26,9 +26,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCommandList(nullptr)
 	, m_pVertexBuffer(nullptr)
 	, m_pIndexBuffer(nullptr)
-	, m_pDefaultHeapProps(new D3DHeapProperties(D3D12_HEAP_TYPE_DEFAULT))
-	, m_pUploadHeapProps(new D3DHeapProperties(D3D12_HEAP_TYPE_UPLOAD))
-	, m_pRenderEnv(new D3DRenderEnv())
+	, m_pDefaultHeapProps(new HeapProperties(D3D12_HEAP_TYPE_DEFAULT))
+	, m_pUploadHeapProps(new HeapProperties(D3D12_HEAP_TYPE_UPLOAD))
+	, m_pRenderEnv(new RenderEnv())
 	, m_pFence(nullptr)
 	, m_pViewport(nullptr)
 	, m_pScissorRect(nullptr)
@@ -63,14 +63,14 @@ DXApplication::~DXApplication()
 
 void DXApplication::OnInit()
 {
-	D3DFactory factory;
-	m_pDevice = new D3DDevice(&factory, D3D_FEATURE_LEVEL_11_0);
+	GraphicsFactory factory;
+	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_11_0);
 	
-	D3DDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kBackBufferCount, false);
-	m_pShaderInvisibleRTVHeap = new D3DDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
+	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kBackBufferCount, false);
+	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	D3DDescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kBackBufferCount, false);
-	m_pShaderInvisibleSRVHeap = new D3DDescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pShaderInvisibleSRVHeap");
+	DescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kBackBufferCount, false);
+	m_pShaderInvisibleSRVHeap = new DescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
 	m_pRenderEnv->m_pDevice = m_pDevice;
 	m_pRenderEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
@@ -78,44 +78,44 @@ void DXApplication::OnInit()
 	m_pRenderEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
 	m_pRenderEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
 
-	D3DCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_pCommandQueue = new D3DCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
+	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
 		
 	const RECT bufferRect = m_pWindow->GetClientRect();
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
 	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
 
-	m_pViewport = new D3DViewport(0.0f, 0.0f, FLOAT(bufferWidth), FLOAT(bufferHeight));
-	m_pScissorRect = new D3DRect(0, 0, bufferWidth, bufferHeight);
+	m_pViewport = new Viewport(0.0f, 0.0f, FLOAT(bufferWidth), FLOAT(bufferHeight));
+	m_pScissorRect = new Rect(0, 0, bufferWidth, bufferHeight);
 
-	D3DSwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
-	m_pSwapChain = new D3DSwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
+	SwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
+	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 	
 	for (UINT index = 0; index < kBackBufferCount; ++index)
-		m_CommandAllocators[index] = new D3DCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
+		m_CommandAllocators[index] = new CommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
 
-	D3DRootSignatureDesc rootSignatureDesc(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new D3DRootSignature(m_pDevice, &rootSignatureDesc, L"D3DRootSignature");
+	RootSignatureDesc rootSignatureDesc(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	m_pRootSignature = new RootSignature(m_pDevice, &rootSignatureDesc, L"RootSignature");
 
-	const D3DInputElementDesc inputElementDescs[] =
+	const InputElementDesc inputElementDescs[] =
 	{
-		D3DInputElementDesc("POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0),
-		D3DInputElementDesc("COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16)
+		InputElementDesc("POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0),
+		InputElementDesc("COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16)
 	};
 	
-	D3DShader vertexShader(L"Shaders//PassThroughVS.hlsl", "Main", "vs_4_0");
-	D3DShader pixelShader(L"Shaders//PassThroughPS.hlsl", "Main", "ps_4_0");
+	Shader vertexShader(L"Shaders//PassThroughVS.hlsl", "Main", "vs_4_0");
+	Shader pixelShader(L"Shaders//PassThroughPS.hlsl", "Main", "ps_4_0");
 
-	D3DGraphicsPipelineStateDesc pipelineStateDesc;
+	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetPixelShader(&pixelShader);
-	pipelineStateDesc.InputLayout = D3DInputLayoutDesc(ARRAYSIZE(inputElementDescs), inputElementDescs);
+	pipelineStateDesc.InputLayout = InputLayoutDesc(ARRAYSIZE(inputElementDescs), inputElementDescs);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.SetRenderTargetFormat(DXGI_FORMAT_R8G8B8A8_UNORM);
 		
-	m_pPipelineState = new D3DPipelineState(m_pDevice, &pipelineStateDesc, L"D3DPipelineState");
+	m_pPipelineState = new PipelineState(m_pDevice, &pipelineStateDesc, L"PipelineState");
 	
 	const FLOAT scale = 0.5f;
 	struct Vertex
@@ -132,30 +132,30 @@ void DXApplication::OnInit()
 	};
 	const WORD indices[] = {0, 1, 3, 1, 2, 3};
 
-	D3DVertexBufferDesc vertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]));
-	m_pVertexBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pVertexBuffer");
+	VertexBufferDesc vertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]));
+	m_pVertexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pVertexBuffer");
 	
-	D3DBuffer uploadVertexBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadVertexBuffer");
+	Buffer uploadVertexBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadVertexBuffer");
 	uploadVertexBuffer.Write(vertices, sizeof(vertices));
 
-	D3DIndexBufferDesc indexBufferDesc(ARRAYSIZE(indices), sizeof(indices[0]));
-	m_pIndexBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pIndexBuffer");
+	IndexBufferDesc indexBufferDesc(ARRAYSIZE(indices), sizeof(indices[0]));
+	m_pIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pIndexBuffer");
 	
-	D3DBuffer uploadIndexBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadIndexBuffer");
+	Buffer uploadIndexBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadIndexBuffer");
 	uploadIndexBuffer.Write(indices, sizeof(indices));
 	
-	m_pFence = new D3DFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
+	m_pFence = new Fence(m_pDevice, m_FenceValues[m_BackBufferIndex], L"m_pFence");
 	++m_FenceValues[m_BackBufferIndex];
 
-	m_pCommandList = new D3DCommandList(m_pDevice, m_CommandAllocators[m_BackBufferIndex], nullptr, L"m_pCommandList");
+	m_pCommandList = new CommandList(m_pDevice, m_CommandAllocators[m_BackBufferIndex], nullptr, L"m_pCommandList");
 
 	m_pCommandList->CopyResource(m_pVertexBuffer, &uploadVertexBuffer);
 	m_pCommandList->CopyResource(m_pIndexBuffer, &uploadIndexBuffer);
 	
 	const D3D12_RESOURCE_BARRIER resourceTransitions[] =
 	{
-		D3DResourceTransitionBarrier(m_pVertexBuffer, m_pVertexBuffer->GetState(), m_pVertexBuffer->GetReadState()),
-		D3DResourceTransitionBarrier(m_pIndexBuffer, m_pIndexBuffer->GetState(), m_pIndexBuffer->GetReadState())
+		ResourceTransitionBarrier(m_pVertexBuffer, m_pVertexBuffer->GetState(), m_pVertexBuffer->GetReadState()),
+		ResourceTransitionBarrier(m_pIndexBuffer, m_pIndexBuffer->GetState(), m_pIndexBuffer->GetReadState())
 	};
 	m_pCommandList->ResourceBarrier(ARRAYSIZE(resourceTransitions), &resourceTransitions[0]);
 
@@ -174,15 +174,15 @@ void DXApplication::OnUpdate()
 
 void DXApplication::OnRender()
 {
-	D3DCommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
+	CommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
 	pCommandAllocator->Reset();
 	
 	m_pCommandList->Reset(pCommandAllocator, m_pPipelineState);
 	m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 		
-	D3DColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 		
-	D3DResourceTransitionBarrier writeStateTransition(pRenderTarget, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
+	ResourceTransitionBarrier writeStateTransition(pRenderTarget, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
 	m_pCommandList->ResourceBarrier(1, &writeStateTransition);
 	pRenderTarget->SetState(pRenderTarget->GetWriteState());
 		
@@ -198,7 +198,7 @@ void DXApplication::OnRender()
 	m_pCommandList->RSSetScissorRects(1, m_pScissorRect);
 	m_pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
-	D3DResourceTransitionBarrier presentStateTransition(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
+	ResourceTransitionBarrier presentStateTransition(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
 	m_pCommandList->ResourceBarrier(1, &presentStateTransition);
 	pRenderTarget->SetState(D3D12_RESOURCE_STATE_PRESENT);
 

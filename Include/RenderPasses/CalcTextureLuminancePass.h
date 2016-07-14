@@ -1,28 +1,28 @@
 #pragma once
 
-#include "Common/Common.h"
+#include "D3DWrapper/Common.h"
 
-class D3DDevice;
-class D3DPipelineState;
-class D3DRootSignature;
-class D3DCommandList;
-class D3DCommandAllocator;
-class D3DResource;
-class D3DDescriptorHeap;
+class GraphicsDevice;
+class PipelineState;
+class RootSignature;
+class CommandList;
+class CommandAllocator;
+class GraphicsResource;
+class DescriptorHeap;
 
 class CalcTextureLuminancePass
 {
 public:
-	CalcTextureLuminancePass(D3DDevice* pDevice, DXGI_FORMAT rtvFormat, bool logLuminance = false);
+	CalcTextureLuminancePass(GraphicsDevice* pDevice, DXGI_FORMAT rtvFormat, bool logLuminance = false);
 	~CalcTextureLuminancePass();
 
-	void Record(D3DCommandList* pCommandList, D3DCommandAllocator* pCommandAllocator,
-		D3DResource* pRTVTexture, D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor,
-		D3DDescriptorHeap* pSRVDescriptorHeap, D3DResource* pSRVTexture, D3D12_GPU_DESCRIPTOR_HANDLE srvDescriptor,
-		D3DDescriptorHeap* pSamplerDescriptorHeap, D3D12_GPU_DESCRIPTOR_HANDLE samplerDescriptor,
+	void Record(CommandList* pCommandList, CommandAllocator* pCommandAllocator,
+		GraphicsResource* pRTVTexture, D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor,
+		DescriptorHeap* pSRVDescriptorHeap, GraphicsResource* pSRVTexture, D3D12_GPU_DESCRIPTOR_HANDLE srvDescriptor,
+		DescriptorHeap* pSamplerDescriptorHeap, D3D12_GPU_DESCRIPTOR_HANDLE samplerDescriptor,
 		const D3D12_RESOURCE_STATES* pRTVEndState = nullptr, const D3D12_RESOURCE_STATES* pSRVEndState = nullptr);
 
 private:
-	D3DRootSignature* m_pRootSignature;
-	D3DPipelineState* m_pPipelineState;
+	RootSignature* m_pRootSignature;
+	PipelineState* m_pPipelineState;
 };

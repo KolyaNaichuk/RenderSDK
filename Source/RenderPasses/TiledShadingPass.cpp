@@ -1,10 +1,10 @@
 #include "RenderPasses/TiledShadingPass.h"
-#include "D3DWrapper/D3DPipelineState.h"
-#include "D3DWrapper/D3DRootSignature.h"
-#include "D3DWrapper/D3DResource.h"
-#include "D3DWrapper/D3DCommandList.h"
-#include "D3DWrapper/D3DCommandAllocator.h"
-#include "D3DWrapper/D3DRenderEnv.h"
+#include "D3DWrapper/PipelineState.h"
+#include "D3DWrapper/RootSignature.h"
+#include "D3DWrapper/GraphicsResource.h"
+#include "D3DWrapper/CommandList.h"
+#include "D3DWrapper/CommandAllocator.h"
+#include "D3DWrapper/RenderEnv.h"
 
 enum RootParams
 {
@@ -18,7 +18,7 @@ TiledShadingPass::TiledShadingPass(InitParams* pParams)
 	, m_NumThreadGroupsX(pParams->m_NumTilesX)
 	, m_NumThreadGroupsY(pParams->m_NumTilesY)
 {
-	D3DRenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	std::string tileSizeStr = std::to_string(pParams->m_TileSize);
 	std::string numTilesXStr = std::to_string(pParams->m_NumTilesX);
@@ -27,39 +27,39 @@ TiledShadingPass::TiledShadingPass(InitParams* pParams)
 	std::string enableSpotLightsStr = std::to_string(pParams->m_EnableSpotLights ? 1 : 0);
 	std::string enableDirectionalLightStr = std::to_string(pParams->m_EnableDirectionalLight ? 1 : 0);
 	
-	const D3DShaderMacro shaderDefines[] =
+	const ShaderMacro shaderDefines[] =
 	{
-		D3DShaderMacro("TILE_SIZE", tileSizeStr.c_str()),
-		D3DShaderMacro("NUM_TILES_X", numTilesXStr.c_str()),
-		D3DShaderMacro("SHADING_MODE", shadingModeStr.c_str()),
-		D3DShaderMacro("ENABLE_POINT_LIGHTS", enablePointLightsStr.c_str()),
-		D3DShaderMacro("ENABLE_SPOT_LIGHTS", enableSpotLightsStr.c_str()),
-		D3DShaderMacro("ENABLE_DIRECTIONAL_LIGHT", enableDirectionalLightStr.c_str()),
-		D3DShaderMacro()
+		ShaderMacro("TILE_SIZE", tileSizeStr.c_str()),
+		ShaderMacro("NUM_TILES_X", numTilesXStr.c_str()),
+		ShaderMacro("SHADING_MODE", shadingModeStr.c_str()),
+		ShaderMacro("ENABLE_POINT_LIGHTS", enablePointLightsStr.c_str()),
+		ShaderMacro("ENABLE_SPOT_LIGHTS", enableSpotLightsStr.c_str()),
+		ShaderMacro("ENABLE_DIRECTIONAL_LIGHT", enableDirectionalLightStr.c_str()),
+		ShaderMacro()
 	};
-	D3DShader computeShader(L"Shaders//TiledShadingCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//TiledShadingCS.hlsl", "Main", "cs_5_0", shaderDefines);
 
 	std::vector<D3D12_DESCRIPTOR_RANGE> srvDescriptorRanges;
-	srvDescriptorRanges.push_back(D3DUAVRange(1, 0));
-	srvDescriptorRanges.push_back(D3DCBVRange(1, 0));
-	srvDescriptorRanges.push_back(D3DSRVRange(4, 0));
+	srvDescriptorRanges.push_back(UAVDescriptorRange(1, 0));
+	srvDescriptorRanges.push_back(CBVDescriptorRange(1, 0));
+	srvDescriptorRanges.push_back(SRVDescriptorRange(4, 0));
 	
 	if (pParams->m_EnablePointLights)
-		srvDescriptorRanges.push_back(D3DSRVRange(4, 4));
+		srvDescriptorRanges.push_back(SRVDescriptorRange(4, 4));
 	if (pParams->m_EnableSpotLights)
-		srvDescriptorRanges.push_back(D3DSRVRange(4, 8));
+		srvDescriptorRanges.push_back(SRVDescriptorRange(4, 8));
 	
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kSRVRootParam] = D3DRootDescriptorTableParameter(srvDescriptorRanges.size(), srvDescriptorRanges.data(), D3D12_SHADER_VISIBILITY_ALL);
+	rootParams[kSRVRootParam] = RootDescriptorTableParameter(srvDescriptorRanges.size(), srvDescriptorRanges.data(), D3D12_SHADER_VISIBILITY_ALL);
 
-	D3DRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new D3DRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"TiledShadingPass::m_pRootSignature");
+	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
+	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"TiledShadingPass::m_pRootSignature");
 
-	D3DComputePipelineStateDesc pipelineStateDesc;
+	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
-	m_pPipelineState = new D3DPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"TiledShadingPass::m_pPipelineState");
+	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"TiledShadingPass::m_pPipelineState");
 }
 
 TiledShadingPass::~TiledShadingPass()
@@ -70,14 +70,14 @@ TiledShadingPass::~TiledShadingPass()
 
 void TiledShadingPass::Record(RenderParams* pParams)
 {
-	D3DRenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-	D3DCommandList* pCommandList = pParams->m_pCommandList;
-	D3DResourceList* pResources = pParams->m_pResources;
-	D3DColorTexture* pAccumLightTexture = pParams->m_pAccumLightTexture;
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	CommandList* pCommandList = pParams->m_pCommandList;
+	BindingResourceList* pResources = pParams->m_pResources;
+	ColorTexture* pAccumLightTexture = pParams->m_pAccumLightTexture;
 
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
-	pCommandList->SetResourceTransitions(&pResources->m_RequiredResourceStates);
+	pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 

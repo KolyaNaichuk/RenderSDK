@@ -1,18 +1,18 @@
 #pragma once
 
-#include "Common/Common.h"
+#include "D3DWrapper/Common.h"
 
-class D3DRootSignature;
-class D3DPipelineState;
-class D3DCommandSignature;
-class D3DCommandList;
-class D3DCommandAllocator;
-class D3DBuffer;
+class RootSignature;
+class PipelineState;
+class CommandSignature;
+class CommandList;
+class CommandAllocator;
+class Buffer;
 class MeshBatch;
 
-struct D3DViewport;
-struct D3DRenderEnv;
-struct D3DResourceList;
+struct Viewport;
+struct RenderEnv;
+struct BindingResourceList;
 
 enum LightType
 {
@@ -25,7 +25,7 @@ class RenderTiledShadowMapPass
 public:
 	struct InitParams
 	{
-		D3DRenderEnv* m_pRenderEnv;
+		RenderEnv* m_pRenderEnv;
 		DXGI_FORMAT m_DSVFormat;
 		MeshBatch* m_pMeshBatch;
 		LightType m_LightType;
@@ -33,14 +33,14 @@ public:
 
 	struct RenderParams
 	{
-		D3DRenderEnv* m_pRenderEnv;
-		D3DCommandList* m_pCommandList;
-		D3DCommandAllocator* m_pCommandAllocator;
-		D3DResourceList* m_pResources;
-		D3DViewport* m_pViewport;
+		RenderEnv* m_pRenderEnv;
+		CommandList* m_pCommandList;
+		CommandAllocator* m_pCommandAllocator;
+		BindingResourceList* m_pResources;
+		Viewport* m_pViewport;
 		MeshBatch* m_pMeshBatch;
-		D3DBuffer* m_pDrawShadowCasterCommandBuffer;
-		D3DBuffer* m_pNumDrawShadowCastersBuffer;
+		Buffer* m_pDrawShadowCasterCommandBuffer;
+		Buffer* m_pNumDrawShadowCastersBuffer;
 	};
 
 	RenderTiledShadowMapPass(InitParams* pParams);
@@ -49,7 +49,7 @@ public:
 	void Record(RenderParams* pParams);
 
 private:
-	D3DPipelineState* m_pPipelineState;
-	D3DRootSignature* m_pRootSignature;
-	D3DCommandSignature* m_pCommandSignature;
+	PipelineState* m_pPipelineState;
+	RootSignature* m_pRootSignature;
+	CommandSignature* m_pCommandSignature;
 };

@@ -2,24 +2,24 @@
 
 #include "Common/Application.h"
 
-class D3DDevice;
-class D3DSwapChain;
-class D3DCommandQueue;
-class D3DCommandList;
-class D3DCommandAllocator;
-class D3DDescriptorHeap;
-class D3DRootSignature;
-class D3DPipelineState;
-class D3DBuffer;
-class D3DColorTexture;
-class D3DFence;
+class GraphicsDevice;
+class SwapChain;
+class CommandQueue;
+class CommandList;
+class CommandAllocator;
+class DescriptorHeap;
+class RootSignature;
+class PipelineState;
+class Buffer;
+class ColorTexture;
+class Fence;
 
-struct D3DHeapProperties;
-struct D3DRenderEnv;
-struct D3DVertexBufferView;
-struct D3DIndexBufferView;
-struct D3DViewport;
-struct D3DRect;
+struct HeapProperties;
+struct RenderEnv;
+struct VertexBufferView;
+struct IndexBufferView;
+struct Viewport;
+struct Rect;
 
 class DXApplication : public Application
 {
@@ -41,23 +41,23 @@ private:
 private:
 	enum { kBackBufferCount = 3 };
 
-	D3DDevice* m_pDevice;
-	D3DSwapChain* m_pSwapChain;
-	D3DCommandQueue* m_pCommandQueue;
-	D3DDescriptorHeap* m_pShaderInvisibleRTVHeap;
-	D3DDescriptorHeap* m_pShaderInvisibleSRVHeap;
-	D3DRootSignature* m_pRootSignature;
-	D3DPipelineState* m_pPipelineState;
-	D3DCommandAllocator* m_CommandAllocators[kBackBufferCount];
-	D3DCommandList* m_pCommandList;
-	D3DBuffer* m_pVertexBuffer;
-	D3DBuffer* m_pIndexBuffer;
-	D3DHeapProperties* m_pDefaultHeapProps;
-	D3DHeapProperties* m_pUploadHeapProps;
-	D3DRenderEnv* m_pRenderEnv;
-	D3DFence* m_pFence;
+	GraphicsDevice* m_pDevice;
+	SwapChain* m_pSwapChain;
+	CommandQueue* m_pCommandQueue;
+	DescriptorHeap* m_pShaderInvisibleRTVHeap;
+	DescriptorHeap* m_pShaderInvisibleSRVHeap;
+	RootSignature* m_pRootSignature;
+	PipelineState* m_pPipelineState;
+	CommandAllocator* m_CommandAllocators[kBackBufferCount];
+	CommandList* m_pCommandList;
+	Buffer* m_pVertexBuffer;
+	Buffer* m_pIndexBuffer;
+	HeapProperties* m_pDefaultHeapProps;
+	HeapProperties* m_pUploadHeapProps;
+	RenderEnv* m_pRenderEnv;
+	Fence* m_pFence;
 	UINT64 m_FenceValues[kBackBufferCount];
-	D3DViewport* m_pViewport;
-	D3DRect* m_pScissorRect;
+	Viewport* m_pViewport;
+	Rect* m_pScissorRect;
 	UINT m_BackBufferIndex;
 };

@@ -135,54 +135,6 @@
     <ClInclude Include="..\Include\Math\Cone.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DCommandAllocator.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DCommandList.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DCommandQueue.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DCommandSignature.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DDescriptorHeap.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DDevice.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DFactory.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DFence.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DPipelineState.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DRenderEnv.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DResource.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DResourceList.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DRootSignature.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DSwapChain.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\D3DUtils.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\DXObject.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -227,6 +179,54 @@
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferCommandsPass.h">
       <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\GraphicsDevice.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\GraphicsFactory.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\GraphicsUtils.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\RenderEnv.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\CommandAllocator.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\CommandList.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\CommandSignature.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\DescriptorHeap.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\Fence.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\PipelineState.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\RootSignature.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\BindingResourceList.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\CommandQueue.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\SwapChain.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\GraphicsResource.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\Common.h">
+      <Filter>D3DWrapper</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -338,45 +338,6 @@
     <ClCompile Include="..\Source\Math\Cone.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\D3DCommandAllocator.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\D3DCommandList.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\D3DCommandQueue.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\D3DCommandSignature.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\D3DDescriptorHeap.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\D3DDevice.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\D3DFactory.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\D3DFence.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\D3DPipelineState.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\D3DResource.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\D3DRootSignature.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\D3DSwapChain.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\D3DUtils.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
@@ -421,6 +382,45 @@
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\GraphicsDevice.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\GraphicsFactory.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\GraphicsUtils.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\CommandAllocator.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\CommandList.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\CommandSignature.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\DescriptorHeap.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\Fence.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\PipelineState.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\RootSignature.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\CommandQueue.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\SwapChain.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\GraphicsResource.cpp">
+      <Filter>D3DWrapper</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

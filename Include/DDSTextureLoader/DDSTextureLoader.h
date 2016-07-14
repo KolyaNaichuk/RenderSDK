@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "Common/Common.h"
+#include "D3DWrapper/Common.h"
 
 #ifdef _WIN32_WINNT
 #undef _WIN32_WINNT

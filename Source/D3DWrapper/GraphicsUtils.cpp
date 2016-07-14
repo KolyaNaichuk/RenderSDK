@@ -1,6 +1,6 @@
-#include "D3DWrapper/D3DUtils.h"
+#include "D3DWrapper/GraphicsUtils.h"
 
-D3DViewport::D3DViewport(FLOAT topLeftX, FLOAT topLeftY, FLOAT width, FLOAT height, FLOAT minDepth, FLOAT maxDepth)
+Viewport::Viewport(FLOAT topLeftX, FLOAT topLeftY, FLOAT width, FLOAT height, FLOAT minDepth, FLOAT maxDepth)
 {
 	TopLeftX = topLeftX;
 	TopLeftY = topLeftY;
@@ -10,7 +10,7 @@ D3DViewport::D3DViewport(FLOAT topLeftX, FLOAT topLeftY, FLOAT width, FLOAT heig
 	MaxDepth = maxDepth;
 }
 
-D3DRect::D3DRect(LONG upperLeftX, LONG upperLeftY, LONG lowerRightX, LONG lowerRightY)
+Rect::Rect(LONG upperLeftX, LONG upperLeftY, LONG lowerRightX, LONG lowerRightY)
 {
 	left = upperLeftX;
 	top = upperLeftY;
@@ -18,9 +18,9 @@ D3DRect::D3DRect(LONG upperLeftX, LONG upperLeftY, LONG lowerRightX, LONG lowerR
 	bottom = lowerRightY;
 }
 
-const D3DRect ExtractRect(const D3DViewport* viewport)
+const Rect ExtractRect(const Viewport* viewport)
 {
-	return D3DRect(LONG(viewport->TopLeftX), LONG(viewport->TopLeftY),
+	return Rect(LONG(viewport->TopLeftX), LONG(viewport->TopLeftY),
 		LONG(viewport->TopLeftX + viewport->Width),
 		LONG(viewport->TopLeftY + viewport->Height));
 }

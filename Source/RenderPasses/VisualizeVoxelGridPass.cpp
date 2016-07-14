@@ -1,11 +1,11 @@
 #include "RenderPasses/VisualizeVoxelGridPass.h"
-#include "D3DWrapper/D3DPipelineState.h"
-#include "D3DWrapper/D3DRootSignature.h"
-#include "D3DWrapper/D3DCommandList.h"
-#include "D3DWrapper/D3DResource.h"
-#include "D3DWrapper/D3DDescriptorHeap.h"
-#include "D3DWrapper/D3DRenderEnv.h"
-#include "D3DWrapper/D3DUtils.h"
+#include "D3DWrapper/PipelineState.h"
+#include "D3DWrapper/RootSignature.h"
+#include "D3DWrapper/CommandList.h"
+#include "D3DWrapper/GraphicsResource.h"
+#include "D3DWrapper/DescriptorHeap.h"
+#include "D3DWrapper/RenderEnv.h"
+#include "D3DWrapper/GraphicsUtils.h"
 
 enum RootParams
 {
@@ -17,26 +17,26 @@ VisualizeVoxelGridPass::VisualizeVoxelGridPass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
-	D3DRenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	D3DShader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
-	D3DShader pixelShader(L"Shaders//VisualizeVoxelGridPS.hlsl", "Main", "ps_4_0");
+	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
+	Shader pixelShader(L"Shaders//VisualizeVoxelGridPS.hlsl", "Main", "ps_4_0");
 
-	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = {D3DCBVRange(2, 0), D3DSRVRange(2, 0)};
+	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = {CBVDescriptorRange(2, 0), SRVDescriptorRange(2, 0)};
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kSRVRootParam] = D3DRootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), &descriptorRanges[0], D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParams[kSRVRootParam] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), &descriptorRanges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 	
-	D3DRootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new D3DRootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"VisualizeVoxelGridPass::m_pRootSignature");
+	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"VisualizeVoxelGridPass::m_pRootSignature");
 
-	D3DGraphicsPipelineStateDesc pipelineStateDesc;
+	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetPixelShader(&pixelShader);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat);
 
-	m_pPipelineState = new D3DPipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeVoxelGridPass::m_pPipelineState");
+	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeVoxelGridPass::m_pPipelineState");
 }
 
 VisualizeVoxelGridPass::~VisualizeVoxelGridPass()
@@ -47,14 +47,14 @@ VisualizeVoxelGridPass::~VisualizeVoxelGridPass()
 
 void VisualizeVoxelGridPass::Record(RenderParams* pParams)
 {
-	D3DRenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-	D3DCommandList* pCommandList = pParams->m_pCommandList;
-	D3DResourceList* pResources = pParams->m_pResources;
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	CommandList* pCommandList = pParams->m_pCommandList;
+	BindingResourceList* pResources = pParams->m_pResources;
 
 	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
-	pCommandList->SetResourceTransitions(&pResources->m_RequiredResourceStates);
+	pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 	
@@ -67,7 +67,7 @@ void VisualizeVoxelGridPass::Record(RenderParams* pParams)
 
 	pCommandList->RSSetViewports(1, pParams->m_pViewport);
 
-	D3DRect scissorRect(ExtractRect(pParams->m_pViewport));
+	Rect scissorRect(ExtractRect(pParams->m_pViewport));
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	pCommandList->DrawInstanced(3, 1, 0, 0);

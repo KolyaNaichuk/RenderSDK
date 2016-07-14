@@ -2,9 +2,9 @@
 
 #include "Common/Common.h"
 
-class D3DCommandList;
-class D3DBuffer;
-struct D3DRenderEnv;
+class CommandList;
+class Buffer;
+struct RenderEnv;
 
 class PointLight;
 class SpotLight;
@@ -12,31 +12,31 @@ class SpotLight;
 class LightBuffer
 {
 public:
-	LightBuffer(D3DRenderEnv* pRenderEnv, u32 numPointLights, PointLight** ppPointLights);
-	LightBuffer(D3DRenderEnv* pRenderEnv, u32 numSpotLights, SpotLight** ppSpotLights);
+	LightBuffer(RenderEnv* pRenderEnv, u32 numPointLights, PointLight** ppPointLights);
+	LightBuffer(RenderEnv* pRenderEnv, u32 numSpotLights, SpotLight** ppSpotLights);
 
 	~LightBuffer();
 
-	void RecordDataForUpload(D3DCommandList* pCommandList);
+	void RecordDataForUpload(CommandList* pCommandList);
 	void RemoveDataForUpload();
 
 	u32 GetNumLights() const { return m_NumLights; }
 
-	D3DBuffer* GetLightBoundsBuffer() { return m_pLightBoundsBuffer; }
-	D3DBuffer* GetLightPropsBuffer() { return m_pLightPropsBuffer; }
-	D3DBuffer* GetLightFrustumBuffer() { return m_pLightFrustumBuffer; }
-	D3DBuffer* GetLightViewProjMatrixBuffer() { return m_pLightViewProjMatrixBuffer; }
+	Buffer* GetLightBoundsBuffer() { return m_pLightBoundsBuffer; }
+	Buffer* GetLightPropsBuffer() { return m_pLightPropsBuffer; }
+	Buffer* GetLightFrustumBuffer() { return m_pLightFrustumBuffer; }
+	Buffer* GetLightViewProjMatrixBuffer() { return m_pLightViewProjMatrixBuffer; }
 
 private:
 	u32 m_NumLights;
 	
-	D3DBuffer* m_pUploadLightBoundsBuffer;
-	D3DBuffer* m_pUploadLightPropsBuffer;
-	D3DBuffer* m_pUploadLightFrustumBuffer;
-	D3DBuffer* m_pUploadLightViewProjMatrixBuffer;
+	Buffer* m_pUploadLightBoundsBuffer;
+	Buffer* m_pUploadLightPropsBuffer;
+	Buffer* m_pUploadLightFrustumBuffer;
+	Buffer* m_pUploadLightViewProjMatrixBuffer;
 
-	D3DBuffer* m_pLightBoundsBuffer;
-	D3DBuffer* m_pLightPropsBuffer;
-	D3DBuffer* m_pLightFrustumBuffer;
-	D3DBuffer* m_pLightViewProjMatrixBuffer;
+	Buffer* m_pLightBoundsBuffer;
+	Buffer* m_pLightPropsBuffer;
+	Buffer* m_pLightFrustumBuffer;
+	Buffer* m_pLightViewProjMatrixBuffer;
 };

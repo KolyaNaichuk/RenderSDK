@@ -1,8 +1,8 @@
 #include "RenderPasses/ScaleTexturePass.h"
-#include "D3DWrapper/D3DRootSignature.h"
-#include "D3DWrapper/D3DPipelineState.h"
+#include "D3DWrapper/RootSignature.h"
+#include "D3DWrapper/PipelineState.h"
 
-ScaleTexturePass::ScaleTexturePass(D3DDevice* pDevice, ScaleFactor scaleFactor)
+ScaleTexturePass::ScaleTexturePass(GraphicsDevice* pDevice, ScaleFactor scaleFactor)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common/Common.h"
+#include "D3DWrapper/Common.h"
 
 struct Vector2f;
 struct Vector3f;

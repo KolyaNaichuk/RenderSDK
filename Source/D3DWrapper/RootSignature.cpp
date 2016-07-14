@@ -1,7 +1,7 @@
-#include "D3DWrapper/D3DRootSignature.h"
-#include "D3DWrapper/D3DDevice.h"
+#include "D3DWrapper/RootSignature.h"
+#include "D3DWrapper/GraphicsDevice.h"
 
-D3DCBVRange::D3DCBVRange(UINT numDescriptors, UINT baseShaderRegister, UINT registerSpace, UINT offsetInDescriptorsFromTableStart)
+CBVDescriptorRange::CBVDescriptorRange(UINT numDescriptors, UINT baseShaderRegister, UINT registerSpace, UINT offsetInDescriptorsFromTableStart)
 {
 	RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	NumDescriptors = numDescriptors;
@@ -10,7 +10,7 @@ D3DCBVRange::D3DCBVRange(UINT numDescriptors, UINT baseShaderRegister, UINT regi
 	OffsetInDescriptorsFromTableStart = offsetInDescriptorsFromTableStart;
 }
 
-D3DSRVRange::D3DSRVRange(UINT numDescriptors, UINT baseShaderRegister, UINT registerSpace, UINT offsetInDescriptorsFromTableStart)
+SRVDescriptorRange::SRVDescriptorRange(UINT numDescriptors, UINT baseShaderRegister, UINT registerSpace, UINT offsetInDescriptorsFromTableStart)
 {
 	RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	NumDescriptors = numDescriptors;
@@ -19,7 +19,7 @@ D3DSRVRange::D3DSRVRange(UINT numDescriptors, UINT baseShaderRegister, UINT regi
 	OffsetInDescriptorsFromTableStart = offsetInDescriptorsFromTableStart;
 }
 
-D3DUAVRange::D3DUAVRange(UINT numDescriptors, UINT baseShaderRegister, UINT registerSpace, UINT offsetInDescriptorsFromTableStart)
+UAVDescriptorRange::UAVDescriptorRange(UINT numDescriptors, UINT baseShaderRegister, UINT registerSpace, UINT offsetInDescriptorsFromTableStart)
 {
 	RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 	NumDescriptors = numDescriptors;
@@ -28,7 +28,7 @@ D3DUAVRange::D3DUAVRange(UINT numDescriptors, UINT baseShaderRegister, UINT regi
 	OffsetInDescriptorsFromTableStart = offsetInDescriptorsFromTableStart;
 }
 
-D3DSamplerRange::D3DSamplerRange(UINT numDescriptors, UINT baseShaderRegister, UINT registerSpace, UINT offsetInDescriptorsFromTableStart)
+SamplerRange::SamplerRange(UINT numDescriptors, UINT baseShaderRegister, UINT registerSpace, UINT offsetInDescriptorsFromTableStart)
 {
 	RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
 	NumDescriptors = numDescriptors;
@@ -37,7 +37,7 @@ D3DSamplerRange::D3DSamplerRange(UINT numDescriptors, UINT baseShaderRegister, U
 	OffsetInDescriptorsFromTableStart = offsetInDescriptorsFromTableStart;
 }
 
-D3DRootDescriptorTableParameter::D3DRootDescriptorTableParameter()
+RootDescriptorTableParameter::RootDescriptorTableParameter()
 {
 	ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	DescriptorTable.NumDescriptorRanges = 0;
@@ -45,7 +45,7 @@ D3DRootDescriptorTableParameter::D3DRootDescriptorTableParameter()
 	ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 }
 
-D3DRootDescriptorTableParameter::D3DRootDescriptorTableParameter(UINT numDescriptorRanges, const D3D12_DESCRIPTOR_RANGE* pDescriptorRanges, D3D12_SHADER_VISIBILITY shaderVisibility)
+RootDescriptorTableParameter::RootDescriptorTableParameter(UINT numDescriptorRanges, const D3D12_DESCRIPTOR_RANGE* pDescriptorRanges, D3D12_SHADER_VISIBILITY shaderVisibility)
 {
 	ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	DescriptorTable.NumDescriptorRanges = numDescriptorRanges;
@@ -53,7 +53,7 @@ D3DRootDescriptorTableParameter::D3DRootDescriptorTableParameter(UINT numDescrip
 	ShaderVisibility = shaderVisibility;
 }
 
-D3DRootCBVParameter::D3DRootCBVParameter(UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace)
+RootCBVParameter::RootCBVParameter(UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace)
 {
 	ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	Descriptor.ShaderRegister = shaderRegister;
@@ -61,7 +61,7 @@ D3DRootCBVParameter::D3DRootCBVParameter(UINT shaderRegister, D3D12_SHADER_VISIB
 	ShaderVisibility = shaderVisibility;
 }
 
-D3DRootSRVParameter::D3DRootSRVParameter(UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace)
+RootSRVParameter::RootSRVParameter(UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace)
 {
 	ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
 	Descriptor.ShaderRegister = shaderRegister;
@@ -69,7 +69,7 @@ D3DRootSRVParameter::D3DRootSRVParameter(UINT shaderRegister, D3D12_SHADER_VISIB
 	ShaderVisibility = shaderVisibility;
 }
 
-D3DRootUAVParameter::D3DRootUAVParameter(UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace)
+RootUAVParameter::RootUAVParameter(UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace)
 {
 	ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
 	Descriptor.ShaderRegister = shaderRegister;
@@ -77,7 +77,7 @@ D3DRootUAVParameter::D3DRootUAVParameter(UINT shaderRegister, D3D12_SHADER_VISIB
 	ShaderVisibility = shaderVisibility;
 }
 
-D3DRoot32BitConstantsParameter::D3DRoot32BitConstantsParameter(UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT num32BitValues, UINT registerSpace)
+Root32BitConstantsParameter::Root32BitConstantsParameter(UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT num32BitValues, UINT registerSpace)
 {
 	ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 	Constants.ShaderRegister = shaderRegister;
@@ -86,27 +86,27 @@ D3DRoot32BitConstantsParameter::D3DRoot32BitConstantsParameter(UINT shaderRegist
 	ShaderVisibility = shaderVisibility;
 }
 
-D3DRootSignatureDesc::D3DRootSignatureDesc()
-	: D3DRootSignatureDesc(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE)
+RootSignatureDesc::RootSignatureDesc()
+	: RootSignatureDesc(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE)
 {
 }
 
-D3DRootSignatureDesc::D3DRootSignatureDesc(UINT numParameters, const D3D12_ROOT_PARAMETER* pFirstParameter, D3D12_ROOT_SIGNATURE_FLAGS flags)
-	: D3DRootSignatureDesc(numParameters, pFirstParameter, 0, nullptr, flags)
+RootSignatureDesc::RootSignatureDesc(UINT numParameters, const D3D12_ROOT_PARAMETER* pFirstParameter, D3D12_ROOT_SIGNATURE_FLAGS flags)
+	: RootSignatureDesc(numParameters, pFirstParameter, 0, nullptr, flags)
 {
 }
 
-D3DRootSignatureDesc::D3DRootSignatureDesc(UINT numStaticSamplers, const D3D12_STATIC_SAMPLER_DESC* pFirstStaticSampler, D3D12_ROOT_SIGNATURE_FLAGS flags)
-	: D3DRootSignatureDesc(0, nullptr, numStaticSamplers, pFirstStaticSampler, flags)
+RootSignatureDesc::RootSignatureDesc(UINT numStaticSamplers, const D3D12_STATIC_SAMPLER_DESC* pFirstStaticSampler, D3D12_ROOT_SIGNATURE_FLAGS flags)
+	: RootSignatureDesc(0, nullptr, numStaticSamplers, pFirstStaticSampler, flags)
 {
 }
 
-D3DRootSignatureDesc::D3DRootSignatureDesc(D3D12_ROOT_SIGNATURE_FLAGS flags)
-	: D3DRootSignatureDesc(0, nullptr, 0, nullptr, flags)
+RootSignatureDesc::RootSignatureDesc(D3D12_ROOT_SIGNATURE_FLAGS flags)
+	: RootSignatureDesc(0, nullptr, 0, nullptr, flags)
 {
 }
 
-D3DRootSignatureDesc::D3DRootSignatureDesc(UINT numParameters, const D3D12_ROOT_PARAMETER* pFirstParameter,
+RootSignatureDesc::RootSignatureDesc(UINT numParameters, const D3D12_ROOT_PARAMETER* pFirstParameter,
 	UINT numStaticSamplers, const D3D12_STATIC_SAMPLER_DESC* pFirstStaticSampler, D3D12_ROOT_SIGNATURE_FLAGS flags)
 {
 	NumParameters = numParameters;
@@ -116,7 +116,7 @@ D3DRootSignatureDesc::D3DRootSignatureDesc(UINT numParameters, const D3D12_ROOT_
 	Flags = flags;
 }
 
-D3DRootSignature::D3DRootSignature(D3DDevice* pDevice, const D3DRootSignatureDesc* pDesc, LPCWSTR pName)
+RootSignature::RootSignature(GraphicsDevice* pDevice, const RootSignatureDesc* pDesc, LPCWSTR pName)
 {
 	ComPtr<ID3DBlob> d3dRootSignatureBlob;
 	ComPtr<ID3DBlob> d3dErrorBlob;
@@ -128,9 +128,12 @@ D3DRootSignature::D3DRootSignature(D3DDevice* pDevice, const D3DRootSignatureDes
 	}
 
 	UINT nodeMask = 0;
-	DXVerify(pDevice->GetDXObject()->CreateRootSignature(nodeMask, d3dRootSignatureBlob->GetBufferPointer(), d3dRootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(GetDXObjectAddress())));
+	VerifyD3DResult(pDevice->GetD3DObject()->CreateRootSignature(nodeMask,
+		d3dRootSignatureBlob->GetBufferPointer(), 
+		d3dRootSignatureBlob->GetBufferSize(),
+		IID_PPV_ARGS(&m_D3DRootSignature)));
 
 #ifdef _DEBUG
-	SetName(pName);
+	VerifyD3DResult(m_D3DRootSignature->SetName(pName));
 #endif
 }

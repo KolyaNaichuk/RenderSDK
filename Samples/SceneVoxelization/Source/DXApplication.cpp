@@ -1,17 +1,17 @@
 #include "DXApplication.h"
-#include "D3DWrapper/D3DFactory.h"
-#include "D3DWrapper/D3DDevice.h"
-#include "D3DWrapper/D3DSwapChain.h"
-#include "D3DWrapper/D3DCommandQueue.h"
-#include "D3DWrapper/D3DCommandAllocator.h"
-#include "D3DWrapper/D3DCommandList.h"
-#include "D3DWrapper/D3DDescriptorHeap.h"
-#include "D3DWrapper/D3DResource.h"
-#include "D3DWrapper/D3DFence.h"
-#include "D3DWrapper/D3DRenderEnv.h"
-#include "D3DWrapper/D3DUtils.h"
-#include "D3DWrapper/D3DResourceList.h"
-#include "D3DWrapper/D3DCommandSignature.h"
+#include "D3DWrapper/GraphicsFactory.h"
+#include "D3DWrapper/GraphicsDevice.h"
+#include "D3DWrapper/SwapChain.h"
+#include "D3DWrapper/CommandQueue.h"
+#include "D3DWrapper/CommandAllocator.h"
+#include "D3DWrapper/CommandList.h"
+#include "D3DWrapper/DescriptorHeap.h"
+#include "D3DWrapper/GraphicsResource.h"
+#include "D3DWrapper/Fence.h"
+#include "D3DWrapper/RenderEnv.h"
+#include "D3DWrapper/GraphicsUtils.h"
+#include "D3DWrapper/BindingResourceList.h"
+#include "D3DWrapper/CommandSignature.h"
 #include "RenderPasses/RenderGBufferPass.h"
 #include "RenderPasses/TiledLightCullingPass.h"
 #include "RenderPasses/TiledShadingPass.h"
@@ -155,8 +155,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCommandQueue(nullptr)
 	, m_pCommandList(nullptr)
 	, m_pCommandListPool(nullptr)
-	, m_pDefaultHeapProps(new D3DHeapProperties(D3D12_HEAP_TYPE_DEFAULT))
-	, m_pUploadHeapProps(new D3DHeapProperties(D3D12_HEAP_TYPE_UPLOAD))
+	, m_pDefaultHeapProps(new HeapProperties(D3D12_HEAP_TYPE_DEFAULT))
+	, m_pUploadHeapProps(new HeapProperties(D3D12_HEAP_TYPE_UPLOAD))
 	, m_pShaderInvisibleRTVHeap(nullptr)
 	, m_pShaderInvisibleDSVHeap(nullptr)
 	, m_pShaderInvisibleSRVHeap(nullptr)
@@ -192,35 +192,35 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pNumShadowCastingSpotLightsBuffer(nullptr)
 	, m_pDrawSpotLightShadowCasterCommandBuffer(nullptr)
 	, m_pNumDrawSpotLightShadowCastersBuffer(nullptr)
-	, m_pRenderEnv(new D3DRenderEnv())
+	, m_pRenderEnv(new RenderEnv())
 	, m_pFence(nullptr)
 	, m_BackBufferIndex(0)
 	, m_pRenderGBufferPass(nullptr)
-	, m_pRenderGBufferResources(new D3DResourceList())
+	, m_pRenderGBufferResources(new BindingResourceList())
 	, m_pTiledLightCullingPass(nullptr)
-	, m_pTiledLightCullingResources(new D3DResourceList())
+	, m_pTiledLightCullingResources(new BindingResourceList())
 	, m_pTiledShadingPass(nullptr)
-	, m_pTiledShadingResources(new D3DResourceList())
+	, m_pTiledShadingResources(new BindingResourceList())
 	, m_pClearVoxelGridPass(nullptr)
-	, m_pClearVoxelGridResources(new D3DResourceList())
+	, m_pClearVoxelGridResources(new BindingResourceList())
 	, m_pCreateVoxelGridPass(nullptr)
-	, m_pCreateVoxelGridResources(new D3DResourceList())
+	, m_pCreateVoxelGridResources(new BindingResourceList())
 	, m_pInjectVPLsIntoVoxelGridPass(nullptr)
 	, m_pVisualizeVoxelGridPass(nullptr)
 	, m_pVisualizeMeshPass(nullptr)
 	, m_pDetectVisibleMeshesPass(nullptr)
-	, m_pDetectVisibleMeshesResources(new D3DResourceList())
+	, m_pDetectVisibleMeshesResources(new BindingResourceList())
 	, m_pDetectVisiblePointLightsPass(nullptr)
-	, m_pDetectVisiblePointLightsResources(new D3DResourceList())
+	, m_pDetectVisiblePointLightsResources(new BindingResourceList())
 	, m_pDetectVisibleSpotLightsPass(nullptr)
-	, m_pDetectVisibleSpotLightsResources(new D3DResourceList())
+	, m_pDetectVisibleSpotLightsResources(new BindingResourceList())
 	, m_pRenderGBufferCommandsPass(nullptr)
-	, m_pRenderGBufferCommandsResources(new D3DResourceList())
+	, m_pRenderGBufferCommandsResources(new BindingResourceList())
 	, m_pRenderShadowMapCommandsPass(nullptr)
-	, m_pRenderShadowMapCommandsResources(new D3DResourceList())
+	, m_pRenderShadowMapCommandsResources(new BindingResourceList())
 	, m_pRenderShadowMapCommandsArgumentBuffer(nullptr)
 	, m_pRenderSpotLightTiledShadowMapPass(nullptr)
-	, m_pRenderSpotLightTiledShadowMapResources(new D3DResourceList())
+	, m_pRenderSpotLightTiledShadowMapResources(new BindingResourceList())
 	, m_pCopyTexturePass(nullptr)
 	, m_pMeshBatch(nullptr)
 	, m_pPointLightBuffer(nullptr)
@@ -235,9 +235,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	{
 		m_FenceValues[index] = 0;
 		m_CommandAllocators[index] = nullptr;
-		m_VisualizeMeshResources[index] = new D3DResourceList();
-		m_VisualizeVoxelGridResources[index] = new D3DResourceList();
-		m_CopyTextureResources[index] = new D3DResourceList();
+		m_VisualizeMeshResources[index] = new BindingResourceList();
+		m_VisualizeVoxelGridResources[index] = new BindingResourceList();
+		m_CopyTextureResources[index] = new BindingResourceList();
 	}
 }
 
@@ -334,34 +334,34 @@ DXApplication::~DXApplication()
 
 void DXApplication::OnInit()
 {
-	D3DFactory factory;
-	m_pDevice = new D3DDevice(&factory, D3D_FEATURE_LEVEL_12_0, true);
+	GraphicsFactory factory;
+	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_12_0, true);
 
 	D3D12_FEATURE_DATA_D3D12_OPTIONS supportedOptions;
 	m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &supportedOptions, sizeof(supportedOptions));
 	//assert(supportedOptions.ConservativeRasterizationTier != D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED);
 	assert(supportedOptions.ROVsSupported == TRUE);
 
-	D3DCommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_pCommandQueue = new D3DCommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
+	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
 
-	D3DDescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 9, false);
-	m_pShaderInvisibleRTVHeap = new D3DDescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
+	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 9, false);
+	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	D3DDescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 70, true);
-	m_pShaderVisibleSRVHeap = new D3DDescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
+	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 70, true);
+	m_pShaderVisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
-	D3DDescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 60, false);
-	m_pShaderInvisibleSRVHeap = new D3DDescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
+	DescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 60, false);
+	m_pShaderInvisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
-	D3DDescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2, false);
-	m_pShaderInvisibleDSVHeap = new D3DDescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pShaderInvisibleDSVHeap");
+	DescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2, false);
+	m_pShaderInvisibleDSVHeap = new DescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pShaderInvisibleDSVHeap");
 
 	for (UINT index = 0; index < kBackBufferCount; ++index)
-		m_CommandAllocators[index] = new D3DCommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
+		m_CommandAllocators[index] = new CommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
 
-	m_pCommandListPool = new D3DCommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_pCommandList = new D3DCommandList(m_pDevice, m_CommandAllocators[m_BackBufferIndex], nullptr, L"m_pCommandList");
+	m_pCommandListPool = new CommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pCommandList = new CommandList(m_pDevice, m_CommandAllocators[m_BackBufferIndex], nullptr, L"m_pCommandList");
 
 	m_pRenderEnv->m_pDevice = m_pDevice;
 	m_pRenderEnv->m_pCommandListPool = m_pCommandListPool;
@@ -376,7 +376,7 @@ void DXApplication::OnInit()
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
 	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
 
-	m_pViewport = new D3DViewport(0.0f, 0.0f, (FLOAT)bufferWidth, (FLOAT)bufferHeight);
+	m_pViewport = new Viewport(0.0f, 0.0f, (FLOAT)bufferWidth, (FLOAT)bufferHeight);
 
 	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(bufferWidth) / FLOAT(bufferHeight));
 	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
@@ -386,54 +386,54 @@ void DXApplication::OnInit()
 	transform.SetPosition(Vector3f(278.0f, 274.0f, 700.0f));
 	transform.SetRotation(CreateRotationYQuaternion(Radian(PI)));
 
-	D3DSwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
-	m_pSwapChain = new D3DSwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
+	SwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
+	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 	
-	D3DDepthStencilValue optimizedClearDepth(1.0f);
+	DepthStencilValue optimizedClearDepth(1.0f);
 
-	D3DDepthTexture2DDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, bufferWidth, bufferHeight, true, true);
-	m_pDepthTexture = new D3DDepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &depthTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pDepthTexture");
+	DepthTexture2DDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, bufferWidth, bufferHeight, true, true);
+	m_pDepthTexture = new DepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &depthTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pDepthTexture");
 	
-	D3DDepthTexture2DDesc tiledShadowMapDesc(DXGI_FORMAT_R32_TYPELESS, kTiledShadowMapSize, kTiledShadowMapSize, true, true);
-	m_pSpotLightTiledShadowMap = new D3DDepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &tiledShadowMapDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pSpotLightTiledShadowMap");
+	DepthTexture2DDesc tiledShadowMapDesc(DXGI_FORMAT_R32_TYPELESS, kTiledShadowMapSize, kTiledShadowMapSize, true, true);
+	m_pSpotLightTiledShadowMap = new DepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &tiledShadowMapDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pSpotLightTiledShadowMap");
 
 	const FLOAT optimizedClearColor[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-	D3DColorTexture2DDesc diffuseTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, true, true, false);
-	m_pDiffuseTexture = new D3DColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &diffuseTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pDiffuseTexture");
+	ColorTexture2DDesc diffuseTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, true, true, false);
+	m_pDiffuseTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &diffuseTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pDiffuseTexture");
 
-	D3DColorTexture2DDesc normalTexDesc(DXGI_FORMAT_R8G8B8A8_SNORM, bufferWidth, bufferHeight, true, true, false);
-	m_pNormalTexture = new D3DColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &normalTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pNormalTexture");
+	ColorTexture2DDesc normalTexDesc(DXGI_FORMAT_R8G8B8A8_SNORM, bufferWidth, bufferHeight, true, true, false);
+	m_pNormalTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &normalTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pNormalTexture");
 
-	D3DColorTexture2DDesc specularTexDesc(DXGI_FORMAT_R8G8B8A8_UNORM, bufferWidth, bufferHeight, true, true, false);
-	m_pSpecularTexture = new D3DColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &specularTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pSpecularTexture");
+	ColorTexture2DDesc specularTexDesc(DXGI_FORMAT_R8G8B8A8_UNORM, bufferWidth, bufferHeight, true, true, false);
+	m_pSpecularTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &specularTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pSpecularTexture");
 
-	D3DColorTexture2DDesc accumLightTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, false, true, true);
-	m_pAccumLightTexture = new D3DColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &accumLightTexDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pAccumLightTexture");
+	ColorTexture2DDesc accumLightTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, false, true, true);
+	m_pAccumLightTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &accumLightTexDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pAccumLightTexture");
 
-	D3DConstantBufferDesc objectTransformBufferDesc(sizeof(ObjectTransform));
-	m_pObjectTransformBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &objectTransformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pObjectTransformBuffer");
+	ConstantBufferDesc objectTransformBufferDesc(sizeof(ObjectTransform));
+	m_pObjectTransformBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &objectTransformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pObjectTransformBuffer");
 
-	D3DConstantBufferDesc cameraTransformBufferDesc(sizeof(CameraTransform));
-	m_pCameraTransformBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &cameraTransformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCameraTransformBuffer");
+	ConstantBufferDesc cameraTransformBufferDesc(sizeof(CameraTransform));
+	m_pCameraTransformBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &cameraTransformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCameraTransformBuffer");
 
-	D3DConstantBufferDesc gridConfigBufferDesc(sizeof(GridConfig));
-	m_pGridConfigBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &gridConfigBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pGridConfigBuffer");
+	ConstantBufferDesc gridConfigBufferDesc(sizeof(GridConfig));
+	m_pGridConfigBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &gridConfigBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pGridConfigBuffer");
 
-	D3DConstantBufferDesc viewFrustumCullingDataBufferDesc(sizeof(ViewFrustumCullingData));
-	m_pViewFrustumCullingDataBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &viewFrustumCullingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pViewFrustumCullingDataBuffer");
+	ConstantBufferDesc viewFrustumCullingDataBufferDesc(sizeof(ViewFrustumCullingData));
+	m_pViewFrustumCullingDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &viewFrustumCullingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pViewFrustumCullingDataBuffer");
 
-	D3DConstantBufferDesc tiledLightCullingDataBufferDesc(sizeof(TiledLightCullingData));
-	m_pTiledLightCullingDataBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &tiledLightCullingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pTiledLightCullingDataBuffer");
+	ConstantBufferDesc tiledLightCullingDataBufferDesc(sizeof(TiledLightCullingData));
+	m_pTiledLightCullingDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &tiledLightCullingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pTiledLightCullingDataBuffer");
 
-	D3DConstantBufferDesc tiledShadingDataBufferDesc(sizeof(TiledShadingData));
-	m_pTiledShadingDataBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &tiledShadingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pTiledShadingDataBuffer");
+	ConstantBufferDesc tiledShadingDataBufferDesc(sizeof(TiledShadingData));
+	m_pTiledShadingDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &tiledShadingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pTiledShadingDataBuffer");
 
 	const u32 numGridElements = kNumGridCellsX * kNumGridCellsY * kNumGridCellsZ;
-	D3DStructuredBufferDesc gridBufferDesc(numGridElements, sizeof(Voxel), true, true);
-	m_pGridBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &gridBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pGridBuffer");
+	StructuredBufferDesc gridBufferDesc(numGridElements, sizeof(Voxel), true, true);
+	m_pGridBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &gridBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pGridBuffer");
 
-	m_pFence = new D3DFence(m_pDevice, m_FenceValues[m_BackBufferIndex]);
+	m_pFence = new Fence(m_pDevice, m_FenceValues[m_BackBufferIndex], L"m_pFence");
 	++m_FenceValues[m_BackBufferIndex];
 
 	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test1);
@@ -441,8 +441,8 @@ void DXApplication::OnInit()
 	assert(pScene->GetNumMeshBatches() == 1);
 	MeshBatchData* pMeshBatchData = *pScene->GetMeshBatches();
 	
-	D3DStructuredBufferDesc drawCommandBufferDesc(pMeshBatchData->GetNumMeshes(), sizeof(DrawMeshCommand), true, true);
-	m_pDrawMeshCommandBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawMeshCommandBuffer");
+	StructuredBufferDesc drawCommandBufferDesc(pMeshBatchData->GetNumMeshes(), sizeof(DrawMeshCommand), true, true);
+	m_pDrawMeshCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawMeshCommandBuffer");
 	
 	m_pMeshBatch = new MeshBatch(m_pRenderEnv, pMeshBatchData);
 	m_pMeshBatch->RecordDataForUpload(m_pCommandList);
@@ -452,20 +452,20 @@ void DXApplication::OnInit()
 		m_pPointLightBuffer = new LightBuffer(m_pRenderEnv, pScene->GetNumPointLights(), pScene->GetPointLights());
 		m_pPointLightBuffer->RecordDataForUpload(m_pCommandList);
 
-		D3DFormattedBufferDesc numVisibleLightsBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
-		m_pNumVisiblePointLightsBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numVisibleLightsBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumVisiblePointLightsBuffer");
+		FormattedBufferDesc numVisibleLightsBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
+		m_pNumVisiblePointLightsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numVisibleLightsBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumVisiblePointLightsBuffer");
 
-		D3DFormattedBufferDesc visibleLightIndexBufferDesc(pScene->GetNumPointLights(), DXGI_FORMAT_R32_UINT, true, true);
-		m_pVisiblePointLightIndexBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &visibleLightIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pVisiblePointLightIndexBuffer");
+		FormattedBufferDesc visibleLightIndexBufferDesc(pScene->GetNumPointLights(), DXGI_FORMAT_R32_UINT, true, true);
+		m_pVisiblePointLightIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &visibleLightIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pVisiblePointLightIndexBuffer");
 
-		D3DFormattedBufferDesc numLightsPerTileBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
-		m_pNumPointLightsPerTileBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numLightsPerTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumPointLightsPerTileBuffer");
+		FormattedBufferDesc numLightsPerTileBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
+		m_pNumPointLightsPerTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numLightsPerTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumPointLightsPerTileBuffer");
 
-		D3DFormattedBufferDesc lightIndexPerTileBufferDesc(kNumTilesX * kNumTilesY * pScene->GetNumPointLights(), DXGI_FORMAT_R32_UINT, true, true);
-		m_pPointLightIndexPerTileBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &lightIndexPerTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pPointLightIndexPerTileBuffer");
+		FormattedBufferDesc lightIndexPerTileBufferDesc(kNumTilesX * kNumTilesY * pScene->GetNumPointLights(), DXGI_FORMAT_R32_UINT, true, true);
+		m_pPointLightIndexPerTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &lightIndexPerTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pPointLightIndexPerTileBuffer");
 
-		D3DStructuredBufferDesc lightRangePerTileBufferDesc(kNumTilesX * kNumTilesY, sizeof(Range), true, true);
-		m_pPointLightRangePerTileBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &lightRangePerTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pPointLightRangePerTileBuffer");
+		StructuredBufferDesc lightRangePerTileBufferDesc(kNumTilesX * kNumTilesY, sizeof(Range), true, true);
+		m_pPointLightRangePerTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &lightRangePerTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pPointLightRangePerTileBuffer");
 	}
 
 	if (pScene->GetNumSpotLights() > 0)
@@ -473,27 +473,27 @@ void DXApplication::OnInit()
 		m_pSpotLightBuffer = new LightBuffer(m_pRenderEnv, pScene->GetNumSpotLights(), pScene->GetSpotLights());
 		m_pSpotLightBuffer->RecordDataForUpload(m_pCommandList);
 
-		D3DFormattedBufferDesc numVisibleLightsBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
-		m_pNumVisibleSpotLightsBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numVisibleLightsBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumVisibleSpotLightsBuffer");
+		FormattedBufferDesc numVisibleLightsBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
+		m_pNumVisibleSpotLightsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numVisibleLightsBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumVisibleSpotLightsBuffer");
 
-		D3DFormattedBufferDesc visibleLightIndexBufferDesc(pScene->GetNumSpotLights(), DXGI_FORMAT_R32_UINT, true, true);
-		m_pVisibleSpotLightIndexBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &visibleLightIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pVisibleSpotLightIndexBuffer");
+		FormattedBufferDesc visibleLightIndexBufferDesc(pScene->GetNumSpotLights(), DXGI_FORMAT_R32_UINT, true, true);
+		m_pVisibleSpotLightIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &visibleLightIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pVisibleSpotLightIndexBuffer");
 
-		D3DFormattedBufferDesc numLightsPerTileBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
-		m_pNumSpotLightsPerTileBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numLightsPerTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumSpotLightsPerTileBuffer");
+		FormattedBufferDesc numLightsPerTileBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
+		m_pNumSpotLightsPerTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numLightsPerTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumSpotLightsPerTileBuffer");
 
-		D3DFormattedBufferDesc lightIndexPerTileBufferDesc(kNumTilesX * kNumTilesY * pScene->GetNumSpotLights(), DXGI_FORMAT_R32_UINT, true, true);
-		m_pSpotLightIndexPerTileBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &lightIndexPerTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pSpotLightIndexPerTileBuffer");
+		FormattedBufferDesc lightIndexPerTileBufferDesc(kNumTilesX * kNumTilesY * pScene->GetNumSpotLights(), DXGI_FORMAT_R32_UINT, true, true);
+		m_pSpotLightIndexPerTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &lightIndexPerTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pSpotLightIndexPerTileBuffer");
 
-		D3DStructuredBufferDesc lightRangePerTileBufferDesc(kNumTilesX * kNumTilesY, sizeof(Range), true, true);
-		m_pSpotLightRangePerTileBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &lightRangePerTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pSpotLightRangePerTileBuffer");
+		StructuredBufferDesc lightRangePerTileBufferDesc(kNumTilesX * kNumTilesY, sizeof(Range), true, true);
+		m_pSpotLightRangePerTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &lightRangePerTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pSpotLightRangePerTileBuffer");
 	}
 	
-	D3DStructuredBufferDesc shadowMapCommandsArgumentBufferDesc(1, sizeof(Vector3u), false, false);
-	m_pRenderShadowMapCommandsArgumentBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pRenderShadowMapCommandsArgumentBuffer");
+	StructuredBufferDesc shadowMapCommandsArgumentBufferDesc(1, sizeof(Vector3u), false, false);
+	m_pRenderShadowMapCommandsArgumentBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pRenderShadowMapCommandsArgumentBuffer");
 
 	Vector3u shadowMapCommandsArgumentBufferInitValues(0, 1, 1);
-	D3DBuffer uploadRenderShadowMapCommandsArgumentBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &shadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pRenderShadowMapCommandsArgumentBuffer");
+	Buffer uploadRenderShadowMapCommandsArgumentBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &shadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pRenderShadowMapCommandsArgumentBuffer");
 	uploadRenderShadowMapCommandsArgumentBuffer.Write(&shadowMapCommandsArgumentBufferInitValues, sizeof(Vector3u));
 
 	m_pCommandList->CopyResource(m_pRenderShadowMapCommandsArgumentBuffer, &uploadRenderShadowMapCommandsArgumentBuffer);
@@ -510,15 +510,15 @@ void DXApplication::OnInit()
 	if (m_pSpotLightBuffer != nullptr)
 		m_pSpotLightBuffer->RemoveDataForUpload();
 
-	D3DFormattedBufferDesc numVisibleMeshesBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
-	m_pNumVisibleMeshesBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numVisibleMeshesBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumVisibleMeshesBuffer");
+	FormattedBufferDesc numVisibleMeshesBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
+	m_pNumVisibleMeshesBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numVisibleMeshesBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumVisibleMeshesBuffer");
 
-	D3DFormattedBufferDesc visibleMeshIndexBufferDesc(m_pMeshBatch->GetNumMeshes(), DXGI_FORMAT_R32_UINT, true, true);
-	m_pVisibleMeshIndexBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &visibleMeshIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pVisibleMeshIndexBuffer");
+	FormattedBufferDesc visibleMeshIndexBufferDesc(m_pMeshBatch->GetNumMeshes(), DXGI_FORMAT_R32_UINT, true, true);
+	m_pVisibleMeshIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &visibleMeshIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pVisibleMeshIndexBuffer");
 	
-	D3DBuffer* pMeshBoundsBuffer = m_pMeshBatch->GetMeshBoundsBuffer();
-	D3DBuffer* pMeshDescBuffer = m_pMeshBatch->GetMeshDescBuffer();
-	D3DBuffer* pMaterialBuffer = m_pMeshBatch->GetMaterialBuffer();
+	Buffer* pMeshBoundsBuffer = m_pMeshBatch->GetMeshBoundsBuffer();
+	Buffer* pMeshDescBuffer = m_pMeshBatch->GetMeshDescBuffer();
+	Buffer* pMaterialBuffer = m_pMeshBatch->GetMaterialBuffer();
 
 	ViewFrustumCullingPass::InitParams detectVisibleMeshesParams;
 	detectVisibleMeshesParams.m_pRenderEnv = m_pRenderEnv;
@@ -545,7 +545,7 @@ void DXApplication::OnInit()
 		detectVisibleLightsParams.m_NumObjects = m_pPointLightBuffer->GetNumLights();
 
 		m_pDetectVisiblePointLightsPass = new ViewFrustumCullingPass(&detectVisibleLightsParams);
-		D3DBuffer* pLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
+		Buffer* pLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
 		
 		m_pDetectVisiblePointLightsResources->m_RequiredResourceStates.emplace_back(m_pNumVisiblePointLightsBuffer, m_pNumVisiblePointLightsBuffer->GetWriteState());
 		m_pDetectVisiblePointLightsResources->m_RequiredResourceStates.emplace_back(m_pVisiblePointLightIndexBuffer, m_pVisiblePointLightIndexBuffer->GetWriteState());
@@ -566,7 +566,7 @@ void DXApplication::OnInit()
 		detectVisibleLightsParams.m_NumObjects = m_pSpotLightBuffer->GetNumLights();
 
 		m_pDetectVisibleSpotLightsPass = new ViewFrustumCullingPass(&detectVisibleLightsParams);
-		D3DBuffer* pLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
+		Buffer* pLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
 
 		m_pDetectVisibleSpotLightsResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleSpotLightsBuffer, m_pNumVisibleSpotLightsBuffer->GetWriteState());
 		m_pDetectVisibleSpotLightsResources->m_RequiredResourceStates.emplace_back(m_pVisibleSpotLightIndexBuffer, m_pVisibleSpotLightIndexBuffer->GetWriteState());
@@ -597,7 +597,7 @@ void DXApplication::OnInit()
 
 	if (m_pPointLightBuffer != nullptr)
 	{
-		D3DBuffer* pLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
+		Buffer* pLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
 
 		m_pTiledLightCullingResources->m_RequiredResourceStates.emplace_back(m_pNumVisiblePointLightsBuffer, m_pNumVisiblePointLightsBuffer->GetReadState());
 		m_pTiledLightCullingResources->m_RequiredResourceStates.emplace_back(m_pVisiblePointLightIndexBuffer, m_pVisiblePointLightIndexBuffer->GetReadState());
@@ -616,7 +616,7 @@ void DXApplication::OnInit()
 
 	if (m_pSpotLightBuffer != nullptr)
 	{
-		D3DBuffer* pLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
+		Buffer* pLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
 
 		m_pTiledLightCullingResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleSpotLightsBuffer, m_pNumVisibleSpotLightsBuffer->GetReadState());
 		m_pTiledLightCullingResources->m_RequiredResourceStates.emplace_back(m_pVisibleSpotLightIndexBuffer, m_pVisibleSpotLightIndexBuffer->GetReadState());
@@ -688,32 +688,32 @@ void DXApplication::OnInit()
 
 	if (pScene->GetNumPointLights() > 0)
 	{
-		D3DFormattedBufferDesc shadowCastingLightIndexBufferDesc(m_pMeshBatch->GetNumMeshes() * pScene->GetNumPointLights(), DXGI_FORMAT_R32_UINT, true, true);
-		m_pShadowCastingPointLightIndexBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowCastingLightIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pShadowCastingPointLightIndexBuffer");
+		FormattedBufferDesc shadowCastingLightIndexBufferDesc(m_pMeshBatch->GetNumMeshes() * pScene->GetNumPointLights(), DXGI_FORMAT_R32_UINT, true, true);
+		m_pShadowCastingPointLightIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowCastingLightIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pShadowCastingPointLightIndexBuffer");
 		
-		D3DFormattedBufferDesc numShadowCastingLightsBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
-		m_pNumShadowCastingPointLightsBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numShadowCastingLightsBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumShadowCastingPointLightsBuffer");
+		FormattedBufferDesc numShadowCastingLightsBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
+		m_pNumShadowCastingPointLightsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numShadowCastingLightsBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumShadowCastingPointLightsBuffer");
 
-		D3DStructuredBufferDesc drawCommandBufferDesc(m_pMeshBatch->GetNumMeshes(), sizeof(DrawMeshCommand), false, true);
-		m_pDrawPointLightShadowCasterCommandBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawPointLightShadowCasterCommandBuffer");
+		StructuredBufferDesc drawCommandBufferDesc(m_pMeshBatch->GetNumMeshes(), sizeof(DrawMeshCommand), false, true);
+		m_pDrawPointLightShadowCasterCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawPointLightShadowCasterCommandBuffer");
 		
-		D3DFormattedBufferDesc numShadowCastersBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
-		m_pNumDrawPointLightShadowCastersBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numShadowCastersBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumDrawPointLightShadowCastersBuffer");
+		FormattedBufferDesc numShadowCastersBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
+		m_pNumDrawPointLightShadowCastersBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numShadowCastersBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumDrawPointLightShadowCastersBuffer");
 	}
 
 	if (pScene->GetNumSpotLights() > 0)
 	{
-		D3DFormattedBufferDesc shadowCastingLightIndexBufferDesc(m_pMeshBatch->GetNumMeshes() * pScene->GetNumSpotLights(), DXGI_FORMAT_R32_UINT, true, true);
-		m_pShadowCastingSpotLightIndexBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowCastingLightIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pShadowCastingSpotLightIndexBuffer");
+		FormattedBufferDesc shadowCastingLightIndexBufferDesc(m_pMeshBatch->GetNumMeshes() * pScene->GetNumSpotLights(), DXGI_FORMAT_R32_UINT, true, true);
+		m_pShadowCastingSpotLightIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowCastingLightIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pShadowCastingSpotLightIndexBuffer");
 
-		D3DFormattedBufferDesc numShadowCastingLightsBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
-		m_pNumShadowCastingSpotLightsBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numShadowCastingLightsBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumShadowCastingSpotLightsBuffer");
+		FormattedBufferDesc numShadowCastingLightsBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
+		m_pNumShadowCastingSpotLightsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numShadowCastingLightsBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumShadowCastingSpotLightsBuffer");
 
-		D3DStructuredBufferDesc drawCommandBufferDesc(m_pMeshBatch->GetNumMeshes(), sizeof(DrawMeshCommand), false, true);
-		m_pDrawSpotLightShadowCasterCommandBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawSpotLightShadowCasterCommandBuffer");
+		StructuredBufferDesc drawCommandBufferDesc(m_pMeshBatch->GetNumMeshes(), sizeof(DrawMeshCommand), false, true);
+		m_pDrawSpotLightShadowCasterCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawSpotLightShadowCasterCommandBuffer");
 
-		D3DFormattedBufferDesc numShadowCastersBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
-		m_pNumDrawSpotLightShadowCastersBuffer = new D3DBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numShadowCastersBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumDrawSpotLightShadowCastersBuffer");
+		FormattedBufferDesc numShadowCastersBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
+		m_pNumDrawSpotLightShadowCastersBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numShadowCastersBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumDrawSpotLightShadowCastersBuffer");
 	}
 
 	m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer->GetReadState());
@@ -728,7 +728,7 @@ void DXApplication::OnInit()
 
 	if (m_pPointLightBuffer != nullptr)
 	{
-		D3DBuffer* pPointLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
+		Buffer* pPointLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
 
 		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pPointLightBoundsBuffer, pPointLightBoundsBuffer->GetReadState());
 		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumVisiblePointLightsBuffer, m_pNumVisiblePointLightsBuffer->GetReadState());
@@ -749,7 +749,7 @@ void DXApplication::OnInit()
 
 	if (m_pSpotLightBuffer != nullptr)
 	{
-		D3DBuffer* pSpotLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
+		Buffer* pSpotLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
 
 		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pSpotLightBoundsBuffer, pSpotLightBoundsBuffer->GetReadState());
 		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleSpotLightsBuffer, m_pNumVisibleSpotLightsBuffer->GetReadState());
@@ -796,8 +796,8 @@ void DXApplication::OnInit()
 
 	if (m_pPointLightBuffer != nullptr)
 	{
-		D3DBuffer* pLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
-		D3DBuffer* pLightPropsBuffer = m_pPointLightBuffer->GetLightPropsBuffer();
+		Buffer* pLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
+		Buffer* pLightPropsBuffer = m_pPointLightBuffer->GetLightPropsBuffer();
 
 		m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(pLightBoundsBuffer, pLightBoundsBuffer->GetReadState());
 		m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(pLightPropsBuffer, pLightPropsBuffer->GetReadState());
@@ -812,8 +812,8 @@ void DXApplication::OnInit()
 
 	if (m_pSpotLightBuffer != nullptr)
 	{
-		D3DBuffer* pLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
-		D3DBuffer* pLightPropsBuffer = m_pSpotLightBuffer->GetLightPropsBuffer();
+		Buffer* pLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
+		Buffer* pLightPropsBuffer = m_pSpotLightBuffer->GetLightPropsBuffer();
 
 		m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(pLightBoundsBuffer, pLightBoundsBuffer->GetReadState());
 		m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(pLightPropsBuffer, pLightPropsBuffer->GetReadState());
@@ -882,7 +882,7 @@ void DXApplication::OnInit()
 
 	for (u8 index = 0; index < kBackBufferCount; ++index)
 	{
-		D3DColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
+		ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
 
 		m_VisualizeVoxelGridResources[index]->m_RequiredResourceStates.emplace_back(pRenderTarget, pRenderTarget->GetWriteState());
 		m_VisualizeVoxelGridResources[index]->m_RequiredResourceStates.emplace_back(m_pDepthTexture, m_pDepthTexture->GetReadState());
@@ -907,7 +907,7 @@ void DXApplication::OnInit()
 
 	for (u8 index = 0; index < kBackBufferCount; ++index)
 	{
-		D3DColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
+		ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
 
 		m_VisualizeMeshResources[index]->m_RequiredResourceStates.emplace_back(pRenderTarget, pRenderTarget->GetWriteState());
 		m_VisualizeMeshResources[index]->m_RequiredResourceStates.emplace_back(m_pDepthTexture, m_pDepthTexture->GetWriteState());
@@ -919,7 +919,7 @@ void DXApplication::OnInit()
 		m_pDevice->CopyDescriptor(m_VisualizeMeshResources[index]->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 
-	D3DColorTexture* pCopyTexture = m_pAccumLightTexture;
+	ColorTexture* pCopyTexture = m_pAccumLightTexture;
 
 	CopyTexturePass::InitParams copyTextureParams;
 	copyTextureParams.m_pRenderEnv = m_pRenderEnv;
@@ -929,7 +929,7 @@ void DXApplication::OnInit()
 
 	for (u8 index = 0; index < kBackBufferCount; ++index)
 	{
-		D3DColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
+		ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
 
 		m_CopyTextureResources[index]->m_RequiredResourceStates.emplace_back(pRenderTarget, pRenderTarget->GetWriteState());
 		m_CopyTextureResources[index]->m_RequiredResourceStates.emplace_back(pCopyTexture, pCopyTexture->GetReadState());
@@ -1037,10 +1037,10 @@ void DXApplication::OnUpdate()
 
 void DXApplication::OnRender()
 {
-	D3DCommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
+	CommandAllocator* pCommandAllocator = m_CommandAllocators[m_BackBufferIndex];
 	pCommandAllocator->Reset();
 
-	D3DColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderTarget->GetRTVHandle();
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDepthTexture->GetDSVHandle();
@@ -1048,7 +1048,7 @@ void DXApplication::OnRender()
 	const u8 clearFlags = m_pCamera->GetClearFlags();
 	if (clearFlags != 0)
 	{
-		std::vector<D3DResourceTransitionBarrier> resourceTransitions;
+		std::vector<ResourceTransitionBarrier> resourceTransitions;
 		if (pRenderTarget->GetState() != pRenderTarget->GetWriteState())
 		{
 			resourceTransitions.emplace_back(pRenderTarget, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
@@ -1148,7 +1148,7 @@ void DXApplication::OnRender()
 	WaitForGPU();
 
 	{
-		std::vector<D3DResourceTransitionBarrier> resourceTransitions;
+		std::vector<ResourceTransitionBarrier> resourceTransitions;
 		if (m_pRenderShadowMapCommandsArgumentBuffer->GetState() != D3D12_RESOURCE_STATE_COPY_DEST)
 		{
 			resourceTransitions.emplace_back(m_pRenderShadowMapCommandsArgumentBuffer, m_pRenderShadowMapCommandsArgumentBuffer->GetState(), D3D12_RESOURCE_STATE_COPY_DEST);
@@ -1258,7 +1258,7 @@ void DXApplication::OnRender()
 	{
 		m_pCommandList->Reset(pCommandAllocator, nullptr);
 
-		D3DResourceTransitionBarrier resourceTransition(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
+		ResourceTransitionBarrier resourceTransition(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
 		m_pCommandList->ResourceBarrier(1, &resourceTransition);
 		pRenderTarget->SetState(D3D12_RESOURCE_STATE_PRESENT);
 

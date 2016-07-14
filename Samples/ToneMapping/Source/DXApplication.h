@@ -2,17 +2,17 @@
 
 #include "Common/Application.h"
 
-class D3DDevice;
-class D3DSwapChain;
-class D3DCommandQueue;
-class D3DCommandList;
-class D3DCommandAllocator;
-class D3DDescriptorHeap;
-class D3DColorTexture;
-class D3DFence;
+class GraphicsDevice;
+class SwapChain;
+class CommandQueue;
+class CommandList;
+class CommandAllocator;
+class DescriptorHeap;
+class ColorTexture;
+class Fence;
 
-struct D3DRenderEnv;
-struct D3DHeapProperties;
+struct RenderEnv;
+struct HeapProperties;
 
 class CopyTexturePass;
 class CalcTextureLuminancePass;
@@ -44,19 +44,19 @@ private:
 private:
 	enum { kBackBufferCount = 3 };
 
-	D3DDevice* m_pDevice;
-	D3DSwapChain* m_pSwapChain;
-	D3DCommandQueue* m_pCommandQueue;
-	D3DDescriptorHeap* m_pShaderInvisibleRTVHeap;
-	D3DDescriptorHeap* m_pShaderInvisibleSRVHeap;
-	D3DDescriptorHeap* m_pShaderInvisibleSamplerHeap;
-	D3DCommandAllocator* m_CommandAllocators[kBackBufferCount];
-	D3DCommandList* m_pCommandList;
-	D3DFence* m_pFence;
+	GraphicsDevice* m_pDevice;
+	SwapChain* m_pSwapChain;
+	CommandQueue* m_pCommandQueue;
+	DescriptorHeap* m_pShaderInvisibleRTVHeap;
+	DescriptorHeap* m_pShaderInvisibleSRVHeap;
+	DescriptorHeap* m_pShaderInvisibleSamplerHeap;
+	CommandAllocator* m_CommandAllocators[kBackBufferCount];
+	CommandList* m_pCommandList;
+	Fence* m_pFence;
 	UINT64 m_FenceValues[kBackBufferCount];
 	UINT m_BackBufferIndex;
 
-	D3DColorTexture* m_pHDRTexture;
+	ColorTexture* m_pHDRTexture;
 	CopyTexturePass* m_pCopyTexturePass;
 	CalcTextureLuminancePass* m_pCalcTextureLuminancePass;
 	CalcTextureLuminancePass* m_pCalcTextureLogLuminancePass;

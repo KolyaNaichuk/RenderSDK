@@ -1,14 +1,14 @@
 #pragma once
 
-#include "Common/Common.h"
+#include "D3DWrapper/Common.h"
 
-class D3DRootSignature;
-class D3DPipelineState;
-class D3DCommandList;
-class D3DCommandAllocator;
-class D3DBuffer;
-struct D3DRenderEnv;
-struct D3DResourceList;
+class RootSignature;
+class PipelineState;
+class CommandList;
+class CommandAllocator;
+class Buffer;
+struct RenderEnv;
+struct BindingResourceList;
 
 enum ObjectBoundsType
 {
@@ -21,17 +21,17 @@ class ViewFrustumCullingPass
 public:
 	struct InitParams
 	{
-		D3DRenderEnv* m_pRenderEnv;
+		RenderEnv* m_pRenderEnv;
 		ObjectBoundsType m_ObjectBoundsType;
 		u32 m_NumObjects;
 	};
 	struct RenderParams
 	{
-		D3DRenderEnv* m_pRenderEnv;
-		D3DCommandList* m_pCommandList;
-		D3DCommandAllocator* m_pCommandAllocator;
-		D3DResourceList* m_pResources;
-		D3DBuffer* m_pNumVisibleObjectsBuffer;
+		RenderEnv* m_pRenderEnv;
+		CommandList* m_pCommandList;
+		CommandAllocator* m_pCommandAllocator;
+		BindingResourceList* m_pResources;
+		Buffer* m_pNumVisibleObjectsBuffer;
 	};
 	
 	ViewFrustumCullingPass(InitParams* pParams);
@@ -40,8 +40,8 @@ public:
 	void Record(RenderParams* pParams);
 
 private:
-	D3DRootSignature* m_pRootSignature;
-	D3DPipelineState* m_pPipelineState;
+	RootSignature* m_pRootSignature;
+	PipelineState* m_pPipelineState;
 
 	u16 m_NumThreadGroupsX;
 };
