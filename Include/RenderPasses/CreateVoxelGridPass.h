@@ -6,7 +6,6 @@ class GraphicsDevice;
 class RootSignature;
 class PipelineState;
 class CommandList;
-class CommandAllocator;
 class CommandSignature;
 class Buffer;
 class MeshBatch;
@@ -28,7 +27,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		CommandAllocator* m_pCommandAllocator;
 		BindingResourceList* m_pResources;
 		Viewport* m_pViewport;
 		MeshBatch* m_pMeshBatch;

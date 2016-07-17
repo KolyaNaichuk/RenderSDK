@@ -3,7 +3,6 @@
 #include "D3DWrapper/Common.h"
 
 class CommandList;
-class CommandAllocator;
 class PipelineState;
 class RootSignature;
 
@@ -24,7 +23,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		CommandAllocator* m_pCommandAllocator;
 		BindingResourceList* m_pResources;
 		Viewport* m_pViewport;
 	};

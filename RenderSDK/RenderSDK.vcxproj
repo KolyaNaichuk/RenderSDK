@@ -162,7 +162,6 @@
     <ClInclude Include="..\Include\Common\SceneLoader.h" />
     <ClInclude Include="..\Include\Common\SceneObject.h" />
     <ClInclude Include="..\Include\Common\Window.h" />
-    <ClInclude Include="..\Include\D3DWrapper\CommandAllocator.h" />
     <ClInclude Include="..\Include\D3DWrapper\CommandList.h" />
     <ClInclude Include="..\Include\D3DWrapper\CommandQueue.h" />
     <ClInclude Include="..\Include\D3DWrapper\CommandSignature.h" />
@@ -231,7 +230,6 @@
     <ClCompile Include="..\Source\Common\SceneLoader.cpp" />
     <ClCompile Include="..\Source\Common\SceneObject.cpp" />
     <ClCompile Include="..\Source\Common\Window.cpp" />
-    <ClCompile Include="..\Source\D3DWrapper\CommandAllocator.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\CommandList.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\CommandQueue.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\CommandSignature.cpp" />

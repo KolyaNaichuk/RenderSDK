@@ -66,7 +66,7 @@ void ClearVoxelGridPass::Record(RenderParams* pParams)
 	CommandList* pCommandList = pParams->m_pCommandList;
 	BindingResourceList* pResources = pParams->m_pResources;
 	
-	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
+	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 	
 	pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
@@ -74,5 +74,5 @@ void ClearVoxelGridPass::Record(RenderParams* pParams)
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 	
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, m_NumThreadGroupsZ);
-	pCommandList->Close();
+	pCommandList->End();
 }

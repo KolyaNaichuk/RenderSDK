@@ -1,6 +1,5 @@
 #include "D3DWrapper/CommandQueue.h"
 #include "D3DWrapper/CommandList.h"
-#include "D3DWrapper/CommandAllocator.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/GraphicsDevice.h"
@@ -22,12 +21,10 @@ CommandQueue::CommandQueue(GraphicsDevice* pDevice, const CommandQueueDesc* pDes
 #endif
 }
 
-void CommandQueue::ExecuteCommandLists(RenderEnv* pRenderEnv, UINT numCommandLists, CommandList** ppCommandLists, CommandAllocator* pBarrierCommandAllocator)
+void CommandQueue::ExecuteCommandLists(RenderEnv* pRenderEnv, UINT numCommandLists, CommandList** ppCommandLists, Fence* pCompletionFence, UINT64 completionFenceValue)
 {
-	CommandListPool* pCommandListPool = pRenderEnv->m_pCommandListPool;
-
-	std::vector<ID3D12CommandList*> commandLists;
-	commandLists.reserve(numCommandLists);
+	std::vector<ID3D12CommandList*> d3dCommandLists;
+	d3dCommandLists.reserve(numCommandLists);
 
 	std::vector<CommandList*> barrierCommandLists;
 	barrierCommandLists.reserve(numCommandLists);
@@ -35,20 +32,22 @@ void CommandQueue::ExecuteCommandLists(RenderEnv* pRenderEnv, UINT numCommandLis
 	for (UINT listIndex = 0; listIndex < numCommandLists; ++listIndex)
 	{
 		CommandList* pCommandList = ppCommandLists[listIndex];
+		pCommandList->SetCompletionFence(pCompletionFence, completionFenceValue);
+
 		RequiredResourceStateList* pRequiredResourceStates = pCommandList->GetRequiredResourceStates();
 		if (pRequiredResourceStates != nullptr)
 		{
 			std::vector<ResourceTransitionBarrier> resourceBarriers;
 			resourceBarriers.reserve(pRequiredResourceStates->size());
 
-			for (std::size_t resourceIndex = 0; resourceIndex < pRequiredResourceStates->size(); ++resourceIndex)
+			for (std::size_t stateIndex = 0; stateIndex < pRequiredResourceStates->size(); ++stateIndex)
 			{
-				RequiredResourceState& requiredResourceState = (*pRequiredResourceStates)[resourceIndex];
+				RequiredResourceState& requiredResourceState = (*pRequiredResourceStates)[stateIndex];
 				GraphicsResource* pResource = requiredResourceState.m_pResource;
 
 				D3D12_RESOURCE_STATES stateBefore = pResource->GetState();
 				D3D12_RESOURCE_STATES stateAfter = requiredResourceState.m_RequiredState;
-				
+
 				if (stateBefore != stateAfter)
 				{
 					resourceBarriers.emplace_back(pResource, stateBefore, stateAfter);
@@ -58,24 +57,24 @@ void CommandQueue::ExecuteCommandLists(RenderEnv* pRenderEnv, UINT numCommandLis
 
 			if (!resourceBarriers.empty())
 			{
-				CommandList* pBarrierCommandList = pCommandListPool->Create(pBarrierCommandAllocator, nullptr, L"pBarrierCommandList");
+				CommandList* pBarrierCommandList = pRenderEnv->m_pCommandListPool->Create(L"pBarrierCommandList");
+				pBarrierCommandList->Begin();
 				pBarrierCommandList->ResourceBarrier(resourceBarriers.size(), &resourceBarriers[0]);
-				pBarrierCommandList->Close();
-
+				pBarrierCommandList->End();
+				pBarrierCommandList->SetCompletionFence(pCompletionFence, completionFenceValue);
+				
 				barrierCommandLists.emplace_back(pBarrierCommandList);
-				commandLists.emplace_back(pBarrierCommandList->GetD3DObject());
+				d3dCommandLists.emplace_back(pBarrierCommandList->GetD3DObject());
 			}
 		}
-		commandLists.emplace_back(pCommandList->GetD3DObject());
+		d3dCommandLists.emplace_back(pCommandList->GetD3DObject());
 	}
 	
-	GetD3DObject()->ExecuteCommandLists(commandLists.size(), &commandLists[0]);
-
-	for (std::size_t listIndex = 0; listIndex < barrierCommandLists.size(); ++listIndex)
-		pCommandListPool->Release(barrierCommandLists[listIndex]);
+	m_D3DCommandQueue->ExecuteCommandLists(d3dCommandLists.size(), &d3dCommandLists[0]);
+	Signal(pCompletionFence, completionFenceValue);
 }
 
-void CommandQueue::Signal(Fence* pFence, UINT64 value)
+void CommandQueue::Signal(Fence* pFence, UINT64 fenceValue)
 {
-	VerifyD3DResult(GetD3DObject()->Signal(pFence->GetD3DObject(), value));
+	VerifyD3DResult(m_D3DCommandQueue->Signal(pFence->GetD3DObject(), fenceValue));
 }

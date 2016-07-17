@@ -5,7 +5,6 @@
 class RootSignature;
 class PipelineState;
 class CommandList;
-class CommandAllocator;
 class Buffer;
 
 struct RenderEnv;
@@ -28,7 +27,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		CommandAllocator* m_pCommandAllocator;
 		BindingResourceList* m_pResources;
 		Buffer* m_pNumPointLightsPerTileBuffer;
 		Buffer* m_pNumSpotLightsPerTileBuffer;

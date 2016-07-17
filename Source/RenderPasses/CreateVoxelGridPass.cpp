@@ -95,7 +95,7 @@ void CreateVoxelGridPass::Record(RenderParams* pParams)
 	BindingResourceList* pResources = pParams->m_pResources;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 
-	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
+	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 			
 	pCommandList->OMSetRenderTargets(0, nullptr);
@@ -117,5 +117,5 @@ void CreateVoxelGridPass::Record(RenderParams* pParams)
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 	
 	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshBatch->GetNumMeshes(), pParams->m_pDrawMeshCommandBuffer, 0, pParams->m_pNumDrawMeshesBuffer, 0);
-	pCommandList->Close();
+	pCommandList->End();
 }

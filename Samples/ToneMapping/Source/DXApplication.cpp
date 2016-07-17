@@ -3,7 +3,6 @@
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/SwapChain.h"
 #include "D3DWrapper/CommandQueue.h"
-#include "D3DWrapper/CommandAllocator.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/DescriptorHeap.h"
 #include "D3DWrapper/PipelineState.h"
@@ -34,7 +33,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pShaderInvisibleRTVHeap(nullptr)
 	, m_pShaderInvisibleSRVHeap(nullptr)
 	, m_pShaderInvisibleSamplerHeap(nullptr)
-	, m_pCommandList(nullptr)
 	, m_pFence(nullptr)
 	, m_BackBufferIndex(0)
 	, m_pHDRTexture(nullptr)
@@ -43,14 +41,14 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCalcTextureLogLuminancePass(nullptr)
 	, m_DisplayResult(DisplayResult_HDRImage)
 {
-	std::memset(m_CommandAllocators, 0, sizeof(m_CommandAllocators));
+	std::memset(m_CommandLists, 0, sizeof(m_CommandLists));
 	std::memset(m_FenceValues, 0, sizeof(m_FenceValues));
 }
 
 DXApplication::~DXApplication()
 {
-	for (UINT index = 0; index < kBackBufferCount; ++index)
-		SafeDelete(m_CommandAllocators[index]);
+	for (UINT index = 0; index < kNumBackBuffers; ++index)
+		SafeDelete(m_CommandLists[index]);
 
 	SafeDelete(m_pCopyTexturePass);
 	SafeDelete(m_pCalcTextureLuminancePass);
@@ -58,7 +56,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pShaderInvisibleSRVHeap);
 	SafeDelete(m_pShaderInvisibleSamplerHeap);
 	SafeDelete(m_pHDRTexture);
-	SafeDelete(m_pCommandList);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pShaderInvisibleRTVHeap);
 	SafeDelete(m_pDevice);
@@ -82,11 +79,11 @@ void DXApplication::OnInit()
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
 	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
 
-	SwapChainDesc swapChainDesc(kBackBufferCount, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
+	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
 	m_pSwapChain = new SwapChain(&factory, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
-	DescriptorHeapDesc rtvDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kBackBufferCount, false);
+	DescriptorHeapDesc rtvDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kNumBackBuffers, false);
 	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvDescriptorHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
 	DescriptorHeapDesc srvDescriptorHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kSRVDescriptor_Count, false);
@@ -99,7 +96,7 @@ void DXApplication::OnInit()
 	m_pDevice->CreateSampler(&pointSampler, m_pShaderInvisibleSamplerHeap->GetCPUDescriptor(kSamplerDescriptor_Point));
 	
 	Tex2DRenderTargetViewDesc rtvDesc;
-	for (UINT index = 0; index < kBackBufferCount; ++index)
+	for (UINT index = 0; index < kNumBackBuffers; ++index)
 	{
 		GraphicsResource* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pShaderInvisibleRTVHeap->GetCPUDescriptor(index);
@@ -114,7 +111,7 @@ void DXApplication::OnInit()
 	m_pCalcTextureLuminancePass = new CalcTextureLuminancePass(m_pDevice, rtvFormat);
 	m_pCalcTextureLogLuminancePass = new CalcTextureLuminancePass(m_pDevice, rtvFormat, true);
 
-	for (UINT index = 0; index < kBackBufferCount; ++index)
+	for (UINT index = 0; index < kNumBackBuffers; ++index)
 		m_CommandAllocators[index] = new CommandAllocator(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandAllocators");
 
 	HeapProperties defaultHeapProperties(D3D12_HEAP_TYPE_DEFAULT);
@@ -216,7 +213,7 @@ void DXApplication::OnKeyUp(UINT8 key)
 void DXApplication::WaitForGPU()
 {
 	m_pCommandQueue->Signal(m_pFence, m_FenceValues[m_BackBufferIndex]);
-	m_pFence->WaitForSignal(m_FenceValues[m_BackBufferIndex]);
+	m_pFence->WaitForSignalOnCPU(m_FenceValues[m_BackBufferIndex]);
 
 	++m_FenceValues[m_BackBufferIndex];
 }
@@ -227,7 +224,7 @@ void DXApplication::MoveToNextFrame()
 	m_pCommandQueue->Signal(m_pFence, currentFenceValue);
 
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-	m_pFence->WaitForSignal(m_FenceValues[m_BackBufferIndex]);
+	m_pFence->WaitForSignalOnCPU(m_FenceValues[m_BackBufferIndex]);
 
 	m_FenceValues[m_BackBufferIndex] = currentFenceValue + 1;
 }

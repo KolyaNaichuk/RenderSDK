@@ -51,7 +51,7 @@ void VisualizeVoxelGridPass::Record(RenderParams* pParams)
 	CommandList* pCommandList = pParams->m_pCommandList;
 	BindingResourceList* pResources = pParams->m_pResources;
 
-	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
+	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
 	pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
@@ -71,5 +71,5 @@ void VisualizeVoxelGridPass::Record(RenderParams* pParams)
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	pCommandList->DrawInstanced(3, 1, 0, 0);
-	pCommandList->Close();
+	pCommandList->End();
 }

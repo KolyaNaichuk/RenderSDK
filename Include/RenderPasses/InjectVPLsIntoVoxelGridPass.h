@@ -4,7 +4,6 @@
 
 class GraphicsDevice;
 class CommandList;
-class CommandAllocator;
 class RootSignature;
 class PipelineState;
 class GraphicsResource;

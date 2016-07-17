@@ -54,7 +54,7 @@ CalcTextureLuminancePass::~CalcTextureLuminancePass()
 	SafeDelete(m_pRootSignature);
 }
 
-void CalcTextureLuminancePass::Record(CommandList* pCommandList, CommandAllocator* pCommandAllocator,
+void CalcTextureLuminancePass::Record(CommandList* pCommandList,
 	GraphicsResource* pRTVTexture, D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptor,
 	DescriptorHeap* pSRVDescriptorHeap, GraphicsResource* pSRVTexture, D3D12_GPU_DESCRIPTOR_HANDLE srvDescriptor,
 	DescriptorHeap* pSamplerDescriptorHeap, D3D12_GPU_DESCRIPTOR_HANDLE samplerDescriptor,

@@ -84,7 +84,7 @@ void RenderShadowMapCommandsPass::Record(RenderParams* pParams)
 	CommandList* pCommandList = pParams->m_pCommandList;
 	BindingResourceList* pResources = pParams->m_pResources;
 
-	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
+	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 	pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
@@ -122,5 +122,5 @@ void RenderShadowMapCommandsPass::Record(RenderParams* pParams)
 	}
 
 	pCommandList->ExecuteIndirect(m_pCommandSignature, 1, pParams->m_pIndirectArgumentBuffer, 0, nullptr, 0);
-	pCommandList->Close();
+	pCommandList->End();
 }

@@ -5,7 +5,6 @@
 class RootSignature;
 class PipelineState;
 class CommandList;
-class CommandAllocator;
 struct RenderEnv;
 struct BindingResourceList;
 
@@ -21,7 +20,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		CommandAllocator* m_pCommandAllocator;
 		BindingResourceList* m_pResources;
 	};
 

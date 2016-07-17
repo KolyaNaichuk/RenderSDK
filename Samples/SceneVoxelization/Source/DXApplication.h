@@ -5,7 +5,6 @@
 class GraphicsDevice;
 class SwapChain;
 class CommandQueue;
-class CommandAllocator;
 class CommandList;
 class CommandListPool;
 class DescriptorHeap;
@@ -38,7 +37,7 @@ struct Viewport;
 
 enum
 { 
-	kBackBufferCount = 3
+	kNumBackBuffers = 3
 };
 
 class DXApplication : public Application
@@ -62,8 +61,6 @@ private:
 	GraphicsDevice* m_pDevice;
 	SwapChain* m_pSwapChain;
 	CommandQueue* m_pCommandQueue;
-	CommandAllocator* m_CommandAllocators[kBackBufferCount];
-	CommandList* m_pCommandList;
 	CommandListPool* m_pCommandListPool;
 	HeapProperties* m_pDefaultHeapProps;
 	HeapProperties* m_pUploadHeapProps;
@@ -104,7 +101,8 @@ private:
 	Buffer* m_pNumDrawSpotLightShadowCastersBuffer;
 	RenderEnv* m_pRenderEnv;
 	Fence* m_pFence;
-	UINT64 m_FenceValues[kBackBufferCount];
+	UINT64 m_FenceValues[kNumBackBuffers];
+	CommandList* m_CommandLists[kNumBackBuffers];
 	UINT m_BackBufferIndex;
 
 	RenderGBufferPass* m_pRenderGBufferPass;
@@ -125,10 +123,10 @@ private:
 	InjectVPLsIntoVoxelGridPass* m_pInjectVPLsIntoVoxelGridPass;
 
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridPass;
-	BindingResourceList* m_VisualizeVoxelGridResources[kBackBufferCount];
+	BindingResourceList* m_VisualizeVoxelGridResources[kNumBackBuffers];
 
 	VisualizeMeshPass* m_pVisualizeMeshPass;
-	BindingResourceList* m_VisualizeMeshResources[kBackBufferCount];
+	BindingResourceList* m_VisualizeMeshResources[kNumBackBuffers];
 
 	ViewFrustumCullingPass* m_pDetectVisibleMeshesPass;
 	BindingResourceList* m_pDetectVisibleMeshesResources;
@@ -150,7 +148,7 @@ private:
 	BindingResourceList* m_pRenderSpotLightTiledShadowMapResources;
 
 	CopyTexturePass* m_pCopyTexturePass;
-	BindingResourceList* m_CopyTextureResources[kBackBufferCount];
+	BindingResourceList* m_CopyTextureResources[kNumBackBuffers];
 
 	MeshBatch* m_pMeshBatch;
 	

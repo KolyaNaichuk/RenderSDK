@@ -3,6 +3,7 @@
 
 Fence::Fence(GraphicsDevice* pDevice, UINT64 initialValue, LPCWSTR pName)
 	: m_hCompletionEvent(INVALID_HANDLE_VALUE)
+	, m_CachedCompletedValue(initialValue)
 {
 	D3D12_FENCE_FLAGS flags = D3D12_FENCE_FLAG_NONE;
 	VerifyD3DResult(pDevice->GetD3DObject()->CreateFence(initialValue, flags, IID_PPV_ARGS(&m_D3DFence)));
@@ -10,7 +11,7 @@ Fence::Fence(GraphicsDevice* pDevice, UINT64 initialValue, LPCWSTR pName)
 #ifdef _DEBUG
 	VerifyD3DResult(m_D3DFence->SetName(pName));
 #endif
-
+	
 	m_hCompletionEvent = ::CreateEventEx(nullptr, FALSE, FALSE, EVENT_ALL_ACCESS);
 	assert(m_hCompletionEvent != INVALID_HANDLE_VALUE);
 }
@@ -23,18 +24,22 @@ Fence::~Fence()
 void Fence::Clear(UINT64 value)
 {
 	VerifyD3DResult(m_D3DFence->Signal(value));
+	m_CachedCompletedValue = value;
 }
 
-void Fence::WaitForSignal(UINT64 value)
+void Fence::WaitForSignalOnCPU(UINT64 value)
 {
-	if (HasBeenSignaled(value))
+	if (ReceivedSignal(value))
 		return;
 
 	VerifyD3DResult(m_D3DFence->SetEventOnCompletion(value, m_hCompletionEvent));
 	::WaitForSingleObject(m_hCompletionEvent, INFINITE);
 }
 
-bool Fence::HasBeenSignaled(UINT64 value)
+bool Fence::ReceivedSignal(UINT64 value)
 {
-	return (m_D3DFence->GetCompletedValue() >= value);
+	if (value > m_CachedCompletedValue)
+		m_CachedCompletedValue = m_D3DFence->GetCompletedValue();
+
+	return (m_CachedCompletedValue >= value);
 }

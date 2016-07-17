@@ -3,7 +3,6 @@
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/CommandList.h"
-#include "D3DWrapper/CommandAllocator.h"
 #include "D3DWrapper/RenderEnv.h"
 
 enum RootParams
@@ -75,7 +74,7 @@ void TiledShadingPass::Record(RenderParams* pParams)
 	BindingResourceList* pResources = pParams->m_pResources;
 	ColorTexture* pAccumLightTexture = pParams->m_pAccumLightTexture;
 
-	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
+	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 	pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
@@ -85,5 +84,5 @@ void TiledShadingPass::Record(RenderParams* pParams)
 	pCommandList->ClearUnorderedAccessView(pResources->m_SRVHeapStart, pAccumLightTexture->GetUAVHandle(), pAccumLightTexture, accumLightClearColor);
 
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
-	pCommandList->Close();
+	pCommandList->End();
 }

@@ -4,13 +4,13 @@
 
 class GraphicsDevice;
 class Buffer;
-class CommandAllocator;
 class CommandSignature;
 class PipelineState;
 class RootSignature;
 class RootSignature;
 class GraphicsResource;
 class DescriptorHeap;
+class Fence;
 
 struct Viewport;
 struct Rect;
@@ -20,13 +20,13 @@ struct IndexBufferView;
 class CommandList
 {
 public:
-	CommandList(GraphicsDevice* pDevice, CommandAllocator* pCommandAllocator, PipelineState* pInitialState, LPCWSTR pName);
+	CommandList(GraphicsDevice* pDevice, D3D12_COMMAND_LIST_TYPE type, LPCWSTR pName);
 	
 	ID3D12GraphicsCommandList* GetD3DObject() { return m_D3DCommandList.Get(); }
 	void SetName(LPCWSTR pName);
 
-	void Reset(CommandAllocator* pAllocator, PipelineState* pInitialState = nullptr);
-	void Close();
+	void Begin(PipelineState* pPipelineState = nullptr);
+	void End();
 				
 	void IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
 	void IASetVertexBuffers(UINT startSlot, UINT numViews, const VertexBufferView* pViews);
@@ -69,9 +69,16 @@ public:
 	RequiredResourceStateList* GetRequiredResourceStates();
 	void SetRequiredResourceStates(RequiredResourceStateList* pRequiredResourceStates);
 	
+	void SetCompletionFence(Fence* pFence, UINT64 fenceValue);
+	bool CompletedExecution();
+
 private:
 	ComPtr<ID3D12GraphicsCommandList> m_D3DCommandList;
+	ComPtr<ID3D12CommandAllocator> m_D3DCommandAllocator;
 	RequiredResourceStateList* m_pRequiredResourceStates;
+	
+	Fence* m_pCompletionFence;
+	UINT64 m_CompletionFenceValue;
 };
 
 class CommandListPool
@@ -80,8 +87,7 @@ public:
 	CommandListPool(GraphicsDevice* pDevice, D3D12_COMMAND_LIST_TYPE type);
 	~CommandListPool();
 
-	CommandList* Create(CommandAllocator* pCommandAllocator, PipelineState* pInitialState, LPCWSTR pName);
-	void Release(CommandList* pCommandList);
+	CommandList* Create(LPCWSTR pName);
 
 private:
 	GraphicsDevice* m_pDevice;

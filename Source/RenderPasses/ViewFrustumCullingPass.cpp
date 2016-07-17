@@ -59,7 +59,7 @@ void ViewFrustumCullingPass::Record(RenderParams* pParams)
 	BindingResourceList* pResources = pParams->m_pResources;
 	Buffer* pNumVisibleObjectsBuffer = pParams->m_pNumVisibleObjectsBuffer;
 
-	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
+	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 	pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
@@ -69,5 +69,5 @@ void ViewFrustumCullingPass::Record(RenderParams* pParams)
 	pCommandList->ClearUnorderedAccessView(pResources->m_SRVHeapStart, pNumVisibleObjectsBuffer->GetUAVHandle(), pNumVisibleObjectsBuffer, numObjectsClearValue);
 
 	pCommandList->Dispatch(m_NumThreadGroupsX, 1, 1);
-	pCommandList->Close();
+	pCommandList->End();
 }

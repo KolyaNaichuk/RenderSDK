@@ -5,8 +5,7 @@
 class GraphicsDevice;
 class SwapChain;
 class CommandQueue;
-class CommandList;
-class CommandAllocator;
+class CommandListPool;
 class DescriptorHeap;
 class RootSignature;
 class PipelineState;
@@ -34,30 +33,28 @@ private:
 	virtual void OnDestroy();
 	virtual void OnKeyDown(UINT8 key);
 	virtual void OnKeyUp(UINT8 key);
-
-	void WaitForGPU();
-	void MoveToNextFrame();
-
+	
 private:
-	enum { kBackBufferCount = 3 };
+	enum { kNumBackBuffers = 3 };
 
 	GraphicsDevice* m_pDevice;
 	SwapChain* m_pSwapChain;
 	CommandQueue* m_pCommandQueue;
+	CommandListPool* m_pCommandListPool;
 	DescriptorHeap* m_pShaderInvisibleRTVHeap;
 	DescriptorHeap* m_pShaderInvisibleSRVHeap;
 	RootSignature* m_pRootSignature;
 	PipelineState* m_pPipelineState;
-	CommandAllocator* m_CommandAllocators[kBackBufferCount];
-	CommandList* m_pCommandList;
 	Buffer* m_pVertexBuffer;
 	Buffer* m_pIndexBuffer;
 	HeapProperties* m_pDefaultHeapProps;
 	HeapProperties* m_pUploadHeapProps;
 	RenderEnv* m_pRenderEnv;
 	Fence* m_pFence;
-	UINT64 m_FenceValues[kBackBufferCount];
 	Viewport* m_pViewport;
 	Rect* m_pScissorRect;
 	UINT m_BackBufferIndex;
+	
+	UINT64 m_LastSubmissionFenceValue;
+	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers];
 };

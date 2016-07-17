@@ -192,9 +192,6 @@
     <ClInclude Include="..\Include\D3DWrapper\RenderEnv.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\CommandAllocator.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\D3DWrapper\CommandList.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
@@ -390,9 +387,6 @@
       <Filter>D3DWrapper</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\D3DWrapper\GraphicsUtils.cpp">
-      <Filter>D3DWrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\CommandAllocator.cpp">
       <Filter>D3DWrapper</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\D3DWrapper\CommandList.cpp">

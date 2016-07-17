@@ -3,7 +3,6 @@
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/CommandList.h"
-#include "D3DWrapper/CommandAllocator.h"
 #include "D3DWrapper/RenderEnv.h"
 
 enum RootParams
@@ -79,7 +78,7 @@ void TiledLightCullingPass::Record(RenderParams* pParams)
 	CommandList* pCommandList = pParams->m_pCommandList;
 	BindingResourceList* pResources = pParams->m_pResources;
 	
-	pCommandList->Reset(pParams->m_pCommandAllocator, m_pPipelineState);
+	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 	pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
@@ -104,5 +103,5 @@ void TiledLightCullingPass::Record(RenderParams* pParams)
 	}
 	
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
-	pCommandList->Close();
+	pCommandList->End();
 }

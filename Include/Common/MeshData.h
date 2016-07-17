@@ -2,11 +2,11 @@
 
 #include "D3DWrapper/Common.h"
 
+struct AxisAlignedBox;
+struct Material;
 struct Vector2f;
 struct Vector3f;
 struct Vector4f;
-struct AxisAlignedBox;
-struct Material;
 
 class VertexData
 {

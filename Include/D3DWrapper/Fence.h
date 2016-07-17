@@ -13,10 +13,11 @@ public:
 	ID3D12Fence* GetD3DObject() { return m_D3DFence.Get(); }
 
 	void Clear(UINT64 value);
-	void WaitForSignal(UINT64 value);
-	bool HasBeenSignaled(UINT64 value);
+	void WaitForSignalOnCPU(UINT64 value);
+	bool ReceivedSignal(UINT64 value);
 	
 private:
 	ComPtr<ID3D12Fence> m_D3DFence;
 	HANDLE m_hCompletionEvent;
+	UINT64 m_CachedCompletedValue;
 };

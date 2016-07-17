@@ -1,41 +1,44 @@
 #include "D3DWrapper/CommandList.h"
-#include "D3DWrapper/CommandAllocator.h"
 #include "D3DWrapper/CommandSignature.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/DescriptorHeap.h"
+#include "D3DWrapper/Fence.h"
 #include "D3DWrapper/GraphicsUtils.h"
 
-CommandList::CommandList(GraphicsDevice* pDevice, CommandAllocator* pCommandAllocator, PipelineState* pInitialState, LPCWSTR pName)
+CommandList::CommandList(GraphicsDevice* pDevice, D3D12_COMMAND_LIST_TYPE type, LPCWSTR pName)
 	: m_pRequiredResourceStates(nullptr)
 {
-	UINT nodeMask = 0;
-	VerifyD3DResult(pDevice->GetD3DObject()->CreateCommandList(nodeMask,
-		pCommandAllocator->GetType(),
-		pCommandAllocator->GetD3DObject(),
-	   (pInitialState != nullptr) ? pInitialState->GetD3DObject() : nullptr,
-		IID_PPV_ARGS(&m_D3DCommandList)));
+	ID3D12Device* pD3DDevice = pDevice->GetD3DObject();
+	VerifyD3DResult(pD3DDevice->CreateCommandAllocator(type, IID_PPV_ARGS(&m_D3DCommandAllocator)));
 
+	UINT nodeMask = 0;
+	ID3D12PipelineState* pD3DPipelineState = nullptr;
+	VerifyD3DResult(pD3DDevice->CreateCommandList(nodeMask, type, m_D3DCommandAllocator.Get(), pD3DPipelineState, IID_PPV_ARGS(&m_D3DCommandList)));
+	VerifyD3DResult(m_D3DCommandList->Close());
+	
 #ifdef _DEBUG
-	SetName(pName);
+	VerifyD3DResult(m_D3DCommandList->SetName(pName));
 #endif
 }
 
-void CommandList::SetName(LPCWSTR pName) {
+void CommandList::SetName(LPCWSTR pName)
+{
 	VerifyD3DResult(m_D3DCommandList->SetName(pName));
 }
 
-void CommandList::Reset(CommandAllocator* pAllocator, PipelineState* pInitialState)
+void CommandList::Begin(PipelineState* pPipelineState)
 {
-	VerifyD3DResult(m_D3DCommandList->Reset(pAllocator->GetD3DObject(),
-		(pInitialState != nullptr) ? pInitialState->GetD3DObject() : nullptr));
+	VerifyD3DResult(m_D3DCommandAllocator->Reset()); 
+	VerifyD3DResult(m_D3DCommandList->Reset(m_D3DCommandAllocator.Get(), (pPipelineState != nullptr) ? pPipelineState->GetD3DObject() : nullptr));
 
-	m_pRequiredResourceStates = nullptr;
+	SetRequiredResourceStates(nullptr);
+	SetCompletionFence(nullptr, 0);
 }
 
-void CommandList::Close()
+void CommandList::End()
 {
 	VerifyD3DResult(m_D3DCommandList->Close());
 }
@@ -188,6 +191,18 @@ void CommandList::ClearUnorderedAccessView(D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle
 	m_D3DCommandList->ClearUnorderedAccessViewFloat(gpuHandle, cpuHandle, pResource->GetD3DObject(), clearValue, 0, nullptr);
 }
 
+void CommandList::SetCompletionFence(Fence* pFence, UINT64 fenceValue)
+{
+	m_pCompletionFence = pFence;
+	m_CompletionFenceValue = fenceValue;
+}
+
+bool CommandList::CompletedExecution()
+{
+	assert(m_pCompletionFence != nullptr);
+	return m_pCompletionFence->ReceivedSignal(m_CompletionFenceValue);
+}
+
 CommandListPool::CommandListPool(GraphicsDevice* pDevice, D3D12_COMMAND_LIST_TYPE type)
 	: m_pDevice(pDevice)
 	, m_Type(type)
@@ -205,25 +220,24 @@ CommandListPool::~CommandListPool()
 	}
 }
 
-CommandList* CommandListPool::Create(CommandAllocator* pCommandAllocator, PipelineState* pInitialState, LPCWSTR pName)
+CommandList* CommandListPool::Create(LPCWSTR pName)
 {
-	assert(m_Type == pCommandAllocator->GetType());
+	CommandList* pCommandList = nullptr;
 	if (!m_CommandListQueue.empty())
 	{
-		CommandList* pCommandList = m_CommandListQueue.front();
-		m_CommandListQueue.pop();
-
-		pCommandList->Reset(pCommandAllocator, pInitialState);
+		CommandList* pExistingCommandList = m_CommandListQueue.front();
+		if (pExistingCommandList->CompletedExecution())
+		{
+			m_CommandListQueue.pop();
+			pCommandList = pExistingCommandList;
 #ifdef _DEBUG
-		pCommandList->SetName(pName);
+			pCommandList->SetName(pName);
 #endif
-
-		return pCommandList;
+		}
 	}
-	return new CommandList(m_pDevice, pCommandAllocator, pInitialState, pName);
-}
+	if (pCommandList == nullptr)
+		pCommandList = new CommandList(m_pDevice, m_Type, pName);
 
-void CommandListPool::Release(CommandList* pCommandList)
-{
 	m_CommandListQueue.push(pCommandList);
+	return pCommandList;
 }
