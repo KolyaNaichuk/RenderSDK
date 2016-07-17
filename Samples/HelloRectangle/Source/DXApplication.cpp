@@ -68,16 +68,19 @@ void DXApplication::OnInit()
 
 	DescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kNumBackBuffers, false);
 	m_pShaderInvisibleSRVHeap = new DescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pShaderInvisibleSRVHeap");
-
+	
+	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
+	
+	m_pCommandListPool = new CommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
+	
 	m_pRenderEnv->m_pDevice = m_pDevice;
+	m_pRenderEnv->m_pCommandListPool = m_pCommandListPool;
 	m_pRenderEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
 	m_pRenderEnv->m_pUploadHeapProps = m_pUploadHeapProps;
 	m_pRenderEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
 	m_pRenderEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
 
-	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
-		
 	const RECT bufferRect = m_pWindow->GetClientRect();
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
 	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
@@ -88,9 +91,7 @@ void DXApplication::OnInit()
 	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
 	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-	
-	m_pCommandListPool = new CommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
-	
+			
 	RootSignatureDesc rootSignatureDesc(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	m_pRootSignature = new RootSignature(m_pDevice, &rootSignatureDesc, L"RootSignature");
 
@@ -142,7 +143,7 @@ void DXApplication::OnInit()
 	
 	m_pFence = new Fence(m_pDevice, m_LastSubmissionFenceValue, L"m_pFence");
 	
-	CommandList* pCommandList = m_pCommandListPool->Create(L"UploadVertexDataCommandList");
+	CommandList* pCommandList = m_pCommandListPool->Create(L"uploadVertexDataCommandList");
 	pCommandList->Begin();
 	pCommandList->CopyResource(m_pVertexBuffer, &uploadVertexBuffer);
 	pCommandList->CopyResource(m_pIndexBuffer, &uploadIndexBuffer);
@@ -170,7 +171,7 @@ void DXApplication::OnUpdate()
 
 void DXApplication::OnRender()
 {
-	CommandList* pCommandList = m_pCommandListPool->Create(L"RenderRectCommandList");
+	CommandList* pCommandList = m_pCommandListPool->Create(L"renderRectCommandList");
 	
 	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);

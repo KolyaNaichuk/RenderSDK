@@ -192,6 +192,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pNumDrawSpotLightShadowCastersBuffer(nullptr)
 	, m_pRenderEnv(new RenderEnv())
 	, m_pFence(nullptr)
+	, m_LastSubmissionFenceValue(0)
 	, m_BackBufferIndex(0)
 	, m_pRenderGBufferPass(nullptr)
 	, m_pRenderGBufferResources(new BindingResourceList())
@@ -231,8 +232,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
-		m_FenceValues[index] = 0;
-		m_CommandLists[index] = nullptr;
+		m_FrameCompletionFenceValues[index] = m_LastSubmissionFenceValue;
 		m_VisualizeMeshResources[index] = new BindingResourceList();
 		m_VisualizeVoxelGridResources[index] = new BindingResourceList();
 		m_CopyTextureResources[index] = new BindingResourceList();
@@ -243,12 +243,12 @@ DXApplication::~DXApplication()
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
-		SafeDelete(m_CommandLists[index]);
 		SafeDelete(m_VisualizeMeshResources[index]);
 		SafeDelete(m_VisualizeVoxelGridResources[index]);
 		SafeDelete(m_CopyTextureResources[index]);
 	}
 
+	SafeDelete(m_pCommandListPool);
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pPointLightBuffer);
 	SafeDelete(m_pNumVisiblePointLightsBuffer);
@@ -342,6 +342,8 @@ void DXApplication::OnInit()
 	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
 
+	m_pCommandListPool = new CommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
+
 	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 9, false);
 	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
@@ -353,12 +355,7 @@ void DXApplication::OnInit()
 
 	DescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2, false);
 	m_pShaderInvisibleDSVHeap = new DescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pShaderInvisibleDSVHeap");
-
-	for (UINT index = 0; index < kNumBackBuffers; ++index)
-		m_CommandLists[index] = new CommandList(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT, L"m_CommandLists");
-
-	m_pCommandListPool = new CommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
-		
+				
 	m_pRenderEnv->m_pDevice = m_pDevice;
 	m_pRenderEnv->m_pCommandListPool = m_pCommandListPool;
 	m_pRenderEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
@@ -429,9 +426,8 @@ void DXApplication::OnInit()
 	StructuredBufferDesc gridBufferDesc(numGridElements, sizeof(Voxel), true, true);
 	m_pGridBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &gridBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pGridBuffer");
 
-	m_pFence = new Fence(m_pDevice, m_FenceValues[m_BackBufferIndex], L"m_pFence");
-	++m_FenceValues[m_BackBufferIndex];
-
+	m_pFence = new Fence(m_pDevice, m_LastSubmissionFenceValue, L"m_pFence");
+	
 	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test1);
 	
 	assert(pScene->GetNumMeshBatches() == 1);
@@ -440,7 +436,7 @@ void DXApplication::OnInit()
 	StructuredBufferDesc drawCommandBufferDesc(pMeshBatchData->GetNumMeshes(), sizeof(DrawMeshCommand), true, true);
 	m_pDrawMeshCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawMeshCommandBuffer");
 	
-	CommandList* pCommandList = m_CommandLists[m_BackBufferIndex];
+	CommandList* pCommandList = m_pCommandListPool->Create(L"uploadDataCommandList");
 	pCommandList->Begin();
 
 	m_pMeshBatch = new MeshBatch(m_pRenderEnv, pMeshBatchData);
@@ -498,8 +494,9 @@ void DXApplication::OnInit()
 	pCommandList->CopyResource(m_pRenderShadowMapCommandsArgumentBuffer, &uploadRenderShadowMapCommandsArgumentBuffer);
 	pCommandList->End();
 
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-	WaitForGPU();
+	++m_LastSubmissionFenceValue;
+	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList, m_pFence, m_LastSubmissionFenceValue);
+	m_pFence->WaitForSignalOnCPU(m_LastSubmissionFenceValue);
 
 	m_pMeshBatch->RemoveDataForUpload();
 	
@@ -632,11 +629,11 @@ void DXApplication::OnInit()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightRangePerTileBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 
-	RenderGBufferCommandsPass::InitParams fillGBufferCommandsParams;
-	fillGBufferCommandsParams.m_pRenderEnv = m_pRenderEnv;
-	fillGBufferCommandsParams.m_NumMeshesInBatch = m_pMeshBatch->GetNumMeshes();
+	RenderGBufferCommandsPass::InitParams renderGBufferCommandsParams;
+	renderGBufferCommandsParams.m_pRenderEnv = m_pRenderEnv;
+	renderGBufferCommandsParams.m_NumMeshesInBatch = m_pMeshBatch->GetNumMeshes();
 	
-	m_pRenderGBufferCommandsPass = new RenderGBufferCommandsPass(&fillGBufferCommandsParams);
+	m_pRenderGBufferCommandsPass = new RenderGBufferCommandsPass(&renderGBufferCommandsParams);
 
 	m_pRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleMeshesBuffer, m_pNumVisibleMeshesBuffer->GetReadState());
 	m_pRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer->GetReadState());
@@ -649,15 +646,15 @@ void DXApplication::OnInit()
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMeshDescBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDrawMeshCommandBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	RenderGBufferPass::InitParams fillGBufferParams;
-	fillGBufferParams.m_pRenderEnv = m_pRenderEnv;
-	fillGBufferParams.m_NormalRTVFormat = GetRenderTargetViewFormat(m_pNormalTexture->GetFormat());
-	fillGBufferParams.m_DiffuseRTVFormat = GetRenderTargetViewFormat(m_pDiffuseTexture->GetFormat());
-	fillGBufferParams.m_SpecularRTVFormat = GetRenderTargetViewFormat(m_pSpecularTexture->GetFormat());
-	fillGBufferParams.m_DSVFormat = GetDepthStencilViewFormat(m_pDepthTexture->GetFormat());
-	fillGBufferParams.m_pMeshBatch = m_pMeshBatch;
+	RenderGBufferPass::InitParams renderGBufferParams;
+	renderGBufferParams.m_pRenderEnv = m_pRenderEnv;
+	renderGBufferParams.m_NormalRTVFormat = GetRenderTargetViewFormat(m_pNormalTexture->GetFormat());
+	renderGBufferParams.m_DiffuseRTVFormat = GetRenderTargetViewFormat(m_pDiffuseTexture->GetFormat());
+	renderGBufferParams.m_SpecularRTVFormat = GetRenderTargetViewFormat(m_pSpecularTexture->GetFormat());
+	renderGBufferParams.m_DSVFormat = GetDepthStencilViewFormat(m_pDepthTexture->GetFormat());
+	renderGBufferParams.m_pMeshBatch = m_pMeshBatch;
 	
-	m_pRenderGBufferPass = new RenderGBufferPass(&fillGBufferParams);
+	m_pRenderGBufferPass = new RenderGBufferPass(&renderGBufferParams);
 	
 	m_pRenderGBufferResources->m_RequiredResourceStates.emplace_back(m_pNormalTexture, m_pNormalTexture->GetWriteState());
 	m_pRenderGBufferResources->m_RequiredResourceStates.emplace_back(m_pDiffuseTexture, m_pDiffuseTexture->GetWriteState());
@@ -1036,7 +1033,8 @@ void DXApplication::OnUpdate()
 
 void DXApplication::OnRender()
 {
-	CommandList* pCommandList = m_CommandLists[m_BackBufferIndex];
+	std::vector<CommandList*> submissionBatch;
+
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderTarget->GetRTVHandle();
@@ -1045,6 +1043,8 @@ void DXApplication::OnRender()
 	const u8 clearFlags = m_pCamera->GetClearFlags();
 	if (clearFlags != 0)
 	{
+		CommandList* pClearCommandList = m_pCommandListPool->Create(L"pClearCommandList");
+
 		std::vector<ResourceTransitionBarrier> resourceTransitions;
 		if (pRenderTarget->GetState() != pRenderTarget->GetWriteState())
 		{
@@ -1059,85 +1059,79 @@ void DXApplication::OnRender()
 		
 		const Vector4f& clearColor = m_pCamera->GetBackgroundColor();
 
-		pCommandList->Begin();
-		pCommandList->ResourceBarrier(resourceTransitions.size(), &resourceTransitions[0]);
-		pCommandList->ClearRenderTargetView(rtvHandle, &clearColor.m_X);
-		pCommandList->ClearDepthView(dsvHandle);				
-		pCommandList->End();
+		pClearCommandList->Begin();
+		pClearCommandList->ResourceBarrier(resourceTransitions.size(), &resourceTransitions[0]);
+		pClearCommandList->ClearRenderTargetView(rtvHandle, &clearColor.m_X);
+		pClearCommandList->ClearDepthView(dsvHandle);
+		pClearCommandList->End();
 
-		m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-		WaitForGPU();
+		submissionBatch.emplace_back(pClearCommandList);
 	}
 
 	ViewFrustumCullingPass::RenderParams detectVisibleMeshesParams;
 	detectVisibleMeshesParams.m_pRenderEnv = m_pRenderEnv;
-	detectVisibleMeshesParams.m_pCommandList = pCommandList;
+	detectVisibleMeshesParams.m_pCommandList = m_pCommandListPool->Create(L"pDetectVisibleMeshesCommandList");
 	detectVisibleMeshesParams.m_pResources = m_pDetectVisibleMeshesResources;
 	detectVisibleMeshesParams.m_pNumVisibleObjectsBuffer = m_pNumVisibleMeshesBuffer;
 
 	m_pDetectVisibleMeshesPass->Record(&detectVisibleMeshesParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-	WaitForGPU();
+	submissionBatch.emplace_back(detectVisibleMeshesParams.m_pCommandList);
 
 	if (m_pPointLightBuffer != nullptr)
 	{
 		ViewFrustumCullingPass::RenderParams detectVisibleLightsParams;
 		detectVisibleLightsParams.m_pRenderEnv = m_pRenderEnv;
-		detectVisibleLightsParams.m_pCommandList = pCommandList;
+		detectVisibleLightsParams.m_pCommandList = m_pCommandListPool->Create(L"pDetectVisiblePointLightsCommandList");
 		detectVisibleLightsParams.m_pResources = m_pDetectVisiblePointLightsResources;
 		detectVisibleLightsParams.m_pNumVisibleObjectsBuffer = m_pNumVisiblePointLightsBuffer;
 
 		m_pDetectVisiblePointLightsPass->Record(&detectVisibleLightsParams);
-		m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-		WaitForGPU();
+		submissionBatch.emplace_back(detectVisibleLightsParams.m_pCommandList);
 	}
 
 	if (m_pSpotLightBuffer != nullptr)
 	{
 		ViewFrustumCullingPass::RenderParams detectVisibleLightsParams;
 		detectVisibleLightsParams.m_pRenderEnv = m_pRenderEnv;
-		detectVisibleLightsParams.m_pCommandList = pCommandList;
+		detectVisibleLightsParams.m_pCommandList = m_pCommandListPool->Create(L"pDetectVisibleSpotLightsCommandList");
 		detectVisibleLightsParams.m_pResources = m_pDetectVisibleSpotLightsResources;
 		detectVisibleLightsParams.m_pNumVisibleObjectsBuffer = m_pNumVisibleSpotLightsBuffer;
 
 		m_pDetectVisibleSpotLightsPass->Record(&detectVisibleLightsParams);
-		m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-		WaitForGPU();
+		submissionBatch.emplace_back(detectVisibleLightsParams.m_pCommandList);
 	}
 	
-	RenderGBufferCommandsPass::RenderParams fillGBufferCommandsParams;
-	fillGBufferCommandsParams.m_pRenderEnv = m_pRenderEnv;
-	fillGBufferCommandsParams.m_pCommandList = pCommandList;
-	fillGBufferCommandsParams.m_pResources = m_pRenderGBufferCommandsResources;
+	RenderGBufferCommandsPass::RenderParams renderGBufferCommandsParams;
+	renderGBufferCommandsParams.m_pRenderEnv = m_pRenderEnv;
+	renderGBufferCommandsParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferCommandsCommandList");
+	renderGBufferCommandsParams.m_pResources = m_pRenderGBufferCommandsResources;
 
-	m_pRenderGBufferCommandsPass->Record(&fillGBufferCommandsParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-	WaitForGPU();
+	m_pRenderGBufferCommandsPass->Record(&renderGBufferCommandsParams);
+	submissionBatch.emplace_back(renderGBufferCommandsParams.m_pCommandList);
 
-	RenderGBufferPass::RenderParams fillGBufferParams;
-	fillGBufferParams.m_pRenderEnv = m_pRenderEnv;
-	fillGBufferParams.m_pCommandList = pCommandList;
-	fillGBufferParams.m_pResources = m_pRenderGBufferResources;
-	fillGBufferParams.m_pViewport = m_pViewport;
-	fillGBufferParams.m_pMeshBatch = m_pMeshBatch;
-	fillGBufferParams.m_pDrawMeshCommandBuffer = m_pDrawMeshCommandBuffer;
-	fillGBufferParams.m_pNumDrawMeshesBuffer = m_pNumVisibleMeshesBuffer;
+	RenderGBufferPass::RenderParams renderGBufferParams;
+	renderGBufferParams.m_pRenderEnv = m_pRenderEnv;
+	renderGBufferParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferCommandList");
+	renderGBufferParams.m_pResources = m_pRenderGBufferResources;
+	renderGBufferParams.m_pViewport = m_pViewport;
+	renderGBufferParams.m_pMeshBatch = m_pMeshBatch;
+	renderGBufferParams.m_pDrawMeshCommandBuffer = m_pDrawMeshCommandBuffer;
+	renderGBufferParams.m_pNumDrawMeshesBuffer = m_pNumVisibleMeshesBuffer;
 	
-	m_pRenderGBufferPass->Record(&fillGBufferParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-	WaitForGPU();
+	m_pRenderGBufferPass->Record(&renderGBufferParams);
+	submissionBatch.emplace_back(renderGBufferParams.m_pCommandList);
 
 	TiledLightCullingPass::RenderParams tiledLightCullingParams;
 	tiledLightCullingParams.m_pRenderEnv = m_pRenderEnv;
-	tiledLightCullingParams.m_pCommandList = pCommandList;
+	tiledLightCullingParams.m_pCommandList = m_pCommandListPool->Create(L"pTiledLightCullingCommandList");
 	tiledLightCullingParams.m_pResources = m_pTiledLightCullingResources;
 	tiledLightCullingParams.m_pNumPointLightsPerTileBuffer = m_pNumPointLightsPerTileBuffer;
 	tiledLightCullingParams.m_pNumSpotLightsPerTileBuffer = m_pNumSpotLightsPerTileBuffer;
 
 	m_pTiledLightCullingPass->Record(&tiledLightCullingParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-	WaitForGPU();
+	submissionBatch.emplace_back(tiledLightCullingParams.m_pCommandList);
 
+	/*
 	{
 		std::vector<ResourceTransitionBarrier> resourceTransitions;
 		if (m_pRenderShadowMapCommandsArgumentBuffer->GetState() != D3D12_RESOURCE_STATE_COPY_DEST)
@@ -1151,18 +1145,18 @@ void DXApplication::OnRender()
 			m_pNumVisibleMeshesBuffer->SetState(D3D12_RESOURCE_STATE_COPY_SOURCE);
 		}
 
-		pCommandList->Begin();
-		pCommandList->ResourceBarrier(resourceTransitions.size(), &resourceTransitions[0]);
-		pCommandList->CopyBufferRegion(m_pRenderShadowMapCommandsArgumentBuffer, 0, m_pNumVisibleMeshesBuffer, 0, sizeof(u32));
-		pCommandList->End();
+		CommandList* pArgBufferBarrierCommandList = m_pCommandListPool->Create(L"pArgBufferBarrierCommandList");
+		pArgBufferBarrierCommandList->Begin();
+		pArgBufferBarrierCommandList->ResourceBarrier(resourceTransitions.size(), &resourceTransitions[0]);
+		pArgBufferBarrierCommandList->CopyBufferRegion(m_pRenderShadowMapCommandsArgumentBuffer, 0, m_pNumVisibleMeshesBuffer, 0, sizeof(u32));
+		pArgBufferBarrierCommandList->End();
 
-		m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-		WaitForGPU();
+		submissionBatch.emplace_back(pArgBufferBarrierCommandList);
 	}
 
 	RenderShadowMapCommandsPass::RenderParams renderShadowMapCommandsParams;
 	renderShadowMapCommandsParams.m_pRenderEnv = m_pRenderEnv;
-	renderShadowMapCommandsParams.m_pCommandList = pCommandList;
+	renderShadowMapCommandsParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderShadowMapCommandsCommandList");
 	renderShadowMapCommandsParams.m_pResources = m_pRenderShadowMapCommandsResources;
 	renderShadowMapCommandsParams.m_pIndirectArgumentBuffer = m_pRenderShadowMapCommandsArgumentBuffer;
 	renderShadowMapCommandsParams.m_pNumShadowCastingPointLightsBuffer = m_pNumShadowCastingPointLightsBuffer;
@@ -1170,55 +1164,51 @@ void DXApplication::OnRender()
 	renderShadowMapCommandsParams.m_pNumShadowCastingSpotLightsBuffer = m_pNumShadowCastingSpotLightsBuffer;
 	renderShadowMapCommandsParams.m_pNumDrawSpotLightShadowCastersBuffer = m_pNumDrawSpotLightShadowCastersBuffer;
 
-	//m_pRenderShadowMapCommandsPass->Record(&renderShadowMapCommandsParams);
-	//m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-	//WaitForGPU();
+	m_pRenderShadowMapCommandsPass->Record(&renderShadowMapCommandsParams);
+	submissionBatch.emplace_back(renderShadowMapCommandsParams.m_pCommandList);
+	*/
 
 	TiledShadingPass::RenderParams tiledShadingParams;
 	tiledShadingParams.m_pRenderEnv = m_pRenderEnv;
-	tiledShadingParams.m_pCommandList = pCommandList;
+	tiledShadingParams.m_pCommandList = m_pCommandListPool->Create(L"pTiledShadingCommandList");
 	tiledShadingParams.m_pResources = m_pTiledShadingResources;
 	tiledShadingParams.m_pAccumLightTexture = m_pAccumLightTexture;
 	
 	m_pTiledShadingPass->Record(&tiledShadingParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-	WaitForGPU();
+	submissionBatch.emplace_back(tiledShadingParams.m_pCommandList);
 
 	CopyTexturePass::RenderParams copyTextureParams;
 	copyTextureParams.m_pRenderEnv = m_pRenderEnv;
-	copyTextureParams.m_pCommandList = pCommandList;
+	copyTextureParams.m_pCommandList = m_pCommandListPool->Create(L"pCopyTextureCommandList");
 	copyTextureParams.m_pResources = m_CopyTextureResources[m_BackBufferIndex];
 	copyTextureParams.m_pViewport = m_pViewport;
 
 	m_pCopyTexturePass->Record(&copyTextureParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-	WaitForGPU();
+	submissionBatch.emplace_back(copyTextureParams.m_pCommandList);
 
 	/*
 	VisualizeMeshPass::RenderParams visualizeMeshParams;
 	visualizeMeshParams.m_pRenderEnv = m_pRenderEnv;
-	visualizeMeshParams.m_pCommandList = pCommandList;
+	visualizeMeshParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeMeshCommandList");
 	visualizeMeshParams.m_pResources = m_VisualizeMeshResources[m_BackBufferIndex];
 	visualizeMeshParams.m_pViewport = m_pViewport;
 	visualizeMeshParams.m_pMeshBatch = m_pMeshBatch;
 
 	m_pVisualizeMeshPass->Record(&visualizeMeshParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-	WaitForGPU();
+	submissionBatch.emplace_back(visualizeMeshParams.m_pCommandList);
 	*/
 
 	ClearVoxelGridPass::RenderParams clearGridParams;
 	clearGridParams.m_pRenderEnv = m_pRenderEnv;
-	clearGridParams.m_pCommandList = pCommandList;
+	clearGridParams.m_pCommandList = m_pCommandListPool->Create(L"pClearGridCommandList");
 	clearGridParams.m_pResources = m_pClearVoxelGridResources;
 	
 	m_pClearVoxelGridPass->Record(&clearGridParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-	WaitForGPU();
+	submissionBatch.emplace_back(clearGridParams.m_pCommandList);
 
 	CreateVoxelGridPass::RenderParams createGridParams;
 	createGridParams.m_pRenderEnv = m_pRenderEnv;
-	createGridParams.m_pCommandList = pCommandList;
+	createGridParams.m_pCommandList = m_pCommandListPool->Create(L"pCreateGridCommandList");
 	createGridParams.m_pResources = m_pCreateVoxelGridResources;
 	createGridParams.m_pViewport = m_pViewport;
 	createGridParams.m_pMeshBatch = m_pMeshBatch;
@@ -1226,37 +1216,43 @@ void DXApplication::OnRender()
 	createGridParams.m_pNumDrawMeshesBuffer = m_pNumVisibleMeshesBuffer;
 	
 	m_pCreateVoxelGridPass->Record(&createGridParams);
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-	WaitForGPU();
+	submissionBatch.emplace_back(createGridParams.m_pCommandList);
 	
+	/*
 	VisualizeVoxelGridPass::RenderParams visualizeGridParams;
 	visualizeGridParams.m_pRenderEnv = m_pRenderEnv;
-	visualizeGridParams.m_pCommandList = pCommandList;
+	visualizeGridParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeGridCommandList");
 	visualizeGridParams.m_pResources = m_VisualizeVoxelGridResources[m_BackBufferIndex];
 	visualizeGridParams.m_pViewport = m_pViewport;
 	
-	//m_pVisualizeVoxelGridPass->Record(&visualizeGridParams);
-	//m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
+	m_pVisualizeVoxelGridPass->Record(&visualizeGridParams);
+	submissionBatch.emplace_back(visualizeGridParams.m_pCommandList);
+	*/
 	
-	if (pRenderTarget->GetState() != D3D12_RESOURCE_STATE_PRESENT)
-	{
-		pCommandList->Begin();
+	ResourceTransitionBarrier presentBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	CommandList* pPresentBarrierCommandList = m_pCommandListPool->Create(L"pPresentBarrierCommandList");
+	pPresentBarrierCommandList->Begin();
+	pPresentBarrierCommandList->ResourceBarrier(1, &presentBarrier);
+	pPresentBarrierCommandList->End();
+	submissionBatch.emplace_back(pPresentBarrierCommandList);
 
-		ResourceTransitionBarrier resourceTransition(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
-		pCommandList->ResourceBarrier(1, &resourceTransition);
-		pRenderTarget->SetState(D3D12_RESOURCE_STATE_PRESENT);
+	++m_LastSubmissionFenceValue;
+	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, submissionBatch.size(), submissionBatch.data(), m_pFence, m_LastSubmissionFenceValue);
+	pRenderTarget->SetState(D3D12_RESOURCE_STATE_PRESENT);
 
-		pCommandList->End();
-		m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList);
-	}
-
+	++m_LastSubmissionFenceValue;
 	m_pSwapChain->Present(1, 0);
-	MoveToNextFrame();
+	m_pCommandQueue->Signal(m_pFence, m_LastSubmissionFenceValue);
+
+	m_FrameCompletionFenceValues[m_BackBufferIndex] = m_LastSubmissionFenceValue;
+	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+	m_pFence->WaitForSignalOnCPU(m_FrameCompletionFenceValues[m_BackBufferIndex]);
 }
 
 void DXApplication::OnDestroy()
 {
-	WaitForGPU();
+	m_pCommandQueue->Signal(m_pFence, m_LastSubmissionFenceValue);
+	m_pFence->WaitForSignalOnCPU(m_LastSubmissionFenceValue);
 }
 
 void DXApplication::OnKeyDown(UINT8 key)
@@ -1265,23 +1261,4 @@ void DXApplication::OnKeyDown(UINT8 key)
 
 void DXApplication::OnKeyUp(UINT8 key)
 {
-}
-
-void DXApplication::WaitForGPU()
-{
-	m_pCommandQueue->Signal(m_pFence, m_FenceValues[m_BackBufferIndex]);
-	m_pFence->WaitForSignalOnCPU(m_FenceValues[m_BackBufferIndex]);
-
-	++m_FenceValues[m_BackBufferIndex];
-}
-
-void DXApplication::MoveToNextFrame()
-{
-	const UINT64 currentFenceValue = m_FenceValues[m_BackBufferIndex];
-	m_pCommandQueue->Signal(m_pFence, currentFenceValue);
-
-	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-	m_pFence->WaitForSignalOnCPU(m_FenceValues[m_BackBufferIndex]);
-
-	m_FenceValues[m_BackBufferIndex] = currentFenceValue + 1;
 }

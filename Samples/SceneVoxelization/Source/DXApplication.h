@@ -5,7 +5,6 @@
 class GraphicsDevice;
 class SwapChain;
 class CommandQueue;
-class CommandList;
 class CommandListPool;
 class DescriptorHeap;
 class ColorTexture;
@@ -54,9 +53,6 @@ private:
 	virtual void OnKeyDown(UINT8 key);
 	virtual void OnKeyUp(UINT8 key);
 
-	void WaitForGPU();
-	void MoveToNextFrame();
-
 private:
 	GraphicsDevice* m_pDevice;
 	SwapChain* m_pSwapChain;
@@ -101,8 +97,8 @@ private:
 	Buffer* m_pNumDrawSpotLightShadowCastersBuffer;
 	RenderEnv* m_pRenderEnv;
 	Fence* m_pFence;
-	UINT64 m_FenceValues[kNumBackBuffers];
-	CommandList* m_CommandLists[kNumBackBuffers];
+	UINT64 m_LastSubmissionFenceValue;
+	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers];
 	UINT m_BackBufferIndex;
 
 	RenderGBufferPass* m_pRenderGBufferPass;
