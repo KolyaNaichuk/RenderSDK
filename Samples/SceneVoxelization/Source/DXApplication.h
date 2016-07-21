@@ -75,7 +75,9 @@ private:
 	Buffer* m_pCameraTransformBuffer;
 	Buffer* m_pGridBuffer;
 	Buffer* m_pGridConfigBuffer;
-	Buffer* m_pViewFrustumCullingDataBuffer;
+	Buffer* m_pViewFrustumMeshCullingDataBuffer;
+	Buffer* m_pViewFrustumSpotLightCullingDataBuffer;
+	Buffer* m_pViewFrustumPointLightCullingDataBuffer;
 	Buffer* m_pTiledLightCullingDataBuffer;
 	Buffer* m_pTiledShadingDataBuffer;
 	Buffer* m_pDrawMeshCommandBuffer;

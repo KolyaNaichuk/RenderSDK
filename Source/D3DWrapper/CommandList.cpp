@@ -199,8 +199,7 @@ void CommandList::SetCompletionFence(Fence* pFence, UINT64 fenceValue)
 
 bool CommandList::CompletedExecution()
 {
-	assert(m_pCompletionFence != nullptr);
-	return m_pCompletionFence->ReceivedSignal(m_CompletionFenceValue);
+	return ((m_pCompletionFence != nullptr) && m_pCompletionFence->ReceivedSignal(m_CompletionFenceValue));
 }
 
 CommandListPool::CommandListPool(GraphicsDevice* pDevice, D3D12_COMMAND_LIST_TYPE type)

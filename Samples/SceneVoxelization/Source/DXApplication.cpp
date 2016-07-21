@@ -111,7 +111,7 @@ struct Range
 struct ViewFrustumCullingData
 {
 	Plane m_ViewFrustumPlanes[6];
-	u32 m_NumMeshes;
+	u32 m_NumObjects;
 	Vector3u m_NotUsed1;
 	Vector4f m_NotUsed2[9];
 };
@@ -170,7 +170,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCameraTransformBuffer(nullptr)
 	, m_pGridBuffer(nullptr)
 	, m_pGridConfigBuffer(nullptr)
-	, m_pViewFrustumCullingDataBuffer(nullptr)
+	, m_pViewFrustumMeshCullingDataBuffer(nullptr)
+	, m_pViewFrustumSpotLightCullingDataBuffer(nullptr)
+	, m_pViewFrustumPointLightCullingDataBuffer(nullptr)
 	, m_pTiledLightCullingDataBuffer(nullptr)
 	, m_pTiledShadingDataBuffer(nullptr)
 	, m_pDrawMeshCommandBuffer(nullptr)
@@ -309,7 +311,9 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pSpotLightIndexPerTileBuffer);
 	SafeDelete(m_pSpotLightRangePerTileBuffer);
 	SafeDelete(m_pDrawMeshCommandBuffer);
-	SafeDelete(m_pViewFrustumCullingDataBuffer);
+	SafeDelete(m_pViewFrustumMeshCullingDataBuffer);
+	SafeDelete(m_pViewFrustumSpotLightCullingDataBuffer);
+	SafeDelete(m_pViewFrustumPointLightCullingDataBuffer);
 	SafeDelete(m_pTiledLightCullingDataBuffer);
 	SafeDelete(m_pTiledShadingDataBuffer);
 	SafeDelete(m_pGridConfigBuffer);
@@ -414,7 +418,9 @@ void DXApplication::OnInit()
 	m_pGridConfigBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &gridConfigBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pGridConfigBuffer");
 
 	ConstantBufferDesc viewFrustumCullingDataBufferDesc(sizeof(ViewFrustumCullingData));
-	m_pViewFrustumCullingDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &viewFrustumCullingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pViewFrustumCullingDataBuffer");
+	m_pViewFrustumMeshCullingDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &viewFrustumCullingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pViewFrustumMeshCullingDataBuffer");
+	m_pViewFrustumPointLightCullingDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &viewFrustumCullingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pViewFrustumPointLightCullingDataBuffer");
+	m_pViewFrustumSpotLightCullingDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &viewFrustumCullingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pViewFrustumSpotLightCullingDataBuffer");
 
 	ConstantBufferDesc tiledLightCullingDataBufferDesc(sizeof(TiledLightCullingData));
 	m_pTiledLightCullingDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &tiledLightCullingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pTiledLightCullingDataBuffer");
@@ -531,7 +537,7 @@ void DXApplication::OnInit()
 	m_pDevice->CopyDescriptor(m_pDetectVisibleMeshesResources->m_SRVHeapStart, m_pNumVisibleMeshesBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisibleMeshIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMeshBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pViewFrustumCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pViewFrustumMeshCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	if (m_pPointLightBuffer != nullptr)
 	{
@@ -551,7 +557,7 @@ void DXApplication::OnInit()
 		m_pDevice->CopyDescriptor(m_pDetectVisiblePointLightsResources->m_SRVHeapStart, m_pNumVisiblePointLightsBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisiblePointLightIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pViewFrustumCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pViewFrustumPointLightCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 
 	if (m_pSpotLightBuffer != nullptr)
@@ -572,7 +578,7 @@ void DXApplication::OnInit()
 		m_pDevice->CopyDescriptor(m_pDetectVisibleSpotLightsResources->m_SRVHeapStart, m_pNumVisibleSpotLightsBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisibleSpotLightIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pViewFrustumCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pViewFrustumSpotLightCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 	
 	TiledLightCullingPass::InitParams tiledLightCullingParams;
@@ -997,9 +1003,15 @@ void DXApplication::OnInit()
 	ViewFrustumCullingData viewFrustumCullingData;
 	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
 		viewFrustumCullingData.m_ViewFrustumPlanes[planeIndex] = mainCameraFrustum.m_Planes[planeIndex];
-	viewFrustumCullingData.m_NumMeshes = m_pMeshBatch->GetNumMeshes();
 
-	m_pViewFrustumCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
+	viewFrustumCullingData.m_NumObjects = m_pMeshBatch->GetNumMeshes();
+	m_pViewFrustumMeshCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
+
+	viewFrustumCullingData.m_NumObjects = pScene->GetNumPointLights();
+	m_pViewFrustumPointLightCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
+
+	viewFrustumCullingData.m_NumObjects = pScene->GetNumSpotLights();
+	m_pViewFrustumSpotLightCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
 
 	TiledLightCullingData tiledLightCullingData;
 	tiledLightCullingData.m_RcpScreenSize = Rcp(Vector2f((f32)bufferWidth, (f32)bufferHeight));
@@ -1100,7 +1112,7 @@ void DXApplication::OnRender()
 		m_pDetectVisibleSpotLightsPass->Record(&detectVisibleLightsParams);
 		submissionBatch.emplace_back(detectVisibleLightsParams.m_pCommandList);
 	}
-	
+	/*
 	RenderGBufferCommandsPass::RenderParams renderGBufferCommandsParams;
 	renderGBufferCommandsParams.m_pRenderEnv = m_pRenderEnv;
 	renderGBufferCommandsParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferCommandsCommandList");
@@ -1168,6 +1180,7 @@ void DXApplication::OnRender()
 	submissionBatch.emplace_back(renderShadowMapCommandsParams.m_pCommandList);
 	*/
 
+	/*
 	TiledShadingPass::RenderParams tiledShadingParams;
 	tiledShadingParams.m_pRenderEnv = m_pRenderEnv;
 	tiledShadingParams.m_pCommandList = m_pCommandListPool->Create(L"pTiledShadingCommandList");
@@ -1198,6 +1211,7 @@ void DXApplication::OnRender()
 	submissionBatch.emplace_back(visualizeMeshParams.m_pCommandList);
 	*/
 
+	/*
 	ClearVoxelGridPass::RenderParams clearGridParams;
 	clearGridParams.m_pRenderEnv = m_pRenderEnv;
 	clearGridParams.m_pCommandList = m_pCommandListPool->Create(L"pClearGridCommandList");
