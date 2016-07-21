@@ -1112,7 +1112,7 @@ void DXApplication::OnRender()
 		m_pDetectVisibleSpotLightsPass->Record(&detectVisibleLightsParams);
 		submissionBatch.emplace_back(detectVisibleLightsParams.m_pCommandList);
 	}
-	/*
+	
 	RenderGBufferCommandsPass::RenderParams renderGBufferCommandsParams;
 	renderGBufferCommandsParams.m_pRenderEnv = m_pRenderEnv;
 	renderGBufferCommandsParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferCommandsCommandList");
@@ -1121,6 +1121,7 @@ void DXApplication::OnRender()
 	m_pRenderGBufferCommandsPass->Record(&renderGBufferCommandsParams);
 	submissionBatch.emplace_back(renderGBufferCommandsParams.m_pCommandList);
 
+	/*
 	RenderGBufferPass::RenderParams renderGBufferParams;
 	renderGBufferParams.m_pRenderEnv = m_pRenderEnv;
 	renderGBufferParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferCommandList");
@@ -1142,7 +1143,7 @@ void DXApplication::OnRender()
 
 	m_pTiledLightCullingPass->Record(&tiledLightCullingParams);
 	submissionBatch.emplace_back(tiledLightCullingParams.m_pCommandList);
-
+	
 	/*
 	{
 		std::vector<ResourceTransitionBarrier> resourceTransitions;
