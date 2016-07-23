@@ -134,11 +134,14 @@ COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelGridPS.hlsl" "$(SolutionDir)Samples
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Reconstruction.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Reconstruction.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\FillGBufferVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillGBufferVS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\FillGBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillGBufferVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderGBufferCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderGBufferCommandsCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\FillGBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillGBufferPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\FillGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillGBufferPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderGBufferVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderGBufferVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderGBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderGBufferVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderGBufferPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderGBufferPS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\InjectVPLsIntoVoxelGridCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\InjectVPLsIntoVoxelGridCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\InjectVPLsIntoVoxelGridCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\InjectVPLsIntoVoxelGridCS.hlsl"
@@ -160,9 +163,6 @@ COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(Pr
 
 COPY /Y "$(SolutionDir)Shaders\CopyTexturePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CopyTexturePS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\CopyTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CopyTexturePS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\FillGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillGBufferCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\FillGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillGBufferCommandsCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\RenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderShadowMapCommandsCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderShadowMapCommandsCS.hlsl"

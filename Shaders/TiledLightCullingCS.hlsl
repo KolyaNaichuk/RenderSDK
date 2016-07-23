@@ -16,47 +16,6 @@ struct TiledLightCullingData
 
 #define NUM_THREADS_PER_TILE	(TILE_SIZE * TILE_SIZE)
 
-float4 CreatePlanePassingThroughOrigin(float3 pt1, float3 pt2)
-{
-	float3 planeNormal = normalize(cross(pt1, pt2));
-	float signedDistFromOrigin = 0.0f;
-
-	return float4(planeNormal, signedDistFromOrigin);
-}
-
-void BuildFrustumSidePlanes(out float4 viewSpaceFrusumSidePlanes[4], uint2 tileId, float2 rcpScreenSize, matrix projInvMatrix)
-{
-	uint2 screenSpaceTileTLCorner = tileId.xy * TILE_SIZE;
-	uint2 screenSpaceTileBRCorner = screenSpaceTileTLCorner.xy + TILE_SIZE;
-
-	float2 texSpaceTileTLCorner = (float2(screenSpaceTileTLCorner.xy) + 0.5f) * rcpScreenSize;
-	float2 texSpaceTileBRCorner = (float2(screenSpaceTileBRCorner.xy) + 0.5f) * rcpScreenSize;
-	float2 texSpaceTileTRCorner = float2(texSpaceTileBRCorner.x, texSpaceTileTLCorner.y);
-	float2 texSpaceTileBLCorner = float2(texSpaceTileTLCorner.x, texSpaceTileBRCorner.y);
-
-	float3 viewSpaceTileTLCorner = ComputeViewSpacePosition(texSpaceTileTLCorner, 1.0f, projInvMatrix).xyz;
-	float3 viewSpaceTileTRCorner = ComputeViewSpacePosition(texSpaceTileTRCorner, 1.0f, projInvMatrix).xyz;
-	float3 viewSpaceTileBLCorner = ComputeViewSpacePosition(texSpaceTileBLCorner, 1.0f, projInvMatrix).xyz;
-	float3 viewSpaceTileBRCorner = ComputeViewSpacePosition(texSpaceTileBRCorner, 1.0f, projInvMatrix).xyz;
-
-	viewSpaceFrusumSidePlanes[0] = CreatePlanePassingThroughOrigin(viewSpaceTileTRCorner, viewSpaceTileTLCorner);
-	viewSpaceFrusumSidePlanes[1] = CreatePlanePassingThroughOrigin(viewSpaceTileBLCorner, viewSpaceTileBRCorner);
-	viewSpaceFrusumSidePlanes[2] = CreatePlanePassingThroughOrigin(viewSpaceTileTLCorner, viewSpaceTileBLCorner);
-	viewSpaceFrusumSidePlanes[3] = CreatePlanePassingThroughOrigin(viewSpaceTileBRCorner, viewSpaceTileTRCorner);
-}
-
-bool TestSphereAgainstFrustum(float4 frustumSidePlanes[4], float frustumMinZ, float frustumMaxZ, Sphere sphere)
-{
-	bool insideOrOverlap = TestSphereAgainstPlane(frustumSidePlanes[0], sphere) &&
-		TestSphereAgainstPlane(frustumSidePlanes[1], sphere) &&
-		TestSphereAgainstPlane(frustumSidePlanes[2], sphere) &&
-		TestSphereAgainstPlane(frustumSidePlanes[3], sphere) &&
-	    (frustumMinZ < sphere.center.z + sphere.radius) &&
-	    (frustumMaxZ > sphere.center.z - sphere.radius);
-
-	return insideOrOverlap;
-}
-
 cbuffer TiledLightCullingDataBuffer : register(b0)
 {
 	TiledLightCullingData g_LightCullingData;
@@ -99,15 +58,56 @@ groupshared uint g_SpotLightIndicesPerTile[MAX_NUM_SPOT_LIGHTS];
 groupshared uint g_SpotLightIndicesOffset;
 #endif
 
+float4 CreatePlanePassingThroughOrigin(float3 pt1, float3 pt2)
+{
+	float3 planeNormal = normalize(cross(pt1, pt2));
+	float signedDistFromOrigin = 0.0f;
+
+	return float4(planeNormal, signedDistFromOrigin);
+}
+
+void BuildFrustumSidePlanes(out float4 viewSpaceFrusumSidePlanes[4], uint2 tileId)
+{
+	uint2 screenSpaceTileTLCorner = tileId.xy * TILE_SIZE;
+	uint2 screenSpaceTileBRCorner = screenSpaceTileTLCorner.xy + TILE_SIZE;
+
+	float2 texSpaceTileTLCorner = (float2(screenSpaceTileTLCorner.xy) + 0.5f) * g_LightCullingData.rcpScreenSize;
+	float2 texSpaceTileBRCorner = (float2(screenSpaceTileBRCorner.xy) + 0.5f) * g_LightCullingData.rcpScreenSize;
+	float2 texSpaceTileTRCorner = float2(texSpaceTileBRCorner.x, texSpaceTileTLCorner.y);
+	float2 texSpaceTileBLCorner = float2(texSpaceTileTLCorner.x, texSpaceTileBRCorner.y);
+
+	float3 viewSpaceTileTLCorner = ComputeViewSpacePosition(texSpaceTileTLCorner, 1.0f, g_LightCullingData.projInvMatrix).xyz;
+	float3 viewSpaceTileTRCorner = ComputeViewSpacePosition(texSpaceTileTRCorner, 1.0f, g_LightCullingData.projInvMatrix).xyz;
+	float3 viewSpaceTileBLCorner = ComputeViewSpacePosition(texSpaceTileBLCorner, 1.0f, g_LightCullingData.projInvMatrix).xyz;
+	float3 viewSpaceTileBRCorner = ComputeViewSpacePosition(texSpaceTileBRCorner, 1.0f, g_LightCullingData.projInvMatrix).xyz;
+
+	viewSpaceFrusumSidePlanes[0] = CreatePlanePassingThroughOrigin(viewSpaceTileTRCorner, viewSpaceTileTLCorner);
+	viewSpaceFrusumSidePlanes[1] = CreatePlanePassingThroughOrigin(viewSpaceTileBLCorner, viewSpaceTileBRCorner);
+	viewSpaceFrusumSidePlanes[2] = CreatePlanePassingThroughOrigin(viewSpaceTileTLCorner, viewSpaceTileBLCorner);
+	viewSpaceFrusumSidePlanes[3] = CreatePlanePassingThroughOrigin(viewSpaceTileBRCorner, viewSpaceTileTRCorner);
+}
+
+bool TestSphereAgainstFrustum(float4 frustumSidePlanes[4], float frustumMinZ, float frustumMaxZ, Sphere sphere)
+{
+	bool insideOrOverlap = TestSphereAgainstPlane(frustumSidePlanes[0], sphere) &&
+		TestSphereAgainstPlane(frustumSidePlanes[1], sphere) &&
+		TestSphereAgainstPlane(frustumSidePlanes[2], sphere) &&
+		TestSphereAgainstPlane(frustumSidePlanes[3], sphere) &&
+		(frustumMinZ < sphere.center.z + sphere.radius) &&
+		(frustumMaxZ > sphere.center.z - sphere.radius);
+
+	return insideOrOverlap;
+}
+
 #if MAX_NUM_POINT_LIGHTS > 0
-void CullPointLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth, matrix viewMatrix)
+void CullPointLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth)
 {
 	for (uint index = localThreadIndex; index < g_NumPointLightsBuffer[0]; index += NUM_THREADS_PER_TILE)
 	{
 		uint lightIndex = g_PointLightIndexBuffer[index];
 
 		Sphere viewSpaceLightBounds = g_PointLightBoundsBuffer[lightIndex];
-		viewSpaceLightBounds.center = mul(float4(viewSpaceLightBounds.center.xyz, 1.0f), viewMatrix).xyz;
+		viewSpaceLightBounds.center = mul(float4(viewSpaceLightBounds.center.xyz, 1.0f), g_LightCullingData.viewMatrix).xyz;
 
 		if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceLightBounds))
 		{
@@ -120,14 +120,14 @@ void CullPointLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePl
 #endif
 
 #if MAX_NUM_SPOT_LIGHTS > 0
-void CullSpotLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth, matrix viewMatrix)
+void CullSpotLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth)
 {
 	for (uint index = localThreadIndex; index < g_NumSpotLightsBuffer[0]; index += NUM_THREADS_PER_TILE)
 	{
 		uint lightIndex = g_SpotLightIndexBuffer[index];
 
 		Sphere viewSpaceLightBounds = g_SpotLightBoundsBuffer[lightIndex];
-		viewSpaceLightBounds.center = mul(float4(viewSpaceLightBounds.center.xyz, 1.0f), viewMatrix).xyz;
+		viewSpaceLightBounds.center = mul(float4(viewSpaceLightBounds.center.xyz, 1.0f), g_LightCullingData.viewMatrix).xyz;
 
 		if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceLightBounds))
 		{
@@ -176,13 +176,13 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 
 #if (MAX_NUM_POINT_LIGHTS > 0) || (MAX_NUM_SPOT_LIGHTS > 0)
 	float4 viewSpaceFrusumSidePlanes[4];
-	BuildFrustumSidePlanes(viewSpaceFrusumSidePlanes, tileId.xy, g_LightCullingData.rcpScreenSize, g_LightCullingData.projInvMatrix);
+	BuildFrustumSidePlanes(viewSpaceFrusumSidePlanes, tileId.xy);
 #endif
 
 	uint tileIndex = tileId.y * NUM_TILES_X + tileId.x;
 
 #if MAX_NUM_POINT_LIGHTS > 0
-	CullPointLightsPerTile(localThreadIndex, viewSpaceFrusumSidePlanes, viewSpaceMinDepthPerTile, viewSpaceMaxDepthPerTile, g_LightCullingData.viewMatrix);
+	CullPointLightsPerTile(localThreadIndex, viewSpaceFrusumSidePlanes, viewSpaceMinDepthPerTile, viewSpaceMaxDepthPerTile);
 	GroupMemoryBarrierWithGroupSync();
 
 	if (localThreadIndex == 0)
@@ -201,7 +201,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 #endif
 	
 #if MAX_NUM_SPOT_LIGHTS > 0
-	CullSpotLightsPerTile(localThreadIndex, viewSpaceFrusumSidePlanes, viewSpaceMinDepthPerTile, viewSpaceMaxDepthPerTile, g_LightCullingData.viewMatrix);
+	CullSpotLightsPerTile(localThreadIndex, viewSpaceFrusumSidePlanes, viewSpaceMinDepthPerTile, viewSpaceMaxDepthPerTile);
 	GroupMemoryBarrierWithGroupSync();
 
 	if (localThreadIndex == 0)

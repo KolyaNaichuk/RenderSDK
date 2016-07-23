@@ -466,12 +466,6 @@
     <None Include="..\Shaders\Packing.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\FillGBufferVS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\FillGBufferPS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\InjectVPLsIntoVoxelGridCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -482,9 +476,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\OverlapTest.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\FillGBufferCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\RenderShadowMapCommandsCS.hlsl">
@@ -503,6 +494,15 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\RenderTiledShadowMapGS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\RenderGBufferPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\RenderGBufferVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\RenderGBufferCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -26,7 +26,7 @@ RenderGBufferCommandsPass::RenderGBufferCommandsPass(InitParams* pParams)
 		ShaderMacro("THREAD_GROUP_SIZE", threadGroupSizeStr.c_str()),
 		ShaderMacro()
 	};
-	Shader computeShader(L"Shaders//FillGBufferCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//RenderGBufferCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
 
 	D3D12_DESCRIPTOR_RANGE srvDescriptorRanges[] = {SRVDescriptorRange(3, 0), UAVDescriptorRange(1, 0)};
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];

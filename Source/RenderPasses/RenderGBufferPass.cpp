@@ -24,8 +24,8 @@ RenderGBufferPass::RenderGBufferPass(InitParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 
-	Shader vertexShader(L"Shaders//FillGBufferVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//FillGBufferPS.hlsl", "Main", "ps_4_0");
+	Shader vertexShader(L"Shaders//RenderGBufferVS.hlsl", "Main", "vs_4_0");
+	Shader pixelShader(L"Shaders//RenderGBufferPS.hlsl", "Main", "ps_4_0");
 
 	D3D12_DESCRIPTOR_RANGE descriptorRangesVS[] = {CBVDescriptorRange(1, 0)};
 	D3D12_DESCRIPTOR_RANGE descriptorRangesPS[] = {SRVDescriptorRange(1, 0)};
