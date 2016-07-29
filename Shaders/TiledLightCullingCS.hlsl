@@ -187,10 +187,12 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 
 	if (localThreadIndex == 0)
 	{
-		uint lightIndicesOffset;
-		InterlockedAdd(g_NumPointLightsPerTileBuffer[0], g_NumPointLightsPerTile, lightIndicesOffset);
-		g_PointLightIndicesOffset = lightIndicesOffset;
-
+		uint lightIndicesOffset = 0;
+		if (g_NumPointLightsPerTile > 0)
+		{
+			InterlockedAdd(g_NumPointLightsPerTileBuffer[0], g_NumPointLightsPerTile, lightIndicesOffset);
+			g_PointLightIndicesOffset = lightIndicesOffset;
+		}
 		g_PointLightRangePerTileBuffer[tileIndex].start = lightIndicesOffset;
 		g_PointLightRangePerTileBuffer[tileIndex].length = g_NumPointLightsPerTile;
 	}
@@ -206,10 +208,12 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 
 	if (localThreadIndex == 0)
 	{
-		uint lightIndicesOffset;
-		InterlockedAdd(g_NumSpotLightsPerTileBuffer[0], g_NumSpotLightsPerTile, lightIndicesOffset);
-		g_SpotLightIndicesOffset = lightIndicesOffset;
-
+		uint lightIndicesOffset = 0;
+		if (g_NumSpotLightsPerTile > 0)
+		{
+			InterlockedAdd(g_NumSpotLightsPerTileBuffer[0], g_NumSpotLightsPerTile, lightIndicesOffset);
+			g_SpotLightIndicesOffset = lightIndicesOffset;
+		}
 		g_SpotLightRangePerTileBuffer[tileIndex].start = lightIndicesOffset;
 		g_SpotLightRangePerTileBuffer[tileIndex].length = g_NumSpotLightsPerTile;
 	}

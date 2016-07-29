@@ -1121,7 +1121,6 @@ void DXApplication::OnRender()
 	m_pRenderGBufferCommandsPass->Record(&renderGBufferCommandsParams);
 	submissionBatch.emplace_back(renderGBufferCommandsParams.m_pCommandList);
 
-	/*
 	RenderGBufferPass::RenderParams renderGBufferParams;
 	renderGBufferParams.m_pRenderEnv = m_pRenderEnv;
 	renderGBufferParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferCommandList");
@@ -1181,7 +1180,6 @@ void DXApplication::OnRender()
 	submissionBatch.emplace_back(renderShadowMapCommandsParams.m_pCommandList);
 	*/
 
-	/*
 	TiledShadingPass::RenderParams tiledShadingParams;
 	tiledShadingParams.m_pRenderEnv = m_pRenderEnv;
 	tiledShadingParams.m_pCommandList = m_pCommandListPool->Create(L"pTiledShadingCommandList");
