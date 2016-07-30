@@ -1,6 +1,8 @@
 RenderSDK/Bin/
 RenderSDK.opensdf
 RenderSDK.sdf
+RenderSDK.VC.opendb
+RenderSDK.VC.db
 Library/
 Samples/Bin/
 Samples/SceneVoxelization/Win32/
@@ -9,6 +11,4 @@ Samples/HelloRectangle/Win32/
 Samples/HelloRectangle/Shaders/
 Samples/ToneMapping/Win32/
 Samples/ToneMapping/Shaders/
-
 .vs/RenderSDK/v14/.suo
-RenderSDK.VC.opendb
