@@ -1,9 +1,9 @@
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsFactory.h"
-#include "D3DWrapper/CommandQueue.h"
-#include "D3DWrapper/CommandList.h"
-#include "D3DWrapper/Fence.h"
 #include "D3DWrapper/GraphicsResource.h"
+#include "D3DWrapper/CommandList.h"
+#include "D3DWrapper/CommandQueue.h"
+#include "D3DWrapper/Fence.h"
 
 void GetHardwareAdapter(GraphicsFactory* pFactory, D3D_FEATURE_LEVEL minFeatureLevel, IDXGIAdapter1** ppAdapter)
 {
@@ -12,10 +12,10 @@ void GetHardwareAdapter(GraphicsFactory* pFactory, D3D_FEATURE_LEVEL minFeatureL
 
 	for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != pFactory->GetDXGIObject()->EnumAdapters1(adapterIndex, &dxgiAdapter); ++adapterIndex)
 	{
-		DXGI_ADAPTER_DESC1 desc;
-		dxgiAdapter->GetDesc1(&desc);
+		DXGI_ADAPTER_DESC1 adapterDesc;
+		dxgiAdapter->GetDesc1(&adapterDesc);
 
-		if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+		if ((adapterDesc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) != 0)
 			continue;
 
 		if (SUCCEEDED(D3D12CreateDevice(dxgiAdapter.Get(), minFeatureLevel, _uuidof(ID3D12Device), nullptr)))

@@ -336,12 +336,12 @@ DXApplication::~DXApplication()
 void DXApplication::OnInit()
 {
 	GraphicsFactory factory;
-	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_12_0, true);
+	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_11_0);
 
 	D3D12_FEATURE_DATA_D3D12_OPTIONS supportedOptions;
 	m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &supportedOptions, sizeof(supportedOptions));
 	//assert(supportedOptions.ConservativeRasterizationTier != D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED);
-	assert(supportedOptions.ROVsSupported == TRUE);
+	//assert(supportedOptions.ROVsSupported == TRUE);
 
 	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
@@ -854,7 +854,7 @@ void DXApplication::OnInit()
 	createGridParams.m_pRenderEnv = m_pRenderEnv;
 	createGridParams.m_pMeshBatch = m_pMeshBatch;
 
-	m_pCreateVoxelGridPass = new CreateVoxelGridPass(&createGridParams);
+	//m_pCreateVoxelGridPass = new CreateVoxelGridPass(&createGridParams);
 
 	m_pCreateVoxelGridResources->m_RequiredResourceStates.emplace_back(pMaterialBuffer, pMaterialBuffer->GetReadState());
 	m_pCreateVoxelGridResources->m_RequiredResourceStates.emplace_back(m_pGridBuffer, m_pGridBuffer->GetWriteState());	
@@ -1048,7 +1048,6 @@ void DXApplication::OnRender()
 	std::vector<CommandList*> submissionBatch;
 
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-	
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderTarget->GetRTVHandle();
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDepthTexture->GetDSVHandle();
 	
@@ -1231,7 +1230,6 @@ void DXApplication::OnRender()
 	m_pCreateVoxelGridPass->Record(&createGridParams);
 	submissionBatch.emplace_back(createGridParams.m_pCommandList);
 	
-	/*
 	VisualizeVoxelGridPass::RenderParams visualizeGridParams;
 	visualizeGridParams.m_pRenderEnv = m_pRenderEnv;
 	visualizeGridParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeGridCommandList");
