@@ -1,9 +1,5 @@
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsFactory.h"
-#include "D3DWrapper/GraphicsResource.h"
-#include "D3DWrapper/CommandList.h"
-#include "D3DWrapper/CommandQueue.h"
-#include "D3DWrapper/Fence.h"
 
 void GetHardwareAdapter(GraphicsFactory* pFactory, D3D_FEATURE_LEVEL minFeatureLevel, IDXGIAdapter1** ppAdapter)
 {
