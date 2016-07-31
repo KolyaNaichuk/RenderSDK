@@ -3,6 +3,7 @@ RenderSDK.opensdf
 RenderSDK.sdf
 RenderSDK.VC.opendb
 RenderSDK.VC.db
+RenderSDK.VC.VC.opendb
 Library/
 Samples/Bin/
 Samples/SceneVoxelization/Win32/
