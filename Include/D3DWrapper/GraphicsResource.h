@@ -266,8 +266,8 @@ public:
 	D3D12_RESOURCE_STATES GetReadState() const { return m_ReadState; }
 	D3D12_RESOURCE_STATES GetWriteState() const { return m_WriteState; }
 	
-	template <typename T>
-	void Write(const T* pInputData, SIZE_T numBytes);
+	void Write(const void* pInputData, SIZE_T numBytes);
+	void Read(void* pOutputData, SIZE_T numBytes);
 
 protected:
 	ComPtr<ID3D12Resource> m_D3DResource;
@@ -276,21 +276,6 @@ protected:
 	D3D12_RESOURCE_STATES m_ReadState;
 	D3D12_RESOURCE_STATES m_WriteState;
 };
-
-template <typename T>
-void GraphicsResource::Write(const T* pInputData, SIZE_T numBytes)
-{
-	const UINT subresource = 0;
-	T* pResourceData = nullptr;
-
-	MemoryRange readRange(0, 0);
-	VerifyD3DResult(GetD3DObject()->Map(subresource, &readRange, reinterpret_cast<void**>(&pResourceData)));
-	
-	std::memcpy(pResourceData, pInputData, numBytes);
-	
-	MemoryRange writtenRange(0, numBytes);
-	GetD3DObject()->Unmap(subresource, &writtenRange);
-}
 
 class ColorTexture : public GraphicsResource
 {

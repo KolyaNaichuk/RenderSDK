@@ -667,6 +667,34 @@ GraphicsResource::GraphicsResource(const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOU
 {
 }
 
+void GraphicsResource::Write(const void* pInputData, SIZE_T numBytes)
+{
+	const UINT subresource = 0;
+	void* pResourceData = nullptr;
+
+	MemoryRange readRange(0, 0);
+	VerifyD3DResult(GetD3DObject()->Map(subresource, &readRange, reinterpret_cast<void**>(&pResourceData)));
+
+	std::memcpy(pResourceData, pInputData, numBytes);
+
+	MemoryRange writtenRange(0, numBytes);
+	GetD3DObject()->Unmap(subresource, &writtenRange);
+}
+
+void GraphicsResource::Read(void* pOutputData, SIZE_T numBytes)
+{
+	const UINT subresource = 0;
+	void* pResourceData = nullptr;
+
+	MemoryRange readRange(0, numBytes);
+	VerifyD3DResult(GetD3DObject()->Map(subresource, &readRange, reinterpret_cast<void**>(&pResourceData)));
+
+	std::memcpy(pOutputData, pResourceData, numBytes);
+
+	MemoryRange writtenRange(0, 0);
+	GetD3DObject()->Unmap(subresource, &writtenRange);
+}
+
 HeapProperties::HeapProperties(D3D12_HEAP_TYPE type)
 {
 	Type = type;

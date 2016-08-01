@@ -235,6 +235,12 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pNumVisibleSpotLightsBuffer(nullptr)
 	, m_pVisibleSpotLightIndexBuffer(nullptr)
 	, m_pCamera(nullptr)
+#ifdef FOR_DEBUG_ONLY
+	, m_pDebugShadowCastingSpotLightIndexBuffer(nullptr)
+	, m_pDebugNumShadowCastingSpotLightsBuffer(nullptr)
+	, m_pDebugDrawSpotLightShadowCasterCommandBuffer(nullptr)
+	, m_pDebugNumDrawSpotLightShadowCastersBuffer(nullptr)
+#endif // FOR_DEBUG_ONLY
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
@@ -334,6 +340,13 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pSwapChain);
 	SafeDelete(m_pDevice);
 	SafeDelete(m_pViewport);
+
+#ifdef FOR_DEBUG_ONLY
+	SafeDelete(m_pDebugShadowCastingSpotLightIndexBuffer);
+	SafeDelete(m_pDebugNumShadowCastingSpotLightsBuffer);
+	SafeDelete(m_pDebugDrawSpotLightShadowCasterCommandBuffer);
+	SafeDelete(m_pDebugNumDrawSpotLightShadowCastersBuffer);
+#endif // FOR_DEBUG_ONLY
 }
 
 void DXApplication::OnInit()
@@ -341,10 +354,12 @@ void DXApplication::OnInit()
 	GraphicsFactory factory;
 	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_11_0);
 
+#ifdef ENABLE_INDIRECT_LIGHTING
 	D3D12_FEATURE_DATA_D3D12_OPTIONS supportedOptions;
 	m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &supportedOptions, sizeof(supportedOptions));
-	//assert(supportedOptions.ConservativeRasterizationTier != D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED);
-	//assert(supportedOptions.ROVsSupported == TRUE);
+	assert(supportedOptions.ConservativeRasterizationTier != D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED);
+	assert(supportedOptions.ROVsSupported == TRUE);
+#endif // ENABLE_INDIRECT_LIGHTING
 
 	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
@@ -723,6 +738,20 @@ void DXApplication::OnInit()
 
 		FormattedBufferDesc numShadowCastersBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
 		m_pNumDrawSpotLightShadowCastersBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numShadowCastersBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumDrawSpotLightShadowCastersBuffer");
+
+#ifdef FOR_DEBUG_ONLY
+		FormattedBufferDesc debugShadowCastingLightIndexBufferDesc(m_pMeshBatch->GetNumMeshes() * pScene->GetNumSpotLights(), DXGI_FORMAT_R32_UINT, false, false);
+		m_pDebugShadowCastingSpotLightIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugShadowCastingLightIndexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugShadowCastingSpotLightIndexBuffer");
+
+		FormattedBufferDesc debugNumShadowCastingLightsBufferDesc(1, DXGI_FORMAT_R32_UINT, false, false);
+		m_pDebugNumShadowCastingSpotLightsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugNumShadowCastingLightsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugNumShadowCastingSpotLightsBuffer");
+		
+		StructuredBufferDesc debugDrawCommandBufferDesc(m_pMeshBatch->GetNumMeshes(), sizeof(DrawMeshCommand), false, false);
+		m_pDebugDrawSpotLightShadowCasterCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugDrawCommandBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugDrawSpotLightShadowCasterCommandBuffer");
+		
+		FormattedBufferDesc debugNumShadowCastersBufferDesc(1, DXGI_FORMAT_R32_UINT, false, false);
+		m_pDebugNumDrawSpotLightShadowCastersBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugNumShadowCastersBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugNumDrawSpotLightShadowCastersBuffer");
+#endif // FOR_DEBUG_ONLY
 	}
 
 	m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer->GetReadState());
@@ -857,11 +886,12 @@ void DXApplication::OnInit()
 	m_pDevice->CopyDescriptor(m_pClearVoxelGridResources->m_SRVHeapStart, m_pGridConfigBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+#ifdef ENABLE_INDIRECT_LIGHTING
 	CreateVoxelGridPass::InitParams createGridParams;
 	createGridParams.m_pRenderEnv = m_pRenderEnv;
 	createGridParams.m_pMeshBatch = m_pMeshBatch;
 
-	//m_pCreateVoxelGridPass = new CreateVoxelGridPass(&createGridParams);
+	m_pCreateVoxelGridPass = new CreateVoxelGridPass(&createGridParams);
 
 	m_pCreateVoxelGridResources->m_RequiredResourceStates.emplace_back(pMaterialBuffer, pMaterialBuffer->GetReadState());
 	m_pCreateVoxelGridResources->m_RequiredResourceStates.emplace_back(m_pGridBuffer, m_pGridBuffer->GetWriteState());	
@@ -888,6 +918,7 @@ void DXApplication::OnInit()
 	visualizeGridParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
 	
 	m_pVisualizeVoxelGridPass = new VisualizeVoxelGridPass(&visualizeGridParams);
+#endif // ENABLE_INDIRECT_LIGHTING
 
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
@@ -1164,7 +1195,7 @@ void DXApplication::OnRender()
 	m_pCopyTexturePass->Record(&copyTextureParams);
 	submissionBatch.emplace_back(copyTextureParams.m_pCommandList);
 
-	/*
+#ifdef ENABLE_INDIRECT_LIGHTING
 	ClearVoxelGridPass::RenderParams clearGridParams;
 	clearGridParams.m_pRenderEnv = m_pRenderEnv;
 	clearGridParams.m_pCommandList = m_pCommandListPool->Create(L"pClearGridCommandList");
@@ -1193,7 +1224,7 @@ void DXApplication::OnRender()
 	
 	m_pVisualizeVoxelGridPass->Record(&visualizeGridParams);
 	submissionBatch.emplace_back(visualizeGridParams.m_pCommandList);
-	*/
+#endif // ENABLE_INDIRECT_LIGHTING
 	
 	ResourceTransitionBarrier presentBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	CommandList* pPresentBarrierCommandList = m_pCommandListPool->Create(L"pPresentBarrierCommandList");
@@ -1202,9 +1233,67 @@ void DXApplication::OnRender()
 	pPresentBarrierCommandList->End();
 	submissionBatch.emplace_back(pPresentBarrierCommandList);
 
+#ifdef FOR_DEBUG_ONLY
+	ResourceTransitionBarrier debugBarriers[] =
+	{
+		ResourceTransitionBarrier(m_pShadowCastingSpotLightIndexBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE),
+		ResourceTransitionBarrier(m_pNumShadowCastingSpotLightsBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE),
+		ResourceTransitionBarrier(m_pDrawSpotLightShadowCasterCommandBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE),
+		ResourceTransitionBarrier(m_pNumDrawSpotLightShadowCastersBuffer, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE)
+	};
+
+	CommandList* pDebugCommandList = m_pCommandListPool->Create(L"pDebugCommandList");
+	pDebugCommandList->Begin();
+	pDebugCommandList->ResourceBarrier(ARRAYSIZE(debugBarriers), &debugBarriers[0]);
+	pDebugCommandList->CopyResource(m_pDebugShadowCastingSpotLightIndexBuffer, m_pShadowCastingSpotLightIndexBuffer);
+	pDebugCommandList->CopyResource(m_pDebugNumShadowCastingSpotLightsBuffer, m_pNumShadowCastingSpotLightsBuffer);
+	pDebugCommandList->CopyResource(m_pDebugDrawSpotLightShadowCasterCommandBuffer, m_pDrawSpotLightShadowCasterCommandBuffer);
+	pDebugCommandList->CopyResource(m_pDebugNumDrawSpotLightShadowCastersBuffer, m_pNumDrawSpotLightShadowCastersBuffer);
+	pDebugCommandList->End();
+
+	submissionBatch.emplace_back(pDebugCommandList);
+#endif // FOR_DEBUG_ONLY
+
 	++m_LastSubmissionFenceValue;
 	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, submissionBatch.size(), submissionBatch.data(), m_pFence, m_LastSubmissionFenceValue);
 	pRenderTarget->SetState(D3D12_RESOURCE_STATE_PRESENT);
+
+#ifdef FOR_DEBUG_ONLY
+	m_pFence->WaitForSignalOnCPU(m_LastSubmissionFenceValue);
+	OutputDebugStringA("1.Debug =========================\n");
+
+	u32 debugNumShadowCastingSpotLights = 0;
+	m_pDebugNumShadowCastingSpotLightsBuffer->Read(&debugNumShadowCastingSpotLights, sizeof(u32));
+	OutputDebugStringA(("NumShadowCastingSpotLights: " + std::to_string(debugNumShadowCastingSpotLights)).c_str());
+	OutputDebugStringA("\n");
+
+	std::vector<u32> debugShadowCastingSpotLightIndices(debugNumShadowCastingSpotLights);
+	m_pDebugShadowCastingSpotLightIndexBuffer->Read(debugShadowCastingSpotLightIndices.data(), debugNumShadowCastingSpotLights * sizeof(u32));
+	for (u32 i = 0; i < debugNumShadowCastingSpotLights; ++i)
+		OutputDebugStringA(("\t" + std::to_string(i) + ".light index: " + std::to_string(debugShadowCastingSpotLightIndices[i]) + "\n").c_str());
+	OutputDebugStringA("\n");
+	
+	u32 debugNumDrawSpotLightShadowCasters = 0;
+	m_pDebugNumDrawSpotLightShadowCastersBuffer->Read(&debugNumDrawSpotLightShadowCasters, sizeof(u32));
+	OutputDebugStringA(("NumDrawSpotLightShadowCasters: " + std::to_string(debugNumDrawSpotLightShadowCasters)).c_str());
+	OutputDebugStringA("\n");
+
+	std::vector<DrawMeshCommand> debugDrawSpotLightShadowCasterCommands(debugNumDrawSpotLightShadowCasters);
+	m_pDebugDrawSpotLightShadowCasterCommandBuffer->Read(debugDrawSpotLightShadowCasterCommands.data(), debugNumDrawSpotLightShadowCasters * sizeof(DrawMeshCommand));
+	for (u32 i = 0; i < debugNumDrawSpotLightShadowCasters; ++i)
+	{
+		const DrawMeshCommand& drawCommand = debugDrawSpotLightShadowCasterCommands[i];
+		OutputDebugStringA((std::to_string(i) + ".Command:\n").c_str());
+		OutputDebugStringA(("\tlightIndexStart: " + std::to_string(drawCommand.m_Root32BitConstant) + "\n").c_str());
+		OutputDebugStringA(("\tIndexCountPerInstance: " + std::to_string(drawCommand.m_DrawArgs.IndexCountPerInstance) + "\n").c_str());
+		OutputDebugStringA(("\tinstanceCount: " + std::to_string(drawCommand.m_DrawArgs.InstanceCount) + "\n").c_str());
+		OutputDebugStringA(("\tstartIndexLocation: " + std::to_string(drawCommand.m_DrawArgs.StartIndexLocation) + "\n").c_str());
+		OutputDebugStringA(("\tbaseVertexLocation: " + std::to_string(drawCommand.m_DrawArgs.BaseVertexLocation) + "\n").c_str());
+		OutputDebugStringA(("\tstartInstanceLocation: " + std::to_string(drawCommand.m_DrawArgs.StartInstanceLocation) + "\n").c_str());
+	}
+
+	OutputDebugStringA("2.Debug =========================\n");
+#endif // FOR_DEBUG_ONLY
 
 	++m_LastSubmissionFenceValue;
 	m_pSwapChain->Present(1, 0);
