@@ -202,10 +202,10 @@
     <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CopyTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\RenderGBufferCommandsPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CreateRenderGBufferCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\InjectVPLsIntoVoxelGridPass.h" />
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\RenderShadowMapCommandsPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CreateRenderShadowMapCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\RenderTiledShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\ScaleTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledLightCullingPass.h" />
@@ -267,10 +267,10 @@
     <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CopyTexturePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\RenderGBufferCommandsPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CreateRenderGBufferCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\InjectVPLsIntoVoxelGridPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\RenderShadowMapCommandsPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CreateRenderShadowMapCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\RenderTiledShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ScaleTexturePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledLightCullingPass.cpp" />
@@ -456,7 +456,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\RenderGBufferCommandsCS.hlsl">
+    <None Include="..\Shaders\CreateRenderGBufferCommandsCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
@@ -469,7 +469,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\RenderShadowMapCommandsCS.hlsl">
+    <None Include="..\Shaders\CreateRenderShadowMapCommandsCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>

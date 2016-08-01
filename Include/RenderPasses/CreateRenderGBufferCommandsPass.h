@@ -8,7 +8,7 @@ class CommandList;
 struct RenderEnv;
 struct BindingResourceList;
 
-class RenderGBufferCommandsPass
+class CreateRenderGBufferCommandsPass
 {
 public:
 	struct InitParams
@@ -23,8 +23,8 @@ public:
 		BindingResourceList* m_pResources;
 	};
 
-	RenderGBufferCommandsPass(InitParams* pParams);
-	~RenderGBufferCommandsPass();
+	CreateRenderGBufferCommandsPass(InitParams* pParams);
+	~CreateRenderGBufferCommandsPass();
 
 	void Record(RenderParams* pParams);
 

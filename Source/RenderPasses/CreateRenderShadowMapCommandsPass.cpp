@@ -1,4 +1,4 @@
-#include "RenderPasses/RenderShadowMapCommandsPass.h"
+#include "RenderPasses/CreateRenderShadowMapCommandsPass.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
@@ -13,7 +13,7 @@ enum RootParams
 	kNumRootParams
 };
 
-RenderShadowMapCommandsPass::RenderShadowMapCommandsPass(InitParams* pParams)
+CreateRenderShadowMapCommandsPass::CreateRenderShadowMapCommandsPass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 	, m_pCommandSignature(nullptr)
@@ -38,7 +38,7 @@ RenderShadowMapCommandsPass::RenderShadowMapCommandsPass(InitParams* pParams)
 		ShaderMacro("MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER", maxNumSpotLightsPerShadowCasterStr.c_str()),
 		ShaderMacro()
 	};
-	Shader computeShader(L"Shaders//RenderShadowMapCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//CreateRenderShadowMapCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
 
 	std::vector<D3D12_DESCRIPTOR_RANGE> srvDescriptorRanges;
 	srvDescriptorRanges.push_back(SRVDescriptorRange(3, 0));
@@ -58,27 +58,27 @@ RenderShadowMapCommandsPass::RenderShadowMapCommandsPass(InitParams* pParams)
 	rootParams[kSRVRootParam] = RootDescriptorTableParameter(srvDescriptorRanges.size(), &srvDescriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"RenderShadowMapCommandsPass::m_pRootSignature");
+	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CreateRenderShadowMapCommandsPass::m_pRootSignature");
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
-	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"RenderShadowMapCommandsPass::m_pPipelineState");
+	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CreateRenderShadowMapCommandsPass::m_pPipelineState");
 
 	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] = {DispatchArgument()};
 	CommandSignatureDesc commandSignatureDesc(sizeof(D3D12_DISPATCH_ARGUMENTS), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
-	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, nullptr, &commandSignatureDesc, L"RenderShadowMapCommandsPass::m_pCommandSignature");
+	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, nullptr, &commandSignatureDesc, L"CreateRenderShadowMapCommandsPass::m_pCommandSignature");
 }
 
-RenderShadowMapCommandsPass::~RenderShadowMapCommandsPass()
+CreateRenderShadowMapCommandsPass::~CreateRenderShadowMapCommandsPass()
 {
 	SafeDelete(m_pCommandSignature);
 	SafeDelete(m_pRootSignature);
 	SafeDelete(m_pPipelineState);
 }
 
-void RenderShadowMapCommandsPass::Record(RenderParams* pParams)
+void CreateRenderShadowMapCommandsPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;

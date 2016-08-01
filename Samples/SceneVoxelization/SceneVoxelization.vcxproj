@@ -134,8 +134,8 @@ COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelGridPS.hlsl" "$(SolutionDir)Samples
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Reconstruction.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Reconstruction.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\RenderGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderGBufferCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\RenderGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderGBufferCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateRenderGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateRenderGBufferCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateRenderGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateRenderGBufferCommandsCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\RenderGBufferVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderGBufferVS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderGBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderGBufferVS.hlsl"
@@ -164,8 +164,8 @@ COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(Pr
 COPY /Y "$(SolutionDir)Shaders\CopyTexturePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CopyTexturePS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\CopyTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CopyTexturePS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\RenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderShadowMapCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\RenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Foundation.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Foundation.hlsl"

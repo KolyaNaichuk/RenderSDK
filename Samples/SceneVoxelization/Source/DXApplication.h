@@ -15,29 +15,23 @@ class Fence;
 class Camera;
 class MeshBatch;
 class LightBuffer;
-class RenderGBufferCommandsPass;
+class CreateRenderGBufferCommandsPass;
 class RenderGBufferPass;
 class ClearVoxelGridPass;
 class CreateVoxelGridPass;
 class InjectVPLsIntoVoxelGridPass;
 class VisualizeVoxelGridPass;
-class VisualizeMeshPass;
 class CopyTexturePass;
 class TiledLightCullingPass;
 class TiledShadingPass;
 class ViewFrustumCullingPass;
-class RenderShadowMapCommandsPass;
+class CreateRenderShadowMapCommandsPass;
 class RenderTiledShadowMapPass;
 
 struct HeapProperties;
 struct RenderEnv;
 struct BindingResourceList;
 struct Viewport;
-
-enum
-{ 
-	kNumBackBuffers = 3
-};
 
 class DXApplication : public Application
 {
@@ -54,12 +48,15 @@ private:
 	virtual void OnKeyUp(UINT8 key);
 
 private:
+	enum { kNumBackBuffers = 3 };
+
 	GraphicsDevice* m_pDevice;
 	SwapChain* m_pSwapChain;
 	CommandQueue* m_pCommandQueue;
 	CommandListPool* m_pCommandListPool;
-	HeapProperties* m_pDefaultHeapProps;
 	HeapProperties* m_pUploadHeapProps;
+	HeapProperties* m_pDefaultHeapProps;
+	HeapProperties* m_pReadbackHeapProps;
 	DescriptorHeap* m_pShaderInvisibleRTVHeap;
 	DescriptorHeap* m_pShaderInvisibleDSVHeap;
 	DescriptorHeap* m_pShaderInvisibleSRVHeap;
@@ -123,9 +120,6 @@ private:
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridPass;
 	BindingResourceList* m_VisualizeVoxelGridResources[kNumBackBuffers];
 
-	VisualizeMeshPass* m_pVisualizeMeshPass;
-	BindingResourceList* m_VisualizeMeshResources[kNumBackBuffers];
-
 	ViewFrustumCullingPass* m_pDetectVisibleMeshesPass;
 	BindingResourceList* m_pDetectVisibleMeshesResources;
 
@@ -135,13 +129,14 @@ private:
 	ViewFrustumCullingPass* m_pDetectVisibleSpotLightsPass;
 	BindingResourceList* m_pDetectVisibleSpotLightsResources;
 
-	RenderGBufferCommandsPass* m_pRenderGBufferCommandsPass;
-	BindingResourceList* m_pRenderGBufferCommandsResources;
+	CreateRenderGBufferCommandsPass* m_pCreateRenderGBufferCommandsPass;
+	BindingResourceList* m_pCreateRenderGBufferCommandsResources;
 
-	RenderShadowMapCommandsPass* m_pRenderShadowMapCommandsPass;
-	BindingResourceList* m_pRenderShadowMapCommandsResources;
-	Buffer* m_pRenderShadowMapCommandsArgumentBuffer;
-
+	BindingResourceList* m_pCreateRenderShadowMapCommandsArgumentBufferResources;
+	CreateRenderShadowMapCommandsPass* m_pCreateRenderShadowMapCommandsPass;
+	BindingResourceList* m_pCreateRenderShadowMapCommandsResources;
+	Buffer* m_pCreateRenderShadowMapCommandsArgumentBuffer;
+	
 	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass;
 	BindingResourceList* m_pRenderSpotLightTiledShadowMapResources;
 

@@ -153,9 +153,6 @@
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\RenderShadowMapCommandsPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\RenderTiledShadowMapPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -175,9 +172,6 @@
       <Filter>RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\RenderGBufferCommandsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\D3DWrapper\GraphicsDevice.h">
@@ -224,6 +218,12 @@
     </ClInclude>
     <ClInclude Include="..\Include\D3DWrapper\Common.h">
       <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateRenderGBufferCommandsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateRenderShadowMapCommandsPass.h">
+      <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -353,9 +353,6 @@
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\RenderShadowMapCommandsPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\RenderTiledShadowMapPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
@@ -375,9 +372,6 @@
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelGridPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\RenderGBufferCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\D3DWrapper\GraphicsDevice.cpp">
@@ -415,6 +409,12 @@
     </ClCompile>
     <ClCompile Include="..\Source\D3DWrapper\GraphicsResource.cpp">
       <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateRenderGBufferCommandsPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateRenderShadowMapCommandsPass.cpp">
+      <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -478,9 +478,6 @@
     <None Include="..\Shaders\OverlapTest.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\RenderShadowMapCommandsCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\ViewFrustumCullingCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -502,7 +499,10 @@
     <None Include="..\Shaders\RenderGBufferVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\RenderGBufferCommandsCS.hlsl">
+    <None Include="..\Shaders\CreateRenderGBufferCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateRenderShadowMapCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

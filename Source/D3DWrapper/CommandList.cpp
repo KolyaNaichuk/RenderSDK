@@ -158,7 +158,7 @@ void CommandList::ExecuteIndirect(CommandSignature* pCommandSignature, UINT maxC
 {
 	m_D3DCommandList->ExecuteIndirect(pCommandSignature->GetD3DObject(), maxCommandCount,
 		pArgumentBuffer->GetD3DObject(), argumentBufferOffset,
-		pCountBuffer->GetD3DObject(), countBufferOffset);
+		(pCountBuffer != nullptr) ? pCountBuffer->GetD3DObject() : 0, countBufferOffset);
 }
 
 void CommandList::ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, const FLOAT clearColor[4])

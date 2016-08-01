@@ -13,6 +13,7 @@ struct RenderEnv
 		, m_pCommandListPool(nullptr)
 		, m_pUploadHeapProps(nullptr)
 		, m_pDefaultHeapProps(nullptr)
+		, m_pReadbackHeapProps(nullptr)
 		, m_pShaderInvisibleRTVHeap(nullptr)
 		, m_pShaderInvisibleDSVHeap(nullptr)
 		, m_pShaderInvisibleSRVHeap(nullptr)
@@ -26,6 +27,7 @@ struct RenderEnv
 
 	HeapProperties* m_pUploadHeapProps;
 	HeapProperties* m_pDefaultHeapProps;
+	HeapProperties* m_pReadbackHeapProps;
 
 	DescriptorHeap* m_pShaderInvisibleRTVHeap;
 	DescriptorHeap* m_pShaderInvisibleDSVHeap;

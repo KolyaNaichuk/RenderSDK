@@ -1,4 +1,4 @@
-#include "RenderPasses/RenderGBufferCommandsPass.h"
+#include "RenderPasses/CreateRenderGBufferCommandsPass.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
@@ -11,7 +11,7 @@ enum RootParams
 	kNumRootParams
 };
 
-RenderGBufferCommandsPass::RenderGBufferCommandsPass(InitParams* pParams)
+CreateRenderGBufferCommandsPass::CreateRenderGBufferCommandsPass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
@@ -26,29 +26,29 @@ RenderGBufferCommandsPass::RenderGBufferCommandsPass(InitParams* pParams)
 		ShaderMacro("THREAD_GROUP_SIZE", threadGroupSizeStr.c_str()),
 		ShaderMacro()
 	};
-	Shader computeShader(L"Shaders//RenderGBufferCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//CreateRenderGBufferCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
 
 	D3D12_DESCRIPTOR_RANGE srvDescriptorRanges[] = {SRVDescriptorRange(3, 0), UAVDescriptorRange(1, 0)};
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kSRVRootParam] = RootDescriptorTableParameter(ARRAYSIZE(srvDescriptorRanges), &srvDescriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"RenderGBufferCommandsPass::m_pRootSignature");
+	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CreateRenderGBufferCommandsPass::m_pRootSignature");
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
-	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"RenderGBufferCommandsPass::m_pPipelineState");
+	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CreateRenderGBufferCommandsPass::m_pPipelineState");
 }
 
-RenderGBufferCommandsPass::~RenderGBufferCommandsPass()
+CreateRenderGBufferCommandsPass::~CreateRenderGBufferCommandsPass()
 {
 	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pRootSignature);
 }
 
-void RenderGBufferCommandsPass::Record(RenderParams* pParams)
+void CreateRenderGBufferCommandsPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;

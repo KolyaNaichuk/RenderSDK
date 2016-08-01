@@ -1,29 +1,28 @@
 #include "DXApplication.h"
-#include "D3DWrapper/GraphicsFactory.h"
+#include "D3DWrapper/BindingResourceList.h"
 #include "D3DWrapper/GraphicsDevice.h"
-#include "D3DWrapper/SwapChain.h"
-#include "D3DWrapper/CommandQueue.h"
-#include "D3DWrapper/CommandList.h"
-#include "D3DWrapper/DescriptorHeap.h"
+#include "D3DWrapper/GraphicsFactory.h"
 #include "D3DWrapper/GraphicsResource.h"
+#include "D3DWrapper/GraphicsUtils.h"
+#include "D3DWrapper/CommandList.h"
+#include "D3DWrapper/CommandQueue.h"
+#include "D3DWrapper/CommandSignature.h"
+#include "D3DWrapper/DescriptorHeap.h"
 #include "D3DWrapper/Fence.h"
 #include "D3DWrapper/RenderEnv.h"
-#include "D3DWrapper/GraphicsUtils.h"
-#include "D3DWrapper/BindingResourceList.h"
-#include "D3DWrapper/CommandSignature.h"
+#include "D3DWrapper/SwapChain.h"
+#include "RenderPasses/ClearVoxelGridPass.h"
+#include "RenderPasses/CopyTexturePass.h"
+#include "RenderPasses/CreateVoxelGridPass.h"
+#include "RenderPasses/CreateRenderGBufferCommandsPass.h"
+#include "RenderPasses/CreateRenderShadowMapCommandsPass.h"
+#include "RenderPasses/InjectVPLsIntoVoxelGridPass.h"
 #include "RenderPasses/RenderGBufferPass.h"
+#include "RenderPasses/RenderTiledShadowMapPass.h"
 #include "RenderPasses/TiledLightCullingPass.h"
 #include "RenderPasses/TiledShadingPass.h"
-#include "RenderPasses/ClearVoxelGridPass.h"
-#include "RenderPasses/CreateVoxelGridPass.h"
-#include "RenderPasses/InjectVPLsIntoVoxelGridPass.h"
-#include "RenderPasses/VisualizeVoxelGridPass.h"
-#include "RenderPasses/VisualizeMeshPass.h"
 #include "RenderPasses/ViewFrustumCullingPass.h"
-#include "RenderPasses/RenderGBufferCommandsPass.h"
-#include "RenderPasses/RenderShadowMapCommandsPass.h"
-#include "RenderPasses/RenderTiledShadowMapPass.h"
-#include "RenderPasses/CopyTexturePass.h"
+#include "RenderPasses/VisualizeVoxelGridPass.h"
 #include "Common/MeshData.h"
 #include "Common/MeshBatchData.h"
 #include "Common/MeshBatch.h"
@@ -43,8 +42,12 @@
 Render passes overview
 
 1.Run view frustum culling of meshes. Generate visible mesh indices (GPU side)
-2.Generate render G-Buffer indirect draw commands (GPU side)
-3.Render G-Buffer with visible meshes (GPU side)
+2.Run view furstum culling of point lights. Generate visible point light indices (GPU side)
+3.Run view frustum culling of spot lights. Generate visible spot light indices (GPU side)
+4.Generate render G-Buffer indirect draw commands (GPU side)
+5.Render G-Buffer with visible meshes (GPU side)
+
+
 
 4.Run view frustum culling of light bounding spheres (CPU side)
 5.Assign shadow map tile for each visible light (CPU side)
@@ -153,8 +156,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
 	, m_pCommandListPool(nullptr)
-	, m_pDefaultHeapProps(new HeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new HeapProperties(D3D12_HEAP_TYPE_UPLOAD))
+	, m_pDefaultHeapProps(new HeapProperties(D3D12_HEAP_TYPE_DEFAULT))
+	, m_pReadbackHeapProps(new HeapProperties(D3D12_HEAP_TYPE_READBACK))
 	, m_pShaderInvisibleRTVHeap(nullptr)
 	, m_pShaderInvisibleDSVHeap(nullptr)
 	, m_pShaderInvisibleSRVHeap(nullptr)
@@ -208,18 +212,18 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCreateVoxelGridResources(new BindingResourceList())
 	, m_pInjectVPLsIntoVoxelGridPass(nullptr)
 	, m_pVisualizeVoxelGridPass(nullptr)
-	, m_pVisualizeMeshPass(nullptr)
 	, m_pDetectVisibleMeshesPass(nullptr)
 	, m_pDetectVisibleMeshesResources(new BindingResourceList())
 	, m_pDetectVisiblePointLightsPass(nullptr)
 	, m_pDetectVisiblePointLightsResources(new BindingResourceList())
 	, m_pDetectVisibleSpotLightsPass(nullptr)
 	, m_pDetectVisibleSpotLightsResources(new BindingResourceList())
-	, m_pRenderGBufferCommandsPass(nullptr)
-	, m_pRenderGBufferCommandsResources(new BindingResourceList())
-	, m_pRenderShadowMapCommandsPass(nullptr)
-	, m_pRenderShadowMapCommandsResources(new BindingResourceList())
-	, m_pRenderShadowMapCommandsArgumentBuffer(nullptr)
+	, m_pCreateRenderGBufferCommandsPass(nullptr)
+	, m_pCreateRenderGBufferCommandsResources(new BindingResourceList())
+	, m_pCreateRenderShadowMapCommandsArgumentBufferResources(new BindingResourceList())
+	, m_pCreateRenderShadowMapCommandsPass(nullptr)
+	, m_pCreateRenderShadowMapCommandsResources(new BindingResourceList())
+	, m_pCreateRenderShadowMapCommandsArgumentBuffer(nullptr)
 	, m_pRenderSpotLightTiledShadowMapPass(nullptr)
 	, m_pRenderSpotLightTiledShadowMapResources(new BindingResourceList())
 	, m_pCopyTexturePass(nullptr)
@@ -235,7 +239,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
 		m_FrameCompletionFenceValues[index] = m_LastSubmissionFenceValue;
-		m_VisualizeMeshResources[index] = new BindingResourceList();
 		m_VisualizeVoxelGridResources[index] = new BindingResourceList();
 		m_CopyTextureResources[index] = new BindingResourceList();
 	}
@@ -245,11 +248,11 @@ DXApplication::~DXApplication()
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
-		SafeDelete(m_VisualizeMeshResources[index]);
 		SafeDelete(m_VisualizeVoxelGridResources[index]);
 		SafeDelete(m_CopyTextureResources[index]);
 	}
 
+	SafeDelete(m_pCreateRenderShadowMapCommandsArgumentBufferResources);
 	SafeDelete(m_pCommandListPool);
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pPointLightBuffer);
@@ -274,18 +277,17 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCreateVoxelGridResources);
 	SafeDelete(m_pInjectVPLsIntoVoxelGridPass);
 	SafeDelete(m_pVisualizeVoxelGridPass);
-	SafeDelete(m_pVisualizeMeshPass);
 	SafeDelete(m_pTiledLightCullingPass);
 	SafeDelete(m_pTiledLightCullingResources);
 	SafeDelete(m_pTiledShadingPass);
 	SafeDelete(m_pTiledShadingResources);
 	SafeDelete(m_pRenderGBufferPass);
 	SafeDelete(m_pRenderGBufferResources);
-	SafeDelete(m_pRenderGBufferCommandsPass);
-	SafeDelete(m_pRenderGBufferCommandsResources);
-	SafeDelete(m_pRenderShadowMapCommandsPass);
-	SafeDelete(m_pRenderShadowMapCommandsResources);
-	SafeDelete(m_pRenderShadowMapCommandsArgumentBuffer);
+	SafeDelete(m_pCreateRenderGBufferCommandsPass);
+	SafeDelete(m_pCreateRenderGBufferCommandsResources);
+	SafeDelete(m_pCreateRenderShadowMapCommandsPass);
+	SafeDelete(m_pCreateRenderShadowMapCommandsResources);
+	SafeDelete(m_pCreateRenderShadowMapCommandsArgumentBuffer);
 	SafeDelete(m_pRenderSpotLightTiledShadowMapPass);
 	SafeDelete(m_pRenderSpotLightTiledShadowMapResources);
 	SafeDelete(m_pDetectVisibleMeshesPass);
@@ -295,8 +297,9 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pDetectVisibleSpotLightsPass);
 	SafeDelete(m_pDetectVisibleSpotLightsResources);
 	SafeDelete(m_pFence);
-	SafeDelete(m_pDefaultHeapProps);
 	SafeDelete(m_pUploadHeapProps);
+	SafeDelete(m_pDefaultHeapProps);
+	SafeDelete(m_pReadbackHeapProps);
 	SafeDelete(m_pShaderInvisibleDSVHeap);
 	SafeDelete(m_pShaderInvisibleSRVHeap);
 	SafeDelete(m_pShaderInvisibleRTVHeap);
@@ -362,8 +365,9 @@ void DXApplication::OnInit()
 				
 	m_pRenderEnv->m_pDevice = m_pDevice;
 	m_pRenderEnv->m_pCommandListPool = m_pCommandListPool;
-	m_pRenderEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
 	m_pRenderEnv->m_pUploadHeapProps = m_pUploadHeapProps;
+	m_pRenderEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
+	m_pRenderEnv->m_pReadbackHeapProps = m_pReadbackHeapProps;
 	m_pRenderEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
 	m_pRenderEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
 	m_pRenderEnv->m_pShaderInvisibleDSVHeap = m_pShaderInvisibleDSVHeap;
@@ -491,13 +495,13 @@ void DXApplication::OnInit()
 	}
 	
 	StructuredBufferDesc shadowMapCommandsArgumentBufferDesc(1, sizeof(Vector3u), false, false);
-	m_pRenderShadowMapCommandsArgumentBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pRenderShadowMapCommandsArgumentBuffer");
+	m_pCreateRenderShadowMapCommandsArgumentBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pCreateRenderShadowMapCommandsArgumentBuffer");
 
 	Vector3u shadowMapCommandsArgumentBufferInitValues(0, 1, 1);
-	Buffer uploadRenderShadowMapCommandsArgumentBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &shadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pRenderShadowMapCommandsArgumentBuffer");
+	Buffer uploadRenderShadowMapCommandsArgumentBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &shadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCreateRenderShadowMapCommandsArgumentBuffer");
 	uploadRenderShadowMapCommandsArgumentBuffer.Write(&shadowMapCommandsArgumentBufferInitValues, sizeof(Vector3u));
 
-	pCommandList->CopyResource(m_pRenderShadowMapCommandsArgumentBuffer, &uploadRenderShadowMapCommandsArgumentBuffer);
+	pCommandList->CopyResource(m_pCreateRenderShadowMapCommandsArgumentBuffer, &uploadRenderShadowMapCommandsArgumentBuffer);
 	pCommandList->End();
 
 	++m_LastSubmissionFenceValue;
@@ -635,19 +639,19 @@ void DXApplication::OnInit()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightRangePerTileBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 
-	RenderGBufferCommandsPass::InitParams renderGBufferCommandsParams;
-	renderGBufferCommandsParams.m_pRenderEnv = m_pRenderEnv;
-	renderGBufferCommandsParams.m_NumMeshesInBatch = m_pMeshBatch->GetNumMeshes();
+	CreateRenderGBufferCommandsPass::InitParams createRenderGBufferCommandsParams;
+	createRenderGBufferCommandsParams.m_pRenderEnv = m_pRenderEnv;
+	createRenderGBufferCommandsParams.m_NumMeshesInBatch = m_pMeshBatch->GetNumMeshes();
 	
-	m_pRenderGBufferCommandsPass = new RenderGBufferCommandsPass(&renderGBufferCommandsParams);
+	m_pCreateRenderGBufferCommandsPass = new CreateRenderGBufferCommandsPass(&createRenderGBufferCommandsParams);
 
-	m_pRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleMeshesBuffer, m_pNumVisibleMeshesBuffer->GetReadState());
-	m_pRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer->GetReadState());
-	m_pRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(pMeshDescBuffer, pMeshDescBuffer->GetReadState());
-	m_pRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(m_pDrawMeshCommandBuffer, m_pDrawMeshCommandBuffer->GetWriteState());
+	m_pCreateRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleMeshesBuffer, m_pNumVisibleMeshesBuffer->GetReadState());
+	m_pCreateRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer->GetReadState());
+	m_pCreateRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(pMeshDescBuffer, pMeshDescBuffer->GetReadState());
+	m_pCreateRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(m_pDrawMeshCommandBuffer, m_pDrawMeshCommandBuffer->GetWriteState());
 	
-	m_pRenderGBufferCommandsResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
-	m_pDevice->CopyDescriptor(m_pRenderGBufferCommandsResources->m_SRVHeapStart, m_pNumVisibleMeshesBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pCreateRenderGBufferCommandsResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+	m_pDevice->CopyDescriptor(m_pCreateRenderGBufferCommandsResources->m_SRVHeapStart, m_pNumVisibleMeshesBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisibleMeshIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMeshDescBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDrawMeshCommandBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -679,14 +683,17 @@ void DXApplication::OnInit()
 	m_pDevice->CopyDescriptor(m_pRenderGBufferResources->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMaterialBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	RenderShadowMapCommandsPass::InitParams renderShadowMapCommandsParams;
-	renderShadowMapCommandsParams.m_pRenderEnv = m_pRenderEnv;
-	renderShadowMapCommandsParams.m_EnablePointLights = pScene->GetNumPointLights() > 0;
-	renderShadowMapCommandsParams.m_MaxNumPointLightsPerShadowCaster = pScene->GetNumPointLights();
-	renderShadowMapCommandsParams.m_EnableSpotLights = pScene->GetNumSpotLights() > 0;
-	renderShadowMapCommandsParams.m_MaxNumSpotLightsPerShadowCaster = pScene->GetNumSpotLights();
+	m_pCreateRenderShadowMapCommandsArgumentBufferResources->m_RequiredResourceStates.emplace_back(m_pCreateRenderShadowMapCommandsArgumentBuffer, D3D12_RESOURCE_STATE_COPY_DEST);
+	m_pCreateRenderShadowMapCommandsArgumentBufferResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleMeshesBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
-	m_pRenderShadowMapCommandsPass = new RenderShadowMapCommandsPass(&renderShadowMapCommandsParams);
+	CreateRenderShadowMapCommandsPass::InitParams createRenderShadowMapCommandsParams;
+	createRenderShadowMapCommandsParams.m_pRenderEnv = m_pRenderEnv;
+	createRenderShadowMapCommandsParams.m_EnablePointLights = pScene->GetNumPointLights() > 0;
+	createRenderShadowMapCommandsParams.m_MaxNumPointLightsPerShadowCaster = pScene->GetNumPointLights();
+	createRenderShadowMapCommandsParams.m_EnableSpotLights = pScene->GetNumSpotLights() > 0;
+	createRenderShadowMapCommandsParams.m_MaxNumSpotLightsPerShadowCaster = pScene->GetNumSpotLights();
+
+	m_pCreateRenderShadowMapCommandsPass = new CreateRenderShadowMapCommandsPass(&createRenderShadowMapCommandsParams);
 
 	if (pScene->GetNumPointLights() > 0)
 	{
@@ -718,13 +725,13 @@ void DXApplication::OnInit()
 		m_pNumDrawSpotLightShadowCastersBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numShadowCastersBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumDrawSpotLightShadowCastersBuffer");
 	}
 
-	m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer->GetReadState());
-	m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pMeshBoundsBuffer, pMeshBoundsBuffer->GetReadState());
-	m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pMeshDescBuffer, pMeshDescBuffer->GetReadState());
-	m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pRenderShadowMapCommandsArgumentBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer->GetReadState());
+	m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pMeshBoundsBuffer, pMeshBoundsBuffer->GetReadState());
+	m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pMeshDescBuffer, pMeshDescBuffer->GetReadState());
+	m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pCreateRenderShadowMapCommandsArgumentBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 
-	m_pRenderShadowMapCommandsResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
-	m_pDevice->CopyDescriptor(m_pRenderShadowMapCommandsResources->m_SRVHeapStart, m_pVisibleMeshIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pCreateRenderShadowMapCommandsResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+	m_pDevice->CopyDescriptor(m_pCreateRenderShadowMapCommandsResources->m_SRVHeapStart, m_pVisibleMeshIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMeshBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMeshDescBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -732,13 +739,13 @@ void DXApplication::OnInit()
 	{
 		Buffer* pPointLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
 
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pPointLightBoundsBuffer, pPointLightBoundsBuffer->GetReadState());
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumVisiblePointLightsBuffer, m_pNumVisiblePointLightsBuffer->GetReadState());
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisiblePointLightIndexBuffer, m_pVisiblePointLightIndexBuffer->GetReadState());
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pShadowCastingPointLightIndexBuffer, m_pShadowCastingPointLightIndexBuffer->GetWriteState());
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumShadowCastingPointLightsBuffer, m_pNumShadowCastingPointLightsBuffer->GetWriteState());
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pDrawPointLightShadowCasterCommandBuffer, m_pDrawPointLightShadowCasterCommandBuffer->GetWriteState());
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumDrawPointLightShadowCastersBuffer, m_pNumDrawPointLightShadowCastersBuffer->GetWriteState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pPointLightBoundsBuffer, pPointLightBoundsBuffer->GetReadState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumVisiblePointLightsBuffer, m_pNumVisiblePointLightsBuffer->GetReadState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisiblePointLightIndexBuffer, m_pVisiblePointLightIndexBuffer->GetReadState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pShadowCastingPointLightIndexBuffer, m_pShadowCastingPointLightIndexBuffer->GetWriteState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumShadowCastingPointLightsBuffer, m_pNumShadowCastingPointLightsBuffer->GetWriteState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pDrawPointLightShadowCasterCommandBuffer, m_pDrawPointLightShadowCasterCommandBuffer->GetWriteState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumDrawPointLightShadowCastersBuffer, m_pNumDrawPointLightShadowCastersBuffer->GetWriteState());
 
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPointLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pNumVisiblePointLightsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -753,13 +760,13 @@ void DXApplication::OnInit()
 	{
 		Buffer* pSpotLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
 
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pSpotLightBoundsBuffer, pSpotLightBoundsBuffer->GetReadState());
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleSpotLightsBuffer, m_pNumVisibleSpotLightsBuffer->GetReadState());
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisibleSpotLightIndexBuffer, m_pVisibleSpotLightIndexBuffer->GetReadState());
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pShadowCastingSpotLightIndexBuffer, m_pShadowCastingSpotLightIndexBuffer->GetWriteState());
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumShadowCastingSpotLightsBuffer, m_pNumShadowCastingSpotLightsBuffer->GetWriteState());
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pDrawSpotLightShadowCasterCommandBuffer, m_pDrawSpotLightShadowCasterCommandBuffer->GetWriteState());
-		m_pRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumDrawSpotLightShadowCastersBuffer, m_pNumDrawSpotLightShadowCastersBuffer->GetWriteState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pSpotLightBoundsBuffer, pSpotLightBoundsBuffer->GetReadState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleSpotLightsBuffer, m_pNumVisibleSpotLightsBuffer->GetReadState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisibleSpotLightIndexBuffer, m_pVisibleSpotLightIndexBuffer->GetReadState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pShadowCastingSpotLightIndexBuffer, m_pShadowCastingSpotLightIndexBuffer->GetWriteState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumShadowCastingSpotLightsBuffer, m_pNumShadowCastingSpotLightsBuffer->GetWriteState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pDrawSpotLightShadowCasterCommandBuffer, m_pDrawSpotLightShadowCasterCommandBuffer->GetWriteState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumDrawSpotLightShadowCastersBuffer, m_pNumDrawSpotLightShadowCastersBuffer->GetWriteState());
 
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pSpotLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pNumVisibleSpotLightsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -898,31 +905,7 @@ void DXApplication::OnInit()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 	
-	VisualizeMeshPass::InitParams visualizeMeshParams;
-	visualizeMeshParams.m_pRenderEnv = m_pRenderEnv;
-	visualizeMeshParams.m_MeshDataElement = MeshDataElement_Normal;
-	visualizeMeshParams.m_pMeshBatch = m_pMeshBatch;
-	visualizeMeshParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
-	visualizeMeshParams.m_DSVFormat = GetDepthStencilViewFormat(m_pDepthTexture->GetFormat());
-		
-	//m_pVisualizeMeshPass = new VisualizeMeshPass(&visualizeMeshParams);
-
-	for (u8 index = 0; index < kNumBackBuffers; ++index)
-	{
-		ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
-
-		m_VisualizeMeshResources[index]->m_RequiredResourceStates.emplace_back(pRenderTarget, pRenderTarget->GetWriteState());
-		m_VisualizeMeshResources[index]->m_RequiredResourceStates.emplace_back(m_pDepthTexture, m_pDepthTexture->GetWriteState());
-		
-		m_VisualizeMeshResources[index]->m_RTVHeapStart = pRenderTarget->GetRTVHandle();
-		m_VisualizeMeshResources[index]->m_DSVHeapStart = m_pDepthTexture->GetDSVHandle();
-		m_VisualizeMeshResources[index]->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
-		
-		m_pDevice->CopyDescriptor(m_VisualizeMeshResources[index]->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
-
 	ColorTexture* pCopyTexture = m_pAccumLightTexture;
-
 	CopyTexturePass::InitParams copyTextureParams;
 	copyTextureParams.m_pRenderEnv = m_pRenderEnv;
 	copyTextureParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(0)->GetFormat());
@@ -1112,13 +1095,13 @@ void DXApplication::OnRender()
 		submissionBatch.emplace_back(detectVisibleLightsParams.m_pCommandList);
 	}
 	
-	RenderGBufferCommandsPass::RenderParams renderGBufferCommandsParams;
-	renderGBufferCommandsParams.m_pRenderEnv = m_pRenderEnv;
-	renderGBufferCommandsParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferCommandsCommandList");
-	renderGBufferCommandsParams.m_pResources = m_pRenderGBufferCommandsResources;
+	CreateRenderGBufferCommandsPass::RenderParams createRenderGBufferCommandsParams;
+	createRenderGBufferCommandsParams.m_pRenderEnv = m_pRenderEnv;
+	createRenderGBufferCommandsParams.m_pCommandList = m_pCommandListPool->Create(L"pCreateRenderGBufferCommandsCommandList");
+	createRenderGBufferCommandsParams.m_pResources = m_pCreateRenderGBufferCommandsResources;
 
-	m_pRenderGBufferCommandsPass->Record(&renderGBufferCommandsParams);
-	submissionBatch.emplace_back(renderGBufferCommandsParams.m_pCommandList);
+	m_pCreateRenderGBufferCommandsPass->Record(&createRenderGBufferCommandsParams);
+	submissionBatch.emplace_back(createRenderGBufferCommandsParams.m_pCommandList);
 
 	RenderGBufferPass::RenderParams renderGBufferParams;
 	renderGBufferParams.m_pRenderEnv = m_pRenderEnv;
@@ -1142,42 +1125,26 @@ void DXApplication::OnRender()
 	m_pTiledLightCullingPass->Record(&tiledLightCullingParams);
 	submissionBatch.emplace_back(tiledLightCullingParams.m_pCommandList);
 	
-	/*
-	{
-		std::vector<ResourceTransitionBarrier> resourceTransitions;
-		if (m_pRenderShadowMapCommandsArgumentBuffer->GetState() != D3D12_RESOURCE_STATE_COPY_DEST)
-		{
-			resourceTransitions.emplace_back(m_pRenderShadowMapCommandsArgumentBuffer, m_pRenderShadowMapCommandsArgumentBuffer->GetState(), D3D12_RESOURCE_STATE_COPY_DEST);
-			m_pRenderShadowMapCommandsArgumentBuffer->SetState(D3D12_RESOURCE_STATE_COPY_DEST);
-		}
-		if (m_pNumVisibleMeshesBuffer->GetState() != D3D12_RESOURCE_STATE_COPY_SOURCE)
-		{
-			resourceTransitions.emplace_back(m_pNumVisibleMeshesBuffer, m_pNumVisibleMeshesBuffer->GetState(), D3D12_RESOURCE_STATE_COPY_SOURCE);
-			m_pNumVisibleMeshesBuffer->SetState(D3D12_RESOURCE_STATE_COPY_SOURCE);
-		}
+	CommandList* pUpdateRenderShadowMapCommandsArgumentBufferCommandList = m_pCommandListPool->Create(L"pUpdateRenderShadowMapCommandsArgumentBufferCommandList");
+	pUpdateRenderShadowMapCommandsArgumentBufferCommandList->Begin();
+	pUpdateRenderShadowMapCommandsArgumentBufferCommandList->SetRequiredResourceStates(&m_pCreateRenderShadowMapCommandsArgumentBufferResources->m_RequiredResourceStates);
+	pUpdateRenderShadowMapCommandsArgumentBufferCommandList->CopyBufferRegion(m_pCreateRenderShadowMapCommandsArgumentBuffer, 0, m_pNumVisibleMeshesBuffer, 0, sizeof(u32));
+	pUpdateRenderShadowMapCommandsArgumentBufferCommandList->End();
 
-		CommandList* pArgBufferBarrierCommandList = m_pCommandListPool->Create(L"pArgBufferBarrierCommandList");
-		pArgBufferBarrierCommandList->Begin();
-		pArgBufferBarrierCommandList->ResourceBarrier(resourceTransitions.size(), &resourceTransitions[0]);
-		pArgBufferBarrierCommandList->CopyBufferRegion(m_pRenderShadowMapCommandsArgumentBuffer, 0, m_pNumVisibleMeshesBuffer, 0, sizeof(u32));
-		pArgBufferBarrierCommandList->End();
+	submissionBatch.emplace_back(pUpdateRenderShadowMapCommandsArgumentBufferCommandList);
 
-		submissionBatch.emplace_back(pArgBufferBarrierCommandList);
-	}
+	CreateRenderShadowMapCommandsPass::RenderParams createRenderShadowMapCommandsParams;
+	createRenderShadowMapCommandsParams.m_pRenderEnv = m_pRenderEnv;
+	createRenderShadowMapCommandsParams.m_pCommandList = m_pCommandListPool->Create(L"pCreateRenderShadowMapCommandsCommandList");
+	createRenderShadowMapCommandsParams.m_pResources = m_pCreateRenderShadowMapCommandsResources;
+	createRenderShadowMapCommandsParams.m_pIndirectArgumentBuffer = m_pCreateRenderShadowMapCommandsArgumentBuffer;
+	createRenderShadowMapCommandsParams.m_pNumShadowCastingPointLightsBuffer = m_pNumShadowCastingPointLightsBuffer;
+	createRenderShadowMapCommandsParams.m_pNumDrawPointLightShadowCastersBuffer = m_pNumDrawPointLightShadowCastersBuffer;
+	createRenderShadowMapCommandsParams.m_pNumShadowCastingSpotLightsBuffer = m_pNumShadowCastingSpotLightsBuffer;
+	createRenderShadowMapCommandsParams.m_pNumDrawSpotLightShadowCastersBuffer = m_pNumDrawSpotLightShadowCastersBuffer;
 
-	RenderShadowMapCommandsPass::RenderParams renderShadowMapCommandsParams;
-	renderShadowMapCommandsParams.m_pRenderEnv = m_pRenderEnv;
-	renderShadowMapCommandsParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderShadowMapCommandsCommandList");
-	renderShadowMapCommandsParams.m_pResources = m_pRenderShadowMapCommandsResources;
-	renderShadowMapCommandsParams.m_pIndirectArgumentBuffer = m_pRenderShadowMapCommandsArgumentBuffer;
-	renderShadowMapCommandsParams.m_pNumShadowCastingPointLightsBuffer = m_pNumShadowCastingPointLightsBuffer;
-	renderShadowMapCommandsParams.m_pNumDrawPointLightShadowCastersBuffer = m_pNumDrawPointLightShadowCastersBuffer;
-	renderShadowMapCommandsParams.m_pNumShadowCastingSpotLightsBuffer = m_pNumShadowCastingSpotLightsBuffer;
-	renderShadowMapCommandsParams.m_pNumDrawSpotLightShadowCastersBuffer = m_pNumDrawSpotLightShadowCastersBuffer;
-
-	m_pRenderShadowMapCommandsPass->Record(&renderShadowMapCommandsParams);
-	submissionBatch.emplace_back(renderShadowMapCommandsParams.m_pCommandList);
-	*/
+	m_pCreateRenderShadowMapCommandsPass->Record(&createRenderShadowMapCommandsParams);
+	submissionBatch.emplace_back(createRenderShadowMapCommandsParams.m_pCommandList);
 
 	TiledShadingPass::RenderParams tiledShadingParams;
 	tiledShadingParams.m_pRenderEnv = m_pRenderEnv;

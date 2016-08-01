@@ -10,7 +10,7 @@ class Buffer;
 struct RenderEnv;
 struct BindingResourceList;
 
-class RenderShadowMapCommandsPass
+class CreateRenderShadowMapCommandsPass
 {
 public:
 	struct InitParams
@@ -34,8 +34,8 @@ public:
 		Buffer* m_pNumDrawSpotLightShadowCastersBuffer;
 	};
 
-	RenderShadowMapCommandsPass(InitParams* pParams);
-	~RenderShadowMapCommandsPass();
+	CreateRenderShadowMapCommandsPass(InitParams* pParams);
+	~CreateRenderShadowMapCommandsPass();
 
 	void Record(RenderParams* pParams);
 
