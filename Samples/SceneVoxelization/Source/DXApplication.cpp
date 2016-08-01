@@ -1165,18 +1165,6 @@ void DXApplication::OnRender()
 	submissionBatch.emplace_back(copyTextureParams.m_pCommandList);
 
 	/*
-	VisualizeMeshPass::RenderParams visualizeMeshParams;
-	visualizeMeshParams.m_pRenderEnv = m_pRenderEnv;
-	visualizeMeshParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeMeshCommandList");
-	visualizeMeshParams.m_pResources = m_VisualizeMeshResources[m_BackBufferIndex];
-	visualizeMeshParams.m_pViewport = m_pViewport;
-	visualizeMeshParams.m_pMeshBatch = m_pMeshBatch;
-
-	m_pVisualizeMeshPass->Record(&visualizeMeshParams);
-	submissionBatch.emplace_back(visualizeMeshParams.m_pCommandList);
-	*/
-
-	/*
 	ClearVoxelGridPass::RenderParams clearGridParams;
 	clearGridParams.m_pRenderEnv = m_pRenderEnv;
 	clearGridParams.m_pCommandList = m_pCommandListPool->Create(L"pClearGridCommandList");
