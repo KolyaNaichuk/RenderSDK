@@ -1125,13 +1125,13 @@ void DXApplication::OnRender()
 	m_pTiledLightCullingPass->Record(&tiledLightCullingParams);
 	submissionBatch.emplace_back(tiledLightCullingParams.m_pCommandList);
 	
-	CommandList* pUpdateRenderShadowMapCommandsArgumentBufferCommandList = m_pCommandListPool->Create(L"pUpdateRenderShadowMapCommandsArgumentBufferCommandList");
-	pUpdateRenderShadowMapCommandsArgumentBufferCommandList->Begin();
-	pUpdateRenderShadowMapCommandsArgumentBufferCommandList->SetRequiredResourceStates(&m_pCreateRenderShadowMapCommandsArgumentBufferResources->m_RequiredResourceStates);
-	pUpdateRenderShadowMapCommandsArgumentBufferCommandList->CopyBufferRegion(m_pCreateRenderShadowMapCommandsArgumentBuffer, 0, m_pNumVisibleMeshesBuffer, 0, sizeof(u32));
-	pUpdateRenderShadowMapCommandsArgumentBufferCommandList->End();
+	CommandList* pUpdateCreateRenderShadowMapCommandsArgumentBufferCommandList = m_pCommandListPool->Create(L"pUpdateCreateRenderShadowMapCommandsArgumentBufferCommandList");
+	pUpdateCreateRenderShadowMapCommandsArgumentBufferCommandList->Begin();
+	pUpdateCreateRenderShadowMapCommandsArgumentBufferCommandList->SetRequiredResourceStates(&m_pCreateRenderShadowMapCommandsArgumentBufferResources->m_RequiredResourceStates);
+	pUpdateCreateRenderShadowMapCommandsArgumentBufferCommandList->CopyBufferRegion(m_pCreateRenderShadowMapCommandsArgumentBuffer, 0, m_pNumVisibleMeshesBuffer, 0, sizeof(u32));
+	pUpdateCreateRenderShadowMapCommandsArgumentBufferCommandList->End();
 
-	submissionBatch.emplace_back(pUpdateRenderShadowMapCommandsArgumentBufferCommandList);
+	submissionBatch.emplace_back(pUpdateCreateRenderShadowMapCommandsArgumentBufferCommandList);
 
 	CreateRenderShadowMapCommandsPass::RenderParams createRenderShadowMapCommandsParams;
 	createRenderShadowMapCommandsParams.m_pRenderEnv = m_pRenderEnv;
