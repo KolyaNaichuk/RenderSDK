@@ -35,7 +35,7 @@ void Main(triangle GSInput input[3], inout TriangleStream<GSOutput> outputStream
 
 #if LIGHT_TYPE == LIGHT_TYPE_SPOT
 StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t0);
-StructuredBuffer<matrix> g_SpotLightViewProjMatrixBuffer : register(t1);
+StructuredBuffer<matrix> g_SpotLightViewTileProjMatrixBuffer : register(t1);
 StructuredBuffer<Frustum> g_SpotLightFrustumBuffer : register(t2);
 
 [maxvertexcount(3)]
@@ -67,11 +67,11 @@ void Main(triangle GSInput input[3], inout TriangleStream<GSOutput> outputStream
 	if (isFaceInvisible)
 		return;
 
-	matrix lightViewTileProjMatrix = g_SpotLightViewProjMatrixBuffer[lightIndex];
+	matrix lightViewTileProjMatrix = g_SpotLightViewTileProjMatrixBuffer[lightIndex];
 	for (uint vertexIndex = 0; vertexIndex < 3; ++vertexIndex)
 	{
 		GSOutput output;
-		
+
 		output.clipSpacePos = mul(input[vertexIndex].worldSpacePos, lightViewTileProjMatrix);
 		output.tileClipDist = tileClipSignedDist[vertexIndex];
 

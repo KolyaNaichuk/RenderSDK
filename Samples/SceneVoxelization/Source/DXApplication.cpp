@@ -19,6 +19,7 @@
 #include "RenderPasses/InjectVPLsIntoVoxelGridPass.h"
 #include "RenderPasses/RenderGBufferPass.h"
 #include "RenderPasses/RenderTiledShadowMapPass.h"
+#include "RenderPasses/SetupTiledShadowMapPass.h"
 #include "RenderPasses/TiledLightCullingPass.h"
 #include "RenderPasses/TiledShadingPass.h"
 #include "RenderPasses/ViewFrustumCullingPass.h"
@@ -80,7 +81,9 @@ enum
 	kNumGridCellsY = 64,
 	kNumGridCellsZ = 64,
 
-	kTiledShadowMapSize = 4 * 1024
+	kNumShadowMapTiles = 1,
+	kShadowMapTileSize = 512,
+	kTiledShadowMapSize = kNumShadowMapTiles * kShadowMapTileSize
 };
 
 struct ObjectTransform
@@ -150,6 +153,21 @@ struct Voxel
 	Vector4f m_ColorAndNumOccluders;
 };
 
+struct ShadowMapData
+{
+	f32 m_SizeInPixels;
+	f32 m_RcpSizeInPixels;
+	f32 m_TileSizeInPixels;
+	f32 m_RcpTileSizeInPixels;
+	f32 m_NotUsed[60];
+};
+
+struct ShadowMapTile
+{
+	Vector2f m_TexSpaceTopLeftPos;
+	Vector2f m_TexSpaceSize;
+};
+
 DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Scene Voxelization", 0, 0, kTileSize * kNumTilesX, kTileSize * kNumTilesY)
 	, m_pDevice(nullptr)
@@ -169,7 +187,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pNormalTexture(nullptr)
 	, m_pSpecularTexture(nullptr)
 	, m_pAccumLightTexture(nullptr)
-	, m_pViewport(nullptr)
+	, m_pBackBufferViewport(nullptr)
+	, m_pSpotLightTiledShadowMapViewport(nullptr)
 	, m_pObjectTransformBuffer(nullptr)
 	, m_pCameraTransformBuffer(nullptr)
 	, m_pGridBuffer(nullptr)
@@ -196,6 +215,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pNumShadowCastingSpotLightsBuffer(nullptr)
 	, m_pDrawSpotLightShadowCasterCommandBuffer(nullptr)
 	, m_pNumDrawSpotLightShadowCastersBuffer(nullptr)
+	, m_pSpotLightShadowMapDataBuffer(nullptr)
+	, m_pSpotLightShadowMapTileBuffer(nullptr)
+	, m_pSpotLightViewTileProjMatrixBuffer(nullptr)
 	, m_pRenderEnv(new RenderEnv())
 	, m_pFence(nullptr)
 	, m_LastSubmissionFenceValue(0)
@@ -227,6 +249,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pRenderSpotLightTiledShadowMapPass(nullptr)
 	, m_pRenderSpotLightTiledShadowMapResources(new BindingResourceList())
 	, m_pCopyTexturePass(nullptr)
+	, m_pSetupSpotLightTiledShadowMapPass(nullptr)
+	, m_pSetupSpotLightTiledShadowMapResources(new BindingResourceList())
 	, m_pMeshBatch(nullptr)
 	, m_pPointLightBuffer(nullptr)
 	, m_pNumVisiblePointLightsBuffer(nullptr)
@@ -257,7 +281,11 @@ DXApplication::~DXApplication()
 		SafeDelete(m_VisualizeVoxelGridResources[index]);
 		SafeDelete(m_CopyTextureResources[index]);
 	}
-
+	SafeDelete(m_pSpotLightShadowMapDataBuffer);
+	SafeDelete(m_pSpotLightShadowMapTileBuffer);
+	SafeDelete(m_pSpotLightViewTileProjMatrixBuffer);
+	SafeDelete(m_pSetupSpotLightTiledShadowMapPass);
+	SafeDelete(m_pSetupSpotLightTiledShadowMapResources);
 	SafeDelete(m_pCreateRenderShadowMapCommandsArgumentBufferResources);
 	SafeDelete(m_pCommandListPool);
 	SafeDelete(m_pCamera);
@@ -339,7 +367,8 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCommandListPool);
 	SafeDelete(m_pSwapChain);
 	SafeDelete(m_pDevice);
-	SafeDelete(m_pViewport);
+	SafeDelete(m_pBackBufferViewport);
+	SafeDelete(m_pSpotLightTiledShadowMapViewport);
 
 #ifdef FOR_DEBUG_ONLY
 	SafeDelete(m_pDebugShadowCastingSpotLightIndexBuffer);
@@ -388,13 +417,14 @@ void DXApplication::OnInit()
 	m_pRenderEnv->m_pShaderInvisibleDSVHeap = m_pShaderInvisibleDSVHeap;
 	m_pRenderEnv->m_pShaderVisibleSRVHeap = m_pShaderVisibleSRVHeap;
 	
-	const RECT bufferRect = m_pWindow->GetClientRect();
-	const UINT bufferWidth = bufferRect.right - bufferRect.left;
-	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
+	const RECT backBufferRect = m_pWindow->GetClientRect();
+	const UINT backBufferWidth = backBufferRect.right - backBufferRect.left;
+	const UINT backBufferHeight = backBufferRect.bottom - backBufferRect.top;
 
-	m_pViewport = new Viewport(0.0f, 0.0f, (FLOAT)bufferWidth, (FLOAT)bufferHeight);
+	m_pBackBufferViewport = new Viewport(0.0f, 0.0f, (FLOAT)backBufferWidth, (FLOAT)backBufferHeight);
+	m_pSpotLightTiledShadowMapViewport = new Viewport(0.0f, 0.0f, (FLOAT)kTiledShadowMapSize, (FLOAT)kTiledShadowMapSize);
 
-	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(bufferWidth) / FLOAT(bufferHeight));
+	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
 	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
 	m_pCamera->SetBackgroundColor(Color::GRAY);
 
@@ -402,29 +432,29 @@ void DXApplication::OnInit()
 	transform.SetPosition(Vector3f(278.0f, 274.0f, 700.0f));
 	transform.SetRotation(CreateRotationYQuaternion(Radian(PI)));
 
-	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
+	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), backBufferWidth, backBufferHeight);
 	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 	
 	DepthStencilValue optimizedClearDepth(1.0f);
 
-	DepthTexture2DDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, bufferWidth, bufferHeight, true, true);
+	DepthTexture2DDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, backBufferWidth, backBufferHeight, true, true);
 	m_pDepthTexture = new DepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &depthTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pDepthTexture");
 	
-	DepthTexture2DDesc tiledShadowMapDesc(DXGI_FORMAT_R32_TYPELESS, kTiledShadowMapSize, kTiledShadowMapSize, true, true);
-	m_pSpotLightTiledShadowMap = new DepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &tiledShadowMapDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pSpotLightTiledShadowMap");
+	DepthTexture2DDesc spotLightTiledShadowMapDesc(DXGI_FORMAT_R32_TYPELESS, kTiledShadowMapSize, kTiledShadowMapSize, true, true);
+	m_pSpotLightTiledShadowMap = new DepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &spotLightTiledShadowMapDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pSpotLightTiledShadowMap");
 
 	const FLOAT optimizedClearColor[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-	ColorTexture2DDesc diffuseTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, true, true, false);
+	ColorTexture2DDesc diffuseTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, backBufferWidth, backBufferHeight, true, true, false);
 	m_pDiffuseTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &diffuseTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pDiffuseTexture");
 
-	ColorTexture2DDesc normalTexDesc(DXGI_FORMAT_R8G8B8A8_SNORM, bufferWidth, bufferHeight, true, true, false);
+	ColorTexture2DDesc normalTexDesc(DXGI_FORMAT_R8G8B8A8_SNORM, backBufferWidth, backBufferHeight, true, true, false);
 	m_pNormalTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &normalTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pNormalTexture");
 
-	ColorTexture2DDesc specularTexDesc(DXGI_FORMAT_R8G8B8A8_UNORM, bufferWidth, bufferHeight, true, true, false);
+	ColorTexture2DDesc specularTexDesc(DXGI_FORMAT_R8G8B8A8_UNORM, backBufferWidth, backBufferHeight, true, true, false);
 	m_pSpecularTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &specularTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pSpecularTexture");
 
-	ColorTexture2DDesc accumLightTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, bufferWidth, bufferHeight, false, true, true);
+	ColorTexture2DDesc accumLightTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, backBufferWidth, backBufferHeight, false, true, true);
 	m_pAccumLightTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &accumLightTexDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pAccumLightTexture");
 
 	ConstantBufferDesc objectTransformBufferDesc(sizeof(ObjectTransform));
@@ -507,6 +537,15 @@ void DXApplication::OnInit()
 
 		StructuredBufferDesc lightRangePerTileBufferDesc(kNumTilesX * kNumTilesY, sizeof(Range), true, true);
 		m_pSpotLightRangePerTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &lightRangePerTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pSpotLightRangePerTileBuffer");
+
+		ConstantBufferDesc shadowMapDataBufferDesc(sizeof(ShadowMapData));
+		m_pSpotLightShadowMapDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &shadowMapDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pSpotLightShadowMapDataBuffer");
+
+		StructuredBufferDesc shadowMapTileBufferDesc(kNumShadowMapTiles * kNumShadowMapTiles, sizeof(ShadowMapTile), true, true);
+		m_pSpotLightShadowMapTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowMapTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pSpotLightShadowMapTileBuffer");
+
+		StructuredBufferDesc lightViewProjTileMatrixBufferDesc(pScene->GetNumSpotLights(), sizeof(Matrix4f), true, true);
+		m_pSpotLightViewTileProjMatrixBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &lightViewProjTileMatrixBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pSpotLightShadowMapTileBuffer");
 	}
 	
 	StructuredBufferDesc shadowMapCommandsArgumentBufferDesc(1, sizeof(Vector3u), false, false);
@@ -766,9 +805,9 @@ void DXApplication::OnInit()
 
 	if (m_pPointLightBuffer != nullptr)
 	{
-		Buffer* pPointLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
+		Buffer* pLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
 
-		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pPointLightBoundsBuffer, pPointLightBoundsBuffer->GetReadState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pLightBoundsBuffer, pLightBoundsBuffer->GetReadState());
 		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumVisiblePointLightsBuffer, m_pNumVisiblePointLightsBuffer->GetReadState());
 		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisiblePointLightIndexBuffer, m_pVisiblePointLightIndexBuffer->GetReadState());
 		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pShadowCastingPointLightIndexBuffer, m_pShadowCastingPointLightIndexBuffer->GetWriteState());
@@ -776,7 +815,7 @@ void DXApplication::OnInit()
 		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pDrawPointLightShadowCasterCommandBuffer, m_pDrawPointLightShadowCasterCommandBuffer->GetWriteState());
 		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumDrawPointLightShadowCastersBuffer, m_pNumDrawPointLightShadowCastersBuffer->GetWriteState());
 
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPointLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pNumVisiblePointLightsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisiblePointLightIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pShadowCastingPointLightIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -787,9 +826,9 @@ void DXApplication::OnInit()
 
 	if (m_pSpotLightBuffer != nullptr)
 	{
-		Buffer* pSpotLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
+		Buffer* pLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
 
-		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pSpotLightBoundsBuffer, pSpotLightBoundsBuffer->GetReadState());
+		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(pLightBoundsBuffer, pLightBoundsBuffer->GetReadState());
 		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleSpotLightsBuffer, m_pNumVisibleSpotLightsBuffer->GetReadState());
 		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisibleSpotLightIndexBuffer, m_pVisibleSpotLightIndexBuffer->GetReadState());
 		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pShadowCastingSpotLightIndexBuffer, m_pShadowCastingSpotLightIndexBuffer->GetWriteState());
@@ -797,7 +836,7 @@ void DXApplication::OnInit()
 		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pDrawSpotLightShadowCasterCommandBuffer, m_pDrawSpotLightShadowCasterCommandBuffer->GetWriteState());
 		m_pCreateRenderShadowMapCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumDrawSpotLightShadowCastersBuffer, m_pNumDrawSpotLightShadowCastersBuffer->GetWriteState());
 
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pSpotLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pNumVisibleSpotLightsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisibleSpotLightIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pShadowCastingSpotLightIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -852,6 +891,8 @@ void DXApplication::OnInit()
 	{
 		Buffer* pLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
 		Buffer* pLightPropsBuffer = m_pSpotLightBuffer->GetLightPropsBuffer();
+		Buffer* pLightFrustumBuffer = m_pSpotLightBuffer->GetLightFrustumBuffer();
+		Buffer* pLightViewProjMatrixBuffer = m_pSpotLightBuffer->GetLightViewProjMatrixBuffer();
 
 		m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(pLightBoundsBuffer, pLightBoundsBuffer->GetReadState());
 		m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(pLightPropsBuffer, pLightPropsBuffer->GetReadState());
@@ -862,16 +903,52 @@ void DXApplication::OnInit()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightIndexPerTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightRangePerTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
 
-	RenderTiledShadowMapPass::InitParams renderSpotLightTiledShadowMapParams;
-	renderSpotLightTiledShadowMapParams.m_pRenderEnv = m_pRenderEnv;
-	renderSpotLightTiledShadowMapParams.m_DSVFormat = GetDepthStencilViewFormat(m_pSpotLightTiledShadowMap->GetFormat());
-	renderSpotLightTiledShadowMapParams.m_pMeshBatch = m_pMeshBatch;
-	renderSpotLightTiledShadowMapParams.m_LightType = LightType_Spot;
+		SetupTiledShadowMapPass::InitParams setupTiledShadowMapParams;
+		setupTiledShadowMapParams.m_pRenderEnv = m_pRenderEnv;
+		setupTiledShadowMapParams.m_NumTilesX = kNumShadowMapTiles;
+		setupTiledShadowMapParams.m_NumTilesY = kNumShadowMapTiles;
 
-	m_pRenderSpotLightTiledShadowMapPass = new RenderTiledShadowMapPass(&renderSpotLightTiledShadowMapParams);
+		m_pSetupSpotLightTiledShadowMapPass = new SetupTiledShadowMapPass(&setupTiledShadowMapParams);
 		
+		m_pSetupSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleSpotLightsBuffer, m_pNumVisibleSpotLightsBuffer->GetReadState());
+		m_pSetupSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pVisibleSpotLightIndexBuffer, m_pVisibleSpotLightIndexBuffer->GetReadState());
+		m_pSetupSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(pLightViewProjMatrixBuffer, pLightViewProjMatrixBuffer->GetReadState());
+		m_pSetupSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pSpotLightShadowMapTileBuffer, m_pSpotLightShadowMapTileBuffer->GetWriteState());
+		m_pSetupSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pSpotLightViewTileProjMatrixBuffer, m_pSpotLightViewTileProjMatrixBuffer->GetWriteState());
+		
+		m_pSetupSpotLightTiledShadowMapResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+		m_pDevice->CopyDescriptor(m_pSetupSpotLightTiledShadowMapResources->m_SRVHeapStart, m_pSpotLightShadowMapDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pNumVisibleSpotLightsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisibleSpotLightIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightViewProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightShadowMapTileBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightViewTileProjMatrixBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		
+		RenderTiledShadowMapPass::InitParams renderTiledShadowMapParams;
+		renderTiledShadowMapParams.m_pRenderEnv = m_pRenderEnv;
+		renderTiledShadowMapParams.m_DSVFormat = GetDepthStencilViewFormat(m_pSpotLightTiledShadowMap->GetFormat());
+		renderTiledShadowMapParams.m_pMeshBatch = m_pMeshBatch;
+		renderTiledShadowMapParams.m_LightType = LightType_Spot;
+
+		m_pRenderSpotLightTiledShadowMapPass = new RenderTiledShadowMapPass(&renderTiledShadowMapParams);
+		
+		m_pRenderSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pSpotLightTiledShadowMap, m_pSpotLightTiledShadowMap->GetWriteState());
+		m_pRenderSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(pLightPropsBuffer, pLightPropsBuffer->GetReadState());
+		m_pRenderSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pSpotLightViewTileProjMatrixBuffer, m_pSpotLightViewTileProjMatrixBuffer->GetReadState());
+		m_pRenderSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(pLightFrustumBuffer, pLightFrustumBuffer->GetReadState());
+		m_pRenderSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pDrawSpotLightShadowCasterCommandBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+		m_pRenderSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pNumDrawSpotLightShadowCastersBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+		
+		m_pRenderSpotLightTiledShadowMapResources->m_DSVHeapStart = m_pSpotLightTiledShadowMap->GetDSVHandle();
+		m_pRenderSpotLightTiledShadowMapResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+
+		m_pDevice->CopyDescriptor(m_pRenderSpotLightTiledShadowMapResources->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightViewTileProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightFrustumBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
+	
 	ClearVoxelGridPass::InitParams clearGridParams;
 	clearGridParams.m_pRenderEnv = m_pRenderEnv;
 	clearGridParams.m_NumGridCellsX = kNumGridCellsX;
@@ -936,7 +1013,7 @@ void DXApplication::OnInit()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 	
-	ColorTexture* pCopyTexture = m_pAccumLightTexture;
+	DepthTexture* pCopyTexture = m_pSpotLightTiledShadowMap;
 	CopyTexturePass::InitParams copyTextureParams;
 	copyTextureParams.m_pRenderEnv = m_pRenderEnv;
 	copyTextureParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(0)->GetFormat());
@@ -1028,7 +1105,7 @@ void DXApplication::OnInit()
 	m_pViewFrustumSpotLightCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
 
 	TiledLightCullingData tiledLightCullingData;
-	tiledLightCullingData.m_RcpScreenSize = Rcp(Vector2f((f32)bufferWidth, (f32)bufferHeight));
+	tiledLightCullingData.m_RcpScreenSize = Rcp(Vector2f((f32)backBufferWidth, (f32)backBufferHeight));
 	tiledLightCullingData.m_ViewMatrix = m_pCamera->GetViewMatrix();
 	tiledLightCullingData.m_ProjMatrix = m_pCamera->GetProjMatrix();
 	tiledLightCullingData.m_ProjInvMatrix = Inverse(m_pCamera->GetProjMatrix());
@@ -1036,7 +1113,7 @@ void DXApplication::OnInit()
 	m_pTiledLightCullingDataBuffer->Write(&tiledLightCullingData, sizeof(tiledLightCullingData));
 
 	TiledShadingData tiledShadingData;
-	tiledShadingData.m_RcpScreenSize = Rcp(Vector2f((f32)bufferWidth, (f32)bufferHeight));
+	tiledShadingData.m_RcpScreenSize = Rcp(Vector2f((f32)backBufferWidth, (f32)backBufferHeight));
 	tiledShadingData.m_WorldSpaceCameraPos = mainCameraPos;
 	tiledShadingData.m_ViewProjInvMatrix = Inverse(m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix());
 	
@@ -1049,6 +1126,14 @@ void DXApplication::OnInit()
 		tiledShadingData.m_LightColor = pDirectionalLight->GetColor();
 	}
 	m_pTiledShadingDataBuffer->Write(&tiledShadingData, sizeof(tiledShadingData));
+
+	ShadowMapData spotLightShadowMapData;
+	spotLightShadowMapData.m_SizeInPixels = f32(kTiledShadowMapSize);
+	spotLightShadowMapData.m_RcpSizeInPixels = Rcp(spotLightShadowMapData.m_SizeInPixels);
+	spotLightShadowMapData.m_TileSizeInPixels = f32(kShadowMapTileSize);
+	spotLightShadowMapData.m_RcpTileSizeInPixels = Rcp(spotLightShadowMapData.m_TileSizeInPixels);
+
+	m_pSpotLightShadowMapDataBuffer->Write(&spotLightShadowMapData, sizeof(spotLightShadowMapData));
 
 	SafeDelete(pScene);
 }
@@ -1138,7 +1223,7 @@ void DXApplication::OnRender()
 	renderGBufferParams.m_pRenderEnv = m_pRenderEnv;
 	renderGBufferParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferCommandList");
 	renderGBufferParams.m_pResources = m_pRenderGBufferResources;
-	renderGBufferParams.m_pViewport = m_pViewport;
+	renderGBufferParams.m_pViewport = m_pBackBufferViewport;
 	renderGBufferParams.m_pMeshBatch = m_pMeshBatch;
 	renderGBufferParams.m_pDrawMeshCommandBuffer = m_pDrawMeshCommandBuffer;
 	renderGBufferParams.m_pNumDrawMeshesBuffer = m_pNumVisibleMeshesBuffer;
@@ -1177,6 +1262,33 @@ void DXApplication::OnRender()
 	m_pCreateRenderShadowMapCommandsPass->Record(&createRenderShadowMapCommandsParams);
 	submissionBatch.emplace_back(createRenderShadowMapCommandsParams.m_pCommandList);
 
+	if (m_pPointLightBuffer != nullptr)
+	{
+	}
+	
+	if (m_pSpotLightBuffer != nullptr)
+	{
+		SetupTiledShadowMapPass::RenderParams setupTiledShadowMapParams;
+		setupTiledShadowMapParams.m_pRenderEnv = m_pRenderEnv;
+		setupTiledShadowMapParams.m_pCommandList = m_pCommandListPool->Create(L"pSetupSpotLightTiledShadowMapCommandList");
+		setupTiledShadowMapParams.m_pResources = m_pSetupSpotLightTiledShadowMapResources;
+
+		m_pSetupSpotLightTiledShadowMapPass->Record(&setupTiledShadowMapParams);
+		submissionBatch.emplace_back(setupTiledShadowMapParams.m_pCommandList);
+
+		RenderTiledShadowMapPass::RenderParams renderTiledShadowMapParams;
+		renderTiledShadowMapParams.m_pRenderEnv = m_pRenderEnv;
+		renderTiledShadowMapParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderSpotLightTiledShadowMapCommandList");
+		renderTiledShadowMapParams.m_pResources = m_pRenderSpotLightTiledShadowMapResources;
+		renderTiledShadowMapParams.m_pViewport = m_pSpotLightTiledShadowMapViewport;
+		renderTiledShadowMapParams.m_pMeshBatch = m_pMeshBatch;
+		renderTiledShadowMapParams.m_pDrawShadowCasterCommandBuffer = m_pDrawSpotLightShadowCasterCommandBuffer;
+		renderTiledShadowMapParams.m_pNumDrawShadowCastersBuffer = m_pNumDrawSpotLightShadowCastersBuffer;
+
+		m_pRenderSpotLightTiledShadowMapPass->Record(&renderTiledShadowMapParams);
+		submissionBatch.emplace_back(renderTiledShadowMapParams.m_pCommandList);
+	}
+
 	TiledShadingPass::RenderParams tiledShadingParams;
 	tiledShadingParams.m_pRenderEnv = m_pRenderEnv;
 	tiledShadingParams.m_pCommandList = m_pCommandListPool->Create(L"pTiledShadingCommandList");
@@ -1190,7 +1302,7 @@ void DXApplication::OnRender()
 	copyTextureParams.m_pRenderEnv = m_pRenderEnv;
 	copyTextureParams.m_pCommandList = m_pCommandListPool->Create(L"pCopyTextureCommandList");
 	copyTextureParams.m_pResources = m_CopyTextureResources[m_BackBufferIndex];
-	copyTextureParams.m_pViewport = m_pViewport;
+	copyTextureParams.m_pViewport = m_pBackBufferViewport;
 
 	m_pCopyTexturePass->Record(&copyTextureParams);
 	submissionBatch.emplace_back(copyTextureParams.m_pCommandList);
@@ -1208,7 +1320,7 @@ void DXApplication::OnRender()
 	createGridParams.m_pRenderEnv = m_pRenderEnv;
 	createGridParams.m_pCommandList = m_pCommandListPool->Create(L"pCreateGridCommandList");
 	createGridParams.m_pResources = m_pCreateVoxelGridResources;
-	createGridParams.m_pViewport = m_pViewport;
+	createGridParams.m_pBackBufferViewport = m_pBackBufferViewport;
 	createGridParams.m_pMeshBatch = m_pMeshBatch;
 	createGridParams.m_pDrawMeshCommandBuffer = m_pDrawMeshCommandBuffer;
 	createGridParams.m_pNumDrawMeshesBuffer = m_pNumVisibleMeshesBuffer;
@@ -1220,7 +1332,7 @@ void DXApplication::OnRender()
 	visualizeGridParams.m_pRenderEnv = m_pRenderEnv;
 	visualizeGridParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeGridCommandList");
 	visualizeGridParams.m_pResources = m_VisualizeVoxelGridResources[m_BackBufferIndex];
-	visualizeGridParams.m_pViewport = m_pViewport;
+	visualizeGridParams.m_pBackBufferViewport = m_pBackBufferViewport;
 	
 	m_pVisualizeVoxelGridPass->Record(&visualizeGridParams);
 	submissionBatch.emplace_back(visualizeGridParams.m_pCommandList);

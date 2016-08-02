@@ -170,6 +170,9 @@ COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(Solution
 COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Foundation.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Foundation.hlsl"
 
+COPY /Y "$(SolutionDir)Shaders\SetupTiledShadowMapCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\SetupTiledShadowMapCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\SetupTiledShadowMapCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\SetupTiledShadowMapCS.hlsl"
+
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
 

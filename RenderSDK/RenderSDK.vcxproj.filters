@@ -225,6 +225,9 @@
     <ClInclude Include="..\Include\RenderPasses\CreateRenderShadowMapCommandsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\SetupTiledShadowMapPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -416,6 +419,9 @@
     <ClCompile Include="..\Source\RenderPasses\CreateRenderShadowMapCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\SetupTiledShadowMapPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -503,6 +509,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\CreateRenderShadowMapCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\SetupTiledShadowMapCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -27,6 +27,7 @@ class TiledShadingPass;
 class ViewFrustumCullingPass;
 class CreateRenderShadowMapCommandsPass;
 class RenderTiledShadowMapPass;
+class SetupTiledShadowMapPass;
 
 struct HeapProperties;
 struct RenderEnv;
@@ -70,7 +71,8 @@ private:
 	ColorTexture* m_pNormalTexture;
 	ColorTexture* m_pSpecularTexture;
 	ColorTexture* m_pAccumLightTexture;
-	Viewport* m_pViewport;
+	Viewport* m_pBackBufferViewport;
+	Viewport* m_pSpotLightTiledShadowMapViewport;
 	Buffer* m_pObjectTransformBuffer;
 	Buffer* m_pCameraTransformBuffer;
 	Buffer* m_pGridBuffer;
@@ -97,6 +99,9 @@ private:
 	Buffer* m_pNumShadowCastingSpotLightsBuffer;
 	Buffer* m_pDrawSpotLightShadowCasterCommandBuffer;
 	Buffer* m_pNumDrawSpotLightShadowCastersBuffer;
+	Buffer* m_pSpotLightShadowMapDataBuffer;
+	Buffer* m_pSpotLightShadowMapTileBuffer;
+	Buffer* m_pSpotLightViewTileProjMatrixBuffer;
 	RenderEnv* m_pRenderEnv;
 	Fence* m_pFence;
 	UINT64 m_LastSubmissionFenceValue;
@@ -145,6 +150,9 @@ private:
 
 	CopyTexturePass* m_pCopyTexturePass;
 	BindingResourceList* m_CopyTextureResources[kNumBackBuffers];
+
+	SetupTiledShadowMapPass* m_pSetupSpotLightTiledShadowMapPass;
+	BindingResourceList* m_pSetupSpotLightTiledShadowMapResources;
 
 	MeshBatch* m_pMeshBatch;
 	
