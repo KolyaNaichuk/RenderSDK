@@ -21,7 +21,7 @@ class ClearVoxelGridPass;
 class CreateVoxelGridPass;
 class InjectVPLsIntoVoxelGridPass;
 class VisualizeVoxelGridPass;
-class CopyTexturePass;
+class VisualizeTexturePass;
 class TiledLightCullingPass;
 class TiledShadingPass;
 class ViewFrustumCullingPass;
@@ -82,6 +82,7 @@ private:
 	Buffer* m_pViewFrustumPointLightCullingDataBuffer;
 	Buffer* m_pTiledLightCullingDataBuffer;
 	Buffer* m_pTiledShadingDataBuffer;
+	Buffer* m_pVisualizeGBufferDataBuffer;
 	Buffer* m_pDrawMeshCommandBuffer;
 	Buffer* m_pNumVisibleMeshesBuffer;
 	Buffer* m_pVisibleMeshIndexBuffer;
@@ -147,12 +148,12 @@ private:
 	
 	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass;
 	BindingResourceList* m_pRenderSpotLightTiledShadowMapResources;
-
-	CopyTexturePass* m_pCopyTexturePass;
-	BindingResourceList* m_CopyTextureResources[kNumBackBuffers];
-
+	
 	SetupTiledShadowMapPass* m_pSetupSpotLightTiledShadowMapPass;
 	BindingResourceList* m_pSetupSpotLightTiledShadowMapResources;
+
+	VisualizeTexturePass* m_pVisualizeTexturePass;
+	BindingResourceList* m_VisualizeTextureResources[kNumBackBuffers];
 
 	MeshBatch* m_pMeshBatch;
 	
@@ -167,9 +168,12 @@ private:
 	Camera* m_pCamera;
 
 #ifdef FOR_DEBUG_ONLY
+	BindingResourceList* m_pDebugResources;
 	Buffer* m_pDebugShadowCastingSpotLightIndexBuffer;
 	Buffer* m_pDebugNumShadowCastingSpotLightsBuffer;
 	Buffer* m_pDebugDrawSpotLightShadowCasterCommandBuffer;
 	Buffer* m_pDebugNumDrawSpotLightShadowCastersBuffer;
+	Buffer* m_pDebugSpotLightShadowMapTileBuffer;
+	Buffer* m_pDebugSpotLightViewTileProjMatrixBuffer;
 #endif // FOR_DEBUG_ONLY
 };

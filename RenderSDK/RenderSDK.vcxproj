@@ -200,7 +200,6 @@
     <ClInclude Include="..\Include\Math\Vector4.h" />
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
     <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\CopyTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateRenderGBufferCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\InjectVPLsIntoVoxelGridPass.h" />
@@ -212,7 +211,7 @@
     <ClInclude Include="..\Include\RenderPasses\TiledLightCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledShadingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\ViewFrustumCullingPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\VisualizeMeshPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\VisualizeTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h" />
   </ItemGroup>
   <ItemGroup>
@@ -266,7 +265,6 @@
     <ClCompile Include="..\Source\Math\Vector4.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CopyTexturePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateRenderGBufferCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\InjectVPLsIntoVoxelGridPass.cpp" />
@@ -278,7 +276,7 @@
     <ClCompile Include="..\Source\RenderPasses\TiledLightCullingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledShadingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ViewFrustumCullingPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\VisualizeMeshPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\VisualizeTexturePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelGridPass.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -293,9 +291,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\CopyTexturePS.hlsl">
-      <FileType>Document</FileType>
-    </None>
     <None Include="..\Shaders\FullScreenTriangleVS.hlsl">
       <FileType>Document</FileType>
     </None>
@@ -364,18 +359,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\VisualizeMeshPS.hlsl">
+    <None Include="..\Shaders\VisualizeTexturePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <FileType>Document</FileType>
-    </None>
-    <None Include="..\Shaders\VisualizeMeshVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

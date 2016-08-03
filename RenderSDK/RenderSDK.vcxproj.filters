@@ -141,9 +141,6 @@
     <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\CopyTexturePass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -166,9 +163,6 @@
       <Filter>RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\ViewFrustumCullingPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\VisualizeMeshPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h">
@@ -226,6 +220,9 @@
       <Filter>RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\SetupTiledShadowMapPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\VisualizeTexturePass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -344,9 +341,6 @@
     <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\CopyTexturePass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
@@ -369,9 +363,6 @@
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\ViewFrustumCullingPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\VisualizeMeshPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelGridPass.cpp">
@@ -422,6 +413,9 @@
     <ClCompile Include="..\Source\RenderPasses\SetupTiledShadowMapPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\VisualizeTexturePass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -431,9 +425,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\FullScreenTriangleVS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CopyTexturePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\CreateVoxelGridVS.hlsl">
@@ -461,12 +452,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\ScaleTexture.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\VisualizeMeshPS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\VisualizeMeshVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\Packing.hlsl">
@@ -512,6 +497,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\SetupTiledShadowMapCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VisualizeTexturePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
