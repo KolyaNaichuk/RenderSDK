@@ -34,9 +34,9 @@ void Main(uint3 tileId : SV_GroupThreadID, uint tileIndex : SV_GroupIndex)
 		matrix lightViewProjMatrix = g_LightViewProjMatrixBuffer[lightIndex];
 		
 		ShadowMapTile tile;
-		tile.texSpaceTopLeftPos = (float2(tileId.xy) * g_ShadowMapData.tileSizeInPixels + 0.5f) * g_ShadowMapData.rcpSizeInPixels;
 		tile.texSpaceSize = g_ShadowMapData.tileSizeInPixels * g_ShadowMapData.rcpSizeInPixels;
-
+		tile.texSpaceTopLeftPos = float2(tileId.xy) * tile.texSpaceSize;
+		
 		g_ShadowMapTileBuffer[lightIndex] = tile;
 
 		matrix shadowMapTileProjMatrix =

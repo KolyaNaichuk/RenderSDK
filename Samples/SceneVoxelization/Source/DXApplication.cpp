@@ -79,7 +79,7 @@ enum OutputResult
 
 enum
 {
-	kOutputResult = OutputResult_AccumLight,
+	kOutputResult = OutputResult_SpotLightTiledShadowMap,
 
 	kTileSize = 16,
 	kNumTilesX = 58,
@@ -100,7 +100,7 @@ enum
 
 struct ObjectTransform
 {
-	Matrix4f m_WorldPosMatrix;
+	Matrix4f m_WorldPositionMatrix;
 	Matrix4f m_WorldNormalMatrix;
 	Matrix4f m_WorldViewProjMatrix;
 	Vector4f m_NotUsed[4];
@@ -1147,6 +1147,7 @@ void DXApplication::OnInit()
 	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pNumDrawSpotLightShadowCastersBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
 	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pSpotLightShadowMapTileBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
 	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pSpotLightViewTileProjMatrixBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pSpotLightShadowMapTileBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
 #endif // FOR_DEBUG_ONLY
 
 	// Kolya: Should be moved to OnUpdate
@@ -1157,7 +1158,7 @@ void DXApplication::OnInit()
 	const Frustum mainCameraFrustum = ExtractWorldFrustum(*m_pCamera);
 
 	ObjectTransform objectTransform;
-	objectTransform.m_WorldPosMatrix = Matrix4f::IDENTITY;
+	objectTransform.m_WorldPositionMatrix = Matrix4f::IDENTITY;
 	objectTransform.m_WorldNormalMatrix = Matrix4f::IDENTITY;
 	objectTransform.m_WorldViewProjMatrix = mainViewProjMatrix;
 
@@ -1470,6 +1471,7 @@ void DXApplication::OnRender()
 
 #ifdef FOR_DEBUG_ONLY
 	CommandList* pDebugCommandList = m_pCommandListPool->Create(L"pDebugCommandList");
+	
 	pDebugCommandList->Begin();
 	pDebugCommandList->SetRequiredResourceStates(&m_pDebugResources->m_RequiredResourceStates);
 	pDebugCommandList->CopyResource(m_pDebugShadowCastingSpotLightIndexBuffer, m_pShadowCastingSpotLightIndexBuffer);
@@ -1478,6 +1480,7 @@ void DXApplication::OnRender()
 	pDebugCommandList->CopyResource(m_pDebugNumDrawSpotLightShadowCastersBuffer, m_pNumDrawSpotLightShadowCastersBuffer);
 	pDebugCommandList->CopyResource(m_pDebugSpotLightShadowMapTileBuffer, m_pSpotLightShadowMapTileBuffer);
 	pDebugCommandList->CopyResource(m_pDebugSpotLightViewTileProjMatrixBuffer, m_pSpotLightViewTileProjMatrixBuffer);
+	pDebugCommandList->CopyResource(m_pDebugSpotLightShadowMapTileBuffer, m_pSpotLightShadowMapTileBuffer);
 	pDebugCommandList->End();
 
 	submissionBatch.emplace_back(pDebugCommandList);
@@ -1519,6 +1522,21 @@ void DXApplication::OnRender()
 		OutputDebugStringA(("\tstartIndexLocation: " + std::to_string(drawCommand.m_DrawArgs.StartIndexLocation) + "\n").c_str());
 		OutputDebugStringA(("\tbaseVertexLocation: " + std::to_string(drawCommand.m_DrawArgs.BaseVertexLocation) + "\n").c_str());
 		OutputDebugStringA(("\tstartInstanceLocation: " + std::to_string(drawCommand.m_DrawArgs.StartInstanceLocation) + "\n").c_str());
+	}
+
+	u16 debugNumSpotLightShadowMapTiles = kNumShadowMapTiles * kNumShadowMapTiles;
+	std::vector<ShadowMapTile> debugSpotLightShadowMapTiles(debugNumSpotLightShadowMapTiles);
+	m_pDebugSpotLightShadowMapTileBuffer->Read(debugSpotLightShadowMapTiles.data(), debugNumSpotLightShadowMapTiles * sizeof(ShadowMapTile));
+
+	for (u16 row = 0; row < kNumShadowMapTiles; ++row)
+	{
+		for (u16 col = 0; col < kNumShadowMapTiles; ++col)
+		{
+			const ShadowMapTile& tile = debugSpotLightShadowMapTiles[row * kNumShadowMapTiles + col];
+			OutputDebugStringA(("Tile (" + std::to_string(row) + ", " + std::to_string(col) + "):\n").c_str());
+			OutputDebugStringA(("\ttexSpaceTopLeftPos: (" + std::to_string(tile.m_TexSpaceTopLeftPos.m_X) + ", " + std::to_string(tile.m_TexSpaceTopLeftPos.m_Y) + ")\n").c_str());
+			OutputDebugStringA(("\ttexSpaceSize: (" + std::to_string(tile.m_TexSpaceSize.m_X) + ", " + std::to_string(tile.m_TexSpaceSize.m_Y) + ")\n").c_str());
+		}
 	}
 
 	OutputDebugStringA("2.Debug =========================\n");

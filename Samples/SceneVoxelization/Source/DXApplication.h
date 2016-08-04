@@ -34,7 +34,7 @@ struct RenderEnv;
 struct BindingResourceList;
 struct Viewport;
 
-//#define FOR_DEBUG_ONLY
+#define FOR_DEBUG_ONLY
 //#define ENABLE_INDIRECT_LIGHTING
 
 class DXApplication : public Application
