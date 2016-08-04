@@ -34,7 +34,7 @@ struct RenderEnv;
 struct BindingResourceList;
 struct Viewport;
 
-#define FOR_DEBUG_ONLY
+//#define FOR_DEBUG_ONLY
 //#define ENABLE_INDIRECT_LIGHTING
 
 class DXApplication : public Application
@@ -169,6 +169,8 @@ private:
 
 #ifdef FOR_DEBUG_ONLY
 	BindingResourceList* m_pDebugResources;
+	Buffer* m_pDebugNumVisibleMeshesBuffer;
+	Buffer* m_pDebugVisibleMeshIndexBuffer;
 	Buffer* m_pDebugShadowCastingSpotLightIndexBuffer;
 	Buffer* m_pDebugNumShadowCastingSpotLightsBuffer;
 	Buffer* m_pDebugDrawSpotLightShadowCasterCommandBuffer;

@@ -79,11 +79,11 @@ enum OutputResult
 
 enum
 {
-	kOutputResult = OutputResult_SpotLightTiledShadowMap,
+	kOutputResult = OutputResult_GBufferNormal,
 
 	kTileSize = 16,
-	kNumTilesX = 58,
-	kNumTilesY = 48,
+	kNumTilesX = 40,
+	kNumTilesY = 40,
 
 	kGridSizeX = 640,
 	kGridSizeY = 640,
@@ -282,6 +282,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCamera(nullptr)
 #ifdef FOR_DEBUG_ONLY
 	, m_pDebugResources(new BindingResourceList())
+	, m_pDebugNumVisibleMeshesBuffer(nullptr)
+	, m_pDebugVisibleMeshIndexBuffer(nullptr)
 	, m_pDebugShadowCastingSpotLightIndexBuffer(nullptr)
 	, m_pDebugNumShadowCastingSpotLightsBuffer(nullptr)
 	, m_pDebugDrawSpotLightShadowCasterCommandBuffer(nullptr)
@@ -397,6 +399,8 @@ DXApplication::~DXApplication()
 
 #ifdef FOR_DEBUG_ONLY
 	SafeDelete(m_pDebugResources);
+	SafeDelete(m_pDebugNumVisibleMeshesBuffer);
+	SafeDelete(m_pDebugVisibleMeshIndexBuffer);
 	SafeDelete(m_pDebugShadowCastingSpotLightIndexBuffer);
 	SafeDelete(m_pDebugNumShadowCastingSpotLightsBuffer);
 	SafeDelete(m_pDebugDrawSpotLightShadowCasterCommandBuffer);
@@ -408,6 +412,8 @@ DXApplication::~DXApplication()
 
 void DXApplication::OnInit()
 {
+	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test1);
+
 	GraphicsFactory factory;
 	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_11_0);
 
@@ -452,12 +458,19 @@ void DXApplication::OnInit()
 	m_pBackBufferViewport = new Viewport(0.0f, 0.0f, (FLOAT)backBufferWidth, (FLOAT)backBufferHeight);
 	m_pSpotLightTiledShadowMapViewport = new Viewport(0.0f, 0.0f, (FLOAT)kTiledShadowMapSize, (FLOAT)kTiledShadowMapSize);
 
-	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
+	SpotLight* pSpotLight = *pScene->GetSpotLights();
+	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.001f, pSpotLight->GetAttenEndRange(), 1.0f);
+	m_pCamera->GetTransform().SetPosition(pSpotLight->GetTransform().GetPosition());
+	m_pCamera->GetTransform().SetRotation(pSpotLight->GetTransform().GetRotation());
+	m_pCamera->SetFovY(pSpotLight->GetOuterConeAngle());
+
+	//m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
+	//m_pCamera->GetTransform().SetPosition(Vector3f(278.0f, 274.0f, 700.0f));
+	//m_pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(Radian(PI)));
+	
 	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
 	m_pCamera->SetBackgroundColor(Color::GRAY);
-	m_pCamera->GetTransform().SetPosition(Vector3f(278.0f, 274.0f, 700.0f));
-	m_pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(Radian(PI)));
-
+	
 	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), backBufferWidth, backBufferHeight);
 	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
@@ -508,8 +521,6 @@ void DXApplication::OnInit()
 	m_pGridBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &gridBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pGridBuffer");
 
 	m_pFence = new Fence(m_pDevice, m_LastSubmissionFenceValue, L"m_pFence");
-	
-	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test1);
 	
 	assert(pScene->GetNumMeshBatches() == 1);
 	MeshBatchData* pMeshBatchData = *pScene->GetMeshBatches();
@@ -613,6 +624,14 @@ void DXApplication::OnInit()
 	FormattedBufferDesc visibleMeshIndexBufferDesc(m_pMeshBatch->GetNumMeshes(), DXGI_FORMAT_R32_UINT, true, true);
 	m_pVisibleMeshIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &visibleMeshIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pVisibleMeshIndexBuffer");
 	
+#ifdef FOR_DEBUG_ONLY
+	FormattedBufferDesc debugNumVisibleMeshesBufferDesc(1, DXGI_FORMAT_R32_UINT, false, false);
+	m_pDebugNumVisibleMeshesBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugNumVisibleMeshesBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugNumVisibleMeshesBuffer");
+
+	FormattedBufferDesc debugVisibleMeshIndexBufferDesc(m_pMeshBatch->GetNumMeshes(), DXGI_FORMAT_R32_UINT, false, false);
+	m_pDebugVisibleMeshIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugVisibleMeshIndexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugVisibleMeshIndexBuffer");
+#endif // FOR_DEBUG_ONLY
+
 	Buffer* pMeshBoundsBuffer = m_pMeshBatch->GetMeshBoundsBuffer();
 	Buffer* pMeshDescBuffer = m_pMeshBatch->GetMeshDescBuffer();
 	Buffer* pMaterialBuffer = m_pMeshBatch->GetMaterialBuffer();
@@ -1141,6 +1160,8 @@ void DXApplication::OnInit()
 	}
 
 #ifdef FOR_DEBUG_ONLY
+	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleMeshesBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pVisibleMeshIndexBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
 	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pShadowCastingSpotLightIndexBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
 	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pNumShadowCastingSpotLightsBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
 	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pDrawSpotLightShadowCasterCommandBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
@@ -1165,9 +1186,9 @@ void DXApplication::OnInit()
 	m_pObjectTransformBuffer->Write(&objectTransform, sizeof(objectTransform));
 
 	const BasisAxes mainCameraBasis = ExtractBasisAxes(mainCameraRotation);
-	assert(IsNormalized(mainCameraBasis.m_XAxis));
-	assert(IsNormalized(mainCameraBasis.m_YAxis));
-	assert(IsNormalized(mainCameraBasis.m_ZAxis));
+	//assert(IsNormalized(mainCameraBasis.m_XAxis));
+	//assert(IsNormalized(mainCameraBasis.m_YAxis));
+	//assert(IsNormalized(mainCameraBasis.m_ZAxis));
 
 	const Vector3f gridSize(kGridSizeX, kGridSizeY, kGridSizeZ);
 	const Vector3f gridHalfSize(0.5f * gridSize);
@@ -1310,7 +1331,7 @@ void DXApplication::OnRender()
 
 	m_pDetectVisibleMeshesPass->Record(&detectVisibleMeshesParams);
 	submissionBatch.emplace_back(detectVisibleMeshesParams.m_pCommandList);
-
+	
 	if (m_pPointLightBuffer != nullptr)
 	{
 		ViewFrustumCullingPass::RenderParams detectVisibleLightsParams;
@@ -1421,7 +1442,7 @@ void DXApplication::OnRender()
 	
 	m_pTiledShadingPass->Record(&tiledShadingParams);
 	submissionBatch.emplace_back(tiledShadingParams.m_pCommandList);
-
+	
 #ifdef ENABLE_INDIRECT_LIGHTING
 	ClearVoxelGridPass::RenderParams clearGridParams;
 	clearGridParams.m_pRenderEnv = m_pRenderEnv;
@@ -1474,6 +1495,8 @@ void DXApplication::OnRender()
 	
 	pDebugCommandList->Begin();
 	pDebugCommandList->SetRequiredResourceStates(&m_pDebugResources->m_RequiredResourceStates);
+	pDebugCommandList->CopyResource(m_pDebugNumVisibleMeshesBuffer, m_pNumVisibleMeshesBuffer);
+	pDebugCommandList->CopyResource(m_pDebugVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer);
 	pDebugCommandList->CopyResource(m_pDebugShadowCastingSpotLightIndexBuffer, m_pShadowCastingSpotLightIndexBuffer);
 	pDebugCommandList->CopyResource(m_pDebugNumShadowCastingSpotLightsBuffer, m_pNumShadowCastingSpotLightsBuffer);
 	pDebugCommandList->CopyResource(m_pDebugDrawSpotLightShadowCasterCommandBuffer, m_pDrawSpotLightShadowCasterCommandBuffer);
@@ -1493,6 +1516,17 @@ void DXApplication::OnRender()
 #ifdef FOR_DEBUG_ONLY
 	m_pFence->WaitForSignalOnCPU(m_LastSubmissionFenceValue);
 	OutputDebugStringA("1.Debug =========================\n");
+
+	u32 debugNumVisibleMeshes = 0;
+	m_pDebugNumVisibleMeshesBuffer->Read(&debugNumVisibleMeshes, sizeof(u32));
+	OutputDebugStringA(("NumVisibleMeshes: " + std::to_string(debugNumVisibleMeshes)).c_str());
+	OutputDebugStringA("\n");
+
+	std::vector<u32> debugVisibleMeshIndices(debugNumVisibleMeshes);
+	m_pDebugVisibleMeshIndexBuffer->Read(debugVisibleMeshIndices.data(), debugNumVisibleMeshes * sizeof(u32));
+	for (u32 i = 0; i < debugNumVisibleMeshes; ++i)
+		OutputDebugStringA(("\t" + std::to_string(i) + ".mesh index: " + std::to_string(debugVisibleMeshIndices[i]) + "\n").c_str());
+	OutputDebugStringA("\n");
 
 	u32 debugNumShadowCastingSpotLights = 0;
 	m_pDebugNumShadowCastingSpotLightsBuffer->Read(&debugNumShadowCastingSpotLights, sizeof(u32));
