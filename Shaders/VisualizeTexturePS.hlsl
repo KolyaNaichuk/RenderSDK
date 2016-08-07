@@ -6,7 +6,7 @@
 #define TEXTURE_TYPE_DEPTH				4
 #define TEXTURE_TYPE_OTHER				5
 
-struct VisualizeGBufferData
+struct VisualizeTextureData
 {
 	matrix cameraProjMatrix;
 	float cameraNearPlane;
@@ -20,9 +20,9 @@ struct PSInput
 	float2 texCoord			: TEXCOORD0;
 };
 
-cbuffer VisualizeGBufferDataBuffer : register(b0)
+cbuffer VisualizeTextureDataBuffer : register(b0)
 {
-	VisualizeGBufferData g_VisualizeData;
+	VisualizeTextureData g_VisualizeData;
 };
 
 Texture2D InputTexture		: register(t0);
