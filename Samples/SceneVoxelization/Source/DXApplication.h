@@ -5,6 +5,7 @@
 class GraphicsDevice;
 class SwapChain;
 class CommandQueue;
+class CommandList;
 class CommandListPool;
 class DescriptorHeap;
 class ColorTexture;
@@ -28,13 +29,14 @@ class ViewFrustumCullingPass;
 class CreateRenderShadowMapCommandsPass;
 class RenderTiledShadowMapPass;
 class SetupTiledShadowMapPass;
+class Scene;
 
 struct HeapProperties;
 struct RenderEnv;
 struct BindingResourceList;
 struct Viewport;
 
-//#define FOR_DEBUG_ONLY
+#define DEBUG_RENDER_PASS
 //#define ENABLE_INDIRECT_LIGHTING
 
 class DXApplication : public Application
@@ -50,6 +52,47 @@ private:
 	virtual void OnDestroy();
 	virtual void OnKeyDown(UINT8 key);
 	virtual void OnKeyUp(UINT8 key);
+
+	void InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight);
+	void InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
+	void InitDetectVisibleMeshesPass();
+	void InitDetectVisiblePointLightsPass(const Scene* pScene);
+	void InitDetectVisibleSpotLightsPass(const Scene* pScene);
+	void InitCreateRenderGBufferCommandsPass();
+	void InitRenderGBufferPass(UINT backBufferWidth, UINT backBufferHeight);
+	void InitTiledLightCullingPass(const Scene* pScene);
+	void InitTiledShadingPass(const Scene* pScene);
+	void InitSetupSpotLightTiledShadowMapPass(const Scene* pScene);
+	void InitCreateRenderShadowMapCommandsPass(const Scene* pScene);
+	void InitRenderSpotLightTiledShadowMapPass();
+	void InitVisualizeTexturePass();
+	void InitClearVoxelGridPass();
+	void InitCreateVoxelGridPass();
+	void InitInjectVPLsIntoVoxelGridPass();
+	void InitVisualizeVoxelGridPass();
+	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
+	void InitDebugRenderPass(const Scene* pScene);
+
+	CommandList* RecordClearBackBufferPass(u8 clearFlags);
+	CommandList* RecordDetectVisibleMeshesPass();
+	CommandList* RecordDetectVisiblePointLightsPass();
+	CommandList* RecordDetectVisibleSpotLightsPass();
+	CommandList* RecordCreateRenderGBufferCommandsPass();
+	CommandList* RecordRenderGBufferPass();
+	CommandList* RecordTiledLightCullingPass();
+	CommandList* RecordUpdateCreateRenderShadowMapCommandsArgumentBufferPass();
+	CommandList* RecordCreateRenderShadowMapCommandsPass();
+	CommandList* RecordSetupSpotLightTiledShadowMapPass();
+	CommandList* RecordRenderSpotLightTiledShadowMapPass();
+	CommandList* RecordTiledShadingPass();
+	CommandList* RecordClearVoxelGridPass();
+	CommandList* RecordCreateVoxelGridPass();
+	CommandList* RecordVisualizeVoxelGridPass();
+	CommandList* RecordVisualizeTexturePass();
+	CommandList* RecordPresentResourceBarrierPass();
+	CommandList* RecordDebugRenderPass();
+
+	void OuputDebugResult();
 
 private:
 	enum { kNumBackBuffers = 3 };
@@ -82,7 +125,7 @@ private:
 	Buffer* m_pViewFrustumPointLightCullingDataBuffer;
 	Buffer* m_pTiledLightCullingDataBuffer;
 	Buffer* m_pTiledShadingDataBuffer;
-	Buffer* m_pVisualizeGBufferDataBuffer;
+	Buffer* m_pVisualizeTextureDataBuffer;
 	Buffer* m_pDrawMeshCommandBuffer;
 	Buffer* m_pNumVisibleMeshesBuffer;
 	Buffer* m_pVisibleMeshIndexBuffer;
@@ -125,6 +168,7 @@ private:
 	BindingResourceList* m_pCreateVoxelGridResources;
 
 	InjectVPLsIntoVoxelGridPass* m_pInjectVPLsIntoVoxelGridPass;
+	BindingResourceList* m_pInjectVPLsIntoVoxelGridResources;
 
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridPass;
 	BindingResourceList* m_VisualizeVoxelGridResources[kNumBackBuffers];
@@ -167,7 +211,7 @@ private:
 	
 	Camera* m_pCamera;
 
-#ifdef FOR_DEBUG_ONLY
+#ifdef DEBUG_RENDER_PASS
 	BindingResourceList* m_pDebugResources;
 	Buffer* m_pDebugNumVisibleMeshesBuffer;
 	Buffer* m_pDebugVisibleMeshIndexBuffer;
@@ -177,5 +221,5 @@ private:
 	Buffer* m_pDebugNumDrawSpotLightShadowCastersBuffer;
 	Buffer* m_pDebugSpotLightShadowMapTileBuffer;
 	Buffer* m_pDebugSpotLightViewTileProjMatrixBuffer;
-#endif // FOR_DEBUG_ONLY
+#endif // DEBUG_RENDER_PASS
 };
