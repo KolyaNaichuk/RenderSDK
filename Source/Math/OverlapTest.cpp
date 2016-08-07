@@ -1,6 +1,8 @@
 #include "Math/OverlapTest.h"
 #include "Math/AxisAlignedBox.h"
+#include "Math/Frustum.h"
 #include "Math/Sphere.h"
+#include "Math/Plane.h"
 #include "Math/Math.h"
 
 bool Overlap(const AxisAlignedBox& box1, const AxisAlignedBox& box2)
@@ -23,4 +25,25 @@ bool Overlap(const Sphere& sphere1, const Sphere& sphere2)
 	f32 radiusSum = sphere1.m_Radius + sphere2.m_Radius;
 	
 	return (sqLength <= Sqr(radiusSum));
+}
+
+bool TestAABBAgainstPlane(const Plane& plane, const AxisAlignedBox& box)
+{
+	f32 maxRadiusProj = Dot(box.m_Radius, Abs(plane.m_Normal));
+	f32 signedDist = SignedDistanceToPoint(plane, box.m_Center);
+
+	bool fullyInsideBackHalfSpace = (signedDist + maxRadiusProj) < 0.0f;
+	return !fullyInsideBackHalfSpace;
+}
+
+bool TestAABBAgainstFrustum(const Frustum& frustum, const AxisAlignedBox& box)
+{
+	bool insideOrOverlap = TestAABBAgainstPlane(frustum.m_Planes[0], box) &&
+		TestAABBAgainstPlane(frustum.m_Planes[1], box) &&
+		TestAABBAgainstPlane(frustum.m_Planes[2], box) &&
+		TestAABBAgainstPlane(frustum.m_Planes[3], box) &&
+		TestAABBAgainstPlane(frustum.m_Planes[4], box) &&
+		TestAABBAgainstPlane(frustum.m_Planes[5], box);
+
+	return insideOrOverlap;
 }
