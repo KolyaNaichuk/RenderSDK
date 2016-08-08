@@ -36,7 +36,7 @@ struct RenderEnv;
 struct BindingResourceList;
 struct Viewport;
 
-#define DEBUG_RENDER_PASS
+//#define DEBUG_RENDER_PASS
 //#define ENABLE_INDIRECT_LIGHTING
 
 class DXApplication : public Application
@@ -56,14 +56,14 @@ private:
 	void InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight);
 	void InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
 	void InitDetectVisibleMeshesPass();
-	void InitDetectVisiblePointLightsPass(const Scene* pScene);
-	void InitDetectVisibleSpotLightsPass(const Scene* pScene);
+	void InitDetectVisiblePointLightsPass();
+	void InitDetectVisibleSpotLightsPass();
 	void InitCreateRenderGBufferCommandsPass();
 	void InitRenderGBufferPass(UINT backBufferWidth, UINT backBufferHeight);
-	void InitTiledLightCullingPass(const Scene* pScene);
-	void InitTiledShadingPass(const Scene* pScene);
-	void InitSetupSpotLightTiledShadowMapPass(const Scene* pScene);
-	void InitCreateRenderShadowMapCommandsPass(const Scene* pScene);
+	void InitTiledLightCullingPass();
+	void InitTiledShadingPass();
+	void InitSetupSpotLightTiledShadowMapPass();
+	void InitCreateRenderShadowMapCommandsPass();
 	void InitRenderSpotLightTiledShadowMapPass();
 	void InitVisualizeTexturePass();
 	void InitClearVoxelGridPass();
@@ -71,7 +71,6 @@ private:
 	void InitInjectVPLsIntoVoxelGridPass();
 	void InitVisualizeVoxelGridPass();
 	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
-	void InitDebugRenderPass(const Scene* pScene);
 
 	CommandList* RecordClearBackBufferPass(u8 clearFlags);
 	CommandList* RecordDetectVisibleMeshesPass();
@@ -90,10 +89,13 @@ private:
 	CommandList* RecordVisualizeVoxelGridPass();
 	CommandList* RecordVisualizeTexturePass();
 	CommandList* RecordPresentResourceBarrierPass();
+	
+#ifdef DEBUG_RENDER_PASS
+	void InitDebugRenderPass(const Scene* pScene);
 	CommandList* RecordDebugRenderPass();
-
-	void OuputDebugResult();
-
+	void OuputDebugRenderPassResult();
+#endif // DEBUG_RENDER_PASS
+	
 private:
 	enum { kNumBackBuffers = 3 };
 

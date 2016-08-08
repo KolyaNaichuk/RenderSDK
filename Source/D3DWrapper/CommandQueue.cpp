@@ -25,10 +25,7 @@ void CommandQueue::ExecuteCommandLists(RenderEnv* pRenderEnv, UINT numCommandLis
 {
 	std::vector<ID3D12CommandList*> d3dCommandLists;
 	d3dCommandLists.reserve(numCommandLists);
-
-	std::vector<CommandList*> barrierCommandLists;
-	barrierCommandLists.reserve(numCommandLists);
-
+		
 	for (UINT listIndex = 0; listIndex < numCommandLists; ++listIndex)
 	{
 		CommandList* pCommandList = ppCommandLists[listIndex];
@@ -63,7 +60,6 @@ void CommandQueue::ExecuteCommandLists(RenderEnv* pRenderEnv, UINT numCommandLis
 				pBarrierCommandList->End();
 				pBarrierCommandList->SetCompletionFence(pCompletionFence, completionFenceValue);
 				
-				barrierCommandLists.emplace_back(pBarrierCommandList);
 				d3dCommandLists.emplace_back(pBarrierCommandList->GetD3DObject());
 			}
 		}
