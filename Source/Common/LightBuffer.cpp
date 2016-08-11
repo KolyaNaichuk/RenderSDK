@@ -120,7 +120,9 @@ LightBuffer::LightBuffer(RenderEnv* pRenderEnv, u32 numSpotLights, SpotLight** p
 		const Vector3f& lightWorldSpacePos = lightWorldSpaceTransform.GetPosition();
 
 		const BasisAxes lightWorldSpaceBasis = ExtractBasisAxes(lightWorldSpaceTransform.GetRotation());
-		const Vector3f lightWorldSpaceDir = Normalize(lightWorldSpaceBasis.m_ZAxis);
+		
+		assert(IsNormalized(lightWorldSpaceBasis.m_ZAxis));
+		const Vector3f& lightWorldSpaceDir = lightWorldSpaceBasis.m_ZAxis;
 
 		Cone cone(lightWorldSpacePos, pLight->GetOuterConeAngle(), lightWorldSpaceDir, pLight->GetAttenEndRange());
 		lightBounds.emplace_back(ExtractBoundingSphere(cone));
