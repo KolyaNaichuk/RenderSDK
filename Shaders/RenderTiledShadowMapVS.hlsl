@@ -8,7 +8,7 @@ struct VSInput
 struct VSOutput
 {
 	float4 worldSpacePos		: SV_Position;
-	uint lightIndex				: LIGHT_INDEX;
+	uint lightIndexOffset		: LIGHT_INDEX_OFFSET;
 };
 
 struct ObjectTransform
@@ -34,7 +34,7 @@ VSOutput Main(VSInput input)
 	VSOutput output;
 
 	output.worldSpacePos = mul(float4(input.localSpacePos.xyz, 1.0f), g_Transform.worldPositionMatrix);
-	output.lightIndex = g_LightIndexOffset + input.instanceId;
+	output.lightIndexOffset = g_LightIndexOffset + input.instanceId;
 
 	return output;
 }

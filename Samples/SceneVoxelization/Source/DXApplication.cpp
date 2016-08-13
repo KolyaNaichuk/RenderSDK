@@ -80,7 +80,7 @@ enum OutputResult
 
 enum
 {
-	kOutputResult = OutputResult_GBufferNormal,
+	kOutputResult = OutputResult_SpotLightTiledShadowMap,
 
 	kTileSize = 16,
 	kNumTilesX = 40,
@@ -458,13 +458,7 @@ void DXApplication::OnInit()
 	InitDebugRenderPass(pScene);
 #endif // DEBUG_RENDER_PASS
 
-	InitConstantBuffers(pScene, backBufferWidth, backBufferHeight);
-
-	//const MeshBatchData* pMeshBatchData = *pScene->GetMeshBatches();
-	//const AxisAlignedBox* pMeshAABBs = pMeshBatchData->GetMeshAABBs();
-	//const AxisAlignedBox& backWallAABB = pMeshAABBs[2];
-	//bool testResult = TestAABBAgainstFrustum(mainCameraFrustum, backWallAABB);
-	
+	InitConstantBuffers(pScene, backBufferWidth, backBufferHeight);		
 	SafeDelete(pScene);
 }
 
@@ -511,7 +505,7 @@ void DXApplication::OnRender()
 	submissionBatch.emplace_back(RecordCreateVoxelGridPass());
 	submissionBatch.emplace_back(RecordVisualizeVoxelGridPass());
 #endif // ENABLE_INDIRECT_LIGHTING
-
+	
 	submissionBatch.emplace_back(RecordVisualizeTexturePass());
 	submissionBatch.emplace_back(RecordPresentResourceBarrierPass());
 
@@ -524,14 +518,14 @@ void DXApplication::OnRender()
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	pRenderTarget->SetState(D3D12_RESOURCE_STATE_PRESENT);
 
+	++m_LastSubmissionFenceValue;
+	m_pSwapChain->Present(1, 0);
+	m_pCommandQueue->Signal(m_pFence, m_LastSubmissionFenceValue);
+
 #ifdef DEBUG_RENDER_PASS
 	m_pFence->WaitForSignalOnCPU(m_LastSubmissionFenceValue);
 	OuputDebugRenderPassResult();
 #endif // DEBUG_RENDER_PASS
-
-	++m_LastSubmissionFenceValue;
-	m_pSwapChain->Present(1, 0);
-	m_pCommandQueue->Signal(m_pFence, m_LastSubmissionFenceValue);
 		
 	m_FrameCompletionFenceValues[m_BackBufferIndex] = m_LastSubmissionFenceValue;
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
@@ -594,17 +588,18 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 
 void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
 {
-	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
-	m_pCamera->GetTransform().SetPosition(Vector3f(278.0f, 274.0f, 700.0f));
-	m_pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(Radian(PI)));
+	//m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
+	//m_pCamera->GetTransform().SetPosition(Vector3f(278.0f, 274.0f, 700.0f));
+	//m_pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(Radian(PI)));
+	
+	SpotLight* pSpotLight = *pScene->GetSpotLights();
+	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.001f, pSpotLight->GetAttenEndRange(), 1.0f);
+	m_pCamera->GetTransform().SetPosition(pSpotLight->GetTransform().GetPosition());
+	m_pCamera->GetTransform().SetRotation(pSpotLight->GetTransform().GetRotation());
+	m_pCamera->SetFovY(pSpotLight->GetOuterConeAngle());
+	
 	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
 	m_pCamera->SetBackgroundColor(Color::GRAY);
-
-	//SpotLight* pSpotLight = *pScene->GetSpotLights();
-	//m_pCamera = new Camera(Camera::ProjType_Perspective, 0.001f, pSpotLight->GetAttenEndRange(), 1.0f);
-	//m_pCamera->GetTransform().SetPosition(pSpotLight->GetTransform().GetPosition());
-	//m_pCamera->GetTransform().SetRotation(pSpotLight->GetTransform().GetRotation());
-	//m_pCamera->SetFovY(pSpotLight->GetOuterConeAngle());
 
 	assert(pScene->GetNumMeshBatches() == 1);
 	MeshBatchData* pMeshBatchData = *pScene->GetMeshBatches();
@@ -1136,8 +1131,9 @@ void DXApplication::InitRenderSpotLightTiledShadowMapPass()
 	initParams.m_LightType = LightType_Spot;
 
 	m_pRenderSpotLightTiledShadowMapPass = new RenderTiledShadowMapPass(&initParams);
-
+		
 	m_pRenderSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pSpotLightTiledShadowMap, m_pSpotLightTiledShadowMap->GetWriteState());
+	m_pRenderSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pShadowCastingSpotLightIndexBuffer, m_pShadowCastingSpotLightIndexBuffer->GetReadState());
 	m_pRenderSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(pLightPropsBuffer, pLightPropsBuffer->GetReadState());
 	m_pRenderSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pSpotLightViewTileProjMatrixBuffer, m_pSpotLightViewTileProjMatrixBuffer->GetReadState());
 	m_pRenderSpotLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(pLightFrustumBuffer, pLightFrustumBuffer->GetReadState());
@@ -1148,6 +1144,7 @@ void DXApplication::InitRenderSpotLightTiledShadowMapPass()
 	m_pRenderSpotLightTiledShadowMapResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
 
 	m_pDevice->CopyDescriptor(m_pRenderSpotLightTiledShadowMapResources->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pShadowCastingSpotLightIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightViewTileProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightFrustumBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -1359,7 +1356,7 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	assert(IsNormalized(mainCameraBasis.m_XAxis));
 	assert(IsNormalized(mainCameraBasis.m_YAxis));
 	assert(IsNormalized(mainCameraBasis.m_ZAxis));
-
+	
 #ifdef ENABLE_INDIRECT_LIGHTING
 
 	const Vector3f gridSize(kGridSizeX, kGridSizeY, kGridSizeZ);
@@ -1728,7 +1725,7 @@ void DXApplication::InitDebugRenderPass(const Scene* pScene)
 
 	FormattedBufferDesc debugNumShadowCastersBufferDesc(1, DXGI_FORMAT_R32_UINT, false, false);
 	m_pDebugNumDrawSpotLightShadowCastersBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugNumShadowCastersBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugNumDrawSpotLightShadowCastersBuffer");
-
+		
 	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleMeshesBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
 	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pVisibleMeshIndexBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
 	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pShadowCastingSpotLightIndexBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);

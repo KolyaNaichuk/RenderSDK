@@ -46,6 +46,8 @@ void Main(uint3 tileId : SV_GroupThreadID, uint tileIndex : SV_GroupIndex)
 			0.0f, 0.0f, 1.0f, 0.0f,
 			tile.texSpaceSize.x + 2.0f * tile.texSpaceTopLeftPos.x - 1.0f, 1.0f - tile.texSpaceSize.y - 2.0f * tile.texSpaceTopLeftPos.y, 0.0f, 1.0f
 		};
-		g_LightViewProjTileMatrixBuffer[lightIndex] = lightViewProjMatrix * shadowMapTileProjMatrix;
+		
+		matrix lightViewProjTileMatrix = mul(lightViewProjMatrix, shadowMapTileProjMatrix);
+		g_LightViewProjTileMatrixBuffer[lightIndex] = transpose(lightViewProjTileMatrix);
 	}
 }

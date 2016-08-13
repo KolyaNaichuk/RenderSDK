@@ -37,7 +37,7 @@ RenderTiledShadowMapPass::RenderTiledShadowMapPass(InitParams* pParams)
 	Shader geometryShader(L"Shaders//RenderTiledShadowMapGS.hlsl", "Main", "gs_4_0", geometryShaderDefines);
 
 	D3D12_DESCRIPTOR_RANGE descriptorRangesVS[] = {CBVDescriptorRange(1, 0)};
-	D3D12_DESCRIPTOR_RANGE descriptorRangesGS[] = {SRVDescriptorRange(3, 0)};
+	D3D12_DESCRIPTOR_RANGE descriptorRangesGS[] = {SRVDescriptorRange(4, 0)};
 
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kCBVRootParamVS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesVS), &descriptorRangesVS[0], D3D12_SHADER_VISIBILITY_VERTEX);
