@@ -16,6 +16,9 @@
 #ifdef SCALE_DOWN_4X
 #endif // SCALE_DOWN_4X
 
+// Depth downsampling
+// Check GPU Pro 6, page 192
+
 #ifdef SCALE_AUTO
 
 Texture2D<float4> InputTexture : register(t0);

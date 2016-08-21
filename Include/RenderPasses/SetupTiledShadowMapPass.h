@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Common/Light.h"
 #include "D3DWrapper/Common.h"
 
 class RootSignature;
@@ -14,8 +15,8 @@ public:
 	struct InitParams
 	{
 		RenderEnv* m_pRenderEnv;
-		u16 m_NumTilesX;
-		u16 m_NumTilesY;
+		LightType m_LightType;
+		u32 m_MaxNumLights;
 	};
 	
 	struct RenderParams
@@ -33,4 +34,7 @@ public:
 private:
 	RootSignature* m_pRootSignature;
 	PipelineState* m_pPipelineState;
+
+	u16 m_NumThreadGroupsX;
+	u16 m_NumThreadGroupsY;
 };

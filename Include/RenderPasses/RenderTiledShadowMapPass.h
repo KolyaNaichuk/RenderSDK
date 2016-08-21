@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Common/Light.h"
 #include "D3DWrapper/Common.h"
 
 class RootSignature;
@@ -13,11 +14,7 @@ struct Viewport;
 struct RenderEnv;
 struct BindingResourceList;
 
-enum LightType
-{
-	LightType_Point = 1,
-	LightType_Spot = 2
-};
+
 
 class RenderTiledShadowMapPass
 {

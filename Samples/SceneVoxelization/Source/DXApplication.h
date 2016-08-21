@@ -63,8 +63,10 @@ private:
 	void InitTiledLightCullingPass();
 	void InitTiledShadingPass();
 	void InitSetupSpotLightTiledShadowMapPass();
+	void InitSetupPointLightTiledShadowMapPass();
 	void InitCreateRenderShadowMapCommandsPass();
 	void InitRenderSpotLightTiledShadowMapPass();
+	void InitRenderPointLightTiledShadowMapPass();
 	void InitVisualizeTexturePass();
 	void InitClearVoxelGridPass();
 	void InitCreateVoxelGridPass();
@@ -82,7 +84,9 @@ private:
 	CommandList* RecordUpdateCreateRenderShadowMapCommandsArgumentBufferPass();
 	CommandList* RecordCreateRenderShadowMapCommandsPass();
 	CommandList* RecordSetupSpotLightTiledShadowMapPass();
+	CommandList* RecordSetupPointLightTiledShadowMapPass();
 	CommandList* RecordRenderSpotLightTiledShadowMapPass();
+	CommandList* RecordRenderPointLightTiledShadowMapPass();
 	CommandList* RecordTiledShadingPass();
 	CommandList* RecordClearVoxelGridPass();
 	CommandList* RecordCreateVoxelGridPass();
@@ -112,12 +116,14 @@ private:
 	DescriptorHeap* m_pShaderVisibleSRVHeap;
 	DepthTexture* m_pDepthTexture;
 	DepthTexture* m_pSpotLightTiledShadowMap;
+	DepthTexture* m_pPointLightTiledShadowMap;
 	ColorTexture* m_pDiffuseTexture;
 	ColorTexture* m_pNormalTexture;
 	ColorTexture* m_pSpecularTexture;
 	ColorTexture* m_pAccumLightTexture;
 	Viewport* m_pBackBufferViewport;
 	Viewport* m_pSpotLightTiledShadowMapViewport;
+	Viewport* m_pPointLightTiledShadowMapViewport;
 	Buffer* m_pObjectTransformBuffer;
 	Buffer* m_pCameraTransformBuffer;
 	Buffer* m_pGridBuffer;
@@ -148,6 +154,9 @@ private:
 	Buffer* m_pSpotLightShadowMapDataBuffer;
 	Buffer* m_pSpotLightShadowMapTileBuffer;
 	Buffer* m_pSpotLightViewTileProjMatrixBuffer;
+	Buffer* m_pPointLightShadowMapDataBuffer;
+	Buffer* m_pPointLightShadowMapTileBuffer;
+	Buffer* m_pPointLightViewTileProjMatrixBuffer;
 	RenderEnv* m_pRenderEnv;
 	Fence* m_pFence;
 	UINT64 m_LastSubmissionFenceValue;
@@ -195,8 +204,14 @@ private:
 	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass;
 	BindingResourceList* m_pRenderSpotLightTiledShadowMapResources;
 	
+	RenderTiledShadowMapPass* m_pRenderPointLightTiledShadowMapPass;
+	BindingResourceList* m_pRenderPointLightTiledShadowMapResources;
+	
 	SetupTiledShadowMapPass* m_pSetupSpotLightTiledShadowMapPass;
 	BindingResourceList* m_pSetupSpotLightTiledShadowMapResources;
+
+	SetupTiledShadowMapPass* m_pSetupPointLightTiledShadowMapPass;
+	BindingResourceList* m_pSetupPointLightTiledShadowMapResources;
 
 	VisualizeTexturePass* m_pVisualizeTexturePass;
 	BindingResourceList* m_VisualizeTextureResources[kNumBackBuffers];
@@ -223,5 +238,6 @@ private:
 	Buffer* m_pDebugNumDrawSpotLightShadowCastersBuffer;
 	Buffer* m_pDebugSpotLightShadowMapTileBuffer;
 	Buffer* m_pDebugSpotLightViewTileProjMatrixBuffer;
+	Buffer* m_pDebugPointLightShadowMapTileBuffer;
 #endif // DEBUG_RENDER_PASS
 };

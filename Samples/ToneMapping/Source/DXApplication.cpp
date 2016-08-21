@@ -35,7 +35,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFence(nullptr)
 	, m_BackBufferIndex(0)
 	, m_pHDRTexture(nullptr)
-	, m_pCopyTexturePass(nullptr)
 	, m_pCalcTextureLuminancePass(nullptr)
 	, m_pCalcTextureLogLuminancePass(nullptr)
 	, m_DisplayResult(DisplayResult_HDRImage)
@@ -49,7 +48,6 @@ DXApplication::~DXApplication()
 	for (UINT index = 0; index < kNumBackBuffers; ++index)
 		SafeDelete(m_CommandLists[index]);
 
-	SafeDelete(m_pCopyTexturePass);
 	SafeDelete(m_pCalcTextureLuminancePass);
 	SafeDelete(m_pCalcTextureLogLuminancePass);
 	SafeDelete(m_pShaderInvisibleSRVHeap);

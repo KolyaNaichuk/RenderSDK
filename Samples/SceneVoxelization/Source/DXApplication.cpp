@@ -75,6 +75,7 @@ enum OutputResult
 	OutputResult_GBufferNormal,
 	OutputResult_Depth,
 	OutputResult_SpotLightTiledShadowMap,
+	OutputResult_PointLightTiledShadowMap,
 	OutputResult_AccumLight
 };
 
@@ -94,9 +95,7 @@ enum
 	kNumGridCellsY = 64,
 	kNumGridCellsZ = 64,
 
-	kNumShadowMapTiles = 1,
-	kShadowMapTileSize = 512,
-	kTiledShadowMapSize = kNumShadowMapTiles * kShadowMapTileSize
+	kShadowMapTileSize = 512
 };
 
 struct ObjectTransform
@@ -168,11 +167,8 @@ struct Voxel
 
 struct ShadowMapData
 {
-	f32 m_SizeInPixels;
-	f32 m_RcpSizeInPixels;
-	f32 m_TileSizeInPixels;
-	f32 m_RcpTileSizeInPixels;
-	f32 m_NotUsed[60];
+	Vector2f m_TileTexSpaceSize;
+	Vector2f m_NotUsed[31];
 };
 
 struct ShadowMapTile
@@ -204,12 +200,14 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pShaderVisibleSRVHeap(nullptr)
 	, m_pDepthTexture(nullptr)
 	, m_pSpotLightTiledShadowMap(nullptr)
+	, m_pPointLightTiledShadowMap(nullptr)
 	, m_pDiffuseTexture(nullptr)
 	, m_pNormalTexture(nullptr)
 	, m_pSpecularTexture(nullptr)
 	, m_pAccumLightTexture(nullptr)
 	, m_pBackBufferViewport(nullptr)
 	, m_pSpotLightTiledShadowMapViewport(nullptr)
+	, m_pPointLightTiledShadowMapViewport(nullptr)
 	, m_pObjectTransformBuffer(nullptr)
 	, m_pCameraTransformBuffer(nullptr)
 	, m_pGridBuffer(nullptr)
@@ -240,6 +238,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pSpotLightShadowMapDataBuffer(nullptr)
 	, m_pSpotLightShadowMapTileBuffer(nullptr)
 	, m_pSpotLightViewTileProjMatrixBuffer(nullptr)
+	, m_pPointLightShadowMapDataBuffer(nullptr)
+	, m_pPointLightShadowMapTileBuffer(nullptr)
+	, m_pPointLightViewTileProjMatrixBuffer(nullptr)
 	, m_pRenderEnv(new RenderEnv())
 	, m_pFence(nullptr)
 	, m_LastSubmissionFenceValue(0)
@@ -271,8 +272,12 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCreateRenderShadowMapCommandsArgumentBuffer(nullptr)
 	, m_pRenderSpotLightTiledShadowMapPass(nullptr)
 	, m_pRenderSpotLightTiledShadowMapResources(new BindingResourceList())
+	, m_pRenderPointLightTiledShadowMapPass(nullptr)
+	, m_pRenderPointLightTiledShadowMapResources(new BindingResourceList())
 	, m_pSetupSpotLightTiledShadowMapPass(nullptr)
 	, m_pSetupSpotLightTiledShadowMapResources(new BindingResourceList())
+	, m_pSetupPointLightTiledShadowMapPass(nullptr)
+	, m_pSetupPointLightTiledShadowMapResources(new BindingResourceList())
 	, m_pVisualizeTexturePass(nullptr)
 	, m_pMeshBatch(nullptr)
 	, m_pPointLightBuffer(nullptr)
@@ -292,6 +297,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pDebugNumDrawSpotLightShadowCastersBuffer(nullptr)
 	, m_pDebugSpotLightShadowMapTileBuffer(nullptr)
 	, m_pDebugSpotLightViewTileProjMatrixBuffer(nullptr)
+	, m_pDebugPointLightShadowMapTileBuffer(nullptr)
 #endif // DEBUG_RENDER_PASS
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -313,8 +319,13 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pSpotLightShadowMapDataBuffer);
 	SafeDelete(m_pSpotLightShadowMapTileBuffer);
 	SafeDelete(m_pSpotLightViewTileProjMatrixBuffer);
+	SafeDelete(m_pPointLightShadowMapDataBuffer);
+	SafeDelete(m_pPointLightShadowMapTileBuffer);
+	SafeDelete(m_pPointLightViewTileProjMatrixBuffer);
 	SafeDelete(m_pSetupSpotLightTiledShadowMapPass);
 	SafeDelete(m_pSetupSpotLightTiledShadowMapResources);
+	SafeDelete(m_pSetupPointLightTiledShadowMapPass);
+	SafeDelete(m_pSetupPointLightTiledShadowMapResources);
 	SafeDelete(m_pCreateRenderShadowMapCommandsArgumentBufferResources);
 	SafeDelete(m_pCommandListPool);
 	SafeDelete(m_pCamera);
@@ -353,6 +364,8 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCreateRenderShadowMapCommandsArgumentBuffer);
 	SafeDelete(m_pRenderSpotLightTiledShadowMapPass);
 	SafeDelete(m_pRenderSpotLightTiledShadowMapResources);
+	SafeDelete(m_pRenderPointLightTiledShadowMapPass);
+	SafeDelete(m_pRenderPointLightTiledShadowMapResources);
 	SafeDelete(m_pDetectVisibleMeshesPass);
 	SafeDelete(m_pDetectVisibleMeshesResources);
 	SafeDelete(m_pDetectVisiblePointLightsPass);
@@ -391,6 +404,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pSpecularTexture);
 	SafeDelete(m_pAccumLightTexture);
 	SafeDelete(m_pSpotLightTiledShadowMap);
+	SafeDelete(m_pPointLightTiledShadowMap);
 	SafeDelete(m_pDepthTexture);
 	SafeDelete(m_pCommandQueue);
 	SafeDelete(m_pCommandListPool);
@@ -398,6 +412,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pDevice);
 	SafeDelete(m_pBackBufferViewport);
 	SafeDelete(m_pSpotLightTiledShadowMapViewport);
+	SafeDelete(m_pPointLightTiledShadowMapViewport);
 	SafeDelete(m_pVisualizeTextureDataBuffer);
 
 #ifdef DEBUG_RENDER_PASS
@@ -410,6 +425,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pDebugNumDrawSpotLightShadowCastersBuffer);
 	SafeDelete(m_pDebugSpotLightShadowMapTileBuffer);
 	SafeDelete(m_pDebugSpotLightViewTileProjMatrixBuffer);
+	SafeDelete(m_pDebugPointLightShadowMapTileBuffer);
 #endif // DEBUG_RENDER_PASS
 }
 
@@ -422,13 +438,13 @@ void DXApplication::OnInit()
 	InitRenderEnv(backBufferWidth, backBufferHeight);
 	
 	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test1);
-	InitScene(pScene, backBufferWidth, backBufferHeight);
+	InitScene(pScene, backBufferWidth, backBufferHeight);	
 	
 	InitDetectVisibleMeshesPass();
 	
 	if (m_pPointLightBuffer != nullptr)
 		InitDetectVisiblePointLightsPass();
-	
+				
 	if (m_pSpotLightBuffer != nullptr)
 		InitDetectVisibleSpotLightsPass();
 	
@@ -436,15 +452,19 @@ void DXApplication::OnInit()
 	InitRenderGBufferPass(backBufferWidth, backBufferHeight);
 	InitTiledLightCullingPass();
 	InitTiledShadingPass();
-
-	if (m_pSpotLightBuffer != nullptr)
-		InitSetupSpotLightTiledShadowMapPass();
-	
 	InitCreateRenderShadowMapCommandsPass();
 	
+	if (m_pPointLightBuffer != nullptr)
+	{
+		InitSetupPointLightTiledShadowMapPass();
+		InitRenderPointLightTiledShadowMapPass();
+	}
 	if (m_pSpotLightBuffer != nullptr)
+	{
+		InitSetupSpotLightTiledShadowMapPass();
 		InitRenderSpotLightTiledShadowMapPass();
-	
+	}
+
 	InitVisualizeTexturePass();
 	
 #ifdef ENABLE_INDIRECT_LIGHTING
@@ -485,13 +505,17 @@ void DXApplication::OnRender()
 	submissionBatch.emplace_back(RecordCreateRenderGBufferCommandsPass());
 	submissionBatch.emplace_back(RecordRenderGBufferPass());
 	submissionBatch.emplace_back(RecordTiledLightCullingPass());
-	submissionBatch.emplace_back(RecordUpdateCreateRenderShadowMapCommandsArgumentBufferPass());
-	submissionBatch.emplace_back(RecordCreateRenderShadowMapCommandsPass());
 
+	if ((m_pPointLightBuffer != nullptr) || (m_pSpotLightBuffer != nullptr))
+	{
+		submissionBatch.emplace_back(RecordUpdateCreateRenderShadowMapCommandsArgumentBufferPass());
+		submissionBatch.emplace_back(RecordCreateRenderShadowMapCommandsPass());
+	}		
 	if (m_pPointLightBuffer != nullptr)
 	{
-	}
-	
+		submissionBatch.emplace_back(RecordSetupPointLightTiledShadowMapPass());
+		submissionBatch.emplace_back(RecordRenderPointLightTiledShadowMapPass());
+	}	
 	if (m_pSpotLightBuffer != nullptr)
 	{
 		submissionBatch.emplace_back(RecordSetupSpotLightTiledShadowMapPass());
@@ -978,7 +1002,7 @@ void DXApplication::InitSetupSpotLightTiledShadowMapPass()
 	ConstantBufferDesc shadowMapDataBufferDesc(sizeof(ShadowMapData));
 	m_pSpotLightShadowMapDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &shadowMapDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pSpotLightShadowMapDataBuffer");
 
-	StructuredBufferDesc shadowMapTileBufferDesc(kNumShadowMapTiles * kNumShadowMapTiles, sizeof(ShadowMapTile), true, true);
+	StructuredBufferDesc shadowMapTileBufferDesc(m_pSpotLightBuffer->GetNumLights(), sizeof(ShadowMapTile), true, true);
 	m_pSpotLightShadowMapTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowMapTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pSpotLightShadowMapTileBuffer");
 
 	StructuredBufferDesc lightViewProjTileMatrixBufferDesc(m_pSpotLightBuffer->GetNumLights(), sizeof(Matrix4f), true, true);
@@ -988,8 +1012,8 @@ void DXApplication::InitSetupSpotLightTiledShadowMapPass()
 
 	SetupTiledShadowMapPass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
-	initParams.m_NumTilesX = kNumShadowMapTiles;
-	initParams.m_NumTilesY = kNumShadowMapTiles;
+	initParams.m_LightType = LightType_Spot;
+	initParams.m_MaxNumLights = m_pSpotLightBuffer->GetNumLights();
 
 	m_pSetupSpotLightTiledShadowMapPass = new SetupTiledShadowMapPass(&initParams);
 
@@ -1006,6 +1030,43 @@ void DXApplication::InitSetupSpotLightTiledShadowMapPass()
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightViewProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightShadowMapTileBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightViewTileProjMatrixBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}
+
+void DXApplication::InitSetupPointLightTiledShadowMapPass()
+{
+	assert(m_pPointLightBuffer != nullptr);
+
+	ConstantBufferDesc shadowMapDataBufferDesc(sizeof(ShadowMapData));
+	m_pPointLightShadowMapDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &shadowMapDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pPointLightShadowMapDataBuffer");
+
+	StructuredBufferDesc shadowMapTileBufferDesc(kNumCubeMapFaces *  m_pPointLightBuffer->GetNumLights(), sizeof(ShadowMapTile), true, true);
+	m_pPointLightShadowMapTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowMapTileBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pPointLightShadowMapTileBuffer");
+
+	StructuredBufferDesc lightViewProjTileMatrixBufferDesc(kNumCubeMapFaces * m_pPointLightBuffer->GetNumLights(), sizeof(Matrix4f), true, true);
+	m_pPointLightViewTileProjMatrixBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &lightViewProjTileMatrixBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pPointLightShadowMapTileBuffer");
+
+	Buffer* pLightViewProjMatrixBuffer = m_pPointLightBuffer->GetLightViewProjMatrixBuffer();
+
+	SetupTiledShadowMapPass::InitParams initParams;
+	initParams.m_pRenderEnv = m_pRenderEnv;
+	initParams.m_LightType = LightType_Point;
+	initParams.m_MaxNumLights = m_pPointLightBuffer->GetNumLights();
+
+	m_pSetupPointLightTiledShadowMapPass = new SetupTiledShadowMapPass(&initParams);
+
+	m_pSetupPointLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pNumVisiblePointLightsBuffer, m_pNumVisiblePointLightsBuffer->GetReadState());
+	m_pSetupPointLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pVisiblePointLightIndexBuffer, m_pVisiblePointLightIndexBuffer->GetReadState());
+	m_pSetupPointLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(pLightViewProjMatrixBuffer, pLightViewProjMatrixBuffer->GetReadState());
+	m_pSetupPointLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pPointLightShadowMapTileBuffer, m_pPointLightShadowMapTileBuffer->GetWriteState());
+	m_pSetupPointLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pPointLightViewTileProjMatrixBuffer, m_pPointLightViewTileProjMatrixBuffer->GetWriteState());
+
+	m_pSetupPointLightTiledShadowMapResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+	m_pDevice->CopyDescriptor(m_pSetupPointLightTiledShadowMapResources->m_SRVHeapStart, m_pPointLightShadowMapDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pNumVisiblePointLightsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisiblePointLightIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightViewProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pPointLightShadowMapTileBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pPointLightViewTileProjMatrixBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void DXApplication::InitCreateRenderShadowMapCommandsPass()
@@ -1115,11 +1176,14 @@ void DXApplication::InitRenderSpotLightTiledShadowMapPass()
 {
 	assert(m_pSpotLightBuffer != nullptr);
 
-	m_pSpotLightTiledShadowMapViewport = new Viewport(0.0f, 0.0f, (FLOAT)kTiledShadowMapSize, (FLOAT)kTiledShadowMapSize);
+	const u32 tiledShadowMapWidth = m_pSpotLightBuffer->GetNumLights() * kShadowMapTileSize;
+	const u32 tiledShadowMapHeight = kShadowMapTileSize;
+
+	m_pSpotLightTiledShadowMapViewport = new Viewport(0.0f, 0.0f, (f32)tiledShadowMapWidth, (f32)tiledShadowMapHeight);
 
 	DepthStencilValue optimizedClearDepth(1.0f);
-	DepthTexture2DDesc spotLightTiledShadowMapDesc(DXGI_FORMAT_R32_TYPELESS, kTiledShadowMapSize, kTiledShadowMapSize, true, true);
-	m_pSpotLightTiledShadowMap = new DepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &spotLightTiledShadowMapDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pSpotLightTiledShadowMap");
+	DepthTexture2DDesc tiledShadowMapDesc(DXGI_FORMAT_R32_TYPELESS, tiledShadowMapWidth, tiledShadowMapHeight, true, true);
+	m_pSpotLightTiledShadowMap = new DepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &tiledShadowMapDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pSpotLightTiledShadowMap");
 
 	Buffer* pLightPropsBuffer = m_pSpotLightBuffer->GetLightPropsBuffer();
 	Buffer* pLightFrustumBuffer = m_pSpotLightBuffer->GetLightFrustumBuffer();
@@ -1147,6 +1211,48 @@ void DXApplication::InitRenderSpotLightTiledShadowMapPass()
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pShadowCastingSpotLightIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightViewTileProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightFrustumBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}
+
+void DXApplication::InitRenderPointLightTiledShadowMapPass()
+{
+	assert(m_pPointLightBuffer != nullptr);
+
+	const u32 tiledShadowMapWidth = m_pPointLightBuffer->GetNumLights() * kShadowMapTileSize;
+	const u32 tiledShadowMapHeight = kNumCubeMapFaces * kShadowMapTileSize;
+
+	m_pPointLightTiledShadowMapViewport = new Viewport(0.0f, 0.0f, (f32)tiledShadowMapWidth, (f32)tiledShadowMapHeight);
+
+	DepthStencilValue optimizedClearDepth(1.0f);
+	DepthTexture2DDesc tiledShadowMapDesc(DXGI_FORMAT_R32_TYPELESS, tiledShadowMapWidth, tiledShadowMapHeight, true, true);
+	m_pPointLightTiledShadowMap = new DepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &tiledShadowMapDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pPointLightTiledShadowMap");
+
+	Buffer* pLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
+	Buffer* pLightFrustumBuffer = m_pPointLightBuffer->GetLightFrustumBuffer();
+
+	RenderTiledShadowMapPass::InitParams initParams;
+	initParams.m_pRenderEnv = m_pRenderEnv;
+	initParams.m_DSVFormat = GetDepthStencilViewFormat(m_pPointLightTiledShadowMap->GetFormat());
+	initParams.m_pMeshBatch = m_pMeshBatch;
+	initParams.m_LightType = LightType_Point;
+
+	m_pRenderPointLightTiledShadowMapPass = new RenderTiledShadowMapPass(&initParams);
+
+	m_pRenderPointLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pPointLightTiledShadowMap, m_pPointLightTiledShadowMap->GetWriteState());
+	m_pRenderPointLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pShadowCastingPointLightIndexBuffer, m_pShadowCastingPointLightIndexBuffer->GetReadState());
+	m_pRenderPointLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(pLightBoundsBuffer, pLightBoundsBuffer->GetReadState());
+	m_pRenderPointLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pPointLightViewTileProjMatrixBuffer, m_pPointLightViewTileProjMatrixBuffer->GetReadState());
+	m_pRenderPointLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(pLightFrustumBuffer, pLightFrustumBuffer->GetReadState());
+	m_pRenderPointLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pDrawPointLightShadowCasterCommandBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	m_pRenderPointLightTiledShadowMapResources->m_RequiredResourceStates.emplace_back(m_pNumDrawPointLightShadowCastersBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+
+	m_pRenderPointLightTiledShadowMapResources->m_DSVHeapStart = m_pPointLightTiledShadowMap->GetDSVHandle();
+	m_pRenderPointLightTiledShadowMapResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+
+	m_pDevice->CopyDescriptor(m_pRenderPointLightTiledShadowMapResources->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pShadowCastingPointLightIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pPointLightViewTileProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightFrustumBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
@@ -1178,6 +1284,7 @@ void DXApplication::InitVisualizeTexturePass()
 		}
 		case OutputResult_Depth:
 		case OutputResult_SpotLightTiledShadowMap:
+		case OutputResult_PointLightTiledShadowMap:
 		{
 			initParams.m_TextureType = VisualizeTexturePass::TextureType_Depth;
 			break;
@@ -1231,8 +1338,16 @@ void DXApplication::InitVisualizeTexturePass()
 			}
 			case OutputResult_SpotLightTiledShadowMap:
 			{
+				assert(m_pSpotLightTiledShadowMap != nullptr);
 				m_VisualizeTextureResources[index]->m_RequiredResourceStates.emplace_back(m_pSpotLightTiledShadowMap, m_pSpotLightTiledShadowMap->GetReadState());
 				m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightTiledShadowMap->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+				break;
+			}
+			case OutputResult_PointLightTiledShadowMap:
+			{
+				assert(m_pPointLightTiledShadowMap != nullptr);
+				m_VisualizeTextureResources[index]->m_RequiredResourceStates.emplace_back(m_pPointLightTiledShadowMap, m_pPointLightTiledShadowMap->GetReadState());
+				m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pPointLightTiledShadowMap->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 				break;
 			}
 			case OutputResult_AccumLight:
@@ -1441,14 +1556,21 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	}
 	m_pTiledShadingDataBuffer->Write(&tiledShadingData, sizeof(tiledShadingData));
 
-	ShadowMapData spotLightShadowMapData;
-	spotLightShadowMapData.m_SizeInPixels = f32(kTiledShadowMapSize);
-	spotLightShadowMapData.m_RcpSizeInPixels = Rcp(spotLightShadowMapData.m_SizeInPixels);
-	spotLightShadowMapData.m_TileSizeInPixels = f32(kShadowMapTileSize);
-	spotLightShadowMapData.m_RcpTileSizeInPixels = Rcp(spotLightShadowMapData.m_TileSizeInPixels);
+	if (m_pPointLightTiledShadowMap != nullptr)
+	{
+		ShadowMapData shadowMapData;
+		shadowMapData.m_TileTexSpaceSize = Vector2f((f32)kShadowMapTileSize, (f32)kShadowMapTileSize) / Vector2f((f32)m_pPointLightTiledShadowMap->GetWidth(), (f32)m_pPointLightTiledShadowMap->GetHeight());
 
-	m_pSpotLightShadowMapDataBuffer->Write(&spotLightShadowMapData, sizeof(spotLightShadowMapData));
+		m_pPointLightShadowMapDataBuffer->Write(&shadowMapData, sizeof(shadowMapData));
+	}
+	if (m_pSpotLightTiledShadowMap != nullptr)
+	{
+		ShadowMapData shadowMapData;
+		shadowMapData.m_TileTexSpaceSize = Vector2f((f32)kShadowMapTileSize, (f32)kShadowMapTileSize) / Vector2f((f32)m_pSpotLightTiledShadowMap->GetWidth(), (f32)m_pSpotLightTiledShadowMap->GetHeight());
 
+		m_pSpotLightShadowMapDataBuffer->Write(&shadowMapData, sizeof(shadowMapData));
+	}
+	
 	VisualizeTextureData visualizeTextureData;
 	visualizeTextureData.m_CameraProjMatrix = m_pCamera->GetProjMatrix();
 	visualizeTextureData.m_CameraNearPlane = m_pCamera->GetNearClipPlane();
@@ -1609,6 +1731,17 @@ CommandList* DXApplication::RecordSetupSpotLightTiledShadowMapPass()
 	return renderParams.m_pCommandList;
 }
 
+CommandList* DXApplication::RecordSetupPointLightTiledShadowMapPass()
+{
+	SetupTiledShadowMapPass::RenderParams renderParams;
+	renderParams.m_pRenderEnv = m_pRenderEnv;
+	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pSetupPointLightTiledShadowMapCommandList");
+	renderParams.m_pResources = m_pSetupPointLightTiledShadowMapResources;
+
+	m_pSetupPointLightTiledShadowMapPass->Record(&renderParams);
+	return renderParams.m_pCommandList;
+}
+
 CommandList* DXApplication::RecordRenderSpotLightTiledShadowMapPass()
 {
 	RenderTiledShadowMapPass::RenderParams renderParams;
@@ -1621,6 +1754,21 @@ CommandList* DXApplication::RecordRenderSpotLightTiledShadowMapPass()
 	renderParams.m_pNumDrawShadowCastersBuffer = m_pNumDrawSpotLightShadowCastersBuffer;
 
 	m_pRenderSpotLightTiledShadowMapPass->Record(&renderParams);
+	return renderParams.m_pCommandList;
+}
+
+CommandList* DXApplication::RecordRenderPointLightTiledShadowMapPass()
+{
+	RenderTiledShadowMapPass::RenderParams renderParams;
+	renderParams.m_pRenderEnv = m_pRenderEnv;
+	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderPointLightTiledShadowMapCommandList");
+	renderParams.m_pResources = m_pRenderPointLightTiledShadowMapResources;
+	renderParams.m_pViewport = m_pPointLightTiledShadowMapViewport;
+	renderParams.m_pMeshBatch = m_pMeshBatch;
+	renderParams.m_pDrawShadowCasterCommandBuffer = m_pDrawPointLightShadowCasterCommandBuffer;
+	renderParams.m_pNumDrawShadowCastersBuffer = m_pNumDrawPointLightShadowCastersBuffer;
+
+	m_pRenderPointLightTiledShadowMapPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
 }
 
@@ -1702,58 +1850,84 @@ CommandList* DXApplication::RecordPresentResourceBarrierPass()
 #ifdef DEBUG_RENDER_PASS
 void DXApplication::InitDebugRenderPass(const Scene* pScene)
 {
-	StructuredBufferDesc debugShadowMapTileBufferDesc(kNumShadowMapTiles * kNumShadowMapTiles, sizeof(ShadowMapTile), false, false);
-	m_pDebugSpotLightShadowMapTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugShadowMapTileBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"pDebugSpotLightShadowMapTileBuffer");
+	FormattedBufferDesc numVisibleMeshesBufferDesc(1, DXGI_FORMAT_R32_UINT, false, false);
+	m_pDebugNumVisibleMeshesBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &numVisibleMeshesBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugNumVisibleMeshesBuffer");
 
-	StructuredBufferDesc debugLightViewProjTileMatrixBufferDesc(pScene->GetNumSpotLights(), sizeof(Matrix4f), false, false);
-	m_pDebugSpotLightViewTileProjMatrixBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugLightViewProjTileMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"pDebugSpotLightViewTileProjMatrixBuffer");
+	FormattedBufferDesc visibleMeshIndexBufferDesc(m_pMeshBatch->GetNumMeshes(), DXGI_FORMAT_R32_UINT, false, false);
+	m_pDebugVisibleMeshIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &visibleMeshIndexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugVisibleMeshIndexBuffer");
 
-	FormattedBufferDesc debugNumVisibleMeshesBufferDesc(1, DXGI_FORMAT_R32_UINT, false, false);
-	m_pDebugNumVisibleMeshesBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugNumVisibleMeshesBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugNumVisibleMeshesBuffer");
+	if (m_pPointLightBuffer != nullptr)
+	{
+		StructuredBufferDesc shadowMapTileBufferDesc(kNumCubeMapFaces * m_pPointLightBuffer->GetNumLights(), sizeof(ShadowMapTile), false, false);
+		m_pDebugPointLightShadowMapTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &shadowMapTileBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugPointLightShadowMapTileBuffer");
+	}
 
-	FormattedBufferDesc debugVisibleMeshIndexBufferDesc(m_pMeshBatch->GetNumMeshes(), DXGI_FORMAT_R32_UINT, false, false);
-	m_pDebugVisibleMeshIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugVisibleMeshIndexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugVisibleMeshIndexBuffer");
+	if (m_pSpotLightBuffer != nullptr)
+	{
+		StructuredBufferDesc shadowMapTileBufferDesc(m_pSpotLightBuffer->GetNumLights(), sizeof(ShadowMapTile), false, false);
+		m_pDebugSpotLightShadowMapTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &shadowMapTileBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugSpotLightShadowMapTileBuffer");
 
-	FormattedBufferDesc debugShadowCastingLightIndexBufferDesc(m_pMeshBatch->GetNumMeshes() * pScene->GetNumSpotLights(), DXGI_FORMAT_R32_UINT, false, false);
-	m_pDebugShadowCastingSpotLightIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugShadowCastingLightIndexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugShadowCastingSpotLightIndexBuffer");
+		StructuredBufferDesc lightViewProjTileMatrixBufferDesc(m_pSpotLightBuffer->GetNumLights(), sizeof(Matrix4f), false, false);
+		m_pDebugSpotLightViewTileProjMatrixBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &lightViewProjTileMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"pDebugSpotLightViewTileProjMatrixBuffer");
 
-	FormattedBufferDesc debugNumShadowCastingLightsBufferDesc(1, DXGI_FORMAT_R32_UINT, false, false);
-	m_pDebugNumShadowCastingSpotLightsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugNumShadowCastingLightsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugNumShadowCastingSpotLightsBuffer");
+		FormattedBufferDesc shadowCastingLightIndexBufferDesc(m_pMeshBatch->GetNumMeshes() * pScene->GetNumSpotLights(), DXGI_FORMAT_R32_UINT, false, false);
+		m_pDebugShadowCastingSpotLightIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &shadowCastingLightIndexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugShadowCastingSpotLightIndexBuffer");
 
-	StructuredBufferDesc debugDrawCommandBufferDesc(m_pMeshBatch->GetNumMeshes(), sizeof(DrawMeshCommand), false, false);
-	m_pDebugDrawSpotLightShadowCasterCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugDrawCommandBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugDrawSpotLightShadowCasterCommandBuffer");
+		FormattedBufferDesc numShadowCastingLightsBufferDesc(1, DXGI_FORMAT_R32_UINT, false, false);
+		m_pDebugNumShadowCastingSpotLightsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &numShadowCastingLightsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugNumShadowCastingSpotLightsBuffer");
 
-	FormattedBufferDesc debugNumShadowCastersBufferDesc(1, DXGI_FORMAT_R32_UINT, false, false);
-	m_pDebugNumDrawSpotLightShadowCastersBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &debugNumShadowCastersBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugNumDrawSpotLightShadowCastersBuffer");
-		
+		StructuredBufferDesc drawCommandBufferDesc(m_pMeshBatch->GetNumMeshes(), sizeof(DrawMeshCommand), false, false);
+		m_pDebugDrawSpotLightShadowCasterCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugDrawSpotLightShadowCasterCommandBuffer");
+
+		FormattedBufferDesc numShadowCastersBufferDesc(1, DXGI_FORMAT_R32_UINT, false, false);
+		m_pDebugNumDrawSpotLightShadowCastersBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &numShadowCastersBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugNumDrawSpotLightShadowCastersBuffer");
+	}
+				
 	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleMeshesBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
 	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pVisibleMeshIndexBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pShadowCastingSpotLightIndexBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pNumShadowCastingSpotLightsBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pDrawSpotLightShadowCasterCommandBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pNumDrawSpotLightShadowCastersBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pSpotLightShadowMapTileBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pSpotLightViewTileProjMatrixBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pSpotLightShadowMapTileBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	
+	if (m_pPointLightBuffer != nullptr)
+	{
+		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pPointLightShadowMapTileBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	}
+
+	if (m_pSpotLightBuffer != nullptr)
+	{
+		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pShadowCastingSpotLightIndexBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pNumShadowCastingSpotLightsBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pDrawSpotLightShadowCasterCommandBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pNumDrawSpotLightShadowCastersBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pSpotLightShadowMapTileBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pSpotLightViewTileProjMatrixBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
+		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pSpotLightShadowMapTileBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
+	}
 }
 
 CommandList* DXApplication::RecordDebugRenderPass()
 {
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pDebugRenderPassCommandList");
-
 	pCommandList->Begin();
+	
 	pCommandList->SetRequiredResourceStates(&m_pDebugResources->m_RequiredResourceStates);
 	pCommandList->CopyResource(m_pDebugNumVisibleMeshesBuffer, m_pNumVisibleMeshesBuffer);
 	pCommandList->CopyResource(m_pDebugVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer);
-	pCommandList->CopyResource(m_pDebugShadowCastingSpotLightIndexBuffer, m_pShadowCastingSpotLightIndexBuffer);
-	pCommandList->CopyResource(m_pDebugNumShadowCastingSpotLightsBuffer, m_pNumShadowCastingSpotLightsBuffer);
-	pCommandList->CopyResource(m_pDebugDrawSpotLightShadowCasterCommandBuffer, m_pDrawSpotLightShadowCasterCommandBuffer);
-	pCommandList->CopyResource(m_pDebugNumDrawSpotLightShadowCastersBuffer, m_pNumDrawSpotLightShadowCastersBuffer);
-	pCommandList->CopyResource(m_pDebugSpotLightShadowMapTileBuffer, m_pSpotLightShadowMapTileBuffer);
-	pCommandList->CopyResource(m_pDebugSpotLightViewTileProjMatrixBuffer, m_pSpotLightViewTileProjMatrixBuffer);
-	pCommandList->CopyResource(m_pDebugSpotLightShadowMapTileBuffer, m_pSpotLightShadowMapTileBuffer);
-	pCommandList->End();
 
+	if (m_pPointLightBuffer != nullptr)
+	{
+		pCommandList->CopyResource(m_pDebugPointLightShadowMapTileBuffer, m_pPointLightShadowMapTileBuffer);
+	}
+
+	if (m_pSpotLightBuffer != nullptr)
+	{
+		pCommandList->CopyResource(m_pDebugShadowCastingSpotLightIndexBuffer, m_pShadowCastingSpotLightIndexBuffer);
+		pCommandList->CopyResource(m_pDebugNumShadowCastingSpotLightsBuffer, m_pNumShadowCastingSpotLightsBuffer);
+		pCommandList->CopyResource(m_pDebugDrawSpotLightShadowCasterCommandBuffer, m_pDrawSpotLightShadowCasterCommandBuffer);
+		pCommandList->CopyResource(m_pDebugNumDrawSpotLightShadowCastersBuffer, m_pNumDrawSpotLightShadowCastersBuffer);
+		pCommandList->CopyResource(m_pDebugSpotLightShadowMapTileBuffer, m_pSpotLightShadowMapTileBuffer);
+		pCommandList->CopyResource(m_pDebugSpotLightViewTileProjMatrixBuffer, m_pSpotLightViewTileProjMatrixBuffer);
+	}
+
+	pCommandList->End();
 	return pCommandList;
 }
 
@@ -1761,57 +1935,72 @@ void DXApplication::OuputDebugRenderPassResult()
 {
 	OutputDebugStringA("1.Debug =========================\n");
 
-	u32 debugNumVisibleMeshes = 0;
-	m_pDebugNumVisibleMeshesBuffer->Read(&debugNumVisibleMeshes, sizeof(u32));
-	OutputDebugStringA(("NumVisibleMeshes: " + std::to_string(debugNumVisibleMeshes)).c_str());
+	u32 numVisibleMeshes = 0;
+	m_pDebugNumVisibleMeshesBuffer->Read(&numVisibleMeshes, sizeof(u32));
+	OutputDebugStringA(("NumVisibleMeshes: " + std::to_string(numVisibleMeshes)).c_str());
 	OutputDebugStringA("\n");
 
-	std::vector<u32> debugVisibleMeshIndices(debugNumVisibleMeshes);
-	m_pDebugVisibleMeshIndexBuffer->Read(debugVisibleMeshIndices.data(), debugNumVisibleMeshes * sizeof(u32));
-	for (u32 i = 0; i < debugNumVisibleMeshes; ++i)
-		OutputDebugStringA(("\t" + std::to_string(i) + ".mesh index: " + std::to_string(debugVisibleMeshIndices[i]) + "\n").c_str());
+	std::vector<u32> visibleMeshIndices(numVisibleMeshes);
+	m_pDebugVisibleMeshIndexBuffer->Read(visibleMeshIndices.data(), numVisibleMeshes * sizeof(u32));
+	for (u32 i = 0; i < numVisibleMeshes; ++i)
+		OutputDebugStringA(("\t" + std::to_string(i) + ".mesh index: " + std::to_string(visibleMeshIndices[i]) + "\n").c_str());
 	OutputDebugStringA("\n");
 
-	u32 debugNumShadowCastingSpotLights = 0;
-	m_pDebugNumShadowCastingSpotLightsBuffer->Read(&debugNumShadowCastingSpotLights, sizeof(u32));
-	OutputDebugStringA(("NumShadowCastingSpotLights: " + std::to_string(debugNumShadowCastingSpotLights)).c_str());
-	OutputDebugStringA("\n");
-
-	std::vector<u32> debugShadowCastingSpotLightIndices(debugNumShadowCastingSpotLights);
-	m_pDebugShadowCastingSpotLightIndexBuffer->Read(debugShadowCastingSpotLightIndices.data(), debugNumShadowCastingSpotLights * sizeof(u32));
-	for (u32 i = 0; i < debugNumShadowCastingSpotLights; ++i)
-		OutputDebugStringA(("\t" + std::to_string(i) + ".light index: " + std::to_string(debugShadowCastingSpotLightIndices[i]) + "\n").c_str());
-	OutputDebugStringA("\n");
-
-	u32 debugNumDrawSpotLightShadowCasters = 0;
-	m_pDebugNumDrawSpotLightShadowCastersBuffer->Read(&debugNumDrawSpotLightShadowCasters, sizeof(u32));
-	OutputDebugStringA(("NumDrawSpotLightShadowCasters: " + std::to_string(debugNumDrawSpotLightShadowCasters)).c_str());
-	OutputDebugStringA("\n");
-
-	std::vector<DrawMeshCommand> debugDrawSpotLightShadowCasterCommands(debugNumDrawSpotLightShadowCasters);
-	m_pDebugDrawSpotLightShadowCasterCommandBuffer->Read(debugDrawSpotLightShadowCasterCommands.data(), debugNumDrawSpotLightShadowCasters * sizeof(DrawMeshCommand));
-	for (u32 i = 0; i < debugNumDrawSpotLightShadowCasters; ++i)
+	if (m_pPointLightBuffer != nullptr)
 	{
-		const DrawMeshCommand& drawCommand = debugDrawSpotLightShadowCasterCommands[i];
-		OutputDebugStringA((std::to_string(i) + ".Command:\n").c_str());
-		OutputDebugStringA(("\tlightIndexStart: " + std::to_string(drawCommand.m_Root32BitConstant) + "\n").c_str());
-		OutputDebugStringA(("\tIndexCountPerInstance: " + std::to_string(drawCommand.m_DrawArgs.IndexCountPerInstance) + "\n").c_str());
-		OutputDebugStringA(("\tinstanceCount: " + std::to_string(drawCommand.m_DrawArgs.InstanceCount) + "\n").c_str());
-		OutputDebugStringA(("\tstartIndexLocation: " + std::to_string(drawCommand.m_DrawArgs.StartIndexLocation) + "\n").c_str());
-		OutputDebugStringA(("\tbaseVertexLocation: " + std::to_string(drawCommand.m_DrawArgs.BaseVertexLocation) + "\n").c_str());
-		OutputDebugStringA(("\tstartInstanceLocation: " + std::to_string(drawCommand.m_DrawArgs.StartInstanceLocation) + "\n").c_str());
+		u16 numPointLightShadowMapTiles = kNumCubeMapFaces * m_pPointLightBuffer->GetNumLights();
+		std::vector<ShadowMapTile> pointLightShadowMapTiles(numPointLightShadowMapTiles);
+		m_pDebugPointLightShadowMapTileBuffer->Read(pointLightShadowMapTiles.data(), numPointLightShadowMapTiles * sizeof(ShadowMapTile));
+
+		for (u16 i = 0; i < numPointLightShadowMapTiles; ++i)
+		{
+			const ShadowMapTile& tile = pointLightShadowMapTiles[i];
+			OutputDebugStringA((std::to_string(i) + ".Tile:\n").c_str());
+			OutputDebugStringA(("\ttexSpaceTopLeftPos: (" + std::to_string(tile.m_TexSpaceTopLeftPos.m_X) + ", " + std::to_string(tile.m_TexSpaceTopLeftPos.m_Y) + ")\n").c_str());
+			OutputDebugStringA(("\ttexSpaceSize: (" + std::to_string(tile.m_TexSpaceSize.m_X) + ", " + std::to_string(tile.m_TexSpaceSize.m_Y) + ")\n").c_str());
+		}
 	}
 
-	u16 debugNumSpotLightShadowMapTiles = kNumShadowMapTiles * kNumShadowMapTiles;
-	std::vector<ShadowMapTile> debugSpotLightShadowMapTiles(debugNumSpotLightShadowMapTiles);
-	m_pDebugSpotLightShadowMapTileBuffer->Read(debugSpotLightShadowMapTiles.data(), debugNumSpotLightShadowMapTiles * sizeof(ShadowMapTile));
-
-	for (u16 row = 0; row < kNumShadowMapTiles; ++row)
+	if (m_pSpotLightBuffer != nullptr)
 	{
-		for (u16 col = 0; col < kNumShadowMapTiles; ++col)
+		u32 numShadowCastingSpotLights = 0;
+		m_pDebugNumShadowCastingSpotLightsBuffer->Read(&numShadowCastingSpotLights, sizeof(u32));
+		OutputDebugStringA(("NumShadowCastingSpotLights: " + std::to_string(numShadowCastingSpotLights)).c_str());
+		OutputDebugStringA("\n");
+
+		std::vector<u32> shadowCastingSpotLightIndices(numShadowCastingSpotLights);
+		m_pDebugShadowCastingSpotLightIndexBuffer->Read(shadowCastingSpotLightIndices.data(), numShadowCastingSpotLights * sizeof(u32));
+		for (u32 i = 0; i < numShadowCastingSpotLights; ++i)
+			OutputDebugStringA(("\t" + std::to_string(i) + ".light index: " + std::to_string(shadowCastingSpotLightIndices[i]) + "\n").c_str());
+		OutputDebugStringA("\n");
+
+		u32 numDrawSpotLightShadowCasters = 0;
+		m_pDebugNumDrawSpotLightShadowCastersBuffer->Read(&numDrawSpotLightShadowCasters, sizeof(u32));
+		OutputDebugStringA(("NumDrawSpotLightShadowCasters: " + std::to_string(numDrawSpotLightShadowCasters)).c_str());
+		OutputDebugStringA("\n");
+
+		std::vector<DrawMeshCommand> drawSpotLightShadowCasterCommands(numDrawSpotLightShadowCasters);
+		m_pDebugDrawSpotLightShadowCasterCommandBuffer->Read(drawSpotLightShadowCasterCommands.data(), numDrawSpotLightShadowCasters * sizeof(DrawMeshCommand));
+		for (u32 i = 0; i < numDrawSpotLightShadowCasters; ++i)
 		{
-			const ShadowMapTile& tile = debugSpotLightShadowMapTiles[row * kNumShadowMapTiles + col];
-			OutputDebugStringA(("Tile (" + std::to_string(row) + ", " + std::to_string(col) + "):\n").c_str());
+			const DrawMeshCommand& drawCommand = drawSpotLightShadowCasterCommands[i];
+			OutputDebugStringA((std::to_string(i) + ".Command:\n").c_str());
+			OutputDebugStringA(("\tlightIndexStart: " + std::to_string(drawCommand.m_Root32BitConstant) + "\n").c_str());
+			OutputDebugStringA(("\tIndexCountPerInstance: " + std::to_string(drawCommand.m_DrawArgs.IndexCountPerInstance) + "\n").c_str());
+			OutputDebugStringA(("\tinstanceCount: " + std::to_string(drawCommand.m_DrawArgs.InstanceCount) + "\n").c_str());
+			OutputDebugStringA(("\tstartIndexLocation: " + std::to_string(drawCommand.m_DrawArgs.StartIndexLocation) + "\n").c_str());
+			OutputDebugStringA(("\tbaseVertexLocation: " + std::to_string(drawCommand.m_DrawArgs.BaseVertexLocation) + "\n").c_str());
+			OutputDebugStringA(("\tstartInstanceLocation: " + std::to_string(drawCommand.m_DrawArgs.StartInstanceLocation) + "\n").c_str());
+		}
+
+		u16 numSpotLightShadowMapTiles = m_pSpotLightBuffer->GetNumLights();
+		std::vector<ShadowMapTile> spotLightShadowMapTiles(numSpotLightShadowMapTiles);
+		m_pDebugSpotLightShadowMapTileBuffer->Read(spotLightShadowMapTiles.data(), numSpotLightShadowMapTiles * sizeof(ShadowMapTile));
+
+		for (u16 i = 0; i < numSpotLightShadowMapTiles; ++i)
+		{
+			const ShadowMapTile& tile = spotLightShadowMapTiles[i];
+			OutputDebugStringA((std::to_string(i) + ".Tile:\n").c_str());
 			OutputDebugStringA(("\ttexSpaceTopLeftPos: (" + std::to_string(tile.m_TexSpaceTopLeftPos.m_X) + ", " + std::to_string(tile.m_TexSpaceTopLeftPos.m_Y) + ")\n").c_str());
 			OutputDebugStringA(("\ttexSpaceSize: (" + std::to_string(tile.m_TexSpaceSize.m_X) + ", " + std::to_string(tile.m_TexSpaceSize.m_Y) + ")\n").c_str());
 		}

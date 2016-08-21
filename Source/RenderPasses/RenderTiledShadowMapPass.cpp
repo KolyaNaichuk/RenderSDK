@@ -21,8 +21,6 @@ RenderTiledShadowMapPass::RenderTiledShadowMapPass(InitParams* pParams)
 	, m_pRootSignature(nullptr)
 	, m_pCommandSignature(nullptr)
 {
-	assert(pParams->m_LightType == LightType_Spot);
-
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 		

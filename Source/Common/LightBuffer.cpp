@@ -63,32 +63,74 @@ LightBuffer::LightBuffer(RenderEnv* pRenderEnv, u32 numPointLights, PointLight**
 {
 	std::vector<Sphere> lightBounds;
 	std::vector<PointLightProps> lightProps;
+	std::vector<LightFrustum> lightFrustums;
+	std::vector<Matrix4f> lightViewProjMatrices;
 
 	lightBounds.reserve(m_NumLights);
 	lightProps.reserve(m_NumLights);
+	lightFrustums.reserve(kNumCubeMapFaces * m_NumLights);
+	lightViewProjMatrices.reserve(kNumCubeMapFaces * m_NumLights);
 
+	Quaternion cubeMapWorldSpaceRotations[kNumCubeMapFaces];
+	cubeMapWorldSpaceRotations[kCubeMapFacePosX] = CreateRotationYQuaternion(Radian(PI_DIV_TWO));
+	cubeMapWorldSpaceRotations[kCubeMapFaceNegX] = CreateRotationYQuaternion(Radian(-PI_DIV_TWO));
+	cubeMapWorldSpaceRotations[kCubeMapFacePosY] = CreateRotationXQuaternion(Radian(-PI_DIV_TWO));
+	cubeMapWorldSpaceRotations[kCubeMapFaceNegY] = CreateRotationXQuaternion(Radian(PI_DIV_TWO));
+	cubeMapWorldSpaceRotations[kCubeMapFacePosZ] = Quaternion();
+	cubeMapWorldSpaceRotations[kCubeMapFaceNegZ] = CreateRotationYQuaternion(Radian(PI));
+		
 	for (u32 lightIndex = 0; lightIndex < m_NumLights; ++lightIndex)
 	{
 		const PointLight* pLight = ppPointLights[lightIndex];
 
 		const Transform& lightWorldSpaceTransform = pLight->GetTransform();
 		const Vector3f& lightWorldSpacePos = lightWorldSpaceTransform.GetPosition();
-				
+		const Quaternion& lightWorldSpaceRotation = lightWorldSpaceTransform.GetRotation();
+		
 		lightBounds.emplace_back(lightWorldSpacePos, pLight->GetAttenEndRange());
 		lightProps.emplace_back(pLight->GetColor(), pLight->GetAttenStartRange());
+
+		Matrix4f lightProjMatrix = CreatePerspectiveFovProjMatrix(Radian(PI_DIV_TWO), 1.0f, 0.001f, pLight->GetAttenEndRange());
+		Frustum lightSpaceFrustum(lightProjMatrix);
+		
+		for (u8 faceIndex = 0; faceIndex < kNumCubeMapFaces; ++faceIndex)
+		{
+			Transform cubeMapLightWorldSpaceTransform(cubeMapWorldSpaceRotations[faceIndex] * lightWorldSpaceRotation, lightWorldSpacePos);
+			Frustum lightWorldSpaceFrustum = TransformFrustum(lightSpaceFrustum, cubeMapLightWorldSpaceTransform);
+
+			const Plane& leftWorldSpacePlane = lightWorldSpaceFrustum.m_Planes[Frustum::LeftPlane];
+			const Plane& rightWorldSpacePlane = lightWorldSpaceFrustum.m_Planes[Frustum::RightPlane];
+			const Plane& topWorldSpacePlane = lightWorldSpaceFrustum.m_Planes[Frustum::TopPlane];
+			const Plane& bottomWorldSpacePlane = lightWorldSpaceFrustum.m_Planes[Frustum::BottomPlane];
+
+			lightFrustums.emplace_back(leftWorldSpacePlane, rightWorldSpacePlane, topWorldSpacePlane, bottomWorldSpacePlane);
+
+			Matrix4f lightViewProjMatrix = cubeMapLightWorldSpaceTransform.GetWorldToLocalMatrix() * lightProjMatrix;
+			lightViewProjMatrices.emplace_back(lightViewProjMatrix);
+		}
 	}
 
 	StructuredBufferDesc lightBoundsBufferDesc(m_NumLights, sizeof(Sphere), true, false);
 	StructuredBufferDesc lightPropsBufferDesc(m_NumLights, sizeof(PointLightProps), true, false);
+	StructuredBufferDesc lightFrustumBufferDesc(kNumCubeMapFaces * m_NumLights, sizeof(LightFrustum), true, false);
+	StructuredBufferDesc lightViewProjMatrixBufferDesc(kNumCubeMapFaces * m_NumLights, sizeof(Matrix4f), true, false);
 
 	m_pLightBoundsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightBoundsBuffer");
 	m_pLightPropsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightPropsBuffer");
+	m_pLightFrustumBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightFrustumBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightFrustumBuffer");
+	m_pLightViewProjMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightViewProjMatrixBuffer");
 
 	m_pUploadLightBoundsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightBoundsBuffer");
 	m_pUploadLightBoundsBuffer->Write(lightBounds.data(), m_NumLights * sizeof(Sphere));
 
 	m_pUploadLightPropsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightPropsBuffer");
 	m_pUploadLightPropsBuffer->Write(lightProps.data(), m_NumLights * sizeof(PointLightProps));
+
+	m_pUploadLightFrustumBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightFrustumBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightFrustumBuffer");
+	m_pUploadLightFrustumBuffer->Write(lightFrustums.data(), kNumCubeMapFaces * m_NumLights * sizeof(LightFrustum));
+
+	m_pUploadLightViewProjMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightViewProjMatrixBuffer");
+	m_pUploadLightViewProjMatrixBuffer->Write(lightViewProjMatrices.data(), kNumCubeMapFaces * m_NumLights * sizeof(Matrix4f));
 }
 
 LightBuffer::LightBuffer(RenderEnv* pRenderEnv, u32 numSpotLights, SpotLight** ppSpotLights)

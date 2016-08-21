@@ -3,6 +3,8 @@
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/RenderEnv.h"
+#include "D3DWrapper/GraphicsUtils.h"
+#include "Math/Math.h"
 
 enum RootParams
 {
@@ -13,16 +15,28 @@ enum RootParams
 SetupTiledShadowMapPass::SetupTiledShadowMapPass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
+	, m_NumThreadGroupsX(0)
+	, m_NumThreadGroupsY(0)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	std::string numTilesXStr = std::to_string(pParams->m_NumTilesX);
-	std::string numTilesYStr = std::to_string(pParams->m_NumTilesY);
+	const u16 threadGroupSize = 64;	
+	m_NumThreadGroupsX = (u16)Ceil((f32)pParams->m_MaxNumLights / (f32)threadGroupSize);
+
+	if (pParams->m_LightType == LightType_Point)
+		m_NumThreadGroupsY = kNumCubeMapFaces;
+	else if (pParams->m_LightType == LightType_Spot)
+		m_NumThreadGroupsY = 1;
+	else
+		assert(false);
+
+	std::string threadGroupSizeStr = std::to_string(threadGroupSize);
+	std::string lightTypeStr = std::to_string(pParams->m_LightType);
 
 	const ShaderMacro shaderDefines[] =
 	{
-		ShaderMacro("NUM_TILES_X", numTilesXStr.c_str()),
-		ShaderMacro("NUM_TILES_Y", numTilesYStr.c_str()),
+		ShaderMacro("THREAD_GROUP_SIZE", threadGroupSizeStr.c_str()),
+		ShaderMacro("LIGHT_TYPE", lightTypeStr.c_str()),
 		ShaderMacro()
 	};
 	Shader computeShader(L"Shaders//SetupTiledShadowMapCS.hlsl", "Main", "cs_5_0", shaderDefines);
@@ -63,6 +77,6 @@ void SetupTiledShadowMapPass::Record(RenderParams* pParams)
 	pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
-	pCommandList->Dispatch(1, 1, 1);
+	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
 	pCommandList->End();
 }

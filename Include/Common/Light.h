@@ -4,6 +4,24 @@
 #include "Math/Vector4.h"
 #include "Math/Radian.h"
 
+enum LightType
+{
+	LightType_Point = 1,
+	LightType_Spot = 2,
+	LightType_Directional = 3
+};
+
+enum CubeMapFaces
+{
+	kCubeMapFacePosX = 0,
+	kCubeMapFaceNegX,
+	kCubeMapFacePosY,
+	kCubeMapFaceNegY,
+	kCubeMapFacePosZ,
+	kCubeMapFaceNegZ,
+	kNumCubeMapFaces
+};
+
 class Light : public SceneObject
 {
 protected:

@@ -13,7 +13,6 @@ class Fence;
 struct RenderEnv;
 struct HeapProperties;
 
-class CopyTexturePass;
 class CalcTextureLuminancePass;
 
 enum DisplayResult
@@ -55,7 +54,6 @@ private:
 	UINT m_BackBufferIndex;
 
 	ColorTexture* m_pHDRTexture;
-	CopyTexturePass* m_pCopyTexturePass;
 	CalcTextureLuminancePass* m_pCalcTextureLuminancePass;
 	CalcTextureLuminancePass* m_pCalcTextureLogLuminancePass;
 
