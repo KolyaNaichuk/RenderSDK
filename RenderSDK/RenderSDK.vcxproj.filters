@@ -225,6 +225,9 @@
     <ClInclude Include="..\Include\RenderPasses\VisualizeTexturePass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Common\OBJFileLoader.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -415,6 +418,9 @@
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\VisualizeTexturePass.cpp">
       <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\OBJFileLoader.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

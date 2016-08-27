@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <cassert>
 #include <memory>
+#include <fstream>
+#include <sstream>
 
 #include "Common/BasicTypes.h"
 

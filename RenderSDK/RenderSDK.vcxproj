@@ -158,6 +158,7 @@
     <ClInclude Include="..\Include\Common\MeshDataFactory.h" />
     <ClInclude Include="..\Include\Common\MeshDataUtilities.h" />
     <ClInclude Include="..\Include\Common\Light.h" />
+    <ClInclude Include="..\Include\Common\OBJFileLoader.h" />
     <ClInclude Include="..\Include\Common\Scene.h" />
     <ClInclude Include="..\Include\Common\SceneLoader.h" />
     <ClInclude Include="..\Include\Common\SceneObject.h" />
@@ -226,6 +227,7 @@
     <ClCompile Include="..\Source\Common\MeshBatchData.cpp" />
     <ClCompile Include="..\Source\Common\MeshData.cpp" />
     <ClCompile Include="..\Source\Common\MeshDataFactory.cpp" />
+    <ClCompile Include="..\Source\Common\OBJFileLoader.cpp" />
     <ClCompile Include="..\Source\Common\Scene.cpp" />
     <ClCompile Include="..\Source\Common\SceneLoader.cpp" />
     <ClCompile Include="..\Source\Common\SceneObject.cpp" />
