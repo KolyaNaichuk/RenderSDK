@@ -4,25 +4,6 @@
 
 namespace OBJFile
 {
-	struct Face
-	{
-		enum Attributes
-		{
-			Attributes_PositionIndices = 1 << 0,
-			Attributes_TexCoordIndices = 1 << 1,
-			Attributes_NormalIndices = 1 << 2
-		};
-		enum { kNumIndices = 3 };
-
-		Face()
-			: m_Attributes(0)
-		{}		
-		u32 m_PositionIndices[kNumIndices];
-		u32 m_TexCoordIndices[kNumIndices];
-		u32 m_NormalIndices[kNumIndices];
-		u8 m_Attributes;
-	};
-
 	struct Material
 	{
 		Material(const std::wstring& name)
@@ -37,7 +18,9 @@ namespace OBJFile
 			: m_MaterialIndex(materialIndex)
 		{}
 		u32 m_MaterialIndex;
-		std::vector<Face> m_Faces;
+		std::vector<u32> m_PositionIndices;
+		std::vector<u32> m_TexCoordIndices;
+		std::vector<u32> m_NormalIndices;
 	};
 	
 	struct Object
@@ -48,6 +31,8 @@ namespace OBJFile
 		std::wstring m_Name;
 		std::vector<u32> m_MeshIndices;
 	};
+
+	void Triangulate(const std::vector<u32>& faceVertexIndices, std::vector<u32>& triangleVertexIndices);
 }
 
 bool OBJFileLoader::Load(const wchar_t* pFilePath)
@@ -198,29 +183,27 @@ bool OBJFileLoader::Load(const wchar_t* pFilePath)
 
 				pCurrentObject->m_MeshIndices.emplace_back(currentMeshIndex);
 			}
-			
-			pCurrentMesh->m_Faces.emplace_back();
-			OBJFile::Face* pCurrentFace = &pCurrentMesh->m_Faces.back();
-
+						
 			const i32 numPositions = positions.size();
 			const i32 numTexCoords = texCoords.size();
 			const i32 numNormals = normals.size();
-						
-			u8 index = 0;						
-			for (; stringStream; ++index)
+			
+			std::vector<u32> facePositionIndices;
+			std::vector<u32> faceTexCoordIndices;
+			std::vector<u32> faceNormalIndices;
+
+			while (stringStream)
 			{
 				i32 posIndex;
 				stringStream >> posIndex;
 				
 				if (posIndex > 0)
-					pCurrentFace->m_PositionIndices[index] = posIndex - 1;
+					facePositionIndices.emplace_back(posIndex - 1);
 				else if (posIndex < 0)
-					pCurrentFace->m_PositionIndices[index] = posIndex + numPositions;
+					facePositionIndices.emplace_back(posIndex + numPositions);
 				else
 					assert(false);
-
-				pCurrentFace->m_Attributes |= OBJFile::Face::Attributes_PositionIndices;
-				
+								
 				if (stringStream.peek() == L'/')
 				{
 					stringStream.ignore(1);
@@ -230,13 +213,11 @@ bool OBJFileLoader::Load(const wchar_t* pFilePath)
 						stringStream >> texCoordIndex;
 
 						if (texCoordIndex > 0)
-							pCurrentFace->m_TexCoordIndices[index] = texCoordIndex - 1;
+							faceTexCoordIndices.emplace_back(texCoordIndex - 1);
 						else if (texCoordIndex < 0)
-							pCurrentFace->m_TexCoordIndices[index] = texCoordIndex + numTexCoords;
+							faceTexCoordIndices.emplace_back(texCoordIndex + numTexCoords);
 						else
 							assert(false);
-
-						pCurrentFace->m_Attributes |= OBJFile::Face::Attributes_TexCoordIndices;
 					}
 					if (stringStream.peek() == L'/')
 					{						
@@ -246,19 +227,38 @@ bool OBJFileLoader::Load(const wchar_t* pFilePath)
 						stringStream >> normalIndex;
 						
 						if (normalIndex > 0)
-							pCurrentFace->m_NormalIndices[index] = normalIndex - 1;
+							faceNormalIndices.emplace_back(normalIndex - 1);
 						else if (normalIndex < 0)
-							pCurrentFace->m_NormalIndices[index] = normalIndex + numNormals;
+							faceNormalIndices.emplace_back(normalIndex + numNormals);
 						else
 							assert(false);
-
-						pCurrentFace->m_Attributes |= OBJFile::Face::Attributes_NormalIndices;
 					}
 				}
 			}
-			assert((pCurrentFace->m_Attributes & OBJFile::Face::Attributes_PositionIndices) != 0);
-			assert((index + 1) == OBJFile::Face::kNumIndices);
+						
+			OBJFile::Triangulate(facePositionIndices, pCurrentMesh->m_PositionIndices);
+			
+			if (!faceTexCoordIndices.empty())
+				OBJFile::Triangulate(faceTexCoordIndices, pCurrentMesh->m_TexCoordIndices);
+
+			if (!faceNormalIndices.empty())
+				OBJFile::Triangulate(faceNormalIndices, pCurrentMesh->m_NormalIndices);
 		}
 	}
 	return true;
+}
+
+namespace OBJFile
+{
+	void Triangulate(const std::vector<u32>& faceVertexIndices, std::vector<u32>& triangleVertexIndices)
+	{
+		assert(faceVertexIndices.size() > 2);
+		for (u32 index = 1; index < faceVertexIndices.size() - 1; ++index)
+		{
+			triangleVertexIndices.emplace_back(faceVertexIndices[0]);
+			triangleVertexIndices.emplace_back(faceVertexIndices[index + 1]);
+			triangleVertexIndices.emplace_back(faceVertexIndices[index]);
+		}
+		assert((triangleVertexIndices.size() % 3) == 0);
+	}
 }
