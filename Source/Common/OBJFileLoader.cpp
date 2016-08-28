@@ -48,8 +48,9 @@ bool OBJFileLoader::Load(const wchar_t* pFilePath)
 	
 	std::wstring materialLibName;
 
-	const static std::wstring kDefaultObjectName = L"Default Object";
-	const static std::wstring kDefaultMaterialName = L"Default Material";
+	const static std::wstring kDefaultObjectName = L"default";
+	const static std::wstring kDefaultMaterialName = L"default";
+	const static std::wstring kDefaultGroupName = L"default";
 
 	u32 currentMaterialIndex = 0;
 	std::vector<OBJFile::Material> materials;
@@ -61,6 +62,8 @@ bool OBJFileLoader::Load(const wchar_t* pFilePath)
 
 	std::vector<OBJFile::Mesh> meshes;
 	OBJFile::Mesh* pCurrentMesh = nullptr;
+
+	std::wstring currentGroupName = kDefaultGroupName;
 
 	for (std::wstring line; std::getline(fileStream, line); )
 	{
@@ -126,8 +129,18 @@ bool OBJFileLoader::Load(const wchar_t* pFilePath)
 		}
 		else if (line.compare(0, 2, L"g ") == 0)
 		{
-			// Group name
-			assert(false);
+			std::wstringstream stringStream(line.substr(2));
+			std::wstring groupName;
+			stringStream >> groupName;
+
+			if (currentGroupName != groupName)
+			{
+				objects.emplace_back(groupName);
+				pCurrentObject = &objects.back();
+				pCurrentMesh = nullptr;
+
+				currentGroupName = groupName;
+			}
 		}
 		else if (line.compare(0, 2, L"s ") == 0)
 		{
