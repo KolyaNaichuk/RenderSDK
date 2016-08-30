@@ -111,21 +111,12 @@ bool OBJFileLoader::Load(const wchar_t* pFilePath)
 			std::wstring objectName;
 			stringStream >> objectName;
 
-			pCurrentObject = nullptr;
-			for (OBJFile::Object& object : objects)
-			{
-				if (object.m_Name == objectName)
-				{
-					pCurrentObject = &object;
-					break;
-				}
-			}
-			if (pCurrentObject == nullptr)
+			if ((pCurrentObject == nullptr) || (pCurrentObject->m_Name != objectName))
 			{
 				objects.emplace_back(objectName);
 				pCurrentObject = &objects.back();
+				pCurrentMesh = nullptr;
 			}
-			pCurrentMesh = nullptr;
 		}
 		else if (line.compare(0, 2, L"g ") == 0)
 		{
@@ -138,7 +129,7 @@ bool OBJFileLoader::Load(const wchar_t* pFilePath)
 				objects.emplace_back(groupName);
 				pCurrentObject = &objects.back();
 				pCurrentMesh = nullptr;
-
+				
 				currentGroupName = groupName;
 			}
 		}
