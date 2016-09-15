@@ -69,4 +69,4 @@ const Matrix4f CreateOrthoProjMatrix(f32 width, f32 height, f32 nearZ, f32 farZ)
 const Matrix4f CreatePerspectiveProjMatrix(f32 nearWidth, f32 nearHeight, f32 nearZ, f32 farZ);
 const Matrix4f CreatePerspectiveFovProjMatrix(const Radian& fovY, f32 aspectRatio, f32 nearZ, f32 farZ);
 
-const BasisAxes GetBasisAxes(const Matrix4f& matrix);
+const BasisAxes ExtractBasisAxes(const Matrix4f& matrix);

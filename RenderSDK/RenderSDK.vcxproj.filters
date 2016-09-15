@@ -228,6 +228,9 @@
     <ClInclude Include="..\Include\Common\OBJFileLoader.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Math\Hash.h">
+      <Filter>Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">

@@ -232,7 +232,7 @@ const Matrix4f CreatePerspectiveFovProjMatrix(const Radian& fovY, f32 aspectRati
 					0.0f, 0.0f, nearZ * farZ / (nearZ - farZ), 0.0f);
 }
 
-const BasisAxes GetBasisAxes(const Matrix4f& matrix)
+const BasisAxes ExtractBasisAxes(const Matrix4f& matrix)
 {
 	return BasisAxes(Vector3f(matrix.m_00, matrix.m_01, matrix.m_02),
 					 Vector3f(matrix.m_10, matrix.m_11, matrix.m_12),

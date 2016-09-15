@@ -185,6 +185,7 @@
     <ClInclude Include="..\Include\Math\Degree.h" />
     <ClInclude Include="..\Include\Math\AxisAlignedBox.h" />
     <ClInclude Include="..\Include\Math\Frustum.h" />
+    <ClInclude Include="..\Include\Math\Hash.h" />
     <ClInclude Include="..\Include\Math\OrientedBox.h" />
     <ClInclude Include="..\Include\Math\Sphere.h" />
     <ClInclude Include="..\Include\Math\EulerAngles.h" />
