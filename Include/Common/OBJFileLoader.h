@@ -5,6 +5,23 @@
 
 namespace OBJFile
 {
+	const static std::wstring kDefaultObjectName = L"default";
+	const static std::wstring kDefaultMaterialName = L"default";
+	const static std::wstring kDefaultGroupName = L"default";
+	const static u32 kUnknownIndex = (u32)-1;
+
+	struct VertexIndex
+	{
+		VertexIndex(u32 positionIndex, u32 normalIndex = kUnknownIndex, u32 texCoordIndex = kUnknownIndex)
+			: m_PositionIndex(positionIndex)
+			, m_NormalIndex(normalIndex)
+			, m_TexCoordIndex(texCoordIndex)
+		{}
+		u32 m_PositionIndex;
+		u32 m_NormalIndex;
+		u32 m_TexCoordIndex;
+	};
+
 	struct Material
 	{
 		Material(const std::wstring& name)
@@ -39,9 +56,7 @@ namespace OBJFile
 			: m_MaterialIndex(materialIndex)
 		{}
 		u32 m_MaterialIndex;
-		std::vector<u32> m_PositionIndices;
-		std::vector<u32> m_TexCoordIndices;
-		std::vector<u32> m_NormalIndices;
+		std::vector<VertexIndex> m_VertexIndices;
 	};
 	
 	struct Object
@@ -62,8 +77,9 @@ public:
 private:
 	bool LoadOBJFile(const wchar_t* pFilePath);
 	bool LoadMaterialFile(const wchar_t* pFilePath);
+	void GenerateMeshBatchData();
 	void Clear();
-
+	
 private:
 	std::vector<Vector3f> m_Positions;
 	std::vector<Vector2f> m_TexCoords;

@@ -1,13 +1,42 @@
 #include "Common/OBJFileLoader.h"
+#include "Common/MeshBatchData.h"
+#include "Common/MeshData.h"
+#include "Math/Hash.h"
 
-namespace
-{
-	const static std::wstring kDefaultObjectName = L"default";
-	const static std::wstring kDefaultMaterialName = L"default";
-	const static std::wstring kDefaultGroupName = L"default";
-	const static u32 kUnknownMaterialIndex = (u32)-1;
+namespace OBJFile
+{		
+	void Triangulate(const std::vector<VertexIndex>& faceVertexIndices, std::vector<VertexIndex>& triangleVertexIndices)
+	{
+		assert(faceVertexIndices.size() > 2);
+		for (u32 index = 1; index < faceVertexIndices.size() - 1; ++index)
+		{
+			triangleVertexIndices.emplace_back(faceVertexIndices[0]);
+			triangleVertexIndices.emplace_back(faceVertexIndices[index + 1]);
+			triangleVertexIndices.emplace_back(faceVertexIndices[index]);
+		}
+		assert((triangleVertexIndices.size() % 3) == 0);
+	}
+	struct VertexIndexHash
+	{
+		std::size_t operator()(const VertexIndex& vertexIndex) const
+		{
+			std::size_t seed = 0;
+			HashCombine(seed, vertexIndex.m_PositionIndex);
+			HashCombine(seed, vertexIndex.m_NormalIndex);
+			HashCombine(seed, vertexIndex.m_TexCoordIndex);
 
-	void Triangulate(const std::vector<u32>& faceVertexIndices, std::vector<u32>& triangleVertexIndices);
+			return seed;
+		}
+	};
+	struct VertexIndexComp
+	{
+		bool operator()(const VertexIndex& vertexIndex1, const VertexIndex& vertexIndex2) const
+		{
+			return (vertexIndex1.m_PositionIndex == vertexIndex2.m_PositionIndex) &&
+				(vertexIndex1.m_NormalIndex == vertexIndex2.m_NormalIndex) &&
+				(vertexIndex1.m_TexCoordIndex == vertexIndex2.m_TexCoordIndex);
+		}
+	};
 }
 
 bool OBJFileLoader::Load(const wchar_t* pOBJFilePath)
@@ -140,7 +169,7 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath)
 			{
 				if (m_pCurrentObject == nullptr)
 				{
-					m_Objects.emplace_back(kDefaultObjectName);
+					m_Objects.emplace_back(OBJFile::kDefaultObjectName);
 					m_pCurrentObject = &m_Objects.back();
 				}
 				createNewMesh = true;
@@ -161,9 +190,8 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath)
 			const i32 numTexCoords = m_TexCoords.size();
 			const i32 numNormals = m_Normals.size();
 			
-			std::vector<u32> facePositionIndices;
-			std::vector<u32> faceTexCoordIndices;
-			std::vector<u32> faceNormalIndices;
+			std::vector<OBJFile::VertexIndex> faceVertexIndices;
+			OBJFile::VertexIndex* pCurrentVertexIndex = nullptr;
 
 			while (stringStream)
 			{
@@ -171,9 +199,15 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath)
 				stringStream >> posIndex;
 				
 				if (posIndex > 0)
-					facePositionIndices.emplace_back(posIndex - 1);
+				{
+					faceVertexIndices.emplace_back(posIndex - 1);
+					pCurrentVertexIndex = &faceVertexIndices.back();
+				}
 				else if (posIndex < 0)
-					facePositionIndices.emplace_back(posIndex + numPositions);
+				{ 
+					faceVertexIndices.emplace_back(posIndex + numPositions);
+					pCurrentVertexIndex = &faceVertexIndices.back();
+				}
 				else
 					assert(false);
 								
@@ -182,42 +216,39 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath)
 					stringStream.ignore(1);
 					if (stringStream.peek() != L'/')
 					{
+						assert(pCurrentVertexIndex != nullptr);
+
 						i32 texCoordIndex;
 						stringStream >> texCoordIndex;
 
 						if (texCoordIndex > 0)
-							faceTexCoordIndices.emplace_back(texCoordIndex - 1);
+							pCurrentVertexIndex->m_TexCoordIndex = texCoordIndex - 1;
 						else if (texCoordIndex < 0)
-							faceTexCoordIndices.emplace_back(texCoordIndex + numTexCoords);
+							pCurrentVertexIndex->m_TexCoordIndex = texCoordIndex + numTexCoords;
 						else
 							assert(false);
 					}
 					if (stringStream.peek() == L'/')
-					{						
+					{
 						stringStream.ignore(1);
+						assert(pCurrentVertexIndex != nullptr);
 						
 						i32 normalIndex;
 						stringStream >> normalIndex;
 						
 						if (normalIndex > 0)
-							faceNormalIndices.emplace_back(normalIndex - 1);
+							pCurrentVertexIndex->m_NormalIndex = normalIndex - 1;
 						else if (normalIndex < 0)
-							faceNormalIndices.emplace_back(normalIndex + numNormals);
+							pCurrentVertexIndex->m_NormalIndex = normalIndex + numNormals;
 						else
 							assert(false);
 					}
 				}
 			}
-						
-			Triangulate(facePositionIndices, m_pCurrentMesh->m_PositionIndices);
-			
-			if (!faceTexCoordIndices.empty())
-				Triangulate(faceTexCoordIndices, m_pCurrentMesh->m_TexCoordIndices);
-
-			if (!faceNormalIndices.empty())
-				Triangulate(faceNormalIndices, m_pCurrentMesh->m_NormalIndices);
+			Triangulate(faceVertexIndices, m_pCurrentMesh->m_VertexIndices);
 		}
 	}
+	GenerateMeshBatchData();
 	return true;
 }
 
@@ -244,7 +275,7 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 			std::wstring materialName;
 			stringStream >> materialName;
 
-			m_CurrentMaterialIndex = kUnknownMaterialIndex;
+			m_CurrentMaterialIndex = OBJFile::kUnknownIndex;
 			for (u32 index = 0; index < m_Materials.size(); ++index)
 			{
 				if (m_Materials[index].m_Name == materialName)
@@ -256,19 +287,19 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 		}
 		else if (line.compare(0, 11, L"Ka spectral"))
 		{
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the ambient reflectivity using a spectral curve");
 		}
 		else if (line.compare(0, 6, L"Ka xyz"))
 		{
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the ambient reflectivity using CIEXYZ values");
 		}
 		else if (line.compare(0, 2, L"Ka"))
 		{
 			std::wstringstream stringStream(line.substr(2));
 
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			Vector3f& ambientColor = m_Materials[m_CurrentMaterialIndex].m_AmbientColor;
 			
 			stringStream >> ambientColor.m_X;
@@ -287,24 +318,24 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 		{
 			std::wstringstream stringStream(line.substr(6));
 			
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			stringStream >> m_Materials[m_CurrentMaterialIndex].m_AmbientMapName;
 		}
 		else if (line.compare(0, 11, L"Kd spectral"))
 		{
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the diffuse reflectivity using a spectral curve");
 		}
 		else if (line.compare(0, 6, L"Kd xyz"))
 		{
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the diffuse reflectivity using CIEXYZ values");
 		}
 		else if (line.compare(0, 2, L"Kd"))
 		{
 			std::wstringstream stringStream(line.substr(2));
 
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			Vector3f& diffuseColor = m_Materials[m_CurrentMaterialIndex].m_DiffuseColor;
 
 			stringStream >> diffuseColor.m_X;
@@ -323,24 +354,24 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 		{
 			std::wstringstream stringStream(line.substr(6));
 
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			stringStream >> m_Materials[m_CurrentMaterialIndex].m_DiffuseMapName;
 		}
 		else if (line.compare(0, 11, L"Ks spectral"))
 		{
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the specular reflectivity using a spectral curve");
 		}
 		else if (line.compare(0, 6, L"Ks xyz"))
 		{
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the specular reflectivity using CIEXYZ values");
 		}
 		else if (line.compare(0, 2, L"Ks"))
 		{
 			std::wstringstream stringStream(line.substr(2));
 
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			Vector3f& specularColor = m_Materials[m_CurrentMaterialIndex].m_SpecularColor;
 
 			stringStream >> specularColor.m_X;
@@ -359,38 +390,38 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 		{
 			std::wstringstream stringStream(line.substr(6));
 
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			stringStream >> m_Materials[m_CurrentMaterialIndex].m_SpecularMapName;
 		}
 		else if (line.compare(0, 2, L"Ns"))
 		{
 			std::wstringstream stringStream(line.substr(2));
 
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			stringStream >> m_Materials[m_CurrentMaterialIndex].m_SpecularPower;
 		}
 		else if (line.compare(0, 6, L"map_Ns"))
 		{
 			std::wstringstream stringStream(line.substr(6));
 
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			stringStream >> m_Materials[m_CurrentMaterialIndex].m_SpecularPowerMapName;
 		}
 		else if (line.compare(0, 11, L"Ke spectral"))
 		{
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the emissive reflectivity using a spectral curve");
 		}
 		else if (line.compare(0, 6, L"Ke xyz"))
 		{
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the emissive reflectivity using CIEXYZ values");
 		}
 		else if (line.compare(0, 2, L"Ke"))
 		{
 			std::wstringstream stringStream(line.substr(2));
 
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			Vector3f& emissiveColor = m_Materials[m_CurrentMaterialIndex].m_EmissiveColor;
 
 			stringStream >> emissiveColor.m_X;
@@ -409,32 +440,83 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 		{
 			std::wstringstream stringStream(line.substr(6));
 
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			stringStream >> m_Materials[m_CurrentMaterialIndex].m_EmissiveMapName;
 		}
 		else if (line.compare(0, 2, L"Ni"))
 		{
 			std::wstringstream stringStream(line.substr(2));
 
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			stringStream >> m_Materials[m_CurrentMaterialIndex].m_IndexOfRefraction;
 		}
 		else if (line.compare(0, 2, L"d "))
 		{
 			std::wstringstream stringStream(line.substr(2));
 			
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			stringStream >> m_Materials[m_CurrentMaterialIndex].m_Opacity;
 		}
 		else if (line.compare(0, 5, L"map_d"))
 		{
 			std::wstringstream stringStream(line.substr(5));
 
-			assert(m_CurrentMaterialIndex != kUnknownMaterialIndex);
+			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			stringStream >> m_Materials[m_CurrentMaterialIndex].m_OpacityMapName;
 		}
 	}	
 	return true;
+}
+
+void OBJFileLoader::GenerateMeshBatchData()
+{
+	u8 vertexFormat = 0;
+	
+	assert(!m_Positions.empty());
+	vertexFormat |= VertexData::FormatFlag_Position;
+	
+	assert(!m_Normals.empty());
+	vertexFormat |= VertexData::FormatFlag_Normal;
+	
+	assert(!m_TexCoords.empty());
+	vertexFormat |= VertexData::FormatFlag_TexCoords;
+
+	assert(false && "32/16 bit indices support");
+	MeshBatchData meshBatchData(vertexFormat, DXGI_FORMAT_R16_UINT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	
+	for (const auto& mesh : m_Meshes)
+	{
+		std::vector<Vector3f> positions;
+		std::vector<Vector2f> texCoords;
+		std::vector<Vector3f> normals;
+		std::vector<u16> indices;
+		
+		std::unordered_map<OBJFile::VertexIndex, u16, OBJFile::VertexIndexHash, OBJFile::VertexIndexComp> vertexIndexCache;
+		for (const auto& vertexIndex : mesh.m_VertexIndices)
+		{
+			const u16 newIndex = (u16)vertexIndexCache.size();
+			auto result = vertexIndexCache.insert({vertexIndex, newIndex});
+			if (result.second)
+			{
+				positions.emplace_back(m_Positions[vertexIndex.m_PositionIndex]);
+				texCoords.emplace_back(m_TexCoords[vertexIndex.m_TexCoordIndex]);
+				normals.emplace_back(m_Normals[vertexIndex.m_NormalIndex]);
+
+				indices.emplace_back(newIndex);
+			}
+			else
+			{
+				const u16 existingIndex = result.first->second;
+				indices.emplace_back(existingIndex);
+			}
+		}
+
+		VertexData* pVertexData = new VertexData(positions.size(), positions.data(), normals.data(), nullptr, texCoords.data());
+		IndexData* pIndexData = new IndexData(indices.size(), indices.data());
+
+		MeshData meshData(pVertexData, pIndexData, nullptr, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		meshBatchData.Append(&meshData);
+	}
 }
 
 void OBJFileLoader::Clear()
@@ -446,7 +528,7 @@ void OBJFileLoader::Clear()
 	m_MaterialFileName.clear();
 	m_Materials.clear();
 	m_CurrentMaterialIndex = 0;
-	m_Materials.emplace_back(kDefaultMaterialName);
+	m_Materials.emplace_back(OBJFile::kDefaultMaterialName);
 	assert(false && "Set up default material");
 	
 	m_Objects.clear();
@@ -455,20 +537,5 @@ void OBJFileLoader::Clear()
 	m_Meshes.clear();
 	m_pCurrentMesh = nullptr;
 
-	m_CurrentGroupName = kDefaultGroupName;
-}
-
-namespace
-{
-	void Triangulate(const std::vector<u32>& faceVertexIndices, std::vector<u32>& triangleVertexIndices)
-	{
-		assert(faceVertexIndices.size() > 2);
-		for (u32 index = 1; index < faceVertexIndices.size() - 1; ++index)
-		{
-			triangleVertexIndices.emplace_back(faceVertexIndices[0]);
-			triangleVertexIndices.emplace_back(faceVertexIndices[index + 1]);
-			triangleVertexIndices.emplace_back(faceVertexIndices[index]);
-		}
-		assert((triangleVertexIndices.size() % 3) == 0);
-	}
+	m_CurrentGroupName = OBJFile::kDefaultGroupName;
 }
