@@ -1,6 +1,7 @@
 #include "Common/OBJFileLoader.h"
 #include "Common/MeshBatchData.h"
 #include "Common/MeshData.h"
+#include "Common/MeshDataUtilities.h"
 #include "Math/Hash.h"
 
 namespace OBJFile
@@ -140,25 +141,29 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath)
 		{
 			std::wstringstream stringStream(line.substr(2));
 			
-			f32 x, y, z;
-			stringStream >> x >> y >> z;
-			m_Positions.emplace_back(x, y, z);
+			Vector3f position;
+			stringStream >> position.m_X >> position.m_Y >> position.m_Z;
+			
+			m_Positions.emplace_back(position);
 		}
 		else if (line.compare(0, 2, L"vt") == 0)
 		{
 			std::wstringstream stringStream(line.substr(2));
 
-			f32 u, v;
-			stringStream >> u >> v;
-			m_TexCoords.emplace_back(u, v);
+			Vector2f texCoord;
+			stringStream >> texCoord.m_X >> texCoord.m_Y;
+
+			m_TexCoords.emplace_back(texCoord);
 		}
 		else if (line.compare(0, 2, L"vn") == 0)
 		{
 			std::wstringstream stringStream(line.substr(2));
 
-			f32 x, y, z;
-			stringStream >> x >> y >> z;
-			m_Normals.emplace_back(x, y, z);
+			Vector3f normal;
+			stringStream >> normal.m_X >> normal.m_Y >> normal.m_Z;
+
+			assert(IsNormalized(normal));
+			m_Normals.emplace_back(normal);
 		}
 		else if (line.compare(0, 2, L"f ") == 0)
 		{
@@ -510,11 +515,13 @@ void OBJFileLoader::GenerateMeshBatchData()
 				indices.emplace_back(existingIndex);
 			}
 		}
-
 		VertexData* pVertexData = new VertexData(positions.size(), positions.data(), normals.data(), nullptr, texCoords.data());
 		IndexData* pIndexData = new IndexData(indices.size(), indices.data());
 
 		MeshData meshData(pVertexData, pIndexData, nullptr, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+		meshData.RecalcAABB();
+
 		meshBatchData.Append(&meshData);
 	}
 }
