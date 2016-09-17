@@ -6,9 +6,11 @@ I wanted to have a set of ready and easy to use utilities to implement and exper
 In the current development state, it provides the following packages:
 
 1.D3DWrapper
+
 Thin Direct3D 12 wrappers around the native API.
 
 2.Math
+
 Essential mathematical things to deal with
 - vectors
 - matrices
@@ -18,9 +20,11 @@ Essential mathematical things to deal with
 - intersection tests, etc.
 
 3.RenderPasses
+
 In particular, it is responsible for setting up pipeline state object associated with the render pass and recording the draw/compute commands.
 
 4.Samples
+
 HelloRectangle. Demonstrates core functionality of Direct3D 12 API in action, such as using
 - index and vertex buffers
 - command queue and command lists
