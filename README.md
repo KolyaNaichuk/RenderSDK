@@ -26,8 +26,8 @@ In particular, it is responsible for setting up pipeline state object associated
 <b>Samples</b>
 
 <b>HelloRectangle</b>. Demonstrates core functionality of Direct3D 12 API in action, such as using
-- index and vertex buffers
 - command queue and command lists
+- index and vertex buffers
 - descriptor table and descriptor heap
 - uploading data to the GPU and handling resource transitions.
 
