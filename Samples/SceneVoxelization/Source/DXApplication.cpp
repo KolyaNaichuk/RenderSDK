@@ -38,30 +38,55 @@
 #include "Math/Transform.h"
 #include "Math/BasisAxes.h"
 #include "Math/Radian.h"
-#include "Math/OverlapTest.h"
 
 /*
-Render passes overview
+Render frame overview
 
-1.Run view frustum culling of meshes. Generate visible mesh indices (GPU side)
-2.Run view furstum culling of point lights. Generate visible point light indices (GPU side)
-3.Run view frustum culling of spot lights. Generate visible spot light indices (GPU side)
-4.Generate render G-Buffer indirect draw commands (GPU side)
-5.Render G-Buffer with visible meshes (GPU side)
+As a prerequisite mesh vertex and index data should be merged into one vertex and index buffers.
 
+1.The render frame starts with detecting visible meshes from camera.
+Compute shader is triggered where each thread picks one mesh AABB and checks it overlap with world space camera frustum.
 
+2.After we detect point lights which affect visible meshes from camera.
+3.After we detect spot lights which affect visible meshes from camera.
 
-4.Run view frustum culling of light bounding spheres (CPU side)
-5.Assign shadow map tile for each visible light (CPU side)
-5.1.Detect screen space area of visible lights (CPU side)
-5.2.Sort light list based on affecting screen space area (CPU side)
-5.3.Assign shadow map tile using tile quad tree (CPU side)
-6.Copy visible lights to GPU-visible light buffer (CPU side)
+4.Based on detected visible meshes we generate indirect draw commands to render g-buffer
+5.Based on generated indirect draw commands we render g-buffer itself
 
-6.1.Assign visible lights per each screen space tile (GPU side, compute pipeline)
-6.2.Render shadow maps for visible lights (GPU side, graphics pipeline)
-7.Run tile deferred shading using assigned lights for each tile and rendered shadow maps (GPU side)
+6.After the g-buffer has been rendered, we proceed to tiled light culling.
+Specifically, we split our screen into tiles 64x64 and detect for each visible point and spot light from camera,
+generate a list of lights affecting each tile.
 
+7.Preparing indirect draw commands for rendering shadow maps both from point and spot lights.
+In particular, we spawn as many thread groups as we have detected visible meshes.
+Each thread group tests assigned mesh bounds against all visible point and spot light bounds,
+writing of overlapping point and spot light sources for that shadow caster to a global list.
+When the list of overlapping lights has been generated and the thread group will create indirect draw command,
+where instance count will correspond to the number of overlapping lights and root 32 bit constant
+will be assigned start of the lights in the generated global list.
+
+8.To render shadow maps for many light sources, we utilize Tiled Shadow Map approach described in [5].
+Tiled Shadow Map approach allows to render shadow maps for all the visible light sources in one indirect draw call.
+As the name suggests, the shadow map is split into tiles, where each tile defines render target region for one light source.
+To be able to render geometry to a particular shadow map tile, we apply additional clip space translation to the vertex positions,
+after they have been transformed into clip space. Apart from this, we need to ensure that while rendering geometry to a particular tile,
+we do not overwrite data of the neighboring tiles by the geometry expanding beyond the light view frustum.
+As proposed in [5], we exploit programmable clipping by specifying custom clipping plane distance (SV_ClipDistance) to achieve that.
+
+*In general case, steps 6 and 7 could take advantage of async compute queue.
+In my current implementation, they are executed on the same graphics queue but the intention is to move
+step 7 to compute command queue and execute them in parallel.
+
+Used resources:
+
+[1] OpenGL Insights. Cyril Crassin and Simon Green, Octree-Based Sparse Voxelization Using the GPU Hardware Rasterization
+[2] Section on commulative moving average https://en.wikipedia.org/wiki/Moving_average
+[3] The Basics of GPU Voxelization https://developer.nvidia.com/content/basics-gpu-voxelization
+[4] GPU Pro 4. Hawar Doghramachi, Rasterized Voxel-Based Dynamic Global Illumination
+[5] GPU Pro 6. Hawar Doghramachi, Tile-Based Omnidirectional Shadows
+*/
+
+/*
 To do:
 1.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
 against MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER and MAX_NUM_POINT_LIGHTS_PER_SHADOW_CASTER
