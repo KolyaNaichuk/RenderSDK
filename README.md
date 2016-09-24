@@ -32,4 +32,4 @@ In particular, it is responsible for setting up pipeline state object associated
 - uploading data to the GPU and handling resource transitions
 - command lists execution synchronization.
 
-<b>SceneVoxelization</b>. My initial intention was to play around with scene voxelization taking advantage of hardware support for conservative rasterization and rasterizer ordered views to generate voxel grid data. The sample pretty quickly evolved into,  
+<b>DynamicGI</b>.

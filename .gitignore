@@ -1,8 +1,8 @@
 RenderSDK/Bin/
 Library/
 Samples/Bin/
-Samples/SceneVoxelization/Win32/
-Samples/SceneVoxelization/Shaders/
+Samples/DynamicGI/Win32/
+Samples/DynamicGI/Shaders/
 Samples/HelloRectangle/Win32/
 Samples/HelloRectangle/Shaders/
 Samples/ToneMapping/Win32/
