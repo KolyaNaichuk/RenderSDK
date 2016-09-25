@@ -117,7 +117,7 @@ RasterizerDesc::RasterizerDesc(Id id)
 		MultisampleEnable = FALSE;
 		AntialiasedLineEnable = FALSE;
 		ForcedSampleCount = 0;
-		ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+		ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON;
 	}
 	else
 	{

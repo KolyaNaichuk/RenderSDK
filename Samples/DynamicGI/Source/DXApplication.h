@@ -37,7 +37,6 @@ struct BindingResourceList;
 struct Viewport;
 
 //#define DEBUG_RENDER_PASS
-//#define ENABLE_INDIRECT_LIGHTING
 
 class DXApplication : public Application
 {

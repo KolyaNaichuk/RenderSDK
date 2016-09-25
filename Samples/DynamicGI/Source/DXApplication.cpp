@@ -80,7 +80,7 @@ step 7 to compute command queue and execute them in parallel.
 Used resources:
 
 [1] OpenGL Insights. Cyril Crassin and Simon Green, Octree-Based Sparse Voxelization Using the GPU Hardware Rasterization
-[2] Section on commulative moving average https://en.wikipedia.org/wiki/Moving_average
+[2] Section on comulative moving average https://en.wikipedia.org/wiki/Moving_average
 [3] The Basics of GPU Voxelization https://developer.nvidia.com/content/basics-gpu-voxelization
 [4] GPU Pro 4. Hawar Doghramachi, Rasterized Voxel-Based Dynamic Global Illumination
 [5] GPU Pro 6. Hawar Doghramachi, Tile-Based Omnidirectional Shadows
@@ -101,12 +101,13 @@ enum OutputResult
 	OutputResult_Depth,
 	OutputResult_SpotLightTiledShadowMap,
 	OutputResult_PointLightTiledShadowMap,
-	OutputResult_AccumLight
+	OutputResult_AccumLight,
+	OutputResult_VoxelGrid
 };
 
 enum
 {
-	kOutputResult = OutputResult_SpotLightTiledShadowMap,
+	kOutputResult = OutputResult_AccumLight,
 
 	kTileSize = 16,
 	kNumTilesX = 40,
@@ -462,7 +463,7 @@ void DXApplication::OnInit()
 
 	InitRenderEnv(backBufferWidth, backBufferHeight);
 	
-	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test1);
+	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Test2);
 	InitScene(pScene, backBufferWidth, backBufferHeight);	
 	
 	InitDetectVisibleMeshesPass();
@@ -489,15 +490,15 @@ void DXApplication::OnInit()
 		InitSetupSpotLightTiledShadowMapPass();
 		InitRenderSpotLightTiledShadowMapPass();
 	}
-
-	InitVisualizeTexturePass();
 	
-#ifdef ENABLE_INDIRECT_LIGHTING
-	InitClearVoxelGridPass();
 	InitCreateVoxelGridPass();
-	InitInjectVPLsIntoVoxelGridPass();
-	InitVisualizeVoxelGridPass();
-#endif // ENABLE_INDIRECT_LIGHTING
+	InitClearVoxelGridPass();
+	//InitInjectVPLsIntoVoxelGridPass();
+
+	if (kOutputResult == OutputResult_VoxelGrid)
+		InitVisualizeVoxelGridPass();
+	else
+		InitVisualizeTexturePass();
 
 #ifdef DEBUG_RENDER_PASS
 	InitDebugRenderPass(pScene);
@@ -549,13 +550,14 @@ void DXApplication::OnRender()
 
 	submissionBatch.emplace_back(RecordTiledShadingPass());
 	
-#ifdef ENABLE_INDIRECT_LIGHTING
 	submissionBatch.emplace_back(RecordClearVoxelGridPass());
 	submissionBatch.emplace_back(RecordCreateVoxelGridPass());
-	submissionBatch.emplace_back(RecordVisualizeVoxelGridPass());
-#endif // ENABLE_INDIRECT_LIGHTING
-	
-	submissionBatch.emplace_back(RecordVisualizeTexturePass());
+
+	if (kOutputResult == OutputResult_VoxelGrid)
+		submissionBatch.emplace_back(RecordVisualizeVoxelGridPass());
+	else
+		submissionBatch.emplace_back(RecordVisualizeTexturePass());
+
 	submissionBatch.emplace_back(RecordPresentResourceBarrierPass());
 
 #ifdef DEBUG_RENDER_PASS
@@ -598,7 +600,7 @@ void DXApplication::OnKeyUp(UINT8 key)
 void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 {
 	GraphicsFactory factory;
-	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_11_0);
+	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_12_0);
 
 	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
@@ -637,16 +639,18 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 
 void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
 {
-	//m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
-	//m_pCamera->GetTransform().SetPosition(Vector3f(278.0f, 274.0f, 700.0f));
-	//m_pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(Radian(PI)));
+	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
+	m_pCamera->GetTransform().SetPosition(Vector3f(278.0f, 274.0f, 700.0f));
+	m_pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(Radian(PI)));
 	
+	/*
 	SpotLight* pSpotLight = *pScene->GetSpotLights();
 	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.001f, pSpotLight->GetAttenEndRange(), 1.0f);
 	m_pCamera->GetTransform().SetPosition(pSpotLight->GetTransform().GetPosition());
 	m_pCamera->GetTransform().SetRotation(pSpotLight->GetTransform().GetRotation());
 	m_pCamera->SetFovY(pSpotLight->GetOuterConeAngle());
-	
+	*/
+
 	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
 	m_pCamera->SetBackgroundColor(Color::GRAY);
 
@@ -1496,8 +1500,6 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	assert(IsNormalized(mainCameraBasis.m_XAxis));
 	assert(IsNormalized(mainCameraBasis.m_YAxis));
 	assert(IsNormalized(mainCameraBasis.m_ZAxis));
-	
-#ifdef ENABLE_INDIRECT_LIGHTING
 
 	const Vector3f gridSize(kGridSizeX, kGridSizeY, kGridSizeZ);
 	const Vector3f gridHalfSize(0.5f * gridSize);
@@ -1524,7 +1526,7 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	yAxisCamera.SetSizeY(gridSize.m_Z);
 	yAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_Y * mainCameraBasis.m_YAxis);
 	yAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationXQuaternion(Radian(-PI_DIV_TWO)));
-
+	
 	Camera zAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_Z, gridSize.m_X / gridSize.m_Y);
 	zAxisCamera.SetSizeY(gridSize.m_Y);
 	zAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_Z * mainCameraBasis.m_ZAxis);
@@ -1537,8 +1539,6 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	cameraTransform.m_ViewProjMatrices[2] = zAxisCamera.GetViewMatrix() * zAxisCamera.GetProjMatrix();
 
 	m_pCameraTransformBuffer->Write(&cameraTransform, sizeof(cameraTransform));
-
-#endif // ENABLE_INDIRECT_LIGHTING
 
 	ViewFrustumCullingData viewFrustumCullingData;
 	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
@@ -1595,13 +1595,16 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 
 		m_pSpotLightShadowMapDataBuffer->Write(&shadowMapData, sizeof(shadowMapData));
 	}
-	
-	VisualizeTextureData visualizeTextureData;
-	visualizeTextureData.m_CameraProjMatrix = m_pCamera->GetProjMatrix();
-	visualizeTextureData.m_CameraNearPlane = m_pCamera->GetNearClipPlane();
-	visualizeTextureData.m_CameraFarPlane = m_pCamera->GetFarClipPlane();
 
-	m_pVisualizeTextureDataBuffer->Write(&visualizeTextureData, sizeof(visualizeTextureData));
+	if (m_pVisualizeTextureDataBuffer != nullptr)
+	{
+		VisualizeTextureData visualizeTextureData;
+		visualizeTextureData.m_CameraProjMatrix = m_pCamera->GetProjMatrix();
+		visualizeTextureData.m_CameraNearPlane = m_pCamera->GetNearClipPlane();
+		visualizeTextureData.m_CameraFarPlane = m_pCamera->GetFarClipPlane();
+
+		m_pVisualizeTextureDataBuffer->Write(&visualizeTextureData, sizeof(visualizeTextureData));
+	}
 }
 
 CommandList* DXApplication::RecordClearBackBufferPass(u8 clearFlags)

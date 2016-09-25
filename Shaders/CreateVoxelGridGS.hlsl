@@ -4,10 +4,6 @@ struct GSInput
 {
 	float4 worldSpacePos		: SV_Position;
 	float3 worldSpaceNormal		: NORMAL;
-
-#ifdef HAS_TEXCOORD
-	float2 texCoord				: TEXCOORD;
-#endif // HAS_TEXCOORD
 };
 
 struct GSOutput
@@ -15,10 +11,6 @@ struct GSOutput
 	float4 clipSpacePos			: SV_Position;
 	float4 worldSpacePos		: POSITION;
 	float3 worldSpaceNormal		: NORMAL;
-
-#ifdef HAS_TEXCOORD
-	float2 texCoord				: TEXCOORD;
-#endif // HAS_TEXCOORD
 };
 
 cbuffer TransformBuffer : register(b0)
@@ -53,10 +45,6 @@ void Main(triangle GSInput input[3], inout TriangleStream<GSOutput> outputStream
 		output.clipSpacePos = mul(input[index].worldSpacePos, g_Transform.viewProjMatrices[viewDirIndex]);
 		output.worldSpacePos = input[index].worldSpacePos;
 		output.worldSpaceNormal = input[index].worldSpaceNormal;
-
-#ifdef HAS_TEXCOORD
-		output.texCoord = input[index].texCoord;
-#endif // HAS_TEXCOORD
 
 		outputStream.Append(output);
 	}

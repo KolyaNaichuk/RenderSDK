@@ -9,20 +9,12 @@
 #include "D3DWrapper/RenderEnv.h"
 #include "Common/MeshBatch.h"
 
-//#define HAS_TEXCOORD
-
 enum RootParams
 {
 	kCBVRootParamVS = 0,
 	kCBVRootParamGS,
 	kSRVRootParamPS,
 	kConstant32BitRootParamPS,
-
-#ifdef HAS_TEXCOORD
-	kColorSRVRootParam,
-	kLinearSamplerRootParam,
-#endif // HAS_TEXCOORD
-
 	kNumRootParams
 };
 
@@ -41,23 +33,13 @@ CreateVoxelGridPass::CreateVoxelGridPass(InitParams* pParams)
 	D3D12_DESCRIPTOR_RANGE descriptorRangesVS[] = {CBVDescriptorRange(1, 0)};
 	D3D12_DESCRIPTOR_RANGE descriptorRangesGS[] = {CBVDescriptorRange(1, 0)};
 	D3D12_DESCRIPTOR_RANGE descriptorRangesPS[] = {CBVDescriptorRange(1, 0), SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0)};
-
-#ifdef HAS_TEXCOORD
-	SRVDescriptorRange colorSRVRange(1, 0);
-	SamplerRange linearSamplerRange(1, 0);
-#endif // HAS_TEXCOORD
-	
+		
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kCBVRootParamVS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesVS), &descriptorRangesVS[0], D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParams[kCBVRootParamGS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesGS), &descriptorRangesGS[0], D3D12_SHADER_VISIBILITY_GEOMETRY);
 	rootParams[kSRVRootParamPS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesPS), &descriptorRangesPS[0], D3D12_SHADER_VISIBILITY_PIXEL);
 	rootParams[kConstant32BitRootParamPS] = Root32BitConstantsParameter(1, D3D12_SHADER_VISIBILITY_PIXEL, 1);
 		
-#ifdef HAS_TEXCOORD
-	rootParams[kColorSRVRootParam] = RootDescriptorTableParameter(1, &colorSRVRange, D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParams[kLinearSamplerRootParam] = RootDescriptorTableParameter(1, &linearSamplerRange, D3D12_SHADER_VISIBILITY_PIXEL);
-#endif // HAS_TEXCOORD
-	
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CreateVoxelGridPass::m_pRootSignature");
 		
