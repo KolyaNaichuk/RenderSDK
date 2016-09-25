@@ -75,7 +75,25 @@ As proposed in [5], we exploit programmable clipping by specifying custom clippi
 
 *In general case, steps 6 and 7 could take advantage of async compute queue.
 In my current implementation, they are executed on the same graphics queue but the intention is to move
-step 7 to compute command queue and execute them in parallel.
+step 7 to compute queue and execute them in parallel.
+
+9.After, we apply tiled shading for light sources and compute direct illumination.
+
+10.To calculate indirect lighting, voxel grid of the scene is generated as described in [1] and [4].
+Specifically, we rasterize scene geometry with disabled color writing and depth test.
+In the geometry shader we select view matrix (either along X, Y or Z axis) for which the triangle has the biggest area
+to achieve the highest number of rasterized pixels for the primitive. The rasterized pixels are output to structured buffer,
+representing grid cells, from pixel shader. To avoid race conditions between multiple threads writing to the same grid cell,
+we take advantage of rasterized ordered view, which provide atomic and ordered access to the resource.
+Furthermore, not to lose pixel details only partially covered by triangle, we enable conservative rasterization,
+which guarantees that pixel shader will be invoked for the primitive even if does not cover its center.
+In order to accumulate pixel data written to the same grid cell, I compute the average value of all the data written.
+To calculate the average in-flight, I use moving average technique [2], which allows to calculate average incrementally.
+After voxel grid construction, the voxels are illuminated by each light and converted into virtual point lights.
+Finally, the virtual point lights are propagated within the grid to generate indirect illumination,
+which is later combined with already computed direct illumination.
+
+Current sample is missing complete shadows and indirect lighting implementation. This work is still ongoing.
 
 Used resources:
 
