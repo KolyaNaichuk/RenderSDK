@@ -42,53 +42,98 @@
 /*
 Render frame overview
 
-As a prerequisite mesh vertex and index data should be merged into one vertex and index buffers.
+As a prerequisite, vertex and index data for all meshes should be merged into one vertex and index buffers correspondingly.
 
-1.The render frame starts with detecting visible meshes from camera.
-Compute shader is triggered where each thread picks one mesh AABB and checks it overlap with world space camera frustum.
+1.The render frame starts with detecting visible meshes from camera using compute shader.
+Each spawned thread tests mesh AABB against camera frustum.
+As a result of the pass, we populate two buffers: the first one containing number of visible meshes and the second one - visible mesh IDs.
 
-2.After we detect point lights which affect visible meshes from camera.
-3.After we detect spot lights which affect visible meshes from camera.
+2.After, we detect point lights which affect visible meshes from camera using compute shader.
+Again, each spawned thread tests point light affecting volume (bounding sphere) against camera frustum.
+As a result of the pass, we generate two buffers: the first one containing number of visible point lights and the second one - visible light IDs.
 
-4.Based on detected visible meshes we generate indirect draw commands to render g-buffer
-5.Based on generated indirect draw commands we render g-buffer itself
+3.We detect spot lights which affect visible meshes from camera using compute shader.
+Each spawned thread tests spot light affecting volume against camera frustum.
+As a spot light volume, bounding sphere around spot light cone is used.
+As a result of the pass, we produce two buffers: the first one containing number of visible spot lights and the second one - visible light IDs.
 
-6.After the g-buffer has been rendered, we proceed to tiled light culling.
-Specifically, we split our screen into tiles 64x64 and detect for each visible point and spot light from camera,
-generate a list of lights affecting each tile.
+4.Based on detected visible meshes we generate indirect draw commands to render g-buffer using compute shader.
+The indirect draw argument struct looks the following way:
 
-7.Preparing indirect draw commands for rendering shadow maps both from point and spot lights.
+struct DrawIndexedArgs
+{
+	uint indexCountPerInstance;
+	uint instanceCount;
+	uint startIndexLocation;
+	int  baseVertexLocation;
+	uint startInstanceLocation;
+};
+
+struct DrawMeshCommand
+{
+	uint root32BitConstant;
+	DrawIndexedArgs drawArgs;
+};
+
+root32BitConstant is used to pass material ID associated with a particular mesh.
+The rest of the arguments should be self-explanatory.
+
+5.Based on generated indirect draw commands we render G-buffer using execute indirect.
+
+6.After rendering G-buffer, we proceed to tiled light culling using compute shader.
+Specifically, we split our screen into tiles 16x16 and test each tile overlap against bounding volumes of visible lights.
+As a result, we generate two buffers: the first buffer containing overlapping light IDs and the second one -
+light IDs range associated with each tile from the previous buffer.
+
+7.As soon as we have completed rendering G-Buffer, we start preparing indirect draw commands to render shadow maps for light sources using compute shader.
 In particular, we spawn as many thread groups as we have detected visible meshes.
-Each thread group tests assigned mesh bounds against all visible point and spot light bounds,
-writing of overlapping point and spot light sources for that shadow caster to a global list.
-When the list of overlapping lights has been generated and the thread group will create indirect draw command,
-where instance count will correspond to the number of overlapping lights and root 32 bit constant
-will be assigned start of the lights in the generated global list.
+Each thread group tests mesh AABB against all visible point and spot light bounds,
+outputting overlapping point and spot light IDs for that shadow caster to the buffer.
+When the list of overlapping lights has been populated, one of the threads from the thread group will create indirect draw command to draw the shadow caster.
 
-8.To render shadow maps for many light sources, we utilize Tiled Shadow Map approach described in [5].
-Tiled Shadow Map approach allows to render shadow maps for all the visible light sources in one indirect draw call.
-As the name suggests, the shadow map is split into tiles, where each tile defines render target region for one light source.
-To be able to render geometry to a particular shadow map tile, we apply additional clip space translation to the vertex positions,
-after they have been transformed into clip space. Apart from this, we need to ensure that while rendering geometry to a particular tile,
+The indirect draw argument struct looks the following way:
+
+struct DrawIndexedArgs
+{
+	uint indexCountPerInstance;
+	uint instanceCount;
+	uint startIndexLocation;
+	int  baseVertexLocation;
+	uint startInstanceLocation;
+};
+
+struct DrawMeshCommand
+{
+	uint root32BitConstant;
+	DrawIndexedArgs drawArgs;
+};
+
+root32BitConstant is used to transfer light IDs offset for the shadow caster in the resulting buffer.
+instanceCount is used to specify how many instances of the shadow caster you would like to draw.
+In our case, it will be equal to number of lights affecting that shadow caster.
+
+8.To render shadow maps, Tiled Shadow Map approach from [5] is utilized.
+Tiled Shadow Map technique allows to render shadow maps for light sources in one indirect draw call.
+As the name suggests, the shadow map is split into tiles, where each tile defines shadow map region for one light.
+To render geometry to a particular shadow map tile, additional clip space translation to the vertex position is applied,
+after it has been transformed into clip space. Apart from this, we need to ensure that while rendering geometry to a concrete tile,
 we do not overwrite data of the neighboring tiles by the geometry expanding beyond the light view frustum.
-As proposed in [5], we exploit programmable clipping by specifying custom clipping plane distance (SV_ClipDistance) to achieve that.
+As proposed in [5], I exploit programmable clipping by specifying custom clipping plane distance (SV_ClipDistance) to clip the geometry outside light view frustum.
 
-*In general case, steps 6 and 7 could take advantage of async compute queue.
-In my current implementation, they are executed on the same graphics queue but the intention is to move
-step 7 to compute queue and execute them in parallel.
+*Step 6 mainly involves doing depth test and writing into the depth texture, while step 7 is primarily heavy on arithmetic instructions usage. 
+These two steps are very good candidates to be performed in parallel using async compute queue.
+In my current implementation, they are executed on the same graphics queue but the intention is to move step 7 to compute queue and execute in parallel.
 
-9.After, we apply tiled shading for light sources and compute direct illumination.
+9.After, I apply tiled shading based on detected lights per each screen tile, using Phong shading mode.
 
 10.To calculate indirect lighting, voxel grid of the scene is generated as described in [1] and [4].
 Specifically, we rasterize scene geometry with disabled color writing and depth test.
-In the geometry shader we select view matrix (either along X, Y or Z axis) for which the triangle has the biggest area
-to achieve the highest number of rasterized pixels for the primitive. The rasterized pixels are output to structured buffer,
+In the geometry shader we select view matrix (either along X, Y or Z axis) for which triangle has the biggest area
+to get the highest number of rasterized pixels for the primitive. The rasterized pixels are output to the buffer,
 representing grid cells, from pixel shader. To avoid race conditions between multiple threads writing to the same grid cell,
-we take advantage of rasterized ordered view, which provide atomic and ordered access to the resource.
-Furthermore, not to lose pixel details only partially covered by triangle, we enable conservative rasterization,
-which guarantees that pixel shader will be invoked for the primitive even if does not cover its center.
-In order to accumulate pixel data written to the same grid cell, I compute the average value of all the data written.
-To calculate the average in-flight, I use moving average technique [2], which allows to calculate average incrementally.
+I take advantage of rasterized ordered view, which provides atomic and ordered access to the resource.
+Not to lose details of pixels which are only partially covered by the triangle, I enable conservative rasterization,
+which guarantees that pixel shader will be invoked for the pixel even if the primitive does not cover pixel center location.
 After voxel grid construction, the voxels are illuminated by each light and converted into virtual point lights.
 Finally, the virtual point lights are propagated within the grid to generate indirect illumination,
 which is later combined with already computed direct illumination.
