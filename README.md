@@ -25,7 +25,8 @@ In particular, it is responsible for setting up pipeline state object associated
 
 <b>Samples</b>
 
-<b>HelloRectangle</b>.
+<b>HelloRectangle</b>
+
 Demonstrates core functionality of Direct3D 12 API in action, such as using
 - command queue and command lists
 - index and vertex buffers
@@ -33,10 +34,9 @@ Demonstrates core functionality of Direct3D 12 API in action, such as using
 - uploading data to the GPU and handling resource transitions
 - command lists execution synchronization.
 
-<b>Dynamic Global Illumination</b>.
-I started this sample to play around with global illumnation using voxel representation of the scene to compute indirect lighting. Here comes a short overview of its render frame.
+<b>Dynamic Global Illumination</b>
 
-As a prerequisite, vertex and index data for all meshes should be merged into one vertex and index buffers correspondingly.
+I started this sample to play around with global illumnation using voxel representation of the scene to compute indirect lighting. Here comes a short overview of what it does.
 
 1.The render frame starts with detecting visible meshes from camera using compute shader. Each spawned thread tests mesh AABB against camera frustum. As a result of the pass, we populate two buffers: the first one containing number of visible meshes and the second one - visible mesh IDs.
 
@@ -46,33 +46,7 @@ As a prerequisite, vertex and index data for all meshes should be merged into on
 As a result of the pass, we produce two buffers: the first one containing number of visible spot lights and the second one - visible light IDs.
 
 4.Based on detected visible meshes we generate indirect draw commands to render g-buffer using compute shader. The indirect draw argument struct looks the following way:
-
-struct DrawIndexedArgs
-{
-  uint indexCountPerInstance;
-	uint instanceCount;
-	uint startIndexLocation;
-	int  baseVertexLocation;
-	uint startInstanceLocation;
-};
-
-struct DrawMeshCommand
-{
-	uint root32BitConstant;
-	DrawIndexedArgs drawArgs;
-};
-
-root32BitConstant is used to pass material ID associated with a particular mesh.
-Rest of the arguments should be self-explanatory.
-
-5.Based on generated indirect draw commands, we render G-buffer using execute indirect.
-
-6.After rendering G-buffer, we proceed to tiled light culling using compute shader. Specifically, we split our screen into tiles 16x16 and test each tile overlap against bounding volumes of visible lights. As a result, we generate two buffers: the first buffer containing overlapping light IDs and the second one - light IDs range associated with each tile from the previous buffer.
-
-7.As soon as we have completed rendering G-Buffer, we start preparing indirect draw commands to render shadow maps for light sources using compute shader. In particular, we spawn as many thread groups as we have detected visible meshes. Each thread group tests mesh AABB against all visible point and spot light bounds, outputting overlapping point and spot light IDs for that shadow caster to the buffer. When the list of overlapping lights has been populated, one of the threads from the thread group will create indirect draw command to draw the shadow caster.
-
-The indirect draw argument struct looks the following way:
-
+``````
 struct DrawIndexedArgs
 {
 	uint indexCountPerInstance;
@@ -87,7 +61,34 @@ struct DrawMeshCommand
 	uint root32BitConstant;
 	DrawIndexedArgs drawArgs;
 };
+``````
 
+root32BitConstant is used to pass material ID associated with a particular mesh.
+The rest of the arguments should be self-explanatory.
+
+5.Based on generated indirect draw commands, we render G-buffer using execute indirect.
+
+6.After rendering G-buffer, we proceed to tiled light culling using compute shader. Specifically, we split our screen into tiles 16x16 and test each tile overlap against bounding volumes of visible lights. As a result, we generate two buffers: the first buffer containing overlapping light IDs and the second one - light IDs range associated with each tile from the previous buffer.
+
+7.As soon as we have completed rendering G-Buffer, we start preparing indirect draw commands to render shadow maps for light sources using compute shader. In particular, we spawn as many thread groups as we have detected visible meshes. Each thread group tests mesh AABB against all visible point and spot light bounds, outputting overlapping point and spot light IDs for that shadow caster to the buffer. When the list of overlapping lights has been populated, one of the threads from the thread group will create indirect draw command to draw the shadow caster.
+
+The indirect draw argument struct looks the following way:
+``````
+struct DrawIndexedArgs
+{
+	uint indexCountPerInstance;
+	uint instanceCount;
+	uint startIndexLocation;
+	int  baseVertexLocation;
+	uint startInstanceLocation;
+};
+
+struct DrawMeshCommand
+{
+	uint root32BitConstant;
+	DrawIndexedArgs drawArgs;
+};
+``````
 root32BitConstant is used to transfer light IDs offset for the shadow caster in the resulting buffer.
 instanceCount is used to specify how many instances of the shadow caster you would like to draw. In our case, it will be equal to number of lights affecting that shadow caster.
 
@@ -107,8 +108,8 @@ Currently, I am missing complete shadows and indirect lighting implementation. T
 
 Used resources:
 
-[1] OpenGL Insights. Cyril Crassin and Simon Green, Octree-Based Sparse Voxelization Using the GPU Hardware Rasterization
-[2] Section on comulative moving average https://en.wikipedia.org/wiki/Moving_average
-[3] The Basics of GPU Voxelization https://developer.nvidia.com/content/basics-gpu-voxelization
-[4] GPU Pro 4. Hawar Doghramachi, Rasterized Voxel-Based Dynamic Global Illumination
-[5] GPU Pro 6. Hawar Doghramachi, Tile-Based Omnidirectional Shadows
+1.OpenGL Insights. Cyril Crassin and Simon Green, Octree-Based Sparse Voxelization Using the GPU Hardware Rasterization
+2.Section on comulative moving average https://en.wikipedia.org/wiki/Moving_average
+3.The Basics of GPU Voxelization https://developer.nvidia.com/content/basics-gpu-voxelization
+4.GPU Pro 4. Hawar Doghramachi, Rasterized Voxel-Based Dynamic Global Illumination
+5.GPU Pro 6. Hawar Doghramachi, Tile-Based Omnidirectional Shadows
