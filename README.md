@@ -63,8 +63,7 @@ struct DrawMeshCommand
 };
 ``````
 
-root32BitConstant is used to pass material ID associated with a particular mesh.
-The rest of the arguments should be self-explanatory.
+root32BitConstant is used to pass material ID associated with a particular mesh. The rest of the arguments should be self-explanatory.
 
 5.Based on generated indirect draw commands, we render G-buffer using execute indirect.
 
@@ -89,8 +88,8 @@ struct DrawMeshCommand
 	DrawIndexedArgs drawArgs;
 };
 ``````
-root32BitConstant is used to transfer light IDs offset for the shadow caster in the resulting buffer.
-instanceCount is used to specify how many instances of the shadow caster you would like to draw. In our case, it will be equal to number of lights affecting that shadow caster.
+root32BitConstant is used to transfer light IDs offset for the shadow caster in the resulting buffer.  
+instanceCount specifies how many instances of the shadow caster you would like to draw. In our case, it will be equal to number of lights affecting that shadow caster.
 
 8.To render shadow maps, Tiled Shadow Map approach from [5] is utilized. Tiled Shadow Map technique allows to render shadow maps for light sources in one indirect draw call. As the name suggests, the shadow map is split into tiles, where each tile defines shadow map region for one light. To render geometry to a particular shadow map tile, additional clip space translation to the vertex position is applied, after it has been transformed into clip space. Apart from this, we need to ensure that while rendering geometry to a concrete tile, we do not overwrite data of the neighboring tiles by the geometry expanding beyond the light view frustum. As proposed in [5], I exploit programmable clipping by specifying custom clipping plane distance (SV_ClipDistance) to clip the geometry outside light view frustum.
 
@@ -106,10 +105,10 @@ which is later combined with already computed direct illumination.
 
 Currently, I am missing complete shadows and indirect lighting implementation. The work is ongoing.
 
-Used resources:
+<b>Used Resources:</b>
 
-1.OpenGL Insights. Cyril Crassin and Simon Green, Octree-Based Sparse Voxelization Using the GPU Hardware Rasterization
-2.Section on comulative moving average https://en.wikipedia.org/wiki/Moving_average
-3.The Basics of GPU Voxelization https://developer.nvidia.com/content/basics-gpu-voxelization
-4.GPU Pro 4. Hawar Doghramachi, Rasterized Voxel-Based Dynamic Global Illumination
-5.GPU Pro 6. Hawar Doghramachi, Tile-Based Omnidirectional Shadows
+[1] OpenGL Insights. Cyril Crassin and Simon Green, Octree-Based Sparse Voxelization Using the GPU Hardware Rasterization  
+[2] Section on comulative moving average https://en.wikipedia.org/wiki/Moving_average  
+[3] The Basics of GPU Voxelization https://developer.nvidia.com/content/basics-gpu-voxelization  
+[4] GPU Pro 4. Hawar Doghramachi, Rasterized Voxel-Based Dynamic Global Illumination  
+[5] GPU Pro 6. Hawar Doghramachi, Tile-Based Omnidirectional Shadows
