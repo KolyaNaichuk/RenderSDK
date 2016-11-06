@@ -3,6 +3,9 @@
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 
+class VertexData;
+class IndexData;
+
 namespace OBJFile
 {
 	const static std::wstring kDefaultObjectName = L"default";
@@ -72,12 +75,16 @@ namespace OBJFile
 class OBJFileLoader
 {
 public:
-	bool Load(const wchar_t* pOBJFilePath);
+	bool Load(const wchar_t* pOBJFilePath, bool use32BitIndices);
 
 private:
-	bool LoadOBJFile(const wchar_t* pFilePath);
+	bool LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices);
 	bool LoadMaterialFile(const wchar_t* pFilePath);
-	void GenerateMeshBatchData();
+	void GenerateMeshBatchData(bool use32BitIndices);
+	
+	template <typename Index>
+	void GenerateVertexAndIndexData(const OBJFile::Mesh& mesh, VertexData** ppVertexData, IndexData** ppIndexData);
+
 	void Clear();
 	
 private:

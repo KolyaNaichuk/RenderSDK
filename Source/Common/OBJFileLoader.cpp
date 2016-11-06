@@ -40,9 +40,9 @@ namespace OBJFile
 	};
 }
 
-bool OBJFileLoader::Load(const wchar_t* pOBJFilePath)
+bool OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices)
 {
-	bool success = LoadOBJFile(pOBJFilePath);
+	bool success = LoadOBJFile(pOBJFilePath, use32BitIndices);
 	if (success)
 	{
 		if (!m_MaterialFileName.empty())
@@ -55,7 +55,7 @@ bool OBJFileLoader::Load(const wchar_t* pOBJFilePath)
 	return success;
 }
 
-bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath)
+bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices)
 {
 	Clear();
 
@@ -253,7 +253,7 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath)
 			Triangulate(faceVertexIndices, m_pCurrentMesh->m_VertexIndices);
 		}
 	}
-	GenerateMeshBatchData();
+	GenerateMeshBatchData(use32BitIndices);
 	return true;
 }
 
@@ -473,7 +473,7 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 	return true;
 }
 
-void OBJFileLoader::GenerateMeshBatchData()
+void OBJFileLoader::GenerateMeshBatchData(bool use32BitIndices)
 {
 	u8 vertexFormat = 0;
 	
@@ -486,44 +486,62 @@ void OBJFileLoader::GenerateMeshBatchData()
 	assert(!m_TexCoords.empty());
 	vertexFormat |= VertexData::FormatFlag_TexCoords;
 
-	assert(false && "32/16 bit indices support");
-	MeshBatchData meshBatchData(vertexFormat, DXGI_FORMAT_R16_UINT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	const DXGI_FORMAT indexFormat = use32BitIndices ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+	MeshBatchData meshBatchData(vertexFormat, indexFormat, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	
 	for (const auto& mesh : m_Meshes)
 	{
-		std::vector<Vector3f> positions;
-		std::vector<Vector2f> texCoords;
-		std::vector<Vector3f> normals;
-		std::vector<u16> indices;
+		VertexData* pVertexData = nullptr;
+		IndexData* pIndexData = nullptr;
+
+		if (use32BitIndices)
+			GenerateVertexAndIndexData<u32>(mesh, &pVertexData, &pIndexData);
+		else
+			GenerateVertexAndIndexData<u16>(mesh, &pVertexData, &pIndexData);
 		
-		std::unordered_map<OBJFile::VertexIndex, u16, OBJFile::VertexIndexHash, OBJFile::VertexIndexComp> vertexIndexCache;
-		for (const auto& vertexIndex : mesh.m_VertexIndices)
-		{
-			const u16 newIndex = (u16)vertexIndexCache.size();
-			auto result = vertexIndexCache.insert({vertexIndex, newIndex});
-			if (result.second)
-			{
-				positions.emplace_back(m_Positions[vertexIndex.m_PositionIndex]);
-				texCoords.emplace_back(m_TexCoords[vertexIndex.m_TexCoordIndex]);
-				normals.emplace_back(m_Normals[vertexIndex.m_NormalIndex]);
+		Material* pMaterial = nullptr;
+		assert(pMaterial != nullptr);
 
-				indices.emplace_back(newIndex);
-			}
-			else
-			{
-				const u16 existingIndex = result.first->second;
-				indices.emplace_back(existingIndex);
-			}
-		}
-		VertexData* pVertexData = new VertexData(positions.size(), positions.data(), normals.data(), nullptr, texCoords.data());
-		IndexData* pIndexData = new IndexData(indices.size(), indices.data());
-
-		MeshData meshData(pVertexData, pIndexData, nullptr, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 		meshData.RecalcAABB();
 
 		meshBatchData.Append(&meshData);
 	}
+}
+
+template <typename Index>
+void OBJFileLoader::GenerateVertexAndIndexData(const OBJFile::Mesh& mesh, VertexData** ppVertexData, IndexData** ppIndexData)
+{
+	assert((sizeof(u16) == sizeof(Index)) || (sizeof(u32) == sizeof(Index)));
+	
+	std::vector<Vector3f> positions;
+	std::vector<Vector2f> texCoords;
+	std::vector<Vector3f> normals;
+	std::vector<Index> indices;
+
+	std::unordered_map<OBJFile::VertexIndex, u32, OBJFile::VertexIndexHash, OBJFile::VertexIndexComp> vertexIndexCache;	
+	for (const auto& vertexIndex : mesh.m_VertexIndices)
+	{
+		u32 newIndex = vertexIndexCache.size();
+		auto result = vertexIndexCache.insert({vertexIndex, newIndex});
+		if (result.second)
+		{
+			positions.emplace_back(m_Positions[vertexIndex.m_PositionIndex]);
+			texCoords.emplace_back(m_TexCoords[vertexIndex.m_TexCoordIndex]);
+			normals.emplace_back(m_Normals[vertexIndex.m_NormalIndex]);
+		}
+		else
+		{
+			newIndex = result.first->second;
+		}
+
+		assert(!(newIndex > std::numeric_limits<Index>::max()));
+		indices.emplace_back((Index)newIndex);
+	}
+
+	*ppVertexData = new VertexData(positions.size(), positions.data(), normals.data(), nullptr, texCoords.data());
+	*ppIndexData = new IndexData(indices.size(), indices.data());
 }
 
 void OBJFileLoader::Clear()
