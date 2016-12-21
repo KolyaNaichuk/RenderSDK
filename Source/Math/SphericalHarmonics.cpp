@@ -114,12 +114,12 @@ void SHProjectPointLight(f32* pOutRCoeffs, f32* pOutGCoeffs, f32* pOutBCoeffs, i
 	// Based on Physically Based Rendering (From Theory to Implementation), 2nd edition 
 	// p. 942 Point Lights
 			
-	Vector3f dirOnHemisphere = lightPos - surfacePoint;
+	Vector3f dir = lightPos - surfacePoint;
 	f32 basisFuncValues[SHGetNumBasisFuncs(MAX_NUM_BANDS)];
-	SHEvaluateBasis(basisFuncValues, numBands, Normalize(dirOnHemisphere));
+	SHEvaluateBasis(basisFuncValues, numBands, Normalize(dir));
 
 	if ((flags & SHProjectionFlags_DistanceAttenuation) != 0)
-		lightRadiance /= LengthSquared(dirOnHemisphere);
+		lightRadiance /= LengthSquared(dir);
 	
 	if ((flags & SHProjectionFlags_Normalization) != 0)
 		assert(false);
