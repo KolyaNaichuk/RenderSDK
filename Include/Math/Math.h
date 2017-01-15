@@ -32,12 +32,6 @@ T Min(T left, T right)
 }
 
 template <typename T>
-T Sqrt(T value)
-{
-    return std::sqrt(value);
-}
-
-template <typename T>
 T Sqr(T value)
 {
     return value * value;
@@ -92,6 +86,9 @@ f64 Floor(f64 value);
 
 f32 Pow(f32 base, f32 exponent);
 f64 Pow(f64 base, f64 exponent);
+
+f32 Sqrt(f32 value);
+f64 Sqrt(f64 value);
 
 f32 Lerp(f32 minValue, f32 maxValue, f32 weight);
 f64 Lerp(f64 minValue, f64 maxValue, f64 weight);

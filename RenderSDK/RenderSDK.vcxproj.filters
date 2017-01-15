@@ -511,5 +511,8 @@
     <None Include="..\Shaders\VisualizeTexturePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\Shaders\SphericalHarmonics.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

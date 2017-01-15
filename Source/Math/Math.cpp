@@ -69,6 +69,16 @@ f64 Pow(f64 base, f64 exponent)
 	return std::pow(base, exponent);
 }
 
+f32 Sqrt(f32 value)
+{
+	return std::sqrtf(value);
+}
+
+f64 Sqrt(f64 value)
+{
+	return std::sqrt(value);
+}
+
 f32 Lerp(f32 minValue, f32 maxValue, f32 weight)
 {
 	return minValue + weight * (maxValue - minValue);
