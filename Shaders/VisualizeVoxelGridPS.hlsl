@@ -28,7 +28,7 @@ float4 Main(PSInput input) : SV_Target
 	int3 gridCell = ComputeGridCell(g_GridConfig, worldSpacePos.xyz);
 	if (all(float3(-1.0f, -1.0f, -1.0f) < gridCell.xyz) && all(gridCell.xyz < g_GridConfig.numCells.xyz))
 	{
-		int cellIndex = ComputeCellIndex(g_GridConfig, gridCell);
+		int cellIndex = ComputeGridCellIndex(g_GridConfig, gridCell);
 
 		float3 color = GridBuffer[cellIndex].colorAndNumOccluders.rgb;
 		return float4(color, 1.0f);

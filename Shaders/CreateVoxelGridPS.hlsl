@@ -32,7 +32,7 @@ void Main(PSInput input)
 	int3 gridCell = ComputeGridCell(g_GridConfig, input.worldSpacePos.xyz);
 	if (all(float3(-1.0f, -1.0f, -1.0f) < gridCell.xyz) && all(gridCell.xyz < g_GridConfig.numCells.xyz))
 	{
-		int cellIndex = ComputeCellIndex(g_GridConfig, gridCell);
+		int cellIndex = ComputeGridCellIndex(g_GridConfig, gridCell);
 		float3 color = g_MaterialBuffer[g_MaterialIndex].diffuseColor.rgb;
 
 		GridBuffer[cellIndex].colorAndNumOccluders = ComulativeAverage(color, GridBuffer[cellIndex].colorAndNumOccluders);
