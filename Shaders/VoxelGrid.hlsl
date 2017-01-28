@@ -48,4 +48,11 @@ int ComputeGridCellIndex(GridConfig gridConfig, int3 gridCell)
 	return gridCell.x + gridCell.y * gridConfig.numCells.x + gridCell.z * gridConfig.numCells.x * gridConfig.numCells.y;
 }
 
+bool IsCellOutsideGrid(GridConfig gridConfig, int3 gridCell)
+{
+	return (gridCell.x > gridConfig.numCells.x - 1) || (gridCell.x < 0) ||
+		(gridCell.y > gridConfig.numCells.y - 1) || (gridCell.y < 0) ||
+		(gridCell.z > gridConfig.numCells.z - 1) || (gridCell.z < 0) ||;
+}
+
 #endif

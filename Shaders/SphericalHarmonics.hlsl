@@ -1,18 +1,27 @@
 #ifndef __SPHERICAL_HARMONICS__
 #define __SPHERICAL_HARMONICS__
 
-typedef float4 SHCoeffs;
-
 struct SHSpectralCoeffs
 {
-	SHCoeffs r;
-	SHCoeffs g;
-	SHCoeffs b;
+	float4 r;
+	float4 g;
+	float4 b;
 };
 
-SHCoeffs SHProjectClampedCosine(float3 dir)
+float4 SH(float3 dir)
 {
-	SHCoeffs coeffs;
+	float4 coeffs;
+	coeffs.x =  0.282095f;
+	coeffs.y = -0.488603f * dir.y;
+	coeffs.z =  0.488603f * dir.z;
+	coeffs.w = -0.488603f * dir.x;
+
+	return coeffs;
+}
+
+float4 SHProjectClampedCosine(float3 dir)
+{
+	float4 coeffs;
 	coeffs.x =  0.88622695f;
 	coeffs.y = -1.02332675f * dir.y;
 	coeffs.z =  1.02332675f * dir.z;

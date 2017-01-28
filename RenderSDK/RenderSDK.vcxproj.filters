@@ -514,5 +514,8 @@
     <None Include="..\Shaders\SphericalHarmonics.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\Shaders\PropagateLightCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
