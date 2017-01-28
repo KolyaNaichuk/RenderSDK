@@ -16,9 +16,9 @@ Buffer<uint> g_NumPointLightsBuffer : register(t3);
 Buffer<uint> g_PointLightIndexBuffer : register(t4);
 #endif
 
-RWTexture3D g_FluxRCoeffsTexture : register(u0);
-RWTexture3D g_FluxGCoeffsTexture : register(u1);
-RWTexture3D g_FluxBCoeffsTexture : register(u2);
+RWTexture3D<float4> g_AccumFluxRCoeffsTexture : register(u0);
+RWTexture3D<float4> g_AccumFluxGCoeffsTexture : register(u1);
+RWTexture3D<float4> g_AccumFluxBCoeffsTexture : register(u2);
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 void Main(int3 gridCell : SV_DispatchThreadID)
@@ -29,10 +29,10 @@ void Main(int3 gridCell : SV_DispatchThreadID)
 	if (colorAndNumOccluders.a == 0)
 		return;
 
-	SHSpectralCoeffs sumFluxCoeffs;
-	sumFluxCoeffs.r = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	sumFluxCoeffs.g = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	sumFluxCoeffs.b = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	SHSpectralCoeffs accumFluxCoeffs;
+	accumFluxCoeffs.r = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	accumFluxCoeffs.g = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	accumFluxCoeffs.b = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	
 	float3 diffuseAlbedo = colorAndNumOccluders.rgb;
 		
@@ -61,15 +61,19 @@ void Main(int3 gridCell : SV_DispatchThreadID)
 			float3 currFlux = NdotL * diffuseAlbedo * lightColor * distAtten;
 
 			float4 cosineCoeffs = SHProjectClampedCosine(worldSpaceNormal);
+			float3 projectedCurrFlux;
+			projectedCurrFlux.r = currFlux.r * cosineCoeffs;
+			projectedCurrFlux.g = currFlux.g * cosineCoeffs;
+			projectedCurrFlux.b = currFlux.b * cosineCoeffs;
 
-			sumFluxCoeffs.r += currFlux.r * cosineCoeffs;
-			sumFluxCoeffs.g += currFlux.g * cosineCoeffs;
-			sumFluxCoeffs.b += currFlux.b * cosineCoeffs;
+			accumFluxCoeffs.r += projectedCurrFlux.r;
+			accumFluxCoeffs.g += projectedCurrFlux.g;
+			accumFluxCoeffs.b += projectedCurrFlux.b;
 		}
 	}
 #endif
 
-	g_FluxRCoeffsTexture[gridCell] = sumFluxCoeffs.r;
-	g_FluxGCoeffsTexture[gridCell] = sumFluxCoeffs.g;
-	g_FluxBCoeffsTexture[gridCell] = sumFluxCoeffs.b;
+	g_AccumFluxRCoeffsTexture[gridCell] = accumFluxCoeffs.r;
+	g_AccumFluxGCoeffsTexture[gridCell] = accumFluxCoeffs.g;
+	g_AccumFluxBCoeffsTexture[gridCell] = accumFluxCoeffs.b;
 }
