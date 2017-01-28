@@ -169,21 +169,26 @@ void Main(int3 currCell : SV_DispatchThreadID)
 		for (int faceIndex = 0; faceIndex < NUM_FACES_PER_CELL; ++faceIndex)
 		{
 			CellFaceData faceData = g_Neighbors[neighborIndex].currCellFaces[faceIndex];
-			float4 dirFromNeighborCoeffs = SH(faceData.dirFromNeighborCenter);
 			
-			float3 fluxFromNeighborToFace;
-			fluxFromNeighborToFace.r = dot(neighborFluxCoeffs.r, dirFromNeighborCoeffs);
-			fluxFromNeighborToFace.g = dot(neighborFluxCoeffs.g, dirFromNeighborCoeffs);
-			fluxFromNeighborToFace.b = dot(neighborFluxCoeffs.b, dirFromNeighborCoeffs);
-			fluxFromNeighborToFace = max(0.0f, fluxFromNeighborToFace) * faceData.solidAngleFromNeightborCenter;
+			float4 dirFromNeighborCenterCoeffs = SH(faceData.dirFromNeighborCenter);			
+			float3 fluxFromNeighbor;
+			fluxFromNeighbor.r = dot(neighborFluxCoeffs.r, dirFromNeighborCenterCoeffs);
+			fluxFromNeighbor.g = dot(neighborFluxCoeffs.g, dirFromNeighborCenterCoeffs);
+			fluxFromNeighbor.b = dot(neighborFluxCoeffs.b, dirFromNeighborCenterCoeffs);
+			fluxFromNeighbor = max(0.0f, fluxFromNeighbor) * faceData.solidAngleFromNeightborCenter;
 
-			float4 dirToFaceCoeffs = g_FaceClampedCosineSHCoeffs[faceIndex];
-			gatheredFluxSHCoeffs.r += fluxFromNeighborToFace.r * dirToFaceCoeffs;
-			gatheredFluxSHCoeffs.g += fluxFromNeighborToFace.g * dirToFaceCoeffs;
-			gatheredFluxSHCoeffs.b += fluxFromNeighborToFace.b * dirToFaceCoeffs;
+			float4 dirFromCellCenterCoeffs = g_FaceClampedCosineSHCoeffs[faceIndex];
+			float3 projectedFluxFromNeighbor;
+			projectedFluxFromNeighbor.r = fluxFromNeighbor.r * dirFromCellCenterCoeffs;
+			projectedFluxFromNeighbor.g = fluxFromNeighbor.g * dirFromCellCenterCoeffs;
+			projectedFluxFromNeighbor.b = fluxFromNeighbor.b * dirFromCellCenterCoeffs;
+
+			gatheredFluxSHCoeffs.r += projectedFluxFromNeighbor.r;
+			gatheredFluxSHCoeffs.g += projectedFluxFromNeighbor.g;
+			gatheredFluxSHCoeffs.b += projectedFluxFromNeighbor.b;
 		}
 	}
-
+		
 	g_GatheredFluxRCoeffsTexture[currCell] = gatheredFluxCoeffs.r;
 	g_GatheredFluxGCoeffsTexture[currCell] = gatheredFluxCoeffs.g;
 	g_GatheredFluxBCoeffsTexture[currCell] = gatheredFluxCoeffs.b;
