@@ -177,15 +177,15 @@ void Main(int3 currCell : SV_DispatchThreadID)
 			fluxFromNeighbor.b = dot(neighborFluxCoeffs.b, dirFromNeighborCenterCoeffs);
 			fluxFromNeighbor = max(fluxFromNeighbor, 0.0f) * faceData.solidAngleFromNeightborCenter;
 
-			float4 dirFromCellCenterCoeffs = g_FaceClampedCosineSHCoeffs[faceIndex];
+			float4 dirFromCellCenterCoeffs = g_FaceClampedCosineCoeffs[faceIndex];
 			SHSpectralCoeffs projectedFluxCoeffs;
 			projectedFluxCoeffs.r = fluxFromNeighbor.r * dirFromCellCenterCoeffs;
 			projectedFluxCoeffs.g = fluxFromNeighbor.g * dirFromCellCenterCoeffs;
 			projectedFluxCoeffs.b = fluxFromNeighbor.b * dirFromCellCenterCoeffs;
 
-			accumFluxSHCoeffs.r += projectedFluxCoeffs.r;
-			accumFluxSHCoeffs.g += projectedFluxCoeffs.g;
-			accumFluxSHCoeffs.b += projectedFluxCoeffs.b;
+			accumFluxCoeffs.r += projectedFluxCoeffs.r;
+			accumFluxCoeffs.g += projectedFluxCoeffs.g;
+			accumFluxCoeffs.b += projectedFluxCoeffs.b;
 		}
 	}
 		

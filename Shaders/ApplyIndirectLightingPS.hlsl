@@ -1,4 +1,5 @@
 #include "Reconstruction.hlsl"
+#include "Foundation.hlsl"
 #include "VoxelGrid.hlsl"
 #include "SphericalHarmonics.hlsl"
 
@@ -29,7 +30,7 @@ float4 Main(PSInput input) : SV_Target
 {
 	uint2 screenSpacePos = uint2(input.screenSpacePos.xy);
 	
-	float hardwareDepth = DepthTexture[screenSpacePos].x;
+	float hardwareDepth = g_DepthTexture[screenSpacePos].x;
 	float4 worldSpacePos = ComputeWorldSpacePosition(input.texCoord, hardwareDepth, g_Transform.viewProjInvMatrix);
 	float3 worldSpaceNormal = g_NormalTexture[screenSpacePos].xyz;
 	float3 diffuseAlbedo = g_DiffuseTexture[screenSpacePos].rgb;

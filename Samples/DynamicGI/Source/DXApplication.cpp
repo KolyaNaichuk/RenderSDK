@@ -15,7 +15,9 @@
 #include "RenderPasses/CreateVoxelGridPass.h"
 #include "RenderPasses/CreateRenderGBufferCommandsPass.h"
 #include "RenderPasses/CreateRenderShadowMapCommandsPass.h"
-#include "RenderPasses/InjectVPLsIntoVoxelGridPass.h"
+#include "RenderPasses/InjectVirtualPointLightsPass.h"
+#include "RenderPasses/PropagateLightPass.h"
+#include "RenderPasses/ApplyIndirectLightingPass.h"
 #include "RenderPasses/RenderGBufferPass.h"
 #include "RenderPasses/RenderTiledShadowMapPass.h"
 #include "RenderPasses/SetupTiledShadowMapPass.h"
@@ -276,7 +278,7 @@ struct VisualizeTextureData
 };
 
 DXApplication::DXApplication(HINSTANCE hApp)
-	: Application(hApp, L"Scene Voxelization", 0, 0, kTileSize * kNumTilesX, kTileSize * kNumTilesY)
+	: Application(hApp, L"Dynamic Global Illumination", 0, 0, kTileSize * kNumTilesX, kTileSize * kNumTilesY)
 	, m_pDevice(nullptr)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
@@ -345,8 +347,12 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pClearVoxelGridResources(new BindingResourceList())
 	, m_pCreateVoxelGridPass(nullptr)
 	, m_pCreateVoxelGridResources(new BindingResourceList())
-	, m_pInjectVPLsIntoVoxelGridPass(nullptr)
-	, m_pInjectVPLsIntoVoxelGridResources(new BindingResourceList())
+	, m_pInjectVirtualPointLightsPass(nullptr)
+	, m_pInjectVirtualPointLightsResources(new BindingResourceList())
+	, m_pPropagateLightPass(nullptr)
+	, m_pPropagateLightResources(new BindingResourceList())
+	, m_pApplyIndirectLightingPass(nullptr)
+	, m_pApplyIndirectLightingResources(new BindingResourceList())
 	, m_pVisualizeVoxelGridPass(nullptr)
 	, m_pDetectVisibleMeshesPass(nullptr)
 	, m_pDetectVisibleMeshesResources(new BindingResourceList())
@@ -438,8 +444,12 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pClearVoxelGridResources);
 	SafeDelete(m_pCreateVoxelGridPass);
 	SafeDelete(m_pCreateVoxelGridResources);
-	SafeDelete(m_pInjectVPLsIntoVoxelGridPass);
-	SafeDelete(m_pInjectVPLsIntoVoxelGridResources);
+	SafeDelete(m_pInjectVirtualPointLightsPass);
+	SafeDelete(m_pInjectVirtualPointLightsResources);
+	SafeDelete(m_pPropagateLightPass);
+	SafeDelete(m_pPropagateLightResources);
+	SafeDelete(m_pApplyIndirectLightingPass);
+	SafeDelete(m_pApplyIndirectLightingResources);
 	SafeDelete(m_pVisualizeVoxelGridPass);
 	SafeDelete(m_pTiledLightCullingPass);
 	SafeDelete(m_pTiledLightCullingResources);
@@ -557,7 +567,9 @@ void DXApplication::OnInit()
 	
 	InitCreateVoxelGridPass();
 	InitClearVoxelGridPass();
-	//InitInjectVPLsIntoVoxelGridPass();
+	//InitInjectVirtualPointLightsPass();
+	//InitPropagateLightPass();
+	//InitApplyIndirectLightingPass();
 
 	if (kOutputResult == OutputResult_VoxelGrid)
 		InitVisualizeVoxelGridPass();
@@ -1508,17 +1520,40 @@ void DXApplication::InitCreateVoxelGridPass()
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void DXApplication::InitInjectVPLsIntoVoxelGridPass()
+void DXApplication::InitInjectVirtualPointLightsPass()
 {
 	assert(false && "Needs impl");
 
-	InjectVPLsIntoVoxelGridPass::InitPrams initParams;
+	InjectVirtualPointLightsPass::InitPrams initParams;
+	initParams.m_pRenderEnv = m_pRenderEnv;
+	initParams.m_NumGridCellsX = kNumGridCellsX;
+	initParams.m_NumGridCellsY = kNumGridCellsY;
+	initParams.m_NumGridCellsZ = kNumGridCellsZ;
+	initParams.m_EnablePointLights = (m_pPointLightBuffer != nullptr);
+
+	m_pInjectVirtualPointLightsPass = new InjectVirtualPointLightsPass(&initParams);
+}
+
+void DXApplication::InitPropagateLightPass()
+{
+	assert(false && "Needs impl");
+
+	PropagateLightPass::InitPrams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_NumGridCellsX = kNumGridCellsX;
 	initParams.m_NumGridCellsY = kNumGridCellsY;
 	initParams.m_NumGridCellsZ = kNumGridCellsZ;
 
-	m_pInjectVPLsIntoVoxelGridPass = new InjectVPLsIntoVoxelGridPass(&initParams);
+	m_pPropagateLightPass = new PropagateLightPass(&initParams);
+}
+
+void DXApplication::InitApplyIndirectLightingPass()
+{
+	assert(false && "Needs impl");
+
+	ApplyIndirectLightingPass::InitPrams initParams;
+	
+	m_pApplyIndirectLightingPass = new ApplyIndirectLightingPass(&initParams);
 }
 
 void DXApplication::InitVisualizeVoxelGridPass()

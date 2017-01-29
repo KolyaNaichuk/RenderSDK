@@ -10,7 +10,7 @@ class GraphicsResource;
 
 struct RenderEnv;
 
-class InjectVPLsIntoVoxelGridPass
+class InjectVirtualPointLightsPass
 {
 public:
 	struct InitPrams
@@ -19,14 +19,15 @@ public:
 		u16 m_NumGridCellsX;
 		u16 m_NumGridCellsY;
 		u16 m_NumGridCellsZ;
+		bool m_EnablePointLights;
 	};
 
 	struct RenderParams
 	{
 	};
 
-	InjectVPLsIntoVoxelGridPass(InitPrams* pParams);
-	~InjectVPLsIntoVoxelGridPass();
+	InjectVirtualPointLightsPass(InitPrams* pParams);
+	~InjectVirtualPointLightsPass();
 
 	void Record(RenderParams* pParams);
 

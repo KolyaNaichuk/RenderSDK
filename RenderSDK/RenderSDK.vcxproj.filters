@@ -144,9 +144,6 @@
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\InjectVPLsIntoVoxelGridPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -230,6 +227,15 @@
     </ClInclude>
     <ClInclude Include="..\Include\Math\Hash.h">
       <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\InjectVirtualPointLightsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\PropagateLightPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\ApplyIndirectLightingPass.h">
+      <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -350,9 +356,6 @@
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\InjectVPLsIntoVoxelGridPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
@@ -425,6 +428,15 @@
     <ClCompile Include="..\Source\Common\OBJFileLoader.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\InjectVirtualPointLightsPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\PropagateLightPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\ApplyIndirectLightingPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -464,9 +476,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\Packing.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\InjectVPLsIntoVoxelGridCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\Lighting.hlsl">
@@ -517,7 +526,13 @@
     <None Include="..\Shaders\PropagateLightCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="ApplyIndirectLightingPS.hlsl">
+    <None Include="..\Shaders\InjectVirtualPointLightsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\ApplyIndirectLightingPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\BoundingVolumes.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

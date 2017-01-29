@@ -1,17 +1,7 @@
 #ifndef __OVERLAP_TEST__
 #define __OVERLAP_TEST__
 
-struct AABB
-{
-	float3 center;
-	float3 radius;
-};
-
-struct Sphere
-{
-	float3 center;
-	float radius;
-};
+#include "BoundingVolumes.hlsl"
 
 bool TestAABBAgainstPlane(float4 plane, AABB aabb)
 {

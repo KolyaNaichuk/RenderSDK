@@ -1,4 +1,5 @@
 #include "VoxelGrid.hlsl"
+#include "BoundingVolumes.hlsl"
 #include "Lighting.hlsl"
 #include "SphericalHarmonics.hlsl"
 
