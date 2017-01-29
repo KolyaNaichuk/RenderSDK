@@ -58,17 +58,17 @@ void Main(int3 gridCell : SV_DispatchThreadID)
 			float distAtten = CalcLightDistanceAttenuation(distToLight, lightAttenStartRange, lightAttenEndRange);
 								
 			float NdotL = saturate(dot(worldSpaceNormal, worldSpaceNormDirToLight));
-			float3 currFlux = NdotL * diffuseAlbedo * lightColor * distAtten;
+			float3 reflectedFlux = NdotL * diffuseAlbedo * lightColor * distAtten;
 
 			float4 cosineCoeffs = SHProjectClampedCosine(worldSpaceNormal);
-			float3 projectedCurrFlux;
-			projectedCurrFlux.r = currFlux.r * cosineCoeffs;
-			projectedCurrFlux.g = currFlux.g * cosineCoeffs;
-			projectedCurrFlux.b = currFlux.b * cosineCoeffs;
+			SHSpectralCoeffs projectedFluxCoeffs;
+			projectedFluxCoeffs.r = reflectedFlux.r * cosineCoeffs;
+			projectedFluxCoeffs.g = reflectedFlux.g * cosineCoeffs;
+			projectedFluxCoeffs.b = reflectedFlux.b * cosineCoeffs;
 
-			accumFluxCoeffs.r += projectedCurrFlux.r;
-			accumFluxCoeffs.g += projectedCurrFlux.g;
-			accumFluxCoeffs.b += projectedCurrFlux.b;
+			accumFluxCoeffs.r += projectedFluxCoeffs.r;
+			accumFluxCoeffs.g += projectedFluxCoeffs.g;
+			accumFluxCoeffs.b += projectedFluxCoeffs.b;
 		}
 	}
 #endif

@@ -155,9 +155,9 @@ void LoadGridCellFluxCoeffs(int3 gridCell, inout SHSpectralCoeffs fluxCoeffs)
 void Main(int3 currCell : SV_DispatchThreadID)
 {
 	SHSpectralCoeffs accumFluxCoeffs;
-	accumFluxCoeffs.r = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	accumFluxCoeffs.g = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	accumFluxCoeffs.b = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	accumFluxCoeffs.r = g_FluxRCoeffsTexture[currCell];
+	accumFluxCoeffs.g = g_FluxGCoeffsTexture[currCell];
+	accumFluxCoeffs.b = g_FluxBCoeffsTexture[currCell];
 
 	for (int neighborIndex = 0; neighborIndex < NUM_NEIGHBORS_PER_CELL; ++neighborIndex)
 	{
@@ -175,17 +175,17 @@ void Main(int3 currCell : SV_DispatchThreadID)
 			fluxFromNeighbor.r = dot(neighborFluxCoeffs.r, dirFromNeighborCenterCoeffs);
 			fluxFromNeighbor.g = dot(neighborFluxCoeffs.g, dirFromNeighborCenterCoeffs);
 			fluxFromNeighbor.b = dot(neighborFluxCoeffs.b, dirFromNeighborCenterCoeffs);
-			fluxFromNeighbor = max(0.0f, fluxFromNeighbor) * faceData.solidAngleFromNeightborCenter;
+			fluxFromNeighbor = max(fluxFromNeighbor, 0.0f) * faceData.solidAngleFromNeightborCenter;
 
 			float4 dirFromCellCenterCoeffs = g_FaceClampedCosineSHCoeffs[faceIndex];
-			float3 projectedFluxFromNeighbor;
-			projectedFluxFromNeighbor.r = fluxFromNeighbor.r * dirFromCellCenterCoeffs;
-			projectedFluxFromNeighbor.g = fluxFromNeighbor.g * dirFromCellCenterCoeffs;
-			projectedFluxFromNeighbor.b = fluxFromNeighbor.b * dirFromCellCenterCoeffs;
+			SHSpectralCoeffs projectedFluxCoeffs;
+			projectedFluxCoeffs.r = fluxFromNeighbor.r * dirFromCellCenterCoeffs;
+			projectedFluxCoeffs.g = fluxFromNeighbor.g * dirFromCellCenterCoeffs;
+			projectedFluxCoeffs.b = fluxFromNeighbor.b * dirFromCellCenterCoeffs;
 
-			accumFluxSHCoeffs.r += projectedFluxFromNeighbor.r;
-			accumFluxSHCoeffs.g += projectedFluxFromNeighbor.g;
-			accumFluxSHCoeffs.b += projectedFluxFromNeighbor.b;
+			accumFluxSHCoeffs.r += projectedFluxCoeffs.r;
+			accumFluxSHCoeffs.g += projectedFluxCoeffs.g;
+			accumFluxSHCoeffs.b += projectedFluxCoeffs.b;
 		}
 	}
 		
