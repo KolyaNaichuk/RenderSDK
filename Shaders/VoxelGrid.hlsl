@@ -3,7 +3,9 @@
 
 struct Voxel
 {
-	float4 colorAndNumOccluders;
+	float numOccluders;
+	float3 diffuseColor;
+	float3 worldSpaceNormal;
 };
 
 struct GridConfig

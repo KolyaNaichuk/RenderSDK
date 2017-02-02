@@ -11,5 +11,8 @@ RWStructuredBuffer<Voxel> GridBuffer : register(u0);
 void Main(int3 gridCell : SV_DispatchThreadID)
 {
 	int cellIndex = ComputeGridCellIndex(g_GridConfig, gridCell);
-	GridBuffer[cellIndex].colorAndNumOccluders = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	
+	GridBuffer[cellIndex].numOccluders = 0.0f;
+	GridBuffer[cellIndex].diffuseColor = float3(0.0f, 0.0f, 0.0f);
+	GridBuffer[cellIndex].worldSpaceNormal = float3(0.0f, 0.0f, 0.0f);
 }

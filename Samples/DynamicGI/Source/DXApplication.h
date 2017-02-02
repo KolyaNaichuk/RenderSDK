@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common/Application.h"
+#include "RenderPasses/VisualizeVoxelGridPass.h"
 
 class GraphicsDevice;
 class SwapChain;
@@ -74,7 +75,7 @@ private:
 	void InitInjectVirtualPointLightsPass();
 	void InitPropagateLightPass();
 	void InitApplyIndirectLightingPass();
-	void InitVisualizeVoxelGridPass();
+	void InitVisualizeVoxelGridPass(VisualizeVoxelGridPass::VoxelDataType voxelDataType);
 	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
 
 	CommandList* RecordClearBackBufferPass(u8 clearFlags);

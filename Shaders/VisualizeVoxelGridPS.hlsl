@@ -1,6 +1,9 @@
 #include "Reconstruction.hlsl"
 #include "VoxelGrid.hlsl"
 
+#define VOXEL_DATA_TYPE_DIFFUSE_COLOR		0
+#define VOXEL_DATA_TYPE_NORMAL				1
+
 struct PSInput
 {
 	float4 screenSpacePos	: SV_Position;
@@ -30,8 +33,15 @@ float4 Main(PSInput input) : SV_Target
 	{
 		int cellIndex = ComputeGridCellIndex(g_GridConfig, gridCell);
 
-		float3 color = GridBuffer[cellIndex].colorAndNumOccluders.rgb;
-		return float4(color, 1.0f);
+#if (VOXEL_DATA_TYPE == VOXEL_DATA_TYPE_DIFFUSE_COLOR)
+		float3 diffuseColor = GridBuffer[cellIndex].diffuseColor;
+		return float4(diffuseColor, 1.0f);
+#endif // VOXEL_DATA_TYPE_DIFFUSE_COLOR
+
+#if (VOXEL_DATA_TYPE == VOXEL_DATA_TYPE_NORMAL)
+		float3 worldSpaceNormal = GridBuffer[cellIndex].worldSpaceNormal;
+		return float4(0.5f * worldSpaceNormal + 0.5f, 1.0f);
+#endif // VOXEL_DATA_TYPE_NORMAL
 	}
 
 	return float4(0.7f, 0.8f, 0.5f, 1.0f);

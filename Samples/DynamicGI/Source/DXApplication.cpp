@@ -24,7 +24,6 @@
 #include "RenderPasses/TiledLightCullingPass.h"
 #include "RenderPasses/TiledShadingPass.h"
 #include "RenderPasses/ViewFrustumCullingPass.h"
-#include "RenderPasses/VisualizeVoxelGridPass.h"
 #include "RenderPasses/VisualizeTexturePass.h"
 #include "Common/MeshData.h"
 #include "Common/MeshBatchData.h"
@@ -167,7 +166,8 @@ enum OutputResult
 	OutputResult_SpotLightTiledShadowMap,
 	OutputResult_PointLightTiledShadowMap,
 	OutputResult_AccumLight,
-	OutputResult_VoxelGrid
+	OutputResult_VoxelGridDiffuseColor,
+	OutputResult_VoxelGridNormal
 };
 
 enum
@@ -254,7 +254,9 @@ struct TiledShadingData
 
 struct Voxel
 {
-	Vector4f m_ColorAndNumOccluders;
+	f32 m_NumOccluders;
+	Vector3f m_DiffuseColor;
+	Vector3f m_WorldSpaceNormal;
 };
 
 struct ShadowMapData
@@ -571,8 +573,10 @@ void DXApplication::OnInit()
 	//InitPropagateLightPass();
 	//InitApplyIndirectLightingPass();
 
-	if (kOutputResult == OutputResult_VoxelGrid)
-		InitVisualizeVoxelGridPass();
+	if (kOutputResult == OutputResult_VoxelGridDiffuseColor)
+		InitVisualizeVoxelGridPass(VisualizeVoxelGridPass::VoxelDataType_DiffuseColor);
+	else if (kOutputResult == OutputResult_VoxelGridNormal)
+		InitVisualizeVoxelGridPass(VisualizeVoxelGridPass::VoxelDataType_Normal);
 	else
 		InitVisualizeTexturePass();
 
@@ -629,7 +633,7 @@ void DXApplication::OnRender()
 	submissionBatch.emplace_back(RecordClearVoxelGridPass());
 	submissionBatch.emplace_back(RecordCreateVoxelGridPass());
 
-	if (kOutputResult == OutputResult_VoxelGrid)
+	if ((kOutputResult == OutputResult_VoxelGridDiffuseColor) || (kOutputResult == OutputResult_VoxelGridNormal))
 		submissionBatch.emplace_back(RecordVisualizeVoxelGridPass());
 	else
 		submissionBatch.emplace_back(RecordVisualizeTexturePass());
@@ -1556,12 +1560,13 @@ void DXApplication::InitApplyIndirectLightingPass()
 	m_pApplyIndirectLightingPass = new ApplyIndirectLightingPass(&initParams);
 }
 
-void DXApplication::InitVisualizeVoxelGridPass()
+void DXApplication::InitVisualizeVoxelGridPass(VisualizeVoxelGridPass::VoxelDataType voxelDataType)
 {
 	VisualizeVoxelGridPass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
-
+	initParams.m_VoxelDataType = voxelDataType;
+		
 	m_pVisualizeVoxelGridPass = new VisualizeVoxelGridPass(&initParams);
 
 	for (u8 index = 0; index < kNumBackBuffers; ++index)

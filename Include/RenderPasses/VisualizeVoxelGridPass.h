@@ -13,10 +13,17 @@ struct Viewport;
 class VisualizeVoxelGridPass
 {
 public:
+	enum VoxelDataType
+	{
+		VoxelDataType_DiffuseColor = 0,
+		VoxelDataType_Normal
+	};
+
 	struct InitParams
 	{
 		RenderEnv* m_pRenderEnv;
 		DXGI_FORMAT m_RTVFormat;
+		VoxelDataType m_VoxelDataType;
 	};
 	
 	struct RenderParams

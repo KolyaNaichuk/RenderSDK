@@ -19,8 +19,15 @@ VisualizeVoxelGridPass::VisualizeVoxelGridPass(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
+	std::string voxelDataTypeStr = std::to_string(pParams->m_VoxelDataType);
+	const ShaderMacro shaderDefines[] =
+	{
+		ShaderMacro("VOXEL_DATA_TYPE", voxelDataTypeStr.c_str()),
+		ShaderMacro()
+	};
+
 	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//VisualizeVoxelGridPS.hlsl", "Main", "ps_4_0");
+	Shader pixelShader(L"Shaders//VisualizeVoxelGridPS.hlsl", "Main", "ps_4_0", shaderDefines);
 
 	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = {CBVDescriptorRange(2, 0), SRVDescriptorRange(2, 0)};
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
