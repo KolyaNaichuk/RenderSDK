@@ -95,6 +95,7 @@ private:
 	CommandList* RecordClearVoxelGridPass();
 	CommandList* RecordCreateVoxelGridPass();
 	CommandList* RecordInjectVirtualPointLightsPass();
+	CommandList* RecordPropagateLightPass();
 	CommandList* RecordVisualizeVoxelGridPass();
 	CommandList* RecordVisualizeTexturePass();
 	CommandList* RecordPresentResourceBarrierPass();
@@ -126,9 +127,9 @@ private:
 	ColorTexture* m_pNormalTexture;
 	ColorTexture* m_pSpecularTexture;
 	ColorTexture* m_pAccumLightTexture;
-	ColorTexture* m_AccumFluxRCoeffsTextures[2];
-	ColorTexture* m_AccumFluxGCoeffsTextures[2];
-	ColorTexture* m_AccumFluxBCoeffsTextures[2];
+	ColorTexture* m_FluxRCoeffsTextures[2];
+	ColorTexture* m_FluxGCoeffsTextures[2];
+	ColorTexture* m_FluxBCoeffsTextures[2];
 	Viewport* m_pBackBufferViewport;
 	Viewport* m_pSpotLightTiledShadowMapViewport;
 	Viewport* m_pPointLightTiledShadowMapViewport;
@@ -190,7 +191,7 @@ private:
 	BindingResourceList* m_pInjectVirtualPointLightsResources;
 
 	PropagateLightPass* m_pPropagateLightPass;
-	BindingResourceList* m_pPropagateLightResources;
+	BindingResourceList* m_PropagateLightResources[2];
 
 	ApplyIndirectLightingPass* m_pApplyIndirectLightingPass;
 	BindingResourceList* m_pApplyIndirectLightingResources;

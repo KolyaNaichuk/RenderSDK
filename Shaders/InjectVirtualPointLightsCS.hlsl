@@ -17,9 +17,9 @@ Buffer<uint> g_NumPointLightsBuffer : register(t3);
 Buffer<uint> g_PointLightIndexBuffer : register(t4);
 #endif // ENABLE_POINT_LIGHTS
 
-RWTexture3D<float4> g_AccumFluxRCoeffsTexture : register(u0);
-RWTexture3D<float4> g_AccumFluxGCoeffsTexture : register(u1);
-RWTexture3D<float4> g_AccumFluxBCoeffsTexture : register(u2);
+RWTexture3D<float4> g_FluxRCoeffsTexture : register(u0);
+RWTexture3D<float4> g_FluxGCoeffsTexture : register(u1);
+RWTexture3D<float4> g_FluxBCoeffsTexture : register(u2);
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 void Main(int3 gridCell : SV_DispatchThreadID)
@@ -73,7 +73,7 @@ void Main(int3 gridCell : SV_DispatchThreadID)
 #endif
 	}
 
-	g_AccumFluxRCoeffsTexture[gridCell] = accumFluxCoeffs.r;
-	g_AccumFluxGCoeffsTexture[gridCell] = accumFluxCoeffs.g;
-	g_AccumFluxBCoeffsTexture[gridCell] = accumFluxCoeffs.b;
+	g_FluxRCoeffsTexture[gridCell] = accumFluxCoeffs.r;
+	g_FluxGCoeffsTexture[gridCell] = accumFluxCoeffs.g;
+	g_FluxBCoeffsTexture[gridCell] = accumFluxCoeffs.b;
 }

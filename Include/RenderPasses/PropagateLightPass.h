@@ -9,6 +9,7 @@ class PipelineState;
 class GraphicsResource;
 
 struct RenderEnv;
+struct BindingResourceList;
 
 class PropagateLightPass
 {
@@ -23,6 +24,10 @@ public:
 
 	struct RenderParams
 	{
+		RenderEnv* m_pRenderEnv;
+		CommandList* m_pCommandList;
+		BindingResourceList** m_ppResources;
+		u16 m_NumIterations;
 	};
 
 	PropagateLightPass(InitPrams* pParams);

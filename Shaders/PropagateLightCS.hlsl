@@ -127,13 +127,13 @@ cbuffer GridConfigDataBuffer : register(b0)
 	GridConfig g_GridConfig;
 }
 
-Texture3D g_FluxRCoeffsTexture : register(t0);
-Texture3D g_FluxGCoeffsTexture : register(t1);
-Texture3D g_FluxBCoeffsTexture : register(t2);
+Texture3D g_PrevFluxRCoeffsTexture : register(t0);
+Texture3D g_PrevFluxGCoeffsTexture : register(t1);
+Texture3D g_PrevFluxBCoeffsTexture : register(t2);
 
-RWTexture3D<float4> g_AccumFluxRCoeffsTexture : register(u0);
-RWTexture3D<float4> g_AccumFluxGCoeffsTexture : register(u1);
-RWTexture3D<float4> g_AccumFluxBCoeffsTexture : register(u2);
+RWTexture3D<float4> g_FluxRCoeffsTexture : register(u0);
+RWTexture3D<float4> g_FluxGCoeffsTexture : register(u1);
+RWTexture3D<float4> g_FluxBCoeffsTexture : register(u2);
 
 void LoadGridCellFluxCoeffs(int3 gridCell, inout SHSpectralCoeffs fluxCoeffs)
 {
@@ -145,9 +145,9 @@ void LoadGridCellFluxCoeffs(int3 gridCell, inout SHSpectralCoeffs fluxCoeffs)
 	}
 	else
 	{
-		fluxCoeffs.r = g_FluxRCoeffsTexture[gridCell];
-		fluxCoeffs.g = g_FluxGCoeffsTexture[gridCell];
-		fluxCoeffs.b = g_FluxBCoeffsTexture[gridCell];
+		fluxCoeffs.r = g_PrevFluxRCoeffsTexture[gridCell];
+		fluxCoeffs.g = g_PrevFluxGCoeffsTexture[gridCell];
+		fluxCoeffs.b = g_PrevFluxBCoeffsTexture[gridCell];
 	}
 }
 
@@ -155,9 +155,9 @@ void LoadGridCellFluxCoeffs(int3 gridCell, inout SHSpectralCoeffs fluxCoeffs)
 void Main(int3 currCell : SV_DispatchThreadID)
 {
 	SHSpectralCoeffs accumFluxCoeffs;
-	accumFluxCoeffs.r = g_FluxRCoeffsTexture[currCell];
-	accumFluxCoeffs.g = g_FluxGCoeffsTexture[currCell];
-	accumFluxCoeffs.b = g_FluxBCoeffsTexture[currCell];
+	accumFluxCoeffs.r = g_PrevFluxRCoeffsTexture[currCell];
+	accumFluxCoeffs.g = g_PrevFluxGCoeffsTexture[currCell];
+	accumFluxCoeffs.b = g_PrevFluxBCoeffsTexture[currCell];
 
 	for (int neighborIndex = 0; neighborIndex < NUM_NEIGHBORS_PER_CELL; ++neighborIndex)
 	{
@@ -189,7 +189,7 @@ void Main(int3 currCell : SV_DispatchThreadID)
 		}
 	}
 		
-	g_AccumFluxRCoeffsTexture[currCell] = accumFluxCoeffs.r;
-	g_AccumFluxGCoeffsTexture[currCell] = accumFluxCoeffs.g;
-	g_AccumFluxBCoeffsTexture[currCell] = accumFluxCoeffs.b;
+	g_FluxRCoeffsTexture[currCell] = accumFluxCoeffs.r;
+	g_FluxGCoeffsTexture[currCell] = accumFluxCoeffs.g;
+	g_FluxBCoeffsTexture[currCell] = accumFluxCoeffs.b;
 }
