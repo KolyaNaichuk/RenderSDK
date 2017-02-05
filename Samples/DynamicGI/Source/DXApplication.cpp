@@ -404,6 +404,12 @@ DXApplication::DXApplication(HINSTANCE hApp)
 		m_VisualizeVoxelGridResources[index] = new BindingResourceList();
 		m_VisualizeTextureResources[index] = new BindingResourceList();
 	}
+	for (u8 index = 0; index < 2; ++index)
+	{
+		m_AccumFluxRCoeffsTextures[index] = nullptr;
+		m_AccumFluxGCoeffsTextures[index] = nullptr;
+		m_AccumFluxBCoeffsTextures[index] = nullptr;
+	}
 }
 
 DXApplication::~DXApplication()
@@ -413,6 +419,13 @@ DXApplication::~DXApplication()
 		SafeDelete(m_VisualizeVoxelGridResources[index]);
 		SafeDelete(m_VisualizeTextureResources[index]);
 	}
+	for (u8 index = 0; index < 2; ++index)
+	{
+		SafeDelete(m_AccumFluxRCoeffsTextures[index]);
+		SafeDelete(m_AccumFluxGCoeffsTextures[index]);
+		SafeDelete(m_AccumFluxBCoeffsTextures[index]);
+	}
+
 	SafeDelete(m_pVisualizeTexturePass);
 	SafeDelete(m_pSpotLightShadowMapDataBuffer);
 	SafeDelete(m_pSpotLightShadowMapTileBuffer);
@@ -569,7 +582,7 @@ void DXApplication::OnInit()
 	
 	InitCreateVoxelGridPass();
 	InitClearVoxelGridPass();
-	//InitInjectVirtualPointLightsPass();
+	InitInjectVirtualPointLightsPass();
 	//InitPropagateLightPass();
 	//InitApplyIndirectLightingPass();
 
@@ -632,6 +645,7 @@ void DXApplication::OnRender()
 	
 	submissionBatch.emplace_back(RecordClearVoxelGridPass());
 	submissionBatch.emplace_back(RecordCreateVoxelGridPass());
+	submissionBatch.emplace_back(RecordInjectVirtualPointLightsPass());
 
 	if ((kOutputResult == OutputResult_VoxelGridDiffuseColor) || (kOutputResult == OutputResult_VoxelGridNormal))
 		submissionBatch.emplace_back(RecordVisualizeVoxelGridPass());
@@ -693,7 +707,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 80, true);
 	m_pShaderVisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
-	DescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 70, false);
+	DescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 73, false);
 	m_pShaderInvisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
 	DescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2, false);
@@ -1526,8 +1540,6 @@ void DXApplication::InitCreateVoxelGridPass()
 
 void DXApplication::InitInjectVirtualPointLightsPass()
 {
-	assert(false && "Needs impl");
-
 	InjectVirtualPointLightsPass::InitPrams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_NumGridCellsX = kNumGridCellsX;
@@ -1536,6 +1548,50 @@ void DXApplication::InitInjectVirtualPointLightsPass()
 	initParams.m_EnablePointLights = (m_pPointLightBuffer != nullptr);
 
 	m_pInjectVirtualPointLightsPass = new InjectVirtualPointLightsPass(&initParams);
+
+	const FLOAT optimizedClearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
+	ColorTexture3DDesc coeffsTextureDesc(DXGI_FORMAT_R16G16B16A16_FLOAT, kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, false, true, true);
+
+	for (u8 index = 0; index < 2; ++index)
+	{
+		m_AccumFluxRCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pAccumFluxRCoeffsTexture");
+		m_AccumFluxGCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pAccumFluxGCoeffsTexture");
+		m_AccumFluxBCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pAccumFluxBCoeffsTexture");
+	}
+
+	ColorTexture* pAccumFluxRCoeffsTexture = m_AccumFluxRCoeffsTextures[0];
+	ColorTexture* pAccumFluxGCoeffsTexture = m_AccumFluxGCoeffsTextures[0];
+	ColorTexture* pAccumFluxBCoeffsTexture = m_AccumFluxBCoeffsTextures[0];
+			
+	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(m_pGridBuffer, m_pGridBuffer->GetReadState());
+	m_pInjectVirtualPointLightsResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+
+	m_pDevice->CopyDescriptor(m_pInjectVirtualPointLightsResources->m_SRVHeapStart, m_pGridConfigBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	if (m_pPointLightBuffer != nullptr)
+	{
+		Buffer* pLightBoundsBuffer = m_pPointLightBuffer->GetLightBoundsBuffer();
+		Buffer* pLightPropsBuffer = m_pPointLightBuffer->GetLightPropsBuffer();
+
+		m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pLightBoundsBuffer, pLightBoundsBuffer->GetReadState());
+		m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pLightPropsBuffer, pLightPropsBuffer->GetReadState());
+		m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(m_pNumVisiblePointLightsBuffer, m_pNumVisiblePointLightsBuffer->GetReadState());
+		m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(m_pVisiblePointLightIndexBuffer, m_pVisiblePointLightIndexBuffer->GetReadState());
+
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pNumVisiblePointLightsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisiblePointLightIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
+
+	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pAccumFluxRCoeffsTexture, pAccumFluxRCoeffsTexture->GetWriteState());
+	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pAccumFluxGCoeffsTexture, pAccumFluxGCoeffsTexture->GetWriteState());
+	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pAccumFluxBCoeffsTexture, pAccumFluxBCoeffsTexture->GetWriteState());
+
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pAccumFluxRCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pAccumFluxGCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pAccumFluxBCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void DXApplication::InitPropagateLightPass()
@@ -1942,6 +1998,17 @@ CommandList* DXApplication::RecordCreateVoxelGridPass()
 	renderParams.m_pNumDrawMeshesBuffer = m_pNumVisibleMeshesBuffer;
 
 	m_pCreateVoxelGridPass->Record(&renderParams);
+	return renderParams.m_pCommandList;
+}
+
+CommandList* DXApplication::RecordInjectVirtualPointLightsPass()
+{
+	InjectVirtualPointLightsPass::RenderParams renderParams;
+	renderParams.m_pRenderEnv = m_pRenderEnv;
+	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pInjectVirtualPointLightsCommandList");
+	renderParams.m_pResources = m_pInjectVirtualPointLightsResources;
+
+	m_pInjectVirtualPointLightsPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
 }
 

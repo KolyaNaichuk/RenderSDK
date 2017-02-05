@@ -4,12 +4,21 @@
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/DescriptorHeap.h"
 #include "D3DWrapper/GraphicsResource.h"
+#include "D3DWrapper/RenderEnv.h"
 #include "Math/Math.h"
+
+enum RootParams
+{
+	kSRVRootParam = 0,
+	kNumRootParams
+};
 
 InjectVirtualPointLightsPass::InjectVirtualPointLightsPass(InitPrams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
 	const u16 numThreadsPerGroupX = 8;
 	const u16 numThreadsPerGroupY = 8;
 	const u16 numThreadsPerGroupZ = 8;
@@ -32,7 +41,27 @@ InjectVirtualPointLightsPass::InjectVirtualPointLightsPass(InitPrams* pParams)
 		ShaderMacro()
 	};
 	Shader computeShader(L"Shaders//InjectVirtualPointLightsCS.hlsl", "Main", "cs_5_0", shaderDefines);
-	assert(false);
+	
+	std::vector<D3D12_DESCRIPTOR_RANGE> srvDescriptorRanges;
+	srvDescriptorRanges.push_back(CBVDescriptorRange(1, 0));
+	srvDescriptorRanges.push_back(SRVDescriptorRange(1, 0));
+
+	if (pParams->m_EnablePointLights)
+		srvDescriptorRanges.push_back(SRVDescriptorRange(4, 1));
+	
+	srvDescriptorRanges.push_back(UAVDescriptorRange(3, 0));
+
+	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
+	rootParams[kSRVRootParam] = RootDescriptorTableParameter(srvDescriptorRanges.size(), srvDescriptorRanges.data(), D3D12_SHADER_VISIBILITY_ALL);
+
+	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
+	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"InjectVirtualPointLightsPass::m_pRootSignature");
+
+	ComputePipelineStateDesc pipelineStateDesc;
+	pipelineStateDesc.SetRootSignature(m_pRootSignature);
+	pipelineStateDesc.SetComputeShader(&computeShader);
+
+	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"InjectVirtualPointLightsPass::m_pPipelineState");
 }
 
 InjectVirtualPointLightsPass::~InjectVirtualPointLightsPass()
@@ -43,5 +72,15 @@ InjectVirtualPointLightsPass::~InjectVirtualPointLightsPass()
 
 void InjectVirtualPointLightsPass::Record(RenderParams* pParams)
 {
-	assert(false);
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	CommandList* pCommandList = pParams->m_pCommandList;
+	BindingResourceList* pResources = pParams->m_pResources;
+
+	pCommandList->Begin(m_pPipelineState);
+	pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
+	pCommandList->SetComputeRootSignature(m_pRootSignature);
+	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
+	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, m_NumThreadGroupsZ);
+	pCommandList->End();
 }

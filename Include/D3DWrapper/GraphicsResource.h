@@ -250,6 +250,11 @@ struct Tex2DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 	Tex2DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice = 0, UINT planeSlice = 0);
 };
 
+struct Tex3DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	Tex3DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice = 0, UINT firstDepthSlice = 0, UINT depthSliceCount = -1);
+};
+
 class GraphicsResource
 {
 protected:
@@ -297,6 +302,7 @@ public:
 
 	UINT64 GetWidth() const { return m_Desc.Width; }
 	UINT GetHeight() const { return m_Desc.Height; }
+	UINT16 GetDepthOrArraySize() const { return m_Desc.DepthOrArraySize; }
 
 	DescriptorHandle GetRTVHandle();
 	DescriptorHandle GetSRVHandle();

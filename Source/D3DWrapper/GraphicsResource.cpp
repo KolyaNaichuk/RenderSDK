@@ -56,6 +56,8 @@ DXGI_FORMAT GetShaderResourceViewFormat(DXGI_FORMAT resourceFormat)
 			return DXGI_FORMAT_R8G8B8A8_SNORM;
 		case DXGI_FORMAT_R8G8B8A8_UNORM:
 			return DXGI_FORMAT_R8G8B8A8_UNORM;
+		case DXGI_FORMAT_R16G16B16A16_FLOAT:
+			return DXGI_FORMAT_R16G16B16A16_FLOAT;
 	}
 	assert(false);
 	return resourceFormat;
@@ -69,6 +71,8 @@ DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat)
 			return DXGI_FORMAT_R8G8B8A8_UNORM;
 		case DXGI_FORMAT_R10G10B10A2_UNORM:
 			return DXGI_FORMAT_R10G10B10A2_UNORM;
+		case DXGI_FORMAT_R16G16B16A16_FLOAT:
+			return DXGI_FORMAT_R16G16B16A16_FLOAT;
 	}
 	assert(false);
 	return resourceFormat;
@@ -650,6 +654,15 @@ Tex2DUnorderedAccessViewDesc::Tex2DUnorderedAccessViewDesc(DXGI_FORMAT format, U
 	Texture2D.PlaneSlice = planeSlice;
 }
 
+Tex3DUnorderedAccessViewDesc::Tex3DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstDepthSlice, UINT depthSliceCount)
+{
+	Format = format;
+	ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
+	Texture3D.MipSlice = mipSlice;
+	Texture3D.FirstWSlice = firstDepthSlice;
+	Texture3D.WSize = depthSliceCount;
+}
+
 GraphicsResource::GraphicsResource(ComPtr<ID3D12Resource> d3dResource, D3D12_RESOURCE_STATES initialState)
 	: m_D3DResource(d3dResource)
 	, m_Desc(d3dResource->GetDesc())
@@ -856,7 +869,6 @@ void ColorTexture::CreateTex2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 
-	// Kolya: Add missing impl
 	assert(pTexDesc->DepthOrArraySize == 1);
 	assert(pTexDesc->MipLevels == 1);
 	assert(pTexDesc->SampleDesc.Count == 1);
@@ -890,18 +902,35 @@ void ColorTexture::CreateTex2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_
 
 void ColorTexture::CreateTex3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc)
 {
-	assert(false && "Kolya: Needs impl");
+	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
+
+	assert(pTexDesc->MipLevels == 1);
+	assert(pTexDesc->SampleDesc.Count == 1);
+	assert(pTexDesc->SampleDesc.Quality == 0);
+
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleRTVHeap != nullptr);
+		m_RTVHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
+
+		Tex3DRenderTargetViewDesc viewDesc;
+		pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, m_RTVHandle);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_SRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+
+		Tex3DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format));
+		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_SRVHandle);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_UAVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+
+		Tex3DUnorderedAccessViewDesc viewDesc(GetUnorderedAccessViewFormat(pTexDesc->Format));
+		pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, m_UAVHandle);
 	}
 }
 
@@ -982,7 +1011,6 @@ void DepthTexture::CreateTex2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 
-	// Kolya: Add missing impl
 	assert(pTexDesc->DepthOrArraySize == 1);
 	assert(pTexDesc->MipLevels == 1);
 	assert(pTexDesc->SampleDesc.Count == 1);

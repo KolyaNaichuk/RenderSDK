@@ -15,7 +15,7 @@ StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t1);
 StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t2);
 Buffer<uint> g_NumPointLightsBuffer : register(t3);
 Buffer<uint> g_PointLightIndexBuffer : register(t4);
-#endif
+#endif // ENABLE_POINT_LIGHTS
 
 RWTexture3D<float4> g_AccumFluxRCoeffsTexture : register(u0);
 RWTexture3D<float4> g_AccumFluxGCoeffsTexture : register(u1);

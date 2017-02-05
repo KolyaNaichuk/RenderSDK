@@ -9,6 +9,7 @@ class PipelineState;
 class GraphicsResource;
 
 struct RenderEnv;
+struct BindingResourceList;
 
 class InjectVirtualPointLightsPass
 {
@@ -24,6 +25,9 @@ public:
 
 	struct RenderParams
 	{
+		RenderEnv* m_pRenderEnv;
+		CommandList* m_pCommandList;
+		BindingResourceList* m_pResources;
 	};
 
 	InjectVirtualPointLightsPass(InitPrams* pParams);

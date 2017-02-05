@@ -94,6 +94,7 @@ private:
 	CommandList* RecordTiledShadingPass();
 	CommandList* RecordClearVoxelGridPass();
 	CommandList* RecordCreateVoxelGridPass();
+	CommandList* RecordInjectVirtualPointLightsPass();
 	CommandList* RecordVisualizeVoxelGridPass();
 	CommandList* RecordVisualizeTexturePass();
 	CommandList* RecordPresentResourceBarrierPass();
@@ -125,6 +126,9 @@ private:
 	ColorTexture* m_pNormalTexture;
 	ColorTexture* m_pSpecularTexture;
 	ColorTexture* m_pAccumLightTexture;
+	ColorTexture* m_AccumFluxRCoeffsTextures[2];
+	ColorTexture* m_AccumFluxGCoeffsTextures[2];
+	ColorTexture* m_AccumFluxBCoeffsTextures[2];
 	Viewport* m_pBackBufferViewport;
 	Viewport* m_pSpotLightTiledShadowMapViewport;
 	Viewport* m_pPointLightTiledShadowMapViewport;
