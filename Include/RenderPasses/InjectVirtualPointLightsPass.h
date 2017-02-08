@@ -14,7 +14,7 @@ struct BindingResourceList;
 class InjectVirtualPointLightsPass
 {
 public:
-	struct InitPrams
+	struct InitParams
 	{
 		RenderEnv* m_pRenderEnv;
 		u16 m_NumGridCellsX;
@@ -30,7 +30,7 @@ public:
 		BindingResourceList* m_pResources;
 	};
 
-	InjectVirtualPointLightsPass(InitPrams* pParams);
+	InjectVirtualPointLightsPass(InitParams* pParams);
 	~InjectVirtualPointLightsPass();
 
 	void Record(RenderParams* pParams);

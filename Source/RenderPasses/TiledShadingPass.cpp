@@ -72,7 +72,7 @@ void TiledShadingPass::Record(RenderParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	BindingResourceList* pResources = pParams->m_pResources;
-	ColorTexture* pAccumLightTexture = pParams->m_pAccumLightTexture;
+	ColorTexture* pAccumLightingTexture = pParams->m_pAccumLightingTexture;
 
 	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
@@ -80,8 +80,8 @@ void TiledShadingPass::Record(RenderParams* pParams)
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 
-	const FLOAT accumLightClearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
-	pCommandList->ClearUnorderedAccessView(pResources->m_SRVHeapStart, pAccumLightTexture->GetUAVHandle(), pAccumLightTexture, accumLightClearColor);
+	const FLOAT initialLighting[] = {0.0f, 0.0f, 0.0f, 0.0f};
+	pCommandList->ClearUnorderedAccessView(pResources->m_SRVHeapStart, pAccumLightingTexture->GetUAVHandle(), pAccumLightingTexture, initialLighting);
 
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
 	pCommandList->End();

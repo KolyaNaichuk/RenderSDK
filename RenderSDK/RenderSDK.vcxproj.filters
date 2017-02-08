@@ -234,7 +234,7 @@
     <ClInclude Include="..\Include\RenderPasses\PropagateLightPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\ApplyIndirectLightingPass.h">
+    <ClInclude Include="..\Include\RenderPasses\CalcIndirectLightingPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -434,7 +434,7 @@
     <ClCompile Include="..\Source\RenderPasses\PropagateLightPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\ApplyIndirectLightingPass.cpp">
+    <ClCompile Include="..\Source\RenderPasses\CalcIndirectLightingPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
@@ -529,10 +529,10 @@
     <None Include="..\Shaders\InjectVirtualPointLightsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\ApplyIndirectLightingPS.hlsl">
+    <None Include="..\Shaders\BoundingVolumes.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\BoundingVolumes.hlsl">
+    <None Include="..\Shaders\CalcIndirectLightingPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

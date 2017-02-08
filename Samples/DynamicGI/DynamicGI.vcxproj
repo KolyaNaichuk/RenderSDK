@@ -143,8 +143,8 @@ COPY /Y "$(SolutionDir)Shaders\InjectVirtualPointLightsCS.hlsl" "$(SolutionDir)S
 COPY /Y "$(SolutionDir)Shaders\PropagateLightCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\PropagateLightCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\PropagateLightCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\PropagateLightCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\ApplyIndirectLightingPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ApplyIndirectLightingPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\ApplyIndirectLightingPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ApplyIndirectLightingPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CalcIndirectLightingPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CalcIndirectLightingPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CalcIndirectLightingPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CalcIndirectLightingPS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\VisualizeTexturePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeTexturePS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\VisualizeTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeTexturePS.hlsl"

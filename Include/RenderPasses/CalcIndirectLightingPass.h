@@ -8,22 +8,29 @@ class RootSignature;
 class PipelineState;
 class GraphicsResource;
 
+struct Viewport;
 struct RenderEnv;
+struct BindingResourceList;
 
-class ApplyIndirectLightingPass
+class CalcIndirectLightingPass
 {
 public:
-	struct InitPrams
+	struct InitParams
 	{
 		RenderEnv* m_pRenderEnv;
+		DXGI_FORMAT m_RTVFormat;
 	};
 
 	struct RenderParams
 	{
+		RenderEnv* m_pRenderEnv;
+		CommandList* m_pCommandList;
+		BindingResourceList* m_pResources;
+		Viewport* m_pViewport;
 	};
 
-	ApplyIndirectLightingPass(InitPrams* pParams);
-	~ApplyIndirectLightingPass();
+	CalcIndirectLightingPass(InitParams* pParams);
+	~CalcIndirectLightingPass();
 
 	void Record(RenderParams* pParams);
 

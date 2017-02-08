@@ -36,7 +36,7 @@ public:
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
 		BindingResourceList* m_pResources;
-		ColorTexture* m_pAccumLightTexture;
+		ColorTexture* m_pAccumLightingTexture;
 	};
 	
 	TiledShadingPass(InitParams* pParams);

@@ -41,7 +41,7 @@ Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t10);
 StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t11);
 #endif
 
-RWTexture2D<float4> g_AccumLightTexture : register(u0);
+RWTexture2D<float4> g_AccumLightingTexture : register(u0);
 
 #if ENABLE_POINT_LIGHTS == 1
 float3 CalcPointLightsContribution(uint tileIndex, float3 worldSpaceDirToViewer, float3 worldSpacePos, float3 worldSpaceNormal,
@@ -128,6 +128,6 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID)
 	float3 directionalLightContrib = float3(0.0f, 0.0f, 0.0f);
 #endif
 
-	float3 accumLight = pointLightsContrib + spotLightsContrib + directionalLightContrib;
-	g_AccumLightTexture[globalThreadId.xy] = float4(accumLight, 1.0f);
+	float3 accumLighting = pointLightsContrib + spotLightsContrib + directionalLightContrib;
+	g_AccumLightingTexture[globalThreadId.xy] = float4(accumLighting, 1.0f);
 }

@@ -13,7 +13,7 @@ enum RootParams
 	kNumRootParams
 };
 
-InjectVirtualPointLightsPass::InjectVirtualPointLightsPass(InitPrams* pParams)
+InjectVirtualPointLightsPass::InjectVirtualPointLightsPass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {

@@ -200,7 +200,7 @@
     <ClInclude Include="..\Include\Math\Vector2.h" />
     <ClInclude Include="..\Include\Math\Vector3.h" />
     <ClInclude Include="..\Include\Math\Vector4.h" />
-    <ClInclude Include="..\Include\RenderPasses\ApplyIndirectLightingPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CalcIndirectLightingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
     <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h" />
@@ -268,7 +268,7 @@
     <ClCompile Include="..\Source\Math\Vector2.cpp" />
     <ClCompile Include="..\Source\Math\Vector3.cpp" />
     <ClCompile Include="..\Source\Math\Vector4.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\ApplyIndirectLightingPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CalcIndirectLightingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp" />
@@ -546,7 +546,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\ApplyIndirectLightingPS.hlsl">
+    <None Include="..\Shaders\CalcIndirectLightingPS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

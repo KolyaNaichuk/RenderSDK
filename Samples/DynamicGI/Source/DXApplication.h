@@ -23,7 +23,7 @@ class ClearVoxelGridPass;
 class CreateVoxelGridPass;
 class InjectVirtualPointLightsPass;
 class PropagateLightPass;
-class ApplyIndirectLightingPass;
+class CalcIndirectLightingPass;
 class VisualizeVoxelGridPass;
 class VisualizeTexturePass;
 class TiledLightCullingPass;
@@ -74,7 +74,7 @@ private:
 	void InitCreateVoxelGridPass();
 	void InitInjectVirtualPointLightsPass();
 	void InitPropagateLightPass();
-	void InitApplyIndirectLightingPass();
+	void InitCalcIndirectLightingPass(UINT backBufferWidth, UINT backBufferHeight);
 	void InitVisualizeVoxelGridPass(VisualizeVoxelGridPass::VoxelDataType voxelDataType);
 	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
 
@@ -96,6 +96,7 @@ private:
 	CommandList* RecordCreateVoxelGridPass();
 	CommandList* RecordInjectVirtualPointLightsPass();
 	CommandList* RecordPropagateLightPass();
+	CommandList* RecordCalcIndirectLightingPass();
 	CommandList* RecordVisualizeVoxelGridPass();
 	CommandList* RecordVisualizeTexturePass();
 	CommandList* RecordPresentResourceBarrierPass();
@@ -126,7 +127,8 @@ private:
 	ColorTexture* m_pDiffuseTexture;
 	ColorTexture* m_pNormalTexture;
 	ColorTexture* m_pSpecularTexture;
-	ColorTexture* m_pAccumLightTexture;
+	ColorTexture* m_pAccumLightingTexture;
+	ColorTexture* m_pIndirectLightingTexture;
 	ColorTexture* m_FluxRCoeffsTextures[2];
 	ColorTexture* m_FluxGCoeffsTextures[2];
 	ColorTexture* m_FluxBCoeffsTextures[2];
@@ -193,8 +195,8 @@ private:
 	PropagateLightPass* m_pPropagateLightPass;
 	BindingResourceList* m_PropagateLightResources[2];
 
-	ApplyIndirectLightingPass* m_pApplyIndirectLightingPass;
-	BindingResourceList* m_pApplyIndirectLightingResources;
+	CalcIndirectLightingPass* m_pCalcIndirectLightingPass;
+	BindingResourceList* m_pCalcIndirectLightingResources;
 	
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridPass;
 	BindingResourceList* m_VisualizeVoxelGridResources[kNumBackBuffers];

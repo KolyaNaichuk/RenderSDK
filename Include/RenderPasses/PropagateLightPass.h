@@ -14,7 +14,7 @@ struct BindingResourceList;
 class PropagateLightPass
 {
 public:
-	struct InitPrams
+	struct InitParams
 	{
 		RenderEnv* m_pRenderEnv;
 		u16 m_NumGridCellsX;
@@ -30,7 +30,7 @@ public:
 		u16 m_NumIterations;
 	};
 
-	PropagateLightPass(InitPrams* pParams);
+	PropagateLightPass(InitParams* pParams);
 	~PropagateLightPass();
 
 	void Record(RenderParams* pParams);

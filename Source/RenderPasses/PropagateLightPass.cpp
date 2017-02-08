@@ -13,7 +13,7 @@ enum RootParams
 	kNumRootParams
 };
 
-PropagateLightPass::PropagateLightPass(InitPrams* pParams)
+PropagateLightPass::PropagateLightPass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
@@ -40,14 +40,14 @@ PropagateLightPass::PropagateLightPass(InitPrams* pParams)
 	};
 	Shader computeShader(L"Shaders//PropagateLightCS.hlsl", "Main", "cs_5_0", shaderDefines);
 	
-	const D3D12_DESCRIPTOR_RANGE SRVDescriptorRanges[] =
+	const D3D12_DESCRIPTOR_RANGE srvDescriptorRanges[] =
 	{
 		CBVDescriptorRange(1, 0),
 		SRVDescriptorRange(3, 0),
 		UAVDescriptorRange(3, 0)
 	};
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kSRVRootParam] = RootDescriptorTableParameter(ARRAYSIZE(SRVDescriptorRanges), &SRVDescriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
+	rootParams[kSRVRootParam] = RootDescriptorTableParameter(ARRAYSIZE(srvDescriptorRanges), &srvDescriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
 	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"PropagateLightPass::m_pRootSignature");
