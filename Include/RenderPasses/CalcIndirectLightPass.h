@@ -12,7 +12,7 @@ struct Viewport;
 struct RenderEnv;
 struct BindingResourceList;
 
-class CalcIndirectLightingPass
+class CalcIndirectLightPass
 {
 public:
 	struct InitParams
@@ -29,8 +29,8 @@ public:
 		Viewport* m_pViewport;
 	};
 
-	CalcIndirectLightingPass(InitParams* pParams);
-	~CalcIndirectLightingPass();
+	CalcIndirectLightPass(InitParams* pParams);
+	~CalcIndirectLightPass();
 
 	void Record(RenderParams* pParams);
 

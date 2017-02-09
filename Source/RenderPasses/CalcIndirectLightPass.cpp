@@ -1,4 +1,4 @@
-#include "RenderPasses/CalcIndirectLightingPass.h"
+#include "RenderPasses/CalcIndirectLightPass.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RootSignature.h"
@@ -14,14 +14,14 @@ enum RootParams
 	kNumRootParams
 };
 
-CalcIndirectLightingPass::CalcIndirectLightingPass(InitParams* pParams)
+CalcIndirectLightPass::CalcIndirectLightPass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//CalcIndirectLightingPS.hlsl", "Main", "ps_4_0");
+	Shader pixelShader(L"Shaders//CalcIndirectLightPS.hlsl", "Main", "ps_4_0");
 
 	D3D12_DESCRIPTOR_RANGE srvDescriptorRanges[] =
 	{
@@ -33,7 +33,7 @@ CalcIndirectLightingPass::CalcIndirectLightingPass(InitParams* pParams)
 	rootParams[kSRVRootParam] = RootDescriptorTableParameter(ARRAYSIZE(srvDescriptorRanges), &srvDescriptorRanges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CalcIndirectLightingPass::m_pRootSignature");
+	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CalcIndirectLightPass::m_pRootSignature");
 
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
@@ -42,16 +42,16 @@ CalcIndirectLightingPass::CalcIndirectLightingPass(InitParams* pParams)
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat);
 
-	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CalcIndirectLightingPass::m_pPipelineState");
+	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CalcIndirectLightPass::m_pPipelineState");
 }
 
-CalcIndirectLightingPass::~CalcIndirectLightingPass()
+CalcIndirectLightPass::~CalcIndirectLightPass()
 {
 	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pRootSignature);
 }
 
-void CalcIndirectLightingPass::Record(RenderParams* pParams)
+void CalcIndirectLightPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
@@ -64,10 +64,10 @@ void CalcIndirectLightingPass::Record(RenderParams* pParams)
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 		
-	const FLOAT initialLightColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
+	const FLOAT initialLight[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = pResources->m_RTVHeapStart;
-	pCommandList->ClearRenderTargetView(rtvHeapStart, initialLightColor);
+	pCommandList->ClearRenderTargetView(rtvHeapStart, initialLight);
 	pCommandList->OMSetRenderTargets(1, &rtvHeapStart);
 
 	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

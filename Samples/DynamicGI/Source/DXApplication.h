@@ -23,7 +23,7 @@ class ClearVoxelGridPass;
 class CreateVoxelGridPass;
 class InjectVirtualPointLightsPass;
 class PropagateLightPass;
-class CalcIndirectLightingPass;
+class CalcIndirectLightPass;
 class VisualizeVoxelGridPass;
 class VisualizeTexturePass;
 class TiledLightCullingPass;
@@ -74,7 +74,7 @@ private:
 	void InitCreateVoxelGridPass();
 	void InitInjectVirtualPointLightsPass();
 	void InitPropagateLightPass();
-	void InitCalcIndirectLightingPass(UINT backBufferWidth, UINT backBufferHeight);
+	void InitCalcIndirectLightPass(UINT backBufferWidth, UINT backBufferHeight);
 	void InitVisualizeVoxelGridPass(VisualizeVoxelGridPass::VoxelDataType voxelDataType);
 	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
 
@@ -96,7 +96,7 @@ private:
 	CommandList* RecordCreateVoxelGridPass();
 	CommandList* RecordInjectVirtualPointLightsPass();
 	CommandList* RecordPropagateLightPass();
-	CommandList* RecordCalcIndirectLightingPass();
+	CommandList* RecordCalcIndirectLightPass();
 	CommandList* RecordVisualizeVoxelGridPass();
 	CommandList* RecordVisualizeTexturePass();
 	CommandList* RecordPresentResourceBarrierPass();
@@ -127,8 +127,8 @@ private:
 	ColorTexture* m_pDiffuseTexture;
 	ColorTexture* m_pNormalTexture;
 	ColorTexture* m_pSpecularTexture;
-	ColorTexture* m_pAccumLightingTexture;
-	ColorTexture* m_pIndirectLightingTexture;
+	ColorTexture* m_pAccumLightTexture;
+	ColorTexture* m_pIndirectLightTexture;
 	ColorTexture* m_FluxRCoeffsTextures[2];
 	ColorTexture* m_FluxGCoeffsTextures[2];
 	ColorTexture* m_FluxBCoeffsTextures[2];
@@ -195,8 +195,8 @@ private:
 	PropagateLightPass* m_pPropagateLightPass;
 	BindingResourceList* m_PropagateLightResources[2];
 
-	CalcIndirectLightingPass* m_pCalcIndirectLightingPass;
-	BindingResourceList* m_pCalcIndirectLightingResources;
+	CalcIndirectLightPass* m_pCalcIndirectLightPass;
+	BindingResourceList* m_pCalcIndirectLightResources;
 	
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridPass;
 	BindingResourceList* m_VisualizeVoxelGridResources[kNumBackBuffers];
