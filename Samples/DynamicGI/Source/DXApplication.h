@@ -247,6 +247,7 @@ private:
 
 #ifdef DEBUG_RENDER_PASS
 	BindingResourceList* m_pDebugResources;
+	Buffer* m_pDebugPointLightRangePerTileBuffer;
 	Buffer* m_pDebugNumVisibleMeshesBuffer;
 	Buffer* m_pDebugVisibleMeshIndexBuffer;
 	Buffer* m_pDebugShadowCastingSpotLightIndexBuffer;

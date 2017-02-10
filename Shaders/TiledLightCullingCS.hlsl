@@ -58,9 +58,9 @@ groupshared uint g_SpotLightIndicesPerTile[MAX_NUM_SPOT_LIGHTS];
 groupshared uint g_SpotLightIndicesOffset;
 #endif
 
-float4 CreatePlanePassingThroughOrigin(float3 pt1, float3 pt2)
+float4 CreatePlaneThroughOrigin(float3 point1, float3 point2)
 {
-	float3 planeNormal = normalize(cross(pt1, pt2));
+	float3 planeNormal = normalize(cross(point1, point2));
 	float signedDistFromOrigin = 0.0f;
 
 	return float4(planeNormal, signedDistFromOrigin);
@@ -81,10 +81,10 @@ void BuildFrustumSidePlanes(out float4 viewSpaceFrusumSidePlanes[4], uint2 tileI
 	float3 viewSpaceTileBLCorner = ComputeViewSpacePosition(texSpaceTileBLCorner, 1.0f, g_LightCullingData.projInvMatrix).xyz;
 	float3 viewSpaceTileBRCorner = ComputeViewSpacePosition(texSpaceTileBRCorner, 1.0f, g_LightCullingData.projInvMatrix).xyz;
 
-	viewSpaceFrusumSidePlanes[0] = CreatePlanePassingThroughOrigin(viewSpaceTileTRCorner, viewSpaceTileTLCorner);
-	viewSpaceFrusumSidePlanes[1] = CreatePlanePassingThroughOrigin(viewSpaceTileBLCorner, viewSpaceTileBRCorner);
-	viewSpaceFrusumSidePlanes[2] = CreatePlanePassingThroughOrigin(viewSpaceTileTLCorner, viewSpaceTileBLCorner);
-	viewSpaceFrusumSidePlanes[3] = CreatePlanePassingThroughOrigin(viewSpaceTileBRCorner, viewSpaceTileTRCorner);
+	viewSpaceFrusumSidePlanes[0] = CreatePlaneThroughOrigin(viewSpaceTileTRCorner, viewSpaceTileTLCorner);
+	viewSpaceFrusumSidePlanes[1] = CreatePlaneThroughOrigin(viewSpaceTileBLCorner, viewSpaceTileBRCorner);
+	viewSpaceFrusumSidePlanes[2] = CreatePlaneThroughOrigin(viewSpaceTileTLCorner, viewSpaceTileBLCorner);
+	viewSpaceFrusumSidePlanes[3] = CreatePlaneThroughOrigin(viewSpaceTileBRCorner, viewSpaceTileTRCorner);
 }
 
 bool TestSphereAgainstFrustum(float4 frustumSidePlanes[4], float frustumMinZ, float frustumMaxZ, Sphere sphere)
@@ -160,15 +160,12 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 	GroupMemoryBarrierWithGroupSync();
 
 	float hardwareDepth = g_DepthTexture[globalThreadId.xy].x;
+	
 	float viewSpaceDepth = ComputeViewSpaceDepth(hardwareDepth, g_LightCullingData.projMatrix);
+	uint viewSpaceDepthInt = asuint(viewSpaceDepth);
 
-	if (hardwareDepth != 1.0f)
-	{
-		uint viewSpaceDepthInt = asuint(viewSpaceDepth);
-
-		InterlockedMin(g_ViewSpaceMinDepthIntPerTile, viewSpaceDepthInt);
-		InterlockedMax(g_ViewSpaceMaxDepthIntPerTile, viewSpaceDepthInt);
-	}
+	InterlockedMin(g_ViewSpaceMinDepthIntPerTile, viewSpaceDepthInt);
+	InterlockedMax(g_ViewSpaceMaxDepthIntPerTile, viewSpaceDepthInt);
 	GroupMemoryBarrierWithGroupSync();
 
 	float viewSpaceMinDepthPerTile = asfloat(g_ViewSpaceMinDepthIntPerTile);

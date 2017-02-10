@@ -167,7 +167,7 @@ enum OutputResult
 	OutputResult_PointLightTiledShadowMap,
 	OutputResult_AccumLight,
 	OutputResult_IndirectLight,
-	OutputResult_VoxelGridDiffuseColor,
+	OutputResult_VoxelGridDiffuseAlbedo,
 	OutputResult_VoxelGridNormal
 };
 
@@ -389,6 +389,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCamera(nullptr)
 #ifdef DEBUG_RENDER_PASS
 	, m_pDebugResources(new BindingResourceList())
+	, m_pDebugPointLightRangePerTileBuffer(nullptr)
 	, m_pDebugNumVisibleMeshesBuffer(nullptr)
 	, m_pDebugVisibleMeshIndexBuffer(nullptr)
 	, m_pDebugShadowCastingSpotLightIndexBuffer(nullptr)
@@ -538,6 +539,7 @@ DXApplication::~DXApplication()
 
 #ifdef DEBUG_RENDER_PASS
 	SafeDelete(m_pDebugResources);
+	SafeDelete(m_pDebugPointLightRangePerTileBuffer);
 	SafeDelete(m_pDebugNumVisibleMeshesBuffer);
 	SafeDelete(m_pDebugVisibleMeshIndexBuffer);
 	SafeDelete(m_pDebugShadowCastingSpotLightIndexBuffer);
@@ -592,7 +594,7 @@ void DXApplication::OnInit()
 	InitPropagateLightPass();
 	InitCalcIndirectLightPass(backBufferWidth, backBufferHeight);
 
-	if (kOutputResult == OutputResult_VoxelGridDiffuseColor)
+	if (kOutputResult == OutputResult_VoxelGridDiffuseAlbedo)
 		InitVisualizeVoxelGridPass(VisualizeVoxelGridPass::VoxelDataType_DiffuseColor);
 	else if (kOutputResult == OutputResult_VoxelGridNormal)
 		InitVisualizeVoxelGridPass(VisualizeVoxelGridPass::VoxelDataType_Normal);
@@ -655,7 +657,7 @@ void DXApplication::OnRender()
 	submissionBatch.emplace_back(RecordPropagateLightPass());
 	submissionBatch.emplace_back(RecordCalcIndirectLightPass());
 
-	if ((kOutputResult == OutputResult_VoxelGridDiffuseColor) || (kOutputResult == OutputResult_VoxelGridNormal))
+	if ((kOutputResult == OutputResult_VoxelGridDiffuseAlbedo) || (kOutputResult == OutputResult_VoxelGridNormal))
 		submissionBatch.emplace_back(RecordVisualizeVoxelGridPass());
 	else
 		submissionBatch.emplace_back(RecordVisualizeTexturePass());
@@ -712,7 +714,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 10, false);
 	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 100, true);
+	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 103, true);
 	m_pShaderVisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
 	DescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 73, false);
@@ -1069,7 +1071,7 @@ void DXApplication::InitTiledShadingPass()
 
 	TiledShadingPass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
-	initParams.m_ShadingMode = ShadingMode_Phong;
+	initParams.m_ShadingMode = ShadingMode_BlinnPhong;
 	initParams.m_TileSize = kTileSize;
 	initParams.m_NumTilesX = kNumTilesX;
 	initParams.m_NumTilesY = kNumTilesY;
@@ -2159,6 +2161,9 @@ void DXApplication::InitDebugRenderPass(const Scene* pScene)
 
 	if (m_pPointLightBuffer != nullptr)
 	{
+		StructuredBufferDesc lightRangePerTileBufferDesc(kNumTilesX * kNumTilesY, sizeof(Range), false, false);
+		m_pDebugPointLightRangePerTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &lightRangePerTileBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugPointLightRangePerTileBuffer");
+
 		StructuredBufferDesc shadowMapTileBufferDesc(kNumCubeMapFaces * m_pPointLightBuffer->GetNumLights(), sizeof(ShadowMapTile), false, false);
 		m_pDebugPointLightShadowMapTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &shadowMapTileBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugPointLightShadowMapTileBuffer");
 	}
@@ -2189,6 +2194,7 @@ void DXApplication::InitDebugRenderPass(const Scene* pScene)
 	
 	if (m_pPointLightBuffer != nullptr)
 	{
+		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pPointLightRangePerTileBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
 		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pPointLightShadowMapTileBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
 	}
 
@@ -2215,6 +2221,7 @@ CommandList* DXApplication::RecordDebugRenderPass()
 
 	if (m_pPointLightBuffer != nullptr)
 	{
+		pCommandList->CopyResource(m_pDebugPointLightRangePerTileBuffer, m_pPointLightRangePerTileBuffer);
 		pCommandList->CopyResource(m_pDebugPointLightShadowMapTileBuffer, m_pPointLightShadowMapTileBuffer);
 	}
 
@@ -2249,6 +2256,18 @@ void DXApplication::OuputDebugRenderPassResult()
 
 	if (m_pPointLightBuffer != nullptr)
 	{
+		u16 numTiles = kNumTilesX * kNumTilesY;
+		std::vector<Range> pointLightRangePerTile(numTiles);
+		m_pDebugPointLightRangePerTileBuffer->Read(pointLightRangePerTile.data(), numTiles * sizeof(Range));
+
+		for (u16 i = 0; i < numTiles; ++i)
+		{
+			const Range& range = pointLightRangePerTile[i];
+			OutputDebugStringA("Tile:\n");
+			OutputDebugStringA(("\tstart: " + std::to_string(range.m_Start) + " length: " + std::to_string(range.m_Length)).c_str());
+			OutputDebugStringA("\n");
+		}
+		
 		u16 numPointLightShadowMapTiles = kNumCubeMapFaces * m_pPointLightBuffer->GetNumLights();
 		std::vector<ShadowMapTile> pointLightShadowMapTiles(numPointLightShadowMapTiles);
 		m_pDebugPointLightShadowMapTileBuffer->Read(pointLightShadowMapTiles.data(), numPointLightShadowMapTiles * sizeof(ShadowMapTile));
