@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Common/Application.h"
-#include "RenderPasses/VisualizeVoxelGridPass.h"
 
 class GraphicsDevice;
 class SwapChain;
@@ -26,6 +25,7 @@ class PropagateLightPass;
 class CalcIndirectLightPass;
 class VisualizeVoxelGridPass;
 class VisualizeTexturePass;
+class VisualizeVoxelGridPass;
 class TiledLightCullingPass;
 class TiledShadingPass;
 class ViewFrustumCullingPass;
@@ -44,6 +44,21 @@ struct Viewport;
 class DXApplication : public Application
 {
 public:
+	enum class DisplayResult
+	{
+		AccumLight,
+		IndirectLight,
+		DiffuseBuffer,
+		SpecularBuffer,
+		NormalBuffer,
+		DepthBuffer,
+		SpotLightTiledShadowMap,
+		PointLightTiledShadowMap,
+		VoxelGridDiffuse,
+		VoxelGridNormal,
+		Unspecified
+	};
+
 	DXApplication(HINSTANCE hApp);
 	~DXApplication();
 
@@ -69,13 +84,21 @@ private:
 	void InitCreateRenderShadowMapCommandsPass();
 	void InitRenderSpotLightTiledShadowMapPass();
 	void InitRenderPointLightTiledShadowMapPass();
-	void InitVisualizeTexturePass();
 	void InitClearVoxelGridPass();
 	void InitCreateVoxelGridPass();
 	void InitInjectVirtualPointLightsPass();
 	void InitPropagateLightPass();
 	void InitCalcIndirectLightPass(UINT backBufferWidth, UINT backBufferHeight);
-	void InitVisualizeVoxelGridPass(VisualizeVoxelGridPass::VoxelDataType voxelDataType);
+	void InitVisualizeVoxelGridDiffusePass();
+	void InitVisualizeVoxelGridNormalPass();
+	void InitVisualizeAccumLightPass();
+	void InitVisualizeIndirectLightPass();
+	void InitVisualizeDiffuseBufferPass();
+	void InitVisualizeSpecularBufferPass();
+	void InitVisualizeNormalBufferPass();
+	void InitVisualizeDepthBufferPass();
+	void InitVisualizeSpotLightTiledShadowMapPass();
+	void InitVisualizePointLightTiledShadowMapPass();
 	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
 
 	CommandList* RecordClearBackBufferPass(u8 clearFlags);
@@ -97,10 +120,21 @@ private:
 	CommandList* RecordInjectVirtualPointLightsPass();
 	CommandList* RecordPropagateLightPass();
 	CommandList* RecordCalcIndirectLightPass();
-	CommandList* RecordVisualizeVoxelGridPass();
-	CommandList* RecordVisualizeTexturePass();
+	CommandList* RecordVisualizeVoxelGridDiffusePass();
+	CommandList* RecordVisualizeVoxelGridNormalPass();
+	CommandList* RecordVisualizeAccumLightPass();
+	CommandList* RecordVisualizeIndirectLightPass();
+	CommandList* RecordVisualizeDiffuseBufferPass();
+	CommandList* RecordVisualizeSpecularBufferPass();
+	CommandList* RecordVisualizeNormalBufferPass();
+	CommandList* RecordVisualizeDepthBufferPass();
+	CommandList* RecordVisualizeSpotLightTiledShadowMapPass();
+	CommandList* RecordVisualizePointLightTiledShadowMapPass();
+	CommandList* RecordDisplayResultPass();
 	CommandList* RecordPresentResourceBarrierPass();
-	
+
+	void UpdateDisplayResult(DisplayResult displayResult);
+		
 #ifdef DEBUG_RENDER_PASS
 	void InitDebugRenderPass(const Scene* pScene);
 	CommandList* RecordDebugRenderPass();
@@ -109,6 +143,8 @@ private:
 	
 private:
 	enum { kNumBackBuffers = 3 };
+
+	DisplayResult m_DisplayResult;
 
 	GraphicsDevice* m_pDevice;
 	SwapChain* m_pSwapChain;
@@ -198,8 +234,11 @@ private:
 	CalcIndirectLightPass* m_pCalcIndirectLightPass;
 	BindingResourceList* m_pCalcIndirectLightResources;
 	
-	VisualizeVoxelGridPass* m_pVisualizeVoxelGridPass;
-	BindingResourceList* m_VisualizeVoxelGridResources[kNumBackBuffers];
+	VisualizeVoxelGridPass* m_pVisualizeVoxelGridDiffusePass;
+	BindingResourceList* m_VisualizeVoxelGridDiffuseResources[kNumBackBuffers];
+
+	VisualizeVoxelGridPass* m_pVisualizeVoxelGridNormalPass;
+	BindingResourceList* m_VisualizeVoxelGridNormalResources[kNumBackBuffers];
 
 	ViewFrustumCullingPass* m_pDetectVisibleMeshesPass;
 	BindingResourceList* m_pDetectVisibleMeshesResources;
@@ -230,9 +269,30 @@ private:
 	SetupTiledShadowMapPass* m_pSetupPointLightTiledShadowMapPass;
 	BindingResourceList* m_pSetupPointLightTiledShadowMapResources;
 
-	VisualizeTexturePass* m_pVisualizeTexturePass;
-	BindingResourceList* m_VisualizeTextureResources[kNumBackBuffers];
+	VisualizeTexturePass* m_pVisualizeAccumLightPass;
+	BindingResourceList* m_VisualizeAccumLightResources[kNumBackBuffers];
 
+	VisualizeTexturePass* m_pVisualizeIndirectLightPass;
+	BindingResourceList* m_VisualizeIndirectLightResources[kNumBackBuffers];
+
+	VisualizeTexturePass* m_pVisualizeDiffuseBufferPass;
+	BindingResourceList* m_VisualizeDiffuseBufferResources[kNumBackBuffers];
+
+	VisualizeTexturePass* m_pVisualizeSpecularBufferPass;
+	BindingResourceList* m_VisualizeSpecularBufferResources[kNumBackBuffers];
+
+	VisualizeTexturePass* m_pVisualizeNormalBufferPass;
+	BindingResourceList* m_VisualizeNormalBufferResources[kNumBackBuffers];
+
+	VisualizeTexturePass* m_pVisualizeDepthBufferPass;
+	BindingResourceList* m_VisualizeDepthBufferResources[kNumBackBuffers];
+
+	VisualizeTexturePass* m_pVisualizeSpotLightTiledShadowMapPass;
+	BindingResourceList* m_VisualizeSpotLightTiledShadowMapResources[kNumBackBuffers];
+
+	VisualizeTexturePass* m_pVisualizePointLightTiledShadowMapPass;
+	BindingResourceList* m_VisualizePointLightTiledShadowMapResources[kNumBackBuffers];
+	
 	MeshBatch* m_pMeshBatch;
 	
 	LightBuffer* m_pPointLightBuffer;

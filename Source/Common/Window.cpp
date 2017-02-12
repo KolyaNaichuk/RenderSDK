@@ -53,3 +53,8 @@ RECT Window::GetClientRect() const
 	::GetClientRect(m_hWnd, &rect);
 	return rect;
 }
+
+void Window::SetWindowText(LPCWSTR pText)
+{
+	::SetWindowText(m_hWnd, pText);
+}

@@ -16,6 +16,7 @@ public:
 	HWND GetHWND();
 	void Show(int command);
 	RECT GetClientRect() const;
+	void SetWindowText(LPCWSTR pText);
 
 private:
 	HINSTANCE m_hApp;
