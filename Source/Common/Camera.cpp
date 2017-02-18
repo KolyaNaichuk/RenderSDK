@@ -10,10 +10,7 @@ Camera::Camera(ProjType projType, f32 nearClipPlane, f32 farClipPlane, f32 aspec
 	, m_FarClipPlane(farClipPlane)
 	, m_AspectRatio(aspectRatio)
 	, m_ClearFlags(ClearFlag_None)
-	, m_CullingMask(0)
-	, m_UseOcclusionCulling(true)
-	, m_OpaqueSortMode(OpaqueSortMode_FrontToBack)
-	, m_FovY(0.25f * PI)
+	, m_FovYInRadians(PI_DIV_FOUR)
 	, m_SizeY(10.0f)
 	, m_DirtyFlags(DirtyFlag_ProjMatrix)
 {
@@ -40,48 +37,16 @@ void Camera::SetClearFlags(u8 clearFlags)
 	m_ClearFlags = clearFlags;
 }
 
-u8 Camera::GetCullingMask() const
-{
-	assert(false && "Needs impl");
-	return m_CullingMask;
-}
-
-void Camera::SetCullingMask(u8 cullingMask)
-{
-	assert(false && "Needs impl");
-	m_CullingMask = cullingMask;
-}
-
-bool Camera::UseOcclusionCulling() const
-{
-	return m_UseOcclusionCulling;
-}
-
-void Camera::SetUseOcclusionCulling(bool useOcclusionCulling)
-{
-	m_UseOcclusionCulling = useOcclusionCulling;
-}
-
-Camera::OpaqueSortMode Camera::GetOpaqueSortMode() const
-{
-	return m_OpaqueSortMode;
-}
-
-void Camera::SetOpaqueSortMode(Camera::OpaqueSortMode opaqueSortMode)
-{
-	m_OpaqueSortMode = opaqueSortMode;
-}
-
-const Radian& Camera::GetFovY() const
+f32 Camera::GetFovY() const
 {
 	assert(m_ProjType == ProjType_Perspective);
-	return m_FovY;
+	return m_FovYInRadians;
 }
 
-void Camera::SetFovY(const Radian& fovY)
+void Camera::SetFovY(f32 fovYInRadians)
 {
 	assert(m_ProjType == ProjType_Perspective);
-	m_FovY = fovY;
+	m_FovYInRadians = fovYInRadians;
 	m_DirtyFlags |= DirtyFlag_ProjMatrix;
 }
 
@@ -156,7 +121,7 @@ const Matrix4f& Camera::GetProjMatrix() const
 		}
 		else if (m_ProjType == ProjType_Perspective)
 		{
-			m_ProjMatrix = CreatePerspectiveFovProjMatrix(m_FovY, m_AspectRatio, m_NearClipPlane, m_FarClipPlane);
+			m_ProjMatrix = CreatePerspectiveFovProjMatrix(m_FovYInRadians, m_AspectRatio, m_NearClipPlane, m_FarClipPlane);
 		}
 		else
 		{

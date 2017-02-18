@@ -117,10 +117,10 @@ const Matrix4f CreateScalingMatrix(f32 scale)
 	return CreateScalingMatrix(scale, scale, scale);
 }
 
-const Matrix4f CreateRotationXMatrix(const Radian& angle)
+const Matrix4f CreateRotationXMatrix(f32 angleInRadians)
 {
 	f32 sinAngle, cosAngle;
-	SinCos(sinAngle, cosAngle, angle);
+	SinCos(sinAngle, cosAngle, angleInRadians);
 
 	return Matrix4f(1.0f, 0.0f, 0.0f, 0.0f,
 					0.0f, cosAngle, sinAngle, 0.0f,
@@ -128,10 +128,10 @@ const Matrix4f CreateRotationXMatrix(const Radian& angle)
 					0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-const Matrix4f CreateRotationYMatrix(const Radian& angle)
+const Matrix4f CreateRotationYMatrix(f32 angleInRadians)
 {
 	f32 sinAngle, cosAngle;
-	SinCos(sinAngle, cosAngle, angle);
+	SinCos(sinAngle, cosAngle, angleInRadians);
 
 	return Matrix4f(cosAngle, 0.0f, -sinAngle, 0.0f,
 					0.0f, 1.0f, 0.0f, 0.0f,
@@ -139,10 +139,10 @@ const Matrix4f CreateRotationYMatrix(const Radian& angle)
 					0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-const Matrix4f CreateRotationZMatrix(const Radian& angle)
+const Matrix4f CreateRotationZMatrix(f32 angleInRadians)
 {
 	f32 sinAngle, cosAngle;
-	SinCos(sinAngle, cosAngle, angle);
+	SinCos(sinAngle, cosAngle, angleInRadians);
 
 	return Matrix4f(cosAngle, sinAngle, 0.0f, 0.0f,
 				   -sinAngle, cosAngle, 0.0f, 0.0f,
@@ -155,7 +155,7 @@ const Matrix4f CreateRotationMatrix(const AxisAngle& axisAngle)
 	assert(IsNormalized(axisAngle.m_Axis));
 
 	f32 sinAngle, cosAngle;
-	SinCos(sinAngle, cosAngle, axisAngle.m_Angle);
+	SinCos(sinAngle, cosAngle, axisAngle.m_AngleInRadians);
 
 	Vector3f sinAxis = sinAngle * axisAngle.m_Axis;
 	Vector3f cosAxis = (1.0f - cosAngle) * axisAngle.m_Axis;
@@ -221,9 +221,9 @@ const Matrix4f CreatePerspectiveProjMatrix(f32 nearWidth, f32 nearHeight, f32 ne
 					0.0f, 0.0f, nearZ * farZ / (nearZ - farZ), 0.0f);
 }
 
-const Matrix4f CreatePerspectiveFovProjMatrix(const Radian& fovY, f32 aspectRatio, f32 nearZ, f32 farZ)
+const Matrix4f CreatePerspectiveFovProjMatrix(f32 fovYInRadians, f32 aspectRatio, f32 nearZ, f32 farZ)
 {
-	f32 yScale = Rcp(Tan(0.5f * fovY));
+	f32 yScale = Rcp(Tan(0.5f * fovYInRadians));
 	f32 xScale = yScale / aspectRatio;
 
 	return Matrix4f(xScale, 0.0f, 0.0f, 0.0f,

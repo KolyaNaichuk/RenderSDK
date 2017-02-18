@@ -533,10 +533,10 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 	}
 	else if (settings == CornellBoxSettings_Test1)
 	{
-		SpotLight* pSpotLight = new SpotLight("pSpotLight", 650.0f, Radian(PI_DIV_FOUR), Radian(PI_DIV_TWO));
+		SpotLight* pSpotLight = new SpotLight("pSpotLight", 650.0f, PI_DIV_FOUR, PI_DIV_TWO);
 		pSpotLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 		pSpotLight->GetTransform().SetPosition(Vector3f(275.0f, 540.0f, -280.0f));
-		pSpotLight->GetTransform().SetRotation(CreateRotationXQuaternion(Radian(PI_DIV_TWO)));
+		pSpotLight->GetTransform().SetRotation(CreateRotationXQuaternion(PI_DIV_TWO));
 
 		pScene->AddSpotLight(pSpotLight);
 	}
@@ -552,7 +552,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 	{
 		DirectionalLight* pDirectionalLight = new DirectionalLight("pDirectionalLight");
 		pDirectionalLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
-		pDirectionalLight->GetTransform().SetRotation(CreateRotationXQuaternion(Radian(PI_DIV_TWO + PI_DIV_FOUR)));
+		pDirectionalLight->GetTransform().SetRotation(CreateRotationXQuaternion(PI_DIV_TWO + PI_DIV_FOUR));
 
 		pScene->SetDirectionalLight(pDirectionalLight);
 	}

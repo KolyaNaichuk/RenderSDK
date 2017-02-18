@@ -1,7 +1,6 @@
 #include "Math/Quaternion.h"
 #include "Math/AxisAngle.h"
 #include "Math/EulerAngles.h"
-#include "Math/Radian.h"
 #include "Math/Vector3.h"
 #include "Math/Matrix4.h"
 
@@ -33,7 +32,7 @@ Quaternion::Quaternion(const AxisAngle& axisAngle)
 	assert(IsNormalized(axisAngle.m_Axis));
 	
 	f32 sinHalfAngle, cosHalfAngle;
-	SinCos(sinHalfAngle, cosHalfAngle, 0.5f * axisAngle.m_Angle);
+	SinCos(sinHalfAngle, cosHalfAngle, 0.5f * axisAngle.m_AngleInRadians);
 
 	m_W = cosHalfAngle;
 	m_X = sinHalfAngle * axisAngle.m_Axis.m_X;
@@ -44,13 +43,13 @@ Quaternion::Quaternion(const AxisAngle& axisAngle)
 Quaternion::Quaternion(const EulerAngles& eulerAngles)
 {
 	f32 sinAngleZ, cosAngleZ;
-	SinCos(sinAngleZ, cosAngleZ, 0.5f * eulerAngles.m_ZAxisAngle);
+	SinCos(sinAngleZ, cosAngleZ, 0.5f * eulerAngles.m_ZAxisAngleInRadians);
 
 	f32 sinAngleX, cosAngleX;
-	SinCos(sinAngleX, cosAngleX, 0.5f * eulerAngles.m_XAxisAngle);
+	SinCos(sinAngleX, cosAngleX, 0.5f * eulerAngles.m_XAxisAngleInRadians);
 
 	f32 sinAngleY, cosAngleY;
-	SinCos(sinAngleY, cosAngleY, 0.5f * eulerAngles.m_YAxisAngle);
+	SinCos(sinAngleY, cosAngleY, 0.5f * eulerAngles.m_YAxisAngleInRadians);
 
 	m_W = cosAngleX * cosAngleY * cosAngleZ + sinAngleX * sinAngleY * sinAngleZ;
 	m_X = sinAngleX * cosAngleY * cosAngleZ + cosAngleX * sinAngleY * sinAngleZ;
@@ -160,34 +159,34 @@ const AxisAngle ExtractAxisAngle(const Quaternion& quat)
 	{
 		f32 rcpSinHalfAngle = 1.0f / Sqrt(sqrSinHalfAngle);
 		
-		Radian angle = 2.0f * ACos(quat.m_W);
+		f32 angleInRadians = 2.0f * ArcCos(quat.m_W);
 		Vector3f axis = rcpSinHalfAngle * Vector3f(quat.m_X, quat.m_Y, quat.m_Z);
 
-		return AxisAngle(axis, angle);
+		return AxisAngle(axis, angleInRadians);
 	}
-	return AxisAngle(Vector3f(1.0f, 0.0f, 0.0f), Radian(0.0f));
+	return AxisAngle(Vector3f(1.0f, 0.0f, 0.0f), 0.0f);
 }
 
-const Quaternion CreateRotationXQuaternion(const Radian& angle)
+const Quaternion CreateRotationXQuaternion(f32 angleInRadians)
 {
 	f32 sinHalfAngle, cosHalfAngle;
-	SinCos(sinHalfAngle, cosHalfAngle, 0.5f * angle);
+	SinCos(sinHalfAngle, cosHalfAngle, 0.5f * angleInRadians);
 
 	return Quaternion(sinHalfAngle, 0.0f, 0.0f, cosHalfAngle);
 }
 
-const Quaternion CreateRotationYQuaternion(const Radian& angle)
+const Quaternion CreateRotationYQuaternion(f32 angleInRadians)
 {
 	f32 sinHalfAngle, cosHalfAngle;
-	SinCos(sinHalfAngle, cosHalfAngle, 0.5f * angle);
+	SinCos(sinHalfAngle, cosHalfAngle, 0.5f * angleInRadians);
 
 	return Quaternion(0.0f, sinHalfAngle, 0.0f, cosHalfAngle);
 }
 
-const Quaternion CreateRotationZQuaternion(const Radian& angle)
+const Quaternion CreateRotationZQuaternion(f32 angleInRadians)
 {
 	f32 sinHalfAngle, cosHalfAngle;
-	SinCos(sinHalfAngle, cosHalfAngle, 0.5f * angle);
+	SinCos(sinHalfAngle, cosHalfAngle, 0.5f * angleInRadians);
 
 	return Quaternion(0.0f, 0.0f, sinHalfAngle, cosHalfAngle);
 }

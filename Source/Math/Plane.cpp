@@ -7,9 +7,9 @@ Plane::Plane()
 {
 }
 
-Plane::Plane(const Vector3f& point0, const Vector3f& point1, const Vector3f& point2)
-	: m_Normal(Cross(point1 - point0, point2 - point0))
-	, m_SignedDistFromOrigin(-Dot(m_Normal, point0))
+Plane::Plane(const Vector3f& point1, const Vector3f& point2, const Vector3f& point3)
+	: m_Normal(Cross(point2 - point1, point3 - point1))
+	, m_SignedDistFromOrigin(-Dot(m_Normal, point1))
 {
 }
 

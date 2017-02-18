@@ -99,13 +99,13 @@ void PointLight::SetAttenEndRange(f32 attenEndRange)
 	m_AttenEndRange = attenEndRange;
 }
 
-SpotLight::SpotLight(const std::string& name, f32 range, const Radian& innerConeAngle, const Radian& outerConeAngle)
+SpotLight::SpotLight(const std::string& name, f32 range, f32 innerConeAngleInRadians, f32 outerConeAngleInRadians)
 	: Light(name)
 	, m_Range(range)
 	, m_AttenStartRange(0.0f)
 	, m_AttenEndRange(range)
-	, m_InnerConeAngle(innerConeAngle)
-	, m_OuterConeAngle(outerConeAngle)
+	, m_InnerConeAngleInRadians(innerConeAngleInRadians)
+	, m_OuterConeAngleInRadians(outerConeAngleInRadians)
 {
 }
 
@@ -139,24 +139,24 @@ void SpotLight::SetAttenEndRange(f32 attenEndRange)
 	m_AttenEndRange = attenEndRange;
 }
 
-const Radian& SpotLight::GetInnerConeAngle() const
+f32 SpotLight::GetInnerConeAngle() const
 {
-	return m_InnerConeAngle;
+	return m_InnerConeAngleInRadians;
 }
 
-void SpotLight::SetInnerConeAngle(const Radian& innerConeAngle)
+void SpotLight::SetInnerConeAngle(f32 innerConeAngleInRadians)
 {
-	m_InnerConeAngle = innerConeAngle;
+	m_InnerConeAngleInRadians = innerConeAngleInRadians;
 }
 
-const Radian& SpotLight::GetOuterConeAngle() const
+f32 SpotLight::GetOuterConeAngle() const
 {
-	return m_OuterConeAngle;
+	return m_OuterConeAngleInRadians;
 }
 
-void SpotLight::SetOuterConeAngle(const Radian& outerConeAngle)
+void SpotLight::SetOuterConeAngle(f32 outerConeAngleInRadians)
 {
-	m_OuterConeAngle = outerConeAngle;
+	m_OuterConeAngleInRadians = outerConeAngleInRadians;
 }
 
 DirectionalLight::DirectionalLight(const std::string& name)

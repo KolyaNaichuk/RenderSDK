@@ -53,9 +53,9 @@ const Matrix4f CreateScalingMatrix(const Vector3f& scale);
 const Matrix4f CreateScalingMatrix(f32 xScale, f32 yScale, f32 zScale);
 const Matrix4f CreateScalingMatrix(f32 scale);
 
-const Matrix4f CreateRotationXMatrix(const Radian& angle);
-const Matrix4f CreateRotationYMatrix(const Radian& angle);
-const Matrix4f CreateRotationZMatrix(const Radian& angle);
+const Matrix4f CreateRotationXMatrix(f32 angleInRadians);
+const Matrix4f CreateRotationYMatrix(f32 angleInRadians);
+const Matrix4f CreateRotationZMatrix(f32 angleInRadians);
 const Matrix4f CreateRotationMatrix(const AxisAngle& axisAngle);
 const Matrix4f CreateRotationMatrix(const EulerAngles& eulerAngles);
 const Matrix4f CreateRotationMatrix(const Quaternion& quat);
@@ -67,6 +67,6 @@ const Matrix4f CreateOrthoOffCenterProjMatrix(f32 leftX, f32 rightX, f32 bottomY
 const Matrix4f CreateOrthoProjMatrix(f32 width, f32 height, f32 nearZ, f32 farZ);
 
 const Matrix4f CreatePerspectiveProjMatrix(f32 nearWidth, f32 nearHeight, f32 nearZ, f32 farZ);
-const Matrix4f CreatePerspectiveFovProjMatrix(const Radian& fovY, f32 aspectRatio, f32 nearZ, f32 farZ);
+const Matrix4f CreatePerspectiveFovProjMatrix(f32 fovYInRadians, f32 aspectRatio, f32 nearZ, f32 farZ);
 
 const BasisAxes ExtractBasisAxes(const Matrix4f& matrix);

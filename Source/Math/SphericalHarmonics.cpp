@@ -1,5 +1,4 @@
 #include "Math/SphericalHarmonics.h"
-#include "Math/Radian.h"
 #include "Math/Vector3.h"
 
 namespace
@@ -13,18 +12,18 @@ namespace
 	f32 Legendre(i32 l, i32 m, f32 x);
 }
 
-f32 SHEvaluate(i32 l, i32 m, const Radian& theta, const Radian& phi)
+f32 SHEvaluate(i32 l, i32 m, f32 thetaInRadians, f32 phiInRadians)
 {
 	assert(l >= 0);
 	assert(IsInRange(-l, l, m));
 
 	if (m > 0)
-		return Sqrt(2.0f) * K(l, m) * Cos(f32(m) * phi) * Legendre(l, m, Cos(theta));
+		return Sqrt(2.0f) * K(l, m) * Cos(f32(m) * phiInRadians) * Legendre(l, m, Cos(thetaInRadians));
 
 	if (m < 0)
-		return Sqrt(2.0f) * K(l, m) * Sin(f32(-m) * phi) * Legendre(l, -m, Cos(theta));
+		return Sqrt(2.0f) * K(l, m) * Sin(f32(-m) * phiInRadians) * Legendre(l, -m, Cos(thetaInRadians));
 
-	return K(l, m) * Legendre(l, m, Cos(theta));
+	return K(l, m) * Legendre(l, m, Cos(thetaInRadians));
 }
 
 void SHEvaluateBasis(f32* pOutBasisFuncValues, i32 numBands, const Vector3f& dir)

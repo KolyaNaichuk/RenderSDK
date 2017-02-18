@@ -15,7 +15,7 @@ struct Plane
 	};
 
 	Plane();
-	Plane(const Vector3f& point0, const Vector3f& point1, const Vector3f& point2);
+	Plane(const Vector3f& point1, const Vector3f& point2, const Vector3f& point3);
 	Plane(const Vector3f& point, const Vector3f& normal);
 	Plane(const Vector3f& normal, f32 signedDistFromOrigin);
 

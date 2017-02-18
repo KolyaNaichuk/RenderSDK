@@ -3,8 +3,6 @@
 #include "Common/Common.h"
 #include <cmath>
 
-class Radian;
-
 static const f32 PI = 3.141592654f;
 static const f32 TWO_PI = 6.283185307f;
 static const f32 RCP_PI = 0.318309886f;
@@ -70,13 +68,16 @@ T Rcp(T value)
 f32 ToDegrees(f32 radians);
 f32 ToRadians(f32 degrees);
 
-f32 Sin(const Radian& angle);
+f32 Sin(f32 angleInRadians);
+f32 ArcSin(f32 sinAngle);
 
-f32 Cos(const Radian& angle);
-const Radian ACos(f32 cosAngle);
+f32 Cos(f32 angleInRadians);
+f32 ArcCos(f32 cosAngle);
 
-void SinCos(f32& sinAngle, f32& cosAngle, const Radian& angle);
-f32 Tan(const Radian& angle);
+f32 Tan(f32 angleInRadians);
+f32 ArcTan(f32 tanAngle);
+
+void SinCos(f32& sinAngle, f32& cosAngle, f32 angleInRadians);
 
 f32 Ceil(f32 value);
 f64 Ceil(f64 value);

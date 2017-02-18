@@ -1,16 +1,14 @@
 #include "Math/EulerAngles.h"
 
 EulerAngles::EulerAngles()
-	: m_ZAxisAngle(0.0f)
-	, m_XAxisAngle(0.0f)
-	, m_YAxisAngle(0.0f)
+	: EulerAngles(0.0f, 0.0f, 0.0f)
 {
 }
 
-EulerAngles::EulerAngles(const Radian& zAxisAngle, const Radian& xAxisAngle, const Radian& yAxisAngle)
-	: m_ZAxisAngle(zAxisAngle)
-	, m_XAxisAngle(xAxisAngle)
-	, m_YAxisAngle(yAxisAngle)
+EulerAngles::EulerAngles(f32 zAxisAngleInRadians, f32 xAxisAngleInRadians, f32 yAxisAngleInRadians)
+	: m_ZAxisAngleInRadians(zAxisAngleInRadians)
+	, m_XAxisAngleInRadians(xAxisAngleInRadians)
+	, m_YAxisAngleInRadians(yAxisAngleInRadians)
 {
 }
 

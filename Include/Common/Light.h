@@ -2,7 +2,6 @@
 
 #include "Common/SceneObject.h"
 #include "Math/Vector4.h"
-#include "Math/Radian.h"
 
 enum LightType
 {
@@ -74,7 +73,7 @@ private:
 class SpotLight : public Light
 {
 public:
-	SpotLight(const std::string& name, f32 range, const Radian& innerConeAngle, const Radian& outerConeAngle);
+	SpotLight(const std::string& name, f32 range, f32 innerConeAngleInRadians, f32 outerConeAngleInRadians);
 
 	f32 GetRange() const;
 	void SetRange(f32 range);
@@ -85,18 +84,18 @@ public:
 	f32 GetAttenEndRange() const;
 	void SetAttenEndRange(f32 attenEndRange);
 	
-	const Radian& GetInnerConeAngle() const;
-	void SetInnerConeAngle(const Radian& innerConeAngle);
+	f32 GetInnerConeAngle() const;
+	void SetInnerConeAngle(f32 innerConeAngleInRadians);
 
-	const Radian& GetOuterConeAngle() const;
-	void SetOuterConeAngle(const Radian& outerConeAngle);
+	f32 GetOuterConeAngle() const;
+	void SetOuterConeAngle(f32 outerConeAngleInRadians);
 
 private:
 	f32 m_Range;
 	f32 m_AttenStartRange;
 	f32 m_AttenEndRange;
-	Radian m_InnerConeAngle;
-	Radian m_OuterConeAngle;
+	f32 m_InnerConeAngleInRadians;
+	f32 m_OuterConeAngleInRadians;
 };
 
 class DirectionalLight : public Light

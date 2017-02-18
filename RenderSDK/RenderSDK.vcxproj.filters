@@ -69,12 +69,6 @@
     <ClInclude Include="..\Include\Common\SceneObject.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Math\Degree.h">
-      <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Math\Radian.h">
-      <Filter>Math</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Math\EulerAngles.h">
       <Filter>Math</Filter>
     </ClInclude>
@@ -237,6 +231,15 @@
     <ClInclude Include="..\Include\RenderPasses\CalcIndirectLightPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Math\SphericalTrigonometry.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Triangle.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Quad.h">
+      <Filter>Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -277,12 +280,6 @@
     </ClCompile>
     <ClCompile Include="..\Source\Common\SceneObject.cpp">
       <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Math\Degree.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Math\Radian.cpp">
-      <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Math\EulerAngles.cpp">
       <Filter>Math</Filter>
@@ -436,6 +433,15 @@
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\CalcIndirectLightPass.cpp">
       <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\SphericalTrigonometry.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Triangle.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Quad.cpp">
+      <Filter>Math</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

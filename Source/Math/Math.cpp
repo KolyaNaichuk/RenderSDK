@@ -1,5 +1,4 @@
 #include "Math/Math.h"
-#include "Math/Radian.h"
 
 f32 ToDegrees(f32 radians)
 {
@@ -13,30 +12,43 @@ f32 ToRadians(f32 degrees)
 	return degreesToRadians * degrees;
 }
 
-f32 Sin(const Radian& angle)
+f32 Sin(f32 angleInRadians)
 {
-	return std::sinf(angle.Get());
+	return std::sinf(angleInRadians);
 }
 
-f32 Cos(const Radian& angle)
+f32 ArcSin(f32 sinAngle)
 {
-	return std::cosf(angle.Get());
+	f32 angleInRadians = std::asinf(sinAngle);
+	return angleInRadians;
 }
 
-const Radian ACos(f32 cosAngle)
+f32 Cos(f32 angleInRadians)
 {
-	return Radian(std::acosf(cosAngle));
+	return std::cosf(angleInRadians);
 }
 
-f32 Tan(const Radian& angle)
+f32 ArcCos(f32 cosAngle)
 {
-	return (f32)std::tan((f64)angle.Get());
+	f32 angleInRadians = std::acosf(cosAngle);
+	return angleInRadians;
 }
 
-void SinCos(f32& sinAngle, f32& cosAngle, const Radian& angle)
+f32 Tan(f32 angleInRadians)
 {
-	sinAngle = Sin(angle);
-	cosAngle = Cos(angle);
+	return std::tanf(angleInRadians);
+}
+
+f32 ArcTan(f32 tanAngle)
+{
+	f32 angleInRadians = std::atanf(tanAngle);
+	return angleInRadians;
+}
+
+void SinCos(f32& sinAngle, f32& cosAngle, f32 angleInRadians)
+{
+	sinAngle = Sin(angleInRadians);
+	cosAngle = Cos(angleInRadians);
 }
 
 f32 Ceil(f32 value)

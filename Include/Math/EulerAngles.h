@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Math/Radian.h"
+#include "Math/Math.h"
 
 struct EulerAngles
 {
 	EulerAngles();
-	EulerAngles(const Radian& zAxisAngle, const Radian& xAxisAngle, const Radian& yAxisAngle);
+	EulerAngles(f32 zAxisAngleInRadians, f32 xAxisAngleInRadians, f32 yAxisAngleInRadians);
 
-	Radian m_ZAxisAngle;
-	Radian m_XAxisAngle;
-	Radian m_YAxisAngle;
+	f32 m_ZAxisAngleInRadians;
+	f32 m_XAxisAngleInRadians;
+	f32 m_YAxisAngleInRadians;
 };

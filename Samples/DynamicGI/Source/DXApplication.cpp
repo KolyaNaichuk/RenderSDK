@@ -39,7 +39,6 @@
 #include "Math/Matrix4.h"
 #include "Math/Transform.h"
 #include "Math/BasisAxes.h"
-#include "Math/Radian.h"
 
 /*
 Render frame overview
@@ -787,16 +786,7 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 {
 	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
 	m_pCamera->GetTransform().SetPosition(Vector3f(278.0f, 274.0f, 700.0f));
-	m_pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(Radian(PI)));
-	
-	/*
-	SpotLight* pSpotLight = *pScene->GetSpotLights();
-	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.001f, pSpotLight->GetAttenEndRange(), 1.0f);
-	m_pCamera->GetTransform().SetPosition(pSpotLight->GetTransform().GetPosition());
-	m_pCamera->GetTransform().SetRotation(pSpotLight->GetTransform().GetRotation());
-	m_pCamera->SetFovY(pSpotLight->GetOuterConeAngle());
-	*/
-
+	m_pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(PI));
 	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
 	m_pCamera->SetBackgroundColor(Color::GRAY);
 
@@ -1916,12 +1906,12 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	Camera xAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_X, gridSize.m_Z / gridSize.m_Y);
 	xAxisCamera.SetSizeY(gridSize.m_Y);
 	xAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_X * mainCameraBasis.m_XAxis);
-	xAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationYQuaternion(Radian(PI_DIV_TWO)));
+	xAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationYQuaternion(PI_DIV_TWO));
 
 	Camera yAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_Y, gridSize.m_X / gridSize.m_Z);
 	yAxisCamera.SetSizeY(gridSize.m_Z);
 	yAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_Y * mainCameraBasis.m_YAxis);
-	yAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationXQuaternion(Radian(-PI_DIV_TWO)));
+	yAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationXQuaternion(-PI_DIV_TWO));
 	
 	Camera zAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_Z, gridSize.m_X / gridSize.m_Y);
 	zAxisCamera.SetSizeY(gridSize.m_Y);

@@ -3,7 +3,6 @@
 #include "Math/Math.h"
 #include "Math/BasisAxes.h"
 
-class Radian;
 struct Vector3f;
 struct Matrix4f;
 struct AxisAngle;
@@ -30,9 +29,9 @@ struct Quaternion
 const BasisAxes ExtractBasisAxes(const Quaternion& quat);
 const AxisAngle ExtractAxisAngle(const Quaternion& quat);
 
-const Quaternion CreateRotationXQuaternion(const Radian& angle);
-const Quaternion CreateRotationYQuaternion(const Radian& angle);
-const Quaternion CreateRotationZQuaternion(const Radian& angle);
+const Quaternion CreateRotationXQuaternion(f32 angleInRadians);
+const Quaternion CreateRotationYQuaternion(f32 angleInRadians);
+const Quaternion CreateRotationZQuaternion(f32 angleInRadians);
 
 bool IsEqual(const Quaternion& quat1, const Quaternion& quat2, f32 epsilon = EPSILON);
 const Quaternion Conjugate(const Quaternion& quat);
