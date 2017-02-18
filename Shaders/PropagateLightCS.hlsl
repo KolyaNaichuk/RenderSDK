@@ -16,8 +16,8 @@ struct NeighborCellData
 	CellFaceData currCellFaces[NUM_FACES_PER_CELL];
 };
 
-static const float backFaceSolidAngle = 0.5f;
-static const float sideFaceSolidAngle = 0.2f;
+static const float backFaceSolidAngle = 0.400669754f;
+static const float sideFaceSolidAngle = 0.423431277f;
 
 static const float3 cellCenter = float3(0.5f, 0.5f, 0.5f);
 
