@@ -412,9 +412,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	}
 	for (u8 index = 0; index < 2; ++index)
 	{
-		m_FluxRCoeffsTextures[index] = nullptr;
-		m_FluxGCoeffsTextures[index] = nullptr;
-		m_FluxBCoeffsTextures[index] = nullptr;
+		m_IntensityRCoeffsTextures[index] = nullptr;
+		m_IntensityGCoeffsTextures[index] = nullptr;
+		m_IntensityBCoeffsTextures[index] = nullptr;
 		
 		m_PropagateLightResources[index] = new BindingResourceList();
 	}
@@ -440,9 +440,9 @@ DXApplication::~DXApplication()
 	}
 	for (u8 index = 0; index < 2; ++index)
 	{
-		SafeDelete(m_FluxRCoeffsTextures[index]);
-		SafeDelete(m_FluxGCoeffsTextures[index]);
-		SafeDelete(m_FluxBCoeffsTextures[index]);
+		SafeDelete(m_IntensityRCoeffsTextures[index]);
+		SafeDelete(m_IntensityGCoeffsTextures[index]);
+		SafeDelete(m_IntensityBCoeffsTextures[index]);
 
 		SafeDelete(m_PropagateLightResources[index]);
 	}
@@ -1495,14 +1495,14 @@ void DXApplication::InitInjectVirtualPointLightsPass()
 
 	for (u8 index = 0; index < 2; ++index)
 	{
-		m_FluxRCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pFluxRCoeffsTexture");
-		m_FluxGCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pFluxGCoeffsTexture");
-		m_FluxBCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pFluxBCoeffsTexture");
+		m_IntensityRCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pIntensityRCoeffsTexture");
+		m_IntensityGCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pIntensityGCoeffsTexture");
+		m_IntensityBCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pIntensityBCoeffsTexture");
 	}
 
-	ColorTexture* pFluxRCoeffsTexture = m_FluxRCoeffsTextures[0];
-	ColorTexture* pFluxGCoeffsTexture = m_FluxGCoeffsTextures[0];
-	ColorTexture* pFluxBCoeffsTexture = m_FluxBCoeffsTextures[0];
+	ColorTexture* pIntensityRCoeffsTexture = m_IntensityRCoeffsTextures[0];
+	ColorTexture* pIntensityGCoeffsTexture = m_IntensityGCoeffsTextures[0];
+	ColorTexture* pIntensityBCoeffsTexture = m_IntensityBCoeffsTextures[0];
 			
 	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(m_pGridBuffer, m_pGridBuffer->GetReadState());
 	m_pInjectVirtualPointLightsResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
@@ -1526,13 +1526,13 @@ void DXApplication::InitInjectVirtualPointLightsPass()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisiblePointLightIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 
-	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pFluxRCoeffsTexture, pFluxRCoeffsTexture->GetWriteState());
-	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pFluxGCoeffsTexture, pFluxGCoeffsTexture->GetWriteState());
-	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pFluxBCoeffsTexture, pFluxBCoeffsTexture->GetWriteState());
+	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pIntensityRCoeffsTexture, pIntensityRCoeffsTexture->GetWriteState());
+	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pIntensityGCoeffsTexture, pIntensityGCoeffsTexture->GetWriteState());
+	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pIntensityBCoeffsTexture, pIntensityBCoeffsTexture->GetWriteState());
 
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pFluxRCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pFluxGCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pFluxBCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityRCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityGCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityBCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void DXApplication::InitPropagateLightPass()
@@ -1547,33 +1547,33 @@ void DXApplication::InitPropagateLightPass()
 
 	for (u8 index = 0; index < 2; ++index)
 	{
-		ColorTexture* pPrevFluxRCoeffsTexture = m_FluxRCoeffsTextures[index];
-		ColorTexture* pPrevFluxGCoeffsTexture = m_FluxGCoeffsTextures[index];
-		ColorTexture* pPrevFluxBCoeffsTexture = m_FluxBCoeffsTextures[index];
+		ColorTexture* pPrevIntensityRCoeffsTexture = m_IntensityRCoeffsTextures[index];
+		ColorTexture* pPrevIntensityGCoeffsTexture = m_IntensityGCoeffsTextures[index];
+		ColorTexture* pPrevIntensityBCoeffsTexture = m_IntensityBCoeffsTextures[index];
 		
 		const u8 outTexIndex = (index + 1) % 2;
-		ColorTexture* pOutFluxRCoeffsTexture = m_FluxRCoeffsTextures[outTexIndex];
-		ColorTexture* pOutFluxGCoeffsTexture = m_FluxGCoeffsTextures[outTexIndex];
-		ColorTexture* pOutFluxBCoeffsTexture = m_FluxBCoeffsTextures[outTexIndex];
+		ColorTexture* pIntensityRCoeffsTexture = m_IntensityRCoeffsTextures[outTexIndex];
+		ColorTexture* pIntensityGCoeffsTexture = m_IntensityGCoeffsTextures[outTexIndex];
+		ColorTexture* pIntensityBCoeffsTexture = m_IntensityBCoeffsTextures[outTexIndex];
 				
-		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pPrevFluxRCoeffsTexture, pPrevFluxRCoeffsTexture->GetReadState());
-		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pPrevFluxGCoeffsTexture, pPrevFluxGCoeffsTexture->GetReadState());
-		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pPrevFluxBCoeffsTexture, pPrevFluxBCoeffsTexture->GetReadState());
+		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pPrevIntensityRCoeffsTexture, pPrevIntensityRCoeffsTexture->GetReadState());
+		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pPrevIntensityGCoeffsTexture, pPrevIntensityGCoeffsTexture->GetReadState());
+		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pPrevIntensityBCoeffsTexture, pPrevIntensityBCoeffsTexture->GetReadState());
 		
-		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pOutFluxRCoeffsTexture, pOutFluxRCoeffsTexture->GetWriteState());
-		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pOutFluxGCoeffsTexture, pOutFluxGCoeffsTexture->GetWriteState());
-		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pOutFluxBCoeffsTexture, pOutFluxBCoeffsTexture->GetWriteState());
+		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pIntensityRCoeffsTexture, pIntensityRCoeffsTexture->GetWriteState());
+		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pIntensityGCoeffsTexture, pIntensityGCoeffsTexture->GetWriteState());
+		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pIntensityBCoeffsTexture, pIntensityBCoeffsTexture->GetWriteState());
 
 		m_PropagateLightResources[index]->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
 		m_pDevice->CopyDescriptor(m_PropagateLightResources[index]->m_SRVHeapStart, m_pGridConfigBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPrevFluxRCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPrevFluxGCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPrevFluxBCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPrevIntensityRCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPrevIntensityGCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPrevIntensityBCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pOutFluxRCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pOutFluxGCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pOutFluxBCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityRCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityGCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityBCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 }
 
@@ -1590,19 +1590,19 @@ void DXApplication::InitCalcIndirectLightPass(UINT backBufferWidth, UINT backBuf
 
 	m_pCalcIndirectLightPass = new CalcIndirectLightPass(&initParams);
 	
-	const u8 propagatedFluxTexIndex = kNumPropagationIterations % 2;
+	const u8 intensityTexIndex = kNumPropagationIterations % 2;
 
-	ColorTexture* pPropagatedFluxRCoeffsTexture = m_FluxRCoeffsTextures[propagatedFluxTexIndex];
-	ColorTexture* pPropagatedFluxGCoeffsTexture = m_FluxGCoeffsTextures[propagatedFluxTexIndex];
-	ColorTexture* pPropagatedFluxBCoeffsTexture = m_FluxBCoeffsTextures[propagatedFluxTexIndex];
+	ColorTexture* pIntensityRCoeffsTexture = m_IntensityRCoeffsTextures[intensityTexIndex];
+	ColorTexture* pIntensityGCoeffsTexture = m_IntensityGCoeffsTextures[intensityTexIndex];
+	ColorTexture* pIntensityBCoeffsTexture = m_IntensityBCoeffsTextures[intensityTexIndex];
 
 	m_pCalcIndirectLightResources->m_RequiredResourceStates.emplace_back(m_pIndirectLightTexture, m_pIndirectLightTexture->GetWriteState());
 	m_pCalcIndirectLightResources->m_RequiredResourceStates.emplace_back(m_pDepthTexture, m_pDepthTexture->GetReadState());
 	m_pCalcIndirectLightResources->m_RequiredResourceStates.emplace_back(m_pNormalTexture, m_pNormalTexture->GetReadState());
 	m_pCalcIndirectLightResources->m_RequiredResourceStates.emplace_back(m_pDiffuseTexture, m_pDiffuseTexture->GetReadState());
-	m_pCalcIndirectLightResources->m_RequiredResourceStates.emplace_back(pPropagatedFluxRCoeffsTexture, pPropagatedFluxRCoeffsTexture->GetReadState());
-	m_pCalcIndirectLightResources->m_RequiredResourceStates.emplace_back(pPropagatedFluxGCoeffsTexture, pPropagatedFluxGCoeffsTexture->GetReadState());
-	m_pCalcIndirectLightResources->m_RequiredResourceStates.emplace_back(pPropagatedFluxBCoeffsTexture, pPropagatedFluxBCoeffsTexture->GetReadState());
+	m_pCalcIndirectLightResources->m_RequiredResourceStates.emplace_back(pIntensityRCoeffsTexture, pIntensityRCoeffsTexture->GetReadState());
+	m_pCalcIndirectLightResources->m_RequiredResourceStates.emplace_back(pIntensityGCoeffsTexture, pIntensityGCoeffsTexture->GetReadState());
+	m_pCalcIndirectLightResources->m_RequiredResourceStates.emplace_back(pIntensityBCoeffsTexture, pIntensityBCoeffsTexture->GetReadState());
 	
 	m_pCalcIndirectLightResources->m_RTVHeapStart = m_pIndirectLightTexture->GetRTVHandle();
 	m_pCalcIndirectLightResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
@@ -1612,9 +1612,9 @@ void DXApplication::InitCalcIndirectLightPass(UINT backBufferWidth, UINT backBuf
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDepthTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pNormalTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDiffuseTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPropagatedFluxRCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPropagatedFluxGCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPropagatedFluxBCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityRCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityGCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityBCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void DXApplication::InitVisualizeVoxelGridDiffusePass()

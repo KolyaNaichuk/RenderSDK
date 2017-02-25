@@ -165,9 +165,9 @@ private:
 	ColorTexture* m_pSpecularTexture;
 	ColorTexture* m_pAccumLightTexture;
 	ColorTexture* m_pIndirectLightTexture;
-	ColorTexture* m_FluxRCoeffsTextures[2];
-	ColorTexture* m_FluxGCoeffsTextures[2];
-	ColorTexture* m_FluxBCoeffsTextures[2];
+	ColorTexture* m_IntensityRCoeffsTextures[2];
+	ColorTexture* m_IntensityGCoeffsTextures[2];
+	ColorTexture* m_IntensityBCoeffsTextures[2];
 	Viewport* m_pBackBufferViewport;
 	Viewport* m_pSpotLightTiledShadowMapViewport;
 	Viewport* m_pPointLightTiledShadowMapViewport;

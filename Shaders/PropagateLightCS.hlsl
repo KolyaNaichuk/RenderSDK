@@ -127,69 +127,70 @@ cbuffer GridConfigDataBuffer : register(b0)
 	GridConfig g_GridConfig;
 }
 
-Texture3D g_PrevFluxRCoeffsTexture : register(t0);
-Texture3D g_PrevFluxGCoeffsTexture : register(t1);
-Texture3D g_PrevFluxBCoeffsTexture : register(t2);
+Texture3D g_PrevIntensityRCoeffsTexture : register(t0);
+Texture3D g_PrevIntensityGCoeffsTexture : register(t1);
+Texture3D g_PrevIntensityBCoeffsTexture : register(t2);
 
-RWTexture3D<float4> g_FluxRCoeffsTexture : register(u0);
-RWTexture3D<float4> g_FluxGCoeffsTexture : register(u1);
-RWTexture3D<float4> g_FluxBCoeffsTexture : register(u2);
+RWTexture3D<float4> g_IntensityRCoeffsTexture : register(u0);
+RWTexture3D<float4> g_IntensityGCoeffsTexture : register(u1);
+RWTexture3D<float4> g_IntensityBCoeffsTexture : register(u2);
 
-void LoadGridCellFluxCoeffs(int3 gridCell, inout SHSpectralCoeffs fluxCoeffs)
+void LoadIntensityCoeffs(int3 gridCell, inout SHSpectralCoeffs intensityCoeffs)
 {
 	if (IsCellOutsideGrid(g_GridConfig, gridCell))
 	{
-		fluxCoeffs.r = float4(0.0f, 0.0f, 0.0f, 0.0f);
-		fluxCoeffs.g = float4(0.0f, 0.0f, 0.0f, 0.0f);
-		fluxCoeffs.b = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		intensityCoeffs.r = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		intensityCoeffs.g = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		intensityCoeffs.b = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	}
 	else
 	{
-		fluxCoeffs.r = g_PrevFluxRCoeffsTexture[gridCell];
-		fluxCoeffs.g = g_PrevFluxGCoeffsTexture[gridCell];
-		fluxCoeffs.b = g_PrevFluxBCoeffsTexture[gridCell];
+		intensityCoeffs.r = g_PrevIntensityRCoeffsTexture[gridCell];
+		intensityCoeffs.g = g_PrevIntensityGCoeffsTexture[gridCell];
+		intensityCoeffs.b = g_PrevIntensityBCoeffsTexture[gridCell];
 	}
 }
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 void Main(int3 currCell : SV_DispatchThreadID)
 {
-	SHSpectralCoeffs accumFluxCoeffs;
-	accumFluxCoeffs.r = g_PrevFluxRCoeffsTexture[currCell];
-	accumFluxCoeffs.g = g_PrevFluxGCoeffsTexture[currCell];
-	accumFluxCoeffs.b = g_PrevFluxBCoeffsTexture[currCell];
+	SHSpectralCoeffs accumIntensityCoeffs;
+	accumIntensityCoeffs.r = g_PrevIntensityRCoeffsTexture[currCell];
+	accumIntensityCoeffs.g = g_PrevIntensityGCoeffsTexture[currCell];
+	accumIntensityCoeffs.b = g_PrevIntensityBCoeffsTexture[currCell];
 
 	for (int neighborIndex = 0; neighborIndex < NUM_NEIGHBORS_PER_CELL; ++neighborIndex)
 	{
 		int3 neighborCell = currCell + g_Neighbors[neighborIndex].neighborOffset;
 
-		SHSpectralCoeffs neighborFluxCoeffs;
-		LoadGridCellFluxCoeffs(neighborCell, neighborFluxCoeffs);
+		SHSpectralCoeffs neighborIntensityCoeffs;
+		LoadIntensityCoeffs(neighborCell, neighborIntensityCoeffs);
 
 		for (int faceIndex = 0; faceIndex < NUM_FACES_PER_CELL; ++faceIndex)
 		{
 			CellFaceData faceData = g_Neighbors[neighborIndex].currCellFaces[faceIndex];
 			
-			float4 dirFromNeighborCenterCoeffs = SH(faceData.dirFromNeighborCenter);			
-			float3 fluxFromNeighbor;
-			fluxFromNeighbor.r = dot(neighborFluxCoeffs.r, dirFromNeighborCenterCoeffs);
-			fluxFromNeighbor.g = dot(neighborFluxCoeffs.g, dirFromNeighborCenterCoeffs);
-			fluxFromNeighbor.b = dot(neighborFluxCoeffs.b, dirFromNeighborCenterCoeffs);
-			fluxFromNeighbor = max(fluxFromNeighbor, 0.0f) * faceData.solidAngleFromNeightborCenter;
+			float4 dirFromNeighborCenterCoeffs = SH(faceData.dirFromNeighborCenter);
+			float3 intensityFromNeighbor;
+			intensityFromNeighbor.r = dot(neighborIntensityCoeffs.r, dirFromNeighborCenterCoeffs);
+			intensityFromNeighbor.g = dot(neighborIntensityCoeffs.g, dirFromNeighborCenterCoeffs);
+			intensityFromNeighbor.b = dot(neighborIntensityCoeffs.b, dirFromNeighborCenterCoeffs);
 
-			float4 dirFromCellCenterCoeffs = g_FaceClampedCosineCoeffs[faceIndex];
-			SHSpectralCoeffs projectedFluxCoeffs;
-			projectedFluxCoeffs.r = fluxFromNeighbor.r * dirFromCellCenterCoeffs;
-			projectedFluxCoeffs.g = fluxFromNeighbor.g * dirFromCellCenterCoeffs;
-			projectedFluxCoeffs.b = fluxFromNeighbor.b * dirFromCellCenterCoeffs;
+			float3 fluxFromNeighbor = max(intensityFromNeighbor, 0.0f) * faceData.solidAngleFromNeightborCenter;
 
-			accumFluxCoeffs.r += projectedFluxCoeffs.r;
-			accumFluxCoeffs.g += projectedFluxCoeffs.g;
-			accumFluxCoeffs.b += projectedFluxCoeffs.b;
+			float4 cosineCoeffs = g_FaceClampedCosineCoeffs[faceIndex];
+			SHSpectralCoeffs intensityCoeffs;
+			intensityCoeffs.r = fluxFromNeighbor.r * cosineCoeffs;
+			intensityCoeffs.g = fluxFromNeighbor.g * cosineCoeffs;
+			intensityCoeffs.b = fluxFromNeighbor.b * cosineCoeffs;
+
+			accumIntensityCoeffs.r += intensityCoeffs.r;
+			accumIntensityCoeffs.g += intensityCoeffs.g;
+			accumIntensityCoeffs.b += intensityCoeffs.b;
 		}
 	}
 		
-	g_FluxRCoeffsTexture[currCell] = accumFluxCoeffs.r;
-	g_FluxGCoeffsTexture[currCell] = accumFluxCoeffs.g;
-	g_FluxBCoeffsTexture[currCell] = accumFluxCoeffs.b;
+	g_IntensityRCoeffsTexture[currCell] = accumIntensityCoeffs.r;
+	g_IntensityGCoeffsTexture[currCell] = accumIntensityCoeffs.g;
+	g_IntensityBCoeffsTexture[currCell] = accumIntensityCoeffs.b;
 }

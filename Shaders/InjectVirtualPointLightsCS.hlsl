@@ -17,17 +17,17 @@ Buffer<uint> g_NumPointLightsBuffer : register(t3);
 Buffer<uint> g_PointLightIndexBuffer : register(t4);
 #endif // ENABLE_POINT_LIGHTS
 
-RWTexture3D<float4> g_FluxRCoeffsTexture : register(u0);
-RWTexture3D<float4> g_FluxGCoeffsTexture : register(u1);
-RWTexture3D<float4> g_FluxBCoeffsTexture : register(u2);
+RWTexture3D<float4> g_IntensityRCoeffsTexture : register(u0);
+RWTexture3D<float4> g_IntensityGCoeffsTexture : register(u1);
+RWTexture3D<float4> g_IntensityBCoeffsTexture : register(u2);
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 void Main(int3 gridCell : SV_DispatchThreadID)
 {
-	SHSpectralCoeffs accumFluxCoeffs;
-	accumFluxCoeffs.r = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	accumFluxCoeffs.g = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	accumFluxCoeffs.b = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	SHSpectralCoeffs accumIntensityCoeffs;
+	accumIntensityCoeffs.r = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	accumIntensityCoeffs.g = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	accumIntensityCoeffs.b = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	const int cellIndex = ComputeGridCellIndex(g_GridConfig, gridCell);
 	if (g_GridBuffer[cellIndex].numOccluders > 0.0f)
@@ -49,31 +49,29 @@ void Main(int3 gridCell : SV_DispatchThreadID)
 			float distToLight = length(worldSpaceDirToLight);
 			if (distToLight < lightAttenEndRange)
 			{
+				float solidAngle = 1.0f;
+
 				float3 worldSpaceNormDirToLight = worldSpaceDirToLight * rcp(distToLight);
-
 				float3 lightColor = g_PointLightPropsBuffer[lightIndex].color;
-				float lightAttenStartRange = g_PointLightPropsBuffer[lightIndex].attenStartRange;
-
-				float distAtten = CalcLightDistanceAttenuation(distToLight, lightAttenStartRange, lightAttenEndRange);
-
+								
 				float NdotL = saturate(dot(worldSpaceNormal, worldSpaceNormDirToLight));
-				float3 reflectedFlux = NdotL * diffuseAlbedo * lightColor * distAtten;
+				float3 reflectedFlux = diffuseAlbedo * lightColor * (solidAngle * NdotL);
 
 				float4 cosineCoeffs = SHProjectClampedCosine(worldSpaceNormal);
-				SHSpectralCoeffs projectedFluxCoeffs;
-				projectedFluxCoeffs.r = reflectedFlux.r * cosineCoeffs;
-				projectedFluxCoeffs.g = reflectedFlux.g * cosineCoeffs;
-				projectedFluxCoeffs.b = reflectedFlux.b * cosineCoeffs;
+				SHSpectralCoeffs intensityCoeffs;
+				intensityCoeffs.r = reflectedFlux.r * cosineCoeffs;
+				intensityCoeffs.g = reflectedFlux.g * cosineCoeffs;
+				intensityCoeffs.b = reflectedFlux.b * cosineCoeffs;
 
-				accumFluxCoeffs.r += projectedFluxCoeffs.r;
-				accumFluxCoeffs.g += projectedFluxCoeffs.g;
-				accumFluxCoeffs.b += projectedFluxCoeffs.b;
+				accumIntensityCoeffs.r += intensityCoeffs.r;
+				accumIntensityCoeffs.g += intensityCoeffs.g;
+				accumIntensityCoeffs.b += intensityCoeffs.b;
 			}
 		}
 #endif
 	}
 
-	g_FluxRCoeffsTexture[gridCell] = accumFluxCoeffs.r;
-	g_FluxGCoeffsTexture[gridCell] = accumFluxCoeffs.g;
-	g_FluxBCoeffsTexture[gridCell] = accumFluxCoeffs.b;
+	g_IntensityRCoeffsTexture[gridCell] = accumIntensityCoeffs.r;
+	g_IntensityGCoeffsTexture[gridCell] = accumIntensityCoeffs.g;
+	g_IntensityBCoeffsTexture[gridCell] = accumIntensityCoeffs.b;
 }
