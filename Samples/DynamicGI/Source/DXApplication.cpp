@@ -192,10 +192,12 @@ struct CameraTransform
 struct GridConfig
 {
 	Vector4f m_WorldSpaceOrigin;
+	Vector4f m_Size;
+	Vector4f m_RcpSize;
 	Vector4f m_CellSize;
 	Vector4f m_RcpCellSize;
 	Vector4i m_NumCells;
-	Vector4f m_NotUsed[12];
+	Vector4f m_NotUsed[10];
 };
 
 struct Range
@@ -679,7 +681,10 @@ void DXApplication::OnRender()
 	submissionBatch.emplace_back(RecordClearVoxelGridPass());
 	submissionBatch.emplace_back(RecordCreateVoxelGridPass());
 	submissionBatch.emplace_back(RecordInjectVirtualPointLightsPass());
-	submissionBatch.emplace_back(RecordPropagateLightPass());
+
+	if (kNumPropagationIterations > 0)
+		submissionBatch.emplace_back(RecordPropagateLightPass());
+	
 	submissionBatch.emplace_back(RecordCalcIndirectLightPass());
 	
 	submissionBatch.emplace_back(RecordDisplayResultPass());
@@ -1885,11 +1890,12 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	assert(IsNormalized(mainCameraBasis.m_ZAxis));
 
 	const Vector3f gridSize(kGridSizeX, kGridSizeY, kGridSizeZ);
+	const Vector3f gridRcpSize(Rcp(gridSize));
 	const Vector3f gridHalfSize(0.5f * gridSize);
 	const Vector3f gridNumCells(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ);
 	const Vector3f gridCellSize(gridSize / gridNumCells);
 	const Vector3f gridRcpCellSize(Rcp(gridCellSize));
-
+	
 	// Kolya: Hard-coding grid center for now
 	//const Vector3f gridCenter(mainCameraPos + (0.25f * gridSize.m_Z) * mainCameraBasis.m_ZAxis);
 	const Vector3f gridCenter(278.0f, 274.0f, -279.0f);
@@ -1897,10 +1903,12 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 
 	GridConfig gridConfig;
 	gridConfig.m_WorldSpaceOrigin = Vector4f(gridMinPoint.m_X, gridMinPoint.m_Y, gridMinPoint.m_Z, 0.0f);
+	gridConfig.m_Size = Vector4f(gridSize.m_X, gridSize.m_Y, gridSize.m_Z, 0.0f);
+	gridConfig.m_RcpSize = Vector4f(gridRcpSize.m_X, gridRcpSize.m_Y, gridRcpSize.m_Z, 0.0f);
 	gridConfig.m_CellSize = Vector4f(gridCellSize.m_X, gridCellSize.m_Y, gridCellSize.m_Z, 0.0f);
 	gridConfig.m_RcpCellSize = Vector4f(gridRcpCellSize.m_X, gridRcpCellSize.m_Y, gridRcpCellSize.m_Z, 0.0f);
 	gridConfig.m_NumCells = Vector4i(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, 0);
-
+		
 	m_pGridConfigBuffer->Write(&gridConfig, sizeof(gridConfig));
 
 	Camera xAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_X, gridSize.m_Z / gridSize.m_Y);
@@ -2237,7 +2245,7 @@ CommandList* DXApplication::RecordPropagateLightPass()
 	PropagateLightPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pPropagateLightCommandList");
-	renderParams.m_ppResources = &m_PropagateLightResources[0];
+	renderParams.m_ppResources = m_PropagateLightResources;
 	renderParams.m_NumIterations = kNumPropagationIterations;
 
 	m_pPropagateLightPass->Record(&renderParams);

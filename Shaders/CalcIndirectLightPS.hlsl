@@ -22,9 +22,11 @@ cbuffer CameraTransformBuffer : register(b1)
 Texture2D g_DepthTexture : register(t0);
 Texture2D g_NormalTexture : register(t1);
 Texture2D g_DiffuseTexture : register(t2);
-Texture3D g_FluxRCoeffsTexture : register(t3);
-Texture3D g_FluxGCoeffsTexture : register(t4);
-Texture3D g_FluxBCoeffsTexture : register(t5);
+Texture3D g_IntensityRCoeffsTexture : register(t3);
+Texture3D g_IntensityGCoeffsTexture : register(t4);
+Texture3D g_IntensityBCoeffsTexture : register(t5);
+
+SamplerState g_LinearSampler : register(s0);
 
 float4 Main(PSInput input) : SV_Target
 {
@@ -35,23 +37,23 @@ float4 Main(PSInput input) : SV_Target
 	float3 worldSpaceNormal = g_NormalTexture[screenSpacePos].xyz;
 	float3 diffuseAlbedo = g_DiffuseTexture[screenSpacePos].rgb;
 
-	int3 gridCell = ComputeGridCell(g_GridConfig, worldSpacePos.xyz);
+	float3 gridSpacePos = worldSpacePos - g_GridConfig.worldSpaceOrigin.xyz;
+	float3 gridTexCoord = gridSpacePos * g_GridConfig.rcpSize.xyz;
 	
-	SHSpectralCoeffs incidentFluxCoeffs;
-	incidentFluxCoeffs.r = g_FluxRCoeffsTexture[gridCell];
-	incidentFluxCoeffs.g = g_FluxGCoeffsTexture[gridCell];
-	incidentFluxCoeffs.b = g_FluxBCoeffsTexture[gridCell];
+	SHSpectralCoeffs incidentIntensityCoeffs;
+	incidentIntensityCoeffs.r = g_IntensityRCoeffsTexture.Sample(g_LinearSampler, gridTexCoord);
+	incidentIntensityCoeffs.g = g_IntensityGCoeffsTexture.Sample(g_LinearSampler, gridTexCoord);
+	incidentIntensityCoeffs.b = g_IntensityBCoeffsTexture.Sample(g_LinearSampler, gridTexCoord);
 	
-	float4 cosineCoeffs = SHProjectClampedCosine(-worldSpaceNormal);
-
-	float3 incidentFlux;
-	incidentFlux.r = dot(incidentFluxCoeffs.r, cosineCoeffs);
-	incidentFlux.g = dot(incidentFluxCoeffs.g, cosineCoeffs);
-	incidentFlux.b = dot(incidentFluxCoeffs.b, cosineCoeffs);
-	incidentFlux = max(incidentFlux, 0.0f);
+	float4 cosineCoeffs = SHProjectClampedCosine(worldSpaceNormal);
+	float3 incidentIrradiance;
+	incidentIrradiance.r = dot(incidentIntensityCoeffs.r, cosineCoeffs);
+	incidentIrradiance.g = dot(incidentIntensityCoeffs.g, cosineCoeffs);
+	incidentIrradiance.b = dot(incidentIntensityCoeffs.b, cosineCoeffs);
+	incidentIrradiance = max(incidentIrradiance, 0.0f);
 	
 	float3 diffuseBRDF = diffuseAlbedo * g_RcpPI;
-	float3 reflectedIntensity = incidentFlux * diffuseBRDF;
+	float3 exitantRadiance = diffuseBRDF * incidentIrradiance;
 
-	return float4(reflectedIntensity, 1.0f);
+	return float4(exitantRadiance, 1.0f);
 }

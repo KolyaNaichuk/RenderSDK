@@ -32,7 +32,9 @@ CalcIndirectLightPass::CalcIndirectLightPass(InitParams* pParams)
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kSRVRootParam] = RootDescriptorTableParameter(ARRAYSIZE(srvDescriptorRanges), &srvDescriptorRanges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 
-	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	StaticSamplerDesc samplerDesc(StaticSamplerDesc::Linear, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+
+	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, 1, &samplerDesc, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CalcIndirectLightPass::m_pRootSignature");
 
 	GraphicsPipelineStateDesc pipelineStateDesc;

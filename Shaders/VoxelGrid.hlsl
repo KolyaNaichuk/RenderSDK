@@ -11,10 +11,12 @@ struct Voxel
 struct GridConfig
 {
 	float4 worldSpaceOrigin;
+	float4 size;
+	float4 rcpSize;
 	float4 cellSize;
 	float4 rcpCellSize;
 	int4   numCells;
-	float4 notUsed[12];
+	float4 notUsed[10];
 };
 
 struct ObjectTransform
