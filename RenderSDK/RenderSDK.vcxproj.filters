@@ -228,9 +228,6 @@
     <ClInclude Include="..\Include\RenderPasses\PropagateLightPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\CalcIndirectLightPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Math\SphericalTrigonometry.h">
       <Filter>Math</Filter>
     </ClInclude>
@@ -431,9 +428,6 @@
     <ClCompile Include="..\Source\RenderPasses\PropagateLightPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\CalcIndirectLightPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\Math\SphericalTrigonometry.cpp">
       <Filter>Math</Filter>
     </ClCompile>
@@ -536,9 +530,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\BoundingVolumes.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CalcIndirectLightPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -29,6 +29,7 @@ public:
 		bool m_EnablePointLights;
 		bool m_EnableSpotLights;
 		bool m_EnableDirectionalLight;
+		bool m_EnableIndirectLight;
 	};
 
 	struct RenderParams

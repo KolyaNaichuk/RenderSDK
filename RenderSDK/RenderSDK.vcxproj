@@ -201,7 +201,6 @@
     <ClInclude Include="..\Include\Math\Vector2.h" />
     <ClInclude Include="..\Include\Math\Vector3.h" />
     <ClInclude Include="..\Include\Math\Vector4.h" />
-    <ClInclude Include="..\Include\RenderPasses\CalcIndirectLightPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
     <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h" />
@@ -270,7 +269,6 @@
     <ClCompile Include="..\Source\Math\Vector2.cpp" />
     <ClCompile Include="..\Source\Math\Vector3.cpp" />
     <ClCompile Include="..\Source\Math\Vector4.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CalcIndirectLightPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp" />
@@ -544,11 +542,6 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Shaders\CalcIndirectLightPS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

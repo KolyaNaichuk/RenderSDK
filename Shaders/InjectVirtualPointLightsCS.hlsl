@@ -52,10 +52,10 @@ void Main(int3 gridCell : SV_DispatchThreadID)
 				float solidAngle = 1.0f;
 
 				float3 worldSpaceNormDirToLight = worldSpaceDirToLight * rcp(distToLight);
-				float3 lightColor = g_PointLightPropsBuffer[lightIndex].color;
+				float3 lightIntensity = g_PointLightPropsBuffer[lightIndex].color;
 								
 				float NdotL = saturate(dot(worldSpaceNormal, worldSpaceNormDirToLight));
-				float3 reflectedFlux = diffuseAlbedo * lightColor * (solidAngle * NdotL);
+				float3 reflectedFlux = diffuseAlbedo * lightIntensity * (solidAngle * NdotL);
 
 				float4 cosineCoeffs = SHProjectClampedCosine(worldSpaceNormal);
 				SHSpectralCoeffs intensityCoeffs;
@@ -68,7 +68,7 @@ void Main(int3 gridCell : SV_DispatchThreadID)
 				accumIntensityCoeffs.b += intensityCoeffs.b;
 			}
 		}
-#endif
+#endif // ENABLE_POINT_LIGHTS
 	}
 
 	g_IntensityRCoeffsTexture[gridCell] = accumIntensityCoeffs.r;

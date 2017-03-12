@@ -22,7 +22,6 @@ class ClearVoxelGridPass;
 class CreateVoxelGridPass;
 class InjectVirtualPointLightsPass;
 class PropagateLightPass;
-class CalcIndirectLightPass;
 class VisualizeVoxelGridPass;
 class VisualizeTexturePass;
 class VisualizeVoxelGridPass;
@@ -47,7 +46,6 @@ public:
 	enum class DisplayResult
 	{
 		AccumLight,
-		IndirectLight,
 		DiffuseBuffer,
 		SpecularBuffer,
 		NormalBuffer,
@@ -57,6 +55,12 @@ public:
 		VoxelGridDiffuse,
 		VoxelGridNormal,
 		Unspecified
+	};
+	enum class TileShadingMode
+	{
+		DirectLight,
+		IndirectLight,
+		DirectAndIndirectLight
 	};
 
 	DXApplication(HINSTANCE hApp);
@@ -88,11 +92,9 @@ private:
 	void InitCreateVoxelGridPass();
 	void InitInjectVirtualPointLightsPass();
 	void InitPropagateLightPass();
-	void InitCalcIndirectLightPass(UINT backBufferWidth, UINT backBufferHeight);
 	void InitVisualizeVoxelGridDiffusePass();
 	void InitVisualizeVoxelGridNormalPass();
 	void InitVisualizeAccumLightPass();
-	void InitVisualizeIndirectLightPass();
 	void InitVisualizeDiffuseBufferPass();
 	void InitVisualizeSpecularBufferPass();
 	void InitVisualizeNormalBufferPass();
@@ -119,11 +121,9 @@ private:
 	CommandList* RecordCreateVoxelGridPass();
 	CommandList* RecordInjectVirtualPointLightsPass();
 	CommandList* RecordPropagateLightPass();
-	CommandList* RecordCalcIndirectLightPass();
 	CommandList* RecordVisualizeVoxelGridDiffusePass();
 	CommandList* RecordVisualizeVoxelGridNormalPass();
 	CommandList* RecordVisualizeAccumLightPass();
-	CommandList* RecordVisualizeIndirectLightPass();
 	CommandList* RecordVisualizeDiffuseBufferPass();
 	CommandList* RecordVisualizeSpecularBufferPass();
 	CommandList* RecordVisualizeNormalBufferPass();
@@ -145,6 +145,7 @@ private:
 	enum { kNumBackBuffers = 3 };
 
 	DisplayResult m_DisplayResult;
+	TileShadingMode m_ShadingMode;
 
 	GraphicsDevice* m_pDevice;
 	SwapChain* m_pSwapChain;
@@ -164,7 +165,6 @@ private:
 	ColorTexture* m_pNormalTexture;
 	ColorTexture* m_pSpecularTexture;
 	ColorTexture* m_pAccumLightTexture;
-	ColorTexture* m_pIndirectLightTexture;
 	ColorTexture* m_IntensityRCoeffsTextures[2];
 	ColorTexture* m_IntensityGCoeffsTextures[2];
 	ColorTexture* m_IntensityBCoeffsTextures[2];
@@ -174,7 +174,7 @@ private:
 	Buffer* m_pObjectTransformBuffer;
 	Buffer* m_pCameraTransformBuffer;
 	Buffer* m_pGridBuffer;
-	Buffer* m_pGridConfigBuffer;
+	Buffer* m_pGridConfigDataBuffer;
 	Buffer* m_pViewFrustumMeshCullingDataBuffer;
 	Buffer* m_pViewFrustumSpotLightCullingDataBuffer;
 	Buffer* m_pViewFrustumPointLightCullingDataBuffer;
@@ -217,6 +217,8 @@ private:
 	BindingResourceList* m_pTiledLightCullingResources;
 
 	TiledShadingPass* m_pTiledShadingPass;
+	TiledShadingPass* m_pTiledDirectLightShadingPass;
+	TiledShadingPass* m_pTiledIndirectLightShadingPass;
 	BindingResourceList* m_pTiledShadingResources;
 
 	ClearVoxelGridPass* m_pClearVoxelGridPass;
@@ -230,10 +232,7 @@ private:
 
 	PropagateLightPass* m_pPropagateLightPass;
 	BindingResourceList* m_PropagateLightResources[2];
-
-	CalcIndirectLightPass* m_pCalcIndirectLightPass;
-	BindingResourceList* m_pCalcIndirectLightResources;
-	
+		
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridDiffusePass;
 	BindingResourceList* m_VisualizeVoxelGridDiffuseResources[kNumBackBuffers];
 
@@ -271,10 +270,7 @@ private:
 
 	VisualizeTexturePass* m_pVisualizeAccumLightPass;
 	BindingResourceList* m_VisualizeAccumLightResources[kNumBackBuffers];
-
-	VisualizeTexturePass* m_pVisualizeIndirectLightPass;
-	BindingResourceList* m_VisualizeIndirectLightResources[kNumBackBuffers];
-
+	
 	VisualizeTexturePass* m_pVisualizeDiffuseBufferPass;
 	BindingResourceList* m_VisualizeDiffuseBufferResources[kNumBackBuffers];
 

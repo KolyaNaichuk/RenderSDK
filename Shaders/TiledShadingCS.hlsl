@@ -2,6 +2,8 @@
 #include "OverlapTest.hlsl"
 #include "Reconstruction.hlsl"
 #include "Foundation.hlsl"
+#include "VoxelGrid.hlsl"
+#include "SphericalHarmonics.hlsl"
 
 struct TiledShadingData
 {
@@ -22,36 +24,52 @@ cbuffer TiledShadingDataBuffer : register(b0)
 	TiledShadingData g_ShadingData;
 }
 
+cbuffer GridConfigDataBuffer : register(b1)
+{
+	GridConfig g_GridConfigData;
+}
+
 Texture2D g_DepthTexture : register(t0);
 Texture2D g_NormalTexture : register(t1);
 Texture2D g_DiffuseTexture : register(t2);
 Texture2D g_SpecularTexture : register(t3);
 
-#if ENABLE_POINT_LIGHTS == 1
-StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t4);
-StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t5);
-Buffer<uint> g_PointLightIndexPerTileBuffer : register(t6);
-StructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(t7);
-#endif
+Texture3D g_IntensityRCoeffsTexture : register(t4);
+Texture3D g_IntensityGCoeffsTexture : register(t5);
+Texture3D g_IntensityBCoeffsTexture : register(t6);
 
-#if ENABLE_SPOT_LIGHTS == 1
-StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t8);
-StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t9);
-Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t10);
-StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t11);
-#endif
+StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t7);
+StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t8);
+Buffer<uint> g_PointLightIndexPerTileBuffer : register(t9);
+StructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(t10);
 
+StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t11);
+StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t12);
+Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t13);
+StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t14);
+
+SamplerState g_LinearSampler : register(s0);
 RWTexture2D<float4> g_AccumLightTexture : register(u0);
 
-#if ENABLE_POINT_LIGHTS == 1
-float3 CalcPointLightsContribution(uint tileIndex, float3 worldSpaceDirToViewer, float3 worldSpacePos, float3 worldSpaceNormal,
-	float3 diffuseAlbedo, float3 specularAlbedo, float specularPower)
+[numthreads(TILE_SIZE, TILE_SIZE, 1)]
+void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID)
 {
-	uint lightIndexPerTileStart = g_PointLightRangePerTileBuffer[tileIndex].start;
-	uint lightIndexPerTileEnd = lightIndexPerTileStart + g_PointLightRangePerTileBuffer[tileIndex].length;
+	float hardwareDepth = g_DepthTexture[globalThreadId.xy].x;
+	float2 texCoord = (float2(globalThreadId.xy) + 0.5f) * g_ShadingData.rcpScreenSize;
+	float3 worldSpacePos = ComputeWorldSpacePosition(texCoord, hardwareDepth, g_ShadingData.viewProjInvMatrix).xyz;
+	float3 worldSpaceDirToViewer = normalize(g_ShadingData.worldSpaceCameraPos - worldSpacePos);
+	float3 worldSpaceNormal = g_NormalTexture[globalThreadId.xy].xyz;
+	float3 diffuseAlbedo = g_DiffuseTexture[globalThreadId.xy].rgb;
+	float4 specularAlbedo = g_SpecularTexture[globalThreadId.xy].rgba;
+	uint tileIndex = tileId.y * NUM_TILES_X + tileId.x;
+
+	float3 pointLightsContrib = float3(0.0f, 0.0f, 0.0f);
+#if ENABLE_POINT_LIGHTS == 1
+	uint pointLightIndexPerTileStart = g_PointLightRangePerTileBuffer[tileIndex].start;
+	uint pointLightIndexPerTileEnd = pointLightIndexPerTileStart + g_PointLightRangePerTileBuffer[tileIndex].length;
 
 	float3 lightContrib = float3(0.0f, 0.0f, 0.0f);
-	for (uint lightIndexPerTile = lightIndexPerTileStart; lightIndexPerTile < lightIndexPerTileEnd; ++lightIndexPerTile)
+	for (uint lightIndexPerTile = pointLightIndexPerTileStart; lightIndexPerTile < pointLightIndexPerTileEnd; ++lightIndexPerTile)
 	{
 		uint lightIndex = g_PointLightIndexPerTileBuffer[lightIndexPerTile];
 
@@ -60,25 +78,20 @@ float3 CalcPointLightsContribution(uint tileIndex, float3 worldSpaceDirToViewer,
 		float attenStartRange = g_PointLightPropsBuffer[lightIndex].attenStartRange;
 		float3 lightColor = g_PointLightPropsBuffer[lightIndex].color;
 
-		lightContrib += CalcPointLightContribution(worldSpaceLightPos, lightColor, attenStartRange, attenEndRange,
-			worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal, diffuseAlbedo, specularAlbedo, specularPower);
+		pointLightsContrib += CalcPointLightContribution(worldSpaceLightPos, lightColor, attenStartRange, attenEndRange,
+			worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal, diffuseAlbedo, specularAlbedo.rgb, specularAlbedo.a);
 	}
-	return lightContrib;
-}
-#endif
+#endif // ENABLE_POINT_LIGHTS
 
+	float3 spotLightsContrib = float3(0.0f, 0.0f, 0.0f);
 #if ENABLE_SPOT_LIGHTS == 1
-float3 CalcSpotLightsContribution(uint tileIndex, float3 worldSpaceDirToViewer, float3 worldSpacePos, float3 worldSpaceNormal,
-	float3 diffuseAlbedo, float3 specularAlbedo, float specularPower)
-{
-	uint lightIndexPerTileStart = g_SpotLightRangePerTileBuffer[tileIndex].start;
-	uint lightIndexPerTileEnd = lightIndexPerTileStart + g_SpotLightRangePerTileBuffer[tileIndex].length;
+	uint spotLightIndexPerTileStart = g_SpotLightRangePerTileBuffer[tileIndex].start;
+	uint spotLightIndexPerTileEnd = spotLightIndexPerTileStart + g_SpotLightRangePerTileBuffer[tileIndex].length;
 
-	float3 lightContrib = float3(0.0f, 0.0f, 0.0f);
-	for (uint lightIndexPerTile = lightIndexPerTileStart; lightIndexPerTile < lightIndexPerTileEnd; ++lightIndexPerTile)
+	for (uint lightIndexPerTile = spotLightIndexPerTileStart; lightIndexPerTile < spotLightIndexPerTileEnd; ++lightIndexPerTile)
 	{
 		uint lightIndex = g_SpotLightIndexPerTileBuffer[lightIndexPerTile];
-		
+
 		Sphere lightBounds = g_SpotLightBoundsBuffer[lightIndex];
 		float3 worldSpaceLightDir = g_SpotLightPropsBuffer[lightIndex].worldSpaceDir;
 		float3 worldSpaceLightPos = lightBounds.center - lightBounds.radius * worldSpaceLightDir;
@@ -88,46 +101,42 @@ float3 CalcSpotLightsContribution(uint tileIndex, float3 worldSpaceDirToViewer, 
 		float cosHalfInnerConeAngle = g_SpotLightPropsBuffer[lightIndex].cosHalfInnerConeAngle;
 		float cosHalfOuterConeAngle = g_SpotLightPropsBuffer[lightIndex].cosHalfOuterConeAngle;
 
-		lightContrib += CalcSpotLightContribution(worldSpaceLightPos, worldSpaceLightDir, lightColor, attenStartRange, attenEndRange,
+		spotLightsContrib += CalcSpotLightContribution(worldSpaceLightPos, worldSpaceLightDir, lightColor, attenStartRange, attenEndRange,
 			cosHalfInnerConeAngle, cosHalfOuterConeAngle, worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal,
-			diffuseAlbedo, specularAlbedo, specularPower);
+			diffuseAlbedo, specularAlbedo.rgb, specularAlbedo.a);
 	}
-	return lightContrib;
-}
-#endif
-
-[numthreads(TILE_SIZE, TILE_SIZE, 1)]
-void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID)
-{
-	float  hardwareDepth = g_DepthTexture[globalThreadId.xy].x;
-	float2 texCoord = (float2(globalThreadId.xy) + 0.5f) * g_ShadingData.rcpScreenSize;
-	float3 worldSpacePos = ComputeWorldSpacePosition(texCoord, hardwareDepth, g_ShadingData.viewProjInvMatrix).xyz;
-	float3 worldSpaceDirToViewer = normalize(g_ShadingData.worldSpaceCameraPos - worldSpacePos);
-	float3 worldSpaceNormal = g_NormalTexture[globalThreadId.xy].xyz;
-	float3 diffuseAlbedo = g_DiffuseTexture[globalThreadId.xy].rgb;
-	float4 specularAlbedo = g_SpecularTexture[globalThreadId.xy].rgba;
-
-	uint tileIndex = tileId.y * NUM_TILES_X + tileId.x;
-
-#if ENABLE_POINT_LIGHTS == 1
-	float3 pointLightsContrib = CalcPointLightsContribution(tileIndex, worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal, diffuseAlbedo, specularAlbedo.rgb, specularAlbedo.a);
-#else
-	float3 pointLightsContrib = float3(0.0f, 0.0f, 0.0f);
-#endif
-
-#if ENABLE_SPOT_LIGHTS == 1
-	float3 spotLightsContrib = CalcSpotLightsContribution(tileIndex, worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal, diffuseAlbedo, specularAlbedo.rgb, specularAlbedo.a);
-#else
-	float3 spotLightsContrib = float3(0.0f, 0.0f, 0.0f);
-#endif
+#endif // ENABLE_SPOT_LIGHTS
 
 #if ENABLE_DIRECTIONAL_LIGHT == 1
 	float3 directionalLightContrib = CalcDirectionalLightContribution(g_ShadingData.worldSpaceLightDir, g_ShadingData.lightColor, worldSpaceDirToViewer,
 		worldSpaceNormal, diffuseAlbedo, specularAlbedo.rgb, specularAlbedo.a);
-#else
+#else // ENABLE_DIRECTIONAL_LIGHT
 	float3 directionalLightContrib = float3(0.0f, 0.0f, 0.0f);
-#endif
+#endif // ENABLE_DIRECTIONAL_LIGHT
+	
+	float3 directRadiance = pointLightsContrib + spotLightsContrib + directionalLightContrib;
 
-	float3 accumLight = pointLightsContrib + spotLightsContrib + directionalLightContrib;
-	g_AccumLightTexture[globalThreadId.xy] = float4(accumLight, 1.0f);
+#if ENABLE_INDIRECT_LIGHT == 1
+	float3 gridSpacePos = worldSpacePos - g_GridConfigData.worldSpaceOrigin.xyz;
+	float3 gridTexCoord = gridSpacePos * g_GridConfigData.rcpSize.xyz;
+
+	SHSpectralCoeffs incidentIntensityCoeffs;
+	incidentIntensityCoeffs.r = g_IntensityRCoeffsTexture.SampleLevel(g_LinearSampler, gridTexCoord, 0.0f);
+	incidentIntensityCoeffs.g = g_IntensityGCoeffsTexture.SampleLevel(g_LinearSampler, gridTexCoord, 0.0f);
+	incidentIntensityCoeffs.b = g_IntensityBCoeffsTexture.SampleLevel(g_LinearSampler, gridTexCoord, 0.0f);
+
+	float4 cosineCoeffs = SHProjectClampedCosine(worldSpaceNormal);
+	float3 incidentIrradiance;
+	incidentIrradiance.r = dot(incidentIntensityCoeffs.r, cosineCoeffs);
+	incidentIrradiance.g = dot(incidentIntensityCoeffs.g, cosineCoeffs);
+	incidentIrradiance.b = dot(incidentIntensityCoeffs.b, cosineCoeffs);
+	incidentIrradiance = max(incidentIrradiance, 0.0f);
+
+	float3 diffuseBRDF = diffuseAlbedo * g_RcpPI;
+	float3 indirectRadiance = diffuseBRDF * incidentIrradiance;
+#else // ENABLE_INDIRECT_LIGHT
+	float3 indirectRadiance = float3(0.0f, 0.0f, 0.0f);
+#endif // ENABLE_INDIRECT_LIGHT
+
+	g_AccumLightTexture[globalThreadId.xy] = float4(directRadiance + indirectRadiance, 1.0f);
 }

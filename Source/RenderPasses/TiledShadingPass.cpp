@@ -25,6 +25,7 @@ TiledShadingPass::TiledShadingPass(InitParams* pParams)
 	std::string enablePointLightsStr = std::to_string(pParams->m_EnablePointLights ? 1 : 0);
 	std::string enableSpotLightsStr = std::to_string(pParams->m_EnableSpotLights ? 1 : 0);
 	std::string enableDirectionalLightStr = std::to_string(pParams->m_EnableDirectionalLight ? 1 : 0);
+	std::string enableIndirectLightStr = std::to_string(pParams->m_EnableIndirectLight ? 1 : 0);
 	
 	const ShaderMacro shaderDefines[] =
 	{
@@ -34,24 +35,18 @@ TiledShadingPass::TiledShadingPass(InitParams* pParams)
 		ShaderMacro("ENABLE_POINT_LIGHTS", enablePointLightsStr.c_str()),
 		ShaderMacro("ENABLE_SPOT_LIGHTS", enableSpotLightsStr.c_str()),
 		ShaderMacro("ENABLE_DIRECTIONAL_LIGHT", enableDirectionalLightStr.c_str()),
+		ShaderMacro("ENABLE_INDIRECT_LIGHT", enableIndirectLightStr.c_str()),
 		ShaderMacro()
 	};
 	Shader computeShader(L"Shaders//TiledShadingCS.hlsl", "Main", "cs_5_0", shaderDefines);
-
-	std::vector<D3D12_DESCRIPTOR_RANGE> srvDescriptorRanges;
-	srvDescriptorRanges.push_back(UAVDescriptorRange(1, 0));
-	srvDescriptorRanges.push_back(CBVDescriptorRange(1, 0));
-	srvDescriptorRanges.push_back(SRVDescriptorRange(4, 0));
-	
-	if (pParams->m_EnablePointLights)
-		srvDescriptorRanges.push_back(SRVDescriptorRange(4, 4));
-	if (pParams->m_EnableSpotLights)
-		srvDescriptorRanges.push_back(SRVDescriptorRange(4, 8));
+	D3D12_DESCRIPTOR_RANGE srvDescriptorRanges[] = {UAVDescriptorRange(1, 0), CBVDescriptorRange(2, 0), SRVDescriptorRange(15, 0)};
 	
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kSRVRootParam] = RootDescriptorTableParameter(srvDescriptorRanges.size(), srvDescriptorRanges.data(), D3D12_SHADER_VISIBILITY_ALL);
+	rootParams[kSRVRootParam] = RootDescriptorTableParameter(ARRAYSIZE(srvDescriptorRanges), srvDescriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
+	
+	StaticSamplerDesc samplerDesc(StaticSamplerDesc::Linear, 0, D3D12_SHADER_VISIBILITY_ALL);
 
-	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
+	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, 1, &samplerDesc);
 	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"TiledShadingPass::m_pRootSignature");
 
 	ComputePipelineStateDesc pipelineStateDesc;
