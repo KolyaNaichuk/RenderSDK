@@ -169,7 +169,7 @@ enum
 	kNumGridCellsX = 64,
 	kNumGridCellsY = 64,
 	kNumGridCellsZ = 64,
-	kNumPropagationIterations = 64,
+	kNumPropagationIterations = 8,
 
 	kShadowMapTileSize = 512,
 };
@@ -730,11 +730,20 @@ void DXApplication::OnKeyDown(UINT8 key)
 	else if (key == '9')
 		UpdateDisplayResult(DisplayResult::VoxelGridNormal);
 	else if ((key == 'f') || (key == 'F'))
+	{
 		m_ShadingMode = TileShadingMode::DirectLight;
+		UpdateDisplayResult(DisplayResult::AccumLight);
+	}		
 	else if ((key == 'g') || (key == 'G'))
+	{
 		m_ShadingMode = TileShadingMode::IndirectLight;
+		UpdateDisplayResult(DisplayResult::AccumLight);
+	}
 	else if ((key == 'h') || (key == 'H'))
+	{
 		m_ShadingMode = TileShadingMode::DirectAndIndirectLight;
+		UpdateDisplayResult(DisplayResult::AccumLight);
+	}
 }
 
 void DXApplication::OnKeyUp(UINT8 key)
