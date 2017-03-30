@@ -620,6 +620,7 @@ void DXApplication::OnInit()
 	InitVisualizeSpecularBufferPass();
 	InitVisualizeNormalBufferPass();
 	InitVisualizeDepthBufferPass();
+	InitVisualizePointLightTiledShadowMapPass();
 
 #ifdef DEBUG_RENDER_PASS
 	InitDebugRenderPass(pScene);
@@ -796,7 +797,7 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 	m_pCamera->GetTransform().SetPosition(Vector3f(278.0f, 274.0f, 700.0f));
 	m_pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(PI));
 	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
-	m_pCamera->SetBackgroundColor(Color::GRAY);
+	m_pCamera->SetBackgroundColor(Color::BLACK);
 
 	assert(pScene->GetNumMeshBatches() == 1);
 	MeshBatchData* pMeshBatchData = *pScene->GetMeshBatches();
