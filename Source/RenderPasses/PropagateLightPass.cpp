@@ -71,16 +71,12 @@ void PropagateLightPass::Record(RenderParams* pParams)
 	CommandList* pCommandList = pParams->m_pCommandList;
 	BindingResourceList** ppResources = pParams->m_ppResources;
 
-	pCommandList->Begin(m_pPipelineState);
-	pCommandList->SetComputeRootSignature(m_pRootSignature);
-	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
-
 	std::vector<ResourceTransitionBarrier> resourceBarriers[2];
 	for (u8 barrierIndex = 0; barrierIndex < 2; ++barrierIndex)
 	{
 		BindingResourceList* pCurrResources = ppResources[barrierIndex];
 		BindingResourceList* pPrevResources = ppResources[(barrierIndex + 1) % 2];
-				
+
 		assert(pCurrResources->m_RequiredResourceStates.size() == 6);
 		resourceBarriers[barrierIndex].reserve(6);
 
@@ -89,10 +85,14 @@ void PropagateLightPass::Record(RenderParams* pParams)
 			RequiredResourceState& prevResourceState = pPrevResources->m_RequiredResourceStates[(resourceIndex + 3) % 6];
 			RequiredResourceState& currResourceState = pCurrResources->m_RequiredResourceStates[resourceIndex];
 			assert(prevResourceState.m_pResource == currResourceState.m_pResource);
-			
+
 			resourceBarriers[barrierIndex].emplace_back(currResourceState.m_pResource, prevResourceState.m_RequiredState, currResourceState.m_RequiredState);
 		}
 	}
+
+	pCommandList->Begin(m_pPipelineState);
+	pCommandList->SetComputeRootSignature(m_pRootSignature);
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	{
 		BindingResourceList* pResources = ppResources[0];
 
