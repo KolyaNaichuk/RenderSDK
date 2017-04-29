@@ -5,7 +5,7 @@ I wanted to have a set of ready and easy to use utilities to implement and exper
 
 <b>Building the project</b>  
 The project is setup for Visual Studio 2015, Debug, x86 mode.  
-You might also need to update Target Platform Version (Configuration Properties/General) for the projects in the solution based on your current Windows SDK.
+You might also need to update Target Platform Version (Configuration Properties/General) for the projects in the solution based on your current Windows SDK. Version 10.0.10586.0 is used by default.
 
 In the current development state, it provides the following packages:
 
