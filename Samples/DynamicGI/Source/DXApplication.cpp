@@ -198,7 +198,8 @@ struct GridConfig
 	Vector4f m_CellSize;
 	Vector4f m_RcpCellSize;
 	Vector4i m_NumCells;
-	Vector4f m_NotUsed[10];
+	Vector4f m_RcpNumCells;
+	Vector4f m_NotUsed[9];
 };
 
 struct Range
@@ -1928,6 +1929,7 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	gridConfig.m_CellSize = Vector4f(gridCellSize.m_X, gridCellSize.m_Y, gridCellSize.m_Z, 0.0f);
 	gridConfig.m_RcpCellSize = Vector4f(gridRcpCellSize.m_X, gridRcpCellSize.m_Y, gridRcpCellSize.m_Z, 0.0f);
 	gridConfig.m_NumCells = Vector4i(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, 0);
+	gridConfig.m_RcpNumCells = Rcp(Vector4f(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, 0));
 		
 	m_pGridConfigDataBuffer->Write(&gridConfig, sizeof(gridConfig));
 

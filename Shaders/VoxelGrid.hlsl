@@ -16,7 +16,8 @@ struct GridConfig
 	float4 cellSize;
 	float4 rcpCellSize;
 	int4   numCells;
-	float4 notUsed[10];
+	float4 rcpNumCells;
+	float4 notUsed[9];
 };
 
 struct ObjectTransform
