@@ -37,8 +37,9 @@ public:
 
 private:
 	RootSignature* m_pRootSignature;
-	PipelineState* m_pPipelineState;
-
+	PipelineState* m_pWithoutOcclusionTestState;
+	PipelineState* m_pWithOcclusionTestState;
+	
 	u16 m_NumThreadGroupsX;
 	u16 m_NumThreadGroupsY;
 	u16 m_NumThreadGroupsZ;

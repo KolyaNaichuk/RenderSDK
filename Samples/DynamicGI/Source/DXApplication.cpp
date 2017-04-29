@@ -169,7 +169,9 @@ enum
 	kNumGridCellsX = 64,
 	kNumGridCellsY = 64,
 	kNumGridCellsZ = 64,
-	kNumPropagationIterations = 8,
+
+	kMinNumPropagationIterations = 0,
+	kMaxNumPropagationIterations = 64,
 
 	kShadowMapTileSize = 512,
 };
@@ -269,7 +271,8 @@ struct VisualizeTextureData
 DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Global Illumination", 0, 0, kTileSize * kNumTilesX, kTileSize * kNumTilesY)
 	, m_DisplayResult(DisplayResult::Unspecified)
-	, m_ShadingMode(TileShadingMode::DirectLight)
+	, m_ShadingMode(TileShadingMode::IndirectLight)
+	, m_NumPropagationIterations(kMinNumPropagationIterations)
 	, m_pDevice(nullptr)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
@@ -288,6 +291,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pNormalTexture(nullptr)
 	, m_pSpecularTexture(nullptr)
 	, m_pAccumLightTexture(nullptr)
+	, m_pAccumIntensityRCoeffsTexture(nullptr)
+	, m_pAccumIntensityGCoeffsTexture(nullptr)
+	, m_pAccumIntensityBCoeffsTexture(nullptr)
 	, m_pBackBufferViewport(nullptr)
 	, m_pSpotLightTiledShadowMapViewport(nullptr)
 	, m_pPointLightTiledShadowMapViewport(nullptr)
@@ -543,6 +549,9 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pNormalTexture);
 	SafeDelete(m_pSpecularTexture);
 	SafeDelete(m_pAccumLightTexture);
+	SafeDelete(m_pAccumIntensityRCoeffsTexture);
+	SafeDelete(m_pAccumIntensityGCoeffsTexture);
+	SafeDelete(m_pAccumIntensityBCoeffsTexture);
 	SafeDelete(m_pSpotLightTiledShadowMap);
 	SafeDelete(m_pPointLightTiledShadowMap);
 	SafeDelete(m_pDepthTexture);
@@ -674,7 +683,7 @@ void DXApplication::OnRender()
 	submissionBatch.emplace_back(RecordCreateVoxelGridPass());
 	submissionBatch.emplace_back(RecordInjectVirtualPointLightsPass());
 
-	if (kNumPropagationIterations > 0)
+	if (m_NumPropagationIterations > 0)
 		submissionBatch.emplace_back(RecordPropagateLightPass());
 
 	submissionBatch.emplace_back(RecordTiledShadingPass());
@@ -745,6 +754,22 @@ void DXApplication::OnKeyDown(UINT8 key)
 		m_ShadingMode = TileShadingMode::DirectAndIndirectLight;
 		UpdateDisplayResult(DisplayResult::AccumLight);
 	}
+	else if (key == VK_UP)
+	{
+		if (m_NumPropagationIterations < kMaxNumPropagationIterations)
+		{
+			++m_NumPropagationIterations;
+			UpdateDisplayResult(DisplayResult::AccumLight);
+		}
+	}
+	else if (key == VK_DOWN)
+	{
+		if (m_NumPropagationIterations > kMinNumPropagationIterations)
+		{
+			--m_NumPropagationIterations;
+			UpdateDisplayResult(DisplayResult::AccumLight);
+		}
+	}
 }
 
 void DXApplication::OnKeyUp(UINT8 key)
@@ -764,10 +789,10 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 10, false);
 	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 160, true);
+	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 180, true);
 	m_pShaderVisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
-	DescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 73, false);
+	DescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 80, false);
 	m_pShaderInvisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
 	DescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2, false);
@@ -794,7 +819,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
 {
 	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
-	m_pCamera->GetTransform().SetPosition(Vector3f(278.0f, 274.0f, 700.0f));
+	m_pCamera->GetTransform().SetPosition(Vector3f(0.5f * 549.6f, 0.5f * 548.8f, 700.0f));
 	m_pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(PI));
 	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
 	m_pCamera->SetBackgroundColor(Color::BLACK);
@@ -1135,20 +1160,15 @@ void DXApplication::InitTiledShadingPass()
 	initParams.m_EnableIndirectLight = true;
 	
 	m_pTiledIndirectLightShadingPass = new TiledShadingPass(&initParams);
-
-	const u8 intensityTexIndex = kNumPropagationIterations % 2;
-	ColorTexture* pIntensityRCoeffsTexture = m_IntensityRCoeffsTextures[intensityTexIndex];
-	ColorTexture* pIntensityGCoeffsTexture = m_IntensityGCoeffsTextures[intensityTexIndex];
-	ColorTexture* pIntensityBCoeffsTexture = m_IntensityBCoeffsTextures[intensityTexIndex];
-			
+				
 	m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(m_pAccumLightTexture, m_pAccumLightTexture->GetWriteState());
 	m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(m_pDepthTexture, m_pDepthTexture->GetReadState());
 	m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(m_pNormalTexture, m_pNormalTexture->GetReadState());
 	m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(m_pDiffuseTexture, m_pDiffuseTexture->GetReadState());
 	m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(m_pSpecularTexture, m_pSpecularTexture->GetReadState());
-	m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(pIntensityRCoeffsTexture, pIntensityRCoeffsTexture->GetReadState());
-	m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(pIntensityGCoeffsTexture, pIntensityGCoeffsTexture->GetReadState());
-	m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(pIntensityBCoeffsTexture, pIntensityBCoeffsTexture->GetReadState());
+	m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(m_pAccumIntensityRCoeffsTexture, m_pAccumIntensityRCoeffsTexture->GetReadState());
+	m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(m_pAccumIntensityGCoeffsTexture, m_pAccumIntensityGCoeffsTexture->GetReadState());
+	m_pTiledShadingResources->m_RequiredResourceStates.emplace_back(m_pAccumIntensityBCoeffsTexture, m_pAccumIntensityBCoeffsTexture->GetReadState());
 
 	m_pTiledShadingResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
 	m_pDevice->CopyDescriptor(m_pTiledShadingResources->m_SRVHeapStart, m_pAccumLightTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -1158,9 +1178,9 @@ void DXApplication::InitTiledShadingPass()
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pNormalTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDiffuseTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpecularTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityRCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityGCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityBCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityRCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityGCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityBCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	if (m_pPointLightBuffer != nullptr)
 	{
@@ -1541,10 +1561,14 @@ void DXApplication::InitInjectVirtualPointLightsPass()
 
 	for (u8 index = 0; index < 2; ++index)
 	{
-		m_IntensityRCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pIntensityRCoeffsTexture");
-		m_IntensityGCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pIntensityGCoeffsTexture");
-		m_IntensityBCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pIntensityBCoeffsTexture");
+		m_IntensityRCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_IntensityRCoeffsTextures");
+		m_IntensityGCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_IntensityGCoeffsTextures");
+		m_IntensityBCoeffsTextures[index] = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_IntensityBCoeffsTextures");
 	}
+
+	m_pAccumIntensityRCoeffsTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pAccumIntensityRCoeffsTexture");
+	m_pAccumIntensityGCoeffsTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pAccumIntensityGCoeffsTexture");
+	m_pAccumIntensityBCoeffsTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &coeffsTextureDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pAccumIntensityBCoeffsTexture");
 
 	ColorTexture* pIntensityRCoeffsTexture = m_IntensityRCoeffsTextures[0];
 	ColorTexture* pIntensityGCoeffsTexture = m_IntensityGCoeffsTextures[0];
@@ -1575,10 +1599,18 @@ void DXApplication::InitInjectVirtualPointLightsPass()
 	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pIntensityRCoeffsTexture, pIntensityRCoeffsTexture->GetWriteState());
 	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pIntensityGCoeffsTexture, pIntensityGCoeffsTexture->GetWriteState());
 	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(pIntensityBCoeffsTexture, pIntensityBCoeffsTexture->GetWriteState());
+	
+	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(m_pAccumIntensityRCoeffsTexture, m_pAccumIntensityRCoeffsTexture->GetWriteState());
+	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(m_pAccumIntensityGCoeffsTexture, m_pAccumIntensityGCoeffsTexture->GetWriteState());
+	m_pInjectVirtualPointLightsResources->m_RequiredResourceStates.emplace_back(m_pAccumIntensityBCoeffsTexture, m_pAccumIntensityBCoeffsTexture->GetWriteState());
 
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityRCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityGCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityBCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityRCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityGCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityBCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void DXApplication::InitPropagateLightPass()
@@ -1601,25 +1633,36 @@ void DXApplication::InitPropagateLightPass()
 		ColorTexture* pIntensityRCoeffsTexture = m_IntensityRCoeffsTextures[outTexIndex];
 		ColorTexture* pIntensityGCoeffsTexture = m_IntensityGCoeffsTextures[outTexIndex];
 		ColorTexture* pIntensityBCoeffsTexture = m_IntensityBCoeffsTextures[outTexIndex];
-				
+
+		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(m_pGridBuffer, m_pGridBuffer->GetReadState());
+
 		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pPrevIntensityRCoeffsTexture, pPrevIntensityRCoeffsTexture->GetReadState());
 		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pPrevIntensityGCoeffsTexture, pPrevIntensityGCoeffsTexture->GetReadState());
 		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pPrevIntensityBCoeffsTexture, pPrevIntensityBCoeffsTexture->GetReadState());
-		
+				
 		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pIntensityRCoeffsTexture, pIntensityRCoeffsTexture->GetWriteState());
 		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pIntensityGCoeffsTexture, pIntensityGCoeffsTexture->GetWriteState());
 		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(pIntensityBCoeffsTexture, pIntensityBCoeffsTexture->GetWriteState());
 
+		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(m_pAccumIntensityRCoeffsTexture, m_pAccumIntensityRCoeffsTexture->GetWriteState());
+		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(m_pAccumIntensityGCoeffsTexture, m_pAccumIntensityGCoeffsTexture->GetWriteState());
+		m_PropagateLightResources[index]->m_RequiredResourceStates.emplace_back(m_pAccumIntensityBCoeffsTexture, m_pAccumIntensityBCoeffsTexture->GetWriteState());
+
 		m_PropagateLightResources[index]->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
 		m_pDevice->CopyDescriptor(m_PropagateLightResources[index]->m_SRVHeapStart, m_pGridConfigDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPrevIntensityRCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPrevIntensityGCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pPrevIntensityBCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
+		
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityRCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityGCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pIntensityBCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityRCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityGCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityBCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 }
 
@@ -1875,7 +1918,7 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	
 	// Kolya: Hard-coding grid center for now
 	//const Vector3f gridCenter(mainCameraPos + (0.25f * gridSize.m_Z) * mainCameraBasis.m_ZAxis);
-	const Vector3f gridCenter(278.0f, 274.0f, -279.0f);
+	const Vector3f gridCenter(0.5f * 549.6f, 0.5f * 548.8f, -0.5f * 562.0f);
 	const Vector3f gridMinPoint(gridCenter - gridHalfSize);
 
 	GridConfig gridConfig;
@@ -2231,7 +2274,7 @@ CommandList* DXApplication::RecordPropagateLightPass()
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pPropagateLightCommandList");
 	renderParams.m_ppResources = m_PropagateLightResources;
-	renderParams.m_NumIterations = kNumPropagationIterations;
+	renderParams.m_NumIterations = m_NumPropagationIterations;
 
 	m_pPropagateLightPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
@@ -2398,13 +2441,29 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 	if (m_DisplayResult == DisplayResult::AccumLight)
 	{
 		if (m_ShadingMode == TileShadingMode::DirectAndIndirectLight)
-			m_pWindow->SetWindowText(L"Global Illumination - Direct + Indirect Lighting");
+		{
+			std::wstringstream stream;
+			stream << L"Global Illumination - Direct + Indirect Lighting ";
+			stream << "(" << m_NumPropagationIterations << " iterations)";
+
+			m_pWindow->SetWindowText(stream.str().c_str());
+		}
 		else if (m_ShadingMode == TileShadingMode::DirectLight)
+		{
 			m_pWindow->SetWindowText(L"Global Illumination - Direct Lighting");
+		}
 		else if (m_ShadingMode == TileShadingMode::IndirectLight)
-			m_pWindow->SetWindowText(L"Global Illumination - Indirect Lighting");
+		{
+			std::wstringstream stream;
+			stream << L"Global Illumination - Indirect Lighting ";
+			stream << "(" << m_NumPropagationIterations << " iterations)";
+
+			m_pWindow->SetWindowText(stream.str().c_str());
+		}
 		else
+		{
 			assert(false);
+		}
 	}
 	else if (m_DisplayResult == DisplayResult::DiffuseBuffer)
 		m_pWindow->SetWindowText(L"Global Illumination - Diffuse Buffer");

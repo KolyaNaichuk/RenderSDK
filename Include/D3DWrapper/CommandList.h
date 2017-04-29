@@ -27,6 +27,8 @@ public:
 
 	void Begin(PipelineState* pPipelineState = nullptr);
 	void End();
+
+	void SetPipelineState(PipelineState* pPipelineState);
 				
 	void IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
 	void IASetVertexBuffers(UINT startSlot, UINT numViews, const VertexBufferView* pViews);

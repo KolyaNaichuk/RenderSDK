@@ -2,6 +2,7 @@
 #include "BoundingVolumes.hlsl"
 #include "Lighting.hlsl"
 #include "SphericalHarmonics.hlsl"
+#include "Foundation.hlsl"
 
 cbuffer GridConfigBuffer : register(b0)
 {
@@ -21,13 +22,17 @@ RWTexture3D<float4> g_IntensityRCoeffsTexture : register(u0);
 RWTexture3D<float4> g_IntensityGCoeffsTexture : register(u1);
 RWTexture3D<float4> g_IntensityBCoeffsTexture : register(u2);
 
+RWTexture3D<float4> g_AccumIntensityRCoeffsTexture : register(u3);
+RWTexture3D<float4> g_AccumIntensityGCoeffsTexture : register(u4);
+RWTexture3D<float4> g_AccumIntensityBCoeffsTexture : register(u5);
+
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 void Main(int3 gridCell : SV_DispatchThreadID)
 {
-	SHSpectralCoeffs accumIntensityCoeffs;
-	accumIntensityCoeffs.r = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	accumIntensityCoeffs.g = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	accumIntensityCoeffs.b = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	SHSpectralCoeffs totalIntensityCoeffs;
+	totalIntensityCoeffs.r = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	totalIntensityCoeffs.g = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	totalIntensityCoeffs.b = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	const int cellIndex = ComputeGridCellIndex(g_GridConfig, gridCell);
 	if (g_GridBuffer[cellIndex].numOccluders > 0.0f)
@@ -46,32 +51,38 @@ void Main(int3 gridCell : SV_DispatchThreadID)
 			float3 worldSpaceCellPos = ComputeWorldSpacePosition(g_GridConfig, gridCell);
 			float3 worldSpaceDirToLight = worldSpaceLightPos - worldSpaceCellPos;
 
-			float distToLight = length(worldSpaceDirToLight);
-			if (distToLight < lightAttenEndRange)
-			{
-				float solidAngle = 1.0f;
+			float surfaceArea = 1024.0f;// Kolya. Hardcoding for now
+			float distToLightSquared = dot(worldSpaceDirToLight, worldSpaceDirToLight);
+			float solidAngle = 1.0f;// surfaceArea / distToLightSquared;
+						
+			float3 lightIntensity = g_PointLightPropsBuffer[lightIndex].color;
 
-				float3 worldSpaceNormDirToLight = worldSpaceDirToLight * rcp(distToLight);
-				float3 lightIntensity = g_PointLightPropsBuffer[lightIndex].color;
-								
-				float NdotL = saturate(dot(worldSpaceNormal, worldSpaceNormDirToLight));
-				float3 reflectedFlux = diffuseAlbedo * lightIntensity * (solidAngle * NdotL);
+			// Kolya. Hawar seems to have a constant to emulate solidAngle.
+			// For the rest of reflextedFlux we have similar calculation
+			// float att = saturate(1.0f - (lightVecLen / pointLightUB.radius));
+			// float3 vDiffuse = albedo * pointLightUB.color.rgb * saturate(nDotL) * pointLightUB.multiplier * att;
 
-				float4 cosineCoeffs = SHProjectClampedCosine(worldSpaceNormal);
-				SHSpectralCoeffs intensityCoeffs;
-				intensityCoeffs.r = reflectedFlux.r * cosineCoeffs;
-				intensityCoeffs.g = reflectedFlux.g * cosineCoeffs;
-				intensityCoeffs.b = reflectedFlux.b * cosineCoeffs;
+			float NdotL = saturate(dot(worldSpaceNormal, normalize(worldSpaceDirToLight)));
+			float3 reflectedFlux = diffuseAlbedo * lightIntensity * (solidAngle * NdotL);
+						
+			float4 cosineCoeffs = SHProjectClampedCosine(worldSpaceNormal);
+			SHSpectralCoeffs intensityCoeffs;
+			intensityCoeffs.r = reflectedFlux.r * cosineCoeffs; // Kolya. No corrections applied
+			intensityCoeffs.g = reflectedFlux.g * cosineCoeffs; // Kolya. No corrections applied
+			intensityCoeffs.b = reflectedFlux.b * cosineCoeffs; // Kolya. No corrections applied
 
-				accumIntensityCoeffs.r += intensityCoeffs.r;
-				accumIntensityCoeffs.g += intensityCoeffs.g;
-				accumIntensityCoeffs.b += intensityCoeffs.b;
-			}
+			totalIntensityCoeffs.r += intensityCoeffs.r;
+			totalIntensityCoeffs.g += intensityCoeffs.g;
+			totalIntensityCoeffs.b += intensityCoeffs.b;
 		}
 #endif // ENABLE_POINT_LIGHTS
 	}
 
-	g_IntensityRCoeffsTexture[gridCell] = accumIntensityCoeffs.r;
-	g_IntensityGCoeffsTexture[gridCell] = accumIntensityCoeffs.g;
-	g_IntensityBCoeffsTexture[gridCell] = accumIntensityCoeffs.b;
+	g_IntensityRCoeffsTexture[gridCell] = totalIntensityCoeffs.r;
+	g_IntensityGCoeffsTexture[gridCell] = totalIntensityCoeffs.g;
+	g_IntensityBCoeffsTexture[gridCell] = totalIntensityCoeffs.b;
+
+	g_AccumIntensityRCoeffsTexture[gridCell] = totalIntensityCoeffs.r;
+	g_AccumIntensityGCoeffsTexture[gridCell] = totalIntensityCoeffs.g;
+	g_AccumIntensityBCoeffsTexture[gridCell] = totalIntensityCoeffs.b;
 }

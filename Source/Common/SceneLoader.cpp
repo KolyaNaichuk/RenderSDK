@@ -17,7 +17,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		// Floor
 		const Vector3f positions[] =
 		{
-			Vector3f(552.8f, 0.0f,   0.0f),
+			Vector3f(549.6f, 0.0f,   0.0f),
 			Vector3f(  0.0f, 0.0f,   0.0f),
 			Vector3f(  0.0f, 0.0f, 559.2f),
 			Vector3f(549.6f, 0.0f, 559.2f)
@@ -81,8 +81,8 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		// Ceiling
 		const Vector3f positions[] =
 		{
-			Vector3f(556.0f, 548.8f,   0.0f),
-			Vector3f(556.0f, 548.8f, 559.2f),
+			Vector3f(549.6f, 548.8f,   0.0f),
+			Vector3f(549.6f, 548.8f, 559.2f),
 			Vector3f(  0.0f, 548.8f, 559.2f),
 			Vector3f(  0.0f, 548.8f,   0.0f)
 		};
@@ -148,7 +148,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 			Vector3f(549.6f,   0.0f, 559.2f),
 			Vector3f(  0.0f,   0.0f, 559.2f),
 			Vector3f(  0.0f, 548.8f, 559.2f),
-			Vector3f(556.0f, 548.8f, 559.2f)
+			Vector3f(549.6f, 548.8f, 559.2f)
 		};
 		const u32 numVertices = ARRAYSIZE(positions);
 
@@ -273,10 +273,10 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		// Left wall
 		const Vector3f positions[] =
 		{
-			Vector3f(552.8f,   0.0f,   0.0f),
+			Vector3f(549.6f,   0.0f,   0.0f),
 			Vector3f(549.6f,   0.0f, 559.2f),
-			Vector3f(556.0f, 548.8f, 559.2f),
-			Vector3f(556.0f, 548.8f,   0.0f)
+			Vector3f(549.6f, 548.8f, 559.2f),
+			Vector3f(549.6f, 548.8f,   0.0f)
 		};
 		const u32 numVertices = ARRAYSIZE(positions);
 
@@ -422,7 +422,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 		meshData.RecalcAABB();
 
-		pMeshBatchData->Append(&meshData);
+		//pMeshBatchData->Append(&meshData);
 	}
 	{
 		// Tall block
@@ -513,21 +513,21 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 		meshData.RecalcAABB();
 
-		pMeshBatchData->Append(&meshData);
+		//pMeshBatchData->Append(&meshData);
 	}
 
 	pScene->AddMeshBatch(pMeshBatchData);
 
 	// Cornell box bounds in left-handed coordinate system
-	// 0 < x < 549
-	// 0 < y < 548
-	// -559 (back wall) < z < 0
+	// 0 <= x <= 549.6f
+	// 0 <= y <= 548.8f
+	// -559.2f (back wall) <= z <= 0
 	
 	if (settings == CornellBoxSettings_Original)
 	{
 		PointLight* pPointLight = new PointLight("pPointLight", 650.0f);
 		pPointLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
-		pPointLight->GetTransform().SetPosition(Vector3f(274.5f, 400.0f, -280.0f));
+		pPointLight->GetTransform().SetPosition(Vector3f(0.5f * 549.6f, 400.0f, -0.5f * 559.2f));
 
 		pScene->AddPointLight(pPointLight);
 	}
@@ -535,7 +535,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 	{
 		SpotLight* pSpotLight = new SpotLight("pSpotLight", 650.0f, PI_DIV_FOUR, PI_DIV_TWO);
 		pSpotLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
-		pSpotLight->GetTransform().SetPosition(Vector3f(275.0f, 540.0f, -280.0f));
+		pSpotLight->GetTransform().SetPosition(Vector3f(0.5f * 549.6f, 540.0f, -0.5f * 559.2f));
 		pSpotLight->GetTransform().SetRotation(CreateRotationXQuaternion(PI_DIV_TWO));
 
 		pScene->AddSpotLight(pSpotLight);
@@ -544,7 +544,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 	{
 		PointLight* pPointLight = new PointLight("pPointLight", 650.0f);
 		pPointLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
-		pPointLight->GetTransform().SetPosition(Vector3f(275.0f, 400.0f, -280.0f));
+		pPointLight->GetTransform().SetPosition(Vector3f(0.5f * 549.6f, 400.0f, -0.5f * 559.2f));
 
 		pScene->AddPointLight(pPointLight);
 	}

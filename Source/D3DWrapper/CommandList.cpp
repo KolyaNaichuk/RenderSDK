@@ -43,6 +43,11 @@ void CommandList::End()
 	VerifyD3DResult(m_D3DCommandList->Close());
 }
 
+void CommandList::SetPipelineState(PipelineState* pPipelineState)
+{
+	m_D3DCommandList->SetPipelineState(pPipelineState->GetD3DObject());
+}
+
 void CommandList::IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
 {
 	m_D3DCommandList->IASetPrimitiveTopology(primitiveTopology);

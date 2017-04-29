@@ -146,6 +146,7 @@ private:
 
 	DisplayResult m_DisplayResult;
 	TileShadingMode m_ShadingMode;
+	UINT m_NumPropagationIterations;
 
 	GraphicsDevice* m_pDevice;
 	SwapChain* m_pSwapChain;
@@ -168,6 +169,9 @@ private:
 	ColorTexture* m_IntensityRCoeffsTextures[2];
 	ColorTexture* m_IntensityGCoeffsTextures[2];
 	ColorTexture* m_IntensityBCoeffsTextures[2];
+	ColorTexture* m_pAccumIntensityRCoeffsTexture;
+	ColorTexture* m_pAccumIntensityGCoeffsTexture;
+	ColorTexture* m_pAccumIntensityBCoeffsTexture;
 	Viewport* m_pBackBufferViewport;
 	Viewport* m_pSpotLightTiledShadowMapViewport;
 	Viewport* m_pPointLightTiledShadowMapViewport;

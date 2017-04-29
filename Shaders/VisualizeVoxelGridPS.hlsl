@@ -20,29 +20,29 @@ cbuffer CameraTransformBuffer : register(b1)
 	CameraTransform g_Transform;
 }
 
-Texture2D DepthTexture : register(t0);
-StructuredBuffer<Voxel> GridBuffer : register(t1);
+Texture2D g_DepthTexture : register(t0);
+StructuredBuffer<Voxel> g_GridBuffer : register(t1);
 
 float4 Main(PSInput input) : SV_Target
 {
-	float hardwareDepth = DepthTexture.Load(int3(input.screenSpacePos.xy, 0)).r;
+	float hardwareDepth = g_DepthTexture.Load(int3(input.screenSpacePos.xy, 0)).r;
 	float4 worldSpacePos = ComputeWorldSpacePosition(input.texCoord, hardwareDepth, g_Transform.viewProjInvMatrix);
 	
 	int3 gridCell = ComputeGridCell(g_GridConfig, worldSpacePos.xyz);
-	if (all(int3(-1, -1, -1) < gridCell.xyz) && all(gridCell.xyz < g_GridConfig.numCells.xyz))
+	if (!IsCellOutsideGrid(g_GridConfig, gridCell))
 	{
 		int cellIndex = ComputeGridCellIndex(g_GridConfig, gridCell);
 
 #if (VOXEL_DATA_TYPE == VOXEL_DATA_TYPE_DIFFUSE_COLOR)
-		float3 diffuseColor = GridBuffer[cellIndex].diffuseColor;
+		float3 diffuseColor = g_GridBuffer[cellIndex].diffuseColor;
 		return float4(diffuseColor, 1.0f);
 #endif // VOXEL_DATA_TYPE_DIFFUSE_COLOR
 
 #if (VOXEL_DATA_TYPE == VOXEL_DATA_TYPE_NORMAL)
-		float3 worldSpaceNormal = GridBuffer[cellIndex].worldSpaceNormal;
+		float3 worldSpaceNormal = g_GridBuffer[cellIndex].worldSpaceNormal;
 		return float4(0.5f * worldSpaceNormal + 0.5f, 1.0f);
 #endif // VOXEL_DATA_TYPE_NORMAL
 	}
 
-	return float4(0.7f, 0.8f, 0.5f, 1.0f);
+	return float4(0.0f, 0.0f, 0.0f, 1.0f);
 }
