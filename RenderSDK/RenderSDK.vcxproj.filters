@@ -541,5 +541,8 @@
     <None Include="..\Shaders\VisualizePropagatedIntensityVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\Shaders\VisualizePropagatedIntensityPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
