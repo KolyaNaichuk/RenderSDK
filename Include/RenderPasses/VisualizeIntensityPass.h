@@ -10,7 +10,7 @@ struct RenderEnv;
 struct BindingResourceList;
 struct Viewport;
 
-class VisualizePropagatedIntensityPass
+class VisualizeIntensityPass
 {
 public:
 	enum ViewDirection
@@ -35,11 +35,12 @@ public:
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
 		BindingResourceList* m_pResources;
+		UINT m_TextureIndexToVisualize;
 		Viewport* m_pViewport;
 	};
 
-	VisualizePropagatedIntensityPass(InitParams* pParams);
-	~VisualizePropagatedIntensityPass();
+	VisualizeIntensityPass(InitParams* pParams);
+	~VisualizeIntensityPass();
 
 	void Record(RenderParams* pParams);
 

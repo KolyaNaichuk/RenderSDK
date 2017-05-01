@@ -12,12 +12,12 @@ struct VSOutput
 	float4 color		: COLOR;
 };
 
-cbuffer GridConfigDataBuffer : register(b0)
+cbuffer TextureIndexBuffer : register(b0)
 {
-	GridConfig g_GridConfig;
+	uint g_TextureIndex;
 }
 
-Texture3D g_IntensityCoeffsTexture : register(t0);
+Texture3D<float4> g_IntensityCoeffsTextures[9] : register(t0);
 
 #if HORIZONTAL_BOUNDARY == 1
 static const float2 g_ClipSpaceTopBoundary[2] =
@@ -29,15 +29,15 @@ static const float2 g_ClipSpaceTopBoundary[2] =
 VSOutput Main(uint boundaryId : SV_InstanceID, uint vertexId : SV_VertexID)
 {
 #if VIEW_DIRECTION == VIEW_DIRECTION_Z
-	float2 clipSpaceCellSize = float2(2.0f, 2.0f) * g_GridConfig.rcpNumCells.xy;
+	float2 clipSpaceCellSize = 2.0f / float2(NUM_GRID_CELLS_X, NUM_GRID_CELLS_Y);
 #endif // VIEW_DIRECTION_Z
 
 #if VIEW_DIRECTION == VIEW_DIRECTION_Y
-	float2 clipSpaceCellSize = float2(2.0f, 2.0f) * g_GridConfig.rcpNumCells.xz;
+	float2 clipSpaceCellSize = 2.0f / float2(NUM_GRID_CELLS_X, NUM_GRID_CELLS_Z);
 #endif // VIEW_DIRECTION_Y
 
 #if VIEW_DIRECTION == VIEW_DIRECTION_X
-	float2 clipSpaceCellSize = float2(2.0f, 2.0f) * g_GridConfig.rcpNumCells.zy;
+	float2 clipSpaceCellSize = 2.0f / float2(NUM_GRID_CELLS_Z, NUM_GRID_CELLS_Y);
 #endif // VIEW_DIRECTION_X
 				
 	VSOutput output;
@@ -58,15 +58,15 @@ static const float2 g_ClipSpaceLeftBoundary[2] =
 VSOutput Main(uint boundaryId : SV_InstanceID, uint vertexId : SV_VertexID)
 {
 #if VIEW_DIRECTION == VIEW_DIRECTION_Z
-	float2 clipSpaceCellSize = float2(2.0f, 2.0f) * g_GridConfig.rcpNumCells.xy;
+	float2 clipSpaceCellSize = 2.0f / float2(NUM_GRID_CELLS_X, NUM_GRID_CELLS_Y);
 #endif // VIEW_DIRECTION_Z
 
 #if VIEW_DIRECTION == VIEW_DIRECTION_Y
-	float2 clipSpaceCellSize = float2(2.0f, 2.0f) * g_GridConfig.rcpNumCells.xz;
+	float2 clipSpaceCellSize = 2.0f / float2(NUM_GRID_CELLS_X, NUM_GRID_CELLS_Z);
 #endif // VIEW_DIRECTION_Y
 
 #if VIEW_DIRECTION == VIEW_DIRECTION_X
-	float2 clipSpaceCellSize = float2(2.0f, 2.0f) * g_GridConfig.rcpNumCells.zy;
+	float2 clipSpaceCellSize = 2.0f / float2(NUM_GRID_CELLS_Z, NUM_GRID_CELLS_Y);
 #endif // VIEW_DIRECTION_X
 
 	VSOutput output;
@@ -86,10 +86,10 @@ VSOutput Main(uint cellFlattenedId : SV_InstanceID, uint vertexId : SV_VertexID)
 	float vertexAngle = float(vertexId) * g_AngleSubtendedByIntensityPolygonSide;
 
 #if VIEW_DIRECTION == VIEW_DIRECTION_Z
-	uint numCellsInGridRow = g_GridConfig.numCells.x;
+	uint numCellsInGridRow = NUM_GRID_CELLS_X;
 	uint3 cellId = uint3(cellFlattenedId % numCellsInGridRow, cellFlattenedId / numCellsInGridRow, SLICE_TO_VISUALIZE);
 
-	float2 clipSpaceCellHalfSize = g_GridConfig.rcpNumCells.xy;
+	float2 clipSpaceCellHalfSize = 1.0f / float2(NUM_GRID_CELLS_X, NUM_GRID_CELLS_Y);
 
 	float3 vertexDirOnUnitSphere = float3(0.0f, 0.0f, 0.0f);
 	sincos(vertexAngle, vertexDirOnUnitSphere.y, vertexDirOnUnitSphere.x);
@@ -98,10 +98,10 @@ VSOutput Main(uint cellFlattenedId : SV_InstanceID, uint vertexId : SV_VertexID)
 #endif // VIEW_DIRECTION_Z
 
 #if VIEW_DIRECTION == VIEW_DIRECTION_Y
-	uint numCellsInGridRow = g_GridConfig.numCells.x;
+	uint numCellsInGridRow = NUM_GRID_CELLS_X;
 	uint3 cellId = uint3(cellFlattenedId % numCellsInGridRow, SLICE_TO_VISUALIZE, cellFlattenedId / numCellsInGridRow);
 
-	float2 clipSpaceCellHalfSize = g_GridConfig.rcpNumCells.xz;
+	float2 clipSpaceCellHalfSize = 1.0f / float2(NUM_GRID_CELLS_X, NUM_GRID_CELLS_Z);
 
 	float3 vertexDirOnUnitSphere = float3(0.0f, 0.0f, 0.0f);
 	sincos(vertexAngle, vertexDirOnUnitSphere.z, vertexDirOnUnitSphere.x);
@@ -110,10 +110,10 @@ VSOutput Main(uint cellFlattenedId : SV_InstanceID, uint vertexId : SV_VertexID)
 #endif // VIEW_DIRECTION_Y
 
 #if VIEW_DIRECTION == VIEW_DIRECTION_X
-	uint numCellsInGridRow = g_GridConfig.numCells.z;
+	uint numCellsInGridRow = NUM_GRID_CELLS_Z;
 	uint3 cellId = uint3(SLICE_TO_VISUALIZE, cellFlattenedId / numCellsInGridRow, cellFlattenedId % numCellsInGridRow);
 
-	float2 clipSpaceCellHalfSize = g_GridConfig.rcpNumCells.zy;
+	float2 clipSpaceCellHalfSize = 1.0f / float2(NUM_GRID_CELLS_Z, NUM_GRID_CELLS_Y);
 
 	float3 vertexDirOnUnitSphere = float3(0.0f, 0.0f, 0.0f);
 	sincos(vertexAngle, vertexDirOnUnitSphere.z, vertexDirOnUnitSphere.y);
@@ -123,7 +123,7 @@ VSOutput Main(uint cellFlattenedId : SV_InstanceID, uint vertexId : SV_VertexID)
 	
 	float2 clipSpaceCellCenter = float2(-1.0f, 1.0f) + float2(1 + 2 * cellId.x, 1 + 2 * cellId.y) * float2(clipSpaceCellHalfSize.x, -clipSpaceCellHalfSize.y);
 	
-	float4 intensityCoeffs = g_IntensityCoeffsTexture[cellId];
+	float4 intensityCoeffs = g_IntensityCoeffsTextures[g_TextureIndex][cellId];
 	float intensity = dot(intensityCoeffs, SH(vertexDirOnUnitSphere));
 	
 	float2 clipSpaceVertexScale = (g_VisualizedIntensityScale / intensity) * clipSpaceCellHalfSize;

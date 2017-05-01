@@ -237,7 +237,7 @@
     <ClInclude Include="..\Include\Math\Quad.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\VisualizePropagatedIntensityPass.h">
+    <ClInclude Include="..\Include\RenderPasses\VisualizeIntensityPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -440,7 +440,7 @@
     <ClCompile Include="..\Source\Math\Quad.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\VisualizePropagatedIntensityPass.cpp">
+    <ClCompile Include="..\Source\RenderPasses\VisualizeIntensityPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
@@ -538,10 +538,10 @@
     <None Include="..\Shaders\BoundingVolumes.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\VisualizePropagatedIntensityVS.hlsl">
+    <None Include="..\Shaders\VisualizeIntensityVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\VisualizePropagatedIntensityPS.hlsl">
+    <None Include="..\Shaders\VisualizeIntensityPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

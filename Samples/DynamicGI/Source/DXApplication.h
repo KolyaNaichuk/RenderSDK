@@ -25,6 +25,7 @@ class PropagateLightPass;
 class VisualizeVoxelGridPass;
 class VisualizeTexturePass;
 class VisualizeVoxelGridPass;
+class VisualizeIntensityPass;
 class TiledLightCullingPass;
 class TiledShadingPass;
 class ViewFrustumCullingPass;
@@ -45,7 +46,8 @@ class DXApplication : public Application
 public:
 	enum class DisplayResult
 	{
-		AccumLight,
+		ShadingResult,
+		IndirectLightIntensityResult,
 		DiffuseBuffer,
 		SpecularBuffer,
 		NormalBuffer,
@@ -61,6 +63,18 @@ public:
 		DirectLight,
 		IndirectLight,
 		DirectAndIndirectLight
+	};
+	enum class IndirectLightIntensity
+	{
+		Previous,
+		Current,
+		Accumulated
+	};
+	enum class IndirectLightComponent
+	{
+		Red,
+		Green,
+		Blue
 	};
 
 	DXApplication(HINSTANCE hApp);
@@ -101,6 +115,7 @@ private:
 	void InitVisualizeDepthBufferPass();
 	void InitVisualizeSpotLightTiledShadowMapPass();
 	void InitVisualizePointLightTiledShadowMapPass();
+	void InitVisualizeIntensityPass();
 	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
 
 	CommandList* RecordClearBackBufferPass(u8 clearFlags);
@@ -130,6 +145,7 @@ private:
 	CommandList* RecordVisualizeDepthBufferPass();
 	CommandList* RecordVisualizeSpotLightTiledShadowMapPass();
 	CommandList* RecordVisualizePointLightTiledShadowMapPass();
+	CommandList* RecordVisualizeIntensityPass();
 	CommandList* RecordDisplayResultPass();
 	CommandList* RecordPresentResourceBarrierPass();
 
@@ -146,6 +162,8 @@ private:
 
 	DisplayResult m_DisplayResult;
 	TileShadingMode m_ShadingMode;
+	IndirectLightIntensity m_IndirectLightIntensity;
+	IndirectLightComponent m_IndirectLightComponent;
 	UINT m_NumPropagationIterations;
 
 	GraphicsDevice* m_pDevice;
@@ -292,6 +310,9 @@ private:
 
 	VisualizeTexturePass* m_pVisualizePointLightTiledShadowMapPass;
 	BindingResourceList* m_VisualizePointLightTiledShadowMapResources[kNumBackBuffers];
+
+	VisualizeIntensityPass* m_pVisualizeIntensityPass;
+	BindingResourceList* m_VisualizeIntensityResources[kNumBackBuffers];
 	
 	MeshBatch* m_pMeshBatch;
 	

@@ -35,12 +35,14 @@ public:
 	void IASetIndexBuffer(const IndexBufferView* pView);
 
 	void SetGraphicsRootSignature(RootSignature* pRootSignature);
-	void SetGraphicsRootDescriptorTable(UINT rootParameterIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle);
-
+	void SetGraphicsRootDescriptorTable(UINT rootParamIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle);
+	void SetGraphicsRoot32BitConstant(UINT rootParamIndex, UINT srcData, UINT destOffsetIn32BitValues);
+	
 	void SetComputeRootSignature(RootSignature* pRootSignature);
-	void SetComputeRootDescriptorTable(UINT rootParameterIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle);
+	void SetComputeRootDescriptorTable(UINT rootParamIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle);
+	void SetComputeRoot32BitConstant(UINT rootParamIndex, UINT srcData, UINT destOffsetIn32BitValues);
 
-	void SetDescriptorHeaps(DescriptorHeap* pCBVSRVUAVDescriptorHeap, DescriptorHeap* pSamplerDescriptorHeap = nullptr);
+	void SetDescriptorHeaps(DescriptorHeap* pSRVDescriptorHeap, DescriptorHeap* pSamplerDescriptorHeap = nullptr);
 
 	void RSSetViewports(UINT numViewports, const Viewport* pViewports);
 	void RSSetScissorRects(UINT numRects, const Rect* pRects);

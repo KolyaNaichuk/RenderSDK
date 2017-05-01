@@ -1,4 +1,4 @@
-#include "RenderPasses/VisualizePropagatedIntensityPass.h"
+#include "RenderPasses/VisualizeIntensityPass.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
@@ -11,10 +11,11 @@
 enum RootParams
 {
 	kSRVRootParam = 0,
+	kConstant32BitRootParam,
 	kNumRootParams
 };
 
-VisualizePropagatedIntensityPass::VisualizePropagatedIntensityPass(InitParams* pParams)
+VisualizeIntensityPass::VisualizeIntensityPass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pVerticalBoundaryState(nullptr)
 	, m_pHorizontalBoundaryState(nullptr)
@@ -30,6 +31,8 @@ VisualizePropagatedIntensityPass::VisualizePropagatedIntensityPass(InitParams* p
 	{
 		case ViewDirection_X:
 		{
+			assert(pParams->m_SliceToVisualize < pParams->m_NumGridCellsX);
+
 			m_NumGridCellsPerSlice = pParams->m_NumGridCellsZ * pParams->m_NumGridCellsY;
 			m_NumHorizontalBoundariesPerSlice = 1 + pParams->m_NumGridCellsY;
 			m_NumVerticalBoundariesPerSlice = 1 + pParams->m_NumGridCellsZ;
@@ -38,6 +41,8 @@ VisualizePropagatedIntensityPass::VisualizePropagatedIntensityPass(InitParams* p
 		}
 		case ViewDirection_Y:
 		{
+			assert(pParams->m_SliceToVisualize < pParams->m_NumGridCellsY);
+
 			m_NumGridCellsPerSlice = pParams->m_NumGridCellsX * pParams->m_NumGridCellsZ;
 			m_NumHorizontalBoundariesPerSlice = 1 + pParams->m_NumGridCellsZ;
 			m_NumVerticalBoundariesPerSlice = 1 + pParams->m_NumGridCellsX;
@@ -46,6 +51,8 @@ VisualizePropagatedIntensityPass::VisualizePropagatedIntensityPass(InitParams* p
 		}
 		case ViewDirection_Z:
 		{
+			assert(pParams->m_SliceToVisualize < pParams->m_NumGridCellsZ);
+
 			m_NumGridCellsPerSlice = pParams->m_NumGridCellsX * pParams->m_NumGridCellsY;
 			m_NumHorizontalBoundariesPerSlice = 1 + pParams->m_NumGridCellsY;
 			m_NumVerticalBoundariesPerSlice = 1 + pParams->m_NumGridCellsX;
@@ -58,16 +65,13 @@ VisualizePropagatedIntensityPass::VisualizePropagatedIntensityPass(InitParams* p
 		}
 	}
 
-	D3D12_DESCRIPTOR_RANGE srvDescriptorRanges[] =
-	{
-		CBVDescriptorRange(1, 0),
-		SRVDescriptorRange(1, 0)
-	};
+	D3D12_DESCRIPTOR_RANGE srvDescriptorRanges[] = {SRVDescriptorRange(9, 0)};
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kSRVRootParam] = RootDescriptorTableParameter(ARRAYSIZE(srvDescriptorRanges), srvDescriptorRanges, D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParams[kConstant32BitRootParam] = Root32BitConstantsParameter(0, D3D12_SHADER_VISIBILITY_VERTEX, 1);
 	
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"VisualizePropagatedIntensityPass::m_pRootSignature");
+	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"VisualizeIntensityPass::m_pRootSignature");
 
 	std::string viewDirStr = std::to_string(pParams->m_ViewDir);
 	std::string sliceToVisualizeStr = std::to_string(pParams->m_SliceToVisualize);
@@ -75,16 +79,23 @@ VisualizePropagatedIntensityPass::VisualizePropagatedIntensityPass(InitParams* p
 	assert(pParams->m_NumIntensitySamples > 2);
 	std::string numIntensityPolygonSidesStr = std::to_string(pParams->m_NumIntensitySamples);
 	m_NumIntensityVerticesPerCell = 1 + pParams->m_NumIntensitySamples;
+
+	std::string numGridCellsXStr = std::to_string(pParams->m_NumGridCellsX);
+	std::string numGridCellsYStr = std::to_string(pParams->m_NumGridCellsY);
+	std::string numGridCellsZStr = std::to_string(pParams->m_NumGridCellsZ);
 	
-	Shader pixelShader(L"Shaders//VisualizePropagatedIntensityPS.hlsl", "Main", "vs_4_0");
+	Shader pixelShader(L"Shaders//VisualizeIntensityPS.hlsl", "Main", "ps_4_0");
 	{
 		const ShaderMacro shaderDefines[] =
 		{
 			ShaderMacro("HORIZONTAL_BOUNDARY", "1"),
 			ShaderMacro("VIEW_DIRECTION", viewDirStr.c_str()),
+			ShaderMacro("NUM_GRID_CELLS_X", numGridCellsXStr.c_str()),
+			ShaderMacro("NUM_GRID_CELLS_Y", numGridCellsYStr.c_str()),
+			ShaderMacro("NUM_GRID_CELLS_Z", numGridCellsZStr.c_str()),
 			ShaderMacro()
 		};
-		Shader vertexShader(L"Shaders//VisualizePropagatedIntensityVS.hlsl", "Main", "vs_4_0", shaderDefines);
+		Shader vertexShader(L"Shaders//VisualizeIntensityVS.hlsl", "Main", "vs_5_1", shaderDefines);
 
 		GraphicsPipelineStateDesc pipelineStateDesc;
 		pipelineStateDesc.SetRootSignature(m_pRootSignature);
@@ -93,16 +104,19 @@ VisualizePropagatedIntensityPass::VisualizePropagatedIntensityPass(InitParams* p
 		pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
 		pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat);
 
-		m_pHorizontalBoundaryState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizePropagatedIntensityPass::m_pHorizontalBoundaryState");
+		m_pHorizontalBoundaryState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeIntensityPass::m_pHorizontalBoundaryState");
 	}
 	{
 		const ShaderMacro shaderDefines[] =
 		{
 			ShaderMacro("VERTICAL_BOUNDARY", "1"),
 			ShaderMacro("VIEW_DIRECTION", viewDirStr.c_str()),
+			ShaderMacro("NUM_GRID_CELLS_X", numGridCellsXStr.c_str()),
+			ShaderMacro("NUM_GRID_CELLS_Y", numGridCellsYStr.c_str()),
+			ShaderMacro("NUM_GRID_CELLS_Z", numGridCellsZStr.c_str()),
 			ShaderMacro()
 		};
-		Shader vertexShader(L"Shaders//VisualizePropagatedIntensityVS.hlsl", "Main", "vs_4_0", shaderDefines);
+		Shader vertexShader(L"Shaders//VisualizeIntensityVS.hlsl", "Main", "vs_5_1", shaderDefines);
 
 		GraphicsPipelineStateDesc pipelineStateDesc;
 		pipelineStateDesc.SetRootSignature(m_pRootSignature);
@@ -111,18 +125,21 @@ VisualizePropagatedIntensityPass::VisualizePropagatedIntensityPass(InitParams* p
 		pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
 		pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat);
 
-		m_pVerticalBoundaryState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizePropagatedIntensityPass::m_pVerticalBoundaryState");
+		m_pVerticalBoundaryState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeIntensityPass::m_pVerticalBoundaryState");
 	}
 	{
 		const ShaderMacro shaderDefines[] =
 		{
 			ShaderMacro("INTENSITY_DISTRIBUTION", "1"),
 			ShaderMacro("VIEW_DIRECTION", viewDirStr.c_str()),
+			ShaderMacro("NUM_GRID_CELLS_X", numGridCellsXStr.c_str()),
+			ShaderMacro("NUM_GRID_CELLS_Y", numGridCellsYStr.c_str()),
+			ShaderMacro("NUM_GRID_CELLS_Z", numGridCellsZStr.c_str()),
 			ShaderMacro("SLICE_TO_VISUALIZE", sliceToVisualizeStr.c_str()),
 			ShaderMacro("NUM_INTENSITY_POLYGON_SIDES", numIntensityPolygonSidesStr.c_str()),
 			ShaderMacro()
 		};
-		Shader vertexShader(L"Shaders//VisualizePropagatedIntensityVS.hlsl", "Main", "vs_4_0", shaderDefines);
+		Shader vertexShader(L"Shaders//VisualizeIntensityVS.hlsl", "Main", "vs_5_1", shaderDefines);
 
 		GraphicsPipelineStateDesc pipelineStateDesc;
 		pipelineStateDesc.SetRootSignature(m_pRootSignature);
@@ -131,11 +148,11 @@ VisualizePropagatedIntensityPass::VisualizePropagatedIntensityPass(InitParams* p
 		pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
 		pipelineStateDesc.SetRenderTargetFormat(pParams->m_RTVFormat);
 
-		m_pIntensityDistributionState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizePropagatedIntensityPass::m_pIntensityDistributionState");
+		m_pIntensityDistributionState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeIntensityPass::m_pIntensityDistributionState");
 	}
 }
 
-VisualizePropagatedIntensityPass::~VisualizePropagatedIntensityPass()
+VisualizeIntensityPass::~VisualizeIntensityPass()
 {
 	SafeDelete(m_pVerticalBoundaryState);
 	SafeDelete(m_pHorizontalBoundaryState);
@@ -143,7 +160,7 @@ VisualizePropagatedIntensityPass::~VisualizePropagatedIntensityPass()
 	SafeDelete(m_pRootSignature);
 }
 
-void VisualizePropagatedIntensityPass::Record(RenderParams* pParams)
+void VisualizeIntensityPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
@@ -155,7 +172,8 @@ void VisualizePropagatedIntensityPass::Record(RenderParams* pParams)
 	pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
-
+	pCommandList->SetGraphicsRoot32BitConstant(kConstant32BitRootParam, pParams->m_TextureIndexToVisualize, 0);
+	
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = pResources->m_RTVHeapStart;
 	pCommandList->OMSetRenderTargets(1, &rtvHeapStart);
 		

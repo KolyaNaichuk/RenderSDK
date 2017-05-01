@@ -28,7 +28,7 @@ struct DispatchArgument : public D3D12_INDIRECT_ARGUMENT_DESC
 
 struct Constant32BitArgument : public D3D12_INDIRECT_ARGUMENT_DESC
 {
-	Constant32BitArgument(UINT rootParameterIndex, UINT destOffsetIn32BitValues, UINT num32BitValues);
+	Constant32BitArgument(UINT rootParamIndex, UINT destOffsetIn32BitValues, UINT num32BitValues);
 };
 
 struct ConstantBufferViewArgument : public D3D12_INDIRECT_ARGUMENT_DESC

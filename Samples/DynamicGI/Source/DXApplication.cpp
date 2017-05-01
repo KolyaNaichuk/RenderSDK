@@ -25,6 +25,7 @@
 #include "RenderPasses/ViewFrustumCullingPass.h"
 #include "RenderPasses/VisualizeTexturePass.h"
 #include "RenderPasses/VisualizeVoxelGridPass.h"
+#include "RenderPasses/VisualizeIntensityPass.h"
 #include "Common/MeshData.h"
 #include "Common/MeshBatchData.h"
 #include "Common/MeshBatch.h"
@@ -273,6 +274,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Global Illumination", 0, 0, kTileSize * kNumTilesX, kTileSize * kNumTilesY)
 	, m_DisplayResult(DisplayResult::Unspecified)
 	, m_ShadingMode(TileShadingMode::IndirectLight)
+	, m_IndirectLightIntensity(IndirectLightIntensity::Accumulated)
+	, m_IndirectLightComponent(IndirectLightComponent::Red)
 	, m_NumPropagationIterations(kMinNumPropagationIterations)
 	, m_pDevice(nullptr)
 	, m_pSwapChain(nullptr)
@@ -379,6 +382,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pVisualizeDepthBufferPass(nullptr)
 	, m_pVisualizeSpotLightTiledShadowMapPass(nullptr)
 	, m_pVisualizePointLightTiledShadowMapPass(nullptr)
+	, m_pVisualizeIntensityPass(nullptr)
 	, m_pMeshBatch(nullptr)
 	, m_pPointLightBuffer(nullptr)
 	, m_pNumVisiblePointLightsBuffer(nullptr)
@@ -415,6 +419,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 		m_VisualizeDepthBufferResources[index] = new BindingResourceList();
 		m_VisualizeSpotLightTiledShadowMapResources[index] = new BindingResourceList();
 		m_VisualizePointLightTiledShadowMapResources[index] = new BindingResourceList();
+		m_VisualizeIntensityResources[index] = new BindingResourceList();
 	}
 	for (u8 index = 0; index < 2; ++index)
 	{
@@ -425,7 +430,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 		m_PropagateLightResources[index] = new BindingResourceList();
 	}
 
-	UpdateDisplayResult(DisplayResult::AccumLight);
+	UpdateDisplayResult(DisplayResult::ShadingResult);
 }
 
 DXApplication::~DXApplication()
@@ -442,6 +447,7 @@ DXApplication::~DXApplication()
 		SafeDelete(m_VisualizeDepthBufferResources[index]);
 		SafeDelete(m_VisualizeSpotLightTiledShadowMapResources[index]);
 		SafeDelete(m_VisualizePointLightTiledShadowMapResources[index]);
+		SafeDelete(m_VisualizeIntensityResources[index]);
 	}
 	for (u8 index = 0; index < 2; ++index)
 	{
@@ -459,6 +465,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pVisualizeDepthBufferPass);
 	SafeDelete(m_pVisualizeSpotLightTiledShadowMapPass);
 	SafeDelete(m_pVisualizePointLightTiledShadowMapPass);
+	SafeDelete(m_pVisualizeIntensityPass);
 	SafeDelete(m_pSpotLightShadowMapDataBuffer);
 	SafeDelete(m_pSpotLightShadowMapTileBuffer);
 	SafeDelete(m_pSpotLightViewTileProjMatrixBuffer);
@@ -631,6 +638,7 @@ void DXApplication::OnInit()
 	InitVisualizeNormalBufferPass();
 	InitVisualizeDepthBufferPass();
 	InitVisualizePointLightTiledShadowMapPass();
+	InitVisualizeIntensityPass();
 
 #ifdef DEBUG_RENDER_PASS
 	InitDebugRenderPass(pScene);
@@ -722,53 +730,128 @@ void DXApplication::OnDestroy()
 
 void DXApplication::OnKeyDown(UINT8 key)
 {
-	if (key == '1')
-		UpdateDisplayResult(DisplayResult::AccumLight);
-	else if (key == '2')
-		UpdateDisplayResult(DisplayResult::DiffuseBuffer);
-	else if (key == '3')
-		UpdateDisplayResult(DisplayResult::SpecularBuffer);
-	else if (key == '4')
-		UpdateDisplayResult(DisplayResult::NormalBuffer);
-	else if (key == '5')
-		UpdateDisplayResult(DisplayResult::DepthBuffer);
-	else if (key == '6')
-		UpdateDisplayResult(DisplayResult::SpotLightTiledShadowMap);
-	else if (key == '7')
-		UpdateDisplayResult(DisplayResult::PointLightTiledShadowMap);
-	else if (key == '8')
-		UpdateDisplayResult(DisplayResult::VoxelGridDiffuse);
-	else if (key == '9')
-		UpdateDisplayResult(DisplayResult::VoxelGridNormal);
-	else if ((key == 'f') || (key == 'F'))
+	switch (key)
 	{
-		m_ShadingMode = TileShadingMode::DirectLight;
-		UpdateDisplayResult(DisplayResult::AccumLight);
-	}		
-	else if ((key == 'g') || (key == 'G'))
-	{
-		m_ShadingMode = TileShadingMode::IndirectLight;
-		UpdateDisplayResult(DisplayResult::AccumLight);
-	}
-	else if ((key == 'h') || (key == 'H'))
-	{
-		m_ShadingMode = TileShadingMode::DirectAndIndirectLight;
-		UpdateDisplayResult(DisplayResult::AccumLight);
-	}
-	else if (key == VK_UP)
-	{
-		if (m_NumPropagationIterations < kMaxNumPropagationIterations)
+		case '1':
 		{
-			++m_NumPropagationIterations;
-			UpdateDisplayResult(DisplayResult::AccumLight);
+			UpdateDisplayResult(DisplayResult::DiffuseBuffer);
+			break;
 		}
-	}
-	else if (key == VK_DOWN)
-	{
-		if (m_NumPropagationIterations > kMinNumPropagationIterations)
+		case '2':
 		{
-			--m_NumPropagationIterations;
-			UpdateDisplayResult(DisplayResult::AccumLight);
+			UpdateDisplayResult(DisplayResult::SpecularBuffer);
+			break;
+		}
+		case '3':
+		{
+			UpdateDisplayResult(DisplayResult::NormalBuffer);
+			break;
+		}
+		case '4':
+		{
+			UpdateDisplayResult(DisplayResult::DepthBuffer);
+			break;
+		}
+		case '5':
+		{
+			UpdateDisplayResult(DisplayResult::VoxelGridDiffuse);
+			break;
+		}
+		case '6':
+		{
+			UpdateDisplayResult(DisplayResult::VoxelGridNormal);
+			break;
+		}
+		case '7':
+		{
+			UpdateDisplayResult(DisplayResult::SpotLightTiledShadowMap);
+			break;
+		}
+		case '8':
+		{
+			UpdateDisplayResult(DisplayResult::PointLightTiledShadowMap);
+			break;
+		}
+		case 'd':
+		case 'D':
+		{
+			m_ShadingMode = TileShadingMode::DirectLight;
+			UpdateDisplayResult(DisplayResult::ShadingResult);
+			break;
+		}
+		case 'i':
+		case 'I':
+		{
+			m_ShadingMode = TileShadingMode::IndirectLight;
+			UpdateDisplayResult(DisplayResult::ShadingResult);
+			break;
+		}
+		case 'f':
+		case 'F':
+		{
+			m_ShadingMode = TileShadingMode::DirectAndIndirectLight;
+			UpdateDisplayResult(DisplayResult::ShadingResult);
+			break;
+		}
+		case 'p':
+		case 'P':
+		{
+			m_IndirectLightIntensity = IndirectLightIntensity::Previous;
+			UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
+			break;
+		}
+		case 'c':
+		case 'C':
+		{
+			m_IndirectLightIntensity = IndirectLightIntensity::Current;
+			UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
+			break;
+		}
+		case 'a':
+		case 'A':
+		{
+			m_IndirectLightIntensity = IndirectLightIntensity::Accumulated;
+			UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
+			break;
+		}
+		case 'r':
+		case 'R':
+		{
+			m_IndirectLightComponent = IndirectLightComponent::Red;
+			UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
+			break;
+		}
+		case 'g':
+		case 'G':
+		{
+			m_IndirectLightComponent = IndirectLightComponent::Green;
+			UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
+			break;
+		}
+		case 'b':
+		case 'B':
+		{
+			m_IndirectLightComponent = IndirectLightComponent::Blue;
+			UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
+			break;
+		}
+		case VK_UP:
+		{
+			if (m_NumPropagationIterations < kMaxNumPropagationIterations)
+			{
+				++m_NumPropagationIterations;
+				UpdateDisplayResult(DisplayResult::ShadingResult);
+			}
+			break;
+		}
+		case VK_DOWN:
+		{
+			if (m_NumPropagationIterations > kMinNumPropagationIterations)
+			{
+				--m_NumPropagationIterations;
+				UpdateDisplayResult(DisplayResult::ShadingResult);
+			}
+			break;
 		}
 	}
 }
@@ -1891,6 +1974,51 @@ void DXApplication::InitVisualizePointLightTiledShadowMapPass()
 	}
 }
 
+void DXApplication::InitVisualizeIntensityPass()
+{
+	VisualizeIntensityPass::InitParams initParams;
+	initParams.m_pRenderEnv = m_pRenderEnv;
+	initParams.m_NumGridCellsX = kNumGridCellsX;
+	initParams.m_NumGridCellsY = kNumGridCellsY;
+	initParams.m_NumGridCellsZ = kNumGridCellsZ;
+	initParams.m_ViewDir = VisualizeIntensityPass::ViewDirection_Z;
+	initParams.m_SliceToVisualize = kNumGridCellsZ / 2;
+	initParams.m_NumIntensitySamples = 3;
+	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
+
+	m_pVisualizeIntensityPass = new VisualizeIntensityPass(&initParams);
+
+	DescriptorHandle srvHeapStart = m_pShaderVisibleSRVHeap->Allocate();
+	m_pDevice->CopyDescriptor(srvHeapStart, m_IntensityRCoeffsTextures[0]->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_IntensityGCoeffsTextures[0]->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_IntensityBCoeffsTextures[0]->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_IntensityRCoeffsTextures[1]->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_IntensityGCoeffsTextures[1]->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_IntensityBCoeffsTextures[1]->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityRCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityGCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityBCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
+		ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
+
+		m_VisualizeIntensityResources[index]->m_RequiredResourceStates.emplace_back(pRenderTarget, pRenderTarget->GetWriteState());
+		m_VisualizeIntensityResources[index]->m_RequiredResourceStates.emplace_back(m_IntensityRCoeffsTextures[0], m_IntensityRCoeffsTextures[0]->GetReadState());
+		m_VisualizeIntensityResources[index]->m_RequiredResourceStates.emplace_back(m_IntensityGCoeffsTextures[0], m_IntensityGCoeffsTextures[0]->GetReadState());
+		m_VisualizeIntensityResources[index]->m_RequiredResourceStates.emplace_back(m_IntensityBCoeffsTextures[0], m_IntensityBCoeffsTextures[0]->GetReadState());
+		m_VisualizeIntensityResources[index]->m_RequiredResourceStates.emplace_back(m_IntensityRCoeffsTextures[1], m_IntensityRCoeffsTextures[1]->GetReadState());
+		m_VisualizeIntensityResources[index]->m_RequiredResourceStates.emplace_back(m_IntensityGCoeffsTextures[1], m_IntensityGCoeffsTextures[1]->GetReadState());
+		m_VisualizeIntensityResources[index]->m_RequiredResourceStates.emplace_back(m_IntensityBCoeffsTextures[1], m_IntensityBCoeffsTextures[1]->GetReadState());
+		m_VisualizeIntensityResources[index]->m_RequiredResourceStates.emplace_back(m_pAccumIntensityRCoeffsTexture, m_pAccumIntensityRCoeffsTexture->GetReadState());
+		m_VisualizeIntensityResources[index]->m_RequiredResourceStates.emplace_back(m_pAccumIntensityGCoeffsTexture, m_pAccumIntensityGCoeffsTexture->GetReadState());
+		m_VisualizeIntensityResources[index]->m_RequiredResourceStates.emplace_back(m_pAccumIntensityBCoeffsTexture, m_pAccumIntensityBCoeffsTexture->GetReadState());
+
+		m_VisualizeIntensityResources[index]->m_RTVHeapStart = pRenderTarget->GetRTVHandle();
+		m_VisualizeIntensityResources[index]->m_SRVHeapStart = srvHeapStart;
+	}
+}
+
 void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
 {
 	const Vector3f& mainCameraPos = m_pCamera->GetTransform().GetPosition();
@@ -2390,9 +2518,22 @@ CommandList* DXApplication::RecordVisualizePointLightTiledShadowMapPass()
 	return renderParams.m_pCommandList;
 }
 
+CommandList* DXApplication::RecordVisualizeIntensityPass()
+{
+	VisualizeIntensityPass::RenderParams renderParams;
+	renderParams.m_pRenderEnv = m_pRenderEnv;
+	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeVisualizeIntensityCommandList");;
+	renderParams.m_pResources = m_VisualizeIntensityResources[m_BackBufferIndex];
+	renderParams.m_TextureIndexToVisualize = 6;
+	renderParams.m_pViewport = m_pBackBufferViewport;
+
+	m_pVisualizeIntensityPass->Record(&renderParams);
+	return renderParams.m_pCommandList;
+}
+
 CommandList* DXApplication::RecordDisplayResultPass()
 {
-	if (m_DisplayResult == DisplayResult::AccumLight)
+	if (m_DisplayResult == DisplayResult::ShadingResult)
 		return RecordVisualizeAccumLightPass();
 
 	if (m_DisplayResult == DisplayResult::DiffuseBuffer)
@@ -2418,6 +2559,9 @@ CommandList* DXApplication::RecordDisplayResultPass()
 
 	if (m_DisplayResult == DisplayResult::VoxelGridNormal)
 		return RecordVisualizeVoxelGridNormalPass();
+
+	if (m_DisplayResult == DisplayResult::IndirectLightIntensityResult)
+		return RecordVisualizeIntensityPass();
 	
 	assert(false);
 	return nullptr;
@@ -2439,8 +2583,7 @@ CommandList* DXApplication::RecordPresentResourceBarrierPass()
 void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 {
 	m_DisplayResult = displayResult;
-
-	if (m_DisplayResult == DisplayResult::AccumLight)
+	if (m_DisplayResult == DisplayResult::ShadingResult)
 	{
 		if (m_ShadingMode == TileShadingMode::DirectAndIndirectLight)
 		{
@@ -2467,24 +2610,70 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 			assert(false);
 		}
 	}
+	else if (m_DisplayResult == DisplayResult::IndirectLightIntensityResult)
+	{
+		const wchar_t* pIntensityBufferStr = nullptr;
+		if (m_IndirectLightIntensity == IndirectLightIntensity::Previous)
+			pIntensityBufferStr = L"Previous";
+		else if (m_IndirectLightIntensity == IndirectLightIntensity::Current)
+			pIntensityBufferStr = L"Current";
+		else if (m_IndirectLightIntensity == IndirectLightIntensity::Accumulated)
+			pIntensityBufferStr = L"Accumulated";
+		else
+			assert(false);
+
+		const wchar_t* pIntensityComponentStr = nullptr;
+		if (m_IndirectLightComponent == IndirectLightComponent::Red)
+			pIntensityComponentStr = L"Red";
+		else if (m_IndirectLightComponent == IndirectLightComponent::Green)
+			pIntensityComponentStr = L"Green";
+		else if (m_IndirectLightComponent == IndirectLightComponent::Blue)
+			pIntensityComponentStr = L"Blue";
+		else
+			assert(false);
+
+		std::wstringstream stream;
+		stream << L"Global Illumination - Indirect Light Intensity ";
+		stream << L"(" << pIntensityBufferStr << ", " << pIntensityComponentStr << L")";
+
+		m_pWindow->SetWindowText(stream.str().c_str());
+	}
 	else if (m_DisplayResult == DisplayResult::DiffuseBuffer)
+	{
 		m_pWindow->SetWindowText(L"Global Illumination - Diffuse Buffer");
+	}
 	else if (m_DisplayResult == DisplayResult::SpecularBuffer)
+	{
 		m_pWindow->SetWindowText(L"Global Illumination - Specular Buffer");
+	}
 	else if (m_DisplayResult == DisplayResult::NormalBuffer)
+	{
 		m_pWindow->SetWindowText(L"Global Illumination - Normal Buffer");
+	}
 	else if (m_DisplayResult == DisplayResult::DepthBuffer)
+	{
 		m_pWindow->SetWindowText(L"Global Illumination - Depth Buffer");
+	}
 	else if (m_DisplayResult == DisplayResult::SpotLightTiledShadowMap)
+	{
 		m_pWindow->SetWindowText(L"Global Illumination - Spot Light Tiled Shadow Map");
+	}
 	else if (m_DisplayResult == DisplayResult::PointLightTiledShadowMap)
+	{
 		m_pWindow->SetWindowText(L"Global Illumination - Point Light Tiled Shadow Map");
+	}
 	else if (m_DisplayResult == DisplayResult::VoxelGridDiffuse)
+	{
 		m_pWindow->SetWindowText(L"Global Illumination - Voxel Grid Diffuse");
+	}
 	else if (m_DisplayResult == DisplayResult::VoxelGridNormal)
+	{
 		m_pWindow->SetWindowText(L"Global Illumination - Voxel Grid Normal");
+	}
 	else
+	{
 		assert(false);
+	}
 }
 
 #ifdef DEBUG_RENDER_PASS
