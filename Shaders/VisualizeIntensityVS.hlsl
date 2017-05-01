@@ -79,7 +79,7 @@ VSOutput Main(uint boundaryId : SV_InstanceID, uint vertexId : SV_VertexID)
 
 #if INTENSITY_DISTRIBUTION == 1 
 static const float g_AngleSubtendedByIntensityPolygonSide = g_TwoPI / float(NUM_INTENSITY_POLYGON_SIDES);
-static const float g_VisualizedIntensityScale = 0.9f;
+static const float g_VisualizedIntensityScale = 2.5f;
 
 VSOutput Main(uint cellFlattenedId : SV_InstanceID, uint vertexId : SV_VertexID)
 {
@@ -126,7 +126,7 @@ VSOutput Main(uint cellFlattenedId : SV_InstanceID, uint vertexId : SV_VertexID)
 	float4 intensityCoeffs = g_IntensityCoeffsTextures[g_TextureIndex][cellId];
 	float intensity = dot(intensityCoeffs, SH(vertexDirOnUnitSphere));
 	
-	float2 clipSpaceVertexScale = (g_VisualizedIntensityScale / intensity) * clipSpaceCellHalfSize;
+	float2 clipSpaceVertexScale = (g_VisualizedIntensityScale * intensity) * clipSpaceCellHalfSize;
 	float2 clipSpaceVertexOffset = clipSpaceVertexScale * visualizedIntensityDir;
 
 	VSOutput output;

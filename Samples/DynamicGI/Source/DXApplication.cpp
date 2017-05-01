@@ -167,9 +167,9 @@ enum
 	kGridSizeY = 640,
 	kGridSizeZ = 640,
 		
-	kNumGridCellsX = 64,
-	kNumGridCellsY = 64,
-	kNumGridCellsZ = 64,
+	kNumGridCellsX = 16,
+	kNumGridCellsY = 16,
+	kNumGridCellsZ = 16,
 
 	kMinNumPropagationIterations = 0,
 	kMaxNumPropagationIterations = 64,
@@ -1983,7 +1983,7 @@ void DXApplication::InitVisualizeIntensityPass()
 	initParams.m_NumGridCellsZ = kNumGridCellsZ;
 	initParams.m_ViewDir = VisualizeIntensityPass::ViewDirection_Z;
 	initParams.m_SliceToVisualize = kNumGridCellsZ / 2;
-	initParams.m_NumIntensitySamples = 3;
+	initParams.m_NumIntensitySamples = 32;
 	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
 
 	m_pVisualizeIntensityPass = new VisualizeIntensityPass(&initParams);
