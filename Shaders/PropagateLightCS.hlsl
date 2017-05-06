@@ -150,9 +150,9 @@ RWTexture3D<float4> g_AccumIntensityBCoeffsTexture : register(u5);
 void Main(int3 currCell : SV_DispatchThreadID)
 {
 	SHSpectralCoeffs totalIntensityCoeffs;
-	totalIntensityCoeffs.r = g_PrevIntensityRCoeffsTexture[currCell];
-	totalIntensityCoeffs.g = g_PrevIntensityGCoeffsTexture[currCell];
-	totalIntensityCoeffs.b = g_PrevIntensityBCoeffsTexture[currCell];
+	totalIntensityCoeffs.r = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	totalIntensityCoeffs.g = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	totalIntensityCoeffs.b = float4(0.0f, 0.0f, 0.0f, 0.0f);
 			
 	for (int neighborIndex = 0; neighborIndex < NUM_NEIGHBORS_PER_CELL; ++neighborIndex)
 	{

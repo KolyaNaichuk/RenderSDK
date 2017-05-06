@@ -64,17 +64,17 @@ public:
 		IndirectLight,
 		DirectAndIndirectLight
 	};
-	enum class IndirectLightIntensity
+	enum IndirectLightIntensity
 	{
-		Previous,
-		Current,
-		Accumulated
+		IndirectLightIntensity_Previous = 0,
+		IndirectLightIntensity_Current,
+		IndirectLightIntensity_Accumulated
 	};
-	enum class IndirectLightComponent
+	enum IndirectLightComponent
 	{
-		Red,
-		Green,
-		Blue
+		IndirectLightComponent_Red = 0,
+		IndirectLightComponent_Green,
+		IndirectLightComponent_Blue
 	};
 
 	DXApplication(HINSTANCE hApp);

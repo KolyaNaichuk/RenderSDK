@@ -274,8 +274,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Global Illumination", 0, 0, kTileSize * kNumTilesX, kTileSize * kNumTilesY)
 	, m_DisplayResult(DisplayResult::Unspecified)
 	, m_ShadingMode(TileShadingMode::IndirectLight)
-	, m_IndirectLightIntensity(IndirectLightIntensity::Accumulated)
-	, m_IndirectLightComponent(IndirectLightComponent::Red)
+	, m_IndirectLightIntensity(IndirectLightIntensity_Accumulated)
+	, m_IndirectLightComponent(IndirectLightComponent_Red)
 	, m_NumPropagationIterations(kMinNumPropagationIterations)
 	, m_pDevice(nullptr)
 	, m_pSwapChain(nullptr)
@@ -430,7 +430,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 		m_PropagateLightResources[index] = new BindingResourceList();
 	}
 
-	UpdateDisplayResult(DisplayResult::ShadingResult);
+	UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
 }
 
 DXApplication::~DXApplication()
@@ -796,42 +796,42 @@ void DXApplication::OnKeyDown(UINT8 key)
 		case 'p':
 		case 'P':
 		{
-			m_IndirectLightIntensity = IndirectLightIntensity::Previous;
+			m_IndirectLightIntensity = IndirectLightIntensity_Previous;
 			UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
 			break;
 		}
 		case 'c':
 		case 'C':
 		{
-			m_IndirectLightIntensity = IndirectLightIntensity::Current;
+			m_IndirectLightIntensity = IndirectLightIntensity_Current;
 			UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
 			break;
 		}
 		case 'a':
 		case 'A':
 		{
-			m_IndirectLightIntensity = IndirectLightIntensity::Accumulated;
+			m_IndirectLightIntensity = IndirectLightIntensity_Accumulated;
 			UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
 			break;
 		}
 		case 'r':
 		case 'R':
 		{
-			m_IndirectLightComponent = IndirectLightComponent::Red;
+			m_IndirectLightComponent = IndirectLightComponent_Red;
 			UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
 			break;
 		}
 		case 'g':
 		case 'G':
 		{
-			m_IndirectLightComponent = IndirectLightComponent::Green;
+			m_IndirectLightComponent = IndirectLightComponent_Green;
 			UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
 			break;
 		}
 		case 'b':
 		case 'B':
 		{
-			m_IndirectLightComponent = IndirectLightComponent::Blue;
+			m_IndirectLightComponent = IndirectLightComponent_Blue;
 			UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
 			break;
 		}
@@ -840,7 +840,10 @@ void DXApplication::OnKeyDown(UINT8 key)
 			if (m_NumPropagationIterations < kMaxNumPropagationIterations)
 			{
 				++m_NumPropagationIterations;
-				UpdateDisplayResult(DisplayResult::ShadingResult);
+				if (m_DisplayResult == DisplayResult::IndirectLightIntensityResult)
+					UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
+				else
+					UpdateDisplayResult(DisplayResult::ShadingResult);
 			}
 			break;
 		}
@@ -849,7 +852,10 @@ void DXApplication::OnKeyDown(UINT8 key)
 			if (m_NumPropagationIterations > kMinNumPropagationIterations)
 			{
 				--m_NumPropagationIterations;
-				UpdateDisplayResult(DisplayResult::ShadingResult);
+				if (m_DisplayResult == DisplayResult::IndirectLightIntensityResult)
+					UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
+				else
+					UpdateDisplayResult(DisplayResult::ShadingResult);
 			}
 			break;
 		}
@@ -2048,10 +2054,9 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	// Kolya: Hard-coding grid center for now
 	//const Vector3f gridCenter(mainCameraPos + (0.25f * gridSize.m_Z) * mainCameraBasis.m_ZAxis);
 	const Vector3f gridCenter(0.5f * 549.6f, 0.5f * 548.8f, -0.5f * 562.0f);
-	const Vector3f gridMinPoint(gridCenter - gridHalfSize);
-
+	
 	GridConfig gridConfig;
-	gridConfig.m_WorldSpaceOrigin = Vector4f(gridMinPoint.m_X, gridMinPoint.m_Y, gridMinPoint.m_Z, 0.0f);
+	gridConfig.m_WorldSpaceOrigin = Vector4f(gridCenter.m_X - gridHalfSize.m_X, gridCenter.m_Y + gridHalfSize.m_Y, gridCenter.m_Z - gridHalfSize.m_Z, 0.0f);
 	gridConfig.m_Size = Vector4f(gridSize.m_X, gridSize.m_Y, gridSize.m_Z, 0.0f);
 	gridConfig.m_RcpSize = Vector4f(gridRcpSize.m_X, gridRcpSize.m_Y, gridRcpSize.m_Z, 0.0f);
 	gridConfig.m_CellSize = Vector4f(gridCellSize.m_X, gridCellSize.m_Y, gridCellSize.m_Z, 0.0f);
@@ -2524,7 +2529,7 @@ CommandList* DXApplication::RecordVisualizeIntensityPass()
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeVisualizeIntensityCommandList");;
 	renderParams.m_pResources = m_VisualizeIntensityResources[m_BackBufferIndex];
-	renderParams.m_TextureIndexToVisualize = 6;
+	renderParams.m_TextureIndexToVisualize = m_IndirectLightIntensity * 3 + m_IndirectLightComponent;
 	renderParams.m_pViewport = m_pBackBufferViewport;
 
 	m_pVisualizeIntensityPass->Record(&renderParams);
@@ -2588,19 +2593,19 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 		if (m_ShadingMode == TileShadingMode::DirectAndIndirectLight)
 		{
 			std::wstringstream stream;
-			stream << L"Global Illumination - Direct + Indirect Lighting ";
+			stream << L"Direct + indirect lighting ";
 			stream << "(" << m_NumPropagationIterations << " iterations)";
 
 			m_pWindow->SetWindowText(stream.str().c_str());
 		}
 		else if (m_ShadingMode == TileShadingMode::DirectLight)
 		{
-			m_pWindow->SetWindowText(L"Global Illumination - Direct Lighting");
+			m_pWindow->SetWindowText(L"Direct lighting");
 		}
 		else if (m_ShadingMode == TileShadingMode::IndirectLight)
 		{
 			std::wstringstream stream;
-			stream << L"Global Illumination - Indirect Lighting ";
+			stream << L"Indirect lighting ";
 			stream << "(" << m_NumPropagationIterations << " iterations)";
 
 			m_pWindow->SetWindowText(stream.str().c_str());
@@ -2613,62 +2618,62 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 	else if (m_DisplayResult == DisplayResult::IndirectLightIntensityResult)
 	{
 		const wchar_t* pIntensityBufferStr = nullptr;
-		if (m_IndirectLightIntensity == IndirectLightIntensity::Previous)
-			pIntensityBufferStr = L"Previous";
-		else if (m_IndirectLightIntensity == IndirectLightIntensity::Current)
-			pIntensityBufferStr = L"Current";
-		else if (m_IndirectLightIntensity == IndirectLightIntensity::Accumulated)
-			pIntensityBufferStr = L"Accumulated";
+		if (m_IndirectLightIntensity == IndirectLightIntensity_Previous)
+			pIntensityBufferStr = L"previous intensity";
+		else if (m_IndirectLightIntensity == IndirectLightIntensity_Current)
+			pIntensityBufferStr = L"current intensity";
+		else if (m_IndirectLightIntensity == IndirectLightIntensity_Accumulated)
+			pIntensityBufferStr = L"accumulated intensity";
 		else
 			assert(false);
 
 		const wchar_t* pIntensityComponentStr = nullptr;
-		if (m_IndirectLightComponent == IndirectLightComponent::Red)
-			pIntensityComponentStr = L"Red";
-		else if (m_IndirectLightComponent == IndirectLightComponent::Green)
-			pIntensityComponentStr = L"Green";
-		else if (m_IndirectLightComponent == IndirectLightComponent::Blue)
-			pIntensityComponentStr = L"Blue";
+		if (m_IndirectLightComponent == IndirectLightComponent_Red)
+			pIntensityComponentStr = L"R";
+		else if (m_IndirectLightComponent == IndirectLightComponent_Green)
+			pIntensityComponentStr = L"G";
+		else if (m_IndirectLightComponent == IndirectLightComponent_Blue)
+			pIntensityComponentStr = L"B";
 		else
 			assert(false);
 
 		std::wstringstream stream;
-		stream << L"Global Illumination - Indirect Light Intensity ";
-		stream << L"(" << pIntensityBufferStr << ", " << pIntensityComponentStr << L")";
+		stream << pIntensityComponentStr << " " << pIntensityBufferStr << L" ";
+		stream << "(" << m_NumPropagationIterations << " iterations)";
 
 		m_pWindow->SetWindowText(stream.str().c_str());
 	}
 	else if (m_DisplayResult == DisplayResult::DiffuseBuffer)
 	{
-		m_pWindow->SetWindowText(L"Global Illumination - Diffuse Buffer");
+		m_pWindow->SetWindowText(L"Diffuse buffer");
 	}
 	else if (m_DisplayResult == DisplayResult::SpecularBuffer)
 	{
-		m_pWindow->SetWindowText(L"Global Illumination - Specular Buffer");
+		m_pWindow->SetWindowText(L"Specular buffer");
 	}
 	else if (m_DisplayResult == DisplayResult::NormalBuffer)
 	{
-		m_pWindow->SetWindowText(L"Global Illumination - Normal Buffer");
+		m_pWindow->SetWindowText(L"Normal buffer");
 	}
 	else if (m_DisplayResult == DisplayResult::DepthBuffer)
 	{
-		m_pWindow->SetWindowText(L"Global Illumination - Depth Buffer");
+		m_pWindow->SetWindowText(L"Depth buffer");
 	}
 	else if (m_DisplayResult == DisplayResult::SpotLightTiledShadowMap)
 	{
-		m_pWindow->SetWindowText(L"Global Illumination - Spot Light Tiled Shadow Map");
+		m_pWindow->SetWindowText(L"Spot light tiled shadow map");
 	}
 	else if (m_DisplayResult == DisplayResult::PointLightTiledShadowMap)
 	{
-		m_pWindow->SetWindowText(L"Global Illumination - Point Light Tiled Shadow Map");
+		m_pWindow->SetWindowText(L"Point light tiled shadow map");
 	}
 	else if (m_DisplayResult == DisplayResult::VoxelGridDiffuse)
 	{
-		m_pWindow->SetWindowText(L"Global Illumination - Voxel Grid Diffuse");
+		m_pWindow->SetWindowText(L"Voxel grid diffuse");
 	}
 	else if (m_DisplayResult == DisplayResult::VoxelGridNormal)
 	{
-		m_pWindow->SetWindowText(L"Global Illumination - Voxel Grid Normal");
+		m_pWindow->SetWindowText(L"Voxel grid normal");
 	}
 	else
 	{

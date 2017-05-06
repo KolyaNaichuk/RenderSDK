@@ -56,20 +56,15 @@ void Main(int3 gridCell : SV_DispatchThreadID)
 			float solidAngle = 1.0f;// surfaceArea / distToLightSquared;
 						
 			float3 lightIntensity = g_PointLightPropsBuffer[lightIndex].color;
-
-			// Kolya. Hawar seems to have a constant to emulate solidAngle.
-			// For the rest of reflextedFlux we have similar calculation
-			// float att = saturate(1.0f - (lightVecLen / pointLightUB.radius));
-			// float3 vDiffuse = albedo * pointLightUB.color.rgb * saturate(nDotL) * pointLightUB.multiplier * att;
-
+			
 			float NdotL = saturate(dot(worldSpaceNormal, normalize(worldSpaceDirToLight)));
 			float3 reflectedFlux = diffuseAlbedo * lightIntensity * (solidAngle * NdotL);
 						
 			float4 cosineCoeffs = SHProjectClampedCosine(worldSpaceNormal);
 			SHSpectralCoeffs intensityCoeffs;
-			intensityCoeffs.r = reflectedFlux.r * cosineCoeffs; // Kolya. No corrections applied
-			intensityCoeffs.g = reflectedFlux.g * cosineCoeffs; // Kolya. No corrections applied
-			intensityCoeffs.b = reflectedFlux.b * cosineCoeffs; // Kolya. No corrections applied
+			intensityCoeffs.r = reflectedFlux.r * cosineCoeffs;
+			intensityCoeffs.g = reflectedFlux.g * cosineCoeffs;
+			intensityCoeffs.b = reflectedFlux.b * cosineCoeffs;
 
 			totalIntensityCoeffs.r += intensityCoeffs.r;
 			totalIntensityCoeffs.g += intensityCoeffs.g;
