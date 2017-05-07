@@ -29,7 +29,7 @@ float3 ComulativeAverage(float3 newValue, float3 prevComAvg, float numPrevValues
 void Main(PSInput input)
 {
 	int3 gridCell = ComputeGridCell(g_GridConfig, input.worldSpacePos.xyz);
-	if (all(int3(-1, -1, -1) < gridCell.xyz) && all(gridCell.xyz < g_GridConfig.numCells.xyz))
+	if (!IsCellOutsideGrid(g_GridConfig, gridCell))
 	{
 		int cellIndex = ComputeGridCellIndex(g_GridConfig, gridCell);
 						

@@ -26,7 +26,6 @@ struct SamplerRange : public D3D12_DESCRIPTOR_RANGE
 
 struct RootDescriptorTableParameter : public D3D12_ROOT_PARAMETER
 {
-	RootDescriptorTableParameter();
 	RootDescriptorTableParameter(UINT numDescriptorRanges, const D3D12_DESCRIPTOR_RANGE* pDescriptorRanges, D3D12_SHADER_VISIBILITY shaderVisibility);
 };
 

@@ -215,6 +215,7 @@
     <ClInclude Include="..\Include\RenderPasses\TiledLightCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledShadingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\ViewFrustumCullingPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\VisualizeIntensityPass.h" />
     <ClInclude Include="..\Include\RenderPasses\VisualizeTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h" />
   </ItemGroup>
@@ -283,6 +284,7 @@
     <ClCompile Include="..\Source\RenderPasses\TiledLightCullingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledShadingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ViewFrustumCullingPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\VisualizeIntensityPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VisualizeTexturePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelGridPass.cpp" />
   </ItemGroup>
@@ -555,6 +557,24 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\VisualizeIntensityVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\VisualizeIntensityPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

@@ -180,7 +180,13 @@ COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Sampl
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeIntensityVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeIntensityVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeIntensityPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeIntensityPS.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

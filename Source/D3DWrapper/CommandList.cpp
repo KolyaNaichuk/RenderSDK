@@ -43,6 +43,11 @@ void CommandList::End()
 	VerifyD3DResult(m_D3DCommandList->Close());
 }
 
+void CommandList::SetPipelineState(PipelineState* pPipelineState)
+{
+	m_D3DCommandList->SetPipelineState(pPipelineState->GetD3DObject());
+}
+
 void CommandList::IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
 {
 	m_D3DCommandList->IASetPrimitiveTopology(primitiveTopology);
@@ -88,27 +93,32 @@ void CommandList::SetGraphicsRootSignature(RootSignature* pRootSignature)
 	m_D3DCommandList->SetGraphicsRootSignature(pRootSignature->GetD3DObject());
 }
 
-void CommandList::SetDescriptorHeaps(DescriptorHeap* pCBVSRVUAVDescriptorHeap, DescriptorHeap* pSamplerDescriptorHeap)
+void CommandList::SetDescriptorHeaps(DescriptorHeap* pSRVDescriptorHeap, DescriptorHeap* pSamplerDescriptorHeap)
 {
 	static const UINT maxNumDescriptorHeaps = 2;
-	ID3D12DescriptorHeap* dxDescriptorHeaps[maxNumDescriptorHeaps];
+	ID3D12DescriptorHeap* d3dDescriptorHeaps[maxNumDescriptorHeaps];
 	
-	assert(pCBVSRVUAVDescriptorHeap != nullptr);
-	dxDescriptorHeaps[0] = pCBVSRVUAVDescriptorHeap->GetD3DObject();
+	assert(pSRVDescriptorHeap != nullptr);
+	d3dDescriptorHeaps[0] = pSRVDescriptorHeap->GetD3DObject();
 	UINT numDescriptorHeaps = 1;
 
 	if (pSamplerDescriptorHeap != nullptr)
 	{
-		dxDescriptorHeaps[1] = pSamplerDescriptorHeap->GetD3DObject();
+		d3dDescriptorHeaps[1] = pSamplerDescriptorHeap->GetD3DObject();
 		++numDescriptorHeaps;
 	}
 
-	m_D3DCommandList->SetDescriptorHeaps(numDescriptorHeaps, dxDescriptorHeaps);
+	m_D3DCommandList->SetDescriptorHeaps(numDescriptorHeaps, d3dDescriptorHeaps);
 }
 
-void CommandList::SetGraphicsRootDescriptorTable(UINT rootParameterIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle)
+void CommandList::SetGraphicsRootDescriptorTable(UINT rootParamIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle)
 {
-	m_D3DCommandList->SetGraphicsRootDescriptorTable(rootParameterIndex, baseHandle);
+	m_D3DCommandList->SetGraphicsRootDescriptorTable(rootParamIndex, baseHandle);
+}
+
+void CommandList::SetGraphicsRoot32BitConstant(UINT rootParamIndex, UINT srcData, UINT destOffsetIn32BitValues)
+{
+	m_D3DCommandList->SetGraphicsRoot32BitConstant(rootParamIndex, srcData, destOffsetIn32BitValues);
 }
 
 void CommandList::SetComputeRootSignature(RootSignature* pRootSignature)
@@ -116,9 +126,14 @@ void CommandList::SetComputeRootSignature(RootSignature* pRootSignature)
 	m_D3DCommandList->SetComputeRootSignature(pRootSignature->GetD3DObject());
 }
 
-void CommandList::SetComputeRootDescriptorTable(UINT rootParameterIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle)
+void CommandList::SetComputeRootDescriptorTable(UINT rootParamIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle)
 {
-	m_D3DCommandList->SetComputeRootDescriptorTable(rootParameterIndex, baseHandle);
+	m_D3DCommandList->SetComputeRootDescriptorTable(rootParamIndex, baseHandle);
+}
+
+void CommandList::SetComputeRoot32BitConstant(UINT rootParamIndex, UINT srcData, UINT destOffsetIn32BitValues)
+{
+	m_D3DCommandList->SetComputeRoot32BitConstant(rootParamIndex, srcData, destOffsetIn32BitValues);
 }
 
 void CommandList::RSSetViewports(UINT numViewports, const Viewport* pViewports)

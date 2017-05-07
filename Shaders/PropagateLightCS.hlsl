@@ -3,6 +3,7 @@
 
 #include "SphericalHarmonics.hlsl"
 #include "VoxelGrid.hlsl"
+#include "Foundation.hlsl"
 
 struct CellFaceData
 {
@@ -16,8 +17,12 @@ struct NeighborCellData
 	CellFaceData currCellFaces[NUM_FACES_PER_CELL];
 };
 
-static const float backFaceSolidAngle = 0.400669754f;
-static const float sideFaceSolidAngle = 0.423431277f;
+// Kolya. Using Hawar's
+//static const float backFaceSolidAngle = 0.400669754f;
+//static const float sideFaceSolidAngle = 0.423431277f;
+
+static const float backFaceSolidAngle = 0.0318842778f;
+static const float sideFaceSolidAngle = 0.0336955972f;
 
 static const float3 cellCenter = float3(0.5f, 0.5f, 0.5f);
 
@@ -127,44 +132,46 @@ cbuffer GridConfigDataBuffer : register(b0)
 	GridConfig g_GridConfig;
 }
 
-Texture3D g_PrevIntensityRCoeffsTexture : register(t0);
-Texture3D g_PrevIntensityGCoeffsTexture : register(t1);
-Texture3D g_PrevIntensityBCoeffsTexture : register(t2);
+StructuredBuffer<Voxel> g_GridBuffer : register(t0);
+
+Texture3D g_PrevIntensityRCoeffsTexture : register(t1);
+Texture3D g_PrevIntensityGCoeffsTexture : register(t2);
+Texture3D g_PrevIntensityBCoeffsTexture : register(t3);
 
 RWTexture3D<float4> g_IntensityRCoeffsTexture : register(u0);
 RWTexture3D<float4> g_IntensityGCoeffsTexture : register(u1);
 RWTexture3D<float4> g_IntensityBCoeffsTexture : register(u2);
 
-void LoadIntensityCoeffs(int3 gridCell, inout SHSpectralCoeffs intensityCoeffs)
-{
-	if (IsCellOutsideGrid(g_GridConfig, gridCell))
-	{
-		intensityCoeffs.r = float4(0.0f, 0.0f, 0.0f, 0.0f);
-		intensityCoeffs.g = float4(0.0f, 0.0f, 0.0f, 0.0f);
-		intensityCoeffs.b = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	}
-	else
-	{
-		intensityCoeffs.r = g_PrevIntensityRCoeffsTexture[gridCell];
-		intensityCoeffs.g = g_PrevIntensityGCoeffsTexture[gridCell];
-		intensityCoeffs.b = g_PrevIntensityBCoeffsTexture[gridCell];
-	}
-}
+RWTexture3D<float4> g_AccumIntensityRCoeffsTexture : register(u3);
+RWTexture3D<float4> g_AccumIntensityGCoeffsTexture : register(u4);
+RWTexture3D<float4> g_AccumIntensityBCoeffsTexture : register(u5);
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, NUM_THREADS_Z)]
 void Main(int3 currCell : SV_DispatchThreadID)
 {
-	SHSpectralCoeffs accumIntensityCoeffs;
-	accumIntensityCoeffs.r = g_PrevIntensityRCoeffsTexture[currCell];
-	accumIntensityCoeffs.g = g_PrevIntensityGCoeffsTexture[currCell];
-	accumIntensityCoeffs.b = g_PrevIntensityBCoeffsTexture[currCell];
-
+	SHSpectralCoeffs totalIntensityCoeffs;
+	totalIntensityCoeffs.r = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	totalIntensityCoeffs.g = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	totalIntensityCoeffs.b = float4(0.0f, 0.0f, 0.0f, 0.0f);
+			
 	for (int neighborIndex = 0; neighborIndex < NUM_NEIGHBORS_PER_CELL; ++neighborIndex)
 	{
 		int3 neighborCell = currCell + g_Neighbors[neighborIndex].neighborOffset;
-
+		if (IsCellOutsideGrid(g_GridConfig, neighborCell))
+			continue;
+				
 		SHSpectralCoeffs neighborIntensityCoeffs;
-		LoadIntensityCoeffs(neighborCell, neighborIntensityCoeffs);
+		neighborIntensityCoeffs.r = g_PrevIntensityRCoeffsTexture[neighborCell];
+		neighborIntensityCoeffs.g = g_PrevIntensityGCoeffsTexture[neighborCell];
+		neighborIntensityCoeffs.b = g_PrevIntensityBCoeffsTexture[neighborCell];
+
+#if TEST_OCCLUSION == 1
+		int neighborCellIndex = ComputeGridCellIndex(g_GridConfig, neighborCell);
+
+		float4 neighborOcclusionCoeffs = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		if (g_GridBuffer[neighborCellIndex].numOccluders > 0.0f)
+			neighborOcclusionCoeffs = SHProjectClampedCosine(g_GridBuffer[neighborCellIndex].worldSpaceNormal);
+#endif // TEST_OCCLUSION
 
 		for (int faceIndex = 0; faceIndex < NUM_FACES_PER_CELL; ++faceIndex)
 		{
@@ -176,21 +183,37 @@ void Main(int3 currCell : SV_DispatchThreadID)
 			intensityFromNeighbor.g = dot(neighborIntensityCoeffs.g, dirFromNeighborCenterCoeffs);
 			intensityFromNeighbor.b = dot(neighborIntensityCoeffs.b, dirFromNeighborCenterCoeffs);
 
-			float3 fluxFromNeighbor = max(intensityFromNeighbor, 0.0f) * faceData.solidAngleFromNeightborCenter;
+#if TEST_OCCLUSION == 1
+			float occlusionAmplifier = 2.0f;
+			float neighborOcclusion = 1.0f - saturate(occlusionAmplifier * dot(neighborOcclusionCoeffs, dirFromNeighborCenterCoeffs));
+#else // TEST_OCCLUSION
+			float neighborOcclusion = 1.0f;
+#endif // TEST_OCCLUSION
+
+			float3 fluxFromNeighbor = max(intensityFromNeighbor, 0.0f) * faceData.solidAngleFromNeightborCenter * neighborOcclusion;
+			
+			// Kolya. Hawar is using normalized solid angle and constant to compute flux
+			// His solid angles are
+			// #define SOLID_ANGLE_A 0.0318842778f // (22.95668f/(4*180.0f)) 
+			// #define SOLID_ANGLE_B 0.0336955972f // (24.26083f/(4*180.0f))
 
 			float4 cosineCoeffs = g_FaceClampedCosineCoeffs[faceIndex];
 			SHSpectralCoeffs intensityCoeffs;
-			intensityCoeffs.r = fluxFromNeighbor.r * cosineCoeffs;
-			intensityCoeffs.g = fluxFromNeighbor.g * cosineCoeffs;
-			intensityCoeffs.b = fluxFromNeighbor.b * cosineCoeffs;
+			intensityCoeffs.r = fluxFromNeighbor.r * cosineCoeffs;// Kolya. Do not apply correction
+			intensityCoeffs.g = fluxFromNeighbor.g * cosineCoeffs;// Kolya. Do not apply correction
+			intensityCoeffs.b = fluxFromNeighbor.b * cosineCoeffs;// Kolya. Do not apply correction
 
-			accumIntensityCoeffs.r += intensityCoeffs.r;
-			accumIntensityCoeffs.g += intensityCoeffs.g;
-			accumIntensityCoeffs.b += intensityCoeffs.b;
+			totalIntensityCoeffs.r += intensityCoeffs.r;
+			totalIntensityCoeffs.g += intensityCoeffs.g;
+			totalIntensityCoeffs.b += intensityCoeffs.b;
 		}
 	}
 		
-	g_IntensityRCoeffsTexture[currCell] = accumIntensityCoeffs.r;
-	g_IntensityGCoeffsTexture[currCell] = accumIntensityCoeffs.g;
-	g_IntensityBCoeffsTexture[currCell] = accumIntensityCoeffs.b;
+	g_IntensityRCoeffsTexture[currCell] = totalIntensityCoeffs.r;
+	g_IntensityGCoeffsTexture[currCell] = totalIntensityCoeffs.g;
+	g_IntensityBCoeffsTexture[currCell] = totalIntensityCoeffs.b;
+
+	g_AccumIntensityRCoeffsTexture[currCell] += totalIntensityCoeffs.r;
+	g_AccumIntensityGCoeffsTexture[currCell] += totalIntensityCoeffs.g;
+	g_AccumIntensityBCoeffsTexture[currCell] += totalIntensityCoeffs.b;
 }

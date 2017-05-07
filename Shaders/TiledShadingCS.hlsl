@@ -51,6 +51,30 @@ StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t14);
 SamplerState g_LinearSampler : register(s0);
 RWTexture2D<float4> g_AccumLightTexture : register(u0);
 
+//////////////////////////////////////////////
+
+#define A  0.4f  					 // shoulderStrength
+#define B  0.3f  					 // linearStrength
+#define C  0.1f  					 // linearAngle
+#define D  0.2f  					 // toeStrength
+#define E  0.01f 					 // toeNumerator
+#define F  0.3f  					 // toeDenominator
+#define LINEAR_WHITE 11.2f 
+
+float3 FilmicFunc(in float3 x)
+{
+	return ((x*(A*x + C*B) + D*E) / (x*(A*x + B) + D*F)) - E / F;
+}
+
+float3 TonemapFilmic(in float3 color)
+{
+	float3 numerator = FilmicFunc(color);
+	float3 denominator = FilmicFunc(float3(LINEAR_WHITE, LINEAR_WHITE, LINEAR_WHITE));
+	return numerator / denominator;
+}
+
+//////////////////////////////////////////////
+
 [numthreads(TILE_SIZE, TILE_SIZE, 1)]
 void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID)
 {
@@ -117,7 +141,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID)
 	float3 directRadiance = pointLightsContrib + spotLightsContrib + directionalLightContrib;
 
 #if ENABLE_INDIRECT_LIGHT == 1
-	float3 gridSpacePos = worldSpacePos - g_GridConfigData.worldSpaceOrigin.xyz;
+	float3 gridSpacePos = g_GridConfigData.worldSpaceOrigin.xyz - worldSpacePos;
 	float3 gridTexCoord = gridSpacePos * g_GridConfigData.rcpSize.xyz;
 
 	SHSpectralCoeffs incidentIntensityCoeffs;
@@ -138,5 +162,15 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID)
 	float3 indirectRadiance = float3(0.0f, 0.0f, 0.0f);
 #endif // ENABLE_INDIRECT_LIGHT
 
-	g_AccumLightTexture[globalThreadId.xy] = float4(directRadiance + indirectRadiance, 1.0f);
+	float3 combinedRadiance = directRadiance + indirectRadiance;
+	
+	// Kolya. Applying Hawar's tonemapper
+	////////////////////////////////////////////////////////////////////
+	// Perform filmic tone-mapping with constant exposure
+	//const float exposure = 1.2f;
+	//combinedRadiance *= exposure;
+	//combinedRadiance = TonemapFilmic(combinedRadiance);
+	////////////////////////////////////////////////////////////////////
+
+	g_AccumLightTexture[globalThreadId.xy] = float4(combinedRadiance, 1.0f);
 }

@@ -37,12 +37,12 @@ int FindViewDirectionWithLargestProjectedArea(float3 worldSpaceFaceNormal)
 void Main(triangle GSInput input[3], inout TriangleStream<GSOutput> outputStream)
 {
 	float3 worldSpaceFaceNormal = normalize(input[0].worldSpaceNormal + input[1].worldSpaceNormal + input[2].worldSpaceNormal);
-	int viewDirIndex = FindViewDirectionWithLargestProjectedArea(worldSpaceFaceNormal);
+	int viewIndex = FindViewDirectionWithLargestProjectedArea(worldSpaceFaceNormal);
 	
 	for (int index = 0; index < 3; ++index)
 	{
 		GSOutput output;
-		output.clipSpacePos = mul(input[index].worldSpacePos, g_Transform.viewProjMatrices[viewDirIndex]);
+		output.clipSpacePos = mul(input[index].worldSpacePos, g_Transform.viewProjMatrices[viewIndex]);
 		output.worldSpacePos = input[index].worldSpacePos;
 		output.worldSpaceNormal = input[index].worldSpaceNormal;
 

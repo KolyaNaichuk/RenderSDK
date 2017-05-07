@@ -49,7 +49,7 @@ InjectVirtualPointLightsPass::InjectVirtualPointLightsPass(InitParams* pParams)
 	if (pParams->m_EnablePointLights)
 		srvDescriptorRanges.push_back(SRVDescriptorRange(4, 1));
 	
-	srvDescriptorRanges.push_back(UAVDescriptorRange(3, 0));
+	srvDescriptorRanges.push_back(UAVDescriptorRange(6, 0));
 
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kSRVRootParam] = RootDescriptorTableParameter(srvDescriptorRanges.size(), srvDescriptorRanges.data(), D3D12_SHADER_VISIBILITY_ALL);

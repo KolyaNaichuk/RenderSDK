@@ -25,6 +25,7 @@ class PropagateLightPass;
 class VisualizeVoxelGridPass;
 class VisualizeTexturePass;
 class VisualizeVoxelGridPass;
+class VisualizeIntensityPass;
 class TiledLightCullingPass;
 class TiledShadingPass;
 class ViewFrustumCullingPass;
@@ -45,7 +46,8 @@ class DXApplication : public Application
 public:
 	enum class DisplayResult
 	{
-		AccumLight,
+		ShadingResult,
+		IndirectLightIntensityResult,
 		DiffuseBuffer,
 		SpecularBuffer,
 		NormalBuffer,
@@ -61,6 +63,18 @@ public:
 		DirectLight,
 		IndirectLight,
 		DirectAndIndirectLight
+	};
+	enum IndirectLightIntensity
+	{
+		IndirectLightIntensity_Previous = 0,
+		IndirectLightIntensity_Current,
+		IndirectLightIntensity_Accumulated
+	};
+	enum IndirectLightComponent
+	{
+		IndirectLightComponent_Red = 0,
+		IndirectLightComponent_Green,
+		IndirectLightComponent_Blue
 	};
 
 	DXApplication(HINSTANCE hApp);
@@ -101,6 +115,7 @@ private:
 	void InitVisualizeDepthBufferPass();
 	void InitVisualizeSpotLightTiledShadowMapPass();
 	void InitVisualizePointLightTiledShadowMapPass();
+	void InitVisualizeIntensityPass();
 	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
 
 	CommandList* RecordClearBackBufferPass(u8 clearFlags);
@@ -130,6 +145,7 @@ private:
 	CommandList* RecordVisualizeDepthBufferPass();
 	CommandList* RecordVisualizeSpotLightTiledShadowMapPass();
 	CommandList* RecordVisualizePointLightTiledShadowMapPass();
+	CommandList* RecordVisualizeIntensityPass();
 	CommandList* RecordDisplayResultPass();
 	CommandList* RecordPresentResourceBarrierPass();
 
@@ -146,6 +162,9 @@ private:
 
 	DisplayResult m_DisplayResult;
 	TileShadingMode m_ShadingMode;
+	IndirectLightIntensity m_IndirectLightIntensity;
+	IndirectLightComponent m_IndirectLightComponent;
+	UINT m_NumPropagationIterations;
 
 	GraphicsDevice* m_pDevice;
 	SwapChain* m_pSwapChain;
@@ -168,6 +187,9 @@ private:
 	ColorTexture* m_IntensityRCoeffsTextures[2];
 	ColorTexture* m_IntensityGCoeffsTextures[2];
 	ColorTexture* m_IntensityBCoeffsTextures[2];
+	ColorTexture* m_pAccumIntensityRCoeffsTexture;
+	ColorTexture* m_pAccumIntensityGCoeffsTexture;
+	ColorTexture* m_pAccumIntensityBCoeffsTexture;
 	Viewport* m_pBackBufferViewport;
 	Viewport* m_pSpotLightTiledShadowMapViewport;
 	Viewport* m_pPointLightTiledShadowMapViewport;
@@ -288,6 +310,9 @@ private:
 
 	VisualizeTexturePass* m_pVisualizePointLightTiledShadowMapPass;
 	BindingResourceList* m_VisualizePointLightTiledShadowMapResources[kNumBackBuffers];
+
+	VisualizeIntensityPass* m_pVisualizeIntensityPass;
+	BindingResourceList* m_VisualizeIntensityResources[kNumBackBuffers];
 	
 	MeshBatch* m_pMeshBatch;
 	

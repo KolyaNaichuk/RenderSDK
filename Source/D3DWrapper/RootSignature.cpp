@@ -37,14 +37,6 @@ SamplerRange::SamplerRange(UINT numDescriptors, UINT baseShaderRegister, UINT re
 	OffsetInDescriptorsFromTableStart = offsetInDescriptorsFromTableStart;
 }
 
-RootDescriptorTableParameter::RootDescriptorTableParameter()
-{
-	ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	DescriptorTable.NumDescriptorRanges = 0;
-	DescriptorTable.pDescriptorRanges = nullptr;
-	ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-}
-
 RootDescriptorTableParameter::RootDescriptorTableParameter(UINT numDescriptorRanges, const D3D12_DESCRIPTOR_RANGE* pDescriptorRanges, D3D12_SHADER_VISIBILITY shaderVisibility)
 {
 	ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;

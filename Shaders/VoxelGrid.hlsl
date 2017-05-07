@@ -16,7 +16,8 @@ struct GridConfig
 	float4 cellSize;
 	float4 rcpCellSize;
 	int4   numCells;
-	float4 notUsed[10];
+	float4 rcpNumCells;
+	float4 notUsed[9];
 };
 
 struct ObjectTransform
@@ -35,16 +36,15 @@ struct CameraTransform
 
 int3 ComputeGridCell(GridConfig gridConfig, float3 worldSpacePos)
 {
-	float3 gridSpacePos = worldSpacePos - gridConfig.worldSpaceOrigin.xyz;
-	float3 gridCell = round(gridSpacePos.xyz * gridConfig.rcpCellSize.xyz);
-
-	return int3(gridCell.x, gridCell.y, gridCell.z);
+	float3 gridSpacePos = gridConfig.worldSpaceOrigin.xyz - worldSpacePos;
+	float3 gridCell = gridSpacePos.xyz * gridConfig.rcpCellSize.xyz;
+	return int3(gridCell);
 }
 
 float3 ComputeWorldSpacePosition(GridConfig gridConfig, int3 gridCell)
 {
-	float3 gridSpaceOffset = gridCell * gridConfig.cellSize.xyz;
-	return gridConfig.worldSpaceOrigin.xyz + gridSpaceOffset;
+	float3 gridSpaceOffset = float3(gridCell) * gridConfig.cellSize.xyz;
+	return gridConfig.worldSpaceOrigin.xyz - gridSpaceOffset;
 }
 
 int ComputeGridCellIndex(GridConfig gridConfig, int3 gridCell)
