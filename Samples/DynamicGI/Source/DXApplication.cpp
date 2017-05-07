@@ -2056,7 +2056,7 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	const Vector3f gridCenter(0.5f * 549.6f, 0.5f * 548.8f, -0.5f * 562.0f);
 	
 	GridConfig gridConfig;
-	gridConfig.m_WorldSpaceOrigin = Vector4f(gridCenter.m_X - gridHalfSize.m_X, gridCenter.m_Y + gridHalfSize.m_Y, gridCenter.m_Z - gridHalfSize.m_Z, 0.0f);
+	gridConfig.m_WorldSpaceOrigin = Vector4f(gridCenter.m_X + gridHalfSize.m_X, gridCenter.m_Y + gridHalfSize.m_Y, gridCenter.m_Z + gridHalfSize.m_Z, 0.0f);
 	gridConfig.m_Size = Vector4f(gridSize.m_X, gridSize.m_Y, gridSize.m_Z, 0.0f);
 	gridConfig.m_RcpSize = Vector4f(gridRcpSize.m_X, gridRcpSize.m_Y, gridRcpSize.m_Z, 0.0f);
 	gridConfig.m_CellSize = Vector4f(gridCellSize.m_X, gridCellSize.m_Y, gridCellSize.m_Z, 0.0f);

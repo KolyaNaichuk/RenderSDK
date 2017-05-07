@@ -79,7 +79,7 @@ VSOutput Main(uint boundaryId : SV_InstanceID, uint vertexId : SV_VertexID)
 
 #if INTENSITY_DISTRIBUTION == 1 
 static const float g_AngleSubtendedByIntensityPolygonSide = g_TwoPI / float(NUM_INTENSITY_POLYGON_SIDES);
-static const float g_VisualizedIntensityScale = 2.5f;
+static const float g_VisualizedIntensityScale = 4.0f;
 
 VSOutput Main(uint cellFlattenedId : SV_InstanceID, uint vertexId : SV_VertexID)
 {
@@ -91,10 +91,12 @@ VSOutput Main(uint cellFlattenedId : SV_InstanceID, uint vertexId : SV_VertexID)
 
 	float2 clipSpaceCellHalfSize = 1.0f / float2(NUM_GRID_CELLS_X, NUM_GRID_CELLS_Y);
 
-	float3 vertexDirOnUnitSphere = float3(0.0f, 0.0f, 0.0f);
-	sincos(vertexAngle, vertexDirOnUnitSphere.y, vertexDirOnUnitSphere.x);
+	float3 worldSpaceVertexOnUnitSphere = float3(0.0f, 0.0f, 0.0f);
+	sincos(vertexAngle, worldSpaceVertexOnUnitSphere.y, worldSpaceVertexOnUnitSphere.x);
+	worldSpaceVertexOnUnitSphere.x *= -1.0f;
 
-	float2 visualizedIntensityDir = vertexDirOnUnitSphere.xy;
+	float2 clipSpaceIntensityDir = worldSpaceVertexOnUnitSphere.xy;
+	clipSpaceIntensityDir.x *= -1.0f;
 #endif // VIEW_DIRECTION_Z
 
 #if VIEW_DIRECTION == VIEW_DIRECTION_Y
@@ -124,10 +126,10 @@ VSOutput Main(uint cellFlattenedId : SV_InstanceID, uint vertexId : SV_VertexID)
 	float2 clipSpaceCellCenter = float2(-1.0f, 1.0f) + float2(1 + 2 * cellId.x, 1 + 2 * cellId.y) * float2(clipSpaceCellHalfSize.x, -clipSpaceCellHalfSize.y);
 	
 	float4 intensityCoeffs = g_IntensityCoeffsTextures[g_TextureIndex][cellId];
-	float intensity = dot(intensityCoeffs, SH(vertexDirOnUnitSphere));
+	float intensity = dot(intensityCoeffs, SH(worldSpaceVertexOnUnitSphere));
 	
 	float2 clipSpaceVertexScale = (g_VisualizedIntensityScale * intensity) * clipSpaceCellHalfSize;
-	float2 clipSpaceVertexOffset = clipSpaceVertexScale * visualizedIntensityDir;
+	float2 clipSpaceVertexOffset = clipSpaceVertexScale * clipSpaceIntensityDir;
 
 	VSOutput output;
 	output.clipSpacePos = float4(clipSpaceCellCenter + clipSpaceVertexOffset, 0.0f, 1.0f);

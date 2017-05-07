@@ -141,9 +141,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID)
 	float3 directRadiance = pointLightsContrib + spotLightsContrib + directionalLightContrib;
 
 #if ENABLE_INDIRECT_LIGHT == 1
-	float3 gridSpacePos = worldSpacePos - g_GridConfigData.worldSpaceOrigin.xyz;
-	gridSpacePos.y *= -1.0f;
-
+	float3 gridSpacePos = g_GridConfigData.worldSpaceOrigin.xyz - worldSpacePos;
 	float3 gridTexCoord = gridSpacePos * g_GridConfigData.rcpSize.xyz;
 
 	SHSpectralCoeffs incidentIntensityCoeffs;
