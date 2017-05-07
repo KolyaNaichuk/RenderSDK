@@ -273,7 +273,7 @@ struct VisualizeTextureData
 DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Global Illumination", 0, 0, kTileSize * kNumTilesX, kTileSize * kNumTilesY)
 	, m_DisplayResult(DisplayResult::Unspecified)
-	, m_ShadingMode(TileShadingMode::IndirectLight)
+	, m_ShadingMode(TileShadingMode::DirectAndIndirectLight)
 	, m_IndirectLightIntensity(IndirectLightIntensity_Accumulated)
 	, m_IndirectLightComponent(IndirectLightComponent_Red)
 	, m_NumPropagationIterations(kMinNumPropagationIterations)
@@ -430,7 +430,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 		m_PropagateLightResources[index] = new BindingResourceList();
 	}
 
-	UpdateDisplayResult(DisplayResult::IndirectLightIntensityResult);
+	UpdateDisplayResult(DisplayResult::ShadingResult);
 }
 
 DXApplication::~DXApplication()
