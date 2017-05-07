@@ -15,9 +15,9 @@ class VisualizeIntensityPass
 public:
 	enum ViewDirection
 	{
-		ViewDirection_Z = 1,
-		ViewDirection_Y = 2,
-		ViewDirection_X = 3
+		ViewDirection_WorldSpaceX = 1,
+		ViewDirection_WorldSpaceY = 2,
+		ViewDirection_WorldSpaceZ = 3
 	};
 	struct InitParams
 	{

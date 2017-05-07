@@ -141,8 +141,9 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID)
 	float3 directRadiance = pointLightsContrib + spotLightsContrib + directionalLightContrib;
 
 #if ENABLE_INDIRECT_LIGHT == 1
-	float3 gridSpacePos = g_GridConfigData.worldSpaceOrigin.xyz - worldSpacePos;
+	float3 gridSpacePos = worldSpacePos - g_GridConfigData.worldSpaceOrigin.xyz;
 	float3 gridTexCoord = gridSpacePos * g_GridConfigData.rcpSize.xyz;
+	gridTexCoord.y = 1.0f - gridTexCoord;
 
 	SHSpectralCoeffs incidentIntensityCoeffs;
 	incidentIntensityCoeffs.r = g_IntensityRCoeffsTexture.SampleLevel(g_LinearSampler, gridTexCoord, 0.0f);

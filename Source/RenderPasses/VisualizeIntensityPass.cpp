@@ -29,8 +29,9 @@ VisualizeIntensityPass::VisualizeIntensityPass(InitParams* pParams)
 
 	switch (pParams->m_ViewDir)
 	{
-		case ViewDirection_X:
+		case ViewDirection_WorldSpaceX:
 		{
+			assert(pParams->m_NumGridCellsX > 0);
 			assert(pParams->m_SliceToVisualize < pParams->m_NumGridCellsX);
 
 			m_NumGridCellsPerSlice = pParams->m_NumGridCellsZ * pParams->m_NumGridCellsY;
@@ -39,8 +40,9 @@ VisualizeIntensityPass::VisualizeIntensityPass(InitParams* pParams)
 
 			break;
 		}
-		case ViewDirection_Y:
+		case ViewDirection_WorldSpaceY:
 		{
+			assert(pParams->m_NumGridCellsY > 0);
 			assert(pParams->m_SliceToVisualize < pParams->m_NumGridCellsY);
 
 			m_NumGridCellsPerSlice = pParams->m_NumGridCellsX * pParams->m_NumGridCellsZ;
@@ -49,8 +51,9 @@ VisualizeIntensityPass::VisualizeIntensityPass(InitParams* pParams)
 
 			break;
 		}
-		case ViewDirection_Z:
+		case ViewDirection_WorldSpaceZ:
 		{
+			assert(pParams->m_NumGridCellsZ > 0);
 			assert(pParams->m_SliceToVisualize < pParams->m_NumGridCellsZ);
 
 			m_NumGridCellsPerSlice = pParams->m_NumGridCellsX * pParams->m_NumGridCellsY;

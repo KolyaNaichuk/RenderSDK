@@ -1987,7 +1987,7 @@ void DXApplication::InitVisualizeIntensityPass()
 	initParams.m_NumGridCellsX = kNumGridCellsX;
 	initParams.m_NumGridCellsY = kNumGridCellsY;
 	initParams.m_NumGridCellsZ = kNumGridCellsZ;
-	initParams.m_ViewDir = VisualizeIntensityPass::ViewDirection_Z;
+	initParams.m_ViewDir = VisualizeIntensityPass::ViewDirection_WorldSpaceZ;
 	initParams.m_SliceToVisualize = kNumGridCellsZ / 2;
 	initParams.m_NumIntensitySamples = 32;
 	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
@@ -2054,9 +2054,10 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	// Kolya: Hard-coding grid center for now
 	//const Vector3f gridCenter(mainCameraPos + (0.25f * gridSize.m_Z) * mainCameraBasis.m_ZAxis);
 	const Vector3f gridCenter(0.5f * 549.6f, 0.5f * 548.8f, -0.5f * 562.0f);
+	const Vector3f gridMinPoint = gridCenter - gridHalfSize;
 	
 	GridConfig gridConfig;
-	gridConfig.m_WorldSpaceOrigin = Vector4f(gridCenter.m_X + gridHalfSize.m_X, gridCenter.m_Y + gridHalfSize.m_Y, gridCenter.m_Z + gridHalfSize.m_Z, 0.0f);
+	gridConfig.m_WorldSpaceOrigin = Vector4f(gridMinPoint.m_X, gridMinPoint.m_Y, gridMinPoint.m_Z, 0.0f);
 	gridConfig.m_Size = Vector4f(gridSize.m_X, gridSize.m_Y, gridSize.m_Z, 0.0f);
 	gridConfig.m_RcpSize = Vector4f(gridRcpSize.m_X, gridRcpSize.m_Y, gridRcpSize.m_Z, 0.0f);
 	gridConfig.m_CellSize = Vector4f(gridCellSize.m_X, gridCellSize.m_Y, gridCellSize.m_Z, 0.0f);

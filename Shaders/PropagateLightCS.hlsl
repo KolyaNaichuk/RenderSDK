@@ -159,11 +159,13 @@ void Main(int3 currCell : SV_DispatchThreadID)
 		int3 neighborCell = currCell + g_Neighbors[neighborIndex].neighborOffset;
 		if (IsCellOutsideGrid(g_GridConfig, neighborCell))
 			continue;
-				
+		
+		const uint3 neighborTexturePos = ComputeTexturePosition(g_GridConfig, neighborCell);
+
 		SHSpectralCoeffs neighborIntensityCoeffs;
-		neighborIntensityCoeffs.r = g_PrevIntensityRCoeffsTexture[neighborCell];
-		neighborIntensityCoeffs.g = g_PrevIntensityGCoeffsTexture[neighborCell];
-		neighborIntensityCoeffs.b = g_PrevIntensityBCoeffsTexture[neighborCell];
+		neighborIntensityCoeffs.r = g_PrevIntensityRCoeffsTexture[neighborTexturePos];
+		neighborIntensityCoeffs.g = g_PrevIntensityGCoeffsTexture[neighborTexturePos];
+		neighborIntensityCoeffs.b = g_PrevIntensityBCoeffsTexture[neighborTexturePos];
 
 #if TEST_OCCLUSION == 1
 		int neighborCellIndex = ComputeGridCellIndex(g_GridConfig, neighborCell);
@@ -208,12 +210,14 @@ void Main(int3 currCell : SV_DispatchThreadID)
 			totalIntensityCoeffs.b += intensityCoeffs.b;
 		}
 	}
-		
-	g_IntensityRCoeffsTexture[currCell] = totalIntensityCoeffs.r;
-	g_IntensityGCoeffsTexture[currCell] = totalIntensityCoeffs.g;
-	g_IntensityBCoeffsTexture[currCell] = totalIntensityCoeffs.b;
+	
+	const uint3 currCellTexturePos = ComputeTexturePosition(g_GridConfig, currCell);
 
-	g_AccumIntensityRCoeffsTexture[currCell] += totalIntensityCoeffs.r;
-	g_AccumIntensityGCoeffsTexture[currCell] += totalIntensityCoeffs.g;
-	g_AccumIntensityBCoeffsTexture[currCell] += totalIntensityCoeffs.b;
+	g_IntensityRCoeffsTexture[currCellTexturePos] = totalIntensityCoeffs.r;
+	g_IntensityGCoeffsTexture[currCellTexturePos] = totalIntensityCoeffs.g;
+	g_IntensityBCoeffsTexture[currCellTexturePos] = totalIntensityCoeffs.b;
+
+	g_AccumIntensityRCoeffsTexture[currCellTexturePos] += totalIntensityCoeffs.r;
+	g_AccumIntensityGCoeffsTexture[currCellTexturePos] += totalIntensityCoeffs.g;
+	g_AccumIntensityBCoeffsTexture[currCellTexturePos] += totalIntensityCoeffs.b;
 }

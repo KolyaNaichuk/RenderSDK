@@ -73,11 +73,13 @@ void Main(int3 gridCell : SV_DispatchThreadID)
 #endif // ENABLE_POINT_LIGHTS
 	}
 
-	g_IntensityRCoeffsTexture[gridCell] = totalIntensityCoeffs.r;
-	g_IntensityGCoeffsTexture[gridCell] = totalIntensityCoeffs.g;
-	g_IntensityBCoeffsTexture[gridCell] = totalIntensityCoeffs.b;
+	const uint3 texturePos = ComputeTexturePosition(g_GridConfig, gridCell);
 
-	g_AccumIntensityRCoeffsTexture[gridCell] = totalIntensityCoeffs.r;
-	g_AccumIntensityGCoeffsTexture[gridCell] = totalIntensityCoeffs.g;
-	g_AccumIntensityBCoeffsTexture[gridCell] = totalIntensityCoeffs.b;
+	g_IntensityRCoeffsTexture[texturePos] = totalIntensityCoeffs.r;
+	g_IntensityGCoeffsTexture[texturePos] = totalIntensityCoeffs.g;
+	g_IntensityBCoeffsTexture[texturePos] = totalIntensityCoeffs.b;
+
+	g_AccumIntensityRCoeffsTexture[texturePos] = totalIntensityCoeffs.r;
+	g_AccumIntensityGCoeffsTexture[texturePos] = totalIntensityCoeffs.g;
+	g_AccumIntensityBCoeffsTexture[texturePos] = totalIntensityCoeffs.b;
 }
