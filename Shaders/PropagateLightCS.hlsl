@@ -17,12 +17,8 @@ struct NeighborCellData
 	CellFaceData currCellFaces[NUM_FACES_PER_CELL];
 };
 
-// Kolya. Using Hawar's
-//static const float backFaceSolidAngle = 0.400669754f;
-//static const float sideFaceSolidAngle = 0.423431277f;
-
-static const float backFaceSolidAngle = 0.0318842778f;
-static const float sideFaceSolidAngle = 0.0336955972f;
+static const float backFaceSolidAngle = 0.400669754f;
+static const float sideFaceSolidAngle = 0.423431277f;
 
 static const float3 cellCenter = float3(0.5f, 0.5f, 0.5f);
 
@@ -192,18 +188,13 @@ void Main(int3 currCell : SV_DispatchThreadID)
 			float neighborOcclusion = 1.0f;
 #endif // TEST_OCCLUSION
 
-			float3 fluxFromNeighbor = max(intensityFromNeighbor, 0.0f) * faceData.solidAngleFromNeightborCenter * neighborOcclusion;
+			float3 fluxFromNeighbor = max(intensityFromNeighbor, 0.0f) * faceData.solidAngleFromNeightborCenter * neighborOcclusion * g_RcpPI;
 			
-			// Kolya. Hawar is using normalized solid angle and constant to compute flux
-			// His solid angles are
-			// #define SOLID_ANGLE_A 0.0318842778f // (22.95668f/(4*180.0f)) 
-			// #define SOLID_ANGLE_B 0.0336955972f // (24.26083f/(4*180.0f))
-
 			float4 cosineCoeffs = g_FaceClampedCosineCoeffs[faceIndex];
 			SHSpectralCoeffs intensityCoeffs;
-			intensityCoeffs.r = fluxFromNeighbor.r * cosineCoeffs;// Kolya. Do not apply correction
-			intensityCoeffs.g = fluxFromNeighbor.g * cosineCoeffs;// Kolya. Do not apply correction
-			intensityCoeffs.b = fluxFromNeighbor.b * cosineCoeffs;// Kolya. Do not apply correction
+			intensityCoeffs.r = fluxFromNeighbor.r * cosineCoeffs;
+			intensityCoeffs.g = fluxFromNeighbor.g * cosineCoeffs;
+			intensityCoeffs.b = fluxFromNeighbor.b * cosineCoeffs;
 
 			totalIntensityCoeffs.r += intensityCoeffs.r;
 			totalIntensityCoeffs.g += intensityCoeffs.g;

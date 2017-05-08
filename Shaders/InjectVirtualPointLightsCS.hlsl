@@ -58,7 +58,7 @@ void Main(int3 gridCell : SV_DispatchThreadID)
 			float3 lightIntensity = g_PointLightPropsBuffer[lightIndex].color;
 			
 			float NdotL = saturate(dot(worldSpaceNormal, normalize(worldSpaceDirToLight)));
-			float3 reflectedFlux = diffuseAlbedo * lightIntensity * (solidAngle * NdotL);
+			float3 reflectedFlux = diffuseAlbedo * lightIntensity * (solidAngle * NdotL) * g_RcpPI;
 						
 			float4 cosineCoeffs = SHProjectClampedCosine(worldSpaceNormal);
 			SHSpectralCoeffs intensityCoeffs;
