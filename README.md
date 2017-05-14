@@ -63,6 +63,7 @@ struct DrawIndexedArgs
 	uint startInstanceLocation;
 };
 
+
 struct DrawMeshCommand
 {
 	uint root32BitConstant;
@@ -120,3 +121,4 @@ which is later combined with already computed direct illumination.
 [3] The Basics of GPU Voxelization https://developer.nvidia.com/content/basics-gpu-voxelization  
 [4] GPU Pro 4. Hawar Doghramachi, Rasterized Voxel-Based Dynamic Global Illumination  
 [5] GPU Pro 6. Hawar Doghramachi, Tile-Based Omnidirectional Shadows
+[6] GPU Pro 2. Anton Kaplanyan, Wolfgang Engel and Carsten Dachsbacher, Diffuse Global Illumination with Temporally Coherent Light Propagation Volumes
