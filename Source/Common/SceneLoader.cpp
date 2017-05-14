@@ -422,7 +422,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 		meshData.RecalcAABB();
 
-		//pMeshBatchData->Append(&meshData);
+		pMeshBatchData->Append(&meshData);
 	}
 	{
 		// Tall block
@@ -513,7 +513,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 		meshData.RecalcAABB();
 
-		//pMeshBatchData->Append(&meshData);
+		pMeshBatchData->Append(&meshData);
 	}
 
 	pScene->AddMeshBatch(pMeshBatchData);

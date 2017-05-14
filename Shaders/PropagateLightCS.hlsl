@@ -164,11 +164,11 @@ void Main(int3 currCell : SV_DispatchThreadID)
 		neighborIntensityCoeffs.b = g_PrevIntensityBCoeffsTexture[neighborTexturePos];
 
 #if TEST_OCCLUSION == 1
-		int neighborCellIndex = ComputeGridCellIndex(g_GridConfig, neighborCell);
-
 		float4 neighborOcclusionCoeffs = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		
+		int neighborCellIndex = ComputeGridCellIndex(g_GridConfig, neighborCell);
 		if (g_GridBuffer[neighborCellIndex].numOccluders > 0.0f)
-			neighborOcclusionCoeffs = SHProjectClampedCosine(g_GridBuffer[neighborCellIndex].worldSpaceNormal);
+			neighborOcclusionCoeffs = SHProjectClampedCosine(g_GridBuffer[neighborCellIndex].worldSpaceNormal) * g_GridConfig.blockerPotentialValue;
 #endif // TEST_OCCLUSION
 
 		for (int faceIndex = 0; faceIndex < NUM_FACES_PER_CELL; ++faceIndex)
@@ -182,19 +182,19 @@ void Main(int3 currCell : SV_DispatchThreadID)
 			intensityFromNeighbor.b = dot(neighborIntensityCoeffs.b, dirFromNeighborCenterCoeffs);
 
 #if TEST_OCCLUSION == 1
-			float occlusionAmplifier = 2.0f;
-			float neighborOcclusion = 1.0f - saturate(occlusionAmplifier * dot(neighborOcclusionCoeffs, dirFromNeighborCenterCoeffs));
+			float3 dirToNeighborFaceCenter = -faceData.dirFromNeighborCenter;
+			float neighborOcclusion = 1.0f - saturate(dot(neighborOcclusionCoeffs, dirToNeighborFaceCenter));
 #else // TEST_OCCLUSION
 			float neighborOcclusion = 1.0f;
 #endif // TEST_OCCLUSION
 
-			float3 fluxFromNeighbor = max(intensityFromNeighbor, 0.0f) * faceData.solidAngleFromNeightborCenter * neighborOcclusion * g_RcpPI;
+			float3 fluxFromNeighbor = max(intensityFromNeighbor, 0.0f) * faceData.solidAngleFromNeightborCenter * neighborOcclusion;
 			
 			float4 cosineCoeffs = g_FaceClampedCosineCoeffs[faceIndex];
 			SHSpectralCoeffs intensityCoeffs;
-			intensityCoeffs.r = fluxFromNeighbor.r * cosineCoeffs;
-			intensityCoeffs.g = fluxFromNeighbor.g * cosineCoeffs;
-			intensityCoeffs.b = fluxFromNeighbor.b * cosineCoeffs;
+			intensityCoeffs.r = (g_RcpPI * fluxFromNeighbor.r) * cosineCoeffs;
+			intensityCoeffs.g = (g_RcpPI * fluxFromNeighbor.g) * cosineCoeffs;
+			intensityCoeffs.b = (g_RcpPI * fluxFromNeighbor.b) * cosineCoeffs;
 
 			totalIntensityCoeffs.r += intensityCoeffs.r;
 			totalIntensityCoeffs.g += intensityCoeffs.g;

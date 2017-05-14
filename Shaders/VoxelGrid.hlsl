@@ -17,7 +17,10 @@ struct GridConfig
 	float4 rcpCellSize;
 	int4   numCells;
 	float4 rcpNumCells;
-	float4 notUsed[9];
+	float  fluxWeight;
+	float  blockerPotentialValue;
+	float2 notUsed1;
+	float4 notUsed2[8];
 };
 
 struct ObjectTransform

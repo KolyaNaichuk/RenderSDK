@@ -45,26 +45,23 @@ void Main(int3 gridCell : SV_DispatchThreadID)
 		{
 			uint lightIndex = g_PointLightIndexBuffer[index];
 
+			float3 lightIntensity = g_PointLightPropsBuffer[lightIndex].color;
+			float attenStartRange = g_PointLightPropsBuffer[lightIndex].attenStartRange;
 			float3 worldSpaceLightPos = g_PointLightBoundsBuffer[lightIndex].center;
-			float lightAttenEndRange = g_PointLightBoundsBuffer[lightIndex].radius;
+			float attenEndRange = g_PointLightBoundsBuffer[lightIndex].radius;
 
 			float3 worldSpaceCellPos = ComputeWorldSpacePosition(g_GridConfig, gridCell);
 			float3 worldSpaceDirToLight = worldSpaceLightPos - worldSpaceCellPos;
-
-			float surfaceArea = 1024.0f;// Kolya. Hardcoding for now
-			float distToLightSquared = dot(worldSpaceDirToLight, worldSpaceDirToLight);
-			float solidAngle = 1.0f;// surfaceArea / distToLightSquared;
 						
-			float3 lightIntensity = g_PointLightPropsBuffer[lightIndex].color;
-			
+			float distAttenuation = CalcLightDistanceAttenuation(length(worldSpaceDirToLight), attenStartRange, attenEndRange);	
 			float NdotL = saturate(dot(worldSpaceNormal, normalize(worldSpaceDirToLight)));
-			float3 reflectedFlux = diffuseAlbedo * lightIntensity * (solidAngle * NdotL) * g_RcpPI;
-						
+			float3 reflectedFlux = diffuseAlbedo * lightIntensity * (NdotL * distAttenuation * g_GridConfig.fluxWeight);
+												
 			float4 cosineCoeffs = SHProjectClampedCosine(worldSpaceNormal);
 			SHSpectralCoeffs intensityCoeffs;
-			intensityCoeffs.r = reflectedFlux.r * cosineCoeffs;
-			intensityCoeffs.g = reflectedFlux.g * cosineCoeffs;
-			intensityCoeffs.b = reflectedFlux.b * cosineCoeffs;
+			intensityCoeffs.r = (g_RcpPI * reflectedFlux.r) * cosineCoeffs;
+			intensityCoeffs.g = (g_RcpPI * reflectedFlux.g) * cosineCoeffs;
+			intensityCoeffs.b = (g_RcpPI * reflectedFlux.b) * cosineCoeffs;
 
 			totalIntensityCoeffs.r += intensityCoeffs.r;
 			totalIntensityCoeffs.g += intensityCoeffs.g;

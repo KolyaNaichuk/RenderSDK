@@ -200,7 +200,10 @@ struct GridConfig
 	Vector4f m_RcpCellSize;
 	Vector4i m_NumCells;
 	Vector4f m_RcpNumCells;
-	Vector4f m_NotUsed[9];
+	f32 m_FluxWeight;
+	f32 m_BlockerPotentialValue;
+	Vector2f m_NotUsed1;
+	Vector4f m_NotUsed2[8];
 };
 
 struct Range
@@ -276,7 +279,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_ShadingMode(TileShadingMode::DirectAndIndirectLight)
 	, m_IndirectLightIntensity(IndirectLightIntensity_Accumulated)
 	, m_IndirectLightComponent(IndirectLightComponent_Red)
-	, m_NumPropagationIterations(kMinNumPropagationIterations)
+	, m_NumPropagationIterations(kNumGridCellsX)
 	, m_pDevice(nullptr)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
@@ -2064,6 +2067,8 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	gridConfig.m_RcpCellSize = Vector4f(gridRcpCellSize.m_X, gridRcpCellSize.m_Y, gridRcpCellSize.m_Z, 0.0f);
 	gridConfig.m_NumCells = Vector4i(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, 0);
 	gridConfig.m_RcpNumCells = Rcp(Vector4f(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, 0));
+	gridConfig.m_FluxWeight = 4.0f * PI / 6.0f;//(4.0f * PI / 6.0f) * Rcp(2.0f * gridConfig.m_NumCells.m_X * gridConfig.m_NumCells.m_X);
+	gridConfig.m_BlockerPotentialValue = gridConfig.m_FluxWeight;
 		
 	m_pGridConfigDataBuffer->Write(&gridConfig, sizeof(gridConfig));
 
