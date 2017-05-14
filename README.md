@@ -39,7 +39,7 @@ Demonstrates core functionality of Direct3D 12 API in action, such as using
 - uploading data to the GPU and handling resource transitions
 - command lists execution synchronization.
 
-![Alt text](/Samples/HelloRectangle/Screenshots/Screenshot.png?raw=true "Optional Title")
+![Alt text](/Samples/HelloRectangle/Screenshots/Screenshot.png?raw=true)
 
 <b>Dynamic Global Illumination</b>
 
@@ -110,7 +110,8 @@ Not to lose details of pixels which are only partially covered by the triangle, 
 After voxel grid construction, the voxels are illuminated by each light and converted into virtual point lights. Finally, the virtual point lights are propagated within the grid to generate indirect illumination,
 which is later combined with already computed direct illumination.
 
-Currently, I am missing complete shadows and indirect lighting implementation. The work is ongoing.
+![Alt text](/Samples/DynamicGI/Screenshots/DirectOnly.png?raw=true)
+![Alt text](/Samples/DynamicGI/Screenshots/DirectAndIndirect.png?raw=true)
 
 <b>Used Resources:</b>
 
