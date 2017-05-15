@@ -5,6 +5,7 @@
 
 class VertexData;
 class IndexData;
+class MeshBatchData;
 
 namespace OBJFile
 {
@@ -13,9 +14,9 @@ namespace OBJFile
 	const static std::wstring kDefaultGroupName = L"default";
 	const static u32 kUnknownIndex = (u32)-1;
 
-	struct VertexIndex
+	struct FaceElement
 	{
-		VertexIndex(u32 positionIndex, u32 normalIndex = kUnknownIndex, u32 texCoordIndex = kUnknownIndex)
+		FaceElement(u32 positionIndex, u32 normalIndex = kUnknownIndex, u32 texCoordIndex = kUnknownIndex)
 			: m_PositionIndex(positionIndex)
 			, m_NormalIndex(normalIndex)
 			, m_TexCoordIndex(texCoordIndex)
@@ -23,6 +24,18 @@ namespace OBJFile
 		u32 m_PositionIndex;
 		u32 m_NormalIndex;
 		u32 m_TexCoordIndex;
+	};
+
+	using MeshPolygon = std::vector<FaceElement>;
+	using MeshTriangle = std::array<FaceElement, 3>;
+		
+	struct Mesh
+	{
+		Mesh(u32 materialIndex)
+			: m_MaterialIndex(materialIndex)
+		{}
+		u32 m_MaterialIndex;
+		std::vector<MeshTriangle> m_Triangles;
 	};
 
 	struct Material
@@ -43,23 +56,14 @@ namespace OBJFile
 
 		f32 m_SpecularPower;
 		std::wstring m_SpecularPowerMapName;
-		
+
 		Vector3f m_EmissiveColor;
 		std::wstring m_EmissiveMapName;
-		
+
 		f32 m_Opacity;
 		std::wstring m_OpacityMapName;
 
 		f32 m_IndexOfRefraction;
-	};
-
-	struct Mesh
-	{
-		Mesh(u32 materialIndex)
-			: m_MaterialIndex(materialIndex)
-		{}
-		u32 m_MaterialIndex;
-		std::vector<VertexIndex> m_VertexIndices;
 	};
 	
 	struct Object
@@ -75,12 +79,12 @@ namespace OBJFile
 class OBJFileLoader
 {
 public:
-	bool Load(const wchar_t* pOBJFilePath, bool use32BitIndices);
+	bool Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8 convertMeshDataFlags);
 
 private:
-	bool LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices);
+	bool LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, u8 convertMeshDataFlags);
 	bool LoadMaterialFile(const wchar_t* pFilePath);
-	void GenerateMeshBatchData(bool use32BitIndices);
+	std::shared_ptr<MeshBatchData> GenerateMeshBatchData(bool use32BitIndices, u8 convertMeshDataFlags);
 	
 	template <typename Index>
 	void GenerateVertexAndIndexData(const OBJFile::Mesh& mesh, VertexData** ppVertexData, IndexData** ppIndexData);

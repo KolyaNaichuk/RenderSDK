@@ -5,44 +5,22 @@
 #include "Math/Hash.h"
 
 namespace OBJFile
-{		
-	void Triangulate(const std::vector<VertexIndex>& faceVertexIndices, std::vector<VertexIndex>& triangleVertexIndices)
+{
+	std::vector<MeshTriangle> Triangulate(const MeshPolygon& meshPolygon)
 	{
-		assert(faceVertexIndices.size() > 2);
-		for (u32 index = 1; index < faceVertexIndices.size() - 1; ++index)
-		{
-			triangleVertexIndices.emplace_back(faceVertexIndices[0]);
-			triangleVertexIndices.emplace_back(faceVertexIndices[index + 1]);
-			triangleVertexIndices.emplace_back(faceVertexIndices[index]);
-		}
-		assert((triangleVertexIndices.size() % 3) == 0);
-	}
-	struct VertexIndexHash
-	{
-		std::size_t operator()(const VertexIndex& vertexIndex) const
-		{
-			std::size_t seed = 0;
-			HashCombine(seed, vertexIndex.m_PositionIndex);
-			HashCombine(seed, vertexIndex.m_NormalIndex);
-			HashCombine(seed, vertexIndex.m_TexCoordIndex);
+		assert(meshPolygon.size() > 2);
 
-			return seed;
-		}
-	};
-	struct VertexIndexComp
-	{
-		bool operator()(const VertexIndex& vertexIndex1, const VertexIndex& vertexIndex2) const
-		{
-			return (vertexIndex1.m_PositionIndex == vertexIndex2.m_PositionIndex) &&
-				(vertexIndex1.m_NormalIndex == vertexIndex2.m_NormalIndex) &&
-				(vertexIndex1.m_TexCoordIndex == vertexIndex2.m_TexCoordIndex);
-		}
-	};
+		std::vector<MeshTriangle> meshTriangles;
+		for (u32 index = 1; index < meshPolygon.size() - 1; ++index)
+			meshTriangles.emplace_back(MeshTriangle{meshPolygon[0], meshPolygon[index + 1], meshPolygon[index]});
+		
+		return meshTriangles;
+	}
 }
 
-bool OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices)
+bool OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8 convertMeshDataFlags)
 {
-	bool success = LoadOBJFile(pOBJFilePath, use32BitIndices);
+	bool success = LoadOBJFile(pOBJFilePath, use32BitIndices, convertMeshDataFlags);
 	if (success)
 	{
 		if (!m_MaterialFileName.empty())
@@ -55,7 +33,7 @@ bool OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices)
 	return success;
 }
 
-bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices)
+bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, u8 convertMeshDataFlags)
 {
 	Clear();
 
@@ -195,65 +173,55 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices)
 			const i32 numTexCoords = m_TexCoords.size();
 			const i32 numNormals = m_Normals.size();
 			
-			std::vector<OBJFile::VertexIndex> faceVertexIndices;
-			OBJFile::VertexIndex* pCurrentVertexIndex = nullptr;
-
+			OBJFile::MeshPolygon meshPolygon;
 			while (stringStream)
 			{
-				i32 posIndex;
-				stringStream >> posIndex;
+				i32 positionIndex;
+				stringStream >> positionIndex;
 				
-				if (posIndex > 0)
-				{
-					faceVertexIndices.emplace_back(posIndex - 1);
-					pCurrentVertexIndex = &faceVertexIndices.back();
-				}
-				else if (posIndex < 0)
-				{ 
-					faceVertexIndices.emplace_back(posIndex + numPositions);
-					pCurrentVertexIndex = &faceVertexIndices.back();
-				}
+				if (positionIndex > 0)
+					meshPolygon.emplace_back(positionIndex - 1);
+				else if (positionIndex < 0)
+					meshPolygon.emplace_back(positionIndex + numPositions);
 				else
 					assert(false);
-								
+				OBJFile::FaceElement& currentFaceElement = meshPolygon.back();
+				
 				if (stringStream.peek() == L'/')
 				{
 					stringStream.ignore(1);
 					if (stringStream.peek() != L'/')
 					{
-						assert(pCurrentVertexIndex != nullptr);
-
 						i32 texCoordIndex;
 						stringStream >> texCoordIndex;
 
 						if (texCoordIndex > 0)
-							pCurrentVertexIndex->m_TexCoordIndex = texCoordIndex - 1;
+							currentFaceElement.m_TexCoordIndex = texCoordIndex - 1;
 						else if (texCoordIndex < 0)
-							pCurrentVertexIndex->m_TexCoordIndex = texCoordIndex + numTexCoords;
+							currentFaceElement.m_TexCoordIndex = texCoordIndex + numTexCoords;
 						else
 							assert(false);
 					}
 					if (stringStream.peek() == L'/')
 					{
 						stringStream.ignore(1);
-						assert(pCurrentVertexIndex != nullptr);
 						
 						i32 normalIndex;
 						stringStream >> normalIndex;
 						
 						if (normalIndex > 0)
-							pCurrentVertexIndex->m_NormalIndex = normalIndex - 1;
+							currentFaceElement.m_NormalIndex = normalIndex - 1;
 						else if (normalIndex < 0)
-							pCurrentVertexIndex->m_NormalIndex = normalIndex + numNormals;
+							currentFaceElement.m_NormalIndex = normalIndex + numNormals;
 						else
 							assert(false);
 					}
 				}
 			}
-			Triangulate(faceVertexIndices, m_pCurrentMesh->m_VertexIndices);
+			m_pCurrentMesh->m_Triangles = Triangulate(meshPolygon);
 		}
 	}
-	GenerateMeshBatchData(use32BitIndices);
+	GenerateMeshBatchData(use32BitIndices, convertMeshDataFlags);
 	return true;
 }
 
@@ -473,7 +441,7 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 	return true;
 }
 
-void OBJFileLoader::GenerateMeshBatchData(bool use32BitIndices)
+std::shared_ptr<MeshBatchData> OBJFileLoader::GenerateMeshBatchData(bool use32BitIndices, u8 convertMeshDataFlags)
 {
 	u8 vertexFormat = 0;
 	
@@ -487,8 +455,10 @@ void OBJFileLoader::GenerateMeshBatchData(bool use32BitIndices)
 	vertexFormat |= VertexData::FormatFlag_TexCoords;
 
 	const DXGI_FORMAT indexFormat = use32BitIndices ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
-	MeshBatchData meshBatchData(vertexFormat, indexFormat, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	
+	const D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	const D3D12_PRIMITIVE_TOPOLOGY primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	auto meshBatchData = std::make_shared<MeshBatchData>(vertexFormat, indexFormat, primitiveTopologyType, primitiveTopology);
 	for (const auto& mesh : m_Meshes)
 	{
 		VertexData* pVertexData = nullptr;
@@ -502,42 +472,71 @@ void OBJFileLoader::GenerateMeshBatchData(bool use32BitIndices)
 		Material* pMaterial = nullptr;
 		assert(pMaterial != nullptr);
 
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+		MeshData meshData(pVertexData, pIndexData, pMaterial, primitiveTopologyType, primitiveTopology);
+		if (convertMeshDataFlags != 0)
+			ConvertMeshData(&meshData, convertMeshDataFlags);
 		meshData.RecalcAABB();
 
-		meshBatchData.Append(&meshData);
+		meshBatchData->Append(&meshData);
 	}
+
+	return meshBatchData;
 }
 
 template <typename Index>
 void OBJFileLoader::GenerateVertexAndIndexData(const OBJFile::Mesh& mesh, VertexData** ppVertexData, IndexData** ppIndexData)
 {
 	assert((sizeof(u16) == sizeof(Index)) || (sizeof(u32) == sizeof(Index)));
-	
+
+	struct FaceElementHasher
+	{
+		std::size_t operator()(const OBJFile::FaceElement& faceElement) const
+		{
+			std::size_t seed = 0;
+			HashCombine(seed, faceElement.m_PositionIndex);
+			HashCombine(seed, faceElement.m_NormalIndex);
+			HashCombine(seed, faceElement.m_TexCoordIndex);
+
+			return seed;
+		};
+	};
+
+	struct FaceElementComp
+	{
+		bool operator()(const OBJFile::FaceElement& faceElement1, const OBJFile::FaceElement& faceElement2) const
+		{
+			return (faceElement1.m_PositionIndex == faceElement2.m_PositionIndex) &&
+				(faceElement1.m_NormalIndex == faceElement2.m_NormalIndex) &&
+				(faceElement1.m_TexCoordIndex == faceElement2.m_TexCoordIndex);
+		};
+	};
+		
+	std::vector<Index> indices;
 	std::vector<Vector3f> positions;
 	std::vector<Vector2f> texCoords;
 	std::vector<Vector3f> normals;
-	std::vector<Index> indices;
+	
+	using FaceElementCache = std::unordered_map<OBJFile::FaceElement, u32, FaceElementHasher, FaceElementComp>;
+	FaceElementCache faceElementCache;
 
-	std::unordered_map<OBJFile::VertexIndex, u32, OBJFile::VertexIndexHash, OBJFile::VertexIndexComp> vertexIndexCache;	
-	for (const auto& vertexIndex : mesh.m_VertexIndices)
+	for (const OBJFile::MeshTriangle& triangle : mesh.m_Triangles)
 	{
-		u32 newIndex = vertexIndexCache.size();
-		auto result = vertexIndexCache.insert({vertexIndex, newIndex});
-		if (result.second)
+		for (const OBJFile::FaceElement& faceElement : triangle)
 		{
-			positions.emplace_back(m_Positions[vertexIndex.m_PositionIndex]);
-			texCoords.emplace_back(m_TexCoords[vertexIndex.m_TexCoordIndex]);
-			normals.emplace_back(m_Normals[vertexIndex.m_NormalIndex]);
+			u32 newIndex = faceElementCache.size();
+			auto result = faceElementCache.insert({faceElement, newIndex});
+			if (result.second)
+			{
+				positions.emplace_back(m_Positions[faceElement.m_PositionIndex]);
+				texCoords.emplace_back(m_TexCoords[faceElement.m_TexCoordIndex]);
+				normals.emplace_back(m_Normals[faceElement.m_NormalIndex]);
+			}
+			else
+			{
+				newIndex = result.first->second;
+			}
+			indices.emplace_back((Index)newIndex);
 		}
-		else
-		{
-			newIndex = result.first->second;
-		}
-
-		assert(!(newIndex > std::numeric_limits<Index>::max()));
-		indices.emplace_back((Index)newIndex);
 	}
 
 	*ppVertexData = new VertexData(positions.size(), positions.data(), normals.data(), nullptr, texCoords.data());
