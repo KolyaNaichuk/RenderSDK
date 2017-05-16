@@ -79,7 +79,7 @@ namespace OBJFile
 class OBJFileLoader
 {
 public:
-	bool Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8 convertMeshDataFlags);
+	std::shared_ptr<MeshBatchData> Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8 convertMeshDataFlags);
 
 private:
 	bool LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, u8 convertMeshDataFlags);

@@ -18,25 +18,29 @@ namespace OBJFile
 	}
 }
 
-bool OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8 convertMeshDataFlags)
+std::shared_ptr<MeshBatchData> OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8 convertMeshDataFlags)
 {
-	bool success = LoadOBJFile(pOBJFilePath, use32BitIndices, convertMeshDataFlags);
-	if (success)
+	Clear();
+
+	bool loadedOBJFile = LoadOBJFile(pOBJFilePath, use32BitIndices, convertMeshDataFlags);
+	if (!loadedOBJFile)
+		return nullptr;
+
+	if (!m_MaterialFileName.empty())
 	{
-		if (!m_MaterialFileName.empty())
-		{
-			assert(false);
-			std::wstring materialFilePath;
-			success = LoadMaterialFile(materialFilePath.c_str());
-		}
+		assert(false && "Missing complete implementation");
+		std::wstring materialFilePath;
+
+		bool loadedMaterialFile = LoadMaterialFile(materialFilePath.c_str());
+		if (!loadedMaterialFile)
+			return nullptr;
 	}
-	return success;
+
+	return GenerateMeshBatchData(use32BitIndices, convertMeshDataFlags);
 }
 
 bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, u8 convertMeshDataFlags)
 {
-	Clear();
-
 	assert(pFilePath != nullptr);
 	std::wifstream fileStream(pFilePath);
 	if (!fileStream)
@@ -221,7 +225,6 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 			m_pCurrentMesh->m_Triangles = Triangulate(meshPolygon);
 		}
 	}
-	GenerateMeshBatchData(use32BitIndices, convertMeshDataFlags);
 	return true;
 }
 
@@ -459,27 +462,31 @@ std::shared_ptr<MeshBatchData> OBJFileLoader::GenerateMeshBatchData(bool use32Bi
 	const D3D12_PRIMITIVE_TOPOLOGY primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 	auto meshBatchData = std::make_shared<MeshBatchData>(vertexFormat, indexFormat, primitiveTopologyType, primitiveTopology);
-	for (const auto& mesh : m_Meshes)
+	for (const OBJFile::Object& object : m_Objects)
 	{
-		VertexData* pVertexData = nullptr;
-		IndexData* pIndexData = nullptr;
+		for (u32 meshIndex : object.m_MeshIndices)
+		{
+			const OBJFile::Mesh& mesh = m_Meshes[meshIndex];
 
-		if (use32BitIndices)
-			GenerateVertexAndIndexData<u32>(mesh, &pVertexData, &pIndexData);
-		else
-			GenerateVertexAndIndexData<u16>(mesh, &pVertexData, &pIndexData);
-		
-		Material* pMaterial = nullptr;
-		assert(pMaterial != nullptr);
+			VertexData* pVertexData = nullptr;
+			IndexData* pIndexData = nullptr;
 
-		MeshData meshData(pVertexData, pIndexData, pMaterial, primitiveTopologyType, primitiveTopology);
-		if (convertMeshDataFlags != 0)
-			ConvertMeshData(&meshData, convertMeshDataFlags);
-		meshData.RecalcAABB();
+			if (use32BitIndices)
+				GenerateVertexAndIndexData<u32>(mesh, &pVertexData, &pIndexData);
+			else
+				GenerateVertexAndIndexData<u16>(mesh, &pVertexData, &pIndexData);
 
-		meshBatchData->Append(&meshData);
-	}
+			Material* pMaterial = nullptr;
+			assert(pMaterial != nullptr);
 
+			MeshData meshData(pVertexData, pIndexData, pMaterial, primitiveTopologyType, primitiveTopology);
+			if (convertMeshDataFlags != 0)
+				ConvertMeshData(&meshData, convertMeshDataFlags);
+			meshData.RecalcAABB();
+
+			meshBatchData->Append(&meshData);
+		}
+	}	
 	return meshBatchData;
 }
 
