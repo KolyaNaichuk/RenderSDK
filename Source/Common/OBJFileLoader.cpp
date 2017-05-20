@@ -3,6 +3,7 @@
 #include "Common/MeshData.h"
 #include "Common/MeshDataUtilities.h"
 #include "Math/Hash.h"
+#include <cwctype>
 
 namespace OBJFile
 {
@@ -11,8 +12,8 @@ namespace OBJFile
 		assert(meshPolygon.size() > 2);
 
 		std::vector<MeshTriangle> meshTriangles;
-		for (u32 index = 1; index < meshPolygon.size() - 1; ++index)
-			meshTriangles.emplace_back(MeshTriangle{meshPolygon[0], meshPolygon[index + 1], meshPolygon[index]});
+		for (u32 index = 2; index < meshPolygon.size(); ++index)
+			meshTriangles.emplace_back(MeshTriangle{meshPolygon[0], meshPolygon[index - 1], meshPolygon[index]});
 		
 		return meshTriangles;
 	}
@@ -46,22 +47,24 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 	if (!fileStream)
 		return false;
 	
-	for (std::wstring line; std::getline(fileStream, line); )
+	for (std::wstring statement; true; )
 	{
-		if (line.empty())
+		fileStream >> statement;
+		if (!fileStream)
+			break;
+
+		if (statement == L"#")
 		{
-			// Skip
+			// Ignore comment
 		}
-		else if (line.compare(0, 6, L"mtllib"))
+		else if (statement == L"mtllib")
 		{
-			std::wstringstream stringStream(line.substr(6));
-			stringStream >> m_MaterialFileName;
-		}
-		else if (line.compare(0, 6, L"usemtl"))
+			fileStream >> m_MaterialFileName;
+		}		
+		else if (statement == L"usemtl")
 		{
-			std::wstringstream stringStream(line.substr(6));
 			std::wstring materialName;
-			stringStream >> materialName;
+			fileStream >> materialName;
 
 			if (m_Materials[m_CurrentMaterialIndex].m_Name != materialName)
 			{
@@ -82,15 +85,10 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 				}
 			}
 		}
-		else if (line.compare(0, 1, L"#") == 0)
+		else if (statement == L"o")
 		{
-			// Comment
-		}
-		else if (line.compare(0, 2, L"o ") == 0)
-		{
-			std::wstringstream stringStream(line.substr(2));
 			std::wstring objectName;
-			stringStream >> objectName;
+			fileStream >> objectName;
 
 			if ((m_pCurrentObject == nullptr) || (m_pCurrentObject->m_Name != objectName))
 			{
@@ -99,11 +97,10 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 				m_pCurrentMesh = nullptr;
 			}
 		}
-		else if (line.compare(0, 2, L"g ") == 0)
+		else if (statement == L"g")
 		{
-			std::wstringstream stringStream(line.substr(2));
 			std::wstring groupName;
-			stringStream >> groupName;
+			fileStream >> groupName;
 
 			if (m_CurrentGroupName != groupName)
 			{
@@ -114,43 +111,33 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 				m_CurrentGroupName = groupName;
 			}
 		}
-		else if (line.compare(0, 2, L"s ") == 0)
+		else if (statement == L"s")
 		{
-			// Smoothing group
-			assert(false);
+			// Ignore smoothing group
 		}
-		else if (line.compare(0, 2, L"v ") == 0)
+		else if (statement == L"v")
 		{
-			std::wstringstream stringStream(line.substr(2));
-			
 			Vector3f position;
-			stringStream >> position.m_X >> position.m_Y >> position.m_Z;
+			fileStream >> position.m_X >> position.m_Y >> position.m_Z;
 			
 			m_Positions.emplace_back(position);
 		}
-		else if (line.compare(0, 2, L"vt") == 0)
+		else if (statement == L"vt")
 		{
-			std::wstringstream stringStream(line.substr(2));
-
 			Vector2f texCoord;
-			stringStream >> texCoord.m_X >> texCoord.m_Y;
+			fileStream >> texCoord.m_X >> texCoord.m_Y;
 
 			m_TexCoords.emplace_back(texCoord);
 		}
-		else if (line.compare(0, 2, L"vn") == 0)
+		else if (statement == L"vn")
 		{
-			std::wstringstream stringStream(line.substr(2));
-
 			Vector3f normal;
-			stringStream >> normal.m_X >> normal.m_Y >> normal.m_Z;
+			fileStream >> normal.m_X >> normal.m_Y >> normal.m_Z;
 
-			assert(IsNormalized(normal));
-			m_Normals.emplace_back(normal);
+			m_Normals.emplace_back(Normalize(normal));
 		}
-		else if (line.compare(0, 2, L"f ") == 0)
+		else if (statement == L"f")
 		{
-			std::wstringstream stringStream(line.substr(2));
-			
 			bool createNewMesh = false;
 			if (m_pCurrentMesh == nullptr)
 			{
@@ -178,10 +165,10 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 			const i32 numNormals = m_Normals.size();
 			
 			OBJFile::MeshPolygon meshPolygon;
-			while (stringStream)
+			while (true)
 			{
 				i32 positionIndex;
-				stringStream >> positionIndex;
+				fileStream >> positionIndex;
 				
 				if (positionIndex > 0)
 					meshPolygon.emplace_back(positionIndex - 1);
@@ -191,13 +178,13 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 					assert(false);
 				OBJFile::FaceElement& currentFaceElement = meshPolygon.back();
 				
-				if (stringStream.peek() == L'/')
+				if (fileStream.peek() == L'/')
 				{
-					stringStream.ignore(1);
-					if (stringStream.peek() != L'/')
+					fileStream.ignore(1);
+					if (fileStream.peek() != L'/')
 					{
 						i32 texCoordIndex;
-						stringStream >> texCoordIndex;
+						fileStream >> texCoordIndex;
 
 						if (texCoordIndex > 0)
 							currentFaceElement.m_TexCoordIndex = texCoordIndex - 1;
@@ -206,12 +193,12 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 						else
 							assert(false);
 					}
-					if (stringStream.peek() == L'/')
+					if (fileStream.peek() == L'/')
 					{
-						stringStream.ignore(1);
+						fileStream.ignore(1);
 						
 						i32 normalIndex;
-						stringStream >> normalIndex;
+						fileStream >> normalIndex;
 						
 						if (normalIndex > 0)
 							currentFaceElement.m_NormalIndex = normalIndex - 1;
@@ -221,8 +208,30 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 							assert(false);
 					}
 				}
+
+				bool reachedFaceEnd = false;
+				while (true)
+				{
+					const wchar_t character = fileStream.peek();
+					if (!fileStream || (character == L'\n'))
+					{
+						reachedFaceEnd = true;
+						break;
+					}
+					else if (std::iswdigit(character) != 0)
+					{
+						break;
+					}
+					fileStream.ignore(1);
+				}
+				if (reachedFaceEnd)
+				{
+					break;
+				}
 			}
-			m_pCurrentMesh->m_Triangles = Triangulate(meshPolygon);
+
+			auto meshTriangles = Triangulate(meshPolygon);
+			m_pCurrentMesh->m_Triangles.insert(m_pCurrentMesh->m_Triangles.end(), meshTriangles.cbegin(), meshTriangles.cend());
 		}
 	}
 	return true;
@@ -235,21 +244,20 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 	if (!fileStream)
 		return false;
 
-	for (std::wstring line; std::getline(fileStream, line); )
+	for (std::wstring statement; true; )
 	{
-		if (line.empty())
+		fileStream >> statement;
+		if (!fileStream)
+			break;
+
+		if (statement == L"#")
 		{
-			// Skip
+			// Ignore comment
 		}
-		else if (line.compare(0, 1, L"#") == 0)
+		else if (statement == L"newmtl")
 		{
-			// Comment
-		}
-		else if (line.compare(0, 6, L"newmtl"))
-		{
-			std::wstringstream stringStream(line.substr(6));
 			std::wstring materialName;
-			stringStream >> materialName;
+			fileStream >> materialName;
 
 			m_CurrentMaterialIndex = OBJFile::kUnknownIndex;
 			for (u32 index = 0; index < m_Materials.size(); ++index)
@@ -260,185 +268,95 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 					break;
 				}
 			}
-		}
-		else if (line.compare(0, 11, L"Ka spectral"))
-		{
 			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
+		}
+		else if (statement == L"Ka spectral")
+		{
 			assert(false && "No support for the ambient reflectivity using a spectral curve");
 		}
-		else if (line.compare(0, 6, L"Ka xyz"))
+		else if (statement == L"Ka xyz")
 		{
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the ambient reflectivity using CIEXYZ values");
 		}
-		else if (line.compare(0, 2, L"Ka"))
+		else if (statement == L"Ka")
 		{
-			std::wstringstream stringStream(line.substr(2));
-
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			Vector3f& ambientColor = m_Materials[m_CurrentMaterialIndex].m_AmbientColor;
-			
-			stringStream >> ambientColor.m_X;
-			if (stringStream)
-			{
-				stringStream >> ambientColor.m_Y;
-				stringStream >> ambientColor.m_Z;
-			}
-			else
-			{
-				ambientColor.m_Y = ambientColor.m_X;
-				ambientColor.m_Z = ambientColor.m_X;
-			}
+			fileStream >> ambientColor.m_X >> ambientColor.m_Y >> ambientColor.m_Z;
 		}
-		else if (line.compare(0, 6, L"map_Ka"))
+		else if (statement == L"map_Ka")
 		{
-			std::wstringstream stringStream(line.substr(6));
-			
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
-			stringStream >> m_Materials[m_CurrentMaterialIndex].m_AmbientMapName;
+			fileStream >> m_Materials[m_CurrentMaterialIndex].m_AmbientMapName;
 		}
-		else if (line.compare(0, 11, L"Kd spectral"))
+		else if (statement == L"Kd spectral")
 		{
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the diffuse reflectivity using a spectral curve");
 		}
-		else if (line.compare(0, 6, L"Kd xyz"))
+		else if (statement == L"Kd xyz")
 		{
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the diffuse reflectivity using CIEXYZ values");
 		}
-		else if (line.compare(0, 2, L"Kd"))
+		else if (statement == L"Kd")
 		{
-			std::wstringstream stringStream(line.substr(2));
-
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			Vector3f& diffuseColor = m_Materials[m_CurrentMaterialIndex].m_DiffuseColor;
-
-			stringStream >> diffuseColor.m_X;
-			if (stringStream)
-			{
-				stringStream >> diffuseColor.m_Y;
-				stringStream >> diffuseColor.m_Z;
-			}
-			else
-			{
-				diffuseColor.m_Y = diffuseColor.m_X;
-				diffuseColor.m_Z = diffuseColor.m_X;
-			}
+			fileStream >> diffuseColor.m_X >> diffuseColor.m_Y >> diffuseColor.m_Z;
 		}
-		else if (line.compare(0, 6, L"map_Kd"))
+		else if (statement == L"map_Kd")
 		{
-			std::wstringstream stringStream(line.substr(6));
-
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
-			stringStream >> m_Materials[m_CurrentMaterialIndex].m_DiffuseMapName;
+			fileStream >> m_Materials[m_CurrentMaterialIndex].m_DiffuseMapName;
 		}
-		else if (line.compare(0, 11, L"Ks spectral"))
+		else if (statement == L"Ks spectral")
 		{
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the specular reflectivity using a spectral curve");
 		}
-		else if (line.compare(0, 6, L"Ks xyz"))
+		else if (statement == L"Ks xyz")
 		{
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the specular reflectivity using CIEXYZ values");
 		}
-		else if (line.compare(0, 2, L"Ks"))
+		else if (statement == L"Ks")
 		{
-			std::wstringstream stringStream(line.substr(2));
-
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			Vector3f& specularColor = m_Materials[m_CurrentMaterialIndex].m_SpecularColor;
-
-			stringStream >> specularColor.m_X;
-			if (stringStream)
-			{
-				stringStream >> specularColor.m_Y;
-				stringStream >> specularColor.m_Z;
-			}
-			else
-			{
-				specularColor.m_Y = specularColor.m_X;
-				specularColor.m_Z = specularColor.m_X;
-			}
+			fileStream >> specularColor.m_X >> specularColor.m_Y >> specularColor.m_Z;
 		}
-		else if (line.compare(0, 6, L"map_Ks"))
+		else if (statement == L"map_Ks")
 		{
-			std::wstringstream stringStream(line.substr(6));
-
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
-			stringStream >> m_Materials[m_CurrentMaterialIndex].m_SpecularMapName;
+			fileStream >> m_Materials[m_CurrentMaterialIndex].m_SpecularMapName;
 		}
-		else if (line.compare(0, 2, L"Ns"))
+		else if (statement == L"Ns")
 		{
-			std::wstringstream stringStream(line.substr(2));
-
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
-			stringStream >> m_Materials[m_CurrentMaterialIndex].m_SpecularPower;
+			fileStream >> m_Materials[m_CurrentMaterialIndex].m_SpecularPower;
 		}
-		else if (line.compare(0, 6, L"map_Ns"))
+		else if (statement == L"map_Ns")
 		{
-			std::wstringstream stringStream(line.substr(6));
-
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
-			stringStream >> m_Materials[m_CurrentMaterialIndex].m_SpecularPowerMapName;
+			fileStream >> m_Materials[m_CurrentMaterialIndex].m_SpecularPowerMapName;
 		}
-		else if (line.compare(0, 11, L"Ke spectral"))
+		else if (statement == L"Ke spectral")
 		{
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the emissive reflectivity using a spectral curve");
 		}
-		else if (line.compare(0, 6, L"Ke xyz"))
+		else if (statement == L"Ke xyz")
 		{
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			assert(false && "No support for the emissive reflectivity using CIEXYZ values");
 		}
-		else if (line.compare(0, 2, L"Ke"))
+		else if (statement == L"Ke")
 		{
-			std::wstringstream stringStream(line.substr(2));
-
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			Vector3f& emissiveColor = m_Materials[m_CurrentMaterialIndex].m_EmissiveColor;
-
-			stringStream >> emissiveColor.m_X;
-			if (stringStream)
-			{
-				stringStream >> emissiveColor.m_Y;
-				stringStream >> emissiveColor.m_Z;
-			}
-			else
-			{
-				emissiveColor.m_Y = emissiveColor.m_X;
-				emissiveColor.m_Z = emissiveColor.m_X;
-			}
+			fileStream >> emissiveColor.m_X >> emissiveColor.m_Y >> emissiveColor.m_Z;
 		}
-		else if (line.compare(0, 6, L"map_Ke"))
+		else if (statement == L"map_Ke")
 		{
-			std::wstringstream stringStream(line.substr(6));
-
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
-			stringStream >> m_Materials[m_CurrentMaterialIndex].m_EmissiveMapName;
+			fileStream >> m_Materials[m_CurrentMaterialIndex].m_EmissiveMapName;
 		}
-		else if (line.compare(0, 2, L"Ni"))
+		else if (statement == L"Ni")
 		{
-			std::wstringstream stringStream(line.substr(2));
-
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
-			stringStream >> m_Materials[m_CurrentMaterialIndex].m_IndexOfRefraction;
+			fileStream >> m_Materials[m_CurrentMaterialIndex].m_IndexOfRefraction;
 		}
-		else if (line.compare(0, 2, L"d "))
+		else if (statement == L"d")
 		{
-			std::wstringstream stringStream(line.substr(2));
-			
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
-			stringStream >> m_Materials[m_CurrentMaterialIndex].m_Opacity;
+			fileStream >> m_Materials[m_CurrentMaterialIndex].m_Opacity;
 		}
-		else if (line.compare(0, 5, L"map_d"))
+		else if (statement == L"map_d")
 		{
-			std::wstringstream stringStream(line.substr(5));
-
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
-			stringStream >> m_Materials[m_CurrentMaterialIndex].m_OpacityMapName;
+			fileStream >> m_Materials[m_CurrentMaterialIndex].m_OpacityMapName;
 		}
 	}	
 	return true;
@@ -560,8 +478,13 @@ void OBJFileLoader::Clear()
 	m_Materials.clear();
 	m_CurrentMaterialIndex = 0;
 	m_Materials.emplace_back(OBJFile::kDefaultMaterialName);
-	assert(false && "Set up default material");
-	
+
+	OBJFile::Material& defaultMaterial = m_Materials.back();
+	defaultMaterial.m_DiffuseColor = Vector3f(0.6f, 0.6f, 0.0f);
+	defaultMaterial.m_Opacity = 1.0f;
+	defaultMaterial.m_IndexOfRefraction = 1.0f;
+	defaultMaterial.m_SpecularPower = 0.0f;
+		
 	m_Objects.clear();
 	m_pCurrentObject = nullptr;
 	
