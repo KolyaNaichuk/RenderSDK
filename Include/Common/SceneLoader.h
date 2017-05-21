@@ -14,4 +14,5 @@ class SceneLoader
 {
 public:
 	static Scene* LoadCornellBox(CornellBoxSettings settings = CornellBoxSettings_Original);
+	static Scene* LoadSponza();
 };

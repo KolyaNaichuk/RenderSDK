@@ -4,16 +4,18 @@
 #include "Common/MeshDataUtilities.h"
 #include "Math/Hash.h"
 #include <cwctype>
+#include <limits>
+#include <experimental/filesystem>
 
 namespace OBJFile
 {
-	std::vector<MeshTriangle> Triangulate(const MeshPolygon& meshPolygon)
+	std::vector<MeshTriangle> Triangulate(const MeshFace& meshFace)
 	{
-		assert(meshPolygon.size() > 2);
+		assert(meshFace.size() > 2);
 
 		std::vector<MeshTriangle> meshTriangles;
-		for (u32 index = 2; index < meshPolygon.size(); ++index)
-			meshTriangles.emplace_back(MeshTriangle{meshPolygon[0], meshPolygon[index - 1], meshPolygon[index]});
+		for (u32 index = 2; index < meshFace.size(); ++index)
+			meshTriangles.emplace_back(MeshTriangle{meshFace[0], meshFace[index - 1], meshFace[index]});
 		
 		return meshTriangles;
 	}
@@ -29,9 +31,9 @@ std::shared_ptr<MeshBatchData> OBJFileLoader::Load(const wchar_t* pOBJFilePath, 
 
 	if (!m_MaterialFileName.empty())
 	{
-		assert(false && "Missing complete implementation");
-		std::wstring materialFilePath;
-
+		std::experimental::filesystem::path materialFilePath(pOBJFilePath);
+		materialFilePath.replace_filename(m_MaterialFileName);
+		
 		bool loadedMaterialFile = LoadMaterialFile(materialFilePath.c_str());
 		if (!loadedMaterialFile)
 			return nullptr;
@@ -52,70 +54,8 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 		fileStream >> statement;
 		if (!fileStream)
 			break;
-
-		if (statement == L"#")
-		{
-			// Ignore comment
-		}
-		else if (statement == L"mtllib")
-		{
-			fileStream >> m_MaterialFileName;
-		}		
-		else if (statement == L"usemtl")
-		{
-			std::wstring materialName;
-			fileStream >> materialName;
-
-			if (m_Materials[m_CurrentMaterialIndex].m_Name != materialName)
-			{
-				bool isNewMaterial = true;
-				for (u32 index = 0; index < m_Materials.size(); ++index)
-				{
-					if (m_Materials[index].m_Name == materialName)
-					{
-						m_CurrentMaterialIndex = index;
-						isNewMaterial = false;
-						break;
-					}
-				}
-				if (isNewMaterial)
-				{
-					m_CurrentMaterialIndex = m_Materials.size();
-					m_Materials.emplace_back(materialName);
-				}
-			}
-		}
-		else if (statement == L"o")
-		{
-			std::wstring objectName;
-			fileStream >> objectName;
-
-			if ((m_pCurrentObject == nullptr) || (m_pCurrentObject->m_Name != objectName))
-			{
-				m_Objects.emplace_back(objectName);
-				m_pCurrentObject = &m_Objects.back();
-				m_pCurrentMesh = nullptr;
-			}
-		}
-		else if (statement == L"g")
-		{
-			std::wstring groupName;
-			fileStream >> groupName;
-
-			if (m_CurrentGroupName != groupName)
-			{
-				m_Objects.emplace_back(groupName);
-				m_pCurrentObject = &m_Objects.back();
-				m_pCurrentMesh = nullptr;
 				
-				m_CurrentGroupName = groupName;
-			}
-		}
-		else if (statement == L"s")
-		{
-			// Ignore smoothing group
-		}
-		else if (statement == L"v")
+		if (statement == L"v")
 		{
 			Vector3f position;
 			fileStream >> position.m_X >> position.m_Y >> position.m_Z;
@@ -164,19 +104,19 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 			const i32 numTexCoords = m_TexCoords.size();
 			const i32 numNormals = m_Normals.size();
 			
-			OBJFile::MeshPolygon meshPolygon;
+			OBJFile::MeshFace meshFace;
 			while (true)
 			{
 				i32 positionIndex;
 				fileStream >> positionIndex;
 				
 				if (positionIndex > 0)
-					meshPolygon.emplace_back(positionIndex - 1);
+					meshFace.emplace_back(positionIndex - 1);
 				else if (positionIndex < 0)
-					meshPolygon.emplace_back(positionIndex + numPositions);
+					meshFace.emplace_back(positionIndex + numPositions);
 				else
 					assert(false);
-				OBJFile::FaceElement& currentFaceElement = meshPolygon.back();
+				OBJFile::FaceElement& currentFaceElement = meshFace.back();
 				
 				if (fileStream.peek() == L'/')
 				{
@@ -230,9 +170,72 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 				}
 			}
 
-			auto meshTriangles = Triangulate(meshPolygon);
+			auto meshTriangles = Triangulate(meshFace);
 			m_pCurrentMesh->m_Triangles.insert(m_pCurrentMesh->m_Triangles.end(), meshTriangles.cbegin(), meshTriangles.cend());
 		}
+		else if (statement == L"#")
+		{
+			// Ignore comment
+		}
+		else if (statement == L"usemtl")
+		{
+			std::wstring materialName;
+			fileStream >> materialName;
+
+			if (m_Materials[m_CurrentMaterialIndex].m_Name != materialName)
+			{
+				bool isNewMaterial = true;
+				for (u32 index = 0; index < m_Materials.size(); ++index)
+				{
+					if (m_Materials[index].m_Name == materialName)
+					{
+						m_CurrentMaterialIndex = index;
+						isNewMaterial = false;
+						break;
+					}
+				}
+				if (isNewMaterial)
+				{
+					m_CurrentMaterialIndex = m_Materials.size();
+					m_Materials.emplace_back(materialName);
+				}
+			}
+		}
+		else if (statement == L"o")
+		{
+			std::wstring objectName;
+			fileStream >> objectName;
+
+			if ((m_pCurrentObject == nullptr) || (m_pCurrentObject->m_Name != objectName))
+			{
+				m_Objects.emplace_back(objectName);
+				m_pCurrentObject = &m_Objects.back();
+				m_pCurrentMesh = nullptr;
+			}
+		}
+		else if (statement == L"g")
+		{
+			std::wstring groupName;
+			fileStream >> groupName;
+
+			if (m_CurrentGroupName != groupName)
+			{
+				m_Objects.emplace_back(groupName);
+				m_pCurrentObject = &m_Objects.back();
+				m_pCurrentMesh = nullptr;
+
+				m_CurrentGroupName = groupName;
+			}
+		}
+		else if (statement == L"mtllib")
+		{
+			fileStream >> m_MaterialFileName;
+		}
+		else if (statement == L"s")
+		{
+			// Ignore smoothing group
+		}
+		fileStream.ignore(std::numeric_limits<std::streamsize>::max(), L'\n');
 	}
 	return true;
 }
@@ -358,6 +361,7 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 		{
 			fileStream >> m_Materials[m_CurrentMaterialIndex].m_OpacityMapName;
 		}
+		fileStream.ignore(std::numeric_limits<std::streamsize>::max(), L'\n');
 	}	
 	return true;
 }

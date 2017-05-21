@@ -26,7 +26,7 @@ namespace OBJFile
 		u32 m_TexCoordIndex;
 	};
 
-	using MeshPolygon = std::vector<FaceElement>;
+	using MeshFace = std::vector<FaceElement>;
 	using MeshTriangle = std::array<FaceElement, 3>;
 		
 	struct Mesh

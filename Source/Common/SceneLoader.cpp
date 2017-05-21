@@ -5,6 +5,7 @@
 #include "Common/MeshDataUtilities.h"
 #include "Common/Light.h"
 #include "Common/Color.h"
+#include "Common/OBJFileLoader.h"
 #include "Math/BasisAxes.h"
 
 Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
@@ -562,4 +563,14 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 	}
 
 	return pScene;
+}
+
+Scene* SceneLoader::LoadSponza()
+{
+	const wchar_t* pathToOBJFile = L"..\\..\\Resources\\Sponza\\sponza.obj";
+
+	OBJFileLoader fileLoader;
+	auto meshBatchData = fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
+
+	return nullptr;
 }
