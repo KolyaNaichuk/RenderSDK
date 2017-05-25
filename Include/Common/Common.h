@@ -32,3 +32,8 @@ static void SafeArrayDelete(T*& pArrayObject)
 	delete[] pArrayObject;
 	pArrayObject = nullptr;
 }
+
+static void VerifyWinAPIResult(BOOL result)
+{
+	assert(result != 0);
+}
