@@ -1,4 +1,5 @@
 #include "Common/OBJFileLoader.h"
+#include "Common/FileUtilities.h"
 #include "Common/MeshBatchData.h"
 #include "Common/MeshData.h"
 #include "Common/MeshDataUtilities.h"
@@ -6,6 +7,21 @@
 #include <cwctype>
 #include <limits>
 #include <experimental/filesystem>
+
+static const u16 MAX_STRING_LENGTH = 256;
+
+std::wstring AnsiToWideString(const char* pAnsiString)
+{
+	int ansiStringLength = std::strlen(pAnsiString);
+	assert(ansiStringLength > 0);
+
+	int wideStringLength = MultiByteToWideChar(CP_ACP, 0, pAnsiString, ansiStringLength, nullptr, 0);
+	std::wstring wideString(wideStringLength, L'\0');
+	int numWrittenCharacters = MultiByteToWideChar(CP_ACP, 0, pAnsiString, ansiStringLength, &wideString[0], wideStringLength);
+	assert(numWrittenCharacters == wideStringLength);
+
+	return wideString;
+}
 
 namespace OBJFile
 {
@@ -44,199 +60,173 @@ std::shared_ptr<MeshBatchData> OBJFileLoader::Load(const wchar_t* pOBJFilePath, 
 
 bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, u8 convertMeshDataFlags)
 {
-	assert(pFilePath != nullptr);
-	std::wifstream fileStream(pFilePath);
-	if (!fileStream)
+	std::vector<char> byteStringFileData;
+	if (!LoadDataFromFile(pFilePath, FileMode::Text, byteStringFileData))
 		return false;
-	
+
+	std::wstring wideStringFileData = AnsiToWideString(&byteStringFileData[0]);
+
+	wchar_t* pLineContext = nullptr;
+	wchar_t* pLine = wcstok_s(&wideStringFileData[0], L"\n", &pLineContext);
+
+	while (pLine != nullptr)
+	{
+		wchar_t* pTokenContext = nullptr;
+		wchar_t* pToken = wcstok_s(pLine, L" \t\r", &pTokenContext);
+
+		if (pToken != nullptr)
+		{
+			if (_wcsicmp(pToken, L"v") == 0)
+			{
+				f32 x = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				f32 y = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				f32 z = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+
+				m_Positions.emplace_back(x, y, z);
+			}
+			else if (_wcsicmp(pToken, L"vt") == 0)
+			{
+				f32 u = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				f32 v = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+
+				m_TexCoords.emplace_back(u, v);
+			}
+			else if (_wcsicmp(pToken, L"vn") == 0)
+			{
+				f32 x = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				f32 y = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				f32 z = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+
+				m_Normals.emplace_back(x, y, z);
+			}
+			else if (_wcsicmp(pToken, L"f") == 0)
+			{
+				bool createNewMesh = false;
+				if (m_pCurrentMesh == nullptr)
+				{
+					if (m_pCurrentObject == nullptr)
+					{
+						m_Objects.emplace_back(OBJFile::kDefaultObjectName);
+						m_pCurrentObject = &m_Objects.back();
+					}
+					createNewMesh = true;
+				}
+				else
+					createNewMesh = m_pCurrentMesh->m_MaterialIndex != m_CurrentMaterialIndex;
+
+				if (createNewMesh)
+				{
+					u32 currentMeshIndex = m_Meshes.size();
+					m_Meshes.emplace_back(m_CurrentMaterialIndex);
+					m_pCurrentMesh = &m_Meshes.back();
+
+					m_pCurrentObject->m_MeshIndices.emplace_back(currentMeshIndex);
+				}
+
+				OBJFile::MeshFace meshFace;
+				meshFace.reserve(3);
+
+				while (wchar_t* pFaceElementToken = wcstok_s(nullptr, L" \t\r", &pTokenContext))
+				{
+					i32 positionIndex, texCoordIndex, normalIndex;
+					swscanf_s(pFaceElementToken, L"%d/%d/%d", &positionIndex, &texCoordIndex, &normalIndex);
+
+					assert(positionIndex > 0);
+					--positionIndex;
+
+					assert(texCoordIndex > 0);
+					--texCoordIndex;
+
+					assert(normalIndex > 0);
+					--normalIndex;
+
+					meshFace.emplace_back(positionIndex, normalIndex, texCoordIndex);
+				}
+
+				auto meshTriangles = Triangulate(meshFace);
+				m_pCurrentMesh->m_Triangles.insert(m_pCurrentMesh->m_Triangles.end(), meshTriangles.cbegin(), meshTriangles.cend());
+			}
+			else if (_wcsicmp(pToken, L"#") == 0)
+			{
+				// Ignore comment
+			}
+			else if (_wcsicmp(pToken, L"usemtl") == 0)
+			{
+				wchar_t* pMaterialToken = wcstok_s(nullptr, L" \t", &pTokenContext);
+				assert(pMaterialToken != nullptr);
+			
+				wchar_t materialName[MAX_STRING_LENGTH] = {L'\0'};
+				swscanf_s(pMaterialToken, L"%s", &materialName[0], MAX_STRING_LENGTH);
+
+				if (m_Materials[m_CurrentMaterialIndex].m_Name != materialName)
+				{
+					bool isNewMaterial = true;
+					for (u32 index = 0; index < m_Materials.size(); ++index)
+					{
+						if (m_Materials[index].m_Name == materialName)
+						{
+							m_CurrentMaterialIndex = index;
+							isNewMaterial = false;
+							break;
+						}
+					}
+					if (isNewMaterial)
+					{
+						m_CurrentMaterialIndex = m_Materials.size();
+						m_Materials.emplace_back(materialName);
+					}
+				}
+			}
+		}
+
+		pLine = wcstok_s(nullptr, L"\n", &pLineContext);
+	}
+
+	/*
 	for (std::wstring statement; true; )
 	{
-		fileStream >> statement;
-		if (!fileStream)
-			break;
-				
-		if (statement == L"v")
-		{
-			Vector3f position;
-			fileStream >> position.m_X >> position.m_Y >> position.m_Z;
-			
-			m_Positions.emplace_back(position);
-		}
-		else if (statement == L"vt")
-		{
-			Vector2f texCoord;
-			fileStream >> texCoord.m_X >> texCoord.m_Y;
+	fileStream >> statement;
+	if (!fileStream)
+	break;
 
-			m_TexCoords.emplace_back(texCoord);
-		}
-		else if (statement == L"vn")
-		{
-			Vector3f normal;
-			fileStream >> normal.m_X >> normal.m_Y >> normal.m_Z;
 
-			m_Normals.emplace_back(Normalize(normal));
-		}
-		else if (statement == L"f")
-		{
-			bool createNewMesh = false;
-			if (m_pCurrentMesh == nullptr)
-			{
-				if (m_pCurrentObject == nullptr)
-				{
-					m_Objects.emplace_back(OBJFile::kDefaultObjectName);
-					m_pCurrentObject = &m_Objects.back();
-				}
-				createNewMesh = true;
-			}
-			else
-				createNewMesh = m_pCurrentMesh->m_MaterialIndex != m_CurrentMaterialIndex;
-			
-			if (createNewMesh)
-			{
-				u32 currentMeshIndex = m_Meshes.size();
-				m_Meshes.emplace_back(m_CurrentMaterialIndex);
-				m_pCurrentMesh = &m_Meshes.back();
+	else if (statement == L"o")
+	{
+	std::wstring objectName;
+	fileStream >> objectName;
 
-				m_pCurrentObject->m_MeshIndices.emplace_back(currentMeshIndex);
-			}
-						
-			const i32 numPositions = m_Positions.size();
-			const i32 numTexCoords = m_TexCoords.size();
-			const i32 numNormals = m_Normals.size();
-			
-			OBJFile::MeshFace meshFace;
-			while (true)
-			{
-				i32 positionIndex;
-				fileStream >> positionIndex;
-				
-				if (positionIndex > 0)
-					meshFace.emplace_back(positionIndex - 1);
-				else if (positionIndex < 0)
-					meshFace.emplace_back(positionIndex + numPositions);
-				else
-					assert(false);
-				OBJFile::FaceElement& currentFaceElement = meshFace.back();
-				
-				if (fileStream.peek() == L'/')
-				{
-					fileStream.ignore(1);
-					if (fileStream.peek() != L'/')
-					{
-						i32 texCoordIndex;
-						fileStream >> texCoordIndex;
-
-						if (texCoordIndex > 0)
-							currentFaceElement.m_TexCoordIndex = texCoordIndex - 1;
-						else if (texCoordIndex < 0)
-							currentFaceElement.m_TexCoordIndex = texCoordIndex + numTexCoords;
-						else
-							assert(false);
-					}
-					if (fileStream.peek() == L'/')
-					{
-						fileStream.ignore(1);
-						
-						i32 normalIndex;
-						fileStream >> normalIndex;
-						
-						if (normalIndex > 0)
-							currentFaceElement.m_NormalIndex = normalIndex - 1;
-						else if (normalIndex < 0)
-							currentFaceElement.m_NormalIndex = normalIndex + numNormals;
-						else
-							assert(false);
-					}
-				}
-
-				bool reachedFaceEnd = false;
-				while (true)
-				{
-					const wchar_t character = fileStream.peek();
-					if (!fileStream || (character == L'\n'))
-					{
-						reachedFaceEnd = true;
-						break;
-					}
-					else if (std::iswdigit(character) != 0)
-					{
-						break;
-					}
-					fileStream.ignore(1);
-				}
-				if (reachedFaceEnd)
-				{
-					break;
-				}
-			}
-
-			auto meshTriangles = Triangulate(meshFace);
-			m_pCurrentMesh->m_Triangles.insert(m_pCurrentMesh->m_Triangles.end(), meshTriangles.cbegin(), meshTriangles.cend());
-		}
-		else if (statement == L"#")
-		{
-			// Ignore comment
-		}
-		else if (statement == L"usemtl")
-		{
-			std::wstring materialName;
-			fileStream >> materialName;
-
-			if (m_Materials[m_CurrentMaterialIndex].m_Name != materialName)
-			{
-				bool isNewMaterial = true;
-				for (u32 index = 0; index < m_Materials.size(); ++index)
-				{
-					if (m_Materials[index].m_Name == materialName)
-					{
-						m_CurrentMaterialIndex = index;
-						isNewMaterial = false;
-						break;
-					}
-				}
-				if (isNewMaterial)
-				{
-					m_CurrentMaterialIndex = m_Materials.size();
-					m_Materials.emplace_back(materialName);
-				}
-			}
-		}
-		else if (statement == L"o")
-		{
-			std::wstring objectName;
-			fileStream >> objectName;
-
-			if ((m_pCurrentObject == nullptr) || (m_pCurrentObject->m_Name != objectName))
-			{
-				m_Objects.emplace_back(objectName);
-				m_pCurrentObject = &m_Objects.back();
-				m_pCurrentMesh = nullptr;
-			}
-		}
-		else if (statement == L"g")
-		{
-			std::wstring groupName;
-			fileStream >> groupName;
-
-			if (m_CurrentGroupName != groupName)
-			{
-				m_Objects.emplace_back(groupName);
-				m_pCurrentObject = &m_Objects.back();
-				m_pCurrentMesh = nullptr;
-
-				m_CurrentGroupName = groupName;
-			}
-		}
-		else if (statement == L"mtllib")
-		{
-			fileStream >> m_MaterialFileName;
-		}
-		else if (statement == L"s")
-		{
-			// Ignore smoothing group
-		}
-		fileStream.ignore(std::numeric_limits<std::streamsize>::max(), L'\n');
+	if ((m_pCurrentObject == nullptr) || (m_pCurrentObject->m_Name != objectName))
+	{
+	m_Objects.emplace_back(objectName);
+	m_pCurrentObject = &m_Objects.back();
+	m_pCurrentMesh = nullptr;
 	}
+	}
+	else if (statement == L"g")
+	{
+	std::wstring groupName;
+	fileStream >> groupName;
+
+	if (m_CurrentGroupName != groupName)
+	{
+	m_Objects.emplace_back(groupName);
+	m_pCurrentObject = &m_Objects.back();
+	m_pCurrentMesh = nullptr;
+
+	m_CurrentGroupName = groupName;
+	}
+	}
+	else if (statement == L"mtllib")
+	{
+	fileStream >> m_MaterialFileName;
+	}
+	else if (statement == L"s")
+	{
+	// Ignore smoothing group
+	}
+	fileStream.ignore(std::numeric_limits<std::streamsize>::max(), L'\n');
+	}
+	*/
 	return true;
 }
 
