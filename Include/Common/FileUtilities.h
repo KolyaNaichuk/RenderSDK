@@ -8,5 +8,5 @@ enum class FileMode
 	Binary
 };
 
-bool LoadDataFromFile(const wchar_t* pFilePath, FileMode fileMode, std::vector<char>& loadedData);
+bool LoadDataFromFile(const wchar_t* pFilePath, FileMode fileMode, std::vector<char>& loadedByteData);
 i64 GetFileSizeInBytes(HANDLE hFile);

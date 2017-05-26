@@ -150,7 +150,7 @@
     <ClInclude Include="..\Include\Common\Camera.h" />
     <ClInclude Include="..\Include\Common\Color.h" />
     <ClInclude Include="..\Include\Common\Common.h" />
-    <ClInclude Include="..\Include\Common\FileUtils.h" />
+    <ClInclude Include="..\Include\Common\FileUtilities.h" />
     <ClInclude Include="..\Include\Common\LightBuffer.h" />
     <ClInclude Include="..\Include\Common\Material.h" />
     <ClInclude Include="..\Include\Common\MeshBatch.h" />
@@ -225,7 +225,7 @@
     <ClCompile Include="..\Source\Common\Application.cpp" />
     <ClCompile Include="..\Source\Common\Camera.cpp" />
     <ClCompile Include="..\Source\Common\Common.cpp" />
-    <ClCompile Include="..\Source\Common\FileUtils.cpp" />
+    <ClCompile Include="..\Source\Common\FileUtilities.cpp" />
     <ClCompile Include="..\Source\Common\Light.cpp" />
     <ClCompile Include="..\Source\Common\LightBuffer.cpp" />
     <ClCompile Include="..\Source\Common\Material.cpp" />

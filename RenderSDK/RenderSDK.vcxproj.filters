@@ -240,7 +240,7 @@
     <ClInclude Include="..\Include\RenderPasses\VisualizeIntensityPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Common\FileUtils.h">
+    <ClInclude Include="..\Include\Common\FileUtilities.h">
       <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
@@ -446,7 +446,7 @@
     <ClCompile Include="..\Source\RenderPasses\VisualizeIntensityPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\Common\FileUtils.cpp">
+    <ClCompile Include="..\Source\Common\FileUtilities.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>

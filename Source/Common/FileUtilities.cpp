@@ -1,4 +1,4 @@
-#include "Common/FileUtils.h"
+#include "Common/FileUtilities.h"
 
 i64 GetFileSizeInBytes(HANDLE hFile)
 {
@@ -7,8 +7,9 @@ i64 GetFileSizeInBytes(HANDLE hFile)
 	return sizeInBytes.QuadPart;
 }
 
-bool LoadDataFromFile(const wchar_t* pFilePath, FileMode fileMode, std::vector<char>& loadedData)
+bool LoadDataFromFile(const wchar_t* pFilePath, FileMode fileMode, std::vector<char>& loadedByteData)
 {
+	assert(pFilePath != nullptr);
 	HANDLE hFile = CreateFile(pFilePath, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hFile == INVALID_HANDLE_VALUE)
 		return false;
@@ -16,21 +17,21 @@ bool LoadDataFromFile(const wchar_t* pFilePath, FileMode fileMode, std::vector<c
 	const DWORD numberOfBytesToRead = (DWORD)GetFileSizeInBytes(hFile);
 	
 	if (fileMode == FileMode::Text)
-		loadedData.resize(numberOfBytesToRead + 1, '\0');
+		loadedByteData.resize(numberOfBytesToRead + 1, '\0');
 	else
 	{
 		assert(fileMode == FileMode::Binary);
-		loadedData.resize(numberOfBytesToRead, '0');
+		loadedByteData.resize(numberOfBytesToRead, '0');
 	}
 	
 	DWORD numberOfBytesRead = 0;
-	VerifyWinAPIResult(ReadFile(hFile, &loadedData[0], numberOfBytesToRead, &numberOfBytesRead, nullptr));
+	VerifyWinAPIResult(ReadFile(hFile, &loadedByteData[0], numberOfBytesToRead, &numberOfBytesRead, nullptr));
 	VerifyWinAPIResult(CloseHandle(hFile));
 	
 	if (fileMode == FileMode::Text)
 	{
 		assert(numberOfBytesRead <= numberOfBytesToRead);
-		loadedData.resize(numberOfBytesRead + 1);
+		loadedByteData.resize(numberOfBytesRead + 1);
 	}
 	else
 	{

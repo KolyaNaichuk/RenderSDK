@@ -6,6 +6,7 @@
 #include <windows.h>
 
 #include <string>
+#include <cstring>
 #include <vector>
 #include <array>
 #include <queue>
