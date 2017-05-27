@@ -10,7 +10,7 @@
 
 static const u16 MAX_STRING_LENGTH = 256;
 
-namespace
+namespace OBJFile
 {
 	std::wstring AnsiToWideString(const char* pAnsiString)
 	{
@@ -24,10 +24,7 @@ namespace
 
 		return wideString;
 	}
-}
 
-namespace OBJFile
-{
 	std::vector<MeshTriangle> Triangulate(const MeshFace& meshFace)
 	{
 		assert(meshFace.size() > 2);
@@ -67,7 +64,7 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 	if (!LoadDataFromFile(pFilePath, FileMode::Text, byteStringFileData))
 		return false;
 
-	std::wstring wideStringFileData = AnsiToWideString(&byteStringFileData[0]);
+	std::wstring wideStringFileData = OBJFile::AnsiToWideString(&byteStringFileData[0]);
 
 	wchar_t* pLineContext = nullptr;
 	wchar_t* pLine = wcstok_s(&wideStringFileData[0], L"\n", &pLineContext);
@@ -132,7 +129,8 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 				while (wchar_t* pFaceElementToken = wcstok_s(nullptr, L" \t\r", &pTokenContext))
 				{
 					i32 positionIndex, texCoordIndex, normalIndex;
-					swscanf_s(pFaceElementToken, L"%d/%d/%d", &positionIndex, &texCoordIndex, &normalIndex);
+					int numConvertedValues = swscanf_s(pFaceElementToken, L"%d/%d/%d", &positionIndex, &texCoordIndex, &normalIndex);
+					assert(numConvertedValues == 3);
 
 					assert(positionIndex > 0);
 					--positionIndex;
@@ -164,7 +162,8 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 							
 				wchar_t materialName[MAX_STRING_LENGTH];
 				::ZeroMemory(materialName, sizeof(materialName));
-				swscanf_s(pMaterialToken, L"%s", &materialName[0], MAX_STRING_LENGTH);
+				int numConvertedValues = swscanf_s(pMaterialToken, L"%s", &materialName[0], MAX_STRING_LENGTH);
+				assert(numConvertedValues == 1);
 
 				if (m_Materials[m_CurrentMaterialIndex].m_Name != materialName)
 				{
@@ -192,7 +191,8 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 
 				wchar_t groupName[MAX_STRING_LENGTH];
 				::ZeroMemory(groupName, sizeof(groupName));
-				swscanf_s(pGroupToken, L"%s", &groupName[0], MAX_STRING_LENGTH);
+				int numConvertedValues = swscanf_s(pGroupToken, L"%s", &groupName[0], MAX_STRING_LENGTH);
+				assert(numConvertedValues == 1);
 
 				if (m_CurrentGroupName != groupName)
 				{
@@ -210,8 +210,9 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 
 				wchar_t objectName[MAX_STRING_LENGTH];
 				::ZeroMemory(objectName, sizeof(objectName));
-				swscanf_s(pObjectToken, L"%s", &objectName[0], MAX_STRING_LENGTH);
-				
+				int numConvertedValues = swscanf_s(pObjectToken, L"%s", &objectName[0], MAX_STRING_LENGTH);
+				assert(numConvertedValues == 1);
+
 				if ((m_pCurrentObject == nullptr) || (m_pCurrentObject->m_Name != objectName))
 				{
 					m_Objects.emplace_back(objectName);
@@ -226,7 +227,8 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 
 				wchar_t fileName[MAX_STRING_LENGTH];
 				::ZeroMemory(fileName, sizeof(fileName));
-				swscanf_s(pFileNameToken, L"%s", &fileName[0], MAX_STRING_LENGTH);
+				int numConvertedValues = swscanf_s(pFileNameToken, L"%s", &fileName[0], MAX_STRING_LENGTH);
+				assert(numConvertedValues == 1);
 
 				m_MaterialFileName = fileName;
 			}
@@ -238,127 +240,190 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 
 bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 {
-	assert(pFilePath != nullptr);
-	std::wifstream fileStream(pFilePath);
-	if (!fileStream)
+	std::vector<char> byteStringFileData;
+	if (!LoadDataFromFile(pFilePath, FileMode::Text, byteStringFileData))
 		return false;
 
-	for (std::wstring statement; true; )
+	std::wstring wideStringFileData = OBJFile::AnsiToWideString(&byteStringFileData[0]);
+
+	wchar_t* pLineContext = nullptr;
+	wchar_t* pLine = wcstok_s(&wideStringFileData[0], L"\n", &pLineContext);
+
+	while (pLine != nullptr)
 	{
-		fileStream >> statement;
-		if (!fileStream)
-			break;
+		wchar_t* pTokenContext = nullptr;
+		wchar_t* pToken = wcstok_s(pLine, L" \t\r", &pTokenContext);
 
-		if (statement == L"#")
+		if (pToken != nullptr)
 		{
-			// Ignore comment
-		}
-		else if (statement == L"newmtl")
-		{
-			std::wstring materialName;
-			fileStream >> materialName;
-
-			m_CurrentMaterialIndex = OBJFile::kUnknownIndex;
-			for (u32 index = 0; index < m_Materials.size(); ++index)
+			if (_wcsicmp(pToken, L"#") == 0)
 			{
-				if (m_Materials[index].m_Name == materialName)
-				{
-					m_CurrentMaterialIndex = index;
-					break;
-				}
+				// Ignore comment
 			}
-			assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
+			else if (_wcsicmp(pToken, L"newmtl") == 0)
+			{
+				wchar_t* pMaterialToken = wcstok_s(nullptr, L" \t", &pTokenContext);
+				assert(pMaterialToken != nullptr);
+
+				wchar_t materialName[MAX_STRING_LENGTH];
+				::ZeroMemory(materialName, sizeof(materialName));
+				int numConvertedValues = swscanf_s(pMaterialToken, L"%s", &materialName[0], MAX_STRING_LENGTH);
+				assert(numConvertedValues == 1);
+
+				m_CurrentMaterialIndex = OBJFile::kUnknownIndex;
+				for (u32 index = 0; index < m_Materials.size(); ++index)
+				{
+					if (m_Materials[index].m_Name == materialName)
+					{
+						m_CurrentMaterialIndex = index;
+						break;
+					}
+				}
+				assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
+			}
+			else if (_wcsicmp(pToken, L"Ka spectral") == 0)
+			{
+				assert(false && "No support for the ambient reflectivity using a spectral curve");
+			}
+			else if (_wcsicmp(pToken, L"Ka xyz") == 0)
+			{
+				assert(false && "No support for the ambient reflectivity using CIEXYZ values");
+			}
+			else if (_wcsicmp(pToken, L"Ka") == 0)
+			{
+				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_X = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_Y = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_Z = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+			}
+			else if (_wcsicmp(pToken, L"map_Ka") == 0)
+			{
+				wchar_t* pMapNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
+				assert(pMapNameToken != nullptr);
+
+				wchar_t mapName[MAX_STRING_LENGTH];
+				::ZeroMemory(mapName, sizeof(mapName));
+				int numConvertedValues = swscanf_s(pMapNameToken, L"%s", &mapName[0], MAX_STRING_LENGTH);
+				assert(numConvertedValues == 1);
+
+				m_Materials[m_CurrentMaterialIndex].m_AmbientMapName = mapName;
+			}
+			else if (_wcsicmp(pToken, L"Kd spectral") == 0)
+			{
+				assert(false && "No support for the diffuse reflectivity using a spectral curve");
+			}
+			else if (_wcsicmp(pToken, L"Kd xyz") == 0)
+			{
+				assert(false && "No support for the diffuse reflectivity using CIEXYZ values");
+			}
+			else if (_wcsicmp(pToken, L"Kd") == 0)
+			{
+				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_X = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_Y = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_Z = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+			}
+			else if (_wcsicmp(pToken, L"map_Kd") == 0)
+			{
+				wchar_t* pMapNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
+				assert(pMapNameToken != nullptr);
+
+				wchar_t mapName[MAX_STRING_LENGTH];
+				::ZeroMemory(mapName, sizeof(mapName));
+				int numConvertedValues = swscanf_s(pMapNameToken, L"%s", &mapName[0], MAX_STRING_LENGTH);
+				assert(numConvertedValues == 1);
+
+				m_Materials[m_CurrentMaterialIndex].m_DiffuseMapName = mapName;
+			}
+			else if (_wcsicmp(pToken, L"Ks spectral") == 0)
+			{
+				assert(false && "No support for the specular reflectivity using a spectral curve");
+			}
+			else if (_wcsicmp(pToken, L"Ks xyz") == 0)
+			{
+				assert(false && "No support for the specular reflectivity using CIEXYZ values");
+			}
+			else if (_wcsicmp(pToken, L"Ks") == 0)
+			{
+				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_X = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_Y = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_Z = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+			}
+			else if (_wcsicmp(pToken, L"map_Ks") == 0)
+			{
+				wchar_t* pMapNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
+				assert(pMapNameToken != nullptr);
+
+				wchar_t mapName[MAX_STRING_LENGTH];
+				::ZeroMemory(mapName, sizeof(mapName));
+				int numConvertedValues = swscanf_s(pMapNameToken, L"%s", &mapName[0], MAX_STRING_LENGTH);
+				assert(numConvertedValues == 1);
+
+				m_Materials[m_CurrentMaterialIndex].m_SpecularMapName = mapName;
+			}
+			else if (_wcsicmp(pToken, L"Ke spectral") == 0)
+			{
+				assert(false && "No support for the emissive reflectivity using a spectral curve");
+			}
+			else if (_wcsicmp(pToken, L"Ke xyz") == 0)
+			{
+				assert(false && "No support for the emissive reflectivity using CIEXYZ values");
+			}
+			else if (_wcsicmp(pToken, L"Ke") == 0)
+			{
+				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_X = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_Y = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_Z = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+			}
+			else if (_wcsicmp(pToken, L"map_Ke") == 0)
+			{
+				wchar_t* pMapNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
+				assert(pMapNameToken != nullptr);
+
+				wchar_t mapName[MAX_STRING_LENGTH];
+				::ZeroMemory(mapName, sizeof(mapName));
+				int numConvertedValues = swscanf_s(pMapNameToken, L"%s", &mapName[0], MAX_STRING_LENGTH);
+				assert(numConvertedValues == 1);
+
+				m_Materials[m_CurrentMaterialIndex].m_EmissiveMapName = mapName;
+			}
+			else if (_wcsicmp(pToken, L"Ns") == 0)
+			{
+				m_Materials[m_CurrentMaterialIndex].m_SpecularPower = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+			}
+			else if (_wcsicmp(pToken, L"map_Ns") == 0)
+			{
+				wchar_t* pMapNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
+				assert(pMapNameToken != nullptr);
+
+				wchar_t mapName[MAX_STRING_LENGTH];
+				::ZeroMemory(mapName, sizeof(mapName));
+				int numConvertedValues = swscanf_s(pMapNameToken, L"%s", &mapName[0], MAX_STRING_LENGTH);
+				assert(numConvertedValues == 1);
+
+				m_Materials[m_CurrentMaterialIndex].m_SpecularPowerMapName = mapName;
+			}
+			else if (_wcsicmp(pToken, L"d") == 0)
+			{
+				m_Materials[m_CurrentMaterialIndex].m_Opacity = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+			}
+			else if (_wcsicmp(pToken, L"map_d") == 0)
+			{
+				wchar_t* pMapNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
+				assert(pMapNameToken != nullptr);
+
+				wchar_t mapName[MAX_STRING_LENGTH];
+				::ZeroMemory(mapName, sizeof(mapName));
+				int numConvertedValues = swscanf_s(pMapNameToken, L"%s", &mapName[0], MAX_STRING_LENGTH);
+				assert(numConvertedValues == 1);
+
+				m_Materials[m_CurrentMaterialIndex].m_OpacityMapName = mapName;
+			}
+			else if (_wcsicmp(pToken, L"Ni") == 0)
+			{
+				m_Materials[m_CurrentMaterialIndex].m_IndexOfRefraction = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+			}
 		}
-		else if (statement == L"Ka spectral")
-		{
-			assert(false && "No support for the ambient reflectivity using a spectral curve");
-		}
-		else if (statement == L"Ka xyz")
-		{
-			assert(false && "No support for the ambient reflectivity using CIEXYZ values");
-		}
-		else if (statement == L"Ka")
-		{
-			Vector3f& ambientColor = m_Materials[m_CurrentMaterialIndex].m_AmbientColor;
-			fileStream >> ambientColor.m_X >> ambientColor.m_Y >> ambientColor.m_Z;
-		}
-		else if (statement == L"map_Ka")
-		{
-			fileStream >> m_Materials[m_CurrentMaterialIndex].m_AmbientMapName;
-		}
-		else if (statement == L"Kd spectral")
-		{
-			assert(false && "No support for the diffuse reflectivity using a spectral curve");
-		}
-		else if (statement == L"Kd xyz")
-		{
-			assert(false && "No support for the diffuse reflectivity using CIEXYZ values");
-		}
-		else if (statement == L"Kd")
-		{
-			Vector3f& diffuseColor = m_Materials[m_CurrentMaterialIndex].m_DiffuseColor;
-			fileStream >> diffuseColor.m_X >> diffuseColor.m_Y >> diffuseColor.m_Z;
-		}
-		else if (statement == L"map_Kd")
-		{
-			fileStream >> m_Materials[m_CurrentMaterialIndex].m_DiffuseMapName;
-		}
-		else if (statement == L"Ks spectral")
-		{
-			assert(false && "No support for the specular reflectivity using a spectral curve");
-		}
-		else if (statement == L"Ks xyz")
-		{
-			assert(false && "No support for the specular reflectivity using CIEXYZ values");
-		}
-		else if (statement == L"Ks")
-		{
-			Vector3f& specularColor = m_Materials[m_CurrentMaterialIndex].m_SpecularColor;
-			fileStream >> specularColor.m_X >> specularColor.m_Y >> specularColor.m_Z;
-		}
-		else if (statement == L"map_Ks")
-		{
-			fileStream >> m_Materials[m_CurrentMaterialIndex].m_SpecularMapName;
-		}
-		else if (statement == L"Ns")
-		{
-			fileStream >> m_Materials[m_CurrentMaterialIndex].m_SpecularPower;
-		}
-		else if (statement == L"map_Ns")
-		{
-			fileStream >> m_Materials[m_CurrentMaterialIndex].m_SpecularPowerMapName;
-		}
-		else if (statement == L"Ke spectral")
-		{
-			assert(false && "No support for the emissive reflectivity using a spectral curve");
-		}
-		else if (statement == L"Ke xyz")
-		{
-			assert(false && "No support for the emissive reflectivity using CIEXYZ values");
-		}
-		else if (statement == L"Ke")
-		{
-			Vector3f& emissiveColor = m_Materials[m_CurrentMaterialIndex].m_EmissiveColor;
-			fileStream >> emissiveColor.m_X >> emissiveColor.m_Y >> emissiveColor.m_Z;
-		}
-		else if (statement == L"map_Ke")
-		{
-			fileStream >> m_Materials[m_CurrentMaterialIndex].m_EmissiveMapName;
-		}
-		else if (statement == L"Ni")
-		{
-			fileStream >> m_Materials[m_CurrentMaterialIndex].m_IndexOfRefraction;
-		}
-		else if (statement == L"d")
-		{
-			fileStream >> m_Materials[m_CurrentMaterialIndex].m_Opacity;
-		}
-		else if (statement == L"map_d")
-		{
-			fileStream >> m_Materials[m_CurrentMaterialIndex].m_OpacityMapName;
-		}
-		fileStream.ignore(std::numeric_limits<std::streamsize>::max(), L'\n');
-	}	
+		pLine = wcstok_s(nullptr, L"\n", &pLineContext);
+	}
 	return true;
 }
 
