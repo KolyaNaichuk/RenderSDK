@@ -10,17 +10,20 @@
 
 static const u16 MAX_STRING_LENGTH = 256;
 
-std::wstring AnsiToWideString(const char* pAnsiString)
+namespace
 {
-	int ansiStringLength = std::strlen(pAnsiString);
-	assert(ansiStringLength > 0);
+	std::wstring AnsiToWideString(const char* pAnsiString)
+	{
+		int ansiStringLength = std::strlen(pAnsiString);
+		assert(ansiStringLength > 0);
 
-	int wideStringLength = MultiByteToWideChar(CP_ACP, 0, pAnsiString, ansiStringLength, nullptr, 0);
-	std::wstring wideString(wideStringLength, L'\0');
-	int numWrittenCharacters = MultiByteToWideChar(CP_ACP, 0, pAnsiString, ansiStringLength, &wideString[0], wideStringLength);
-	assert(numWrittenCharacters == wideStringLength);
+		int wideStringLength = MultiByteToWideChar(CP_ACP, 0, pAnsiString, ansiStringLength, nullptr, 0);
+		std::wstring wideString(wideStringLength, L'\0');
+		int numWrittenCharacters = MultiByteToWideChar(CP_ACP, 0, pAnsiString, ansiStringLength, &wideString[0], wideStringLength);
+		assert(numWrittenCharacters == wideStringLength);
 
-	return wideString;
+		return wideString;
+	}
 }
 
 namespace OBJFile
@@ -150,12 +153,17 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 			{
 				// Ignore comment
 			}
+			else if (_wcsicmp(pToken, L"s") == 0)
+			{
+				// Ignore smoothing group
+			}
 			else if (_wcsicmp(pToken, L"usemtl") == 0)
 			{
 				wchar_t* pMaterialToken = wcstok_s(nullptr, L" \t", &pTokenContext);
 				assert(pMaterialToken != nullptr);
-			
-				wchar_t materialName[MAX_STRING_LENGTH] = {L'\0'};
+							
+				wchar_t materialName[MAX_STRING_LENGTH];
+				::ZeroMemory(materialName, sizeof(materialName));
 				swscanf_s(pMaterialToken, L"%s", &materialName[0], MAX_STRING_LENGTH);
 
 				if (m_Materials[m_CurrentMaterialIndex].m_Name != materialName)
@@ -177,56 +185,54 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 					}
 				}
 			}
-		}
+			else if (_wcsicmp(pToken, L"g") == 0)
+			{
+				wchar_t* pGroupToken = wcstok_s(nullptr, L" \t", &pTokenContext);
+				assert(pGroupToken != nullptr);
 
+				wchar_t groupName[MAX_STRING_LENGTH];
+				::ZeroMemory(groupName, sizeof(groupName));
+				swscanf_s(pGroupToken, L"%s", &groupName[0], MAX_STRING_LENGTH);
+
+				if (m_CurrentGroupName != groupName)
+				{
+					m_Objects.emplace_back(groupName);
+					m_pCurrentObject = &m_Objects.back();
+					m_pCurrentMesh = nullptr;
+
+					m_CurrentGroupName = groupName;
+				}
+			}
+			else if (_wcsicmp(pToken, L"o") == 0)
+			{
+				wchar_t* pObjectToken = wcstok_s(nullptr, L" \t", &pTokenContext);
+				assert(pObjectToken != nullptr);
+
+				wchar_t objectName[MAX_STRING_LENGTH];
+				::ZeroMemory(objectName, sizeof(objectName));
+				swscanf_s(pObjectToken, L"%s", &objectName[0], MAX_STRING_LENGTH);
+				
+				if ((m_pCurrentObject == nullptr) || (m_pCurrentObject->m_Name != objectName))
+				{
+					m_Objects.emplace_back(objectName);
+					m_pCurrentObject = &m_Objects.back();
+					m_pCurrentMesh = nullptr;
+				}
+			}
+			else if (_wcsicmp(pToken, L"mtllib") == 0)
+			{
+				wchar_t* pFileNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
+				assert(pFileNameToken != nullptr);
+
+				wchar_t fileName[MAX_STRING_LENGTH];
+				::ZeroMemory(fileName, sizeof(fileName));
+				swscanf_s(pFileNameToken, L"%s", &fileName[0], MAX_STRING_LENGTH);
+
+				m_MaterialFileName = fileName;
+			}
+		}
 		pLine = wcstok_s(nullptr, L"\n", &pLineContext);
 	}
-
-	/*
-	for (std::wstring statement; true; )
-	{
-	fileStream >> statement;
-	if (!fileStream)
-	break;
-
-
-	else if (statement == L"o")
-	{
-	std::wstring objectName;
-	fileStream >> objectName;
-
-	if ((m_pCurrentObject == nullptr) || (m_pCurrentObject->m_Name != objectName))
-	{
-	m_Objects.emplace_back(objectName);
-	m_pCurrentObject = &m_Objects.back();
-	m_pCurrentMesh = nullptr;
-	}
-	}
-	else if (statement == L"g")
-	{
-	std::wstring groupName;
-	fileStream >> groupName;
-
-	if (m_CurrentGroupName != groupName)
-	{
-	m_Objects.emplace_back(groupName);
-	m_pCurrentObject = &m_Objects.back();
-	m_pCurrentMesh = nullptr;
-
-	m_CurrentGroupName = groupName;
-	}
-	}
-	else if (statement == L"mtllib")
-	{
-	fileStream >> m_MaterialFileName;
-	}
-	else if (statement == L"s")
-	{
-	// Ignore smoothing group
-	}
-	fileStream.ignore(std::numeric_limits<std::streamsize>::max(), L'\n');
-	}
-	*/
 	return true;
 }
 
