@@ -84,11 +84,13 @@ public:
 private:
 	bool LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, u8 convertMeshDataFlags);
 	bool LoadMaterialFile(const wchar_t* pFilePath);
+	
+	u32 FindMaterialIndex(const std::wstring& materialName) const;
 	std::shared_ptr<MeshBatchData> GenerateMeshBatchData(bool use32BitIndices, u8 convertMeshDataFlags);
 	
 	template <typename Index>
 	void GenerateVertexAndIndexData(const OBJFile::Mesh& mesh, VertexData** ppVertexData, IndexData** ppIndexData);
-
+		
 	void Clear();
 	
 private:

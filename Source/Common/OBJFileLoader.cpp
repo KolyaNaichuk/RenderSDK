@@ -8,10 +8,47 @@
 #include <limits>
 #include <experimental/filesystem>
 
-static const u16 MAX_STRING_LENGTH = 256;
-
 namespace OBJFile
 {
+	FaceElement ExtractFaceElement(const wchar_t* pFaceElementToken)
+	{
+		i32 positionIndex, texCoordIndex, normalIndex;
+		int numConvertedValues = swscanf_s(pFaceElementToken, L"%d/%d/%d", &positionIndex, &texCoordIndex, &normalIndex);
+		assert(numConvertedValues == 3);
+
+		assert(positionIndex > 0);
+		--positionIndex;
+
+		assert(texCoordIndex > 0);
+		--texCoordIndex;
+
+		assert(normalIndex > 0);
+		--normalIndex;
+
+		return FaceElement(positionIndex, normalIndex, texCoordIndex);
+	}
+
+	f32 ExtractFloat(wchar_t** ppTokenContext)
+	{
+		return f32(_wtof(wcstok_s(nullptr, L" \t", ppTokenContext)));
+	}
+		
+	std::wstring ExtractString(wchar_t** ppTokenContext)
+	{
+		static const u16 MAX_STRING_LENGTH = 256;
+
+		wchar_t* pStringToken = wcstok_s(nullptr, L" \t", ppTokenContext);
+		assert(pStringToken != nullptr);
+
+		wchar_t stringBuffer[MAX_STRING_LENGTH];
+		::ZeroMemory(stringBuffer, sizeof(stringBuffer));
+		
+		int numConvertedValues = swscanf_s(pStringToken, L"%s", &stringBuffer[0], MAX_STRING_LENGTH);
+		assert(numConvertedValues == 1);
+
+		return std::wstring(stringBuffer);
+	}
+		
 	std::wstring AnsiToWideString(const char* pAnsiString)
 	{
 		int ansiStringLength = std::strlen(pAnsiString);
@@ -78,24 +115,24 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 		{
 			if (_wcsicmp(pToken, L"v") == 0)
 			{
-				f32 x = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
-				f32 y = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
-				f32 z = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				f32 x = OBJFile::ExtractFloat(&pTokenContext);
+				f32 y = OBJFile::ExtractFloat(&pTokenContext);
+				f32 z = OBJFile::ExtractFloat(&pTokenContext);
 
 				m_Positions.emplace_back(x, y, z);
 			}
 			else if (_wcsicmp(pToken, L"vt") == 0)
 			{
-				f32 u = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
-				f32 v = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				f32 u = OBJFile::ExtractFloat(&pTokenContext);
+				f32 v = OBJFile::ExtractFloat(&pTokenContext);
 
 				m_TexCoords.emplace_back(u, v);
 			}
 			else if (_wcsicmp(pToken, L"vn") == 0)
 			{
-				f32 x = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
-				f32 y = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
-				f32 z = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				f32 x = OBJFile::ExtractFloat(&pTokenContext);
+				f32 y = OBJFile::ExtractFloat(&pTokenContext);
+				f32 z = OBJFile::ExtractFloat(&pTokenContext);
 
 				m_Normals.emplace_back(x, y, z);
 			}
@@ -128,20 +165,7 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 
 				while (wchar_t* pFaceElementToken = wcstok_s(nullptr, L" \t\r", &pTokenContext))
 				{
-					i32 positionIndex, texCoordIndex, normalIndex;
-					int numConvertedValues = swscanf_s(pFaceElementToken, L"%d/%d/%d", &positionIndex, &texCoordIndex, &normalIndex);
-					assert(numConvertedValues == 3);
-
-					assert(positionIndex > 0);
-					--positionIndex;
-
-					assert(texCoordIndex > 0);
-					--texCoordIndex;
-
-					assert(normalIndex > 0);
-					--normalIndex;
-
-					meshFace.emplace_back(positionIndex, normalIndex, texCoordIndex);
+					meshFace.emplace_back(OBJFile::ExtractFaceElement(pFaceElementToken));
 				}
 
 				auto meshTriangles = Triangulate(meshFace);
@@ -157,27 +181,11 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 			}
 			else if (_wcsicmp(pToken, L"usemtl") == 0)
 			{
-				wchar_t* pMaterialToken = wcstok_s(nullptr, L" \t", &pTokenContext);
-				assert(pMaterialToken != nullptr);
-							
-				wchar_t materialName[MAX_STRING_LENGTH];
-				::ZeroMemory(materialName, sizeof(materialName));
-				int numConvertedValues = swscanf_s(pMaterialToken, L"%s", &materialName[0], MAX_STRING_LENGTH);
-				assert(numConvertedValues == 1);
-
+				std::wstring materialName = OBJFile::ExtractString(&pTokenContext);
 				if (m_Materials[m_CurrentMaterialIndex].m_Name != materialName)
 				{
-					bool isNewMaterial = true;
-					for (u32 index = 0; index < m_Materials.size(); ++index)
-					{
-						if (m_Materials[index].m_Name == materialName)
-						{
-							m_CurrentMaterialIndex = index;
-							isNewMaterial = false;
-							break;
-						}
-					}
-					if (isNewMaterial)
+					m_CurrentMaterialIndex = FindMaterialIndex(materialName);
+					if (m_CurrentMaterialIndex == OBJFile::kUnknownIndex)
 					{
 						m_CurrentMaterialIndex = m_Materials.size();
 						m_Materials.emplace_back(materialName);
@@ -186,14 +194,7 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 			}
 			else if (_wcsicmp(pToken, L"g") == 0)
 			{
-				wchar_t* pGroupToken = wcstok_s(nullptr, L" \t", &pTokenContext);
-				assert(pGroupToken != nullptr);
-
-				wchar_t groupName[MAX_STRING_LENGTH];
-				::ZeroMemory(groupName, sizeof(groupName));
-				int numConvertedValues = swscanf_s(pGroupToken, L"%s", &groupName[0], MAX_STRING_LENGTH);
-				assert(numConvertedValues == 1);
-
+				std::wstring groupName = OBJFile::ExtractString(&pTokenContext);
 				if (m_CurrentGroupName != groupName)
 				{
 					m_Objects.emplace_back(groupName);
@@ -205,14 +206,7 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 			}
 			else if (_wcsicmp(pToken, L"o") == 0)
 			{
-				wchar_t* pObjectToken = wcstok_s(nullptr, L" \t", &pTokenContext);
-				assert(pObjectToken != nullptr);
-
-				wchar_t objectName[MAX_STRING_LENGTH];
-				::ZeroMemory(objectName, sizeof(objectName));
-				int numConvertedValues = swscanf_s(pObjectToken, L"%s", &objectName[0], MAX_STRING_LENGTH);
-				assert(numConvertedValues == 1);
-
+				std::wstring objectName = OBJFile::ExtractString(&pTokenContext);
 				if ((m_pCurrentObject == nullptr) || (m_pCurrentObject->m_Name != objectName))
 				{
 					m_Objects.emplace_back(objectName);
@@ -222,15 +216,7 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 			}
 			else if (_wcsicmp(pToken, L"mtllib") == 0)
 			{
-				wchar_t* pFileNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
-				assert(pFileNameToken != nullptr);
-
-				wchar_t fileName[MAX_STRING_LENGTH];
-				::ZeroMemory(fileName, sizeof(fileName));
-				int numConvertedValues = swscanf_s(pFileNameToken, L"%s", &fileName[0], MAX_STRING_LENGTH);
-				assert(numConvertedValues == 1);
-
-				m_MaterialFileName = fileName;
+				m_MaterialFileName = OBJFile::ExtractString(&pTokenContext);
 			}
 		}
 		pLine = wcstok_s(nullptr, L"\n", &pLineContext);
@@ -262,23 +248,9 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 			}
 			else if (_wcsicmp(pToken, L"newmtl") == 0)
 			{
-				wchar_t* pMaterialToken = wcstok_s(nullptr, L" \t", &pTokenContext);
-				assert(pMaterialToken != nullptr);
+				std::wstring materialName = OBJFile::ExtractString(&pTokenContext);
 
-				wchar_t materialName[MAX_STRING_LENGTH];
-				::ZeroMemory(materialName, sizeof(materialName));
-				int numConvertedValues = swscanf_s(pMaterialToken, L"%s", &materialName[0], MAX_STRING_LENGTH);
-				assert(numConvertedValues == 1);
-
-				m_CurrentMaterialIndex = OBJFile::kUnknownIndex;
-				for (u32 index = 0; index < m_Materials.size(); ++index)
-				{
-					if (m_Materials[index].m_Name == materialName)
-					{
-						m_CurrentMaterialIndex = index;
-						break;
-					}
-				}
+				m_CurrentMaterialIndex = FindMaterialIndex(materialName);
 				assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
 			}
 			else if (_wcsicmp(pToken, L"Ka spectral") == 0)
@@ -291,21 +263,13 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 			}
 			else if (_wcsicmp(pToken, L"Ka") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_X = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
-				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_Y = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
-				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_Z = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_X = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_Y = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_Z = OBJFile::ExtractFloat(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"map_Ka") == 0)
 			{
-				wchar_t* pMapNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
-				assert(pMapNameToken != nullptr);
-
-				wchar_t mapName[MAX_STRING_LENGTH];
-				::ZeroMemory(mapName, sizeof(mapName));
-				int numConvertedValues = swscanf_s(pMapNameToken, L"%s", &mapName[0], MAX_STRING_LENGTH);
-				assert(numConvertedValues == 1);
-
-				m_Materials[m_CurrentMaterialIndex].m_AmbientMapName = mapName;
+				m_Materials[m_CurrentMaterialIndex].m_AmbientMapName = OBJFile::ExtractString(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"Kd spectral") == 0)
 			{
@@ -317,21 +281,13 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 			}
 			else if (_wcsicmp(pToken, L"Kd") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_X = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
-				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_Y = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
-				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_Z = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_X = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_Y = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_Z = OBJFile::ExtractFloat(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"map_Kd") == 0)
 			{
-				wchar_t* pMapNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
-				assert(pMapNameToken != nullptr);
-
-				wchar_t mapName[MAX_STRING_LENGTH];
-				::ZeroMemory(mapName, sizeof(mapName));
-				int numConvertedValues = swscanf_s(pMapNameToken, L"%s", &mapName[0], MAX_STRING_LENGTH);
-				assert(numConvertedValues == 1);
-
-				m_Materials[m_CurrentMaterialIndex].m_DiffuseMapName = mapName;
+				m_Materials[m_CurrentMaterialIndex].m_DiffuseMapName = OBJFile::ExtractString(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"Ks spectral") == 0)
 			{
@@ -343,21 +299,13 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 			}
 			else if (_wcsicmp(pToken, L"Ks") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_X = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
-				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_Y = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
-				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_Z = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_X = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_Y = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_Z = OBJFile::ExtractFloat(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"map_Ks") == 0)
 			{
-				wchar_t* pMapNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
-				assert(pMapNameToken != nullptr);
-
-				wchar_t mapName[MAX_STRING_LENGTH];
-				::ZeroMemory(mapName, sizeof(mapName));
-				int numConvertedValues = swscanf_s(pMapNameToken, L"%s", &mapName[0], MAX_STRING_LENGTH);
-				assert(numConvertedValues == 1);
-
-				m_Materials[m_CurrentMaterialIndex].m_SpecularMapName = mapName;
+				m_Materials[m_CurrentMaterialIndex].m_SpecularMapName = OBJFile::ExtractString(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"Ke spectral") == 0)
 			{
@@ -369,62 +317,48 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 			}
 			else if (_wcsicmp(pToken, L"Ke") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_X = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
-				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_Y = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
-				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_Z = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_X = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_Y = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_Z = OBJFile::ExtractFloat(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"map_Ke") == 0)
 			{
-				wchar_t* pMapNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
-				assert(pMapNameToken != nullptr);
-
-				wchar_t mapName[MAX_STRING_LENGTH];
-				::ZeroMemory(mapName, sizeof(mapName));
-				int numConvertedValues = swscanf_s(pMapNameToken, L"%s", &mapName[0], MAX_STRING_LENGTH);
-				assert(numConvertedValues == 1);
-
-				m_Materials[m_CurrentMaterialIndex].m_EmissiveMapName = mapName;
+				m_Materials[m_CurrentMaterialIndex].m_EmissiveMapName = OBJFile::ExtractString(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"Ns") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_SpecularPower = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_SpecularPower = OBJFile::ExtractFloat(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"map_Ns") == 0)
 			{
-				wchar_t* pMapNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
-				assert(pMapNameToken != nullptr);
-
-				wchar_t mapName[MAX_STRING_LENGTH];
-				::ZeroMemory(mapName, sizeof(mapName));
-				int numConvertedValues = swscanf_s(pMapNameToken, L"%s", &mapName[0], MAX_STRING_LENGTH);
-				assert(numConvertedValues == 1);
-
-				m_Materials[m_CurrentMaterialIndex].m_SpecularPowerMapName = mapName;
+				m_Materials[m_CurrentMaterialIndex].m_SpecularPowerMapName = OBJFile::ExtractString(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"d") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_Opacity = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_Opacity = OBJFile::ExtractFloat(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"map_d") == 0)
 			{
-				wchar_t* pMapNameToken = wcstok_s(nullptr, L" \t", &pTokenContext);
-				assert(pMapNameToken != nullptr);
-
-				wchar_t mapName[MAX_STRING_LENGTH];
-				::ZeroMemory(mapName, sizeof(mapName));
-				int numConvertedValues = swscanf_s(pMapNameToken, L"%s", &mapName[0], MAX_STRING_LENGTH);
-				assert(numConvertedValues == 1);
-
-				m_Materials[m_CurrentMaterialIndex].m_OpacityMapName = mapName;
+				m_Materials[m_CurrentMaterialIndex].m_OpacityMapName = OBJFile::ExtractString(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"Ni") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_IndexOfRefraction = f32(_wtof(wcstok_s(nullptr, L" \t", &pTokenContext)));
+				m_Materials[m_CurrentMaterialIndex].m_IndexOfRefraction = OBJFile::ExtractFloat(&pTokenContext);
 			}
 		}
 		pLine = wcstok_s(nullptr, L"\n", &pLineContext);
 	}
 	return true;
+}
+
+u32 OBJFileLoader::FindMaterialIndex(const std::wstring& materialName) const
+{
+	for (u32 index = 0; index < m_Materials.size(); ++index)
+	{
+		if (m_Materials[index].m_Name == materialName)
+			return index;
+	}
+	return OBJFile::kUnknownIndex;
 }
 
 std::shared_ptr<MeshBatchData> OBJFileLoader::GenerateMeshBatchData(bool use32BitIndices, u8 convertMeshDataFlags)
