@@ -34,7 +34,6 @@ public:
 		
 	u32 GetNumMeshes() const { return m_MeshDescs.size(); }
 	const MeshDesc* GetMeshDescs() const { return &m_MeshDescs[0]; }
-	const Material* GetMaterials() const { return &m_Materials[0]; }
 	const AxisAlignedBox* GetMeshAABBs() const { return &m_MeshAABBs[0]; }
 
 	u32 GetNumVertices() const;
@@ -64,6 +63,5 @@ private:
 	std::vector<u32> m_32BitIndices;
 
 	std::vector<MeshDesc> m_MeshDescs;
-	std::vector<Material> m_Materials;
 	std::vector<AxisAlignedBox> m_MeshAABBs;
 };

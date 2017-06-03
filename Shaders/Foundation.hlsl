@@ -34,7 +34,7 @@ struct DrawMeshCommand
 	DrawIndexedArgs drawArgs;
 };
 
-struct Material
+struct MaterialData
 {
 	float4 ambientColor;
 	float4 diffuseColor;

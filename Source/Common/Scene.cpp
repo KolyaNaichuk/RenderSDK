@@ -1,32 +1,54 @@
 #include "Common/Scene.h"
 
+Scene::Scene()
+	: m_pMeshBatchData(nullptr)
+	, m_pDirectionalLight(nullptr)
+{
+}
+
 Scene::~Scene()
 {
-	for (std::size_t meshBatchIndex = 0; meshBatchIndex < m_MeshBatches.size(); ++meshBatchIndex)
-		SafeDelete(m_MeshBatches[meshBatchIndex]);
+	SafeDelete(m_pMeshBatchData);
 	
-	for (std::size_t pointLightIndex = 0; pointLightIndex < m_PointLights.size(); ++pointLightIndex)
-		SafeDelete(m_PointLights[pointLightIndex]);
+	for (std::size_t index = 0; index < m_Materials.size(); ++index)
+		SafeDelete(m_Materials[index]);
 	
-	for (std::size_t spotLightIndex = 0; spotLightIndex < m_SpotLights.size(); ++spotLightIndex)
-		SafeDelete(m_SpotLights[spotLightIndex]);
+	for (std::size_t index = 0; index < m_PointLights.size(); ++index)
+		SafeDelete(m_PointLights[index]);
+	
+	for (std::size_t index = 0; index < m_SpotLights.size(); ++index)
+		SafeDelete(m_SpotLights[index]);
 
 	SafeDelete(m_pDirectionalLight);
 }
 
-void Scene::AddMeshBatch(MeshBatchData* pMeshBatch)
+const MeshBatchData* Scene::GetMeshBatchData() const
 {
-	m_MeshBatches.emplace_back(pMeshBatch);
+	return m_pMeshBatchData;
 }
 
-std::size_t Scene::GetNumMeshBatches() const
+void Scene::SetMeshBatchData(MeshBatchData* pMeshBatch)
 {
-	return m_MeshBatches.size();
+	if (m_pMeshBatchData != pMeshBatch)
+	{
+		SafeDelete(m_pMeshBatchData);
+		m_pMeshBatchData = pMeshBatch;
+	}
 }
 
-MeshBatchData** Scene::GetMeshBatches()
+void Scene::AddMaterial(Material* pMaterial)
 {
-	return m_MeshBatches.data();
+	m_Materials.emplace_back(pMaterial);
+}
+
+std::size_t Scene::GetNumMaterials() const
+{
+	return m_Materials.size();
+}
+
+Material** Scene::GetMaterials()
+{
+	return m_Materials.data();
 }
 
 void Scene::AddPointLight(PointLight* pPointLight)

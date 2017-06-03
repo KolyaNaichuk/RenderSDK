@@ -73,10 +73,7 @@ void MeshBatchData::Append(const MeshData* pMeshData)
 		m_32BitIndices.insert(m_32BitIndices.end(), p32BitIndices, p32BitIndices + numIndices);
 	}
 
-	const u32 materialIndex = m_Materials.size();
-	m_Materials.emplace_back(*pMeshData->GetMaterial());
-	
-	m_MeshDescs.emplace_back(numIndices, startIndexLocation, baseVertexLocation, materialIndex);
+	m_MeshDescs.emplace_back(numIndices, startIndexLocation, baseVertexLocation, pMeshData->GetMaterialIndex());
 	m_MeshAABBs.emplace_back(*pMeshData->GetAABB());
 }
 

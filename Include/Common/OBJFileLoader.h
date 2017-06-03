@@ -5,7 +5,7 @@
 
 class VertexData;
 class IndexData;
-class MeshBatchData;
+class Scene;
 
 namespace OBJFile
 {
@@ -79,14 +79,14 @@ namespace OBJFile
 class OBJFileLoader
 {
 public:
-	std::shared_ptr<MeshBatchData> Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8 convertMeshDataFlags);
+	Scene* Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8 convertMeshDataFlags);
 
 private:
 	bool LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, u8 convertMeshDataFlags);
 	bool LoadMaterialFile(const wchar_t* pFilePath);
 	
 	u32 FindMaterialIndex(const std::wstring& materialName) const;
-	std::shared_ptr<MeshBatchData> GenerateMeshBatchData(bool use32BitIndices, u8 convertMeshDataFlags);
+	Scene* PopulateScene(bool use32BitIndices, u8 convertMeshDataFlags);
 	
 	template <typename Index>
 	void GenerateVertexAndIndexData(const OBJFile::Mesh& mesh, VertexData** ppVertexData, IndexData** ppIndexData);

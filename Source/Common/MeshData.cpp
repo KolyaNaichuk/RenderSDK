@@ -172,10 +172,10 @@ const u32* IndexData::Get32BitIndices() const
 	return m_p32BitIndices;
 }
 
-MeshData::MeshData(VertexData* pVertexData, IndexData* pIndexData, Material* pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
+MeshData::MeshData(VertexData* pVertexData, IndexData* pIndexData, u32 materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
 	: m_pVertexData(pVertexData)
 	, m_pIndexData(pIndexData)
-	, m_pMaterial(pMaterial)
+	, m_pMaterialIndex(materialIndex)
 	, m_pAABB(new AxisAlignedBox(pVertexData->GetNumVertices(), pVertexData->GetPositions()))
 	, m_PrimitiveTopologyType(primitiveTopologyType)
 	, m_PrimitiveTopology(primitiveTopology)
@@ -187,7 +187,6 @@ MeshData::~MeshData()
 {
 	SafeDelete(m_pVertexData);
 	SafeDelete(m_pIndexData);
-	SafeDelete(m_pMaterial);
 	SafeDelete(m_pAABB);
 }
 

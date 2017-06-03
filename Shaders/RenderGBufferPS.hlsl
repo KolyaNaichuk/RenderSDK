@@ -4,6 +4,10 @@ struct PSInput
 {
 	float4 screenSpacePos		: SV_Position;
 	float3 worldSpaceNormal		: NORMAL;
+
+#ifdef USE_TEXCOORDS
+	float2 texCoord				: TEXCOORD;
+#endif
 };
 
 struct PSOutput
@@ -17,15 +21,37 @@ cbuffer MaterialIndexBuffer : register(b0)
 {
 	uint g_MaterialIndex;
 }
-StructuredBuffer<Material> g_MaterialBuffer : register(t0);
+
+StructuredBuffer<MaterialData> g_MaterialDataBuffer : register(t0);
+Texture2D g_DiffuseTextures[] : register(t1);
+Texture2D g_SpecularTextures[] : register(t2);
+Texture2D g_SpecularPowerTextures[] : register(t3);
+SamplerState g_Sampler : register(s0);
 
 PSOutput Main(PSInput input)
 {
-	PSOutput output;
+	float3 diffuseColor = g_MaterialDataBuffer[g_MaterialIndex].diffuseColor.rgb;
+#ifdef USE_DIFFUSE_MAP
+	Texture2D diffuseTexture = g_DiffuseTextures[g_MaterialIndex];
+	diffuseColor *= diffuseTexture.Sample(g_Sampler, input.texCoord).rgb;
+#endif
 
+	float3 specularColor = g_MaterialDataBuffer[g_MaterialIndex].specularColor.rgb;
+#ifdef USE_SPECULAR_MAP
+	Texture2D specularTexture = g_SpecularTextures[g_MaterialIndex];
+	specularColor *= specularTexture.Sample(g_Sampler, input.texCoord).rgb;
+#endif
+
+	float specularPower = g_MaterialDataBuffer[g_MaterialIndex].specularPower;
+#ifdef USE_SPECULAR_POWER_MAP
+	Texture2D specularPowerTexture = g_SpecularPowerTextures[g_MaterialIndex];
+	specularPower *= specularPowerTexture.Sample(g_Sampler, input.texCoord).r;
+#endif
+
+	PSOutput output;
 	output.worldSpaceNormal = float4(normalize(input.worldSpaceNormal), 0.0f);
-	output.diffuseColor = float4(g_MaterialBuffer[g_MaterialIndex].diffuseColor.rgb, 1.0f);
-	output.specularColor = float4(g_MaterialBuffer[g_MaterialIndex].specularColor.rgb, g_MaterialBuffer[g_MaterialIndex].specularPower);
+	output.diffuseColor = float4(diffuseColor, 1.0f);
+	output.specularColor = float4(specularColor, specularPower);
 
 	return output;
 }

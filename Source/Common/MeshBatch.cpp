@@ -243,6 +243,8 @@ void MeshBatch::InitMeshDescBuffer(RenderEnv* pRenderEnv, const MeshBatchData* p
 
 void MeshBatch::InitMaterialBuffer(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData)
 {
+	assert(false);
+	/*
 	const u32 numMeshes = pBatchData->GetNumMeshes();
 	const u32 structureByteStride = sizeof(Material);
 
@@ -250,5 +252,6 @@ void MeshBatch::InitMaterialBuffer(RenderEnv* pRenderEnv, const MeshBatchData* p
 	m_pMaterialBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshBatch::m_pMaterialBuffer");
 
 	m_pUploadMaterialBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"MeshBatch::m_pUploadMaterialBuffer");
-	m_pUploadMaterialBuffer->Write(pBatchData->GetMaterials(), numMeshes * structureByteStride);
+	m_pUploadMaterialBuffer->Write(pBatchData->GetMaterialIndices(), numMeshes * structureByteStride);
+	*/
 }

@@ -78,7 +78,7 @@ private:
 class MeshData
 {
 public:
-	MeshData(VertexData* pVertexData, IndexData* pIndexData, Material* pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
+	MeshData(VertexData* pVertexData, IndexData* pIndexData, u32 materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
 	~MeshData();
 
 	VertexData* GetVertexData() { return m_pVertexData; }
@@ -93,12 +93,12 @@ public:
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType() const { return m_PrimitiveTopologyType; }
 	D3D12_PRIMITIVE_TOPOLOGY GetPrimitiveTopology() const { return m_PrimitiveTopology; }
 	
-	const Material* GetMaterial() const { return m_pMaterial; }
+	u32 GetMaterialIndex() const { return m_pMaterialIndex; }
 	
 private:
 	VertexData* m_pVertexData;
 	IndexData* m_pIndexData;
-	Material* m_pMaterial;
+	u32 m_pMaterialIndex;
 	AxisAlignedBox* m_pAABB;
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE m_PrimitiveTopologyType;
 	D3D12_PRIMITIVE_TOPOLOGY m_PrimitiveTopology;

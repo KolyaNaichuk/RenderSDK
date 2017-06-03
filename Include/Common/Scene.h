@@ -3,15 +3,24 @@
 #include "Common/Light.h"
 #include "Common/MeshBatchData.h"
 
+struct Material;
+
 class Scene
 {
 public:
+	Scene();
 	~Scene();
 
-	void AddMeshBatch(MeshBatchData* pMeshBatch);
-	std::size_t GetNumMeshBatches() const;
-	MeshBatchData** GetMeshBatches();
-	
+	const MeshBatchData* GetMeshBatchData() const;
+	void SetMeshBatchData(MeshBatchData* pMeshBatch);
+		
+	void AddMaterial(Material* pMaterial);
+	std::size_t GetNumMaterials() const;
+	Material** GetMaterials();
+
+	const DirectionalLight* GetDirectionalLight() const;
+	void SetDirectionalLight(DirectionalLight* pDirectionalLight);
+
 	void AddPointLight(PointLight* pPointLight);
 	std::size_t GetNumPointLights() const;
 	PointLight** GetPointLights();
@@ -19,13 +28,11 @@ public:
 	void AddSpotLight(SpotLight* pSpotLight);
 	std::size_t GetNumSpotLights() const;
 	SpotLight** GetSpotLights();
-
-	const DirectionalLight* GetDirectionalLight() const;
-	void SetDirectionalLight(DirectionalLight* pDirectionalLight);
-	
+			
 private:
-	std::vector<MeshBatchData*> m_MeshBatches;
+	MeshBatchData* m_pMeshBatchData;
+	std::vector<Material*> m_Materials;
+	DirectionalLight* m_pDirectionalLight;
 	std::vector<PointLight*> m_PointLights;
 	std::vector<SpotLight*> m_SpotLights;
-	DirectionalLight* m_pDirectionalLight;
 };

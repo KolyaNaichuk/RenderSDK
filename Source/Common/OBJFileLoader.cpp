@@ -3,6 +3,7 @@
 #include "Common/MeshBatchData.h"
 #include "Common/MeshData.h"
 #include "Common/MeshDataUtilities.h"
+#include "Common/Scene.h"
 #include "Math/Hash.h"
 #include <cwctype>
 #include <limits>
@@ -74,7 +75,7 @@ namespace OBJFile
 	}
 }
 
-std::shared_ptr<MeshBatchData> OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8 convertMeshDataFlags)
+Scene* OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8 convertMeshDataFlags)
 {
 	Clear();
 
@@ -92,7 +93,7 @@ std::shared_ptr<MeshBatchData> OBJFileLoader::Load(const wchar_t* pOBJFilePath, 
 			return nullptr;
 	}
 
-	return GenerateMeshBatchData(use32BitIndices, convertMeshDataFlags);
+	return PopulateScene(use32BitIndices, convertMeshDataFlags);
 }
 
 bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, u8 convertMeshDataFlags)
@@ -361,7 +362,7 @@ u32 OBJFileLoader::FindMaterialIndex(const std::wstring& materialName) const
 	return OBJFile::kUnknownIndex;
 }
 
-std::shared_ptr<MeshBatchData> OBJFileLoader::GenerateMeshBatchData(bool use32BitIndices, u8 convertMeshDataFlags)
+Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshDataFlags)
 {
 	u8 vertexFormat = 0;
 	
@@ -377,8 +378,10 @@ std::shared_ptr<MeshBatchData> OBJFileLoader::GenerateMeshBatchData(bool use32Bi
 	const DXGI_FORMAT indexFormat = use32BitIndices ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
 	const D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	const D3D12_PRIMITIVE_TOPOLOGY primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-
-	auto meshBatchData = std::make_shared<MeshBatchData>(vertexFormat, indexFormat, primitiveTopologyType, primitiveTopology);
+		
+	Scene* pScene = new Scene();
+	
+	MeshBatchData* pMeshBatchData = new MeshBatchData(vertexFormat, indexFormat, primitiveTopologyType, primitiveTopology);
 	for (const OBJFile::Object& object : m_Objects)
 	{
 		for (u32 meshIndex : object.m_MeshIndices)
@@ -392,19 +395,52 @@ std::shared_ptr<MeshBatchData> OBJFileLoader::GenerateMeshBatchData(bool use32Bi
 				GenerateVertexAndIndexData<u32>(mesh, &pVertexData, &pIndexData);
 			else
 				GenerateVertexAndIndexData<u16>(mesh, &pVertexData, &pIndexData);
-
-			Material* pMaterial = nullptr;
-			assert(pMaterial != nullptr);
-
-			MeshData meshData(pVertexData, pIndexData, pMaterial, primitiveTopologyType, primitiveTopology);
+						
+			MeshData meshData(pVertexData, pIndexData, mesh.m_MaterialIndex, primitiveTopologyType, primitiveTopology);
 			if (convertMeshDataFlags != 0)
 				ConvertMeshData(&meshData, convertMeshDataFlags);
 			meshData.RecalcAABB();
 
-			meshBatchData->Append(&meshData);
+			pMeshBatchData->Append(&meshData);
 		}
-	}	
-	return meshBatchData;
+	}
+	pScene->SetMeshBatchData(pMeshBatchData);
+
+	std::vector<std::string> materialMasks;
+	for (const OBJFile::Material& material : m_Materials)
+	{
+		Material* pMaterial = new Material(Vector4f(material.m_AmbientColor.m_X, material.m_AmbientColor.m_Y, material.m_AmbientColor.m_Z, 1.0f),
+			Vector4f(material.m_DiffuseColor.m_X, material.m_DiffuseColor.m_Y, material.m_DiffuseColor.m_Z, 1.0f),
+			Vector4f(material.m_SpecularColor.m_X, material.m_SpecularColor.m_Y, material.m_SpecularColor.m_Z, 1.0f),
+			material.m_SpecularPower,
+			Vector4f(material.m_EmissiveColor.m_X, material.m_EmissiveColor.m_Y, material.m_EmissiveColor.m_Z, 1.0f));
+
+		pMaterial->m_AmbientMapName = material.m_AmbientMapName;
+		pMaterial->m_DiffuseMapName = material.m_DiffuseMapName;
+		pMaterial->m_SpecularMapName = material.m_SpecularMapName;
+		pMaterial->m_SpecularPowerMapName = material.m_SpecularPowerMapName;
+		pMaterial->m_EmissiveMapName = material.m_EmissiveMapName;
+
+		pScene->AddMaterial(pMaterial);
+
+		std::string mask(6, '\n');
+		mask[0] = pMaterial->m_AmbientMapName.empty() ? '0' : '1';
+		mask[1] = pMaterial->m_DiffuseMapName.empty() ? '0' : '1';
+		mask[2] = pMaterial->m_SpecularMapName.empty() ? '0' : '1';
+		mask[3] = pMaterial->m_SpecularPowerMapName.empty() ? '0' : '1';
+		mask[4] = pMaterial->m_EmissiveMapName.empty() ? '0' : '1';
+
+		if (mask == "00000\n")
+			OutputDebugStringA("");
+
+		materialMasks.emplace_back(std::move(mask));
+	}
+
+	std::sort(materialMasks.begin(), materialMasks.end());
+	for (const auto& mask : materialMasks)
+		OutputDebugStringA(mask.c_str());
+	
+	return pScene;
 }
 
 template <typename Index>

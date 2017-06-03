@@ -72,7 +72,10 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 			assert(false);
 		}
 
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		u32 materialIndex = pScene->GetNumMaterials();
+		pScene->AddMaterial(pMaterial);
+
+		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 		meshData.RecalcAABB();
 
@@ -135,8 +138,11 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		{
 			assert(false);
 		}
+
+		u32 materialIndex = pScene->GetNumMaterials();
+		pScene->AddMaterial(pMaterial);
 		
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 		meshData.RecalcAABB();
 
@@ -199,8 +205,11 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		{
 			assert(false);
 		}
+
+		u32 materialIndex = pScene->GetNumMaterials();
+		pScene->AddMaterial(pMaterial);
 		
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 		meshData.RecalcAABB();
 
@@ -263,8 +272,11 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		{
 			assert(false);
 		}
+
+		u32 materialIndex = pScene->GetNumMaterials();
+		pScene->AddMaterial(pMaterial);
 		
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 		meshData.RecalcAABB();
 
@@ -328,7 +340,10 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 			assert(false);
 		}
 
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		u32 materialIndex = pScene->GetNumMaterials();
+		pScene->AddMaterial(pMaterial);
+
+		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 		meshData.RecalcAABB();
 
@@ -418,8 +433,11 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		{
 			assert(false);
 		}
+
+		u32 materialIndex = pScene->GetNumMaterials();
+		pScene->AddMaterial(pMaterial);
 		
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 		meshData.RecalcAABB();
 
@@ -510,14 +528,17 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 			assert(false);
 		}
 		
-		MeshData meshData(pVertexData, pIndexData, pMaterial, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		u32 materialIndex = pScene->GetNumMaterials();
+		pScene->AddMaterial(pMaterial);
+
+		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
 		meshData.RecalcAABB();
 
 		pMeshBatchData->Append(&meshData);
 	}
 
-	pScene->AddMeshBatch(pMeshBatchData);
+	pScene->SetMeshBatchData(pMeshBatchData);
 
 	// Cornell box bounds in left-handed coordinate system
 	// 0 <= x <= 549.6f

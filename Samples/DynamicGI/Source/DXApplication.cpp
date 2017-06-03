@@ -598,7 +598,7 @@ void DXApplication::OnInit()
 
 	InitRenderEnv(backBufferWidth, backBufferHeight);
 	
-	Scene* pScene = SceneLoader::LoadCornellBox(CornellBoxSettings_Original);
+	Scene* pScene = SceneLoader::LoadSponza();
 	InitScene(pScene, backBufferWidth, backBufferHeight);	
 	
 	InitDetectVisibleMeshesPass();
@@ -917,8 +917,7 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 	m_pCamera->SetClearFlags(Camera::ClearFlag_Color | Camera::ClearFlag_Depth);
 	m_pCamera->SetBackgroundColor(Color::BLACK);
 
-	assert(pScene->GetNumMeshBatches() == 1);
-	MeshBatchData* pMeshBatchData = *pScene->GetMeshBatches();
+	const MeshBatchData* pMeshBatchData = pScene->GetMeshBatchData();
 
 	StructuredBufferDesc drawCommandBufferDesc(pMeshBatchData->GetNumMeshes(), sizeof(DrawMeshCommand), true, true);
 	m_pDrawMeshCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawMeshCommandBuffer");
@@ -1116,6 +1115,7 @@ void DXApplication::InitRenderGBufferPass(UINT backBufferWidth, UINT backBufferH
 	initParams.m_DiffuseRTVFormat = GetRenderTargetViewFormat(m_pDiffuseTexture->GetFormat());
 	initParams.m_SpecularRTVFormat = GetRenderTargetViewFormat(m_pSpecularTexture->GetFormat());
 	initParams.m_DSVFormat = GetDepthStencilViewFormat(m_pDepthTexture->GetFormat());
+	initParams.m_ShaderFlags = 0;
 	initParams.m_pMeshBatch = m_pMeshBatch;
 
 	m_pRenderGBufferPass = new RenderGBufferPass(&initParams);

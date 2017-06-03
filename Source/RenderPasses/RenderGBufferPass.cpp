@@ -24,18 +24,29 @@ RenderGBufferPass::RenderGBufferPass(InitParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 
-	Shader vertexShader(L"Shaders//RenderGBufferVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//RenderGBufferPS.hlsl", "Main", "ps_4_0");
+	const ShaderMacro shaderDefines[] =
+	{
+		ShaderMacro("USE_TEXCOORDS", ((pParams->m_ShaderFlags & ShaderFlag_UseTexCoords) != 0) ? "1" : "0"),
+		ShaderMacro("USE_DIFFUSE_MAP", ((pParams->m_ShaderFlags & ShaderFlag_UseDiffuseMap) != 0) ? "1" : "0"),
+		ShaderMacro("USE_SPECULAR_MAP", ((pParams->m_ShaderFlags & ShaderFlag_UseSpecularMap) != 0) ? "1" : "0"),
+		ShaderMacro("USE_SPECULAR_POWER_MAP", ((pParams->m_ShaderFlags & ShaderFlag_UseSpecularPowerMap) != 0) ? "1" : "0"),
+		ShaderMacro()
+	};
+
+	Shader vertexShader(L"Shaders//RenderGBufferVS.hlsl", "Main", "vs_4_0", shaderDefines);
+	Shader pixelShader(L"Shaders//RenderGBufferPS.hlsl", "Main", "ps_4_0", shaderDefines);
 
 	D3D12_DESCRIPTOR_RANGE descriptorRangesVS[] = {CBVDescriptorRange(1, 0)};
-	D3D12_DESCRIPTOR_RANGE descriptorRangesPS[] = {SRVDescriptorRange(1, 0)};
+	D3D12_DESCRIPTOR_RANGE descriptorRangesPS[] = {SRVDescriptorRange(4, 0)};
 
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kCBVRootParamVS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesVS), &descriptorRangesVS[0], D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParams[kConstant32BitRootParamPS] = Root32BitConstantsParameter(0, D3D12_SHADER_VISIBILITY_PIXEL, 1);
 	rootParams[kSRVRootParamPS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesPS), &descriptorRangesPS[0], D3D12_SHADER_VISIBILITY_PIXEL);
 	
-	RootSignatureDesc rootSignatureDesc(kNumRootParams, &rootParams[0], D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	StaticSamplerDesc samplerDesc(StaticSamplerDesc::Linear, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+	
+	RootSignatureDesc rootSignatureDesc(kNumRootParams, &rootParams[0], 1, &samplerDesc, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"RenderGBufferPass::m_pRootSignature");
 		
 	GraphicsPipelineStateDesc pipelineStateDesc;

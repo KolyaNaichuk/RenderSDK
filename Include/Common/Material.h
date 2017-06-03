@@ -4,13 +4,18 @@
 
 struct Material
 {
-	Material();
-	Material(const Vector4f& ambientColor, const Vector4f& diffuseColor,
-		const Vector4f& specularColor, f32 specularPower, const Vector4f& emissiveColor);
-
+	Material(const Vector4f& ambientColor, const Vector4f& diffuseColor, const Vector4f& specularColor,
+		f32 specularPower, const Vector4f& emissiveColor);
+	
 	Vector4f m_AmbientColor;
 	Vector4f m_DiffuseColor;
 	Vector4f m_SpecularColor;
 	f32	m_SpecularPower;
 	Vector4f m_EmissiveColor;
+
+	std::wstring m_AmbientMapName;
+	std::wstring m_DiffuseMapName;
+	std::wstring m_SpecularMapName;
+	std::wstring m_SpecularPowerMapName;
+	std::wstring m_EmissiveMapName;
 };

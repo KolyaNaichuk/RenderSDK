@@ -16,6 +16,13 @@ struct BindingResourceList;
 class RenderGBufferPass
 {
 public:
+	enum ShaderFlags
+	{
+		ShaderFlag_UseTexCoords = 1 << 0,
+		ShaderFlag_UseDiffuseMap = 1 << 1,
+		ShaderFlag_UseSpecularMap = 1 << 2,
+		ShaderFlag_UseSpecularPowerMap = 1 << 3
+	};
 	struct InitParams
 	{
 		RenderEnv* m_pRenderEnv;
@@ -23,6 +30,7 @@ public:
 		DXGI_FORMAT m_DiffuseRTVFormat;
 		DXGI_FORMAT m_SpecularRTVFormat;
 		DXGI_FORMAT m_DSVFormat;
+		u8 m_ShaderFlags;
 		MeshBatch* m_pMeshBatch;
 	};
 	struct RenderParams
