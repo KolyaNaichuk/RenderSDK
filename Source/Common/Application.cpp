@@ -21,7 +21,7 @@ Application::Application(HINSTANCE hApp, LPCWSTR pWindowName, LONG windowX, LONG
 
 Application::~Application()
 {
-	delete m_pWindow;
+	SafeDelete(m_pWindow);
 }
 
 int Application::Run(int showCommand)

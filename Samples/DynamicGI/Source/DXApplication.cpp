@@ -1290,14 +1290,6 @@ void DXApplication::InitTiledShadingPass()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pPointLightIndexPerTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pPointLightRangePerTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
-	else
-	{
-		m_pShaderVisibleSRVHeap->Allocate();
-		m_pShaderVisibleSRVHeap->Allocate();
-		m_pShaderVisibleSRVHeap->Allocate();
-		m_pShaderVisibleSRVHeap->Allocate();
-	}
-
 	if (m_pSpotLightBuffer != nullptr)
 	{
 		Buffer* pLightBoundsBuffer = m_pSpotLightBuffer->GetLightBoundsBuffer();
@@ -1312,13 +1304,6 @@ void DXApplication::InitTiledShadingPass()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightIndexPerTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightRangePerTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
-	else
-	{
-		m_pShaderVisibleSRVHeap->Allocate();
-		m_pShaderVisibleSRVHeap->Allocate();
-		m_pShaderVisibleSRVHeap->Allocate();
-		m_pShaderVisibleSRVHeap->Allocate();
 	}
 }
 

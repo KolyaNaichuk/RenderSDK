@@ -3,9 +3,9 @@ struct VSInput
 	float3 localSpacePos		: POSITION;
 	float3 localSpaceNormal		: NORMAL;
 
-#ifdef USE_TEXCOORDS
+#ifdef HAS_TEXCOORDS
 	float2 texCoord				: TEXCOORD;
-#endif
+#endif // HAS_TEXCOORDS
 };
 
 struct VSOutput
@@ -13,9 +13,9 @@ struct VSOutput
 	float4 clipSpacePos			: SV_Position;
 	float3 worldSpaceNormal		: NORMAL;
 
-#ifdef USE_TEXCOORDS
+#ifdef HAS_TEXCOORDS
 	float2 texCoord				: TEXCOORD;
-#endif
+#endif // HAS_TEXCOORDS
 };
 
 struct ObjectTransform
@@ -38,9 +38,9 @@ VSOutput Main(VSInput input)
 	output.clipSpacePos = mul(float4(input.localSpacePos.xyz, 1.0f), g_Transform.worldViewProjMatrix);
 	output.worldSpaceNormal = mul(float4(input.localSpaceNormal.xyz, 0.0f), g_Transform.worldNormalMatrix).xyz;
 
-#ifdef USE_TEXCOORDS
+#ifdef HAS_TEXCOORDS
 	output.texCoord = input.texCoord;
-#endif
+#endif // HAS_TEXCOORDS
 
 	return output;
 }

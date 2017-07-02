@@ -18,10 +18,10 @@ class RenderGBufferPass
 public:
 	enum ShaderFlags
 	{
-		ShaderFlag_UseTexCoords = 1 << 0,
-		ShaderFlag_UseDiffuseMap = 1 << 1,
-		ShaderFlag_UseSpecularMap = 1 << 2,
-		ShaderFlag_UseSpecularPowerMap = 1 << 3
+		ShaderFlag_HasTexCoords = 1 << 0,
+		ShaderFlag_HasDiffuseMap = 1 << 1,
+		ShaderFlag_HasSpecularMap = 1 << 2,
+		ShaderFlag_HasSpecularPowerMap = 1 << 3
 	};
 	struct InitParams
 	{

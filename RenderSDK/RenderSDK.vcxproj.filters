@@ -243,6 +243,12 @@
     <ClInclude Include="..\Include\Common\FileUtilities.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\DownscaleAndReprojectDepthPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CopyReprojectedDepthPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -449,6 +455,12 @@
     <ClCompile Include="..\Source\Common\FileUtilities.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\DownscaleAndReprojectDepthPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Include\RenderPasses\CopyReprojectedDepthPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -548,6 +560,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\VisualizeIntensityPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\DownscaleAndReprojectDepthCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="CopyReprojectedDepthPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

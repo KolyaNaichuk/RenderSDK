@@ -13,3 +13,5 @@ Samples/ToneMapping/Shaders/
 *.sdf
 *.suo
 *.user
+RenderSDK/x64/
+ipch/

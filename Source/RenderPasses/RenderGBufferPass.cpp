@@ -23,30 +23,49 @@ RenderGBufferPass::RenderGBufferPass(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
+	
+	std::vector<ShaderMacro> shaderDefinesVS;
+	std::vector<D3D12_DESCRIPTOR_RANGE> descriptorRangesVS = {CBVDescriptorRange(1, 0)};
 
-	const ShaderMacro shaderDefines[] =
+	std::vector<ShaderMacro> shaderDefinesPS;
+	std::vector<D3D12_DESCRIPTOR_RANGE> descriptorRangesPS = {SRVDescriptorRange(1, 0)};
+	std::vector<StaticSamplerDesc> staticSamplersPS;
+
+	if ((pParams->m_ShaderFlags & ShaderFlag_HasTexCoords) != 0)
 	{
-		ShaderMacro("USE_TEXCOORDS", ((pParams->m_ShaderFlags & ShaderFlag_UseTexCoords) != 0) ? "1" : "0"),
-		ShaderMacro("USE_DIFFUSE_MAP", ((pParams->m_ShaderFlags & ShaderFlag_UseDiffuseMap) != 0) ? "1" : "0"),
-		ShaderMacro("USE_SPECULAR_MAP", ((pParams->m_ShaderFlags & ShaderFlag_UseSpecularMap) != 0) ? "1" : "0"),
-		ShaderMacro("USE_SPECULAR_POWER_MAP", ((pParams->m_ShaderFlags & ShaderFlag_UseSpecularPowerMap) != 0) ? "1" : "0"),
-		ShaderMacro()
-	};
+		shaderDefinesVS.push_back(ShaderMacro("HAS_TEXCOORDS", "1"));
+		shaderDefinesPS.push_back(ShaderMacro("HAS_TEXCOORDS", "1"));
 
-	Shader vertexShader(L"Shaders//RenderGBufferVS.hlsl", "Main", "vs_4_0", shaderDefines);
-	Shader pixelShader(L"Shaders//RenderGBufferPS.hlsl", "Main", "ps_4_0", shaderDefines);
+		staticSamplersPS.push_back(StaticSamplerDesc(StaticSamplerDesc::Linear, 0, D3D12_SHADER_VISIBILITY_PIXEL));
+	}
+	if ((pParams->m_ShaderFlags & ShaderFlag_HasDiffuseMap) != 0)
+	{
+		shaderDefinesPS.push_back(ShaderMacro("HAS_DIFFUSE_MAP", "1"));
+		descriptorRangesPS.push_back(SRVDescriptorRange(1, 1));
+	}
+	if ((pParams->m_ShaderFlags & ShaderFlag_HasSpecularMap) != 0)
+	{
+		shaderDefinesPS.push_back(ShaderMacro("HAS_SPECULAR_MAP", "1"));
+		descriptorRangesPS.push_back(SRVDescriptorRange(1, 2));
+	}
+	if ((pParams->m_ShaderFlags & ShaderFlag_HasSpecularPowerMap) != 0)
+	{
+		shaderDefinesPS.push_back(ShaderMacro("HAS_SPECULAR_POWER_MAP", "1"));
+		descriptorRangesPS.push_back(SRVDescriptorRange(1, 3));
+	}
 
-	D3D12_DESCRIPTOR_RANGE descriptorRangesVS[] = {CBVDescriptorRange(1, 0)};
-	D3D12_DESCRIPTOR_RANGE descriptorRangesPS[] = {SRVDescriptorRange(4, 0)};
+	shaderDefinesVS.push_back(ShaderMacro());
+	shaderDefinesPS.push_back(ShaderMacro());
 
+	Shader vertexShader(L"Shaders//RenderGBufferVS.hlsl", "Main", "vs_4_0", shaderDefinesVS.data());
+	Shader pixelShader(L"Shaders//RenderGBufferPS.hlsl", "Main", "ps_4_0", shaderDefinesPS.data());
+	
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kCBVRootParamVS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesVS), &descriptorRangesVS[0], D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParams[kCBVRootParamVS] = RootDescriptorTableParameter(descriptorRangesVS.size(), descriptorRangesVS.data(), D3D12_SHADER_VISIBILITY_VERTEX);
 	rootParams[kConstant32BitRootParamPS] = Root32BitConstantsParameter(0, D3D12_SHADER_VISIBILITY_PIXEL, 1);
-	rootParams[kSRVRootParamPS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesPS), &descriptorRangesPS[0], D3D12_SHADER_VISIBILITY_PIXEL);
-	
-	StaticSamplerDesc samplerDesc(StaticSamplerDesc::Linear, 0, D3D12_SHADER_VISIBILITY_PIXEL);
-	
-	RootSignatureDesc rootSignatureDesc(kNumRootParams, &rootParams[0], 1, &samplerDesc, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	rootParams[kSRVRootParamPS] = RootDescriptorTableParameter(descriptorRangesPS.size(), descriptorRangesPS.data(), D3D12_SHADER_VISIBILITY_PIXEL);
+			
+	RootSignatureDesc rootSignatureDesc(kNumRootParams, &rootParams[0], staticSamplersPS.size(), staticSamplersPS.data(), D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"RenderGBufferPass::m_pRootSignature");
 		
 	GraphicsPipelineStateDesc pipelineStateDesc;

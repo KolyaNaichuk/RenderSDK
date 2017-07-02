@@ -10,6 +10,6 @@ ScaleTexturePass::ScaleTexturePass(GraphicsDevice* pDevice, ScaleFactor scaleFac
 
 ScaleTexturePass::~ScaleTexturePass()
 {
-	delete m_pRootSignature;
-	delete m_pPipelineState;
+	SafeDelete(m_pRootSignature);
+	SafeDelete(m_pPipelineState);
 }

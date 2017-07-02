@@ -60,7 +60,8 @@ struct DepthStencilDesc : public D3D12_DEPTH_STENCIL_DESC
 	enum Id
 	{
 		Disabled,
-		Enabled
+		Enabled,
+		Always
 	};
 	DepthStencilDesc(Id id = Disabled);
 };
@@ -82,7 +83,8 @@ struct StaticSamplerDesc : public D3D12_STATIC_SAMPLER_DESC
 	{
 		Point,
 		Linear,
-		Anisotropic
+		Anisotropic,
+		Max
 	};
 	StaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace = 0);
 };

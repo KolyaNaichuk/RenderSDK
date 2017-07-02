@@ -204,8 +204,10 @@
     <ClInclude Include="..\Include\Math\Vector4.h" />
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
     <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CopyReprojectedDepthPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateRenderGBufferCommandsPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\DownscaleAndReprojectDepthPass.h" />
     <ClInclude Include="..\Include\RenderPasses\InjectVirtualPointLightsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\PropagateLightPass.h" />
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h" />
@@ -222,6 +224,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp" />
+    <ClCompile Include="..\Include\RenderPasses\CopyReprojectedDepthPass.cpp" />
     <ClCompile Include="..\Source\Common\Application.cpp" />
     <ClCompile Include="..\Source\Common\Camera.cpp" />
     <ClCompile Include="..\Source\Common\Common.cpp" />
@@ -276,6 +279,7 @@
     <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateRenderGBufferCommandsPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\DownscaleAndReprojectDepthPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\InjectVirtualPointLightsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\PropagateLightPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp" />
@@ -573,6 +577,28 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\VisualizeIntensityPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\DownscaleAndReprojectDepthCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CopyReprojectedDepthPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>

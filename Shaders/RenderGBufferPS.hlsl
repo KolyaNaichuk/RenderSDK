@@ -5,9 +5,9 @@ struct PSInput
 	float4 screenSpacePos		: SV_Position;
 	float3 worldSpaceNormal		: NORMAL;
 
-#ifdef USE_TEXCOORDS
+#ifdef HAS_TEXCOORDS
 	float2 texCoord				: TEXCOORD;
-#endif
+#endif // HAS_TEXCOORDS
 };
 
 struct PSOutput
@@ -31,22 +31,22 @@ SamplerState g_Sampler : register(s0);
 PSOutput Main(PSInput input)
 {
 	float3 diffuseColor = g_MaterialDataBuffer[g_MaterialIndex].diffuseColor.rgb;
-#ifdef USE_DIFFUSE_MAP
+#ifdef HAS_DIFFUSE_MAP
 	Texture2D diffuseTexture = g_DiffuseTextures[g_MaterialIndex];
 	diffuseColor *= diffuseTexture.Sample(g_Sampler, input.texCoord).rgb;
-#endif
+#endif // HAS_DIFFUSE_MAP
 
 	float3 specularColor = g_MaterialDataBuffer[g_MaterialIndex].specularColor.rgb;
-#ifdef USE_SPECULAR_MAP
+#ifdef HAS_SPECULAR_MAP
 	Texture2D specularTexture = g_SpecularTextures[g_MaterialIndex];
 	specularColor *= specularTexture.Sample(g_Sampler, input.texCoord).rgb;
-#endif
+#endif // HAS_SPECULAR_MAP
 
 	float specularPower = g_MaterialDataBuffer[g_MaterialIndex].specularPower;
-#ifdef USE_SPECULAR_POWER_MAP
+#ifdef HAS_SPECULAR_POWER_MAP
 	Texture2D specularPowerTexture = g_SpecularPowerTextures[g_MaterialIndex];
 	specularPower *= specularPowerTexture.Sample(g_Sampler, input.texCoord).r;
-#endif
+#endif // HAS_SPECULAR_POWER_MAP
 
 	PSOutput output;
 	output.worldSpaceNormal = float4(normalize(input.worldSpaceNormal), 0.0f);
