@@ -1,8 +1,7 @@
-struct MeshInfo
+struct InstanceRange
 {
 	uint instanceOffset;
 	uint numInstances;
-	uint meshIndex;
 };
 
 struct FrustumCullingData
@@ -12,13 +11,12 @@ struct FrustumCullingData
 };
 
 StructuredBuffer<AABB> g_InstanceAABBBuffer : register(t0);
-StructuredBuffer<MeshInfo> g_MeshInfoBuffer : register(t1);
+StructuredBuffer<InstanceRange> g_InstanceRangeBuffer : register(t1);
 
 RWStructuredBuffer<uint> g_NumVisibleMeshesBuffer : register(u0);
-RWStructuredBuffer<DrawMeshCommand> g_DrawOOBCommandBuffer : register(u1);
-RWStructuredBuffer<MeshInfo> g_VisibleMeshInfoBuffer : register(u2);
-RWStructuredBuffer<uint> g_NumVisibleInstancesBuffer : register(u3);
-RWStructuredBuffer<uint> g_VisibleInstanceIndexBuffer : register(u4);
+RWStructuredBuffer<InstanceRange> g_VisibleInstanceRangeBuffer : register(u1);
+RWStructuredBuffer<uint> g_NumVisibleInstancesBuffer : register(u2);
+RWStructuredBuffer<uint> g_VisibleInstanceIndexBuffer : register(u3);
 
 groupshared uint g_NumVisibleInstances;
 groupshared uint g_VisibleInstanceIndices[MAX_NUM_INSTANCES];
@@ -34,10 +32,10 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 	}
 	GroupMemoryBarrierWithGroupSync();
  
-	MeshInfo meshInfo = g_MeshInfoBuffer[groupId.x];
-	for (uint index = localIndex; index < meshInfo.numInstances; index += THREAD_GROUP_SIZE)
+	InstanceRange instanceRange = g_InstanceRangeBuffer[groupId.x];
+	for (uint index = localIndex; index < instanceRange.numInstances; index += THREAD_GROUP_SIZE)
 	{
-		uint globalIndex = meshInfo.instanceOffset + index;
+		uint globalIndex = instanceRange.instanceOffset + index;
 		if (TestAABBAgainstFrustum(g_CullingData.frustumPlanes, g_InstanceAABBBuffer[globalIndex]))
 		{
 			uint listIndex;
@@ -51,23 +49,16 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 	{
 		if (g_NumVisibleInstances > 0)
 		{
-			uint instanceOffset;
+			uint instanceOffset;			
 			InterlockedAdd(g_NumVisibleInstancesBuffer[0], g_NumVisibleInstances, instanceOffset);
+			
 			g_VisibleInstanceOffset = instanceOffset;
 
 			uint meshOffset;
 			InterlockedAdd(g_NumVisibleMeshesBuffer[0], 1, meshOffset);
-
-			g_VisibleMeshInfoBuffer[meshOffset].instanceOffset = instanceOffset;
-			g_VisibleMeshInfoBuffer[meshOffset].numInstances = g_NumVisibleInstances;
-			g_VisibleMeshInfoBuffer[meshOffset].meshIndex = meshInfo.meshIndex;
-
-			g_DrawOOBCommandBuffer[meshOffset].root32BitConstant = instanceOffset;
-			g_DrawOOBCommandBuffer[meshOffset].drawArgs.indexCountPerInstance = 8;
-			g_DrawOOBCommandBuffer[meshOffset].drawArgs.instanceCount = g_NumVisibleInstances;
-			g_DrawOOBCommandBuffer[meshOffset].drawArgs.startIndexLocation = 0;
-			g_DrawOOBCommandBuffer[meshOffset].drawArgs.baseVertexLocation = 0;
-			g_DrawOOBCommandBuffer[meshOffset].drawArgs.startInstanceLocation = 0;
+			
+			g_VisibleInstanceRangeBuffer[meshOffset].instanceOffset = instanceOffset;
+			g_VisibleInstanceRangeBuffer[meshOffset].numInstances = g_NumVisibleInstances;
 		}
 	}
 	GroupMemoryBarrierWithGroupSync();
