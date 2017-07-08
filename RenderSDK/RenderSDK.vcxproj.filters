@@ -568,10 +568,8 @@
     <None Include="CopyReprojectedDepthPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="..\Shaders\FrustumMeshCulling.hlsl">
+    <None Include="..\Shaders\FrustumMeshCulling.hlsl">
       <Filter>Shaders</Filter>
-    </FxCompile>
+    </None>
   </ItemGroup>
 </Project>
