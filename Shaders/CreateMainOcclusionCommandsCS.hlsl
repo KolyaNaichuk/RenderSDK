@@ -28,14 +28,16 @@ StructuredBuffer<InstanceRange> g_InstanceRangeBuffer : register(t2);
 StructuredBuffer<MeshInfo> g_MeshInfoBuffer : register(t3);
 
 RWStructuredBuffer<uint> g_VisibleInstanceIndexBuffer : register(u0);
-RWStructuredBuffer<uint> g_OccludedInstanceIndexBuffer : register(u1);
-RWStructuredBuffer<uint> g_NumVisibleMeshesPerTypeBuffer : register(u2);
-RWStructuredBuffer<DrawCommand> g_DrawVisibleInstanceCommandBuffer : register(u3);
-RWStructuredBuffer<DrawCommand> g_DrawOccludedInstanceCommandBuffer : register(u4);
+RWStructuredBuffer<uint> g_NumVisibleMeshesPerTypeBuffer : register(u1);
+RWStructuredBuffer<DrawCommand> g_DrawVisibleInstanceCommandBuffer : register(u2);
+
+RWStructuredBuffer<uint> g_OccludedInstanceIndexBuffer : register(u3);
+RWStructuredBuffer<uint> g_NumOccludedMeshesBuffer : register(u4);
+RWStructuredBuffer<InstanceRange> g_OccludedInstanceRangeBuffer : register(u5);
+RWStructuredBuffer<DrawCommand> g_DrawOccludedInstanceCommandBuffer : register(u6);
 
 groupshared uint g_NumVisibleInstances;
 groupshared uint g_VisibleInstanceIndices[MAX_NUM_INSTANCES];
-groupshared uint g_VisibleInstanceOffset;
 
 groupshared uint g_NumOccludedInstances;
 groupshared uint g_OccludedInstanceIndices[MAX_NUM_INSTANCES];
@@ -77,20 +79,29 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 		{
 			MeshInfo meshInfo = g_MeshInfoBuffer[instanceRange.meshIndex];
 			
-			uint offset;
-			InterlockedAdd(g_DrawOccludedInstanceCommandBuffer[0].args.instanceCount, 1, offset);
-			g_OccludedInstanceOffset = offset;
-
-			InterlockedAdd(g_NumVisibleMeshesPerTypeBuffer[meshInfo.meshType], 1, offset);
-			offset += meshInfo.meshTypeOffset;
+			uint commandOffset;
+			InterlockedAdd(g_NumVisibleMeshesPerTypeBuffer[meshInfo.meshType], 1, commandOffset);
+			commandOffset += meshInfo.meshTypeOffset;
 			
-			g_DrawVisibleInstanceCommandBuffer[offset].instanceOffset = instanceRange.instanceOffset;
-			g_DrawVisibleInstanceCommandBuffer[offset].materialId = meshInfo.materialId;
-			g_DrawVisibleInstanceCommandBuffer[offset].args.indexCountPerInstance = meshInfo.indexCountPerInstance;
-			g_DrawVisibleInstanceCommandBuffer[offset].args.instanceCount = g_NumVisibleInstances;
-			g_DrawVisibleInstanceCommandBuffer[offset].args.startIndexLocation = meshInfo.startIndexLocation;
-			g_DrawVisibleInstanceCommandBuffer[offset].args.baseVertexLocation = meshInfo.baseVertexLocation;
-			g_DrawVisibleInstanceCommandBuffer[offset].args.startInstanceLocation = 0;
+			g_DrawVisibleInstanceCommandBuffer[commandOffset].instanceOffset = instanceRange.instanceOffset;
+			g_DrawVisibleInstanceCommandBuffer[commandOffset].materialId = meshInfo.materialId;
+			g_DrawVisibleInstanceCommandBuffer[commandOffset].args.indexCountPerInstance = meshInfo.indexCountPerInstance;
+			g_DrawVisibleInstanceCommandBuffer[commandOffset].args.instanceCount = g_NumVisibleInstances;
+			g_DrawVisibleInstanceCommandBuffer[commandOffset].args.startIndexLocation = meshInfo.startIndexLocation;
+			g_DrawVisibleInstanceCommandBuffer[commandOffset].args.baseVertexLocation = meshInfo.baseVertexLocation;
+			g_DrawVisibleInstanceCommandBuffer[commandOffset].args.startInstanceLocation = 0;
+		}
+		if (g_NumOccludedInstances > 0)
+		{
+			uint instanceOffset;
+			InterlockedAdd(g_DrawOccludedInstanceCommandBuffer[0].args.instanceCount, g_NumOccludedInstances, instanceOffset);
+			g_OccludedInstanceOffset = instanceOffset;
+
+			uint meshOffset;
+			InterlockedAdd(g_NumOccludedMeshesBuffer[0], 1, meshOffset);
+			g_OccludedInstanceRangeBuffer[meshOffset].instanceOffset = instanceOffset;
+			g_OccludedInstanceRangeBuffer[meshOffset].numInstances = g_NumOccludedInstances;
+			g_OccludedInstanceRangeBuffer[meshOffset].meshIndex = instanceRange.meshIndex;
 		}
 	}
 	GroupMemoryBarrierWithGroupSync();

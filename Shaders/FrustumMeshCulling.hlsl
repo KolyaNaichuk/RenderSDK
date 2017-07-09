@@ -11,12 +11,24 @@ struct FrustumCullingData
 	float4 notUsed[10];
 };
 
+struct DrawCommand
+{
+	uint instanceOffset;
+	uint materialId;
+	DrawIndexedArgs args;
+};
+
+cbuffer FrustumCullingDataBuffer : register(b0)
+{
+	FrustumCullingData g_CullingData;
+}
+
 StructuredBuffer<AABB> g_InstanceAABBBuffer : register(t0);
 StructuredBuffer<InstanceRange> g_InstanceRangeBuffer : register(t1);
 
 RWStructuredBuffer<uint> g_NumVisibleMeshesBuffer : register(u0);
 RWStructuredBuffer<InstanceRange> g_VisibleInstanceRangeBuffer : register(u1);
-RWStructuredBuffer<uint> g_NumVisibleInstancesBuffer : register(u2); // Kolya. Should I use DrawCommand directly as in CreateMainOcclusion?
+RWStructuredBuffer<DrawCommand> g_DrawVisibleInstanceCommandBuffer : register(u2);
 RWStructuredBuffer<uint> g_VisibleInstanceIndexBuffer : register(u3);
 
 groupshared uint g_NumVisibleInstances;
@@ -50,14 +62,15 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 	{
 		if (g_NumVisibleInstances > 0)
 		{
-			uint offset;
-			InterlockedAdd(g_NumVisibleInstancesBuffer[0], g_NumVisibleInstances, offset);
-			g_VisibleInstanceOffset = offset;
+			uint instanceOffset;
+			InterlockedAdd(g_DrawVisibleInstanceCommandBuffer[0].args.instanceCount, g_NumVisibleInstances, instanceOffset);
+			g_VisibleInstanceOffset = instanceOffset;
 
-			InterlockedAdd(g_NumVisibleMeshesBuffer[0], 1, offset);	
-			g_VisibleInstanceRangeBuffer[offset].instanceOffset = instanceOffset;
-			g_VisibleInstanceRangeBuffer[offset].numInstances = g_NumVisibleInstances;
-			g_VisibleInstanceRangeBuffer[offset].meshIndex = instanceRange.meshIndex;
+			uint meshOffset;
+			InterlockedAdd(g_NumVisibleMeshesBuffer[0], 1, meshOffset);
+			g_VisibleInstanceRangeBuffer[meshOffset].instanceOffset = instanceOffset;
+			g_VisibleInstanceRangeBuffer[meshOffset].numInstances = g_NumVisibleInstances;
+			g_VisibleInstanceRangeBuffer[meshOffset].meshIndex = instanceRange.meshIndex;
 		}
 	}
 	GroupMemoryBarrierWithGroupSync();
