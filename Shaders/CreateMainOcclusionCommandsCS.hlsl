@@ -84,13 +84,13 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 			InterlockedAdd(g_NumVisibleMeshesPerTypeBuffer[meshInfo.meshType], 1, offset);
 			offset += meshInfo.meshTypeOffset;
 			
-			g_DrawVisibleCommandBuffer[offset].instanceOffset = instanceRange.instanceOffset;
-			g_DrawVisibleCommandBuffer[offset].materialId = meshInfo.materialId;
-			g_DrawVisibleCommandBuffer[offset].args.indexCountPerInstance = meshInfo.indexCountPerInstance;
-			g_DrawVisibleCommandBuffer[offset].args.instanceCount = g_NumVisibleInstances;
-			g_DrawVisibleCommandBuffer[offset].args.startIndexLocation = meshInfo.startIndexLocation;
-			g_DrawVisibleCommandBuffer[offset].args.baseVertexLocation = meshInfo.baseVertexLocation;
-			g_DrawVisibleCommandBuffer[offset].args.startInstanceLocation = 0;
+			g_DrawVisibleInstanceCommandBuffer[offset].instanceOffset = instanceRange.instanceOffset;
+			g_DrawVisibleInstanceCommandBuffer[offset].materialId = meshInfo.materialId;
+			g_DrawVisibleInstanceCommandBuffer[offset].args.indexCountPerInstance = meshInfo.indexCountPerInstance;
+			g_DrawVisibleInstanceCommandBuffer[offset].args.instanceCount = g_NumVisibleInstances;
+			g_DrawVisibleInstanceCommandBuffer[offset].args.startIndexLocation = meshInfo.startIndexLocation;
+			g_DrawVisibleInstanceCommandBuffer[offset].args.baseVertexLocation = meshInfo.baseVertexLocation;
+			g_DrawVisibleInstanceCommandBuffer[offset].args.startInstanceLocation = 0;
 		}
 	}
 	GroupMemoryBarrierWithGroupSync();

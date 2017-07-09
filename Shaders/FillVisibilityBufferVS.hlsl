@@ -35,6 +35,7 @@ VSOutput Main(uint instanceId : SV_InstanceID, uint vertexId : SV_VertexID)
 	output.occludeeIndex = occludeeIndex;
 	output.clipSpacePos = mul(localSpacePos, worldViewProjMatrix);
 
+	// Kolya. No need for false-negative pass
 	float viewSpaceDepth = output.clipSpacePos.w;
 	if (viewSpaceDepth < 0.0f)
 		output.clipSpacePos = float4(clamp(output.clipSpacePos.xy, float2(-0.999f, -0.999f), float2(0.999f, 0.999f)), 0.0001f, 1.0f);
