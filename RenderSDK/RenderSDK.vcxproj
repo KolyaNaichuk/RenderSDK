@@ -598,15 +598,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="CopyReprojectedDepthPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Shaders\FrustumMeshCulling.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
@@ -616,6 +607,23 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\CreateFalseNegativeOcclusionCommandsCS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\CreateMainOcclusionCommandsCS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\CopyReprojectedDepthPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\FillVisibilityBufferPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\FillVisibilityBufferVS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

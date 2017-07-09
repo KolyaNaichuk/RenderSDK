@@ -15,3 +15,6 @@ Samples/ToneMapping/Shaders/
 *.user
 RenderSDK/x64/
 ipch/
+Samples/ToneMapping/x64/
+Samples/DynamicGI/x64/
+Samples/HelloRectangle/x64/

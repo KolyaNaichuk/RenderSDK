@@ -565,11 +565,25 @@
     <None Include="..\Shaders\DownscaleAndReprojectDepthCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="CopyReprojectedDepthPS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\FrustumMeshCulling.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\Shaders\FillVisibilityBufferVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateFalseNegativeOcclusionCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateMainOcclusionCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CopyReprojectedDepthPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Shaders\FillVisibilityBufferPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
