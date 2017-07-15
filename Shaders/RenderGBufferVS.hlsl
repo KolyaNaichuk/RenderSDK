@@ -1,46 +1,41 @@
 struct VSInput
 {
+	uint   instanceId			: SV_InstanceID
 	float3 localSpacePos		: POSITION;
 	float3 localSpaceNormal		: NORMAL;
-
-#ifdef HAS_TEXCOORDS
 	float2 texCoord				: TEXCOORD;
-#endif // HAS_TEXCOORDS
 };
 
 struct VSOutput
 {
+	uint   materialId			: MATERIAL_ID;
 	float4 clipSpacePos			: SV_Position;
 	float3 worldSpaceNormal		: NORMAL;
-
-#ifdef HAS_TEXCOORDS
 	float2 texCoord				: TEXCOORD;
-#endif // HAS_TEXCOORDS
 };
 
-struct ObjectTransform
+cbuffer InstanceOffsetBuffer : register(b0)
 {
-	matrix worldPositionMatrix;
-	matrix worldNormalMatrix;
-	matrix worldViewProjMatrix;
-	float4 notUsed[4];
-};
-
-cbuffer ObjectTransformBuffer : register(b0)
-{
-	ObjectTransform g_Transform;
+	uint g_InstanceOffset;
+	uint g_MaterialId;	// Kolya. Check if I could pass it directly to pixel shader
 }
+
+StructuredBuffer<uint> g_InstanceIndexBuffer : register(t0);
+StructuredBuffer<matrix> g_InstanceWorldMatrixBuffer : register(t1); // Kolya. Potential issue with matrix storage
+StructuredBuffer<matrix> g_InstanceWorldViewProjMatrixBuffer : register(t2); // Kolya. Potential issue with matrix storage
 
 VSOutput Main(VSInput input)
 {
+	uint instanceIndex = g_InstanceIndexBuffer[g_InstanceOffset + input.instanceId];
+
+	matrix worldMatrix = g_InstanceWorldMatrixBuffer[instanceIndex];
+	matrix worldViewProjMatrix = g_InstanceWorldViewProjMatrixBuffer[instanceIndex];
+
 	VSOutput output;
-
-	output.clipSpacePos = mul(float4(input.localSpacePos.xyz, 1.0f), g_Transform.worldViewProjMatrix);
-	output.worldSpaceNormal = mul(float4(input.localSpaceNormal.xyz, 0.0f), g_Transform.worldNormalMatrix).xyz;
-
-#ifdef HAS_TEXCOORDS
+	output.materialId = g_MaterialId;
+	output.clipSpacePos = mul(float4(input.localSpacePos, 1.0f), worldViewProjMatrix);
+	output.worldSpaceNormal = mul(float4(input.localSpaceNormal, 0.0f), worldMatrix).xyz;
 	output.texCoord = input.texCoord;
-#endif // HAS_TEXCOORDS
 
 	return output;
 }

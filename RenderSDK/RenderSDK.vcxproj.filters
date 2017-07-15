@@ -580,9 +580,12 @@
     <None Include="..\Shaders\CopyReprojectedDepthPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\Shaders\FillVisibilityBufferPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="..\Shaders\FillVisibilityBufferPS.hlsl">
+    <FxCompile Include="..\Shaders\FillDepthBufferWithMaterialIdPS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
