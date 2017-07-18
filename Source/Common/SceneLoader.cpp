@@ -5,15 +5,19 @@
 #include "Common/MeshDataUtilities.h"
 #include "Common/Light.h"
 #include "Common/Color.h"
+#include "Common/Material.h"
 #include "Common/OBJFileLoader.h"
 #include "Math/BasisAxes.h"
 
 Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 {
 	Scene* pScene = new Scene();
+	
+	const u8 meshVertexFormat = VertexData::FormatFlag_Position | VertexData::FormatFlag_Normal;
+	
+	MeshBatchData* pMeshBatchData = new MeshBatchData(meshVertexFormat, DXGI_FORMAT_R16_UINT,
+		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	const u8 meshBatchVertexFormat = VertexData::FormatFlag_Position | VertexData::FormatFlag_Normal;
-	MeshBatchData* pMeshBatchData = new MeshBatchData(meshBatchVertexFormat, DXGI_FORMAT_R16_UINT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	{
 		// Floor
 		const Vector3f positions[] =
@@ -74,12 +78,18 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 
 		u32 materialIndex = pScene->GetNumMaterials();
 		pScene->AddMaterial(pMaterial);
+		
+		u32 numInstances = 1;
+		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
+		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 
-		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		MeshData meshData(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
+			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		
 		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-		meshData.RecalcAABB();
+		meshData.RecalcInstanceWorldAABBs();
 
-		pMeshBatchData->Append(&meshData);
+		pMeshBatchData->AddMeshData(&meshData);
 	}
 	{
 		// Ceiling
@@ -141,12 +151,18 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 
 		u32 materialIndex = pScene->GetNumMaterials();
 		pScene->AddMaterial(pMaterial);
-		
-		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-		meshData.RecalcAABB();
 
-		pMeshBatchData->Append(&meshData);
+		u32 numInstances = 1;
+		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
+		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
+
+		MeshData meshData(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
+			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+		meshData.RecalcInstanceWorldAABBs();
+
+		pMeshBatchData->AddMeshData(&meshData);
 	}
 	{
 		// Back wall
@@ -208,12 +224,18 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 
 		u32 materialIndex = pScene->GetNumMaterials();
 		pScene->AddMaterial(pMaterial);
-		
-		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-		meshData.RecalcAABB();
 
-		pMeshBatchData->Append(&meshData);
+		u32 numInstances = 1;
+		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
+		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
+
+		MeshData meshData(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
+			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+		meshData.RecalcInstanceWorldAABBs();
+
+		pMeshBatchData->AddMeshData(&meshData);
 	}
 	{
 		// Right wall
@@ -275,12 +297,18 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 
 		u32 materialIndex = pScene->GetNumMaterials();
 		pScene->AddMaterial(pMaterial);
-		
-		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-		meshData.RecalcAABB();
 
-		pMeshBatchData->Append(&meshData);
+		u32 numInstances = 1;
+		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
+		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
+
+		MeshData meshData(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
+			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+		meshData.RecalcInstanceWorldAABBs();
+
+		pMeshBatchData->AddMeshData(&meshData);
 	}
 	{
 		// Left wall
@@ -343,11 +371,17 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		u32 materialIndex = pScene->GetNumMaterials();
 		pScene->AddMaterial(pMaterial);
 
-		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-		meshData.RecalcAABB();
+		u32 numInstances = 1;
+		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
+		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 
-		pMeshBatchData->Append(&meshData);
+		MeshData meshData(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
+			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+		meshData.RecalcInstanceWorldAABBs();
+
+		pMeshBatchData->AddMeshData(&meshData);
 	}
 	{
 		// Short block
@@ -436,12 +470,18 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 
 		u32 materialIndex = pScene->GetNumMaterials();
 		pScene->AddMaterial(pMaterial);
-		
-		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-		meshData.RecalcAABB();
 
-		pMeshBatchData->Append(&meshData);
+		u32 numInstances = 1;
+		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
+		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
+
+		MeshData meshData(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
+			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+		meshData.RecalcInstanceWorldAABBs();
+
+		pMeshBatchData->AddMeshData(&meshData);
 	}
 	{
 		// Tall block
@@ -531,11 +571,17 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		u32 materialIndex = pScene->GetNumMaterials();
 		pScene->AddMaterial(pMaterial);
 
-		MeshData meshData(pVertexData, pIndexData, materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
-		meshData.RecalcAABB();
+		u32 numInstances = 1;
+		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
+		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 
-		pMeshBatchData->Append(&meshData);
+		MeshData meshData(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
+			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		ConvertMeshData(&meshData, ConvertionFlag_LeftHandedCoordSystem);
+		meshData.RecalcInstanceWorldAABBs();
+
+		pMeshBatchData->AddMeshData(&meshData);
 	}
 
 	pScene->SetMeshBatchData(pMeshBatchData);

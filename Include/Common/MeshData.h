@@ -7,6 +7,7 @@ struct Material;
 struct Vector2f;
 struct Vector3f;
 struct Vector4f;
+struct Matrix4f;
 
 class VertexData
 {
@@ -23,6 +24,9 @@ public:
 		FormatFlag_Tangent = 1 << 3,
 		FormatFlag_TexCoords = 1 << 4
 	};
+
+	VertexData(const VertexData&) = delete;
+	VertexData& operator= (const VertexData&) = delete;
 
 	u8 GetFormatFlags() const { return m_FormatFlags; }
 	u32 GetNumVertices() const { return m_NumVertices; }
@@ -59,6 +63,9 @@ public:
 	IndexData(u32 numIndices, const u32* p32BitIndices);
 	~IndexData();
 
+	IndexData(const IndexData&) = delete;
+	IndexData& operator= (const IndexData&) = delete;
+
 	u32 GetNumIndices() const { return m_NumIndices; }
 	DXGI_FORMAT GetFormat() const { return m_Format; }
 
@@ -78,7 +85,9 @@ private:
 class MeshData
 {
 public:
-	MeshData(VertexData* pVertexData, IndexData* pIndexData, u32 materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
+	MeshData(VertexData* pVertexData, IndexData* pIndexData, u32 numInstances, Matrix4f* pInstanceWorldMatrices,
+		u32 materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
+	
 	~MeshData();
 
 	VertexData* GetVertexData() { return m_pVertexData; }
@@ -87,8 +96,10 @@ public:
 	IndexData* GetIndexData() { return m_pIndexData; };
 	const IndexData* GetIndexData() const { return m_pIndexData; };
 
-	const AxisAlignedBox* GetAABB() const { return m_pAABB; }
-	void RecalcAABB();
+	u32 GetNumInstances() const { return m_NumInstances; }
+	const Matrix4f* GetInstanceWorldMatrices() const { return m_pInstanceWorldMatrices; }
+	const AxisAlignedBox* GetInstanceWorldAABBs() const { return m_pInstanceWorldAABBs; }
+	void RecalcInstanceWorldAABBs();
 	
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType() const { return m_PrimitiveTopologyType; }
 	D3D12_PRIMITIVE_TOPOLOGY GetPrimitiveTopology() const { return m_PrimitiveTopology; }
@@ -98,8 +109,12 @@ public:
 private:
 	VertexData* m_pVertexData;
 	IndexData* m_pIndexData;
+
+	u32 m_NumInstances;
+	Matrix4f* m_pInstanceWorldMatrices;
+	AxisAlignedBox* m_pInstanceWorldAABBs;
+
 	u32 m_pMaterialIndex;
-	AxisAlignedBox* m_pAABB;
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE m_PrimitiveTopologyType;
 	D3D12_PRIMITIVE_TOPOLOGY m_PrimitiveTopology;
 };

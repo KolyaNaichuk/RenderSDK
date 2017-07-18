@@ -1,4 +1,4 @@
-struct InstanceRange
+struct MeshInstanceRange
 {
 	uint instanceOffset;
 	uint numInstances;
@@ -9,7 +9,7 @@ struct MeshInfo
 {
 	uint meshType;
 	uint meshTypeOffset;
-	uint materialId;
+	uint materialIndex;
 	uint indexCountPerInstance;
 	uint startIndexLocation;
 	int  baseVertexLocation;
@@ -18,13 +18,13 @@ struct MeshInfo
 struct DrawCommand
 {
 	uint instanceOffset;
-	uint materialId;
+	uint materialIndex;
 	DrawIndexedArgs args;
 };
 
 StructuredBuffer<uint> g_VisibilityBuffer : register(t0);
 StructuredBuffer<uint> g_InstanceIndexBuffer : register(t1);
-StructuredBuffer<InstanceRange> g_InstanceRangeBuffer : register(t2);
+StructuredBuffer<MeshInstanceRange> g_MeshInstanceRangeBuffer : register(t2);
 StructuredBuffer<MeshInfo> g_MeshInfoBuffer : register(t3);
 
 RWStructuredBuffer<uint> g_VisibleInstanceIndexBuffer : register(u0);
@@ -33,7 +33,7 @@ RWStructuredBuffer<DrawCommand> g_DrawVisibleInstanceCommandBuffer : register(u2
 
 RWStructuredBuffer<uint> g_OccludedInstanceIndexBuffer : register(u3);
 RWStructuredBuffer<uint> g_NumOccludedMeshesBuffer : register(u4);
-RWStructuredBuffer<InstanceRange> g_OccludedInstanceRangeBuffer : register(u5);
+RWStructuredBuffer<MeshInstanceRange> g_OccludedInstanceRangeBuffer : register(u5);
 RWStructuredBuffer<DrawCommand> g_DrawOccludedInstanceCommandBuffer : register(u6);
 
 groupshared uint g_NumVisibleInstances;
@@ -54,10 +54,10 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 	}
 	GroupMemoryBarrierWithGroupSync();
 
-	InstanceRange instanceRange = g_InstanceRangeBuffer[groupId.x];
-	for (uint index = localIndex; index < instanceRange.numInstances; index += THREAD_GROUP_SIZE)
+	MeshInstanceRange meshInstanceRange = g_MeshInstanceRangeBuffer[groupId.x];
+	for (uint index = localIndex; index < meshInstanceRange.numInstances; index += THREAD_GROUP_SIZE)
 	{
-		uint instanceIndex = g_InstanceIndexBuffer[instanceRange.instanceOffset + index];
+		uint instanceIndex = g_InstanceIndexBuffer[meshInstanceRange.instanceOffset + index];
 		if (g_VisibilityBuffer[instanceIndex] > 0)
 		{
 			uint listIndex;
@@ -77,14 +77,14 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 	{
 		if (g_NumVisibleInstances > 0)
 		{
-			MeshInfo meshInfo = g_MeshInfoBuffer[instanceRange.meshIndex];
+			MeshInfo meshInfo = g_MeshInfoBuffer[meshInstanceRange.meshIndex];
 			
 			uint commandOffset;
 			InterlockedAdd(g_NumVisibleMeshesPerTypeBuffer[meshInfo.meshType], 1, commandOffset);
 			commandOffset += meshInfo.meshTypeOffset;
 			
-			g_DrawVisibleInstanceCommandBuffer[commandOffset].instanceOffset = instanceRange.instanceOffset;
-			g_DrawVisibleInstanceCommandBuffer[commandOffset].materialId = meshInfo.materialId;
+			g_DrawVisibleInstanceCommandBuffer[commandOffset].instanceOffset = meshInstanceRange.instanceOffset;
+			g_DrawVisibleInstanceCommandBuffer[commandOffset].materialIndex = meshInfo.materialIndex;
 			g_DrawVisibleInstanceCommandBuffer[commandOffset].args.indexCountPerInstance = meshInfo.indexCountPerInstance;
 			g_DrawVisibleInstanceCommandBuffer[commandOffset].args.instanceCount = g_NumVisibleInstances;
 			g_DrawVisibleInstanceCommandBuffer[commandOffset].args.startIndexLocation = meshInfo.startIndexLocation;
@@ -101,13 +101,13 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 			InterlockedAdd(g_NumOccludedMeshesBuffer[0], 1, meshOffset);
 			g_OccludedInstanceRangeBuffer[meshOffset].instanceOffset = instanceOffset;
 			g_OccludedInstanceRangeBuffer[meshOffset].numInstances = g_NumOccludedInstances;
-			g_OccludedInstanceRangeBuffer[meshOffset].meshIndex = instanceRange.meshIndex;
+			g_OccludedInstanceRangeBuffer[meshOffset].meshIndex = meshInstanceRange.meshIndex;
 		}
 	}
 	GroupMemoryBarrierWithGroupSync();
 
 	for (uint index = localIndex; index < g_NumVisibleInstances; index += THREAD_GROUP_SIZE)
-		g_VisibleInstanceIndexBuffer[instanceRange.instanceOffset + index] = g_VisibleInstanceIndices[index];
+		g_VisibleInstanceIndexBuffer[meshInstanceRange.instanceOffset + index] = g_VisibleInstanceIndices[index];
 
 	for (uint index = localIndex; index < g_NumOccludedInstances; index += THREAD_GROUP_SIZE)
 		g_OccludedInstanceIndexBuffer[g_OccludedInstanceOffset + index] = g_OccludedInstanceIndices[index];

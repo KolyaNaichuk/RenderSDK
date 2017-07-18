@@ -1,14 +1,6 @@
 #include "Common/MeshBatchData.h"
 #include "Common/MeshData.h"
 
-MeshDesc::MeshDesc(u32 numIndices, u32 startIndexLocation, i32 baseVertexLocation, u32 materialIndex)
-	: m_NumIndices(numIndices)
-	, m_StartIndexLocation(startIndexLocation)
-	, m_BaseVertexLocation(baseVertexLocation)
-	, m_MaterialIndex(materialIndex)
-{
-}
-
 MeshBatchData::MeshBatchData(u8 vertexFormatFlags, DXGI_FORMAT indexFormat, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
 	: m_VertexFormatFlags(vertexFormatFlags)
 	, m_IndexFormat(indexFormat)
@@ -18,7 +10,7 @@ MeshBatchData::MeshBatchData(u8 vertexFormatFlags, DXGI_FORMAT indexFormat, D3D1
 	assert((m_IndexFormat == DXGI_FORMAT_R16_UINT) || (m_IndexFormat == DXGI_FORMAT_R32_UINT));
 }
 
-void MeshBatchData::Append(const MeshData* pMeshData)
+void MeshBatchData::AddMeshData(const MeshData* pMeshData)
 {
 	assert(m_PrimitiveTopology == pMeshData->GetPrimitiveTopology());
 	assert(m_PrimitiveTopologyType == pMeshData->GetPrimitiveTopologyType());
@@ -35,28 +27,33 @@ void MeshBatchData::Append(const MeshData* pMeshData)
 	const u32 numVertices = pVertexData->GetNumVertices();
 
 	{
-		const Vector3f* pPositions = pVertexData->GetPositions();
-		m_Positions.insert(m_Positions.end(), pPositions, pPositions + numVertices);
+		m_Positions.insert(m_Positions.end(),
+			pVertexData->GetPositions(),
+			pVertexData->GetPositions() + numVertices);
 	}	
 	if ((m_VertexFormatFlags & VertexData::FormatFlag_Normal) != 0)
 	{
-		const Vector3f* pNormals = pVertexData->GetNormals();
-		m_Normals.insert(m_Normals.end(), pNormals, pNormals + numVertices);
+		m_Normals.insert(m_Normals.end(),
+			pVertexData->GetNormals(),
+			pVertexData->GetNormals() + numVertices);
 	}
 	if ((m_VertexFormatFlags & VertexData::FormatFlag_TexCoords) != 0)
 	{
-		const Vector2f* pTexCoords = pVertexData->GetTexCoords();
-		m_TexCoords.insert(m_TexCoords.end(), pTexCoords, pTexCoords + numVertices);
+		m_TexCoords.insert(m_TexCoords.end(),
+			pVertexData->GetTexCoords(),
+			pVertexData->GetTexCoords() + numVertices);
 	}
 	if ((m_VertexFormatFlags & VertexData::FormatFlag_Color) != 0)
 	{
-		const Vector4f* pColors = pVertexData->GetColors();
-		m_Colors.insert(m_Colors.end(), pColors, pColors + numVertices);
+		m_Colors.insert(m_Colors.end(),
+			pVertexData->GetColors(),
+			pVertexData->GetColors() + numVertices);
 	}
 	if ((m_VertexFormatFlags & VertexData::FormatFlag_Tangent) != 0)
 	{
-		const Vector3f* pTangents = pVertexData->GetTangents();
-		m_Tangents.insert(m_Tangents.end(), pTangents, pTangents + numVertices);
+		m_Tangents.insert(m_Tangents.end(),
+			pVertexData->GetTangents(),
+			pVertexData->GetTangents() + numVertices);
 	}
 	
 	const u32 startIndexLocation = GetNumIndices();
@@ -64,17 +61,34 @@ void MeshBatchData::Append(const MeshData* pMeshData)
 
 	if (m_IndexFormat == DXGI_FORMAT_R16_UINT)
 	{
-		const u16* p16BitIndices = pIndexData->Get16BitIndices();
-		m_16BitIndices.insert(m_16BitIndices.end(), p16BitIndices, p16BitIndices + numIndices);
+		m_16BitIndices.insert(m_16BitIndices.end(),
+			pIndexData->Get16BitIndices(),
+			pIndexData->Get16BitIndices() + numIndices);
 	}
 	else
 	{
-		const u32* p32BitIndices = pIndexData->Get32BitIndices();
-		m_32BitIndices.insert(m_32BitIndices.end(), p32BitIndices, p32BitIndices + numIndices);
+		m_32BitIndices.insert(m_32BitIndices.end(),
+			pIndexData->Get32BitIndices(),
+			pIndexData->Get32BitIndices() + numIndices);
 	}
 
-	m_MeshDescs.emplace_back(numIndices, startIndexLocation, baseVertexLocation, pMeshData->GetMaterialIndex());
-	m_MeshAABBs.emplace_back(*pMeshData->GetAABB());
+	const u32 numInstances = pMeshData->GetNumInstances();
+	const u32 instanceOffset = GetNumMeshInstances();
+	
+	m_MeshInfos.emplace_back(numInstances,
+		instanceOffset,
+		numIndices,
+		startIndexLocation,
+		baseVertexLocation,
+		pMeshData->GetMaterialIndex());
+	
+	m_MeshInstanceAABBs.insert(m_MeshInstanceAABBs.end(),
+		pMeshData->GetInstanceWorldAABBs(),
+		pMeshData->GetInstanceWorldAABBs() + numInstances);
+	
+	m_MeshInstanceWorldMatrices.insert(m_MeshInstanceWorldMatrices.end(),
+		pMeshData->GetInstanceWorldMatrices(),
+		pMeshData->GetInstanceWorldMatrices() + numInstances);
 }
 
 u32 MeshBatchData::GetNumVertices() const

@@ -2,11 +2,13 @@
 
 struct PSInput
 {
-	uint   materialId			: MATERIAL_ID;
+	uint   materialIndex		: MATERIAL_INDEX;
 	float4 screenSpacePos		: SV_Position;
 	float3 worldSpaceNormal		: NORMAL;
 	float2 texCoord				: TEXCOORD;
 };
+
+// Kolya. Missing implementation
 
 struct PSOutput
 {

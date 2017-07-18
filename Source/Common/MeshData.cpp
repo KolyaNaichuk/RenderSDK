@@ -4,6 +4,7 @@
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 #include "Math/AxisAlignedBox.h"
+#include "Math/Matrix4.h"
 
 VertexData::~VertexData()
 {
@@ -172,26 +173,29 @@ const u32* IndexData::Get32BitIndices() const
 	return m_p32BitIndices;
 }
 
-MeshData::MeshData(VertexData* pVertexData, IndexData* pIndexData, u32 materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
+MeshData::MeshData(VertexData* pVertexData, IndexData* pIndexData, u32 numInstances, Matrix4f* pInstanceWorldMatrices,
+	u32 materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
 	: m_pVertexData(pVertexData)
 	, m_pIndexData(pIndexData)
+	, m_NumInstances(numInstances)
+	, m_pInstanceWorldMatrices(pInstanceWorldMatrices)
 	, m_pMaterialIndex(materialIndex)
-	, m_pAABB(new AxisAlignedBox(pVertexData->GetNumVertices(), pVertexData->GetPositions()))
+	, m_pInstanceWorldAABBs(nullptr)
 	, m_PrimitiveTopologyType(primitiveTopologyType)
 	, m_PrimitiveTopology(primitiveTopology)
 {
-	RecalcAABB();
+	RecalcInstanceWorldAABBs();
 }
 
 MeshData::~MeshData()
 {
 	SafeDelete(m_pVertexData);
 	SafeDelete(m_pIndexData);
-	SafeDelete(m_pAABB);
+	SafeArrayDelete(m_pInstanceWorldMatrices);
+	SafeArrayDelete(m_pInstanceWorldAABBs);
 }
 
-void MeshData::RecalcAABB()
+void MeshData::RecalcInstanceWorldAABBs()
 {
-	SafeDelete(m_pAABB);
-	m_pAABB = new AxisAlignedBox(m_pVertexData->GetNumVertices(), m_pVertexData->GetPositions());
+	assert(false && "Kolya fix me");
 }

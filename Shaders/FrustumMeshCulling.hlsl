@@ -1,4 +1,4 @@
-struct InstanceRange
+struct MeshInstanceRange
 {
 	uint instanceOffset;
 	uint numInstances;
@@ -14,7 +14,7 @@ struct FrustumCullingData
 struct DrawCommand
 {
 	uint instanceOffset;
-	uint materialId;
+	uint materialIndex;
 	DrawIndexedArgs args;
 };
 
@@ -24,10 +24,10 @@ cbuffer FrustumCullingDataBuffer : register(b0)
 }
 
 StructuredBuffer<AABB> g_InstanceAABBBuffer : register(t0);
-StructuredBuffer<InstanceRange> g_InstanceRangeBuffer : register(t1);
+StructuredBuffer<MeshInstanceRange> g_MeshInstanceRangeBuffer : register(t1);
 
 RWStructuredBuffer<uint> g_NumVisibleMeshesBuffer : register(u0);
-RWStructuredBuffer<InstanceRange> g_VisibleInstanceRangeBuffer : register(u1);
+RWStructuredBuffer<MeshInstanceRange> g_VisibleInstanceRangeBuffer : register(u1);
 RWStructuredBuffer<DrawCommand> g_DrawVisibleInstanceCommandBuffer : register(u2);
 RWStructuredBuffer<uint> g_VisibleInstanceIndexBuffer : register(u3);
 
@@ -45,10 +45,10 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 	}
 	GroupMemoryBarrierWithGroupSync();
  
-	InstanceRange instanceRange = g_InstanceRangeBuffer[groupId.x];
-	for (uint index = localIndex; index < instanceRange.numInstances; index += THREAD_GROUP_SIZE)
+	MeshInstanceRange meshInstanceRange = g_MeshInstanceRangeBuffer[groupId.x];
+	for (uint index = localIndex; index < meshInstanceRange.numInstances; index += THREAD_GROUP_SIZE)
 	{
-		uint instanceIndex = instanceRange.instanceOffset + index;
+		uint instanceIndex = meshInstanceRange.instanceOffset + index;
 		if (TestAABBAgainstFrustum(g_CullingData.frustumPlanes, g_InstanceAABBBuffer[instanceIndex]))
 		{
 			uint listIndex;
@@ -70,7 +70,7 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 			InterlockedAdd(g_NumVisibleMeshesBuffer[0], 1, meshOffset);
 			g_VisibleInstanceRangeBuffer[meshOffset].instanceOffset = instanceOffset;
 			g_VisibleInstanceRangeBuffer[meshOffset].numInstances = g_NumVisibleInstances;
-			g_VisibleInstanceRangeBuffer[meshOffset].meshIndex = instanceRange.meshIndex;
+			g_VisibleInstanceRangeBuffer[meshOffset].meshIndex = meshInstanceRange.meshIndex;
 		}
 	}
 	GroupMemoryBarrierWithGroupSync();

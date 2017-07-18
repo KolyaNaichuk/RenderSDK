@@ -4,16 +4,15 @@
 
 class Buffer;
 class CommandList;
+class MeshBatchData;
 
 struct InputLayoutDesc;
 struct RenderEnv;
 
-class MeshBatchData;
-
 class MeshBatch
 {
 public:
-	MeshBatch(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData);
+	MeshBatch(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData, u32 meshType, u32 meshTypeOffset);
 	~MeshBatch();
 
 	void RecordDataForUpload(CommandList* pCommandList);
@@ -27,18 +26,16 @@ public:
 
 	Buffer* GetVertexBuffer() { return m_pVertexBuffer; }
 	Buffer* GetIndexBuffer() { return m_pIndexBuffer; }
-	Buffer* GetMeshBoundsBuffer() { return m_pMeshBoundsBuffer; }
-	Buffer* GetMeshDescBuffer() { return m_pMeshDescBuffer; }
-	Buffer* GetMaterialBuffer() { return m_pMaterialBuffer; }
-					
+	Buffer* GetMeshInfoBuffer() { return m_pMeshInfoBuffer; }
+	Buffer* GetInstanceAABBBuffer() { return m_pInstanceAABBBuffer; }
+
 private:
 	void InitInputLayout(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData);
 	void InitVertexBuffer(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData);
 	void InitIndexBuffer(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData);
-	void InitMeshBoundsBuffer(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData);
-	void InitMeshDescBuffer(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData);
-	void InitMaterialBuffer(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData);
-	
+	void InitMeshInfoBuffer(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData, u32 meshType, u32 meshTypeOffset);
+	void InitInstanceAABBBuffer(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData);
+		
 private:
 	u32 m_NumMeshes;
 
@@ -50,13 +47,47 @@ private:
 
 	Buffer* m_pUploadVertexBuffer;
 	Buffer* m_pUploadIndexBuffer;
-	Buffer* m_pUploadMeshBoundsBuffer;
-	Buffer* m_pUploadMeshDescBuffer;
-	Buffer* m_pUploadMaterialBuffer;
+	Buffer* m_pUploadMeshInfoBuffer;
+	Buffer* m_pUploadInstanceAABBBuffer;
 
 	Buffer* m_pVertexBuffer;	
 	Buffer* m_pIndexBuffer;
-	Buffer* m_pMeshBoundsBuffer;
-	Buffer* m_pMeshDescBuffer;
-	Buffer* m_pMaterialBuffer;
+	Buffer* m_pMeshInfoBuffer;
+	Buffer* m_pInstanceAABBBuffer;
+};
+
+class MeshRenderResources
+{
+public:
+	MeshRenderResources(u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData);
+	~MeshRenderResources();
+
+	u32 GetNumMeshTypes() const { return m_NumMeshTypes; }
+
+	Buffer* GetMeshInfoBuffer() { return m_pMeshInfoBuffer; }
+	Buffer* GetMeshInstanceRangeBuffer() { return m_pMeshInstanceRangeBuffer; }
+
+	Buffer* GetInstanceWorldMatrixBuffer() { return m_pInstanceWorldMatrixBuffer; }
+	Buffer* GetInstanceWorldAABBBuffer() { return m_pInstanceWorldAABBBuffer; }
+
+	const InputLayoutDesc* GetInputLayout(u32 meshType) const { return &m_InputLayouts[meshType]; }
+	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType(u32 meshType) const { return m_PrimitiveTopologyTypes[meshType]; }
+	D3D12_PRIMITIVE_TOPOLOGY GetPrimitiveTopology(u32 meshType) const { return m_PrimitiveTopologies[meshType]; }
+	Buffer* GetVertexBuffer(u32 meshType) { return m_VertexBuffers[meshType]; }
+	Buffer* GetIndexBuffer(u32 meshType) { return m_IndexBuffers[meshType]; }
+
+private:
+	u32 m_NumMeshTypes;
+
+	Buffer* m_pMeshInfoBuffer;
+	Buffer* m_pMeshInstanceRangeBuffer;
+
+	Buffer* m_pInstanceWorldMatrixBuffer;
+	Buffer* m_pInstanceWorldAABBBuffer;
+
+	std::vector<InputLayoutDesc> m_InputLayouts;
+	std::vector<D3D12_PRIMITIVE_TOPOLOGY_TYPE> m_PrimitiveTopologyTypes;
+	std::vector<D3D12_PRIMITIVE_TOPOLOGY> m_PrimitiveTopologies;
+	std::vector<Buffer*> m_VertexBuffers;
+	std::vector<Buffer*> m_IndexBuffers;
 };

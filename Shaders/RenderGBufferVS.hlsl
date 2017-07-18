@@ -8,7 +8,7 @@ struct VSInput
 
 struct VSOutput
 {
-	uint   materialId			: MATERIAL_ID;
+	uint   materialIndex		: MATERIAL_INDEX;
 	float4 clipSpacePos			: SV_Position;
 	float3 worldSpaceNormal		: NORMAL;
 	float2 texCoord				: TEXCOORD;
@@ -17,7 +17,7 @@ struct VSOutput
 cbuffer InstanceOffsetBuffer : register(b0)
 {
 	uint g_InstanceOffset;
-	uint g_MaterialId;	// Kolya. Check if I could pass it directly to pixel shader
+	uint g_MaterialIndex;	// Kolya. Check if I could pass it directly to pixel shader
 }
 
 StructuredBuffer<uint> g_InstanceIndexBuffer : register(t0);
@@ -32,7 +32,7 @@ VSOutput Main(VSInput input)
 	matrix worldViewProjMatrix = g_InstanceWorldViewProjMatrixBuffer[instanceIndex];
 
 	VSOutput output;
-	output.materialId = g_MaterialId;
+	output.materialIndex = g_MaterialIndex;
 	output.clipSpacePos = mul(float4(input.localSpacePos, 1.0f), worldViewProjMatrix);
 	output.worldSpaceNormal = mul(float4(input.localSpaceNormal, 0.0f), worldMatrix).xyz;
 	output.texCoord = input.texCoord;

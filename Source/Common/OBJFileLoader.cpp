@@ -4,6 +4,7 @@
 #include "Common/MeshData.h"
 #include "Common/MeshDataUtilities.h"
 #include "Common/Scene.h"
+#include "Common/Material.h"
 #include "Math/Hash.h"
 #include <cwctype>
 #include <limits>
@@ -395,13 +396,19 @@ Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshDataFlag
 				GenerateVertexAndIndexData<u32>(mesh, &pVertexData, &pIndexData);
 			else
 				GenerateVertexAndIndexData<u16>(mesh, &pVertexData, &pIndexData);
+
+			u32 numInstances = 1;
+			Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
+			pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 						
-			MeshData meshData(pVertexData, pIndexData, mesh.m_MaterialIndex, primitiveTopologyType, primitiveTopology);
+			MeshData meshData(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices,
+				mesh.m_MaterialIndex, primitiveTopologyType, primitiveTopology);
+			
 			if (convertMeshDataFlags != 0)
 				ConvertMeshData(&meshData, convertMeshDataFlags);
-			meshData.RecalcAABB();
+			meshData.RecalcInstanceWorldAABBs();
 
-			pMeshBatchData->Append(&meshData);
+			pMeshBatchData->AddMeshData(&meshData);
 		}
 	}
 	pScene->SetMeshBatchData(pMeshBatchData);

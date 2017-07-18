@@ -583,10 +583,8 @@
     <None Include="..\Shaders\FillVisibilityBufferPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="..\Shaders\FillDepthBufferWithMaterialIdPS.hlsl">
+    <None Include="..\Shaders\FillDepthBufferWithMeshTypePS.hlsl">
       <Filter>Shaders</Filter>
-    </FxCompile>
+    </None>
   </ItemGroup>
 </Project>
