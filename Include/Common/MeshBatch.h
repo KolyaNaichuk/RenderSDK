@@ -59,7 +59,7 @@ private:
 class MeshRenderResources
 {
 public:
-	MeshRenderResources(u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData);
+	MeshRenderResources(RenderEnv* pRenderEnv, u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData);
 	~MeshRenderResources();
 
 	u32 GetNumMeshTypes() const { return m_NumMeshTypes; }
@@ -70,11 +70,16 @@ public:
 	Buffer* GetInstanceWorldMatrixBuffer() { return m_pInstanceWorldMatrixBuffer; }
 	Buffer* GetInstanceWorldAABBBuffer() { return m_pInstanceWorldAABBBuffer; }
 
-	const InputLayoutDesc* GetInputLayout(u32 meshType) const { return &m_InputLayouts[meshType]; }
+	const InputLayoutDesc& GetInputLayout(u32 meshType) const { return m_InputLayouts[meshType]; }
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType(u32 meshType) const { return m_PrimitiveTopologyTypes[meshType]; }
 	D3D12_PRIMITIVE_TOPOLOGY GetPrimitiveTopology(u32 meshType) const { return m_PrimitiveTopologies[meshType]; }
 	Buffer* GetVertexBuffer(u32 meshType) { return m_VertexBuffers[meshType]; }
 	Buffer* GetIndexBuffer(u32 meshType) { return m_IndexBuffers[meshType]; }
+
+private:
+	void InitInputLayout(RenderEnv* pRenderEnv, u32 meshType, const MeshBatchData& batchData);
+	void InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, const MeshBatchData& batchData);
+	void InitIndexBuffer(RenderEnv* pRenderEnv, u32 meshType, const MeshBatchData& batchData);
 
 private:
 	u32 m_NumMeshTypes;
@@ -85,9 +90,16 @@ private:
 	Buffer* m_pInstanceWorldMatrixBuffer;
 	Buffer* m_pInstanceWorldAABBBuffer;
 
+	using InputElements = std::vector<InputElementDesc>;
+	
+	std::vector<u32> m_VertexStrideInBytes;
+	std::vector<InputElements> m_InputElements;
 	std::vector<InputLayoutDesc> m_InputLayouts;
 	std::vector<D3D12_PRIMITIVE_TOPOLOGY_TYPE> m_PrimitiveTopologyTypes;
 	std::vector<D3D12_PRIMITIVE_TOPOLOGY> m_PrimitiveTopologies;
 	std::vector<Buffer*> m_VertexBuffers;
 	std::vector<Buffer*> m_IndexBuffers;
+
+	std::vector<Buffer*> m_UploadVertexBuffers;
+	std::vector<Buffer*> m_UploadIndexBuffers;
 };
