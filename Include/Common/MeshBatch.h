@@ -77,6 +77,10 @@ public:
 	Buffer* GetIndexBuffer(u32 meshType) { return m_IndexBuffers[meshType]; }
 
 private:
+	void InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData);
+	void InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData);
+	void InitPerMeshTypeResources(RenderEnv* pRenderEnv, u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData);
+
 	void InitInputLayout(RenderEnv* pRenderEnv, u32 meshType, const MeshBatchData& batchData);
 	void InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, const MeshBatchData& batchData);
 	void InitIndexBuffer(RenderEnv* pRenderEnv, u32 meshType, const MeshBatchData& batchData);
