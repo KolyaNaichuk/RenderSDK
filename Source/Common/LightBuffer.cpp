@@ -230,14 +230,14 @@ void LightBuffer::RecordDataForUpload(CommandList* pCommandList)
 	pCommandList->CopyResource(m_pLightFrustumBuffer, m_pUploadLightFrustumBuffer);
 	pCommandList->CopyResource(m_pLightViewProjMatrixBuffer, m_pUploadLightViewProjMatrixBuffer);
 
-	const D3D12_RESOURCE_BARRIER resourceTransitions[] =
+	const D3D12_RESOURCE_BARRIER resourceBarriers[] =
 	{
-		ResourceTransitionBarrier(m_pLightBoundsBuffer, m_pLightBoundsBuffer->GetState(), m_pLightBoundsBuffer->GetReadState()),
-		ResourceTransitionBarrier(m_pLightPropsBuffer, m_pLightPropsBuffer->GetState(), m_pLightPropsBuffer->GetReadState()),
-		ResourceTransitionBarrier(m_pLightFrustumBuffer, m_pLightFrustumBuffer->GetState(), m_pLightFrustumBuffer->GetReadState()),
-		ResourceTransitionBarrier(m_pLightViewProjMatrixBuffer, m_pLightViewProjMatrixBuffer->GetState(), m_pLightViewProjMatrixBuffer->GetReadState())
+		ResourceBarrier(m_pLightBoundsBuffer, m_pLightBoundsBuffer->GetState(), m_pLightBoundsBuffer->GetReadState()),
+		ResourceBarrier(m_pLightPropsBuffer, m_pLightPropsBuffer->GetState(), m_pLightPropsBuffer->GetReadState()),
+		ResourceBarrier(m_pLightFrustumBuffer, m_pLightFrustumBuffer->GetState(), m_pLightFrustumBuffer->GetReadState()),
+		ResourceBarrier(m_pLightViewProjMatrixBuffer, m_pLightViewProjMatrixBuffer->GetState(), m_pLightViewProjMatrixBuffer->GetReadState())
 	};
-	pCommandList->ResourceBarrier(ARRAYSIZE(resourceTransitions), &resourceTransitions[0]);
+	pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), &resourceBarriers[0]);
 
 	m_pLightBoundsBuffer->SetState(m_pLightBoundsBuffer->GetReadState());
 	m_pLightPropsBuffer->SetState(m_pLightPropsBuffer->GetReadState());

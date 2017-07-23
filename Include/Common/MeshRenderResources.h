@@ -9,53 +9,6 @@ class MeshBatchData;
 struct InputLayoutDesc;
 struct RenderEnv;
 
-class MeshBatch
-{
-public:
-	MeshBatch(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData, u32 meshType, u32 meshTypeOffset);
-	~MeshBatch();
-
-	void RecordDataForUpload(CommandList* pCommandList);
-	void RemoveDataForUpload();
-
-	u32 GetNumMeshes() const { return m_NumMeshes; }
-	
-	InputLayoutDesc* GetInputLayout() { return m_pInputLayout; }
-	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType() const { return m_PrimitiveTopologyType; }
-	D3D12_PRIMITIVE_TOPOLOGY GetPrimitiveTopology() const { return m_PrimitiveTopology; }
-
-	Buffer* GetVertexBuffer() { return m_pVertexBuffer; }
-	Buffer* GetIndexBuffer() { return m_pIndexBuffer; }
-	Buffer* GetMeshInfoBuffer() { return m_pMeshInfoBuffer; }
-	Buffer* GetInstanceAABBBuffer() { return m_pInstanceAABBBuffer; }
-
-private:
-	void InitInputLayout(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData);
-	void InitVertexBuffer(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData);
-	void InitIndexBuffer(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData);
-	void InitMeshInfoBuffer(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData, u32 meshType, u32 meshTypeOffset);
-	void InitInstanceAABBBuffer(RenderEnv* pRenderEnv, const MeshBatchData* pBatchData);
-		
-private:
-	u32 m_NumMeshes;
-
-	u32 m_VertexStrideInBytes;
-	std::vector<InputElementDesc> m_InputElements;
-	InputLayoutDesc* m_pInputLayout;
-	D3D12_PRIMITIVE_TOPOLOGY_TYPE m_PrimitiveTopologyType;
-	D3D12_PRIMITIVE_TOPOLOGY m_PrimitiveTopology;
-
-	Buffer* m_pUploadVertexBuffer;
-	Buffer* m_pUploadIndexBuffer;
-	Buffer* m_pUploadMeshInfoBuffer;
-	Buffer* m_pUploadInstanceAABBBuffer;
-
-	Buffer* m_pVertexBuffer;	
-	Buffer* m_pIndexBuffer;
-	Buffer* m_pMeshInfoBuffer;
-	Buffer* m_pInstanceAABBBuffer;
-};
-
 class MeshRenderResources
 {
 public:
@@ -103,7 +56,4 @@ private:
 	std::vector<D3D12_PRIMITIVE_TOPOLOGY> m_PrimitiveTopologies;
 	std::vector<Buffer*> m_VertexBuffers;
 	std::vector<Buffer*> m_IndexBuffers;
-
-	std::vector<Buffer*> m_UploadVertexBuffers;
-	std::vector<Buffer*> m_UploadIndexBuffers;
 };

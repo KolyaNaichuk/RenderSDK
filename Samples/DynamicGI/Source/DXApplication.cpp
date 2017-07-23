@@ -28,7 +28,7 @@
 #include "RenderPasses/VisualizeIntensityPass.h"
 #include "Common/MeshData.h"
 #include "Common/MeshBatchData.h"
-#include "Common/MeshBatch.h"
+#include "Common/MeshRenderResources.h"
 #include "Common/LightBuffer.h"
 #include "Common/Color.h"
 #include "Common/Camera.h"
@@ -339,7 +339,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pPointLightViewTileProjMatrixBuffer(nullptr)
 	, m_pRenderEnv(new RenderEnv())
 	, m_pFence(nullptr)
-	, m_LastSubmissionFenceValue(0)
 	, m_BackBufferIndex(0)
 	, m_pRenderGBufferPass(nullptr)
 	, m_pRenderGBufferResources(new BindingResourceList())
@@ -410,7 +409,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
-		m_FrameCompletionFenceValues[index] = m_LastSubmissionFenceValue;
+		m_FrameCompletionFenceValues[index] = m_pRenderEnv->m_LastSubmissionFenceValue;
 
 		m_VisualizeVoxelGridDiffuseResources[index] = new BindingResourceList();
 		m_VisualizeVoxelGridNormalResources[index] = new BindingResourceList();
@@ -891,7 +890,12 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	DescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2, false);
 	m_pShaderInvisibleDSVHeap = new DescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pShaderInvisibleDSVHeap");
 
+	m_pBackBufferViewport = new Viewport(0.0f, 0.0f, (FLOAT)backBufferWidth, (FLOAT)backBufferHeight);
+	m_pFence = new Fence(m_pDevice, m_pRenderEnv->m_LastSubmissionFenceValue, L"m_pFence");
+
 	m_pRenderEnv->m_pDevice = m_pDevice;
+	m_pRenderEnv->m_pCommandQueue = m_pCommandQueue;
+	m_pRenderEnv->m_pFence = m_pFence;
 	m_pRenderEnv->m_pCommandListPool = m_pCommandListPool;
 	m_pRenderEnv->m_pUploadHeapProps = m_pUploadHeapProps;
 	m_pRenderEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
@@ -904,9 +908,6 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), backBufferWidth, backBufferHeight);
 	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-
-	m_pBackBufferViewport = new Viewport(0.0f, 0.0f, (FLOAT)backBufferWidth, (FLOAT)backBufferHeight);
-	m_pFence = new Fence(m_pDevice, m_LastSubmissionFenceValue, L"m_pFence");
 }
 
 void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)

@@ -1,5 +1,5 @@
 #include "RenderPasses/RenderTiledShadowMapPass.h"
-#include "Common/MeshBatch.h"
+#include "Common/MeshRenderResources.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/CommandSignature.h"

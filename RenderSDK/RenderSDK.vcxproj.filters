@@ -114,9 +114,6 @@
     <ClInclude Include="..\Include\Common\MeshBatchData.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Common\MeshBatch.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Common\Scene.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -249,6 +246,9 @@
     <ClInclude Include="..\Include\RenderPasses\CopyReprojectedDepthPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Common\MeshRenderResources.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -333,9 +333,6 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\MeshBatchData.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\MeshBatch.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\Material.cpp">
@@ -460,6 +457,9 @@
     </ClCompile>
     <ClCompile Include="..\Include\RenderPasses\CopyReprojectedDepthPass.cpp">
       <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\MeshRenderResources.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

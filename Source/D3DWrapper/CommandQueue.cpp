@@ -34,7 +34,7 @@ void CommandQueue::ExecuteCommandLists(RenderEnv* pRenderEnv, UINT numCommandLis
 		RequiredResourceStateList* pRequiredResourceStates = pCommandList->GetRequiredResourceStates();
 		if (pRequiredResourceStates != nullptr)
 		{
-			std::vector<ResourceTransitionBarrier> resourceBarriers;
+			std::vector<ResourceBarrier> resourceBarriers;
 			resourceBarriers.reserve(pRequiredResourceStates->size());
 
 			for (std::size_t stateIndex = 0; stateIndex < pRequiredResourceStates->size(); ++stateIndex)

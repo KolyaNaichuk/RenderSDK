@@ -7,7 +7,7 @@
 #include "D3DWrapper/GraphicsUtils.h"
 #include "D3DWrapper/DescriptorHeap.h"
 #include "D3DWrapper/RenderEnv.h"
-#include "Common/MeshBatch.h"
+#include "Common/MeshRenderResources.h"
 
 enum RootParams
 {

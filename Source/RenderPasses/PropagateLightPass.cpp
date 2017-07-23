@@ -93,7 +93,7 @@ void PropagateLightPass::Record(RenderParams* pParams)
 	CommandList* pCommandList = pParams->m_pCommandList;
 	BindingResourceList** ppResources = pParams->m_ppResources;
 			
-	std::vector<ResourceTransitionBarrier> resourceBarriers[2];
+	std::vector<ResourceBarrier> resourceBarriers[2];
 	for (u8 it = 0; it < 2; ++it)
 	{
 		RequiredResourceStateList requiredResourceStates = ppResources[it]->m_RequiredResourceStates;

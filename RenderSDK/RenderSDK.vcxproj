@@ -153,7 +153,7 @@
     <ClInclude Include="..\Include\Common\FileUtilities.h" />
     <ClInclude Include="..\Include\Common\LightBuffer.h" />
     <ClInclude Include="..\Include\Common\Material.h" />
-    <ClInclude Include="..\Include\Common\MeshBatch.h" />
+    <ClInclude Include="..\Include\Common\MeshRenderResources.h" />
     <ClInclude Include="..\Include\Common\MeshBatchData.h" />
     <ClInclude Include="..\Include\Common\MeshData.h" />
     <ClInclude Include="..\Include\Common\MeshDataFactory.h" />
@@ -232,7 +232,7 @@
     <ClCompile Include="..\Source\Common\Light.cpp" />
     <ClCompile Include="..\Source\Common\LightBuffer.cpp" />
     <ClCompile Include="..\Source\Common\Material.cpp" />
-    <ClCompile Include="..\Source\Common\MeshBatch.cpp" />
+    <ClCompile Include="..\Source\Common\MeshRenderResources.cpp" />
     <ClCompile Include="..\Source\Common\MeshBatchData.cpp" />
     <ClCompile Include="..\Source\Common\MeshData.cpp" />
     <ClCompile Include="..\Source\Common\MeshDataFactory.cpp" />

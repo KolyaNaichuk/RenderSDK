@@ -228,7 +228,6 @@ private:
 	Buffer* m_pPointLightViewTileProjMatrixBuffer;
 	RenderEnv* m_pRenderEnv;
 	Fence* m_pFence;
-	UINT64 m_LastSubmissionFenceValue;
 	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers];
 	UINT m_BackBufferIndex;
 
