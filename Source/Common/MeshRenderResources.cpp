@@ -3,20 +3,12 @@
 #include "Common/MeshData.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/CommandList.h"
-#include "D3DWrapper/CommandQueue.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/GraphicsUtils.h"
-#include "D3DWrapper/Fence.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
-
-namespace
-{
-	template <typename DestBufferDesc>
-	void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, const DestBufferDesc* pDestBufferDesc, const void* pUploadData, SIZE_T numUploadBytes);
-}
 
 MeshRenderResources::MeshRenderResources(RenderEnv* pRenderEnv, u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData)
 	: m_NumMeshTypes(numMeshTypes)
@@ -330,30 +322,4 @@ void MeshRenderResources::InitIndexBuffer(RenderEnv* pRenderEnv, u32 meshType, c
 		pIndexData = batchData.Get32BitIndices();
 	
 	UploadData(pRenderEnv, m_IndexBuffers[meshType], &bufferDesc, pIndexData, sizeInBytes);
-}
-
-namespace
-{
-	template <typename DestBufferDesc>
-	void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, const DestBufferDesc* pDestBufferDesc, const void* pUploadData, SIZE_T numUploadBytes)
-	{
-		assert(pDestBuffer->GetState() == D3D12_RESOURCE_STATE_COPY_DEST);
-
-		Buffer* pUploadBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, pDestBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"MeshRenderResources::pUploadBuffer");
-		pUploadBuffer->Write(pUploadData, numUploadBytes);
-
-		ResourceBarrier resourceBarrier(pDestBuffer, pDestBuffer->GetState(), pDestBuffer->GetReadState());
-
-		CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"pUploadCommandList");
-		pUploadCommandList->Begin();
-		pUploadCommandList->CopyResource(pDestBuffer, pUploadBuffer);
-		pUploadCommandList->ResourceBarrier(1, &resourceBarrier);
-		pUploadCommandList->End();
-
-		++pRenderEnv->m_LastSubmissionFenceValue;
-		pRenderEnv->m_pCommandQueue->ExecuteCommandLists(pRenderEnv, 1, &pUploadCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
-		pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
-
-		pDestBuffer->SetState(pDestBuffer->GetReadState());
-	}
 }

@@ -120,9 +120,6 @@
     <ClInclude Include="..\Include\Common\SceneLoader.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Common\LightBuffer.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Math\Cone.h">
       <Filter>Math</Filter>
     </ClInclude>
@@ -249,6 +246,9 @@
     <ClInclude Include="..\Include\Common\MeshRenderResources.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Common\LightRenderResources.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -342,9 +342,6 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\SceneLoader.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\LightBuffer.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Math\Cone.cpp">
@@ -459,6 +456,9 @@
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\MeshRenderResources.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\LightRenderResources.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>

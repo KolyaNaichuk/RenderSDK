@@ -15,7 +15,7 @@ class Fence;
 
 class Camera;
 class MeshBatch;
-class LightBuffer;
+class LightRenderResources;
 class CreateRenderGBufferCommandsPass;
 class RenderGBufferPass;
 class ClearVoxelGridPass;
@@ -315,11 +315,11 @@ private:
 	
 	MeshBatch* m_pMeshBatch;
 	
-	LightBuffer* m_pPointLightBuffer;
+	LightRenderResources* m_pPointLightRenderResources;
 	Buffer* m_pNumVisiblePointLightsBuffer;
 	Buffer* m_pVisiblePointLightIndexBuffer;
 
-	LightBuffer* m_pSpotLightBuffer;
+	LightRenderResources* m_pSpotLightRenderResources;
 	Buffer* m_pNumVisibleSpotLightsBuffer;
 	Buffer* m_pVisibleSpotLightIndexBuffer;
 	

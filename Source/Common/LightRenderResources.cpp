@@ -1,4 +1,4 @@
-#include "Common/LightBuffer.h"
+#include "Common/LightRenderResources.h"
 #include "Common/Light.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/RenderEnv.h"
@@ -50,25 +50,23 @@ struct LightFrustum
 	Plane m_BottomPlane;
 };
 
-LightBuffer::LightBuffer(RenderEnv* pRenderEnv, u32 numPointLights, PointLight** ppPointLights)
+LightRenderResources::LightRenderResources(RenderEnv* pRenderEnv, u32 numPointLights, PointLight** ppPointLights)
 	: m_NumLights(numPointLights)
-	, m_pUploadLightBoundsBuffer(nullptr)
-	, m_pUploadLightPropsBuffer(nullptr)
-	, m_pUploadLightFrustumBuffer(nullptr)
-	, m_pUploadLightViewProjMatrixBuffer(nullptr)
 	, m_pLightBoundsBuffer(nullptr)
 	, m_pLightPropsBuffer(nullptr)
 	, m_pLightFrustumBuffer(nullptr)
 	, m_pLightViewProjMatrixBuffer(nullptr)
 {
 	std::vector<Sphere> lightBounds;
-	std::vector<PointLightProps> lightProps;
-	std::vector<LightFrustum> lightFrustums;
-	std::vector<Matrix4f> lightViewProjMatrices;
-
 	lightBounds.reserve(m_NumLights);
+
+	std::vector<PointLightProps> lightProps;
 	lightProps.reserve(m_NumLights);
+
+	std::vector<LightFrustum> lightFrustums;
 	lightFrustums.reserve(kNumCubeMapFaces * m_NumLights);
+
+	std::vector<Matrix4f> lightViewProjMatrices;	
 	lightViewProjMatrices.reserve(kNumCubeMapFaces * m_NumLights);
 
 	Quaternion cubeMapWorldSpaceRotations[kNumCubeMapFaces];
@@ -109,49 +107,41 @@ LightBuffer::LightBuffer(RenderEnv* pRenderEnv, u32 numPointLights, PointLight**
 			lightViewProjMatrices.emplace_back(lightViewProjMatrix);
 		}
 	}
-
+		
 	StructuredBufferDesc lightBoundsBufferDesc(m_NumLights, sizeof(Sphere), true, false);
+	m_pLightBoundsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightRenderResources::m_pLightBoundsBuffer");
+	UploadData(pRenderEnv, m_pLightBoundsBuffer, &lightBoundsBufferDesc, lightBounds.data(), m_NumLights * sizeof(Sphere));
+	
 	StructuredBufferDesc lightPropsBufferDesc(m_NumLights, sizeof(PointLightProps), true, false);
+	m_pLightPropsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightRenderResources::m_pLightPropsBuffer");
+	UploadData(pRenderEnv, m_pLightPropsBuffer, &lightPropsBufferDesc, lightProps.data(), m_NumLights * sizeof(PointLightProps));
+
 	StructuredBufferDesc lightFrustumBufferDesc(kNumCubeMapFaces * m_NumLights, sizeof(LightFrustum), true, false);
+	m_pLightFrustumBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightFrustumBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightRenderResources::m_pLightFrustumBuffer");
+	UploadData(pRenderEnv, m_pLightFrustumBuffer, &lightFrustumBufferDesc, lightFrustums.data(), kNumCubeMapFaces * m_NumLights * sizeof(LightFrustum));
+
 	StructuredBufferDesc lightViewProjMatrixBufferDesc(kNumCubeMapFaces * m_NumLights, sizeof(Matrix4f), true, false);
-
-	m_pLightBoundsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightBoundsBuffer");
-	m_pLightPropsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightPropsBuffer");
-	m_pLightFrustumBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightFrustumBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightFrustumBuffer");
-	m_pLightViewProjMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightViewProjMatrixBuffer");
-
-	m_pUploadLightBoundsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightBoundsBuffer");
-	m_pUploadLightBoundsBuffer->Write(lightBounds.data(), m_NumLights * sizeof(Sphere));
-
-	m_pUploadLightPropsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightPropsBuffer");
-	m_pUploadLightPropsBuffer->Write(lightProps.data(), m_NumLights * sizeof(PointLightProps));
-
-	m_pUploadLightFrustumBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightFrustumBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightFrustumBuffer");
-	m_pUploadLightFrustumBuffer->Write(lightFrustums.data(), kNumCubeMapFaces * m_NumLights * sizeof(LightFrustum));
-
-	m_pUploadLightViewProjMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightViewProjMatrixBuffer");
-	m_pUploadLightViewProjMatrixBuffer->Write(lightViewProjMatrices.data(), kNumCubeMapFaces * m_NumLights * sizeof(Matrix4f));
+	m_pLightViewProjMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightRenderResources::m_pLightViewProjMatrixBuffer");
+	UploadData(pRenderEnv, m_pLightViewProjMatrixBuffer, &lightViewProjMatrixBufferDesc, lightViewProjMatrices.data(), kNumCubeMapFaces * m_NumLights * sizeof(Matrix4f));
 }
 
-LightBuffer::LightBuffer(RenderEnv* pRenderEnv, u32 numSpotLights, SpotLight** ppSpotLights)
+LightRenderResources::LightRenderResources(RenderEnv* pRenderEnv, u32 numSpotLights, SpotLight** ppSpotLights)
 	: m_NumLights(numSpotLights)
-	, m_pUploadLightBoundsBuffer(nullptr)
-	, m_pUploadLightPropsBuffer(nullptr)
-	, m_pUploadLightFrustumBuffer(nullptr)
-	, m_pUploadLightViewProjMatrixBuffer(nullptr)
 	, m_pLightBoundsBuffer(nullptr)
 	, m_pLightPropsBuffer(nullptr)
 	, m_pLightFrustumBuffer(nullptr)
 	, m_pLightViewProjMatrixBuffer(nullptr)
 {
 	std::vector<Sphere> lightBounds;
-	std::vector<SpotLightProps> lightProps;
-	std::vector<LightFrustum> lightFrustums;
-	std::vector<Matrix4f> lightViewProjMatrices;
-
 	lightBounds.reserve(m_NumLights);
+
+	std::vector<SpotLightProps> lightProps;
 	lightProps.reserve(m_NumLights);
+
+	std::vector<LightFrustum> lightFrustums;
 	lightFrustums.reserve(m_NumLights);
+
+	std::vector<Matrix4f> lightViewProjMatrices;
 	lightViewProjMatrices.reserve(m_NumLights);
 		
 	for (u32 lightIndex = 0; lightIndex < m_NumLights; ++lightIndex)
@@ -191,64 +181,26 @@ LightBuffer::LightBuffer(RenderEnv* pRenderEnv, u32 numSpotLights, SpotLight** p
 	}
 
 	StructuredBufferDesc lightBoundsBufferDesc(m_NumLights, sizeof(Sphere), true, false);
+	m_pLightBoundsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightRenderResources::m_pLightBoundsBuffer");
+	UploadData(pRenderEnv, m_pLightBoundsBuffer, &lightBoundsBufferDesc, lightBounds.data(), m_NumLights * sizeof(Sphere));
+
 	StructuredBufferDesc lightPropsBufferDesc(m_NumLights, sizeof(SpotLightProps), true, false);
+	m_pLightPropsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightRenderResources::m_pLightPropsBuffer");
+	UploadData(pRenderEnv, m_pLightPropsBuffer, &lightPropsBufferDesc, lightProps.data(), m_NumLights * sizeof(SpotLightProps));
+	
 	StructuredBufferDesc lightFrustumBufferDesc(m_NumLights, sizeof(LightFrustum), true, false);
+	m_pLightFrustumBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightFrustumBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightRenderResources::m_pLightFrustumBuffer");
+	UploadData(pRenderEnv, m_pLightFrustumBuffer, &lightFrustumBufferDesc, lightFrustums.data(), m_NumLights * sizeof(LightFrustum));
+
 	StructuredBufferDesc lightViewProjMatrixBufferDesc(m_NumLights, sizeof(Matrix4f), true, false);
-
-	m_pLightBoundsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightBoundsBuffer");
-	m_pLightPropsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightPropsBuffer");
-	m_pLightFrustumBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightFrustumBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightFrustumBuffer");
-	m_pLightViewProjMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightBuffer::m_pLightViewProjMatrixBuffer");
-
-	m_pUploadLightBoundsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightBoundsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightBoundsBuffer");
-	m_pUploadLightBoundsBuffer->Write(lightBounds.data(), m_NumLights * sizeof(Sphere));
-
-	m_pUploadLightPropsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightPropsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightPropsBuffer");
-	m_pUploadLightPropsBuffer->Write(lightProps.data(), m_NumLights * sizeof(SpotLightProps));
-
-	m_pUploadLightFrustumBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightFrustumBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightFrustumBuffer");
-	m_pUploadLightFrustumBuffer->Write(lightFrustums.data(), m_NumLights * sizeof(LightFrustum));
-
-	m_pUploadLightViewProjMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightBuffer::m_pUploadLightViewProjMatrixBuffer");
-	m_pUploadLightViewProjMatrixBuffer->Write(lightViewProjMatrices.data(), m_NumLights * sizeof(Matrix4f));
+	m_pLightViewProjMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightRenderResources::m_pLightViewProjMatrixBuffer");
+	UploadData(pRenderEnv, m_pLightViewProjMatrixBuffer, &lightViewProjMatrixBufferDesc, lightViewProjMatrices.data(), m_NumLights * sizeof(Matrix4f));
 }
 
-LightBuffer::~LightBuffer()
+LightRenderResources::~LightRenderResources()
 {
-	RemoveDataForUpload();
-
 	SafeDelete(m_pLightBoundsBuffer);
 	SafeDelete(m_pLightPropsBuffer);
 	SafeDelete(m_pLightFrustumBuffer);
 	SafeDelete(m_pLightViewProjMatrixBuffer);
-}
-
-void LightBuffer::RecordDataForUpload(CommandList* pCommandList)
-{
-	pCommandList->CopyResource(m_pLightBoundsBuffer, m_pUploadLightBoundsBuffer);
-	pCommandList->CopyResource(m_pLightPropsBuffer, m_pUploadLightPropsBuffer);
-	pCommandList->CopyResource(m_pLightFrustumBuffer, m_pUploadLightFrustumBuffer);
-	pCommandList->CopyResource(m_pLightViewProjMatrixBuffer, m_pUploadLightViewProjMatrixBuffer);
-
-	const D3D12_RESOURCE_BARRIER resourceBarriers[] =
-	{
-		ResourceBarrier(m_pLightBoundsBuffer, m_pLightBoundsBuffer->GetState(), m_pLightBoundsBuffer->GetReadState()),
-		ResourceBarrier(m_pLightPropsBuffer, m_pLightPropsBuffer->GetState(), m_pLightPropsBuffer->GetReadState()),
-		ResourceBarrier(m_pLightFrustumBuffer, m_pLightFrustumBuffer->GetState(), m_pLightFrustumBuffer->GetReadState()),
-		ResourceBarrier(m_pLightViewProjMatrixBuffer, m_pLightViewProjMatrixBuffer->GetState(), m_pLightViewProjMatrixBuffer->GetReadState())
-	};
-	pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), &resourceBarriers[0]);
-
-	m_pLightBoundsBuffer->SetState(m_pLightBoundsBuffer->GetReadState());
-	m_pLightPropsBuffer->SetState(m_pLightPropsBuffer->GetReadState());
-	m_pLightFrustumBuffer->SetState(m_pLightFrustumBuffer->GetReadState());
-	m_pLightViewProjMatrixBuffer->SetState(m_pLightViewProjMatrixBuffer->GetReadState());
-}
-
-void LightBuffer::RemoveDataForUpload()
-{
-	SafeDelete(m_pUploadLightBoundsBuffer);
-	SafeDelete(m_pUploadLightPropsBuffer);
-	SafeDelete(m_pUploadLightFrustumBuffer);
-	SafeDelete(m_pUploadLightViewProjMatrixBuffer);
 }
