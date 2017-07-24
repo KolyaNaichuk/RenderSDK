@@ -154,10 +154,10 @@
     <ClInclude Include="..\Include\Common\LightRenderResources.h" />
     <ClInclude Include="..\Include\Common\Material.h" />
     <ClInclude Include="..\Include\Common\MeshRenderResources.h" />
-    <ClInclude Include="..\Include\Common\MeshBatchData.h" />
-    <ClInclude Include="..\Include\Common\MeshData.h" />
-    <ClInclude Include="..\Include\Common\MeshDataFactory.h" />
-    <ClInclude Include="..\Include\Common\MeshDataUtilities.h" />
+    <ClInclude Include="..\Include\Common\MeshBatch.h" />
+    <ClInclude Include="..\Include\Common\Mesh.h" />
+    <ClInclude Include="..\Include\Common\MeshFactory.h" />
+    <ClInclude Include="..\Include\Common\MeshUtilities.h" />
     <ClInclude Include="..\Include\Common\Light.h" />
     <ClInclude Include="..\Include\Common\OBJFileLoader.h" />
     <ClInclude Include="..\Include\Common\Scene.h" />
@@ -223,7 +223,7 @@
     <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp" />
+    <ClCompile Include="..\Include\Common\MeshUtilities.cpp" />
     <ClCompile Include="..\Include\RenderPasses\CopyReprojectedDepthPass.cpp" />
     <ClCompile Include="..\Source\Common\Application.cpp" />
     <ClCompile Include="..\Source\Common\Camera.cpp" />
@@ -233,9 +233,9 @@
     <ClCompile Include="..\Source\Common\LightRenderResources.cpp" />
     <ClCompile Include="..\Source\Common\Material.cpp" />
     <ClCompile Include="..\Source\Common\MeshRenderResources.cpp" />
-    <ClCompile Include="..\Source\Common\MeshBatchData.cpp" />
-    <ClCompile Include="..\Source\Common\MeshData.cpp" />
-    <ClCompile Include="..\Source\Common\MeshDataFactory.cpp" />
+    <ClCompile Include="..\Source\Common\MeshBatch.cpp" />
+    <ClCompile Include="..\Source\Common\Mesh.cpp" />
+    <ClCompile Include="..\Source\Common\MeshFactory.cpp" />
     <ClCompile Include="..\Source\Common\OBJFileLoader.cpp" />
     <ClCompile Include="..\Source\Common\Scene.cpp" />
     <ClCompile Include="..\Source\Common\SceneLoader.cpp" />

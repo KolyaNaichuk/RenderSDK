@@ -14,7 +14,7 @@ class Buffer;
 class Fence;
 
 class Camera;
-class MeshBatch;
+class MeshRenderResources;
 class LightRenderResources;
 class CreateRenderGBufferCommandsPass;
 class RenderGBufferPass;
@@ -118,7 +118,7 @@ private:
 	void InitVisualizeIntensityPass();
 	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
 
-	CommandList* RecordClearBackBufferPass(u8 clearFlags);
+	CommandList* RecordClearBackBufferPass();
 	CommandList* RecordDetectVisibleMeshesPass();
 	CommandList* RecordDetectVisiblePointLightsPass();
 	CommandList* RecordDetectVisibleSpotLightsPass();
@@ -313,7 +313,7 @@ private:
 	VisualizeIntensityPass* m_pVisualizeIntensityPass;
 	BindingResourceList* m_VisualizeIntensityResources[kNumBackBuffers];
 	
-	MeshBatch* m_pMeshBatch;
+	MeshRenderResources* m_pMeshRenderResources;
 	
 	LightRenderResources* m_pPointLightRenderResources;
 	Buffer* m_pNumVisiblePointLightsBuffer;

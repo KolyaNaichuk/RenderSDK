@@ -1,4 +1,4 @@
-#include "Common/MeshData.h"
+#include "Common/Mesh.h"
 #include "Common/Material.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
@@ -173,7 +173,7 @@ const u32* IndexData::Get32BitIndices() const
 	return m_p32BitIndices;
 }
 
-MeshData::MeshData(VertexData* pVertexData, IndexData* pIndexData, u32 numInstances, Matrix4f* pInstanceWorldMatrices,
+Mesh::Mesh(VertexData* pVertexData, IndexData* pIndexData, u32 numInstances, Matrix4f* pInstanceWorldMatrices,
 	u32 materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
 	: m_pVertexData(pVertexData)
 	, m_pIndexData(pIndexData)
@@ -187,7 +187,7 @@ MeshData::MeshData(VertexData* pVertexData, IndexData* pIndexData, u32 numInstan
 	RecalcInstanceWorldAABBs();
 }
 
-MeshData::~MeshData()
+Mesh::~Mesh()
 {
 	SafeDelete(m_pVertexData);
 	SafeDelete(m_pIndexData);
@@ -195,7 +195,7 @@ MeshData::~MeshData()
 	SafeArrayDelete(m_pInstanceWorldAABBs);
 }
 
-void MeshData::RecalcInstanceWorldAABBs()
+void Mesh::RecalcInstanceWorldAABBs()
 {
 	assert(false && "Kolya fix me");
 }

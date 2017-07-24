@@ -1,7 +1,7 @@
-#include "Common/MeshBatchData.h"
-#include "Common/MeshData.h"
+#include "Common/MeshBatch.h"
+#include "Common/Mesh.h"
 
-MeshBatchData::MeshBatchData(u8 vertexFormatFlags, DXGI_FORMAT indexFormat, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
+MeshBatch::MeshBatch(u8 vertexFormatFlags, DXGI_FORMAT indexFormat, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
 	: m_VertexFormatFlags(vertexFormatFlags)
 	, m_IndexFormat(indexFormat)
 	, m_PrimitiveTopologyType(primitiveTopologyType)
@@ -10,16 +10,16 @@ MeshBatchData::MeshBatchData(u8 vertexFormatFlags, DXGI_FORMAT indexFormat, D3D1
 	assert((m_IndexFormat == DXGI_FORMAT_R16_UINT) || (m_IndexFormat == DXGI_FORMAT_R32_UINT));
 }
 
-void MeshBatchData::AddMeshData(const MeshData* pMeshData)
+void MeshBatch::AddMesh(const Mesh* pMesh)
 {
-	assert(m_PrimitiveTopology == pMeshData->GetPrimitiveTopology());
-	assert(m_PrimitiveTopologyType == pMeshData->GetPrimitiveTopologyType());
+	assert(m_PrimitiveTopology == pMesh->GetPrimitiveTopology());
+	assert(m_PrimitiveTopologyType == pMesh->GetPrimitiveTopologyType());
 
-	const VertexData* pVertexData = pMeshData->GetVertexData();
+	const VertexData* pVertexData = pMesh->GetVertexData();
 	assert(pVertexData != nullptr);
 	assert(m_VertexFormatFlags == (m_VertexFormatFlags & pVertexData->GetFormatFlags()));
 
-	const IndexData* pIndexData = pMeshData->GetIndexData();
+	const IndexData* pIndexData = pMesh->GetIndexData();
 	assert(pIndexData != nullptr);
 	assert(m_IndexFormat == pIndexData->GetFormat());
 
@@ -72,7 +72,7 @@ void MeshBatchData::AddMeshData(const MeshData* pMeshData)
 			pIndexData->Get32BitIndices() + numIndices);
 	}
 
-	const u32 numInstances = pMeshData->GetNumInstances();
+	const u32 numInstances = pMesh->GetNumInstances();
 	const u32 instanceOffset = GetNumMeshInstances();
 	
 	m_MeshInfos.emplace_back(numInstances,
@@ -80,66 +80,66 @@ void MeshBatchData::AddMeshData(const MeshData* pMeshData)
 		numIndices,
 		startIndexLocation,
 		baseVertexLocation,
-		pMeshData->GetMaterialIndex());
+		pMesh->GetMaterialIndex());
 	
 	m_MeshInstanceWorldAABBs.insert(m_MeshInstanceWorldAABBs.end(),
-		pMeshData->GetInstanceWorldAABBs(),
-		pMeshData->GetInstanceWorldAABBs() + numInstances);
+		pMesh->GetInstanceWorldAABBs(),
+		pMesh->GetInstanceWorldAABBs() + numInstances);
 	
 	m_MeshInstanceWorldMatrices.insert(m_MeshInstanceWorldMatrices.end(),
-		pMeshData->GetInstanceWorldMatrices(),
-		pMeshData->GetInstanceWorldMatrices() + numInstances);
+		pMesh->GetInstanceWorldMatrices(),
+		pMesh->GetInstanceWorldMatrices() + numInstances);
 }
 
-u32 MeshBatchData::GetNumVertices() const
+u32 MeshBatch::GetNumVertices() const
 {
 	return m_Positions.size();
 }
 
-const Vector3f* MeshBatchData::GetPositions() const
+const Vector3f* MeshBatch::GetPositions() const
 {
 	assert((m_VertexFormatFlags & VertexData::FormatFlag_Position) != 0);
 	return &m_Positions[0];
 }
 
-const Vector3f* MeshBatchData::GetNormals() const
+const Vector3f* MeshBatch::GetNormals() const
 {
 	assert((m_VertexFormatFlags & VertexData::FormatFlag_Normal) != 0);
 	return &m_Normals[0];
 }
 
-const Vector2f* MeshBatchData::GetTexCoords() const
+const Vector2f* MeshBatch::GetTexCoords() const
 {
 	assert((m_VertexFormatFlags & VertexData::FormatFlag_TexCoords) != 0);
 	return &m_TexCoords[0];
 }
 
-const Vector4f* MeshBatchData::GetColors() const
+const Vector4f* MeshBatch::GetColors() const
 {
 	assert((m_VertexFormatFlags & VertexData::FormatFlag_Color) != 0);
 	return &m_Colors[0];
 }
 
-const Vector3f* MeshBatchData::GetTangents() const
+const Vector3f* MeshBatch::GetTangents() const
 {
 	assert((m_VertexFormatFlags & VertexData::FormatFlag_Tangent) != 0);
 	return &m_Tangents[0];
 }
 
-u32 MeshBatchData::GetNumIndices() const
+u32 MeshBatch::GetNumIndices() const
 {
 	if (m_IndexFormat == DXGI_FORMAT_R16_UINT)
 		return m_16BitIndices.size();
 	return m_32BitIndices.size();
 }
 
-const u16* MeshBatchData::Get16BitIndices() const
+const u16* MeshBatch::Get16BitIndices() const
 {
 	assert(m_IndexFormat == DXGI_FORMAT_R16_UINT);
 	return &m_16BitIndices[0];
 }
 
-const u32* MeshBatchData::Get32BitIndices() const
+const u32* MeshBatch::Get32BitIndices() const
 {
 	assert(m_IndexFormat == DXGI_FORMAT_R32_UINT);
 	return &m_32BitIndices[0];

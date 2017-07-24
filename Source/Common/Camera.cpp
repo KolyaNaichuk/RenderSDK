@@ -9,7 +9,6 @@ Camera::Camera(ProjType projType, f32 nearClipPlane, f32 farClipPlane, f32 aspec
 	, m_NearClipPlane(nearClipPlane)
 	, m_FarClipPlane(farClipPlane)
 	, m_AspectRatio(aspectRatio)
-	, m_ClearFlags(ClearFlag_None)
 	, m_FovYInRadians(PI_DIV_FOUR)
 	, m_SizeY(10.0f)
 	, m_DirtyFlags(DirtyFlag_ProjMatrix)
@@ -25,16 +24,6 @@ void Camera::SetAspectRatio(f32 aspectRatio)
 {
 	m_AspectRatio = aspectRatio;
 	m_DirtyFlags |= DirtyFlag_ProjMatrix;
-}
-
-u8 Camera::GetClearFlags() const
-{
-	return m_ClearFlags;
-}
-
-void Camera::SetClearFlags(u8 clearFlags)
-{
-	m_ClearFlags = clearFlags;
 }
 
 f32 Camera::GetFovY() const

@@ -440,4 +440,5 @@ void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, const DestBufferDesc
 	pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
 
 	pDestBuffer->SetState(pDestBuffer->GetReadState());
+	SafeDelete(pUploadBuffer);
 }

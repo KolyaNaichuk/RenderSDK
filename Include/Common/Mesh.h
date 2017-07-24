@@ -82,13 +82,13 @@ private:
 	u32* m_p32BitIndices;
 };
 
-class MeshData
+class Mesh
 {
 public:
-	MeshData(VertexData* pVertexData, IndexData* pIndexData, u32 numInstances, Matrix4f* pInstanceWorldMatrices,
+	Mesh(VertexData* pVertexData, IndexData* pIndexData, u32 numInstances, Matrix4f* pInstanceWorldMatrices,
 		u32 materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
 	
-	~MeshData();
+	~Mesh();
 
 	VertexData* GetVertexData() { return m_pVertexData; }
 	const VertexData* GetVertexData() const { return m_pVertexData; }

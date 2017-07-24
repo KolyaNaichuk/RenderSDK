@@ -7,7 +7,7 @@
 #include "Math/AxisAlignedBox.h"
 #include "D3DWrapper/Common.h"
 
-class MeshData;
+class Mesh;
 
 struct MeshInfo
 {
@@ -27,12 +27,12 @@ struct MeshInfo
 	u32 m_MaterialIndex;
 };
 
-class MeshBatchData
+class MeshBatch
 {
 public:
-	MeshBatchData(u8 vertexFormatFlags, DXGI_FORMAT indexFormat, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
+	MeshBatch(u8 vertexFormatFlags, DXGI_FORMAT indexFormat, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
 
-	void AddMeshData(const MeshData* pMeshData);
+	void AddMesh(const Mesh* pMesh);
 
 	u8 GetVertexFormatFlags() const { return m_VertexFormatFlags; }
 	DXGI_FORMAT GetIndexFormat() const { return m_IndexFormat; }

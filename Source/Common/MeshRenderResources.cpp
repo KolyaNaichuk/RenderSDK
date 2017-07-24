@@ -1,6 +1,6 @@
 #include "Common/MeshRenderResources.h"
-#include "Common/MeshBatchData.h"
-#include "Common/MeshData.h"
+#include "Common/Mesh.h"
+#include "Common/MeshBatch.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/PipelineState.h"
@@ -10,16 +10,16 @@
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 
-MeshRenderResources::MeshRenderResources(RenderEnv* pRenderEnv, u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData)
+MeshRenderResources::MeshRenderResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)
 	: m_NumMeshTypes(numMeshTypes)
 	, m_pMeshInfoBuffer(nullptr)
 	, m_pMeshInstanceRangeBuffer(nullptr)
 	, m_pInstanceWorldMatrixBuffer(nullptr)
 	, m_pInstanceWorldAABBBuffer(nullptr)
 {
-	InitPerMeshResources(pRenderEnv, numMeshTypes, pFirstMeshTypeData);
-	InitPerMeshInstanceResources(pRenderEnv, numMeshTypes, pFirstMeshTypeData);
-	InitPerMeshTypeResources(pRenderEnv, numMeshTypes, pFirstMeshTypeData);
+	InitPerMeshResources(pRenderEnv, numMeshTypes, ppFirstMeshType);
+	InitPerMeshInstanceResources(pRenderEnv, numMeshTypes, ppFirstMeshType);
+	InitPerMeshTypeResources(pRenderEnv, numMeshTypes, ppFirstMeshType);
 }
 
 MeshRenderResources::~MeshRenderResources()
@@ -36,7 +36,7 @@ MeshRenderResources::~MeshRenderResources()
 	}
 }
 
-void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData)
+void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)
 {
 	struct MeshInstanceRange
 	{
@@ -73,8 +73,8 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 	u32 numAllMeshes = 0;
 	for (u32 meshType = 0; meshType < numMeshTypes; ++meshType)
 	{
-		const MeshBatchData& meshBatch = pFirstMeshTypeData[meshType];
-		numAllMeshes += meshBatch.GetNumMeshes();
+		const MeshBatch* pMeshBatch = ppFirstMeshType[meshType];
+		numAllMeshes += pMeshBatch->GetNumMeshes();
 	}
 
 	std::vector<MeshRenderInfo> meshInfoBufferData;
@@ -88,10 +88,10 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 
 	for (u32 meshType = 0; meshType < numMeshTypes; ++meshType)
 	{
-		const MeshBatchData& meshBatch = pFirstMeshTypeData[meshType];
+		const MeshBatch* pMeshBatch = ppFirstMeshType[meshType];
 
-		const MeshInfo* pFirstMeshInfo = meshBatch.GetMeshInfos();
-		for (u32 meshIndex = 0; meshIndex < meshBatch.GetNumMeshes(); ++meshIndex)
+		const MeshInfo* pFirstMeshInfo = pMeshBatch->GetMeshInfos();
+		for (u32 meshIndex = 0; meshIndex < pMeshBatch->GetNumMeshes(); ++meshIndex)
 		{
 			u32 globalMeshIndex = meshInfoBufferData.size();
 			const MeshInfo& meshInfo = pFirstMeshInfo[meshIndex];
@@ -112,7 +112,7 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 			instanceOffset += meshInfo.m_InstanceCount;
 		}
 
-		meshTypeOffset += meshBatch.GetNumMeshes();
+		meshTypeOffset += pMeshBatch->GetNumMeshes();
 	}
 
 	StructuredBufferDesc meshInfoBufferDesc(numAllMeshes, sizeof(MeshRenderInfo), true, false);
@@ -124,13 +124,13 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 	UploadData(pRenderEnv, m_pMeshInstanceRangeBuffer, &meshInstanceRangeBufferDesc, meshInstanceRangeBufferData.data(), numAllMeshes * sizeof(MeshInstanceRange));
 }
 
-void MeshRenderResources::InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData)
+void MeshRenderResources::InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)
 {
 	u32 numAllInstances = 0;
 	for (u32 meshType = 0; meshType < numMeshTypes; ++meshType)
 	{
-		const MeshBatchData& meshBatch = pFirstMeshTypeData[meshType];
-		numAllInstances += meshBatch.GetNumMeshInstances();
+		const MeshBatch* pMeshBatch = ppFirstMeshType[meshType];
+		numAllInstances += pMeshBatch->GetNumMeshInstances();
 	}
 
 	std::vector<AxisAlignedBox> instanceAABBBufferData;
@@ -141,19 +141,19 @@ void MeshRenderResources::InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u3
 
 	for (u32 meshType = 0; meshType < numMeshTypes; ++meshType)
 	{
-		const MeshBatchData& meshBatch = pFirstMeshTypeData[meshType];
+		const MeshBatch* pMeshBatch = ppFirstMeshType[meshType];
 
-		const AxisAlignedBox* pFirstInstanceWorldAABB = meshBatch.GetMeshInstanceWorldAABBs();
+		const AxisAlignedBox* pFirstInstanceWorldAABB = pMeshBatch->GetMeshInstanceWorldAABBs();
 		instanceAABBBufferData.insert(
 			instanceAABBBufferData.end(),
 			pFirstInstanceWorldAABB,
-			pFirstInstanceWorldAABB + meshBatch.GetNumMeshInstances());
+			pFirstInstanceWorldAABB + pMeshBatch->GetNumMeshInstances());
 
-		const Matrix4f* pFirstInstanceWorldMatrix = meshBatch.GetMeshInstanceWorldMatrices();
+		const Matrix4f* pFirstInstanceWorldMatrix = pMeshBatch->GetMeshInstanceWorldMatrices();
 		instanceWorldMatrixBufferData.insert(
 			instanceWorldMatrixBufferData.end(),
 			pFirstInstanceWorldMatrix,
-			pFirstInstanceWorldMatrix + meshBatch.GetNumMeshInstances());
+			pFirstInstanceWorldMatrix + pMeshBatch->GetNumMeshInstances());
 	}
 
 	StructuredBufferDesc instanceAABBBufferDesc(numAllInstances, sizeof(AxisAlignedBox), true, false);
@@ -165,7 +165,7 @@ void MeshRenderResources::InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u3
 	UploadData(pRenderEnv, m_pInstanceWorldMatrixBuffer, &instanceWorldMatrixBufferDesc, instanceWorldMatrixBufferData.data(), numAllInstances * sizeof(Matrix4f));
 }
 
-void MeshRenderResources::InitPerMeshTypeResources(RenderEnv* pRenderEnv, u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData)
+void MeshRenderResources::InitPerMeshTypeResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)
 {
 	m_VertexStrideInBytes.resize(numMeshTypes);
 	m_InputLayouts.resize(numMeshTypes);
@@ -176,20 +176,20 @@ void MeshRenderResources::InitPerMeshTypeResources(RenderEnv* pRenderEnv, u32 nu
 
 	for (u32 meshType = 0; meshType < numMeshTypes; ++meshType)
 	{
-		const MeshBatchData& batchData = pFirstMeshTypeData[meshType];
+		const MeshBatch* pMeshBatch = ppFirstMeshType[meshType];
 
-		m_PrimitiveTopologyTypes[meshType] = batchData.GetPrimitiveTopologyType();
-		m_PrimitiveTopologies[meshType] = batchData.GetPrimitiveTopology();
+		m_PrimitiveTopologyTypes[meshType] = pMeshBatch->GetPrimitiveTopologyType();
+		m_PrimitiveTopologies[meshType] = pMeshBatch->GetPrimitiveTopology();
 
-		InitInputLayout(pRenderEnv, meshType, batchData);
-		InitVertexBuffer(pRenderEnv, meshType, batchData);
-		InitIndexBuffer(pRenderEnv, meshType, batchData);
+		InitInputLayout(pRenderEnv, meshType, pMeshBatch);
+		InitVertexBuffer(pRenderEnv, meshType, pMeshBatch);
+		InitIndexBuffer(pRenderEnv, meshType, pMeshBatch);
 	}
 }
 
-void MeshRenderResources::InitInputLayout(RenderEnv* pRenderEnv, u32 meshType, const MeshBatchData& batchData)
+void MeshRenderResources::InitInputLayout(RenderEnv* pRenderEnv, u32 meshType, const MeshBatch* pMeshBatch)
 {
-	const u8 vertexFormatFlags = batchData.GetVertexFormatFlags();
+	const u8 vertexFormatFlags = pMeshBatch->GetVertexFormatFlags();
 
 	assert(m_InputElements[meshType].empty());
 	m_InputElements[meshType].reserve(5);
@@ -235,10 +235,10 @@ void MeshRenderResources::InitInputLayout(RenderEnv* pRenderEnv, u32 meshType, c
 	m_InputLayouts[meshType] = InputLayoutDesc(m_InputElements[meshType].size(), m_InputElements[meshType].data());
 }
 
-void MeshRenderResources::InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, const MeshBatchData& batchData)
+void MeshRenderResources::InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, const MeshBatch* pMeshBatch)
 {
-	const u32 numVertices = batchData.GetNumVertices();
-	const u8 vertexFormatFlags = batchData.GetVertexFormatFlags();
+	const u32 numVertices = pMeshBatch->GetNumVertices();
+	const u8 vertexFormatFlags = pMeshBatch->GetVertexFormatFlags();
 
 	assert(m_VertexStrideInBytes[meshType] > 0);
 	const u32 sizeInBytes = numVertices * m_VertexStrideInBytes[meshType];
@@ -248,7 +248,7 @@ void MeshRenderResources::InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, 
 
 	assert((vertexFormatFlags & VertexData::FormatFlag_Position) != 0);
 	{
-		const Vector3f* pPositions = batchData.GetPositions();
+		const Vector3f* pPositions = pMeshBatch->GetPositions();
 		const u32 elementSizeInBytes = sizeof(pPositions[0]);
 
 		for (u32 index = 0; index < numVertices; ++index)
@@ -258,7 +258,7 @@ void MeshRenderResources::InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, 
 	}
 	if ((vertexFormatFlags & VertexData::FormatFlag_Normal) != 0)
 	{
-		const Vector3f* pNormals = batchData.GetNormals();
+		const Vector3f* pNormals = pMeshBatch->GetNormals();
 		const u32 elementSizeInBytes = sizeof(pNormals[0]);
 
 		for (u32 index = 0; index < numVertices; ++index)
@@ -268,7 +268,7 @@ void MeshRenderResources::InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, 
 	}
 	if ((vertexFormatFlags & VertexData::FormatFlag_Color) != 0)
 	{
-		const Vector4f* pColors = batchData.GetColors();
+		const Vector4f* pColors = pMeshBatch->GetColors();
 		const u32 elementSizeInBytes = sizeof(pColors[0]);
 
 		for (u32 index = 0; index < numVertices; ++index)
@@ -278,7 +278,7 @@ void MeshRenderResources::InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, 
 	}
 	if ((vertexFormatFlags & VertexData::FormatFlag_Tangent) != 0)
 	{
-		const Vector3f* pTangents = batchData.GetTangents();
+		const Vector3f* pTangents = pMeshBatch->GetTangents();
 		const u32 elementSizeInBytes = sizeof(pTangents[0]);
 
 		for (u32 index = 0; index < numVertices; ++index)
@@ -288,7 +288,7 @@ void MeshRenderResources::InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, 
 	}
 	if ((vertexFormatFlags & VertexData::FormatFlag_TexCoords) != 0)
 	{
-		const Vector2f* pTexCoords = batchData.GetTexCoords();
+		const Vector2f* pTexCoords = pMeshBatch->GetTexCoords();
 		const u32 elementSizeInBytes = sizeof(pTexCoords[0]);
 
 		for (u32 index = 0; index < numVertices; ++index)
@@ -304,10 +304,10 @@ void MeshRenderResources::InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, 
 	SafeArrayDelete(pVertexData);
 }
 
-void MeshRenderResources::InitIndexBuffer(RenderEnv* pRenderEnv, u32 meshType, const MeshBatchData& batchData)
+void MeshRenderResources::InitIndexBuffer(RenderEnv* pRenderEnv, u32 meshType, const MeshBatch* pMeshBatch)
 {
-	const u32 numIndices = batchData.GetNumIndices();
-	const bool use16BitIndices = batchData.GetIndexFormat() == DXGI_FORMAT_R16_UINT;
+	const u32 numIndices = pMeshBatch->GetNumIndices();
+	const bool use16BitIndices = pMeshBatch->GetIndexFormat() == DXGI_FORMAT_R16_UINT;
 
 	const u32 strideInBytes = use16BitIndices ? sizeof(u16) : sizeof(u32);
 	const u32 sizeInBytes = numIndices * strideInBytes;
@@ -317,9 +317,9 @@ void MeshRenderResources::InitIndexBuffer(RenderEnv* pRenderEnv, u32 meshType, c
 	
 	const void* pIndexData = nullptr;
 	if (use16BitIndices)
-		pIndexData = batchData.Get16BitIndices();
+		pIndexData = pMeshBatch->Get16BitIndices();
 	else
-		pIndexData = batchData.Get32BitIndices();
+		pIndexData = pMeshBatch->Get32BitIndices();
 	
 	UploadData(pRenderEnv, m_IndexBuffers[meshType], &bufferDesc, pIndexData, sizeInBytes);
 }

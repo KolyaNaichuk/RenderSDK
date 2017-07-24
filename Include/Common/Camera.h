@@ -13,14 +13,6 @@ public:
 		ProjType_Perspective
 	};
 
-	enum ClearFlags
-	{
-		ClearFlag_None = 0,
-		ClearFlag_Color = 1,
-		ClearFlag_Depth = 2,
-		ClearFlag_DepthStencil = 4,
-	};
-		
 	Camera(ProjType projType, f32 nearClipPlane, f32 farClipPlane, f32 aspectRatio);
 
 	ProjType GetProjType() const;
@@ -37,10 +29,7 @@ public:
 
 	f32 GetAspectRatio() const;
 	void SetAspectRatio(f32 aspectRatio);
-
-	u8 GetClearFlags() const;
-	void SetClearFlags(u8 clearFlags);
-		
+			
 	f32 GetFovY() const;
 	void SetFovY(f32 fovYInRadians);
 
@@ -62,7 +51,6 @@ private:
 	f32 m_NearClipPlane;
 	f32 m_FarClipPlane;
 	f32 m_AspectRatio;
-	u8 m_ClearFlags;
 	f32 m_FovYInRadians;
 	f32 m_SizeY;
 

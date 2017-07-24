@@ -1,9 +1,8 @@
 #pragma once
 
 #include "Common/Light.h"
-#include "Common/MeshBatchData.h"
-
-struct Material;
+#include "Common/Material.h"
+#include "Common/MeshBatch.h"
 
 class Scene
 {
@@ -11,8 +10,9 @@ public:
 	Scene();
 	~Scene();
 
-	const MeshBatchData* GetMeshBatchData() const;
-	void SetMeshBatchData(MeshBatchData* pMeshBatch);
+	void AddMeshBatch(MeshBatch* pMeshBatch);
+	std::size_t GetNumMeshBatches() const;
+	MeshBatch** GetMeshBatches();
 		
 	void AddMaterial(Material* pMaterial);
 	std::size_t GetNumMaterials() const;
@@ -30,7 +30,7 @@ public:
 	SpotLight** GetSpotLights();
 			
 private:
-	MeshBatchData* m_pMeshBatchData;
+	std::vector<MeshBatch*> m_MeshBatches;
 	std::vector<Material*> m_Materials;
 	DirectionalLight* m_pDirectionalLight;
 	std::vector<PointLight*> m_PointLights;

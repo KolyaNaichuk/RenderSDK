@@ -1,8 +1,8 @@
 #include "Common/OBJFileLoader.h"
 #include "Common/FileUtilities.h"
-#include "Common/MeshBatchData.h"
-#include "Common/MeshData.h"
-#include "Common/MeshDataUtilities.h"
+#include "Common/Mesh.h"
+#include "Common/MeshBatch.h"
+#include "Common/MeshUtilities.h"
 #include "Common/Scene.h"
 #include "Common/Material.h"
 #include "Math/Hash.h"
@@ -76,11 +76,11 @@ namespace OBJFile
 	}
 }
 
-Scene* OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8 convertMeshDataFlags)
+Scene* OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8 convertMeshFlags)
 {
 	Clear();
 
-	bool loadedOBJFile = LoadOBJFile(pOBJFilePath, use32BitIndices, convertMeshDataFlags);
+	bool loadedOBJFile = LoadOBJFile(pOBJFilePath, use32BitIndices, convertMeshFlags);
 	if (!loadedOBJFile)
 		return nullptr;
 
@@ -94,10 +94,10 @@ Scene* OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8
 			return nullptr;
 	}
 
-	return PopulateScene(use32BitIndices, convertMeshDataFlags);
+	return PopulateScene(use32BitIndices, convertMeshFlags);
 }
 
-bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, u8 convertMeshDataFlags)
+bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, u8 convertMeshFlags)
 {
 	std::vector<char> byteStringFileData;
 	if (!LoadDataFromFile(pFilePath, FileMode::Text, byteStringFileData))
@@ -363,7 +363,7 @@ u32 OBJFileLoader::FindMaterialIndex(const std::wstring& materialName) const
 	return OBJFile::kUnknownIndex;
 }
 
-Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshDataFlags)
+Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshFlags)
 {
 	u8 vertexFormat = 0;
 	
@@ -382,36 +382,34 @@ Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshDataFlag
 		
 	Scene* pScene = new Scene();
 	
-	MeshBatchData* pMeshBatchData = new MeshBatchData(vertexFormat, indexFormat, primitiveTopologyType, primitiveTopology);
+	MeshBatch* pMeshBatch = new MeshBatch(vertexFormat, indexFormat, primitiveTopologyType, primitiveTopology);
 	for (const OBJFile::Object& object : m_Objects)
 	{
 		for (u32 meshIndex : object.m_MeshIndices)
 		{
-			const OBJFile::Mesh& mesh = m_Meshes[meshIndex];
+			const OBJFile::Mesh& objFileMesh = m_Meshes[meshIndex];
 
 			VertexData* pVertexData = nullptr;
 			IndexData* pIndexData = nullptr;
 
 			if (use32BitIndices)
-				GenerateVertexAndIndexData<u32>(mesh, &pVertexData, &pIndexData);
+				GenerateVertexAndIndexData<u32>(objFileMesh, &pVertexData, &pIndexData);
 			else
-				GenerateVertexAndIndexData<u16>(mesh, &pVertexData, &pIndexData);
+				GenerateVertexAndIndexData<u16>(objFileMesh, &pVertexData, &pIndexData);
 
 			u32 numInstances = 1;
 			Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
 			pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 						
-			MeshData meshData(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices,
-				mesh.m_MaterialIndex, primitiveTopologyType, primitiveTopology);
-			
-			if (convertMeshDataFlags != 0)
-				ConvertMeshData(&meshData, convertMeshDataFlags);
-			meshData.RecalcInstanceWorldAABBs();
+			Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, objFileMesh.m_MaterialIndex, primitiveTopologyType, primitiveTopology);
+			if (convertMeshFlags != 0)
+				ConvertMesh(&mesh, convertMeshFlags);
+			mesh.RecalcInstanceWorldAABBs();
 
-			pMeshBatchData->AddMeshData(&meshData);
+			pMeshBatch->AddMesh(&mesh);
 		}
 	}
-	pScene->SetMeshBatchData(pMeshBatchData);
+	pScene->AddMeshBatch(pMeshBatch);
 
 	std::vector<std::string> materialMasks;
 	for (const OBJFile::Material& material : m_Materials)

@@ -32,10 +32,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pViewport(nullptr)
 	, m_pScissorRect(nullptr)
 	, m_BackBufferIndex(0)
-	, m_LastSubmissionFenceValue(0)
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
-		m_FrameCompletionFenceValues[index] = m_LastSubmissionFenceValue;
+		m_FrameCompletionFenceValues[index] = m_pRenderEnv->m_LastSubmissionFenceValue;
 }
 
 DXApplication::~DXApplication()
@@ -73,9 +72,12 @@ void DXApplication::OnInit()
 	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
 	
 	m_pCommandListPool = new CommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pFence = new Fence(m_pDevice, m_pRenderEnv->m_LastSubmissionFenceValue, L"m_pFence");
 	
 	m_pRenderEnv->m_pDevice = m_pDevice;
 	m_pRenderEnv->m_pCommandListPool = m_pCommandListPool;
+	m_pRenderEnv->m_pCommandQueue = m_pCommandQueue;
+	m_pRenderEnv->m_pFence = m_pFence;
 	m_pRenderEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
 	m_pRenderEnv->m_pUploadHeapProps = m_pUploadHeapProps;
 	m_pRenderEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
@@ -131,38 +133,11 @@ void DXApplication::OnInit()
 
 	VertexBufferDesc vertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]));
 	m_pVertexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pVertexBuffer");
+	UploadData(m_pRenderEnv, m_pVertexBuffer, &vertexBufferDesc, vertices, sizeof(vertices));
 	
-	Buffer uploadVertexBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadVertexBuffer");
-	uploadVertexBuffer.Write(vertices, sizeof(vertices));
-
 	IndexBufferDesc indexBufferDesc(ARRAYSIZE(indices), sizeof(indices[0]));
 	m_pIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pIndexBuffer");
-	
-	Buffer uploadIndexBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadIndexBuffer");
-	uploadIndexBuffer.Write(indices, sizeof(indices));
-	
-	m_pFence = new Fence(m_pDevice, m_LastSubmissionFenceValue, L"m_pFence");
-	
-	CommandList* pCommandList = m_pCommandListPool->Create(L"uploadVertexDataCommandList");
-	pCommandList->Begin();
-	pCommandList->CopyResource(m_pVertexBuffer, &uploadVertexBuffer);
-	pCommandList->CopyResource(m_pIndexBuffer, &uploadIndexBuffer);
-	
-	const D3D12_RESOURCE_BARRIER resourceTransitions[] =
-	{
-		ResourceTransitionBarrier(m_pVertexBuffer, m_pVertexBuffer->GetState(), m_pVertexBuffer->GetReadState()),
-		ResourceTransitionBarrier(m_pIndexBuffer, m_pIndexBuffer->GetState(), m_pIndexBuffer->GetReadState())
-	};
-	pCommandList->ResourceBarrier(ARRAYSIZE(resourceTransitions), &resourceTransitions[0]);
-
-	m_pVertexBuffer->SetState(m_pVertexBuffer->GetReadState());
-	m_pIndexBuffer->SetState(m_pIndexBuffer->GetReadState());
-
-	pCommandList->End();
-
-	++m_LastSubmissionFenceValue;
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList, m_pFence, m_LastSubmissionFenceValue);
-	m_pFence->WaitForSignalOnCPU(m_LastSubmissionFenceValue);
+	UploadData(m_pRenderEnv, m_pIndexBuffer, &indexBufferDesc, indices, sizeof(indices));
 }
 
 void DXApplication::OnUpdate()
@@ -178,8 +153,8 @@ void DXApplication::OnRender()
 		
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 		
-	ResourceTransitionBarrier writeStateTransition(pRenderTarget, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
-	pCommandList->ResourceBarrier(1, &writeStateTransition);
+	ResourceBarrier writeStateBarrier(pRenderTarget, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
+	pCommandList->ResourceBarrier(1, &writeStateBarrier);
 	pRenderTarget->SetState(pRenderTarget->GetWriteState());
 		
 	const FLOAT clearColor[4] = {0.1f, 0.7f, 0.4f, 1.0f};
@@ -194,28 +169,28 @@ void DXApplication::OnRender()
 	pCommandList->RSSetScissorRects(1, m_pScissorRect);
 	pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
-	ResourceTransitionBarrier presentStateTransition(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
-	pCommandList->ResourceBarrier(1, &presentStateTransition);
+	ResourceBarrier presentStateBarrier(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
+	pCommandList->ResourceBarrier(1, &presentStateBarrier);
 	pRenderTarget->SetState(D3D12_RESOURCE_STATE_PRESENT);
 
 	pCommandList->End();
 
-	++m_LastSubmissionFenceValue;
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList, m_pFence, m_LastSubmissionFenceValue);
+	++m_pRenderEnv->m_LastSubmissionFenceValue;
+	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList, m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 
-	++m_LastSubmissionFenceValue;
+	++m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_pSwapChain->Present(1, 0);
-	m_pCommandQueue->Signal(m_pFence, m_LastSubmissionFenceValue);
+	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 
-	m_FrameCompletionFenceValues[m_BackBufferIndex] = m_LastSubmissionFenceValue;
+	m_FrameCompletionFenceValues[m_BackBufferIndex] = m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 	m_pFence->WaitForSignalOnCPU(m_FrameCompletionFenceValues[m_BackBufferIndex]);
 }
 
 void DXApplication::OnDestroy()
 {
-	m_pCommandQueue->Signal(m_pFence, m_LastSubmissionFenceValue);
-	m_pFence->WaitForSignalOnCPU(m_LastSubmissionFenceValue);
+	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
+	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
 }
 
 void DXApplication::OnKeyDown(UINT8 key)

@@ -1,15 +1,15 @@
 #include "Common/Scene.h"
 
 Scene::Scene()
-	: m_pMeshBatchData(nullptr)
-	, m_pDirectionalLight(nullptr)
+	: m_pDirectionalLight(nullptr)
 {
 }
 
 Scene::~Scene()
-{
-	SafeDelete(m_pMeshBatchData);
-	
+{	
+	for (std::size_t index = 0; index < m_MeshBatches.size(); ++index)
+		SafeDelete(m_MeshBatches[index]);
+
 	for (std::size_t index = 0; index < m_Materials.size(); ++index)
 		SafeDelete(m_Materials[index]);
 	
@@ -22,18 +22,19 @@ Scene::~Scene()
 	SafeDelete(m_pDirectionalLight);
 }
 
-const MeshBatchData* Scene::GetMeshBatchData() const
+void Scene::AddMeshBatch(MeshBatch* pMeshBatch)
 {
-	return m_pMeshBatchData;
+	m_MeshBatches.emplace_back(pMeshBatch);
 }
 
-void Scene::SetMeshBatchData(MeshBatchData* pMeshBatch)
+std::size_t Scene::GetNumMeshBatches() const
 {
-	if (m_pMeshBatchData != pMeshBatch)
-	{
-		SafeDelete(m_pMeshBatchData);
-		m_pMeshBatchData = pMeshBatch;
-	}
+	return m_MeshBatches.size();
+}
+
+MeshBatch** Scene::GetMeshBatches()
+{
+	return m_MeshBatches.data();
 }
 
 void Scene::AddMaterial(Material* pMaterial)

@@ -48,19 +48,10 @@
     <ClInclude Include="..\Include\DDSTextureLoader\DDSTextureLoader.h">
       <Filter>DDSTextureLoader</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Common\MeshData.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\MeshDataFactory.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Common\Material.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\Common\Color.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\MeshDataUtilities.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\Common\Camera.h">
@@ -109,9 +100,6 @@
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\Common\Light.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\MeshBatchData.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\Common\Scene.h">
@@ -249,6 +237,18 @@
     <ClInclude Include="..\Include\Common\LightRenderResources.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Common\Mesh.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\MeshFactory.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\MeshUtilities.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\MeshBatch.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -274,15 +274,6 @@
     </ClCompile>
     <ClCompile Include="..\Source\DDSTextureLoader\DDSTextureLoader.cpp">
       <Filter>DDSTextureLoader</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\MeshDataFactory.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\MeshData.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp">
-      <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\Camera.cpp">
       <Filter>Common</Filter>
@@ -330,9 +321,6 @@
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\Light.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\MeshBatchData.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\Material.cpp">
@@ -459,6 +447,18 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\LightRenderResources.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\Mesh.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\MeshFactory.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Include\Common\MeshUtilities.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\MeshBatch.cpp">
       <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>

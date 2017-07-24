@@ -4,7 +4,7 @@
 
 class Buffer;
 class CommandList;
-class MeshBatchData;
+class MeshBatch;
 
 struct InputLayoutDesc;
 struct RenderEnv;
@@ -12,7 +12,7 @@ struct RenderEnv;
 class MeshRenderResources
 {
 public:
-	MeshRenderResources(RenderEnv* pRenderEnv, u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData);
+	MeshRenderResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType);
 	~MeshRenderResources();
 
 	u32 GetNumMeshTypes() const { return m_NumMeshTypes; }
@@ -30,13 +30,13 @@ public:
 	Buffer* GetIndexBuffer(u32 meshType) { return m_IndexBuffers[meshType]; }
 
 private:
-	void InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData);
-	void InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData);
-	void InitPerMeshTypeResources(RenderEnv* pRenderEnv, u32 numMeshTypes, const MeshBatchData* pFirstMeshTypeData);
+	void InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType);
+	void InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType);
+	void InitPerMeshTypeResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType);
 
-	void InitInputLayout(RenderEnv* pRenderEnv, u32 meshType, const MeshBatchData& batchData);
-	void InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, const MeshBatchData& batchData);
-	void InitIndexBuffer(RenderEnv* pRenderEnv, u32 meshType, const MeshBatchData& batchData);
+	void InitInputLayout(RenderEnv* pRenderEnv, u32 meshType, const MeshBatch* pMeshBatch);
+	void InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, const MeshBatch* pMeshBatch);
+	void InitIndexBuffer(RenderEnv* pRenderEnv, u32 meshType, const MeshBatch* pMeshBatch);
 
 private:
 	u32 m_NumMeshTypes;

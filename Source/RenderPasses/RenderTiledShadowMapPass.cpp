@@ -49,8 +49,8 @@ RenderTiledShadowMapPass::RenderTiledShadowMapPass(InitParams* pParams)
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetGeometryShader(&geometryShader);
-	pipelineStateDesc.InputLayout = *pMeshBatch->GetInputLayout();
-	pipelineStateDesc.PrimitiveTopologyType = pMeshBatch->GetPrimitiveTopologyType();
+	//pipelineStateDesc.InputLayout = *pMeshBatch->GetInputLayout(); // Kolya. Fix me
+	//pipelineStateDesc.PrimitiveTopologyType = pMeshBatch->GetPrimitiveTopologyType(); // Kolya. Fix me
 	pipelineStateDesc.DepthStencilState = DepthStencilDesc(DepthStencilDesc::Enabled);
 	pipelineStateDesc.SetRenderTargetFormats(0, nullptr, pParams->m_DSVFormat);
 
@@ -91,6 +91,7 @@ void RenderTiledShadowMapPass::Record(RenderParams* pParams)
 	pCommandList->ClearDepthStencilView(dsvHeapStart, 1.0f);
 	pCommandList->OMSetRenderTargets(0, nullptr, FALSE, &dsvHeapStart);
 
+	/* Kolya. Fix me
 	pCommandList->IASetPrimitiveTopology(pMeshBatch->GetPrimitiveTopology());
 	pCommandList->IASetVertexBuffers(0, 1, pMeshBatch->GetVertexBuffer()->GetVBView());
 	pCommandList->IASetIndexBuffer(pMeshBatch->GetIndexBuffer()->GetIBView());
@@ -100,5 +101,6 @@ void RenderTiledShadowMapPass::Record(RenderParams* pParams)
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshBatch->GetNumMeshes(), pParams->m_pDrawShadowCasterCommandBuffer, 0, pParams->m_pNumDrawShadowCastersBuffer, 0);
+	*/
 	pCommandList->End();
 }

@@ -1,5 +1,5 @@
-#include "Common/MeshDataUtilities.h"
-#include "Common/MeshData.h"
+#include "Common/MeshUtilities.h"
+#include "Common/Mesh.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
@@ -78,9 +78,9 @@ void ComputeNormals(u32 numVertices, const Vector3f* pPositions, u32 numIndices,
 	assert(false);
 }
 
-void ConvertMeshData(MeshData* pMeshData, u8 convertionFlags)
+void ConvertMesh(Mesh* pMesh, u8 convertionFlags)
 {
-	VertexData* pVertexData = pMeshData->GetVertexData();
+	VertexData* pVertexData = pMesh->GetVertexData();
 
 	const u32 numVertices = pVertexData->GetNumVertices();
 	const u8 vertexFormatFlags = pVertexData->GetFormatFlags();
@@ -123,7 +123,7 @@ void ConvertMeshData(MeshData* pMeshData, u8 convertionFlags)
 	
 	if (convertionFlags & ConvertionFlag_FlipWindingOrder)
 	{
-		IndexData* pIndexData = pMeshData->GetIndexData();
+		IndexData* pIndexData = pMesh->GetIndexData();
 		const u32 numIndices = pIndexData->GetNumIndices();
 
 		if (pIndexData->GetFormat() == DXGI_FORMAT_R16_UINT)
