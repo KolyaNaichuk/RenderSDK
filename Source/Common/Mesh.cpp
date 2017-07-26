@@ -1,10 +1,10 @@
 #include "Common/Mesh.h"
 #include "Common/Material.h"
+#include "Math/AxisAlignedBox.h"
+#include "Math/Matrix4.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
-#include "Math/AxisAlignedBox.h"
-#include "Math/Matrix4.h"
 
 VertexData::~VertexData()
 {
@@ -179,8 +179,8 @@ Mesh::Mesh(VertexData* pVertexData, IndexData* pIndexData, u32 numInstances, Mat
 	, m_pIndexData(pIndexData)
 	, m_NumInstances(numInstances)
 	, m_pInstanceWorldMatrices(pInstanceWorldMatrices)
+	, m_pInstanceWorldAABBs(new AxisAlignedBox[m_NumInstances])
 	, m_pMaterialIndex(materialIndex)
-	, m_pInstanceWorldAABBs(nullptr)
 	, m_PrimitiveTopologyType(primitiveTopologyType)
 	, m_PrimitiveTopology(primitiveTopology)
 {
@@ -197,5 +197,29 @@ Mesh::~Mesh()
 
 void Mesh::RecalcInstanceWorldAABBs()
 {
-	assert(false && "Kolya fix me");
+	const u8 numAABBCorners = 8;
+	const AxisAlignedBox localSpaceAABB(m_pVertexData->GetNumVertices(), m_pVertexData->GetPositions());
+
+	const Vector3f localSpaceAABBCorners[numAABBCorners] =
+	{
+		localSpaceAABB.m_Center + Vector3f( localSpaceAABB.m_Radius.m_X,  localSpaceAABB.m_Radius.m_Y,  localSpaceAABB.m_Radius.m_Z),
+		localSpaceAABB.m_Center + Vector3f( localSpaceAABB.m_Radius.m_X,  localSpaceAABB.m_Radius.m_Y, -localSpaceAABB.m_Radius.m_Z),
+		localSpaceAABB.m_Center + Vector3f( localSpaceAABB.m_Radius.m_X, -localSpaceAABB.m_Radius.m_Y,  localSpaceAABB.m_Radius.m_Z),
+		localSpaceAABB.m_Center + Vector3f( localSpaceAABB.m_Radius.m_X, -localSpaceAABB.m_Radius.m_Y, -localSpaceAABB.m_Radius.m_Z),
+		localSpaceAABB.m_Center + Vector3f(-localSpaceAABB.m_Radius.m_X,  localSpaceAABB.m_Radius.m_Y,  localSpaceAABB.m_Radius.m_Z),
+		localSpaceAABB.m_Center + Vector3f(-localSpaceAABB.m_Radius.m_X,  localSpaceAABB.m_Radius.m_Y, -localSpaceAABB.m_Radius.m_Z),
+		localSpaceAABB.m_Center + Vector3f(-localSpaceAABB.m_Radius.m_X, -localSpaceAABB.m_Radius.m_Y,  localSpaceAABB.m_Radius.m_Z),
+		localSpaceAABB.m_Center + Vector3f(-localSpaceAABB.m_Radius.m_X, -localSpaceAABB.m_Radius.m_Y, -localSpaceAABB.m_Radius.m_Z),
+	};
+
+	Vector3f worldSpaceAABBCorners[numAABBCorners];
+	for (u32 instanceIndex = 0; instanceIndex < m_NumInstances; ++instanceIndex)
+	{
+		const Matrix4f& instanceWorldMatrix = m_pInstanceWorldMatrices[instanceIndex];
+		
+		for (u8 cornerIndex = 0; cornerIndex < numAABBCorners; ++cornerIndex)
+			worldSpaceAABBCorners[cornerIndex] = TransformPoint(localSpaceAABBCorners[cornerIndex], instanceWorldMatrix);
+		
+		m_pInstanceWorldAABBs[instanceIndex] = AxisAlignedBox(numAABBCorners, worldSpaceAABBCorners);
+	}
 }

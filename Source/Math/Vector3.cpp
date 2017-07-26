@@ -108,16 +108,31 @@ bool IsNormalized(const Vector3f& vec, f32 epsilon)
 	return (Abs(1.0f - Length(vec)) < epsilon);
 }
 
-const Vector3f TransformPoint(const Vector3f& point, const Transform& transform)
+const Vector3f TransformPoint(const Vector3f& point, const Matrix4f& matrix)
 {
-	const Matrix4f& matrix = transform.GetLocalToWorldMatrix();
-
 	f32 x = point.m_X * matrix.m_00 + point.m_Y * matrix.m_10 + point.m_Z * matrix.m_20 + matrix.m_30;
 	f32 y = point.m_X * matrix.m_01 + point.m_Y * matrix.m_11 + point.m_Z * matrix.m_21 + matrix.m_31;
 	f32 z = point.m_X * matrix.m_02 + point.m_Y * matrix.m_12 + point.m_Z * matrix.m_22 + matrix.m_32;
 	f32 w = point.m_X * matrix.m_03 + point.m_Y * matrix.m_13 + point.m_Z * matrix.m_23 + matrix.m_33;
 
-	return Vector3f(x / w, y / w, z / w);
+	f32 rcpW = 1.0f / w;
+	return Vector3f(x * rcpW, y * rcpW, z * rcpW);
+}
+
+const Vector3f TransformPoint(const Vector3f& point, const Transform& transform)
+{
+	return TransformPoint(point, transform.GetLocalToWorldMatrix());
+}
+
+Vector3f ToCartesianVector(const Vector4f& homogeneousVec)
+{
+	return Vector3f(homogeneousVec.m_X, homogeneousVec.m_Y, homogeneousVec.m_Z);
+}
+
+Vector3f ToCartesianPoint(const Vector4f& homogeneousPoint)
+{
+	f32 rcpW = 1.0f / homogeneousPoint.m_W;
+	return Vector3f(homogeneousPoint.m_X * rcpW, homogeneousPoint.m_Y * rcpW, homogeneousPoint.m_Z * rcpW);
 }
 
 Vector3f& operator+= (Vector3f& vec1, const Vector3f& vec2)

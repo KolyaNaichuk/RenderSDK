@@ -4,6 +4,7 @@
 
 struct AxisAlignedBox
 {
+	AxisAlignedBox();
 	AxisAlignedBox(const Vector3f& center, const Vector3f& radius);
 	AxisAlignedBox(u32 numPoints, const Vector3f* pFirstPoint);
 	AxisAlignedBox(const AxisAlignedBox& box1, const AxisAlignedBox& box2);

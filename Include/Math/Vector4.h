@@ -3,6 +3,7 @@
 #include "Math/Math.h"
 
 class Transform;
+struct Vector3f;
 
 struct Vector4f
 {
@@ -37,6 +38,8 @@ const Vector4f Max(const Vector4f& vec1, const Vector4f& vec2);
 bool IsNormalized(const Vector4f& vec, f32 epsilon = EPSILON);
 const Vector4f TransformVector(const Vector4f& vec, const Transform& transform);
 const Vector4f TransformNormal(const Vector4f& vec, const Transform& transform);
+Vector4f ToHomogeneousVector(const Vector3f& cartesianVec);
+Vector4f ToHomogeneousPoint(const Vector3f& cartesianPoint, f32 w = 1.0f);
 
 Vector4f& operator+= (Vector4f& vec1, const Vector4f& vec2);
 Vector4f& operator-= (Vector4f& vec1, const Vector4f& vec2);

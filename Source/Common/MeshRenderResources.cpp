@@ -168,6 +168,7 @@ void MeshRenderResources::InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u3
 void MeshRenderResources::InitPerMeshTypeResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)
 {
 	m_VertexStrideInBytes.resize(numMeshTypes);
+	m_InputElements.resize(numMeshTypes);
 	m_InputLayouts.resize(numMeshTypes);
 	m_PrimitiveTopologyTypes.resize(numMeshTypes);
 	m_PrimitiveTopologies.resize(numMeshTypes);

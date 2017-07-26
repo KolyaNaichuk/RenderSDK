@@ -107,6 +107,16 @@ const Vector4f TransformNormal(const Vector4f& vec, const Transform& transform)
 	return transform.GetWorldToLocalMatrix() * vec;
 }
 
+Vector4f ToHomogeneousVector(const Vector3f& cartesianVec)
+{
+	return Vector4f(cartesianVec.m_X, cartesianVec.m_Y, cartesianVec.m_Z, 0.0f);
+}
+
+Vector4f ToHomogeneousPoint(const Vector3f& cartesianPoint, f32 w)
+{
+	return Vector4f(cartesianPoint.m_X * w, cartesianPoint.m_Y * w, cartesianPoint.m_Z * w, w);
+}
+
 Vector4f& operator+= (Vector4f& vec1, const Vector4f& vec2)
 {
 	vec1.m_X += vec2.m_X;

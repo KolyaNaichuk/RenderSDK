@@ -596,10 +596,11 @@ void DXApplication::OnInit()
 	const UINT backBufferHeight = backBufferRect.bottom - backBufferRect.top;
 
 	InitRenderEnv(backBufferWidth, backBufferHeight);
-	/*
-	Scene* pScene = SceneLoader::LoadSponza();
+	
+	Scene* pScene = SceneLoader::LoadCornellBox();
 	InitScene(pScene, backBufferWidth, backBufferHeight);	
 	
+	/*
 	InitDetectVisibleMeshesPass();
 	
 	if (m_pPointLightRenderResources != nullptr)
@@ -908,6 +909,10 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), backBufferWidth, backBufferHeight);
 	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+
+	DepthStencilValue optimizedClearDepth(1.0f);
+	DepthTexture2DDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, backBufferWidth, backBufferHeight, true, true);
+	m_pDepthTexture = new DepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &depthTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pDepthTexture");
 }
 
 void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
@@ -915,7 +920,7 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
 	m_pCamera->GetTransform().SetPosition(Vector3f(0.5f * 549.6f, 0.5f * 548.8f, 700.0f));
 	m_pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(PI));
-	m_pCamera->SetBackgroundColor(Color::BLACK);
+	m_pCamera->SetBackgroundColor(Color::BISQUE);
 
 	m_pMeshRenderResources = new MeshRenderResources(m_pRenderEnv, pScene->GetNumMeshBatches(), pScene->GetMeshBatches());
 
@@ -1064,11 +1069,7 @@ void DXApplication::InitRenderGBufferPass(UINT backBufferWidth, UINT backBufferH
 {
 	assert(false);
 	/*
-	DepthStencilValue optimizedClearDepth(1.0f);
 	const FLOAT optimizedClearColor[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-
-	DepthTexture2DDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, backBufferWidth, backBufferHeight, true, true);
-	m_pDepthTexture = new DepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &depthTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pDepthTexture");
 
 	ColorTexture2DDesc diffuseTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, backBufferWidth, backBufferHeight, true, true, false);
 	m_pDiffuseTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &diffuseTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pDiffuseTexture");

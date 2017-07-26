@@ -1,6 +1,11 @@
 #include "Math/AxisAlignedBox.h"
 #include "Math/Math.h"
 
+AxisAlignedBox::AxisAlignedBox()
+	: AxisAlignedBox(Vector3f::ZERO, Vector3f::ZERO)
+{
+}
+
 AxisAlignedBox::AxisAlignedBox(const Vector3f& center, const Vector3f& radius)
     : m_Center(center)
     , m_Radius(radius)
