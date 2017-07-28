@@ -82,7 +82,7 @@ void CreateRenderShadowMapCommandsPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
-	BindingResourceList* pResources = pParams->m_pResources;
+	ResourceList* pResources = pParams->m_pResources;
 
 	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);

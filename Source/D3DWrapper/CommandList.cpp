@@ -136,6 +136,11 @@ void CommandList::SetComputeRoot32BitConstant(UINT rootParamIndex, UINT srcData,
 	m_D3DCommandList->SetComputeRoot32BitConstant(rootParamIndex, srcData, destOffsetIn32BitValues);
 }
 
+void CommandList::SetComputeRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer)
+{
+	assert(false);
+}
+
 void CommandList::RSSetViewports(UINT numViewports, const Viewport* pViewports)
 {
 	m_D3DCommandList->RSSetViewports(numViewports, pViewports);

@@ -16,6 +16,9 @@ class Fence;
 class Camera;
 class MeshRenderResources;
 class LightRenderResources;
+class FrustumMeshCullingPass;
+
+// Old
 class CreateRenderGBufferCommandsPass;
 class RenderGBufferPass;
 class ClearVoxelGridPass;
@@ -36,7 +39,7 @@ class Scene;
 
 struct HeapProperties;
 struct RenderEnv;
-struct BindingResourceList;
+struct ResourceList;
 struct Viewport;
 
 //#define DEBUG_RENDER_PASS
@@ -90,6 +93,9 @@ private:
 
 	void InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight);
 	void InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
+	void InitFrustumMeshCullingPass();
+
+	// Old
 	void InitDetectVisibleMeshesPass();
 	void InitDetectVisiblePointLightsPass();
 	void InitDetectVisibleSpotLightsPass();
@@ -232,86 +238,86 @@ private:
 	UINT m_BackBufferIndex;
 
 	RenderGBufferPass* m_pRenderGBufferPass;
-	BindingResourceList* m_pRenderGBufferResources;
+	ResourceList* m_pRenderGBufferResources;
 
 	TiledLightCullingPass* m_pTiledLightCullingPass;
-	BindingResourceList* m_pTiledLightCullingResources;
+	ResourceList* m_pTiledLightCullingResources;
 
 	TiledShadingPass* m_pTiledShadingPass;
 	TiledShadingPass* m_pTiledDirectLightShadingPass;
 	TiledShadingPass* m_pTiledIndirectLightShadingPass;
-	BindingResourceList* m_pTiledShadingResources;
+	ResourceList* m_pTiledShadingResources;
 
 	ClearVoxelGridPass* m_pClearVoxelGridPass;
-	BindingResourceList* m_pClearVoxelGridResources;
+	ResourceList* m_pClearVoxelGridResources;
 
 	CreateVoxelGridPass* m_pCreateVoxelGridPass;
-	BindingResourceList* m_pCreateVoxelGridResources;
+	ResourceList* m_pCreateVoxelGridResources;
 
 	InjectVirtualPointLightsPass* m_pInjectVirtualPointLightsPass;
-	BindingResourceList* m_pInjectVirtualPointLightsResources;
+	ResourceList* m_pInjectVirtualPointLightsResources;
 
 	PropagateLightPass* m_pPropagateLightPass;
-	BindingResourceList* m_PropagateLightResources[2];
+	ResourceList* m_PropagateLightResources[2];
 		
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridDiffusePass;
-	BindingResourceList* m_VisualizeVoxelGridDiffuseResources[kNumBackBuffers];
+	ResourceList* m_VisualizeVoxelGridDiffuseResources[kNumBackBuffers];
 
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridNormalPass;
-	BindingResourceList* m_VisualizeVoxelGridNormalResources[kNumBackBuffers];
+	ResourceList* m_VisualizeVoxelGridNormalResources[kNumBackBuffers];
 
 	ViewFrustumCullingPass* m_pDetectVisibleMeshesPass;
-	BindingResourceList* m_pDetectVisibleMeshesResources;
+	ResourceList* m_pDetectVisibleMeshesResources;
 
 	ViewFrustumCullingPass* m_pDetectVisiblePointLightsPass;
-	BindingResourceList* m_pDetectVisiblePointLightsResources;
+	ResourceList* m_pDetectVisiblePointLightsResources;
 
 	ViewFrustumCullingPass* m_pDetectVisibleSpotLightsPass;
-	BindingResourceList* m_pDetectVisibleSpotLightsResources;
+	ResourceList* m_pDetectVisibleSpotLightsResources;
 
 	CreateRenderGBufferCommandsPass* m_pCreateRenderGBufferCommandsPass;
-	BindingResourceList* m_pCreateRenderGBufferCommandsResources;
+	ResourceList* m_pCreateRenderGBufferCommandsResources;
 
-	BindingResourceList* m_pCreateRenderShadowMapCommandsArgumentBufferResources;
+	ResourceList* m_pCreateRenderShadowMapCommandsArgumentBufferResources;
 	CreateRenderShadowMapCommandsPass* m_pCreateRenderShadowMapCommandsPass;
-	BindingResourceList* m_pCreateRenderShadowMapCommandsResources;
+	ResourceList* m_pCreateRenderShadowMapCommandsResources;
 	Buffer* m_pCreateRenderShadowMapCommandsArgumentBuffer;
 	
 	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass;
-	BindingResourceList* m_pRenderSpotLightTiledShadowMapResources;
+	ResourceList* m_pRenderSpotLightTiledShadowMapResources;
 	
 	RenderTiledShadowMapPass* m_pRenderPointLightTiledShadowMapPass;
-	BindingResourceList* m_pRenderPointLightTiledShadowMapResources;
+	ResourceList* m_pRenderPointLightTiledShadowMapResources;
 	
 	SetupTiledShadowMapPass* m_pSetupSpotLightTiledShadowMapPass;
-	BindingResourceList* m_pSetupSpotLightTiledShadowMapResources;
+	ResourceList* m_pSetupSpotLightTiledShadowMapResources;
 
 	SetupTiledShadowMapPass* m_pSetupPointLightTiledShadowMapPass;
-	BindingResourceList* m_pSetupPointLightTiledShadowMapResources;
+	ResourceList* m_pSetupPointLightTiledShadowMapResources;
 
 	VisualizeTexturePass* m_pVisualizeAccumLightPass;
-	BindingResourceList* m_VisualizeAccumLightResources[kNumBackBuffers];
+	ResourceList* m_VisualizeAccumLightResources[kNumBackBuffers];
 	
 	VisualizeTexturePass* m_pVisualizeDiffuseBufferPass;
-	BindingResourceList* m_VisualizeDiffuseBufferResources[kNumBackBuffers];
+	ResourceList* m_VisualizeDiffuseBufferResources[kNumBackBuffers];
 
 	VisualizeTexturePass* m_pVisualizeSpecularBufferPass;
-	BindingResourceList* m_VisualizeSpecularBufferResources[kNumBackBuffers];
+	ResourceList* m_VisualizeSpecularBufferResources[kNumBackBuffers];
 
 	VisualizeTexturePass* m_pVisualizeNormalBufferPass;
-	BindingResourceList* m_VisualizeNormalBufferResources[kNumBackBuffers];
+	ResourceList* m_VisualizeNormalBufferResources[kNumBackBuffers];
 
 	VisualizeTexturePass* m_pVisualizeDepthBufferPass;
-	BindingResourceList* m_VisualizeDepthBufferResources[kNumBackBuffers];
+	ResourceList* m_VisualizeDepthBufferResources[kNumBackBuffers];
 
 	VisualizeTexturePass* m_pVisualizeSpotLightTiledShadowMapPass;
-	BindingResourceList* m_VisualizeSpotLightTiledShadowMapResources[kNumBackBuffers];
+	ResourceList* m_VisualizeSpotLightTiledShadowMapResources[kNumBackBuffers];
 
 	VisualizeTexturePass* m_pVisualizePointLightTiledShadowMapPass;
-	BindingResourceList* m_VisualizePointLightTiledShadowMapResources[kNumBackBuffers];
+	ResourceList* m_VisualizePointLightTiledShadowMapResources[kNumBackBuffers];
 
 	VisualizeIntensityPass* m_pVisualizeIntensityPass;
-	BindingResourceList* m_VisualizeIntensityResources[kNumBackBuffers];
+	ResourceList* m_VisualizeIntensityResources[kNumBackBuffers];
 	
 	MeshRenderResources* m_pMeshRenderResources;
 	
@@ -325,8 +331,11 @@ private:
 	
 	Camera* m_pCamera;
 
+	// New render passes
+	FrustumMeshCullingPass* m_pFrustumMeshCullingPass;
+	
 #ifdef DEBUG_RENDER_PASS
-	BindingResourceList* m_pDebugResources;
+	ResourceList* m_pDebugResources;
 	Buffer* m_pDebugPointLightRangePerTileBuffer;
 	Buffer* m_pDebugNumVisibleMeshesBuffer;
 	Buffer* m_pDebugVisibleMeshIndexBuffer;

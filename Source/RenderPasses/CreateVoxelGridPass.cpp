@@ -74,7 +74,7 @@ void CreateVoxelGridPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
-	BindingResourceList* pResources = pParams->m_pResources;
+	ResourceList* pResources = pParams->m_pResources;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 
 	pCommandList->Begin(m_pPipelineState);

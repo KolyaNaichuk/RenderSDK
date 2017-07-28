@@ -186,7 +186,10 @@ COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityVS.hlsl" "$(SolutionDir)Samples
 COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeIntensityVS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeIntensityPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeIntensityPS.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeIntensityPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FrustumMeshCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FrustumMeshCullingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FrustumMeshCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FrustumMeshCullingCS.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

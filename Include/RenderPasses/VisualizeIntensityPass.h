@@ -7,7 +7,7 @@ class RootSignature;
 class PipelineState;
 
 struct RenderEnv;
-struct BindingResourceList;
+struct ResourceList;
 struct Viewport;
 
 class VisualizeIntensityPass
@@ -34,7 +34,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		BindingResourceList* m_pResources;
+		ResourceList* m_pResources;
 		UINT m_TextureIndexToVisualize;
 		Viewport* m_pViewport;
 	};

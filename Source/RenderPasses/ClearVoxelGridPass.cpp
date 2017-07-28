@@ -3,7 +3,7 @@
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/DescriptorHeap.h"
-#include "D3DWrapper/BindingResourceList.h"
+#include "D3DWrapper/ResourceList.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "Math/Math.h"
 
@@ -64,7 +64,7 @@ void ClearVoxelGridPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
-	BindingResourceList* pResources = pParams->m_pResources;
+	ResourceList* pResources = pParams->m_pResources;
 	
 	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);

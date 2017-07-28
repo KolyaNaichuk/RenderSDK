@@ -11,14 +11,6 @@ struct Range
 	uint length;
 };
 
-struct MeshDesc
-{
-	uint indexCount;
-	uint startIndexLocation;
-	int  baseVertexLocation;
-	uint materialIndex;
-};
-
 struct DrawIndexedArgs
 {
 	uint indexCountPerInstance;
@@ -26,12 +18,6 @@ struct DrawIndexedArgs
 	uint startIndexLocation;
 	int  baseVertexLocation;
 	uint startInstanceLocation;
-};
-
-struct DrawMeshCommand
-{
-	uint root32BitConstant;
-	DrawIndexedArgs drawArgs;
 };
 
 #endif // __FOUNDATION__

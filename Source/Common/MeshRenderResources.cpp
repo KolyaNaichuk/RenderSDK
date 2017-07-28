@@ -10,8 +10,16 @@
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 
+namespace
+{
+	u32 CalcMaxNumInstancesPerMesh(u32 numMeshTypes, MeshBatch** ppFirstMeshType);
+}
+
 MeshRenderResources::MeshRenderResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)
 	: m_NumMeshTypes(numMeshTypes)
+	, m_TotalNumMeshes(0)
+	, m_TotalNumInstances(0)
+	, m_MaxNumInstancesPerMesh(CalcMaxNumInstancesPerMesh(numMeshTypes, ppFirstMeshType))
 	, m_pMeshInfoBuffer(nullptr)
 	, m_pMeshInstanceRangeBuffer(nullptr)
 	, m_pInstanceWorldMatrixBuffer(nullptr)
@@ -44,8 +52,7 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 			: m_InstanceOffset(instanceOffset)
 			, m_NumInstances(numInstances)
 			, m_MeshIndex(meshIndex)
-		{
-		}
+		{}
 		u32 m_InstanceOffset;
 		u32 m_NumInstances;
 		u32 m_MeshIndex;
@@ -60,8 +67,7 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 			, m_IndexCountPerInstance(indexCountPerInstance)
 			, m_StartIndexLocation(startIndexLocation)
 			, m_BaseVertexLocation(baseVertexLocation)
-		{
-		}
+		{}
 		u32 m_MeshType;
 		u32 m_MeshTypeOffset;
 		u32 m_MaterialIndex;
@@ -70,18 +76,18 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 		i32 m_BaseVertexLocation;
 	};
 
-	u32 numAllMeshes = 0;
+	m_TotalNumMeshes = 0;
 	for (u32 meshType = 0; meshType < numMeshTypes; ++meshType)
 	{
 		const MeshBatch* pMeshBatch = ppFirstMeshType[meshType];
-		numAllMeshes += pMeshBatch->GetNumMeshes();
+		m_TotalNumMeshes += pMeshBatch->GetNumMeshes();
 	}
 
 	std::vector<MeshRenderInfo> meshInfoBufferData;
-	meshInfoBufferData.reserve(numAllMeshes);
+	meshInfoBufferData.reserve(m_TotalNumMeshes);
 
 	std::vector<MeshInstanceRange> meshInstanceRangeBufferData;
-	meshInstanceRangeBufferData.reserve(numAllMeshes);
+	meshInstanceRangeBufferData.reserve(m_TotalNumMeshes);
 
 	u32 meshTypeOffset = 0;
 	u32 instanceOffset = 0;
@@ -115,29 +121,29 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 		meshTypeOffset += pMeshBatch->GetNumMeshes();
 	}
 
-	StructuredBufferDesc meshInfoBufferDesc(numAllMeshes, sizeof(MeshRenderInfo), true, false);
+	StructuredBufferDesc meshInfoBufferDesc(m_TotalNumMeshes, sizeof(MeshRenderInfo), true, false);
 	m_pMeshInfoBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &meshInfoBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pMeshInfoBuffer");
-	UploadData(pRenderEnv, m_pMeshInfoBuffer, &meshInfoBufferDesc, meshInfoBufferData.data(), numAllMeshes * sizeof(MeshRenderInfo));
+	UploadData(pRenderEnv, m_pMeshInfoBuffer, &meshInfoBufferDesc, meshInfoBufferData.data(), m_TotalNumMeshes * sizeof(MeshRenderInfo));
 
-	StructuredBufferDesc meshInstanceRangeBufferDesc(numAllMeshes, sizeof(MeshInstanceRange), true, false);
+	StructuredBufferDesc meshInstanceRangeBufferDesc(m_TotalNumMeshes, sizeof(MeshInstanceRange), true, false);
 	m_pMeshInstanceRangeBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &meshInstanceRangeBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pMeshInstanceRangeBuffer");
-	UploadData(pRenderEnv, m_pMeshInstanceRangeBuffer, &meshInstanceRangeBufferDesc, meshInstanceRangeBufferData.data(), numAllMeshes * sizeof(MeshInstanceRange));
+	UploadData(pRenderEnv, m_pMeshInstanceRangeBuffer, &meshInstanceRangeBufferDesc, meshInstanceRangeBufferData.data(), m_TotalNumMeshes * sizeof(MeshInstanceRange));
 }
 
 void MeshRenderResources::InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)
 {
-	u32 numAllInstances = 0;
+	m_TotalNumInstances = 0;
 	for (u32 meshType = 0; meshType < numMeshTypes; ++meshType)
 	{
 		const MeshBatch* pMeshBatch = ppFirstMeshType[meshType];
-		numAllInstances += pMeshBatch->GetNumMeshInstances();
+		m_TotalNumInstances += pMeshBatch->GetNumMeshInstances();
 	}
 
 	std::vector<AxisAlignedBox> instanceAABBBufferData;
-	instanceAABBBufferData.reserve(numAllInstances);
+	instanceAABBBufferData.reserve(m_TotalNumInstances);
 
 	std::vector<Matrix4f> instanceWorldMatrixBufferData;
-	instanceWorldMatrixBufferData.reserve(numAllInstances);
+	instanceWorldMatrixBufferData.reserve(m_TotalNumInstances);
 
 	for (u32 meshType = 0; meshType < numMeshTypes; ++meshType)
 	{
@@ -156,13 +162,13 @@ void MeshRenderResources::InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u3
 			pFirstInstanceWorldMatrix + pMeshBatch->GetNumMeshInstances());
 	}
 
-	StructuredBufferDesc instanceAABBBufferDesc(numAllInstances, sizeof(AxisAlignedBox), true, false);
+	StructuredBufferDesc instanceAABBBufferDesc(m_TotalNumInstances, sizeof(AxisAlignedBox), true, false);
 	m_pInstanceWorldAABBBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &instanceAABBBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pInstanceWorldAABBBuffer");
-	UploadData(pRenderEnv, m_pInstanceWorldAABBBuffer, &instanceAABBBufferDesc, instanceAABBBufferData.data(), numAllInstances * sizeof(AxisAlignedBox));
+	UploadData(pRenderEnv, m_pInstanceWorldAABBBuffer, &instanceAABBBufferDesc, instanceAABBBufferData.data(), m_TotalNumInstances * sizeof(AxisAlignedBox));
 
-	StructuredBufferDesc instanceWorldMatrixBufferDesc(numAllInstances, sizeof(Matrix4f), true, false);
+	StructuredBufferDesc instanceWorldMatrixBufferDesc(m_TotalNumInstances, sizeof(Matrix4f), true, false);
 	m_pInstanceWorldMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &instanceWorldMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pInstanceWorldMatrixBuffer");
-	UploadData(pRenderEnv, m_pInstanceWorldMatrixBuffer, &instanceWorldMatrixBufferDesc, instanceWorldMatrixBufferData.data(), numAllInstances * sizeof(Matrix4f));
+	UploadData(pRenderEnv, m_pInstanceWorldMatrixBuffer, &instanceWorldMatrixBufferDesc, instanceWorldMatrixBufferData.data(), m_TotalNumInstances * sizeof(Matrix4f));
 }
 
 void MeshRenderResources::InitPerMeshTypeResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)
@@ -323,4 +329,16 @@ void MeshRenderResources::InitIndexBuffer(RenderEnv* pRenderEnv, u32 meshType, c
 		pIndexData = pMeshBatch->Get32BitIndices();
 	
 	UploadData(pRenderEnv, m_IndexBuffers[meshType], &bufferDesc, pIndexData, sizeInBytes);
+}
+
+namespace
+{
+	u32 CalcMaxNumInstancesPerMesh(u32 numMeshTypes, MeshBatch** ppFirstMeshType)
+	{
+		u32 maxNumInstancesPerMesh = ppFirstMeshType[0]->GetMaxNumInstancesPerMesh();
+		for (u32 meshType = 1; meshType < numMeshTypes; ++meshType)
+			maxNumInstancesPerMesh = Max(maxNumInstancesPerMesh, ppFirstMeshType[meshType]->GetMaxNumInstancesPerMesh());
+
+		return maxNumInstancesPerMesh;
+	}
 }

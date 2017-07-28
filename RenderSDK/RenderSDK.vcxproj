@@ -175,7 +175,7 @@
     <ClInclude Include="..\Include\D3DWrapper\PipelineState.h" />
     <ClInclude Include="..\Include\D3DWrapper\RenderEnv.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsResource.h" />
-    <ClInclude Include="..\Include\D3DWrapper\BindingResourceList.h" />
+    <ClInclude Include="..\Include\D3DWrapper\ResourceList.h" />
     <ClInclude Include="..\Include\D3DWrapper\RootSignature.h" />
     <ClInclude Include="..\Include\D3DWrapper\SwapChain.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsUtils.h" />
@@ -208,6 +208,7 @@
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateRenderGBufferCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\DownscaleAndReprojectDepthPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\FrustumMeshCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\InjectVirtualPointLightsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\PropagateLightPass.h" />
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h" />
@@ -225,6 +226,7 @@
   <ItemGroup>
     <ClCompile Include="..\Include\Common\MeshUtilities.cpp" />
     <ClCompile Include="..\Include\RenderPasses\CopyReprojectedDepthPass.cpp" />
+    <ClCompile Include="..\Include\RenderPasses\FrustumMeshCullingPass.cpp" />
     <ClCompile Include="..\Source\Common\Application.cpp" />
     <ClCompile Include="..\Source\Common\Camera.cpp" />
     <ClCompile Include="..\Source\Common\Common.cpp" />
@@ -598,7 +600,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\FrustumMeshCulling.hlsl">
+    <None Include="..\Shaders\FrustumMeshCullingCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>

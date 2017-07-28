@@ -16,7 +16,7 @@ struct RequiredResourceState
 
 typedef std::vector<RequiredResourceState> RequiredResourceStateList;
 
-struct BindingResourceList
+struct ResourceList
 {
 	RequiredResourceStateList m_RequiredResourceStates;
 	DescriptorHandle m_RTVHeapStart;

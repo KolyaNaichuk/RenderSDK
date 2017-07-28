@@ -11,7 +11,7 @@ class MeshBatch;
 
 struct Viewport;
 struct RenderEnv;
-struct BindingResourceList;
+struct ResourceList;
 
 class RenderGBufferPass
 {
@@ -37,7 +37,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		BindingResourceList* m_pResources;
+		ResourceList* m_pResources;
 		Viewport* m_pViewport;
 		MeshBatch* m_pMeshBatch;
 		Buffer* m_pDrawMeshCommandBuffer;

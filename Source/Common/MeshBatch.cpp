@@ -1,17 +1,21 @@
 #include "Common/MeshBatch.h"
 #include "Common/Mesh.h"
+#include "Math/Math.h"
 
 MeshBatch::MeshBatch(u8 vertexFormatFlags, DXGI_FORMAT indexFormat, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
 	: m_VertexFormatFlags(vertexFormatFlags)
 	, m_IndexFormat(indexFormat)
 	, m_PrimitiveTopologyType(primitiveTopologyType)
 	, m_PrimitiveTopology(primitiveTopology)
+	, m_MaxNumInstancesPerMesh(0)
 {
 	assert((m_IndexFormat == DXGI_FORMAT_R16_UINT) || (m_IndexFormat == DXGI_FORMAT_R32_UINT));
 }
 
 void MeshBatch::AddMesh(const Mesh* pMesh)
 {
+	m_MaxNumInstancesPerMesh = Max(m_MaxNumInstancesPerMesh, pMesh->GetNumInstances());
+
 	assert(m_PrimitiveTopology == pMesh->GetPrimitiveTopology());
 	assert(m_PrimitiveTopologyType == pMesh->GetPrimitiveTopologyType());
 

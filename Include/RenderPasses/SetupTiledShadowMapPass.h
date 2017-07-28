@@ -7,7 +7,7 @@ class RootSignature;
 class PipelineState;
 class CommandList;
 struct RenderEnv;
-struct BindingResourceList;
+struct ResourceList;
 
 class SetupTiledShadowMapPass
 {
@@ -23,7 +23,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		BindingResourceList* m_pResources;
+		ResourceList* m_pResources;
 	};
 
 	SetupTiledShadowMapPass(InitParams* pParams);

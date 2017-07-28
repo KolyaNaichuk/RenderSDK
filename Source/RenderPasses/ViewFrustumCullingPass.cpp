@@ -56,7 +56,7 @@ void ViewFrustumCullingPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
-	BindingResourceList* pResources = pParams->m_pResources;
+	ResourceList* pResources = pParams->m_pResources;
 	Buffer* pNumVisibleObjectsBuffer = pParams->m_pNumVisibleObjectsBuffer;
 
 	pCommandList->Begin(m_pPipelineState);

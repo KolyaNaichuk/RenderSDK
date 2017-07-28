@@ -8,7 +8,7 @@ class CommandList;
 class ColorTexture;
 
 struct RenderEnv;
-struct BindingResourceList;
+struct ResourceList;
 
 enum ShadingMode
 {
@@ -36,7 +36,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		BindingResourceList* m_pResources;
+		ResourceList* m_pResources;
 		ColorTexture* m_pAccumLightTexture;
 	};
 	

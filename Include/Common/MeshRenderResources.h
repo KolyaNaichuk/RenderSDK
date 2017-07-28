@@ -16,7 +16,10 @@ public:
 	~MeshRenderResources();
 
 	u32 GetNumMeshTypes() const { return m_NumMeshTypes; }
-
+	u32 GetTotalNumMeshes() const { return m_TotalNumMeshes; }
+	u32 GetTotalNumInstances() const { return m_TotalNumInstances; }
+	u32 GetMaxNumInstancesPerMesh() const { return m_MaxNumInstancesPerMesh; }
+		
 	Buffer* GetMeshInfoBuffer() { return m_pMeshInfoBuffer; }
 	Buffer* GetMeshInstanceRangeBuffer() { return m_pMeshInstanceRangeBuffer; }
 
@@ -40,6 +43,9 @@ private:
 
 private:
 	u32 m_NumMeshTypes;
+	u32 m_TotalNumMeshes;
+	u32 m_TotalNumInstances;
+	u32 m_MaxNumInstancesPerMesh;
 
 	Buffer* m_pMeshInfoBuffer;
 	Buffer* m_pMeshInstanceRangeBuffer;

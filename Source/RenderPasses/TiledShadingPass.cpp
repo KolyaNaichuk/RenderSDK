@@ -66,7 +66,7 @@ void TiledShadingPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
-	BindingResourceList* pResources = pParams->m_pResources;
+	ResourceList* pResources = pParams->m_pResources;
 	ColorTexture* pAccumLightTexture = pParams->m_pAccumLightTexture;
 
 	pCommandList->Begin(m_pPipelineState);

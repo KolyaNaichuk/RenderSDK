@@ -91,7 +91,7 @@ void PropagateLightPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
-	BindingResourceList** ppResources = pParams->m_ppResources;
+	ResourceList** ppResources = pParams->m_ppResources;
 			
 	std::vector<ResourceBarrier> resourceBarriers[2];
 	for (u8 it = 0; it < 2; ++it)
@@ -116,7 +116,7 @@ void PropagateLightPass::Record(RenderParams* pParams)
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
 	{
-		BindingResourceList* pResources = ppResources[0];
+		ResourceList* pResources = ppResources[0];
 			
 		pCommandList->SetPipelineState(m_pWithoutOcclusionTestState);
 		pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
@@ -130,7 +130,7 @@ void PropagateLightPass::Record(RenderParams* pParams)
 		for (u16 it = 1; it < pParams->m_NumIterations; ++it)
 		{
 			const u16 resourceIndex = it % 2;
-			BindingResourceList* pResources = ppResources[resourceIndex];
+			ResourceList* pResources = ppResources[resourceIndex];
 
 			pCommandList->ResourceBarrier(resourceBarriers[resourceIndex].size(), resourceBarriers[resourceIndex].data());
 			pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);

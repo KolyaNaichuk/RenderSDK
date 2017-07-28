@@ -1,6 +1,6 @@
 #pragma once
 
-#include "D3DWrapper/BindingResourceList.h"
+#include "D3DWrapper/ResourceList.h"
 
 class GraphicsDevice;
 class Buffer;
@@ -41,6 +41,7 @@ public:
 	void SetComputeRootSignature(RootSignature* pRootSignature);
 	void SetComputeRootDescriptorTable(UINT rootParamIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle);
 	void SetComputeRoot32BitConstant(UINT rootParamIndex, UINT srcData, UINT destOffsetIn32BitValues);
+	void SetComputeRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer);
 
 	void SetDescriptorHeaps(DescriptorHeap* pSRVDescriptorHeap, DescriptorHeap* pSamplerDescriptorHeap = nullptr);
 

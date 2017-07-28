@@ -6,7 +6,7 @@ class CommandList;
 class RootSignature;
 class PipelineState;
 struct RenderEnv;
-struct BindingResourceList;
+struct ResourceList;
 
 class ClearVoxelGridPass
 {
@@ -23,7 +23,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		BindingResourceList* m_pResources;
+		ResourceList* m_pResources;
 	};
 
 	ClearVoxelGridPass(InitParams* pParams);

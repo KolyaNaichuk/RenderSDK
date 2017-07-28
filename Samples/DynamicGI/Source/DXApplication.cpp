@@ -1,5 +1,5 @@
 #include "DXApplication.h"
-#include "D3DWrapper/BindingResourceList.h"
+#include "D3DWrapper/ResourceList.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsFactory.h"
 #include "D3DWrapper/GraphicsResource.h"
@@ -26,6 +26,7 @@
 #include "RenderPasses/VisualizeTexturePass.h"
 #include "RenderPasses/VisualizeVoxelGridPass.h"
 #include "RenderPasses/VisualizeIntensityPass.h"
+#include "RenderPasses/FrustumMeshCullingPass.h"
 #include "Common/Mesh.h"
 #include "Common/MeshBatch.h"
 #include "Common/MeshRenderResources.h"
@@ -341,42 +342,42 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFence(nullptr)
 	, m_BackBufferIndex(0)
 	, m_pRenderGBufferPass(nullptr)
-	, m_pRenderGBufferResources(new BindingResourceList())
+	, m_pRenderGBufferResources(new ResourceList())
 	, m_pTiledLightCullingPass(nullptr)
-	, m_pTiledLightCullingResources(new BindingResourceList())
+	, m_pTiledLightCullingResources(new ResourceList())
 	, m_pTiledShadingPass(nullptr)
 	, m_pTiledDirectLightShadingPass(nullptr)
 	, m_pTiledIndirectLightShadingPass(nullptr)
-	, m_pTiledShadingResources(new BindingResourceList())
+	, m_pTiledShadingResources(new ResourceList())
 	, m_pClearVoxelGridPass(nullptr)
-	, m_pClearVoxelGridResources(new BindingResourceList())
+	, m_pClearVoxelGridResources(new ResourceList())
 	, m_pCreateVoxelGridPass(nullptr)
-	, m_pCreateVoxelGridResources(new BindingResourceList())
+	, m_pCreateVoxelGridResources(new ResourceList())
 	, m_pInjectVirtualPointLightsPass(nullptr)
-	, m_pInjectVirtualPointLightsResources(new BindingResourceList())
+	, m_pInjectVirtualPointLightsResources(new ResourceList())
 	, m_pPropagateLightPass(nullptr)
 	, m_pVisualizeVoxelGridDiffusePass(nullptr)
 	, m_pVisualizeVoxelGridNormalPass(nullptr)
 	, m_pDetectVisibleMeshesPass(nullptr)
-	, m_pDetectVisibleMeshesResources(new BindingResourceList())
+	, m_pDetectVisibleMeshesResources(new ResourceList())
 	, m_pDetectVisiblePointLightsPass(nullptr)
-	, m_pDetectVisiblePointLightsResources(new BindingResourceList())
+	, m_pDetectVisiblePointLightsResources(new ResourceList())
 	, m_pDetectVisibleSpotLightsPass(nullptr)
-	, m_pDetectVisibleSpotLightsResources(new BindingResourceList())
+	, m_pDetectVisibleSpotLightsResources(new ResourceList())
 	, m_pCreateRenderGBufferCommandsPass(nullptr)
-	, m_pCreateRenderGBufferCommandsResources(new BindingResourceList())
-	, m_pCreateRenderShadowMapCommandsArgumentBufferResources(new BindingResourceList())
+	, m_pCreateRenderGBufferCommandsResources(new ResourceList())
+	, m_pCreateRenderShadowMapCommandsArgumentBufferResources(new ResourceList())
 	, m_pCreateRenderShadowMapCommandsPass(nullptr)
-	, m_pCreateRenderShadowMapCommandsResources(new BindingResourceList())
+	, m_pCreateRenderShadowMapCommandsResources(new ResourceList())
 	, m_pCreateRenderShadowMapCommandsArgumentBuffer(nullptr)
 	, m_pRenderSpotLightTiledShadowMapPass(nullptr)
-	, m_pRenderSpotLightTiledShadowMapResources(new BindingResourceList())
+	, m_pRenderSpotLightTiledShadowMapResources(new ResourceList())
 	, m_pRenderPointLightTiledShadowMapPass(nullptr)
-	, m_pRenderPointLightTiledShadowMapResources(new BindingResourceList())
+	, m_pRenderPointLightTiledShadowMapResources(new ResourceList())
 	, m_pSetupSpotLightTiledShadowMapPass(nullptr)
-	, m_pSetupSpotLightTiledShadowMapResources(new BindingResourceList())
+	, m_pSetupSpotLightTiledShadowMapResources(new ResourceList())
 	, m_pSetupPointLightTiledShadowMapPass(nullptr)
-	, m_pSetupPointLightTiledShadowMapResources(new BindingResourceList())
+	, m_pSetupPointLightTiledShadowMapResources(new ResourceList())
 	, m_pVisualizeAccumLightPass(nullptr)
 	, m_pVisualizeDiffuseBufferPass(nullptr)
 	, m_pVisualizeSpecularBufferPass(nullptr)
@@ -393,8 +394,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pNumVisibleSpotLightsBuffer(nullptr)
 	, m_pVisibleSpotLightIndexBuffer(nullptr)
 	, m_pCamera(nullptr)
+	, m_pFrustumMeshCullingPass(nullptr)
 #ifdef DEBUG_RENDER_PASS
-	, m_pDebugResources(new BindingResourceList())
+	, m_pDebugResources(new ResourceList())
 	, m_pDebugPointLightRangePerTileBuffer(nullptr)
 	, m_pDebugNumVisibleMeshesBuffer(nullptr)
 	, m_pDebugVisibleMeshIndexBuffer(nullptr)
@@ -411,17 +413,17 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	{
 		m_FrameCompletionFenceValues[index] = m_pRenderEnv->m_LastSubmissionFenceValue;
 
-		m_VisualizeVoxelGridDiffuseResources[index] = new BindingResourceList();
-		m_VisualizeVoxelGridNormalResources[index] = new BindingResourceList();
+		m_VisualizeVoxelGridDiffuseResources[index] = new ResourceList();
+		m_VisualizeVoxelGridNormalResources[index] = new ResourceList();
 
-		m_VisualizeAccumLightResources[index] = new BindingResourceList();
-		m_VisualizeDiffuseBufferResources[index] = new BindingResourceList();
-		m_VisualizeSpecularBufferResources[index] = new BindingResourceList();
-		m_VisualizeNormalBufferResources[index] = new BindingResourceList();
-		m_VisualizeDepthBufferResources[index] = new BindingResourceList();
-		m_VisualizeSpotLightTiledShadowMapResources[index] = new BindingResourceList();
-		m_VisualizePointLightTiledShadowMapResources[index] = new BindingResourceList();
-		m_VisualizeIntensityResources[index] = new BindingResourceList();
+		m_VisualizeAccumLightResources[index] = new ResourceList();
+		m_VisualizeDiffuseBufferResources[index] = new ResourceList();
+		m_VisualizeSpecularBufferResources[index] = new ResourceList();
+		m_VisualizeNormalBufferResources[index] = new ResourceList();
+		m_VisualizeDepthBufferResources[index] = new ResourceList();
+		m_VisualizeSpotLightTiledShadowMapResources[index] = new ResourceList();
+		m_VisualizePointLightTiledShadowMapResources[index] = new ResourceList();
+		m_VisualizeIntensityResources[index] = new ResourceList();
 	}
 	for (u8 index = 0; index < 2; ++index)
 	{
@@ -429,7 +431,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 		m_IntensityGCoeffsTextures[index] = nullptr;
 		m_IntensityBCoeffsTextures[index] = nullptr;
 		
-		m_PropagateLightResources[index] = new BindingResourceList();
+		m_PropagateLightResources[index] = new ResourceList();
 	}
 
 	UpdateDisplayResult(DisplayResult::ShadingResult);
@@ -460,6 +462,7 @@ DXApplication::~DXApplication()
 		SafeDelete(m_PropagateLightResources[index]);
 	}
 
+	SafeDelete(m_pFrustumMeshCullingPass);
 	SafeDelete(m_pVisualizeAccumLightPass);
 	SafeDelete(m_pVisualizeDiffuseBufferPass);
 	SafeDelete(m_pVisualizeSpecularBufferPass);
@@ -598,7 +601,8 @@ void DXApplication::OnInit()
 	InitRenderEnv(backBufferWidth, backBufferHeight);
 	
 	Scene* pScene = SceneLoader::LoadCornellBox();
-	InitScene(pScene, backBufferWidth, backBufferHeight);	
+	InitScene(pScene, backBufferWidth, backBufferHeight);
+	InitFrustumMeshCullingPass();
 	
 	/*
 	InitDetectVisibleMeshesPass();
@@ -922,7 +926,8 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 	m_pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(PI));
 	m_pCamera->SetBackgroundColor(Color::BISQUE);
 
-	m_pMeshRenderResources = new MeshRenderResources(m_pRenderEnv, pScene->GetNumMeshBatches(), pScene->GetMeshBatches());
+	if (pScene->GetNumMeshBatches() > 0)
+		m_pMeshRenderResources = new MeshRenderResources(m_pRenderEnv, pScene->GetNumMeshBatches(), pScene->GetMeshBatches());
 
 	if (pScene->GetNumPointLights() > 0)
 		m_pPointLightRenderResources = new LightRenderResources(m_pRenderEnv, pScene->GetNumPointLights(), pScene->GetPointLights());
@@ -938,6 +943,15 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 	//Kolya. Fix me
 	//StructuredBufferDesc drawCommandBufferDesc(pMeshBatch->GetNumMeshes(), sizeof(DrawMeshCommand), true, true);
 	//m_pDrawMeshCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawMeshCommandBuffer");
+}
+
+void DXApplication::InitFrustumMeshCullingPass()
+{
+	FrustumMeshCullingPass::InitParams initParams;
+	initParams.m_pRenderEnv = m_pRenderEnv;
+	initParams.m_MaxNumInstancesPerMesh = m_pMeshRenderResources->GetMaxNumInstancesPerMesh();
+
+	m_pFrustumMeshCullingPass = new FrustumMeshCullingPass(&initParams);
 }
 
 void DXApplication::InitDetectVisibleMeshesPass()

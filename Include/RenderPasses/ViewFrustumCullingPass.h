@@ -7,7 +7,7 @@ class PipelineState;
 class CommandList;
 class Buffer;
 struct RenderEnv;
-struct BindingResourceList;
+struct ResourceList;
 
 enum ObjectBoundsType
 {
@@ -28,7 +28,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		BindingResourceList* m_pResources;
+		ResourceList* m_pResources;
 		Buffer* m_pNumVisibleObjectsBuffer;
 	};
 	

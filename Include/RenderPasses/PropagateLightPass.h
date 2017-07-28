@@ -9,7 +9,7 @@ class PipelineState;
 class GraphicsResource;
 
 struct RenderEnv;
-struct BindingResourceList;
+struct ResourceList;
 
 class PropagateLightPass
 {
@@ -26,7 +26,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		BindingResourceList** m_ppResources;
+		ResourceList** m_ppResources;
 		u16 m_NumIterations;
 	};
 

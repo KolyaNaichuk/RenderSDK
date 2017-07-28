@@ -43,6 +43,7 @@ public:
 	u32 GetNumMeshes() const { return m_MeshInfos.size(); }
 	const MeshInfo* GetMeshInfos() const { return m_MeshInfos.data(); }
 
+	u32 GetMaxNumInstancesPerMesh() const { return m_MaxNumInstancesPerMesh; }
 	u32 GetNumMeshInstances() const { return m_MeshInstanceWorldAABBs.size(); }
 	const AxisAlignedBox* GetMeshInstanceWorldAABBs() const { return m_MeshInstanceWorldAABBs.data(); }
 	const Matrix4f* GetMeshInstanceWorldMatrices() const { return m_MeshInstanceWorldMatrices.data(); }
@@ -76,4 +77,6 @@ private:
 	std::vector<MeshInfo> m_MeshInfos;
 	std::vector<AxisAlignedBox> m_MeshInstanceWorldAABBs;
 	std::vector<Matrix4f> m_MeshInstanceWorldMatrices;
+
+	u32 m_MaxNumInstancesPerMesh;
 };

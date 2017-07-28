@@ -8,7 +8,7 @@ class CommandList;
 class Buffer;
 
 struct RenderEnv;
-struct BindingResourceList;
+struct ResourceList;
 
 class TiledLightCullingPass
 {
@@ -27,7 +27,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		BindingResourceList* m_pResources;
+		ResourceList* m_pResources;
 		Buffer* m_pNumPointLightsPerTileBuffer;
 		Buffer* m_pNumSpotLightsPerTileBuffer;
 	};
