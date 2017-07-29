@@ -80,6 +80,8 @@ CreateRenderShadowMapCommandsPass::~CreateRenderShadowMapCommandsPass()
 
 void CreateRenderShadowMapCommandsPass::Record(RenderParams* pParams)
 {
+	assert(false);
+	/*
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	ResourceList* pResources = pParams->m_pResources;
@@ -123,4 +125,5 @@ void CreateRenderShadowMapCommandsPass::Record(RenderParams* pParams)
 
 	pCommandList->ExecuteIndirect(m_pCommandSignature, 1, pParams->m_pIndirectArgumentBuffer, 0, nullptr, 0);
 	pCommandList->End();
+	*/
 }

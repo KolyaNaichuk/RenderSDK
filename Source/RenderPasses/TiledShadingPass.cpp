@@ -64,6 +64,8 @@ TiledShadingPass::~TiledShadingPass()
 
 void TiledShadingPass::Record(RenderParams* pParams)
 {
+	assert(false && "Kolya. Fix me");
+	/*
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	ResourceList* pResources = pParams->m_pResources;
@@ -80,4 +82,5 @@ void TiledShadingPass::Record(RenderParams* pParams)
 
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
 	pCommandList->End();
+	*/
 }

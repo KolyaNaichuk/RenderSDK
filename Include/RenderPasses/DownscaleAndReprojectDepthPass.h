@@ -3,8 +3,6 @@
 #include "D3DWrapper/Common.h"
 
 struct RenderEnv;
-struct ResourceList;
-
 class CommandList;
 class RootSignature;
 class PipelineState;
@@ -23,7 +21,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		ResourceList* m_pResources;
 	};
 
 	DownscaleAndReprojectDepthPass(InitParams* pParams);

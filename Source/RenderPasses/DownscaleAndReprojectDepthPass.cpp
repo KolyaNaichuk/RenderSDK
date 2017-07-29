@@ -57,6 +57,8 @@ DownscaleAndReprojectDepthPass::~DownscaleAndReprojectDepthPass()
 
 void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 {
+	assert(false && "Kolya. Fix me");
+	/*
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	ResourceList* pResources = pParams->m_pResources;
@@ -68,4 +70,5 @@ void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
 	pCommandList->End();
+	*/
 }

@@ -3,7 +3,6 @@
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/DescriptorHeap.h"
-#include "D3DWrapper/ResourceList.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "Math/Math.h"
 
@@ -62,6 +61,8 @@ ClearVoxelGridPass::~ClearVoxelGridPass()
 
 void ClearVoxelGridPass::Record(RenderParams* pParams)
 {
+	assert(false);
+	/*
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	ResourceList* pResources = pParams->m_pResources;
@@ -75,4 +76,5 @@ void ClearVoxelGridPass::Record(RenderParams* pParams)
 	
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, m_NumThreadGroupsZ);
 	pCommandList->End();
+	*/
 }

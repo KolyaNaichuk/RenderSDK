@@ -54,6 +54,8 @@ ViewFrustumCullingPass::~ViewFrustumCullingPass()
 
 void ViewFrustumCullingPass::Record(RenderParams* pParams)
 {
+	assert(false && "Kolya. Fix me");
+	/*
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	ResourceList* pResources = pParams->m_pResources;
@@ -70,4 +72,5 @@ void ViewFrustumCullingPass::Record(RenderParams* pParams)
 
 	pCommandList->Dispatch(m_NumThreadGroupsX, 1, 1);
 	pCommandList->End();
+	*/
 }

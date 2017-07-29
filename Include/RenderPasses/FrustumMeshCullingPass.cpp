@@ -1,10 +1,8 @@
 #include "RenderPasses/FrustumMeshCullingPass.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/GraphicsDevice.h"
-#include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
-#include "D3DWrapper/ResourceList.h"
 #include "D3DWrapper/RootSignature.h"
 
 namespace
@@ -50,7 +48,6 @@ namespace
 FrustumMeshCullingPass::FrustumMeshCullingPass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
-	, m_pResourceList(new ResourceList())
 	, m_pNumVisibleMeshesBuffer(nullptr)
 	, m_pVisibleInstanceRangeBuffer(nullptr)
 	, m_pVisibleInstanceIndexBuffer(nullptr)
@@ -68,13 +65,13 @@ FrustumMeshCullingPass::~FrustumMeshCullingPass()
 	SafeDelete(m_pVisibleInstanceRangeBuffer);
 	SafeDelete(m_pVisibleInstanceIndexBuffer);
 	SafeDelete(m_pDrawVisibleInstanceCommandBuffer);
-	SafeDelete(m_pResourceList);
 	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pRootSignature);
 }
 
 void FrustumMeshCullingPass::InitResources(InitParams* pParams)
 {
+	assert(m_ResourceBarriers.empty());
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	FormattedBufferDesc numVisibleMeshesBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
@@ -93,29 +90,48 @@ void FrustumMeshCullingPass::InitResources(InitParams* pParams)
 	m_pDrawVisibleInstanceCommandBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &drawVisibleInstanceCommandBufferDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FrustumMeshCullingPass::m_pDrawVisibleInstanceCommandBuffer");
 
-	m_pResourceList->m_RequiredResourceStates.emplace_back(pParams->m_pMeshInstanceRangeBuffer, pParams->m_pMeshInstanceRangeBuffer->GetReadState());
-	m_pResourceList->m_RequiredResourceStates.emplace_back(pParams->m_pInstanceAABBBuffer, pParams->m_pInstanceAABBBuffer->GetReadState());
-	m_pResourceList->m_RequiredResourceStates.emplace_back(m_pNumVisibleMeshesBuffer, m_pNumVisibleMeshesBuffer->GetWriteState());
-	m_pResourceList->m_RequiredResourceStates.emplace_back(m_pVisibleInstanceRangeBuffer, m_pVisibleInstanceRangeBuffer->GetWriteState());
-	m_pResourceList->m_RequiredResourceStates.emplace_back(m_pVisibleInstanceIndexBuffer, m_pVisibleInstanceIndexBuffer->GetWriteState());
-	m_pResourceList->m_RequiredResourceStates.emplace_back(m_pDrawVisibleInstanceCommandBuffer, m_pDrawVisibleInstanceCommandBuffer->GetWriteState());
-
-	m_pResourceList->m_SRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();	
-	pRenderEnv->m_pDevice->CopyDescriptor(m_pResourceList->m_SRVHeapStart,
-		pParams->m_pMeshInstanceRangeBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	m_OutputResourceStates.m_MeshInstanceRangeBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_InstanceAABBBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_VisibleInstanceRangeBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	m_OutputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	m_OutputResourceStates.m_DrawVisibleInstanceCommandBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	
+	CreateResourceBarrierIfRequired(pParams->m_pMeshInstanceRangeBuffer,
+		pParams->m_InputResourceStates.m_MeshInstanceRangeBufferState,
+		m_OutputResourceStates.m_MeshInstanceRangeBufferState);
+
+	CreateResourceBarrierIfRequired(pParams->m_pInstanceAABBBuffer,
+		pParams->m_InputResourceStates.m_InstanceAABBBufferState,
+		m_OutputResourceStates.m_InstanceAABBBufferState);
+
+	CreateResourceBarrierIfRequired(m_pVisibleInstanceRangeBuffer,
+		pParams->m_InputResourceStates.m_VisibleInstanceRangeBufferState,
+		m_OutputResourceStates.m_VisibleInstanceRangeBufferState);
+
+	CreateResourceBarrierIfRequired(m_pVisibleInstanceIndexBuffer,
+		pParams->m_InputResourceStates.m_VisibleInstanceIndexBufferState,
+		m_OutputResourceStates.m_VisibleInstanceIndexBufferState);
+
+	CreateResourceBarrierIfRequired(m_pDrawVisibleInstanceCommandBuffer,
+		pParams->m_InputResourceStates.m_DrawVisibleInstanceCommandBufferState,
+		m_OutputResourceStates.m_DrawVisibleInstanceCommandBufferState);
+
+	m_SRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
+	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStart,
+		pParams->m_pMeshInstanceRangeBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		pParams->m_pInstanceAABBBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	
+			
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		m_pNumVisibleMeshesBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		m_pVisibleInstanceRangeBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	
+			
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		m_pVisibleInstanceIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	
+			
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		m_pDrawVisibleInstanceCommandBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
@@ -156,6 +172,12 @@ void FrustumMeshCullingPass::InitPipelineState(InitParams* pParams)
 	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FrustumMeshCullingPass::m_pPipelineState");
 }
 
+void FrustumMeshCullingPass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+{
+	if (currState != requiredState)
+		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
+}
+
 void FrustumMeshCullingPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
@@ -164,10 +186,12 @@ void FrustumMeshCullingPass::Record(RenderParams* pParams)
 	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 
-	pCommandList->SetRequiredResourceStates(&m_pResourceList->m_RequiredResourceStates);
+	assert(false && "Kolya. m_pDrawVisibleInstanceCommandBuffer is not cleared");
+	assert(!m_ResourceBarriers.empty());
+	pCommandList->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootConstantBufferView(kRootCBVParam, pParams->m_pCullingDataBuffer);
-	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_pResourceList->m_SRVHeapStart);
+	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
 
 	pCommandList->Dispatch(m_TotalNumMeshes, 1, 1);
 	pCommandList->End();

@@ -9,7 +9,6 @@
 #include "D3DWrapper/GraphicsUtils.h"
 
 CommandList::CommandList(GraphicsDevice* pDevice, D3D12_COMMAND_LIST_TYPE type, LPCWSTR pName)
-	: m_pRequiredResourceStates(nullptr)
 {
 	ID3D12Device* pD3DDevice = pDevice->GetD3DObject();
 	VerifyD3DResult(pD3DDevice->CreateCommandAllocator(type, IID_PPV_ARGS(&m_D3DCommandAllocator)));
@@ -33,8 +32,6 @@ void CommandList::Begin(PipelineState* pPipelineState)
 {
 	VerifyD3DResult(m_D3DCommandAllocator->Reset()); 
 	VerifyD3DResult(m_D3DCommandList->Reset(m_D3DCommandAllocator.Get(), (pPipelineState != nullptr) ? pPipelineState->GetD3DObject() : nullptr));
-
-	SetRequiredResourceStates(nullptr);
 	SetCompletionFence(nullptr, 0);
 }
 
@@ -78,16 +75,6 @@ void CommandList::ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER
 	m_D3DCommandList->ResourceBarrier(numBarriers, pBarriers);
 }
 
-RequiredResourceStateList* CommandList::GetRequiredResourceStates()
-{
-	return m_pRequiredResourceStates;
-}
-
-void CommandList::SetRequiredResourceStates(RequiredResourceStateList* pRequiredResourceStates)
-{
-	m_pRequiredResourceStates = pRequiredResourceStates;
-}
-
 void CommandList::SetGraphicsRootSignature(RootSignature* pRootSignature)
 {
 	m_D3DCommandList->SetGraphicsRootSignature(pRootSignature->GetD3DObject());
@@ -121,6 +108,12 @@ void CommandList::SetGraphicsRoot32BitConstant(UINT rootParamIndex, UINT srcData
 	m_D3DCommandList->SetGraphicsRoot32BitConstant(rootParamIndex, srcData, destOffsetIn32BitValues);
 }
 
+void CommandList::SetGraphicsRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer)
+{
+	ID3D12Resource* pD3DResource = pBuffer->GetD3DObject();
+	m_D3DCommandList->SetGraphicsRootConstantBufferView(rootParamIndex, pD3DResource->GetGPUVirtualAddress());
+}
+
 void CommandList::SetComputeRootSignature(RootSignature* pRootSignature)
 {
 	m_D3DCommandList->SetComputeRootSignature(pRootSignature->GetD3DObject());
@@ -138,7 +131,8 @@ void CommandList::SetComputeRoot32BitConstant(UINT rootParamIndex, UINT srcData,
 
 void CommandList::SetComputeRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer)
 {
-	assert(false);
+	ID3D12Resource* pD3DResource = pBuffer->GetD3DObject();
+	m_D3DCommandList->SetComputeRootConstantBufferView(rootParamIndex, pD3DResource->GetGPUVirtualAddress());
 }
 
 void CommandList::RSSetViewports(UINT numViewports, const Viewport* pViewports)

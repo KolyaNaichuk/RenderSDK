@@ -50,6 +50,8 @@ CreateRenderGBufferCommandsPass::~CreateRenderGBufferCommandsPass()
 
 void CreateRenderGBufferCommandsPass::Record(RenderParams* pParams)
 {
+	assert(false);
+	/*
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	ResourceList* pResources = pParams->m_pResources;
@@ -63,4 +65,5 @@ void CreateRenderGBufferCommandsPass::Record(RenderParams* pParams)
 
 	pCommandList->Dispatch(m_NumThreadGroupsX, 1, 1);
 	pCommandList->End();
+	*/
 }

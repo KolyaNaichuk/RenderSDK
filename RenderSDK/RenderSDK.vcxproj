@@ -175,7 +175,6 @@
     <ClInclude Include="..\Include\D3DWrapper\PipelineState.h" />
     <ClInclude Include="..\Include\D3DWrapper\RenderEnv.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsResource.h" />
-    <ClInclude Include="..\Include\D3DWrapper\ResourceList.h" />
     <ClInclude Include="..\Include\D3DWrapper\RootSignature.h" />
     <ClInclude Include="..\Include\D3DWrapper\SwapChain.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsUtils.h" />

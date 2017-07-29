@@ -6,7 +6,6 @@ class RootSignature;
 class PipelineState;
 class CommandList;
 struct RenderEnv;
-struct ResourceList;
 
 class CreateRenderGBufferCommandsPass
 {
@@ -20,7 +19,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		ResourceList* m_pResources;
 	};
 
 	CreateRenderGBufferCommandsPass(InitParams* pParams);

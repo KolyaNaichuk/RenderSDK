@@ -2,14 +2,12 @@
 
 #include "D3DWrapper/Common.h"
 
+struct RenderEnv;
 class GraphicsDevice;
 class CommandList;
 class RootSignature;
 class PipelineState;
 class GraphicsResource;
-
-struct RenderEnv;
-struct ResourceList;
 
 class InjectVirtualPointLightsPass
 {
@@ -27,7 +25,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		ResourceList* m_pResources;
 	};
 
 	InjectVirtualPointLightsPass(InitParams* pParams);

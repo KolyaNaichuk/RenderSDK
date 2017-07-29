@@ -8,7 +8,6 @@ class CommandList;
 class CommandSignature;
 class Buffer;
 struct RenderEnv;
-struct ResourceList;
 
 class CreateRenderShadowMapCommandsPass
 {
@@ -26,7 +25,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		ResourceList* m_pResources;
 		Buffer* m_pIndirectArgumentBuffer;
 		Buffer* m_pNumShadowCastingPointLightsBuffer;
 		Buffer* m_pNumDrawPointLightShadowCastersBuffer;

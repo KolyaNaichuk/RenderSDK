@@ -2,12 +2,11 @@
 
 #include "D3DWrapper/Common.h"
 
+struct RenderEnv;
 class RootSignature;
 class PipelineState;
 class CommandList;
 class Buffer;
-struct RenderEnv;
-struct ResourceList;
 
 enum ObjectBoundsType
 {
@@ -28,7 +27,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		ResourceList* m_pResources;
 		Buffer* m_pNumVisibleObjectsBuffer;
 	};
 	

@@ -2,13 +2,11 @@
 
 #include "D3DWrapper/Common.h"
 
+struct RenderEnv;
+struct Viewport;
 class CommandList;
 class RootSignature;
 class PipelineState;
-
-struct RenderEnv;
-struct ResourceList;
-struct Viewport;
 
 class VisualizeIntensityPass
 {
@@ -34,7 +32,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		ResourceList* m_pResources;
 		UINT m_TextureIndexToVisualize;
 		Viewport* m_pViewport;
 	};

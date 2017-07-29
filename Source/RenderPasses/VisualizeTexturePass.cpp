@@ -54,6 +54,8 @@ VisualizeTexturePass::~VisualizeTexturePass()
 
 void VisualizeTexturePass::Record(RenderParams* pParams)
 {
+	assert(false && "Kolya. Fix me");
+	/*
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	ResourceList* pResources = pParams->m_pResources;
@@ -77,4 +79,5 @@ void VisualizeTexturePass::Record(RenderParams* pParams)
 
 	pCommandList->DrawInstanced(3, 1, 0, 0);
 	pCommandList->End();
+	*/
 }

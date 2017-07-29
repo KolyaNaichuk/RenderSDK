@@ -18,7 +18,7 @@ public:
 	CommandQueue(GraphicsDevice* pDevice, const CommandQueueDesc* pDesc, LPCWSTR pName);
 	ID3D12CommandQueue* GetD3DObject() { return m_D3DCommandQueue.Get(); }
 	
-	void ExecuteCommandLists(RenderEnv* pRenderEnv, UINT numCommandLists, CommandList** ppCommandLists, Fence* pCompletionFence, UINT64 completionFenceValue);
+	void ExecuteCommandLists(UINT numCommandLists, CommandList** ppCommandLists, Fence* pCompletionFence, UINT64 completionFenceValue);
 	void Signal(Fence* pFence, UINT64 fenceValue);
 
 private:

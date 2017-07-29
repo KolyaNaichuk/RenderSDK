@@ -1,5 +1,4 @@
 #include "DXApplication.h"
-#include "D3DWrapper/ResourceList.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsFactory.h"
 #include "D3DWrapper/GraphicsResource.h"
@@ -342,42 +341,26 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFence(nullptr)
 	, m_BackBufferIndex(0)
 	, m_pRenderGBufferPass(nullptr)
-	, m_pRenderGBufferResources(new ResourceList())
 	, m_pTiledLightCullingPass(nullptr)
-	, m_pTiledLightCullingResources(new ResourceList())
 	, m_pTiledShadingPass(nullptr)
 	, m_pTiledDirectLightShadingPass(nullptr)
 	, m_pTiledIndirectLightShadingPass(nullptr)
-	, m_pTiledShadingResources(new ResourceList())
 	, m_pClearVoxelGridPass(nullptr)
-	, m_pClearVoxelGridResources(new ResourceList())
 	, m_pCreateVoxelGridPass(nullptr)
-	, m_pCreateVoxelGridResources(new ResourceList())
 	, m_pInjectVirtualPointLightsPass(nullptr)
-	, m_pInjectVirtualPointLightsResources(new ResourceList())
 	, m_pPropagateLightPass(nullptr)
 	, m_pVisualizeVoxelGridDiffusePass(nullptr)
 	, m_pVisualizeVoxelGridNormalPass(nullptr)
 	, m_pDetectVisibleMeshesPass(nullptr)
-	, m_pDetectVisibleMeshesResources(new ResourceList())
 	, m_pDetectVisiblePointLightsPass(nullptr)
-	, m_pDetectVisiblePointLightsResources(new ResourceList())
 	, m_pDetectVisibleSpotLightsPass(nullptr)
-	, m_pDetectVisibleSpotLightsResources(new ResourceList())
 	, m_pCreateRenderGBufferCommandsPass(nullptr)
-	, m_pCreateRenderGBufferCommandsResources(new ResourceList())
-	, m_pCreateRenderShadowMapCommandsArgumentBufferResources(new ResourceList())
 	, m_pCreateRenderShadowMapCommandsPass(nullptr)
-	, m_pCreateRenderShadowMapCommandsResources(new ResourceList())
 	, m_pCreateRenderShadowMapCommandsArgumentBuffer(nullptr)
 	, m_pRenderSpotLightTiledShadowMapPass(nullptr)
-	, m_pRenderSpotLightTiledShadowMapResources(new ResourceList())
 	, m_pRenderPointLightTiledShadowMapPass(nullptr)
-	, m_pRenderPointLightTiledShadowMapResources(new ResourceList())
 	, m_pSetupSpotLightTiledShadowMapPass(nullptr)
-	, m_pSetupSpotLightTiledShadowMapResources(new ResourceList())
 	, m_pSetupPointLightTiledShadowMapPass(nullptr)
-	, m_pSetupPointLightTiledShadowMapResources(new ResourceList())
 	, m_pVisualizeAccumLightPass(nullptr)
 	, m_pVisualizeDiffuseBufferPass(nullptr)
 	, m_pVisualizeSpecularBufferPass(nullptr)
@@ -410,28 +393,13 @@ DXApplication::DXApplication(HINSTANCE hApp)
 #endif // DEBUG_RENDER_PASS
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
-	{
 		m_FrameCompletionFenceValues[index] = m_pRenderEnv->m_LastSubmissionFenceValue;
-
-		m_VisualizeVoxelGridDiffuseResources[index] = new ResourceList();
-		m_VisualizeVoxelGridNormalResources[index] = new ResourceList();
-
-		m_VisualizeAccumLightResources[index] = new ResourceList();
-		m_VisualizeDiffuseBufferResources[index] = new ResourceList();
-		m_VisualizeSpecularBufferResources[index] = new ResourceList();
-		m_VisualizeNormalBufferResources[index] = new ResourceList();
-		m_VisualizeDepthBufferResources[index] = new ResourceList();
-		m_VisualizeSpotLightTiledShadowMapResources[index] = new ResourceList();
-		m_VisualizePointLightTiledShadowMapResources[index] = new ResourceList();
-		m_VisualizeIntensityResources[index] = new ResourceList();
-	}
+	
 	for (u8 index = 0; index < 2; ++index)
 	{
 		m_IntensityRCoeffsTextures[index] = nullptr;
 		m_IntensityGCoeffsTextures[index] = nullptr;
 		m_IntensityBCoeffsTextures[index] = nullptr;
-		
-		m_PropagateLightResources[index] = new ResourceList();
 	}
 
 	UpdateDisplayResult(DisplayResult::ShadingResult);
@@ -439,27 +407,11 @@ DXApplication::DXApplication(HINSTANCE hApp)
 
 DXApplication::~DXApplication()
 {
-	for (u8 index = 0; index < kNumBackBuffers; ++index)
-	{
-		SafeDelete(m_VisualizeVoxelGridDiffuseResources[index]);
-		SafeDelete(m_VisualizeVoxelGridNormalResources[index]);
-
-		SafeDelete(m_VisualizeAccumLightResources[index]);
-		SafeDelete(m_VisualizeDiffuseBufferResources[index]);
-		SafeDelete(m_VisualizeSpecularBufferResources[index]);
-		SafeDelete(m_VisualizeNormalBufferResources[index]);
-		SafeDelete(m_VisualizeDepthBufferResources[index]);
-		SafeDelete(m_VisualizeSpotLightTiledShadowMapResources[index]);
-		SafeDelete(m_VisualizePointLightTiledShadowMapResources[index]);
-		SafeDelete(m_VisualizeIntensityResources[index]);
-	}
 	for (u8 index = 0; index < 2; ++index)
 	{
 		SafeDelete(m_IntensityRCoeffsTextures[index]);
 		SafeDelete(m_IntensityGCoeffsTextures[index]);
 		SafeDelete(m_IntensityBCoeffsTextures[index]);
-
-		SafeDelete(m_PropagateLightResources[index]);
 	}
 
 	SafeDelete(m_pFrustumMeshCullingPass);
@@ -478,10 +430,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pPointLightShadowMapTileBuffer);
 	SafeDelete(m_pPointLightViewTileProjMatrixBuffer);
 	SafeDelete(m_pSetupSpotLightTiledShadowMapPass);
-	SafeDelete(m_pSetupSpotLightTiledShadowMapResources);
 	SafeDelete(m_pSetupPointLightTiledShadowMapPass);
-	SafeDelete(m_pSetupPointLightTiledShadowMapResources);
-	SafeDelete(m_pCreateRenderShadowMapCommandsArgumentBufferResources);
 	SafeDelete(m_pCommandListPool);
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pPointLightRenderResources);
@@ -500,37 +449,24 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pDrawSpotLightShadowCasterCommandBuffer);
 	SafeDelete(m_pNumDrawSpotLightShadowCastersBuffer);
 	SafeDelete(m_pClearVoxelGridPass);
-	SafeDelete(m_pClearVoxelGridResources);
 	SafeDelete(m_pCreateVoxelGridPass);
-	SafeDelete(m_pCreateVoxelGridResources);
 	SafeDelete(m_pInjectVirtualPointLightsPass);
-	SafeDelete(m_pInjectVirtualPointLightsResources);
 	SafeDelete(m_pPropagateLightPass);
 	SafeDelete(m_pVisualizeVoxelGridDiffusePass);
 	SafeDelete(m_pVisualizeVoxelGridNormalPass);
 	SafeDelete(m_pTiledLightCullingPass);
-	SafeDelete(m_pTiledLightCullingResources);
 	SafeDelete(m_pTiledShadingPass);
 	SafeDelete(m_pTiledDirectLightShadingPass);
 	SafeDelete(m_pTiledIndirectLightShadingPass);
-	SafeDelete(m_pTiledShadingResources);
 	SafeDelete(m_pRenderGBufferPass);
-	SafeDelete(m_pRenderGBufferResources);
 	SafeDelete(m_pCreateRenderGBufferCommandsPass);
-	SafeDelete(m_pCreateRenderGBufferCommandsResources);
 	SafeDelete(m_pCreateRenderShadowMapCommandsPass);
-	SafeDelete(m_pCreateRenderShadowMapCommandsResources);
 	SafeDelete(m_pCreateRenderShadowMapCommandsArgumentBuffer);
 	SafeDelete(m_pRenderSpotLightTiledShadowMapPass);
-	SafeDelete(m_pRenderSpotLightTiledShadowMapResources);
 	SafeDelete(m_pRenderPointLightTiledShadowMapPass);
-	SafeDelete(m_pRenderPointLightTiledShadowMapResources);
 	SafeDelete(m_pDetectVisibleMeshesPass);
-	SafeDelete(m_pDetectVisibleMeshesResources);
 	SafeDelete(m_pDetectVisiblePointLightsPass);
-	SafeDelete(m_pDetectVisiblePointLightsResources);
 	SafeDelete(m_pDetectVisibleSpotLightsPass);
-	SafeDelete(m_pDetectVisibleSpotLightsResources);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pUploadHeapProps);
 	SafeDelete(m_pDefaultHeapProps);
@@ -711,9 +647,8 @@ void DXApplication::OnRender()
 #endif // DEBUG_RENDER_PASS
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, submissionBatch.size(), submissionBatch.data(), m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
+	m_pCommandQueue->ExecuteCommandLists(submissionBatch.size(), submissionBatch.data(), m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-	pRenderTarget->SetState(D3D12_RESOURCE_STATE_PRESENT);
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_pSwapChain->Present(1, 0);
@@ -934,13 +869,13 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 
 	if (pScene->GetNumSpotLights() > 0)
 		m_pSpotLightRenderResources = new LightRenderResources(m_pRenderEnv, pScene->GetNumSpotLights(), pScene->GetSpotLights());
-	
-	Vector3u shadowMapCommandsArgumentBufferValues(0, 1, 1);
-	StructuredBufferDesc shadowMapCommandsArgumentBufferDesc(1, sizeof(shadowMapCommandsArgumentBufferValues), false, false);
-	m_pCreateRenderShadowMapCommandsArgumentBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pCreateRenderShadowMapCommandsArgumentBuffer");
-	UploadData(m_pRenderEnv, m_pCreateRenderShadowMapCommandsArgumentBuffer, &shadowMapCommandsArgumentBufferDesc, &shadowMapCommandsArgumentBufferValues, sizeof(shadowMapCommandsArgumentBufferValues));
-	
+		
 	//Kolya. Fix me
+	//Vector3u shadowMapCommandsArgumentBufferValues(0, 1, 1);
+	//StructuredBufferDesc shadowMapCommandsArgumentBufferDesc(1, sizeof(shadowMapCommandsArgumentBufferValues), false, false);
+	//m_pCreateRenderShadowMapCommandsArgumentBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pCreateRenderShadowMapCommandsArgumentBuffer");
+	//UploadData(m_pRenderEnv, m_pCreateRenderShadowMapCommandsArgumentBuffer, &shadowMapCommandsArgumentBufferDesc, &shadowMapCommandsArgumentBufferValues, sizeof(shadowMapCommandsArgumentBufferValues));
+
 	//StructuredBufferDesc drawCommandBufferDesc(pMeshBatch->GetNumMeshes(), sizeof(DrawMeshCommand), true, true);
 	//m_pDrawMeshCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawMeshCommandBuffer");
 }
@@ -990,6 +925,8 @@ void DXApplication::InitDetectVisibleMeshesPass()
 
 void DXApplication::InitDetectVisiblePointLightsPass()
 {
+	assert(false);
+	/*
 	assert(m_pPointLightRenderResources != nullptr);
 	
 	ConstantBufferDesc viewFrustumCullingDataBufferDesc(sizeof(ViewFrustumCullingData));
@@ -1019,10 +956,13 @@ void DXApplication::InitDetectVisiblePointLightsPass()
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisiblePointLightIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pViewFrustumPointLightCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	*/
 }
 
 void DXApplication::InitDetectVisibleSpotLightsPass()
 {
+	assert(false);
+	/*
 	assert(m_pSpotLightRenderResources != nullptr);
 
 	ConstantBufferDesc viewFrustumCullingDataBufferDesc(sizeof(ViewFrustumCullingData));
@@ -1052,6 +992,7 @@ void DXApplication::InitDetectVisibleSpotLightsPass()
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisibleSpotLightIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pViewFrustumSpotLightCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	*/
 }
 
 void DXApplication::InitCreateRenderGBufferCommandsPass()
@@ -1137,6 +1078,8 @@ void DXApplication::InitRenderGBufferPass(UINT backBufferWidth, UINT backBufferH
 
 void DXApplication::InitTiledLightCullingPass()
 {
+	assert(false);
+	/*
 	assert((m_pPointLightRenderResources != nullptr) || (m_pSpotLightRenderResources != nullptr));
 
 	ConstantBufferDesc tiledLightCullingDataBufferDesc(sizeof(TiledLightCullingData));
@@ -1219,10 +1162,13 @@ void DXApplication::InitTiledLightCullingPass()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightIndexPerTileBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightRangePerTileBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
+	*/
 }
 
 void DXApplication::InitTiledShadingPass()
 {
+	assert(false);
+	/*
 	assert((m_pPointLightRenderResources != nullptr) || (m_pSpotLightRenderResources != nullptr));
 
 	ConstantBufferDesc tiledShadingDataBufferDesc(sizeof(TiledShadingData));
@@ -1302,10 +1248,13 @@ void DXApplication::InitTiledShadingPass()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightIndexPerTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightRangePerTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
+	*/
 }
 
 void DXApplication::InitSetupSpotLightTiledShadowMapPass()
 {
+	assert(false);
+	/*
 	assert(m_pSpotLightRenderResources != nullptr);
 
 	ConstantBufferDesc shadowMapDataBufferDesc(sizeof(ShadowMapData));
@@ -1339,10 +1288,13 @@ void DXApplication::InitSetupSpotLightTiledShadowMapPass()
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightViewProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightShadowMapTileBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightViewTileProjMatrixBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	*/
 }
 
 void DXApplication::InitSetupPointLightTiledShadowMapPass()
 {
+	assert(false);
+	/*
 	assert(m_pPointLightRenderResources != nullptr);
 
 	ConstantBufferDesc shadowMapDataBufferDesc(sizeof(ShadowMapData));
@@ -1376,6 +1328,7 @@ void DXApplication::InitSetupPointLightTiledShadowMapPass()
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightViewProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pPointLightShadowMapTileBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pPointLightViewTileProjMatrixBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	*/
 }
 
 void DXApplication::InitCreateRenderShadowMapCommandsPass()
@@ -1576,6 +1529,8 @@ void DXApplication::InitRenderPointLightTiledShadowMapPass()
 
 void DXApplication::InitClearVoxelGridPass()
 {
+	assert(false);
+	/*
 	ClearVoxelGridPass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_NumGridCellsX = kNumGridCellsX;
@@ -1589,6 +1544,7 @@ void DXApplication::InitClearVoxelGridPass()
 
 	m_pDevice->CopyDescriptor(m_pClearVoxelGridResources->m_SRVHeapStart, m_pGridConfigDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	*/
 }
 
 void DXApplication::InitCreateVoxelGridPass()
@@ -1634,6 +1590,8 @@ void DXApplication::InitCreateVoxelGridPass()
 
 void DXApplication::InitInjectVirtualPointLightsPass()
 {
+	assert(false);
+	/*
 	InjectVirtualPointLightsPass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_NumGridCellsX = kNumGridCellsX;
@@ -1698,10 +1656,13 @@ void DXApplication::InitInjectVirtualPointLightsPass()
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityRCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityGCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityBCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	*/
 }
 
 void DXApplication::InitPropagateLightPass()
 {
+	assert(false);
+	/*
 	PropagateLightPass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_NumGridCellsX = kNumGridCellsX;
@@ -1751,10 +1712,13 @@ void DXApplication::InitPropagateLightPass()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityGCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumIntensityBCoeffsTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
+	*/
 }
 
 void DXApplication::InitVisualizeVoxelGridDiffusePass()
 {
+	assert(false);
+	/*
 	VisualizeVoxelGridPass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
@@ -1777,10 +1741,13 @@ void DXApplication::InitVisualizeVoxelGridDiffusePass()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDepthTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
+	*/
 }
 
 void DXApplication::InitVisualizeVoxelGridNormalPass()
 {
+	assert(false);
+	/*
 	VisualizeVoxelGridPass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
@@ -1803,10 +1770,13 @@ void DXApplication::InitVisualizeVoxelGridNormalPass()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDepthTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
+	*/
 }
 
 void DXApplication::InitVisualizeAccumLightPass()
 {
+	assert(false);
+	/*
 	VisualizeTexturePass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
@@ -1827,10 +1797,13 @@ void DXApplication::InitVisualizeAccumLightPass()
 		m_pDevice->CopyDescriptor(m_VisualizeAccumLightResources[index]->m_SRVHeapStart, m_pVisualizeTextureDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pAccumLightTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
+	*/
 }
 
 void DXApplication::InitVisualizeDiffuseBufferPass()
 {
+	assert(false);
+	/*
 	VisualizeTexturePass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
@@ -1851,10 +1824,13 @@ void DXApplication::InitVisualizeDiffuseBufferPass()
 		m_pDevice->CopyDescriptor(m_VisualizeDiffuseBufferResources[index]->m_SRVHeapStart, m_pVisualizeTextureDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDiffuseTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
+	*/
 }
 
 void DXApplication::InitVisualizeSpecularBufferPass()
 {
+	assert(false);
+	/*
 	VisualizeTexturePass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
@@ -1875,10 +1851,13 @@ void DXApplication::InitVisualizeSpecularBufferPass()
 		m_pDevice->CopyDescriptor(m_VisualizeSpecularBufferResources[index]->m_SRVHeapStart, m_pVisualizeTextureDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpecularTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
+	*/
 }
 
 void DXApplication::InitVisualizeNormalBufferPass()
 {
+	assert(false);
+	/*
 	VisualizeTexturePass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
@@ -1899,10 +1878,13 @@ void DXApplication::InitVisualizeNormalBufferPass()
 		m_pDevice->CopyDescriptor(m_VisualizeNormalBufferResources[index]->m_SRVHeapStart, m_pVisualizeTextureDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pNormalTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
+	*/
 }
 
 void DXApplication::InitVisualizeDepthBufferPass()
 {
+	assert(false);
+	/*
 	VisualizeTexturePass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
@@ -1923,10 +1905,13 @@ void DXApplication::InitVisualizeDepthBufferPass()
 		m_pDevice->CopyDescriptor(m_VisualizeDepthBufferResources[index]->m_SRVHeapStart, m_pVisualizeTextureDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDepthTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
+	*/
 }
 
 void DXApplication::InitVisualizeSpotLightTiledShadowMapPass()
 {
+	assert(false);
+	/*
 	assert(m_pSpotLightTiledShadowMap != nullptr);
 
 	VisualizeTexturePass::InitParams initParams;
@@ -1949,10 +1934,13 @@ void DXApplication::InitVisualizeSpotLightTiledShadowMapPass()
 		m_pDevice->CopyDescriptor(m_VisualizeSpotLightTiledShadowMapResources[index]->m_SRVHeapStart, m_pVisualizeTextureDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightTiledShadowMap->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
+	*/
 }
 
 void DXApplication::InitVisualizePointLightTiledShadowMapPass()
 {
+	assert(false);
+	/*
 	assert(m_pPointLightTiledShadowMap != nullptr);
 
 	VisualizeTexturePass::InitParams initParams;
@@ -1975,10 +1963,13 @@ void DXApplication::InitVisualizePointLightTiledShadowMapPass()
 		m_pDevice->CopyDescriptor(m_VisualizePointLightTiledShadowMapResources[index]->m_SRVHeapStart, m_pVisualizeTextureDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pPointLightTiledShadowMap->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
+	*/
 }
 
 void DXApplication::InitVisualizeIntensityPass()
 {
+	assert(false);
+	/*
 	VisualizeIntensityPass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_NumGridCellsX = kNumGridCellsX;
@@ -2020,6 +2011,7 @@ void DXApplication::InitVisualizeIntensityPass()
 		m_VisualizeIntensityResources[index]->m_RTVHeapStart = pRenderTarget->GetRTVHandle();
 		m_VisualizeIntensityResources[index]->m_SRVHeapStart = srvHeapStart;
 	}
+	*/
 }
 
 void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
@@ -2158,12 +2150,14 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 
 CommandList* DXApplication::RecordClearBackBufferPass()
 {
+	assert(false);
+	/*
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	
 	std::vector<ResourceBarrier> resourceBarriers;	
 	if (pRenderTarget->GetState() != pRenderTarget->GetWriteState())
 	{
-		resourceBarriers.emplace_back(pRenderTarget, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
+		resourceBarriers.emplace_back(, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
 		pRenderTarget->SetState(pRenderTarget->GetWriteState());
 	}
 	if (m_pDepthTexture->GetState() != m_pDepthTexture->GetWriteState())
@@ -2182,10 +2176,14 @@ CommandList* DXApplication::RecordClearBackBufferPass()
 	pCommandList->End();
 
 	return pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordDetectVisibleMeshesPass()
 {
+	assert(false);
+	/*
 	ViewFrustumCullingPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pDetectVisibleMeshesCommandList");
@@ -2194,10 +2192,14 @@ CommandList* DXApplication::RecordDetectVisibleMeshesPass()
 
 	m_pDetectVisibleMeshesPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordDetectVisiblePointLightsPass()
 {
+	assert(false);
+	/*
 	ViewFrustumCullingPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pDetectVisiblePointLightsCommandList");
@@ -2206,10 +2208,14 @@ CommandList* DXApplication::RecordDetectVisiblePointLightsPass()
 
 	m_pDetectVisiblePointLightsPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordDetectVisibleSpotLightsPass()
 {
+	assert(false);
+	/*
 	ViewFrustumCullingPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pDetectVisibleSpotLightsCommandList");
@@ -2218,10 +2224,14 @@ CommandList* DXApplication::RecordDetectVisibleSpotLightsPass()
 
 	m_pDetectVisibleSpotLightsPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordCreateRenderGBufferCommandsPass()
 {
+	assert(false);
+	/*
 	CreateRenderGBufferCommandsPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pCreateRenderGBufferCommandsCommandList");
@@ -2229,6 +2239,8 @@ CommandList* DXApplication::RecordCreateRenderGBufferCommandsPass()
 
 	m_pCreateRenderGBufferCommandsPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordRenderGBufferPass()
@@ -2252,6 +2264,8 @@ CommandList* DXApplication::RecordRenderGBufferPass()
 
 CommandList* DXApplication::RecordTiledLightCullingPass()
 {
+	assert(false);
+	/*
 	TiledLightCullingPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pTiledLightCullingCommandList");
@@ -2261,10 +2275,14 @@ CommandList* DXApplication::RecordTiledLightCullingPass()
 
 	m_pTiledLightCullingPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordUpdateCreateRenderShadowMapCommandsArgumentBufferPass()
 {
+	assert(false);
+	/*
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pUpdateCreateRenderShadowMapCommandsArgumentBufferCommandList");
 	
 	pCommandList->Begin();
@@ -2273,10 +2291,14 @@ CommandList* DXApplication::RecordUpdateCreateRenderShadowMapCommandsArgumentBuf
 	pCommandList->End();
 
 	return pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordCreateRenderShadowMapCommandsPass()
 {
+	assert(false);
+	/*
 	CreateRenderShadowMapCommandsPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pCreateRenderShadowMapCommandsCommandList");
@@ -2289,10 +2311,14 @@ CommandList* DXApplication::RecordCreateRenderShadowMapCommandsPass()
 
 	m_pCreateRenderShadowMapCommandsPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordSetupSpotLightTiledShadowMapPass()
 {
+	assert(false);
+	/*
 	SetupTiledShadowMapPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pSetupSpotLightTiledShadowMapCommandList");
@@ -2300,10 +2326,14 @@ CommandList* DXApplication::RecordSetupSpotLightTiledShadowMapPass()
 
 	m_pSetupSpotLightTiledShadowMapPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordSetupPointLightTiledShadowMapPass()
 {
+	assert(false);
+	/*
 	SetupTiledShadowMapPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pSetupPointLightTiledShadowMapCommandList");
@@ -2311,6 +2341,8 @@ CommandList* DXApplication::RecordSetupPointLightTiledShadowMapPass()
 
 	m_pSetupPointLightTiledShadowMapPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordRenderSpotLightTiledShadowMapPass()
@@ -2353,6 +2385,8 @@ CommandList* DXApplication::RecordRenderPointLightTiledShadowMapPass()
 
 CommandList* DXApplication::RecordTiledShadingPass()
 {
+	assert(false);
+	/*
 	TiledShadingPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pTiledShadingCommandList");
@@ -2369,10 +2403,14 @@ CommandList* DXApplication::RecordTiledShadingPass()
 
 	pTiledShadingPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordClearVoxelGridPass()
 {
+	assert(false);
+	/*
 	ClearVoxelGridPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pClearGridCommandList");
@@ -2380,6 +2418,8 @@ CommandList* DXApplication::RecordClearVoxelGridPass()
 
 	m_pClearVoxelGridPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordCreateVoxelGridPass()
@@ -2403,6 +2443,8 @@ CommandList* DXApplication::RecordCreateVoxelGridPass()
 
 CommandList* DXApplication::RecordInjectVirtualPointLightsPass()
 {
+	assert(false);
+	/*
 	InjectVirtualPointLightsPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pInjectVirtualPointLightsCommandList");
@@ -2410,10 +2452,14 @@ CommandList* DXApplication::RecordInjectVirtualPointLightsPass()
 
 	m_pInjectVirtualPointLightsPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordPropagateLightPass()
 {
+	assert(false);
+	/*
 	PropagateLightPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pPropagateLightCommandList");
@@ -2422,10 +2468,14 @@ CommandList* DXApplication::RecordPropagateLightPass()
 
 	m_pPropagateLightPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordVisualizeVoxelGridDiffusePass()
 {
+	assert(false);
+	/*
 	VisualizeVoxelGridPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeVoxelGridDiffuseCommandList");
@@ -2434,10 +2484,14 @@ CommandList* DXApplication::RecordVisualizeVoxelGridDiffusePass()
 
 	m_pVisualizeVoxelGridDiffusePass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordVisualizeVoxelGridNormalPass()
 {
+	assert(false);
+	/*
 	VisualizeVoxelGridPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeVoxelGridNormalCommandList");
@@ -2446,10 +2500,14 @@ CommandList* DXApplication::RecordVisualizeVoxelGridNormalPass()
 
 	m_pVisualizeVoxelGridNormalPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordVisualizeAccumLightPass()
 {
+	assert(false);
+	/*
 	VisualizeTexturePass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeAccumLightCommandList");
@@ -2458,10 +2516,14 @@ CommandList* DXApplication::RecordVisualizeAccumLightPass()
 
 	m_pVisualizeAccumLightPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordVisualizeDiffuseBufferPass()
 {
+	assert(false);
+	/*
 	VisualizeTexturePass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeDiffuseBufferCommandList");
@@ -2470,10 +2532,14 @@ CommandList* DXApplication::RecordVisualizeDiffuseBufferPass()
 
 	m_pVisualizeDiffuseBufferPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordVisualizeSpecularBufferPass()
 {
+	assert(false);
+	/*
 	VisualizeTexturePass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeSpecularBufferCommandList");
@@ -2482,10 +2548,14 @@ CommandList* DXApplication::RecordVisualizeSpecularBufferPass()
 
 	m_pVisualizeSpecularBufferPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordVisualizeNormalBufferPass()
 {
+	assert(false);
+	/*
 	VisualizeTexturePass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeNormalBufferCommandList");
@@ -2494,10 +2564,14 @@ CommandList* DXApplication::RecordVisualizeNormalBufferPass()
 
 	m_pVisualizeNormalBufferPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordVisualizeDepthBufferPass()
 {
+	assert(false);
+	/*
 	VisualizeTexturePass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeDepthBufferCommandList");
@@ -2506,10 +2580,14 @@ CommandList* DXApplication::RecordVisualizeDepthBufferPass()
 
 	m_pVisualizeDepthBufferPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordVisualizeSpotLightTiledShadowMapPass()
 {
+	assert(false);
+	/*
 	VisualizeTexturePass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeSpotLightShadowMapCommandList");
@@ -2518,10 +2596,14 @@ CommandList* DXApplication::RecordVisualizeSpotLightTiledShadowMapPass()
 
 	m_pVisualizeSpotLightTiledShadowMapPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordVisualizePointLightTiledShadowMapPass()
 {
+	assert(false);
+	/*
 	VisualizeTexturePass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizePointLightShadowMapCommandList");
@@ -2530,10 +2612,14 @@ CommandList* DXApplication::RecordVisualizePointLightTiledShadowMapPass()
 
 	m_pVisualizePointLightTiledShadowMapPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordVisualizeIntensityPass()
 {
+	assert(false);
+	/*
 	VisualizeIntensityPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeVisualizeIntensityCommandList");;
@@ -2543,6 +2629,8 @@ CommandList* DXApplication::RecordVisualizeIntensityPass()
 
 	m_pVisualizeIntensityPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 CommandList* DXApplication::RecordDisplayResultPass()

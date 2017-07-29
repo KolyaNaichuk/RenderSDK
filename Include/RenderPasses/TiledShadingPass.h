@@ -2,13 +2,11 @@
 
 #include "D3DWrapper/Common.h"
 
+struct RenderEnv;
 class RootSignature;
 class PipelineState;
 class CommandList;
 class ColorTexture;
-
-struct RenderEnv;
-struct ResourceList;
 
 enum ShadingMode
 {
@@ -36,7 +34,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		ResourceList* m_pResources;
 		ColorTexture* m_pAccumLightTexture;
 	};
 	

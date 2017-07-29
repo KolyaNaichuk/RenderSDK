@@ -2,16 +2,14 @@
 
 #include "D3DWrapper/Common.h"
 
+struct Viewport;
+struct RenderEnv;
 class RootSignature;
 class PipelineState;
 class CommandSignature;
 class CommandList;
 class Buffer;
 class MeshBatch;
-
-struct Viewport;
-struct RenderEnv;
-struct ResourceList;
 
 class RenderGBufferPass
 {
@@ -37,7 +35,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		ResourceList* m_pResources;
 		Viewport* m_pViewport;
 		MeshBatch* m_pMeshBatch;
 		Buffer* m_pDrawMeshCommandBuffer;

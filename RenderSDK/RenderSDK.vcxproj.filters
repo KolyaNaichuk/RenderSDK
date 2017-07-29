@@ -249,9 +249,6 @@
     <ClInclude Include="..\Include\RenderPasses\FrustumMeshCullingPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\ResourceList.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">

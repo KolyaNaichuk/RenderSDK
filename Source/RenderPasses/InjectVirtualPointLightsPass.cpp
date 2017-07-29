@@ -72,6 +72,8 @@ InjectVirtualPointLightsPass::~InjectVirtualPointLightsPass()
 
 void InjectVirtualPointLightsPass::Record(RenderParams* pParams)
 {
+	assert(false && "Kolya. Fix Me");
+	/*
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	ResourceList* pResources = pParams->m_pResources;
@@ -83,4 +85,5 @@ void InjectVirtualPointLightsPass::Record(RenderParams* pParams)
 	pCommandList->SetComputeRootDescriptorTable(kSRVRootParam, pResources->m_SRVHeapStart);
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, m_NumThreadGroupsZ);
 	pCommandList->End();
+	*/
 }

@@ -666,17 +666,11 @@ Tex3DUnorderedAccessViewDesc::Tex3DUnorderedAccessViewDesc(DXGI_FORMAT format, U
 GraphicsResource::GraphicsResource(ComPtr<ID3D12Resource> d3dResource, D3D12_RESOURCE_STATES initialState)
 	: m_D3DResource(d3dResource)
 	, m_Desc(d3dResource->GetDesc())
-	, m_State(initialState)
-	, m_ReadState(D3D12_RESOURCE_STATE_COMMON)
-	, m_WriteState(D3D12_RESOURCE_STATE_COMMON)
 {
 }
 
 GraphicsResource::GraphicsResource(const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES initialState)
 	: m_Desc(*pDesc)
-	, m_State(initialState)
-	, m_ReadState(D3D12_RESOURCE_STATE_COMMON)
-	, m_WriteState(D3D12_RESOURCE_STATE_COMMON)
 {
 }
 
@@ -733,7 +727,6 @@ ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* p
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
 	CreateTex1DViews(pRenderEnv, pTexDesc);
-	DetermineResourceStates(pTexDesc);
 }
 
 ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -743,7 +736,6 @@ ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* p
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
 	CreateTex2DViews(pRenderEnv, pTexDesc);
-	DetermineResourceStates(pTexDesc);
 }
 
 ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -753,20 +745,26 @@ ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* p
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
 	CreateTex3DViews(pRenderEnv, pTexDesc);
-	DetermineResourceStates(pTexDesc);
 }
 
 ColorTexture::ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
 	: GraphicsResource(d3dResource, initialState)
 {
 	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
+	{
 		CreateTex1DViews(pRenderEnv, &m_Desc);
+		return;
+	}
 	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+	{
 		CreateTex2DViews(pRenderEnv, &m_Desc);
+		return;
+	}
 	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+	{
 		CreateTex3DViews(pRenderEnv, &m_Desc);
-
-	DetermineResourceStates(&m_Desc);
+		return;
+	}
 }
 
 DescriptorHandle ColorTexture::GetRTVHandle()
@@ -811,24 +809,6 @@ void ColorTexture::CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HE
 #ifdef _DEBUG
 	VerifyD3DResult(m_D3DResource->SetName(pName));
 #endif
-}
-
-void ColorTexture::DetermineResourceStates(const D3D12_RESOURCE_DESC* pTexDesc)
-{
-	m_WriteState = D3D12_RESOURCE_STATE_COMMON;
-	
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
-		m_WriteState |= D3D12_RESOURCE_STATE_RENDER_TARGET;
-
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
-		m_WriteState |= D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-
-	m_ReadState = D3D12_RESOURCE_STATE_COMMON;
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
-	{
-		m_ReadState |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-		m_ReadState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	}
 }
 
 void ColorTexture::CreateTex1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc)
@@ -941,7 +921,6 @@ DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* p
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
 	CreateTex1DViews(pRenderEnv, pTexDesc);
-	DetermineResourceStates(pTexDesc);
 }
 
 DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -951,7 +930,6 @@ DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* p
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
 	CreateTex2DViews(pRenderEnv, pTexDesc);
-	DetermineResourceStates(pTexDesc);
 }
 
 DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -961,7 +939,6 @@ DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* p
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
 	CreateTex3DViews(pRenderEnv, pTexDesc);
-	DetermineResourceStates(pTexDesc);
 }
 
 DescriptorHandle DepthTexture::GetDSVHandle()
@@ -1047,30 +1024,12 @@ void DepthTexture::CreateTex3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_
 	}
 }
 
-void DepthTexture::DetermineResourceStates(const D3D12_RESOURCE_DESC* pTexDesc)
-{
-	m_WriteState = D3D12_RESOURCE_STATE_COMMON;
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
-		m_WriteState |= D3D12_RESOURCE_STATE_DEPTH_WRITE;
-	
-	m_ReadState = D3D12_RESOURCE_STATE_COMMON;
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
-	{
-		m_ReadState |= D3D12_RESOURCE_STATE_DEPTH_READ;
-		m_ReadState |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-		m_ReadState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	}
-}
-
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const ConstantBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
 	: GraphicsResource(pBufferDesc, initialState)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateConstantBufferView(pRenderEnv, pBufferDesc);
-
-	m_WriteState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-	m_ReadState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 }
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -1079,9 +1038,6 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateVertexBufferView(pRenderEnv, pBufferDesc);
-
-	m_WriteState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-	m_ReadState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 }
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -1090,9 +1046,6 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateIndexBufferView(pRenderEnv, pBufferDesc);
-
-	m_WriteState = D3D12_RESOURCE_STATE_INDEX_BUFFER;
-	m_ReadState = D3D12_RESOURCE_STATE_INDEX_BUFFER;
 }
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -1101,17 +1054,6 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateStructuredBufferViews(pRenderEnv, pBufferDesc);
-
-	m_WriteState = D3D12_RESOURCE_STATE_COMMON;
-	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
-		m_WriteState |= D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-
-	m_ReadState = D3D12_RESOURCE_STATE_COMMON;
-	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
-	{
-		m_ReadState |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-		m_ReadState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	}
 }
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -1120,17 +1062,6 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateFormattedBufferViews(pRenderEnv, pBufferDesc);
-
-	m_WriteState = D3D12_RESOURCE_STATE_COMMON;
-	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
-		m_WriteState |= D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-
-	m_ReadState = D3D12_RESOURCE_STATE_COMMON;
-	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
-	{
-		m_ReadState |= D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-		m_ReadState |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	}
 }
 
 Buffer::~Buffer()

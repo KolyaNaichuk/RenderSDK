@@ -46,6 +46,8 @@ CopyReprojectedDepthPass::~CopyReprojectedDepthPass()
 
 void CopyReprojectedDepthPass::Record(RenderParams* pParams)
 {
+	assert(false);
+	/*
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	ResourceList* pResources = pParams->m_pResources;
@@ -69,4 +71,5 @@ void CopyReprojectedDepthPass::Record(RenderParams* pParams)
 
 	pCommandList->DrawInstanced(3, 1, 0, 0);
 	pCommandList->End();
+	*/
 }

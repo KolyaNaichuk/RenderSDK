@@ -165,6 +165,8 @@ VisualizeIntensityPass::~VisualizeIntensityPass()
 
 void VisualizeIntensityPass::Record(RenderParams* pParams)
 {
+	assert(false && "Kolya. Fix me");
+	/*
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	ResourceList* pResources = pParams->m_pResources;
@@ -198,4 +200,5 @@ void VisualizeIntensityPass::Record(RenderParams* pParams)
 	pCommandList->DrawInstanced(m_NumIntensityVerticesPerCell, m_NumGridCellsPerSlice, 0, 0);
 
 	pCommandList->End();
+	*/
 }

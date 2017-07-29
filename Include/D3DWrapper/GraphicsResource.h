@@ -266,22 +266,13 @@ protected:
 public:
 	ID3D12Resource* GetD3DObject() { return m_D3DResource.Get(); }
 	DXGI_FORMAT GetFormat() const { return m_Desc.Format; }
-	
-	D3D12_RESOURCE_STATES GetState() const { return m_State; }
-	void SetState(D3D12_RESOURCE_STATES state) { m_State = state; }
-
-	D3D12_RESOURCE_STATES GetReadState() const { return m_ReadState; }
-	D3D12_RESOURCE_STATES GetWriteState() const { return m_WriteState; }
-	
+			
 	void Write(const void* pInputData, SIZE_T numBytes);
 	void Read(void* pOutputData, SIZE_T numBytes);
 
 protected:
 	ComPtr<ID3D12Resource> m_D3DResource;
 	D3D12_RESOURCE_DESC m_Desc;
-	D3D12_RESOURCE_STATES m_State;
-	D3D12_RESOURCE_STATES m_ReadState;
-	D3D12_RESOURCE_STATES m_WriteState;
 };
 
 class ColorTexture : public GraphicsResource
@@ -318,9 +309,7 @@ private:
 	void CreateTex1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	void CreateTex2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	void CreateTex3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-
-	void DetermineResourceStates(const D3D12_RESOURCE_DESC* pTexDesc);
-
+	
 private:
 	DescriptorHandle m_RTVHandle;
 	DescriptorHandle m_SRVHandle;
@@ -356,9 +345,7 @@ private:
 	void CreateTex1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	void CreateTex2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	void CreateTex3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-
-	void DetermineResourceStates(const D3D12_RESOURCE_DESC* pTexDesc);
-
+	
 private:
 	DescriptorHandle m_DSVHandle;
 	DescriptorHandle m_SRVHandle;
@@ -420,14 +407,13 @@ private:
 };
 
 template <typename DestBufferDesc>
-void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, const DestBufferDesc* pDestBufferDesc, const void* pUploadData, SIZE_T numUploadBytes)
+void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, D3D12_RESOURCE_STATES destBufferStateAfter,
+	const DestBufferDesc* pDestBufferDesc, const void* pUploadData, SIZE_T numUploadBytes)
 {
-	assert(pDestBuffer->GetState() == D3D12_RESOURCE_STATE_COPY_DEST);
-
-	Buffer* pUploadBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, pDestBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"MeshRenderResources::pUploadBuffer");
+	Buffer* pUploadBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, pDestBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"UploadData::pUploadBuffer");
 	pUploadBuffer->Write(pUploadData, numUploadBytes);
 
-	ResourceBarrier resourceBarrier(pDestBuffer, pDestBuffer->GetState(), pDestBuffer->GetReadState());
+	ResourceBarrier resourceBarrier(pDestBuffer, D3D12_RESOURCE_STATE_COPY_DEST, destBufferStateAfter);
 
 	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"pUploadCommandList");
 	pUploadCommandList->Begin();
@@ -436,9 +422,8 @@ void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, const DestBufferDesc
 	pUploadCommandList->End();
 
 	++pRenderEnv->m_LastSubmissionFenceValue;
-	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(pRenderEnv, 1, &pUploadCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
+	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pUploadCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
 	pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
 
-	pDestBuffer->SetState(pDestBuffer->GetReadState());
 	SafeDelete(pUploadBuffer);
 }

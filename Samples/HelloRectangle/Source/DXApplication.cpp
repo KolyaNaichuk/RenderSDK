@@ -133,11 +133,11 @@ void DXApplication::OnInit()
 
 	VertexBufferDesc vertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]));
 	m_pVertexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pVertexBuffer");
-	UploadData(m_pRenderEnv, m_pVertexBuffer, &vertexBufferDesc, vertices, sizeof(vertices));
+	UploadData(m_pRenderEnv, m_pVertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &vertexBufferDesc, vertices, sizeof(vertices));
 	
 	IndexBufferDesc indexBufferDesc(ARRAYSIZE(indices), sizeof(indices[0]));
 	m_pIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pIndexBuffer");
-	UploadData(m_pRenderEnv, m_pIndexBuffer, &indexBufferDesc, indices, sizeof(indices));
+	UploadData(m_pRenderEnv, m_pIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, &indexBufferDesc, indices, sizeof(indices));
 }
 
 void DXApplication::OnUpdate()
@@ -152,10 +152,8 @@ void DXApplication::OnRender()
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 		
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-		
-	ResourceBarrier writeStateBarrier(pRenderTarget, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
-	pCommandList->ResourceBarrier(1, &writeStateBarrier);
-	pRenderTarget->SetState(pRenderTarget->GetWriteState());
+	ResourceBarrier renderTargetBarrier(pRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	pCommandList->ResourceBarrier(1, &renderTargetBarrier);
 		
 	const FLOAT clearColor[4] = {0.1f, 0.7f, 0.4f, 1.0f};
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderTarget->GetRTVHandle();
@@ -169,14 +167,12 @@ void DXApplication::OnRender()
 	pCommandList->RSSetScissorRects(1, m_pScissorRect);
 	pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
-	ResourceBarrier presentStateBarrier(pRenderTarget, pRenderTarget->GetState(), D3D12_RESOURCE_STATE_PRESENT);
+	ResourceBarrier presentStateBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	pCommandList->ResourceBarrier(1, &presentStateBarrier);
-	pRenderTarget->SetState(D3D12_RESOURCE_STATE_PRESENT);
-
 	pCommandList->End();
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
-	m_pCommandQueue->ExecuteCommandLists(m_pRenderEnv, 1, &pCommandList, m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
+	m_pCommandQueue->ExecuteCommandLists(1, &pCommandList, m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_pSwapChain->Present(1, 0);

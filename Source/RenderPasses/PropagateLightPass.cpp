@@ -89,6 +89,8 @@ PropagateLightPass::~PropagateLightPass()
 
 void PropagateLightPass::Record(RenderParams* pParams)
 {
+	assert(false && "Kolya. Fix Me");
+	/*
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	ResourceList** ppResources = pParams->m_ppResources;
@@ -96,7 +98,7 @@ void PropagateLightPass::Record(RenderParams* pParams)
 	std::vector<ResourceBarrier> resourceBarriers[2];
 	for (u8 it = 0; it < 2; ++it)
 	{
-		RequiredResourceStateList requiredResourceStates = ppResources[it]->m_RequiredResourceStates;
+		ResourceStateList requiredResourceStates = ppResources[it]->m_RequiredResourceStates;
 
 		resourceBarriers[it].reserve(6);
 		for (u8 resourceIndex = 1; resourceIndex < 4; ++resourceIndex)
@@ -142,4 +144,5 @@ void PropagateLightPass::Record(RenderParams* pParams)
 		pCommandList->ResourceBarrier(resourceBarriers[0].size(), resourceBarriers[0].data());
 
 	pCommandList->End();
+	*/
 }

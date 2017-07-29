@@ -1,6 +1,6 @@
 #pragma once
 
-#include "D3DWrapper/ResourceList.h"
+#include "D3DWrapper/Common.h"
 
 class GraphicsDevice;
 class Buffer;
@@ -37,6 +37,7 @@ public:
 	void SetGraphicsRootSignature(RootSignature* pRootSignature);
 	void SetGraphicsRootDescriptorTable(UINT rootParamIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle);
 	void SetGraphicsRoot32BitConstant(UINT rootParamIndex, UINT srcData, UINT destOffsetIn32BitValues);
+	void SetGraphicsRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer);
 	
 	void SetComputeRootSignature(RootSignature* pRootSignature);
 	void SetComputeRootDescriptorTable(UINT rootParamIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle);
@@ -70,18 +71,13 @@ public:
 	void CopyBufferRegion(Buffer* pDestBuffer, UINT64 destOffset, Buffer* pSourceBuffer, UINT64 sourceOffset, UINT64 numBytes);
 
 	void ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER* pBarriers);
-
-	RequiredResourceStateList* GetRequiredResourceStates();
-	void SetRequiredResourceStates(RequiredResourceStateList* pRequiredResourceStates);
-	
+		
 	void SetCompletionFence(Fence* pFence, UINT64 fenceValue);
 	bool CompletedExecution();
 
 private:
 	ComPtr<ID3D12GraphicsCommandList> m_D3DCommandList;
-	ComPtr<ID3D12CommandAllocator> m_D3DCommandAllocator;
-	RequiredResourceStateList* m_pRequiredResourceStates;
-	
+	ComPtr<ID3D12CommandAllocator> m_D3DCommandAllocator;	
 	Fence* m_pCompletionFence;
 	UINT64 m_CompletionFenceValue;
 };

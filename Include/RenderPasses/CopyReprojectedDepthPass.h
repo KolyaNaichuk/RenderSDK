@@ -3,7 +3,6 @@
 #include "D3DWrapper/Common.h"
 
 struct RenderEnv;
-struct ResourceList;
 struct Viewport;
 
 class CommandList;
@@ -23,7 +22,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		ResourceList* m_pResources;
 		Viewport* m_pViewport;
 	};
 

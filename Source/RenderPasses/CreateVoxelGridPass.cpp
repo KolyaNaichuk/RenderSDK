@@ -72,6 +72,8 @@ CreateVoxelGridPass::~CreateVoxelGridPass()
 
 void CreateVoxelGridPass::Record(RenderParams* pParams)
 {
+	assert(false);
+	/*
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	ResourceList* pResources = pParams->m_pResources;
@@ -88,7 +90,6 @@ void CreateVoxelGridPass::Record(RenderParams* pParams)
 	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamVS, pResources->m_SRVHeapStart);
 	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamGS, DescriptorHandle(pResources->m_SRVHeapStart, 1));
 	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParamPS, DescriptorHandle(pResources->m_SRVHeapStart, 2));
-	/* Kolya. Fix me
 	pCommandList->IASetPrimitiveTopology(pMeshBatch->GetPrimitiveTopology());
 	pCommandList->IASetVertexBuffers(0, 1, pMeshBatch->GetVertexBuffer()->GetVBView());
 	pCommandList->IASetIndexBuffer(pMeshBatch->GetIndexBuffer()->GetIBView());
@@ -99,6 +100,6 @@ void CreateVoxelGridPass::Record(RenderParams* pParams)
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 	
 	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshBatch->GetNumMeshes(), pParams->m_pDrawMeshCommandBuffer, 0, pParams->m_pNumDrawMeshesBuffer, 0);
-	*/
 	pCommandList->End();
+	*/
 }

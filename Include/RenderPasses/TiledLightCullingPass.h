@@ -2,13 +2,11 @@
 
 #include "D3DWrapper/Common.h"
 
+struct RenderEnv;
 class RootSignature;
 class PipelineState;
 class CommandList;
 class Buffer;
-
-struct RenderEnv;
-struct ResourceList;
 
 class TiledLightCullingPass
 {
@@ -27,7 +25,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		ResourceList* m_pResources;
 		Buffer* m_pNumPointLightsPerTileBuffer;
 		Buffer* m_pNumSpotLightsPerTileBuffer;
 	};

@@ -2,6 +2,10 @@
 
 #include "Common/Application.h"
 
+struct HeapProperties;
+struct RenderEnv;
+struct Viewport;
+
 class GraphicsDevice;
 class SwapChain;
 class CommandQueue;
@@ -36,11 +40,6 @@ class CreateRenderShadowMapCommandsPass;
 class RenderTiledShadowMapPass;
 class SetupTiledShadowMapPass;
 class Scene;
-
-struct HeapProperties;
-struct RenderEnv;
-struct ResourceList;
-struct Viewport;
 
 //#define DEBUG_RENDER_PASS
 
@@ -238,93 +237,38 @@ private:
 	UINT m_BackBufferIndex;
 
 	RenderGBufferPass* m_pRenderGBufferPass;
-	ResourceList* m_pRenderGBufferResources;
-
 	TiledLightCullingPass* m_pTiledLightCullingPass;
-	ResourceList* m_pTiledLightCullingResources;
-
 	TiledShadingPass* m_pTiledShadingPass;
 	TiledShadingPass* m_pTiledDirectLightShadingPass;
 	TiledShadingPass* m_pTiledIndirectLightShadingPass;
-	ResourceList* m_pTiledShadingResources;
-
 	ClearVoxelGridPass* m_pClearVoxelGridPass;
-	ResourceList* m_pClearVoxelGridResources;
-
 	CreateVoxelGridPass* m_pCreateVoxelGridPass;
-	ResourceList* m_pCreateVoxelGridResources;
-
 	InjectVirtualPointLightsPass* m_pInjectVirtualPointLightsPass;
-	ResourceList* m_pInjectVirtualPointLightsResources;
-
 	PropagateLightPass* m_pPropagateLightPass;
-	ResourceList* m_PropagateLightResources[2];
-		
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridDiffusePass;
-	ResourceList* m_VisualizeVoxelGridDiffuseResources[kNumBackBuffers];
-
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridNormalPass;
-	ResourceList* m_VisualizeVoxelGridNormalResources[kNumBackBuffers];
-
 	ViewFrustumCullingPass* m_pDetectVisibleMeshesPass;
-	ResourceList* m_pDetectVisibleMeshesResources;
-
 	ViewFrustumCullingPass* m_pDetectVisiblePointLightsPass;
-	ResourceList* m_pDetectVisiblePointLightsResources;
-
 	ViewFrustumCullingPass* m_pDetectVisibleSpotLightsPass;
-	ResourceList* m_pDetectVisibleSpotLightsResources;
-
 	CreateRenderGBufferCommandsPass* m_pCreateRenderGBufferCommandsPass;
-	ResourceList* m_pCreateRenderGBufferCommandsResources;
-
-	ResourceList* m_pCreateRenderShadowMapCommandsArgumentBufferResources;
 	CreateRenderShadowMapCommandsPass* m_pCreateRenderShadowMapCommandsPass;
-	ResourceList* m_pCreateRenderShadowMapCommandsResources;
 	Buffer* m_pCreateRenderShadowMapCommandsArgumentBuffer;
-	
 	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass;
-	ResourceList* m_pRenderSpotLightTiledShadowMapResources;
-	
 	RenderTiledShadowMapPass* m_pRenderPointLightTiledShadowMapPass;
-	ResourceList* m_pRenderPointLightTiledShadowMapResources;
-	
 	SetupTiledShadowMapPass* m_pSetupSpotLightTiledShadowMapPass;
-	ResourceList* m_pSetupSpotLightTiledShadowMapResources;
-
 	SetupTiledShadowMapPass* m_pSetupPointLightTiledShadowMapPass;
-	ResourceList* m_pSetupPointLightTiledShadowMapResources;
-
 	VisualizeTexturePass* m_pVisualizeAccumLightPass;
-	ResourceList* m_VisualizeAccumLightResources[kNumBackBuffers];
-	
 	VisualizeTexturePass* m_pVisualizeDiffuseBufferPass;
-	ResourceList* m_VisualizeDiffuseBufferResources[kNumBackBuffers];
-
 	VisualizeTexturePass* m_pVisualizeSpecularBufferPass;
-	ResourceList* m_VisualizeSpecularBufferResources[kNumBackBuffers];
-
 	VisualizeTexturePass* m_pVisualizeNormalBufferPass;
-	ResourceList* m_VisualizeNormalBufferResources[kNumBackBuffers];
-
 	VisualizeTexturePass* m_pVisualizeDepthBufferPass;
-	ResourceList* m_VisualizeDepthBufferResources[kNumBackBuffers];
-
 	VisualizeTexturePass* m_pVisualizeSpotLightTiledShadowMapPass;
-	ResourceList* m_VisualizeSpotLightTiledShadowMapResources[kNumBackBuffers];
-
 	VisualizeTexturePass* m_pVisualizePointLightTiledShadowMapPass;
-	ResourceList* m_VisualizePointLightTiledShadowMapResources[kNumBackBuffers];
-
 	VisualizeIntensityPass* m_pVisualizeIntensityPass;
-	ResourceList* m_VisualizeIntensityResources[kNumBackBuffers];
-	
 	MeshRenderResources* m_pMeshRenderResources;
-	
 	LightRenderResources* m_pPointLightRenderResources;
 	Buffer* m_pNumVisiblePointLightsBuffer;
 	Buffer* m_pVisiblePointLightIndexBuffer;
-
 	LightRenderResources* m_pSpotLightRenderResources;
 	Buffer* m_pNumVisibleSpotLightsBuffer;
 	Buffer* m_pVisibleSpotLightIndexBuffer;
