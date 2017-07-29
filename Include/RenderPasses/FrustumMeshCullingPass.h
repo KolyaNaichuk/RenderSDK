@@ -14,17 +14,17 @@ public:
 	struct ResourceStates
 	{
 		D3D12_RESOURCE_STATES m_MeshInstanceRangeBufferState;
-		D3D12_RESOURCE_STATES m_InstanceAABBBufferState;
+		D3D12_RESOURCE_STATES m_InstanceWorldAABBBufferState;
 		D3D12_RESOURCE_STATES m_VisibleInstanceRangeBufferState;
 		D3D12_RESOURCE_STATES m_VisibleInstanceIndexBufferState;
-		D3D12_RESOURCE_STATES m_DrawVisibleInstanceCommandBufferState;
+		D3D12_RESOURCE_STATES m_NumVisibleInstancesBufferState;
 	};
 
 	struct InitParams
 	{
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
-		Buffer* m_pInstanceAABBBuffer;
+		Buffer* m_pInstanceWorldAABBBuffer;
 		Buffer* m_pMeshInstanceRangeBuffer;
 		u32 m_TotalNumMeshes;
 		u32 m_TotalNumInstances;
@@ -35,14 +35,14 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		Buffer* m_pCullingDataBuffer;
+		Buffer* m_pCameraDataBuffer;
 	};
 
 	FrustumMeshCullingPass(InitParams* pParams);
 	~FrustumMeshCullingPass();
 
 	void Record(RenderParams* pParams);
-	ResourceStates* GetOutputResourceStates() { return &m_OutputResourceStates; }
+	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
 
 private:
 	void InitResources(InitParams* pParams);
@@ -58,8 +58,8 @@ private:
 	ResourceStates m_OutputResourceStates;
 
 	Buffer* m_pNumVisibleMeshesBuffer;
+	Buffer* m_pNumVisibleInstancesBuffer;
 	Buffer* m_pVisibleInstanceRangeBuffer;
 	Buffer* m_pVisibleInstanceIndexBuffer;
-	Buffer* m_pDrawVisibleInstanceCommandBuffer;
 	u32 m_TotalNumMeshes;
 };

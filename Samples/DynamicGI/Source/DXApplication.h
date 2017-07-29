@@ -92,8 +92,7 @@ private:
 
 	void InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight);
 	void InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
-	void InitFrustumMeshCullingPass();
-
+	
 	// Old
 	void InitDetectVisibleMeshesPass();
 	void InitDetectVisiblePointLightsPass();
@@ -124,6 +123,12 @@ private:
 	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
 
 	CommandList* RecordClearBackBufferPass();
+	
+	void InitFrustumMeshCullingPass();
+	CommandList* RecordFrustumMeshCullingPass();
+	
+	CommandList* RecordPresentResourceBarrierPass();
+
 	CommandList* RecordDetectVisibleMeshesPass();
 	CommandList* RecordDetectVisiblePointLightsPass();
 	CommandList* RecordDetectVisibleSpotLightsPass();
@@ -152,8 +157,7 @@ private:
 	CommandList* RecordVisualizePointLightTiledShadowMapPass();
 	CommandList* RecordVisualizeIntensityPass();
 	CommandList* RecordDisplayResultPass();
-	CommandList* RecordPresentResourceBarrierPass();
-
+	
 	void UpdateDisplayResult(DisplayResult displayResult);
 		
 #ifdef DEBUG_RENDER_PASS
@@ -277,7 +281,8 @@ private:
 
 	// New render passes
 	FrustumMeshCullingPass* m_pFrustumMeshCullingPass;
-	
+	Buffer* m_pCameraDataBuffer;
+
 #ifdef DEBUG_RENDER_PASS
 	ResourceList* m_pDebugResources;
 	Buffer* m_pDebugPointLightRangePerTileBuffer;

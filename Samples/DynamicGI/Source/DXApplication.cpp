@@ -157,6 +157,15 @@ against MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER and MAX_NUM_POINT_LIGHTS_PER_SHADO
 while writing data to the local storage
 */
 
+namespace
+{
+	struct CameraData
+	{
+		Vector4f m_WorldFrustumPlanes[6];
+		Vector4f m_NotUsed[10];
+	};
+}
+
 enum
 {
 	kTileSize = 16,
@@ -378,6 +387,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pVisibleSpotLightIndexBuffer(nullptr)
 	, m_pCamera(nullptr)
 	, m_pFrustumMeshCullingPass(nullptr)
+	, m_pCameraDataBuffer(nullptr)
 #ifdef DEBUG_RENDER_PASS
 	, m_pDebugResources(new ResourceList())
 	, m_pDebugPointLightRangePerTileBuffer(nullptr)
@@ -407,14 +417,17 @@ DXApplication::DXApplication(HINSTANCE hApp)
 
 DXApplication::~DXApplication()
 {
+	SafeDelete(m_pFrustumMeshCullingPass);
+	SafeDelete(m_pCameraDataBuffer);
+
+	// Old
 	for (u8 index = 0; index < 2; ++index)
 	{
 		SafeDelete(m_IntensityRCoeffsTextures[index]);
 		SafeDelete(m_IntensityGCoeffsTextures[index]);
 		SafeDelete(m_IntensityBCoeffsTextures[index]);
-	}
+	}	
 
-	SafeDelete(m_pFrustumMeshCullingPass);
 	SafeDelete(m_pVisualizeAccumLightPass);
 	SafeDelete(m_pVisualizeDiffuseBufferPass);
 	SafeDelete(m_pVisualizeSpecularBufferPass);
@@ -538,8 +551,12 @@ void DXApplication::OnInit()
 	
 	Scene* pScene = SceneLoader::LoadCornellBox();
 	InitScene(pScene, backBufferWidth, backBufferHeight);
-	InitFrustumMeshCullingPass();
 	
+	InitFrustumMeshCullingPass();	
+	InitConstantBuffers(pScene, backBufferWidth, backBufferHeight);
+	
+	SafeDelete(pScene);
+
 	/*
 	InitDetectVisibleMeshesPass();
 	
@@ -586,9 +603,6 @@ void DXApplication::OnInit()
 #ifdef DEBUG_RENDER_PASS
 	InitDebugRenderPass(pScene);
 #endif // DEBUG_RENDER_PASS
-
-	InitConstantBuffers(pScene, backBufferWidth, backBufferHeight);		
-	SafeDelete(pScene);
 	*/
 }
 
@@ -599,8 +613,31 @@ void DXApplication::OnUpdate()
 void DXApplication::OnRender()
 {
 	std::vector<CommandList*> submissionBatch;
-
 	submissionBatch.emplace_back(RecordClearBackBufferPass());
+	submissionBatch.emplace_back(RecordFrustumMeshCullingPass());
+	submissionBatch.emplace_back(RecordPresentResourceBarrierPass());
+
+#ifdef DEBUG_RENDER_PASS
+	submissionBatch.emplace_back(RecordDebugRenderPass());
+#endif // DEBUG_RENDER_PASS
+
+	++m_pRenderEnv->m_LastSubmissionFenceValue;
+	m_pCommandQueue->ExecuteCommandLists(submissionBatch.size(), submissionBatch.data(), m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
+	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+
+	++m_pRenderEnv->m_LastSubmissionFenceValue;
+	m_pSwapChain->Present(1, 0);
+	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
+
+#ifdef DEBUG_RENDER_PASS
+	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
+	OuputDebugRenderPassResult();
+#endif // DEBUG_RENDER_PASS
+
+	m_FrameCompletionFenceValues[m_BackBufferIndex] = m_pRenderEnv->m_LastSubmissionFenceValue;
+	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+	m_pFence->WaitForSignalOnCPU(m_FrameCompletionFenceValues[m_BackBufferIndex]);
+	
 	/*
 	submissionBatch.emplace_back(RecordDetectVisibleMeshesPass());
 	
@@ -640,28 +677,6 @@ void DXApplication::OnRender()
 	submissionBatch.emplace_back(RecordTiledShadingPass());
 	submissionBatch.emplace_back(RecordDisplayResultPass());
 	*/
-	submissionBatch.emplace_back(RecordPresentResourceBarrierPass());
-
-#ifdef DEBUG_RENDER_PASS
-	submissionBatch.emplace_back(RecordDebugRenderPass());
-#endif // DEBUG_RENDER_PASS
-
-	++m_pRenderEnv->m_LastSubmissionFenceValue;
-	m_pCommandQueue->ExecuteCommandLists(submissionBatch.size(), submissionBatch.data(), m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
-	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-
-	++m_pRenderEnv->m_LastSubmissionFenceValue;
-	m_pSwapChain->Present(1, 0);
-	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
-
-#ifdef DEBUG_RENDER_PASS
-	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
-	OuputDebugRenderPassResult();
-#endif // DEBUG_RENDER_PASS
-		
-	m_FrameCompletionFenceValues[m_BackBufferIndex] = m_pRenderEnv->m_LastSubmissionFenceValue;
-	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-	m_pFence->WaitForSignalOnCPU(m_FrameCompletionFenceValues[m_BackBufferIndex]);
 }
 
 void DXApplication::OnDestroy()
@@ -878,15 +893,6 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 
 	//StructuredBufferDesc drawCommandBufferDesc(pMeshBatch->GetNumMeshes(), sizeof(DrawMeshCommand), true, true);
 	//m_pDrawMeshCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawMeshCommandBuffer");
-}
-
-void DXApplication::InitFrustumMeshCullingPass()
-{
-	FrustumMeshCullingPass::InitParams initParams;
-	initParams.m_pRenderEnv = m_pRenderEnv;
-	initParams.m_MaxNumInstancesPerMesh = m_pMeshRenderResources->GetMaxNumInstancesPerMesh();
-
-	m_pFrustumMeshCullingPass = new FrustumMeshCullingPass(&initParams);
 }
 
 void DXApplication::InitDetectVisibleMeshesPass()
@@ -2016,13 +2022,24 @@ void DXApplication::InitVisualizeIntensityPass()
 
 void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
 {
-	assert(false);
-	/*
-	const Vector3f& mainCameraPos = m_pCamera->GetTransform().GetPosition();
-	const Quaternion& mainCameraRotation = m_pCamera->GetTransform().GetRotation();
-	const Matrix4f mainViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
-	const Frustum mainCameraFrustum = ExtractWorldFrustum(*m_pCamera);
+	{
+		const Vector3f& mainCameraWorldPosition = m_pCamera->GetTransform().GetPosition();
+		const Quaternion& mainCameraRotation = m_pCamera->GetTransform().GetRotation();
+		const Matrix4f mainViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
+		const Frustum mainCameraWorldFrustum = ExtractWorldFrustum(*m_pCamera);
 
+		ConstantBufferDesc cameraDataBufferDesc(sizeof(CameraData));
+		m_pCameraDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &cameraDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCameraDataBuffer");
+
+		CameraData cameraData;
+		for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
+			cameraData.m_WorldFrustumPlanes[planeIndex] = ToVector4f(mainCameraWorldFrustum.m_Planes[planeIndex]);
+
+		m_pCameraDataBuffer->Write(&cameraData, sizeof(cameraData));
+	}
+
+	// Kolya. Fix me
+	/*
 	ObjectTransform objectTransform;
 	objectTransform.m_WorldPositionMatrix = Matrix4f::IDENTITY;
 	objectTransform.m_WorldNormalMatrix = Matrix4f::IDENTITY;
@@ -2043,7 +2060,7 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	const Vector3f gridRcpCellSize(Rcp(gridCellSize));
 	
 	// Kolya: Hard-coding grid center for now
-	//const Vector3f gridCenter(mainCameraPos + (0.25f * gridSize.m_Z) * mainCameraBasis.m_ZAxis);
+	//const Vector3f gridCenter(mainCameraWorldPosition + (0.25f * gridSize.m_Z) * mainCameraBasis.m_ZAxis);
 	const Vector3f gridCenter(0.5f * 549.6f, 0.5f * 548.8f, -0.5f * 562.0f);
 	const Vector3f gridMinPoint = gridCenter - gridHalfSize;
 	
@@ -2085,7 +2102,7 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 
 	ViewFrustumCullingData viewFrustumCullingData;
 	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
-		viewFrustumCullingData.m_ViewFrustumPlanes[planeIndex] = mainCameraFrustum.m_Planes[planeIndex];
+		viewFrustumCullingData.m_ViewFrustumPlanes[planeIndex] = mainCameraWorldFrustum.m_Planes[planeIndex];
 
 	viewFrustumCullingData.m_NumObjects = m_pMeshRenderResources->GetNumMeshes();
 	m_pViewFrustumMeshCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
@@ -2111,7 +2128,7 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 
 	TiledShadingData tiledShadingData;
 	tiledShadingData.m_RcpScreenSize = Rcp(Vector2f((f32)backBufferWidth, (f32)backBufferHeight));
-	tiledShadingData.m_WorldSpaceCameraPos = mainCameraPos;
+	tiledShadingData.m_WorldSpaceCameraPos = mainCameraWorldPosition;
 	tiledShadingData.m_ViewProjInvMatrix = Inverse(m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix());
 
 	const DirectionalLight* pDirectionalLight = pScene->GetDirectionalLight();
@@ -2150,34 +2167,50 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 
 CommandList* DXApplication::RecordClearBackBufferPass()
 {
-	assert(false);
-	/*
+	const Vector4f& backgroundColor = m_pCamera->GetBackgroundColor();
+
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+	ResourceBarrier resourceBarrier(pRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	
-	std::vector<ResourceBarrier> resourceBarriers;	
-	if (pRenderTarget->GetState() != pRenderTarget->GetWriteState())
-	{
-		resourceBarriers.emplace_back(, pRenderTarget->GetState(), pRenderTarget->GetWriteState());
-		pRenderTarget->SetState(pRenderTarget->GetWriteState());
-	}
-	if (m_pDepthTexture->GetState() != m_pDepthTexture->GetWriteState())
-	{
-		resourceBarriers.emplace_back(m_pDepthTexture, m_pDepthTexture->GetState(), m_pDepthTexture->GetWriteState());
-		m_pDepthTexture->SetState(m_pDepthTexture->GetWriteState());
-	}
-
-	const Vector4f& clearColor = m_pCamera->GetBackgroundColor();
-
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pClearBackBufferCommandList");
 	pCommandList->Begin();
-	pCommandList->ResourceBarrier(resourceBarriers.size(), resourceBarriers.data());
-	pCommandList->ClearRenderTargetView(pRenderTarget->GetRTVHandle(), &clearColor.m_X);
+	pCommandList->ResourceBarrier(1, &resourceBarrier);
+	pCommandList->ClearRenderTargetView(pRenderTarget->GetRTVHandle(), &backgroundColor.m_X);
 	pCommandList->ClearDepthView(m_pDepthTexture->GetDSVHandle());
 	pCommandList->End();
 
 	return pCommandList;
-	*/
-	return nullptr;
+}
+
+void DXApplication::InitFrustumMeshCullingPass()
+{
+	assert(m_pMeshRenderResources != nullptr);
+
+	FrustumMeshCullingPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pInstanceWorldAABBBuffer = m_pMeshRenderResources->GetInstanceWorldAABBBuffer();
+	params.m_pMeshInstanceRangeBuffer = m_pMeshRenderResources->GetMeshInstanceRangeBuffer();
+	params.m_TotalNumMeshes = m_pMeshRenderResources->GetTotalNumMeshes();
+	params.m_TotalNumInstances = m_pMeshRenderResources->GetTotalNumInstances();
+	params.m_MaxNumInstancesPerMesh = m_pMeshRenderResources->GetMaxNumInstancesPerMesh();
+	params.m_InputResourceStates.m_MeshInstanceRangeBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_InstanceWorldAABBBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_VisibleInstanceRangeBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_NumVisibleInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+	m_pFrustumMeshCullingPass = new FrustumMeshCullingPass(&params);
+}
+
+CommandList* DXApplication::RecordFrustumMeshCullingPass()
+{
+	FrustumMeshCullingPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"'pFrustumMeshCullingCommandList");
+	params.m_pCameraDataBuffer = m_pCameraDataBuffer;
+
+	m_pFrustumMeshCullingPass->Record(&params);
+	return params.m_pCommandList;
 }
 
 CommandList* DXApplication::RecordDetectVisibleMeshesPass()
@@ -2672,11 +2705,11 @@ CommandList* DXApplication::RecordDisplayResultPass()
 CommandList* DXApplication::RecordPresentResourceBarrierPass()
 {
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-	ResourceBarrier presentStateBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	ResourceBarrier resourceBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 		
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pPresentResourceBarrierCommandList");
 	pCommandList->Begin();
-	pCommandList->ResourceBarrier(1, &presentStateBarrier);
+	pCommandList->ResourceBarrier(1, &resourceBarrier);
 	pCommandList->End();
 
 	return pCommandList;

@@ -32,8 +32,13 @@ void CommandQueue::ExecuteCommandLists(UINT numCommandLists, CommandList** ppCom
 
 	assert(numCommandLists < MAX_NUM_COMMAND_LISTS);
 	for (UINT listIndex = 0; listIndex < numCommandLists; ++listIndex)
-		d3dCommandLists[listIndex] = ppCommandLists[listIndex]->GetD3DObject();
-	
+	{
+		CommandList* pCommandList = ppCommandLists[listIndex];
+
+		pCommandList->SetCompletionFence(pCompletionFence, completionFenceValue);
+		d3dCommandLists[listIndex] = pCommandList->GetD3DObject();
+	}
+
 	m_D3DCommandQueue->ExecuteCommandLists(numCommandLists, d3dCommandLists);
 	Signal(pCompletionFence, completionFenceValue);
 }

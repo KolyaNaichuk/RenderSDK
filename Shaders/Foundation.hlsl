@@ -20,4 +20,10 @@ struct DrawIndexedArgs
 	uint startInstanceLocation;
 };
 
+struct CameraData
+{
+	float4 worldFrustumPlanes[6];
+	float4 notUsed[10];
+};
+
 #endif // __FOUNDATION__

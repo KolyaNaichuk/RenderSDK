@@ -8,24 +8,18 @@ struct MeshInstanceRange
 	uint meshIndex;
 };
 
-struct CullingData
+cbuffer CameraDataBuffer : register(b0)
 {
-	float4 frustumPlanes[6];
-	float4 notUsed[10];
-};
-
-cbuffer CullingDataBuffer : register(b0)
-{
-	CullingData g_CullingData;
+	CameraData g_CameraData;
 }
 
 StructuredBuffer<MeshInstanceRange> g_MeshInstanceRangeBuffer : register(t0);
-StructuredBuffer<AABB> g_InstanceAABBBuffer : register(t1);
+StructuredBuffer<AABB> g_InstanceWorldAABBBuffer : register(t1);
 
-RWStructuredBuffer<uint> g_NumVisibleMeshesBuffer : register(u0);
-RWStructuredBuffer<MeshInstanceRange> g_VisibleInstanceRangeBuffer : register(u1);
-RWStructuredBuffer<uint> g_VisibleInstanceIndexBuffer : register(u2);
-RWStructuredBuffer<DrawIndexedArgs> g_DrawVisibleInstanceCommandBuffer : register(u3);
+RWBuffer<uint> g_NumVisibleMeshesBuffer : register(u0);
+RWBuffer<uint> g_NumVisibleInstancesBuffer : register(u1);
+RWStructuredBuffer<MeshInstanceRange> g_VisibleInstanceRangeBuffer : register(u2);
+RWBuffer<uint> g_VisibleInstanceIndexBuffer : register(u3);
 
 groupshared uint g_NumVisibleInstancesPerMesh;
 groupshared uint g_VisibleInstanceIndicesPerMesh[MAX_NUM_INSTANCES_PER_MESH];
@@ -45,7 +39,7 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 	for (uint index = localIndex; index < meshInstanceRange.numInstances; index += NUM_THREADS_PER_MESH)
 	{
 		uint instanceIndex = meshInstanceRange.instanceOffset + index;
-		if (TestAABBAgainstFrustum(g_CullingData.frustumPlanes, g_InstanceAABBBuffer[instanceIndex]))
+		if (TestAABBAgainstFrustum(g_CameraData.worldFrustumPlanes, g_InstanceWorldAABBBuffer[instanceIndex]))
 		{
 			uint listIndex;
 			InterlockedAdd(g_NumVisibleInstancesPerMesh, 1, listIndex);
@@ -59,7 +53,7 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 		if (g_NumVisibleInstancesPerMesh > 0)
 		{
 			uint instanceOffset;
-			InterlockedAdd(g_DrawVisibleInstanceCommandBuffer[0].instanceCount, g_NumVisibleInstancesPerMesh, instanceOffset);
+			InterlockedAdd(g_NumVisibleInstancesBuffer[0], g_NumVisibleInstancesPerMesh, instanceOffset);
 			g_VisibleInstanceOffsetPerMesh = instanceOffset;
 
 			uint meshOffset;
