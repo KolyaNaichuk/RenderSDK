@@ -2206,7 +2206,7 @@ CommandList* DXApplication::RecordFrustumMeshCullingPass()
 {
 	FrustumMeshCullingPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"'pFrustumMeshCullingCommandList");
+	params.m_pCommandList = m_pCommandListPool->Create(L"pFrustumMeshCullingCommandList");
 	params.m_pCameraDataBuffer = m_pCameraDataBuffer;
 
 	m_pFrustumMeshCullingPass->Record(&params);
