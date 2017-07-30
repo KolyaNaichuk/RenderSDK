@@ -1,39 +1,41 @@
 #include "Reconstruction.hlsl"
 
-Texture2D<float> g_PreviousDepthTexture : register(t0);
-SamplerState g_MaxSampler : register(s0);
-RWTexture2D<uint> g_ReprojectedDepthTexture : register(u0);
-
 struct ReprojectionData
 {
-	float2 previousDepthTextureRcpSize;
+	float2 prevDepthTextureRcpSize;
 	uint2 reprojectedDepthTextureSize;
-	matrix previousViewProjInvMatrix;
-	matrix currentViewProjMatrix;
+	float4 notUsed1[3];
+	matrix prevViewProjInvMatrix;
+	matrix currViewProjMatrix;
+	float4 notUsed2[4];
 };
 
 cbuffer ReprojectionDataBuffer : register(b0)
 {
-	ReprojectionData g_Data;
+	ReprojectionData g_ReprojectionData;
 }
+
+SamplerState g_MaxSampler : register(s0);
+Texture2D<float> g_PrevDepthTexture : register(t0);
+RWTexture2D<uint> g_ReprojectedDepthTexture : register(u0);
 
 [numthreads(NUM_THREADS_X, NUM_THREADS_Y, 1)]
 void Main(uint3 inputPos : SV_DispatchThreadID)
 {
-	if ((inputPos.x < g_Data.reprojectedDepthTextureSize.x) && (inputPos.y < g_Data.reprojectedDepthTextureSize.y))
+	if ((inputPos.x < g_ReprojectionData.reprojectedDepthTextureSize.x) && (inputPos.y < g_ReprojectionData.reprojectedDepthTextureSize.y))
 	{
-		float2 texCoords = (float2(inputPos.xy) + 0.5f) / float2(g_Data.reprojectedDepthTextureSize.xy);
-		float2 texOffset = g_Data.previousDepthTextureRcpSize;
+		float2 texCoords = (float2(inputPos.xy) + 0.5f) / float2(g_ReprojectionData.reprojectedDepthTextureSize.xy);
+		float2 texOffset = g_ReprojectionData.prevDepthTextureRcpSize;
 
-		float prevDepthLT = g_PreviousDepthTexture.Sample(g_MaxSampler, texCoords, float2(-texOffset.x, -texOffset.y));
-		float prevDepthRT = g_PreviousDepthTexture.Sample(g_MaxSampler, texCoords, float2( texOffset.x, -texOffset.y));
-		float prevDepthLB = g_PreviousDepthTexture.Sample(g_MaxSampler, texCoords, float2(-texOffset.x,  texOffset.y));
-		float prevDepthRB = g_PreviousDepthTexture.Sample(g_MaxSampler, texCoords, float2( texOffset.x,  texOffset.y));
+		float prevDepthLT = g_PrevDepthTexture.Sample(g_MaxSampler, texCoords, float2(-texOffset.x, -texOffset.y));
+		float prevDepthRT = g_PrevDepthTexture.Sample(g_MaxSampler, texCoords, float2( texOffset.x, -texOffset.y));
+		float prevDepthLB = g_PrevDepthTexture.Sample(g_MaxSampler, texCoords, float2(-texOffset.x,  texOffset.y));
+		float prevDepthRB = g_PrevDepthTexture.Sample(g_MaxSampler, texCoords, float2( texOffset.x,  texOffset.y));
 
 		float prevDepth = max(max(max(prevDepthLT, prevDepthRT), prevDepthLB), prevDepthRB);
-		float4 worldSpacePos = ComputeWorldSpacePosition(texCoords, prevDepth, g_Data.previousViewProjInvMatrix);
+		float4 worldSpacePos = ComputeWorldSpacePosition(texCoords, prevDepth, g_ReprojectionData.prevViewProjInvMatrix);
 		
-		float4 clipSpacePos = mul(worldSpacePos, g_Data.currentViewProjMatrix);
+		float4 clipSpacePos = mul(worldSpacePos, g_ReprojectionData.currViewProjMatrix);
 		float4 postWDivideProjSpacePos = clipSpacePos / clipSpacePos.w;
 						
 		float viewSpaceDepth = clipSpacePos.w;
@@ -44,7 +46,7 @@ void Main(uint3 inputPos : SV_DispatchThreadID)
 		unitCubeSpacePos.y = 0.5f * (1.0f - postWDivideProjSpacePos.y);
 		unitCubeSpacePos.xy = saturate(unitCubeSpacePos.xy);
 
-		uint2 outputPos = int2(unitCubeSpacePos.xy) * g_Data.reprojectedDepthTextureSize.xy;
+		uint2 outputPos = uint2(unitCubeSpacePos.xy) * g_ReprojectionData.reprojectedDepthTextureSize.xy;
 
 		float invDepth = saturate(1.0f - depth);
 		uint invDepthInt = asuint(invDepth);

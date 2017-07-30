@@ -138,6 +138,8 @@ void FrustumMeshCullingPass::InitResources(InitParams* pParams)
 
 void FrustumMeshCullingPass::InitRootSignature(InitParams* pParams)
 {
+	assert(m_pRootSignature == nullptr);
+
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kRootCBVParam] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
 
@@ -145,12 +147,14 @@ void FrustumMeshCullingPass::InitRootSignature(InitParams* pParams)
 	rootParams[kRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), &descriptorRanges[0], D3D12_SHADER_VISIBILITY_ALL);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"ClearVoxelGridPass::m_pRootSignature");
+	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"FrustumMeshCullingPass::m_pRootSignature");
 }
 
 void FrustumMeshCullingPass::InitPipelineState(InitParams* pParams)
 {
 	assert(m_pRootSignature != nullptr);
+	assert(m_pPipelineState == nullptr);
+
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	const u8 numThreadsPerMesh = 64;
