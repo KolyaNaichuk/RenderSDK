@@ -188,6 +188,9 @@ COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityVS.hlsl" "$(SolutionDir)Samples
 COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeIntensityPS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeIntensityPS.hlsl"
 
+COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
+
 COPY /Y "$(SolutionDir)Shaders\FrustumMeshCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FrustumMeshCullingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\FrustumMeshCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FrustumMeshCullingCS.hlsl"</Command>
     </PostBuildEvent>

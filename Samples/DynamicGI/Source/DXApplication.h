@@ -20,6 +20,7 @@ class Fence;
 class Camera;
 class MeshRenderResources;
 class LightRenderResources;
+class DownscaleAndReprojectDepthPass;
 class FrustumMeshCullingPass;
 
 // Old
@@ -121,9 +122,12 @@ private:
 	void InitVisualizePointLightTiledShadowMapPass();
 	void InitVisualizeIntensityPass();
 	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
+	
+	void InitDownscaleAndReprojectDepthPass();
+	CommandList* RecordDownscaleAndReprojectDepthPass();
 
 	CommandList* RecordClearBackBufferPass();
-	
+			
 	void InitFrustumMeshCullingPass();
 	CommandList* RecordFrustumMeshCullingPass();
 	
@@ -280,6 +284,7 @@ private:
 	Camera* m_pCamera;
 
 	// New render passes
+	DownscaleAndReprojectDepthPass* m_pDownscaleAndReprojectDepthPass;
 	FrustumMeshCullingPass* m_pFrustumMeshCullingPass;
 	Buffer* m_pCameraDataBuffer;
 

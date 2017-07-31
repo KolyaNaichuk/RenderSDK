@@ -98,7 +98,7 @@ void DownscaleAndReprojectDepthPass::InitRootSignature(InitParams* pParams)
 	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = { SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0) };
 	rootParams[kRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), descriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
 
-	StaticSamplerDesc samplerDesc(StaticSamplerDesc::Max, 0, D3D12_SHADER_VISIBILITY_ALL);
+	StaticSamplerDesc samplerDesc(StaticSamplerDesc::MaxPoint, 0, D3D12_SHADER_VISIBILITY_ALL);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, 1, &samplerDesc);
 	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"DownscaleAndReprojectDepthPass::m_pRootSignature");

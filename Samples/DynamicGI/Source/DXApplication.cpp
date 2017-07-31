@@ -25,6 +25,7 @@
 #include "RenderPasses/VisualizeTexturePass.h"
 #include "RenderPasses/VisualizeVoxelGridPass.h"
 #include "RenderPasses/VisualizeIntensityPass.h"
+#include "RenderPasses/DownscaleAndReprojectDepthPass.h"
 #include "RenderPasses/FrustumMeshCullingPass.h"
 #include "Common/Mesh.h"
 #include "Common/MeshBatch.h"
@@ -386,6 +387,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pNumVisibleSpotLightsBuffer(nullptr)
 	, m_pVisibleSpotLightIndexBuffer(nullptr)
 	, m_pCamera(nullptr)
+	, m_pDownscaleAndReprojectDepthPass(nullptr)
 	, m_pFrustumMeshCullingPass(nullptr)
 	, m_pCameraDataBuffer(nullptr)
 #ifdef DEBUG_RENDER_PASS
@@ -417,6 +419,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 
 DXApplication::~DXApplication()
 {
+	SafeDelete(m_pDownscaleAndReprojectDepthPass);
 	SafeDelete(m_pFrustumMeshCullingPass);
 	SafeDelete(m_pCameraDataBuffer);
 
@@ -552,6 +555,7 @@ void DXApplication::OnInit()
 	Scene* pScene = SceneLoader::LoadCornellBox();
 	InitScene(pScene, backBufferWidth, backBufferHeight);
 	
+	InitDownscaleAndReprojectDepthPass();
 	InitFrustumMeshCullingPass();	
 	InitConstantBuffers(pScene, backBufferWidth, backBufferHeight);
 	
@@ -613,6 +617,7 @@ void DXApplication::OnUpdate()
 void DXApplication::OnRender()
 {
 	std::vector<CommandList*> submissionBatch;
+	submissionBatch.emplace_back(RecordDownscaleAndReprojectDepthPass());
 	submissionBatch.emplace_back(RecordClearBackBufferPass());
 	submissionBatch.emplace_back(RecordFrustumMeshCullingPass());
 	submissionBatch.emplace_back(RecordPresentResourceBarrierPass());
@@ -867,6 +872,15 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	DepthStencilValue optimizedClearDepth(1.0f);
 	DepthTexture2DDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, backBufferWidth, backBufferHeight, true, true);
 	m_pDepthTexture = new DepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &depthTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pDepthTexture");
+
+	CommandList* pInitCommandList = m_pCommandListPool->Create(L"pInitCommandList");
+	pInitCommandList->Begin();
+	pInitCommandList->ClearDepthView(m_pDepthTexture->GetDSVHandle(), 1.0f);
+	pInitCommandList->End();
+
+	++m_pRenderEnv->m_LastSubmissionFenceValue;
+	m_pCommandQueue->ExecuteCommandLists(1, &pInitCommandList, m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
+	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
 }
 
 void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
@@ -2165,18 +2179,43 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	*/
 }
 
+void DXApplication::InitDownscaleAndReprojectDepthPass()
+{
+	DownscaleAndReprojectDepthPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_InputResourceStates.m_PrevDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	params.m_InputResourceStates.m_ReprojectedDepthTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_pPrevDepthTexture = m_pDepthTexture;
+
+	m_pDownscaleAndReprojectDepthPass = new DownscaleAndReprojectDepthPass(&params);
+}
+
+CommandList* DXApplication::RecordDownscaleAndReprojectDepthPass()
+{
+	DownscaleAndReprojectDepthPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pDownscaleAndReprojectDepthCommandList");
+	params.m_pReprojectionDataBuffer = nullptr;
+
+	return params.m_pCommandList;
+}
+
 CommandList* DXApplication::RecordClearBackBufferPass()
 {
 	const Vector4f& backgroundColor = m_pCamera->GetBackgroundColor();
-
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-	ResourceBarrier resourceBarrier(pRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	
+	ResourceBarrier resourceBarriers[] =
+	{
+		ResourceBarrier(pRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET),
+		ResourceBarrier(m_pDepthTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE)
+	};
+		
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pClearBackBufferCommandList");
 	pCommandList->Begin();
-	pCommandList->ResourceBarrier(1, &resourceBarrier);
+	pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
 	pCommandList->ClearRenderTargetView(pRenderTarget->GetRTVHandle(), &backgroundColor.m_X);
-	pCommandList->ClearDepthView(m_pDepthTexture->GetDSVHandle());
+	pCommandList->ClearDepthView(m_pDepthTexture->GetDSVHandle(), 1.0f);
 	pCommandList->End();
 
 	return pCommandList;
