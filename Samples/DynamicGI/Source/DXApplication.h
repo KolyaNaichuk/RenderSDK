@@ -286,7 +286,7 @@ private:
 	// New render passes
 	DownscaleAndReprojectDepthPass* m_pDownscaleAndReprojectDepthPass;
 	FrustumMeshCullingPass* m_pFrustumMeshCullingPass;
-	Buffer* m_pCameraDataBuffer;
+	Buffer* m_pAppDataBuffer;
 
 #ifdef DEBUG_RENDER_PASS
 	ResourceList* m_pDebugResources;

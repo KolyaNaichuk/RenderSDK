@@ -20,10 +20,20 @@ struct DrawIndexedArgs
 	uint startInstanceLocation;
 };
 
-struct CameraData
+struct AppData
 {
-	float4 worldFrustumPlanes[6];
-	float4 notUsed[10];
+	float4 cameraWorldFrustumPlanes[6];
+	uint2 screenSize;
+	float2 rcpScreenSize;
+	uint2 screenHalfSize;
+	float2 rcpScreenHalfSize;
+	uint2 screenQuarterSize;
+	float2 rcpScreenQuarterSize;
+	float2 notUsed1[7];
+	matrix viewProjMatrix;
+	matrix prevViewProjInvMatrix;
+	float2 notUsed2[8];
+	float2 notUsed3;
 };
 
 #endif // __FOUNDATION__

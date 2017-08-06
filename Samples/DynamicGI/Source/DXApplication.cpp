@@ -160,10 +160,20 @@ while writing data to the local storage
 
 namespace
 {
-	struct CameraData
+	struct AppData
 	{
-		Vector4f m_WorldFrustumPlanes[6];
-		Vector4f m_NotUsed[10];
+		Matrix4f m_ViewProjMatrix;
+		Matrix4f m_ViewProjInvMatrix;
+		Matrix4f m_PrevViewProjMatrix;
+		Matrix4f m_PrevViewProjInvMatrix;
+		Vector4f m_CameraWorldFrustumPlanes[Frustum::NumPlanes];
+		Vector2u m_ScreenSize;
+		Vector2f m_RcpScreenSize;
+		Vector2u m_ScreenHalfSize;
+		Vector2f m_RcpScreenHalfSize;
+		Vector2u m_ScreenQuarterSize;
+		Vector2f m_RcpScreenQuarterSize;
+		Vector4f m_NotUsed[7];
 	};
 }
 
@@ -389,7 +399,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCamera(nullptr)
 	, m_pDownscaleAndReprojectDepthPass(nullptr)
 	, m_pFrustumMeshCullingPass(nullptr)
-	, m_pCameraDataBuffer(nullptr)
+	, m_pAppDataBuffer(nullptr)
 #ifdef DEBUG_RENDER_PASS
 	, m_pDebugResources(new ResourceList())
 	, m_pDebugPointLightRangePerTileBuffer(nullptr)
@@ -421,7 +431,7 @@ DXApplication::~DXApplication()
 {
 	SafeDelete(m_pDownscaleAndReprojectDepthPass);
 	SafeDelete(m_pFrustumMeshCullingPass);
-	SafeDelete(m_pCameraDataBuffer);
+	SafeDelete(m_pAppDataBuffer);
 
 	// Old
 	for (u8 index = 0; index < 2; ++index)
@@ -556,9 +566,9 @@ void DXApplication::OnInit()
 	InitScene(pScene, backBufferWidth, backBufferHeight);
 	
 	InitDownscaleAndReprojectDepthPass();
-	InitFrustumMeshCullingPass();	
+	InitFrustumMeshCullingPass();
 	InitConstantBuffers(pScene, backBufferWidth, backBufferHeight);
-	
+		
 	SafeDelete(pScene);
 
 	/*
@@ -2036,22 +2046,27 @@ void DXApplication::InitVisualizeIntensityPass()
 
 void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
 {
-	{
-		const Vector3f& mainCameraWorldPosition = m_pCamera->GetTransform().GetPosition();
-		const Quaternion& mainCameraRotation = m_pCamera->GetTransform().GetRotation();
-		const Matrix4f mainViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
-		const Frustum mainCameraWorldFrustum = ExtractWorldFrustum(*m_pCamera);
+	AppData appData;
+	appData.m_ViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
+	appData.m_ViewProjInvMatrix = Inverse(appData.m_ViewProjMatrix);
+	appData.m_PrevViewProjMatrix = appData.m_ViewProjMatrix;
+	appData.m_PrevViewProjInvMatrix = appData.m_ViewProjInvMatrix;
 
-		ConstantBufferDesc cameraDataBufferDesc(sizeof(CameraData));
-		m_pCameraDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &cameraDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pCameraDataBuffer");
+	const Frustum cameraWorldFrustum = ExtractWorldFrustum(*m_pCamera);
+	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
+		appData.m_CameraWorldFrustumPlanes[planeIndex] = ToVector4f(cameraWorldFrustum.m_Planes[planeIndex]);
 
-		CameraData cameraData;
-		for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
-			cameraData.m_WorldFrustumPlanes[planeIndex] = ToVector4f(mainCameraWorldFrustum.m_Planes[planeIndex]);
+	appData.m_ScreenSize = Vector2u(backBufferWidth, backBufferHeight);
+	appData.m_RcpScreenSize = Vector2f(1.0f / f32(appData.m_ScreenSize.m_X), 1.0f / f32(appData.m_ScreenSize.m_Y));
+	appData.m_ScreenHalfSize = Vector2u(appData.m_ScreenSize.m_X >> 1, appData.m_ScreenSize.m_Y >> 1);
+	appData.m_RcpScreenHalfSize = Vector2f(1.0f / f32(appData.m_ScreenHalfSize.m_X), 1.0f / f32(appData.m_ScreenHalfSize.m_Y));
+	appData.m_ScreenQuarterSize = Vector2u(appData.m_ScreenHalfSize.m_X >> 1, appData.m_ScreenHalfSize.m_Y >> 1);
+	appData.m_RcpScreenQuarterSize = Vector2f(1.0f / f32(appData.m_RcpScreenQuarterSize.m_X), 1.0f / f32(appData.m_RcpScreenQuarterSize.m_Y));	
 
-		m_pCameraDataBuffer->Write(&cameraData, sizeof(cameraData));
-	}
-
+	ConstantBufferDesc appDataBufferDesc(sizeof(appData));
+	m_pAppDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &appDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pAppDataBuffer");
+	m_pAppDataBuffer->Write(&appData, sizeof(appData));
+		
 	// Kolya. Fix me
 	/*
 	ObjectTransform objectTransform;
@@ -2195,8 +2210,9 @@ CommandList* DXApplication::RecordDownscaleAndReprojectDepthPass()
 	DownscaleAndReprojectDepthPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pDownscaleAndReprojectDepthCommandList");
-	params.m_pReprojectionDataBuffer = nullptr;
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
 
+	m_pDownscaleAndReprojectDepthPass->Record(&params);
 	return params.m_pCommandList;
 }
 
@@ -2246,7 +2262,7 @@ CommandList* DXApplication::RecordFrustumMeshCullingPass()
 	FrustumMeshCullingPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pFrustumMeshCullingCommandList");
-	params.m_pCameraDataBuffer = m_pCameraDataBuffer;
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
 
 	m_pFrustumMeshCullingPass->Record(&params);
 	return params.m_pCommandList;

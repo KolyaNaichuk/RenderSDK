@@ -82,7 +82,7 @@ void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 	pCommandList->ClearUnorderedAccessView(reprojectedDepthTextureHandle, m_pReprojectedDepthTexture->GetUAVHandle(), m_pReprojectedDepthTexture, clearValues);
 	
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
-	pCommandList->SetComputeRootConstantBufferView(kRootCBVParam, pParams->m_pReprojectionDataBuffer);
+	pCommandList->SetComputeRootConstantBufferView(kRootCBVParam, pParams->m_pAppDataBuffer);
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
 	pCommandList->End();

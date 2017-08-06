@@ -35,7 +35,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		Buffer* m_pCameraDataBuffer;
+		Buffer* m_pAppDataBuffer;
 	};
 
 	FrustumMeshCullingPass(InitParams* pParams);

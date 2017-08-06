@@ -201,7 +201,7 @@ void FrustumMeshCullingPass::Record(RenderParams* pParams)
 	pCommandList->ClearUnorderedAccessView(numVisibleInstancesBufferHandle, m_pNumVisibleInstancesBuffer->GetUAVHandle(), m_pNumVisibleInstancesBuffer, clearValues);
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
-	pCommandList->SetComputeRootConstantBufferView(kRootCBVParam, pParams->m_pCameraDataBuffer);
+	pCommandList->SetComputeRootConstantBufferView(kRootCBVParam, pParams->m_pAppDataBuffer);
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
 	pCommandList->Dispatch(m_TotalNumMeshes, 1, 1);
 	pCommandList->End();

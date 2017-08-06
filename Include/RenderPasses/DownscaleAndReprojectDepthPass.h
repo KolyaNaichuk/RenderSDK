@@ -28,7 +28,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		Buffer* m_pReprojectionDataBuffer;
+		Buffer* m_pAppDataBuffer;
 	};
 
 	DownscaleAndReprojectDepthPass(InitParams* pParams);

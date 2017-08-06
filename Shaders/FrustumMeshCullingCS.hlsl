@@ -8,9 +8,9 @@ struct MeshInstanceRange
 	uint meshIndex;
 };
 
-cbuffer CameraDataBuffer : register(b0)
+cbuffer AppDataBuffer : register(b0)
 {
-	CameraData g_CameraData;
+	AppData g_AppData;
 }
 
 StructuredBuffer<MeshInstanceRange> g_MeshInstanceRangeBuffer : register(t0);
@@ -39,7 +39,7 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 	for (uint index = localIndex; index < meshInstanceRange.numInstances; index += NUM_THREADS_PER_MESH)
 	{
 		uint instanceIndex = meshInstanceRange.instanceOffset + index;
-		if (TestAABBAgainstFrustum(g_CameraData.worldFrustumPlanes, g_InstanceWorldAABBBuffer[instanceIndex]))
+		if (TestAABBAgainstFrustum(g_AppData.cameraWorldFrustumPlanes, g_InstanceWorldAABBBuffer[instanceIndex]))
 		{
 			uint listIndex;
 			InterlockedAdd(g_NumVisibleInstancesPerMesh, 1, listIndex);
