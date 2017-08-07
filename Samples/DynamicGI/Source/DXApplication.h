@@ -21,6 +21,7 @@ class Camera;
 class MeshRenderResources;
 class LightRenderResources;
 class DownscaleAndReprojectDepthPass;
+class CopyReprojectedDepthPass;
 class FrustumMeshCullingPass;
 
 // Old
@@ -97,6 +98,9 @@ private:
 
 	void InitDownscaleAndReprojectDepthPass();
 	CommandList* RecordDownscaleAndReprojectDepthPass();
+
+	void InitCopyReprojectedDepthPass();
+	CommandList* RecordCopyReprojectedDepthPass();
 
 	CommandList* RecordClearBackBufferPass();
 
@@ -285,6 +289,7 @@ private:
 
 	// New render passes
 	DownscaleAndReprojectDepthPass* m_pDownscaleAndReprojectDepthPass;
+	CopyReprojectedDepthPass* m_pCopyReprojectedDepthPass;
 	FrustumMeshCullingPass* m_pFrustumMeshCullingPass;
 	Buffer* m_pAppDataBuffer;
 

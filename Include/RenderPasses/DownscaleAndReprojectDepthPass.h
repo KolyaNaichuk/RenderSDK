@@ -35,8 +35,10 @@ public:
 	~DownscaleAndReprojectDepthPass();
 
 	void Record(RenderParams* pParams);
-	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
 
+	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
+	ColorTexture* GetReprojectedDepthTexture() { return m_pReprojectedDepthTexture; }
+	
 private:
 	void InitResources(InitParams* pParams, UINT64 reprojectedDepthTextureWidth, UINT reprojectedDepthTextureHeight);
 	void InitRootSignature(InitParams* pParams);
