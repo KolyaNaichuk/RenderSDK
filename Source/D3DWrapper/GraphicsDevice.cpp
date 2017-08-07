@@ -1,6 +1,10 @@
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsFactory.h"
 
+#ifdef _DEBUG
+#define ENABLE_GRAPHICS_DEBUGGING
+#endif
+
 void GetHardwareAdapter(GraphicsFactory* pFactory, D3D_FEATURE_LEVEL minFeatureLevel, IDXGIAdapter1** ppAdapter)
 {
 	ComPtr<IDXGIAdapter1> dxgiAdapter;
@@ -23,7 +27,7 @@ void GetHardwareAdapter(GraphicsFactory* pFactory, D3D_FEATURE_LEVEL minFeatureL
 
 GraphicsDevice::GraphicsDevice(GraphicsFactory* pFactory, D3D_FEATURE_LEVEL minFeatureLevel, bool useWarpAdapter)
 {
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	ComPtr<ID3D12Debug> d3dDebug;
 	VerifyD3DResult(D3D12GetDebugInterface(IID_PPV_ARGS(&d3dDebug)));
 	d3dDebug->EnableDebugLayer();
@@ -31,7 +35,7 @@ GraphicsDevice::GraphicsDevice(GraphicsFactory* pFactory, D3D_FEATURE_LEVEL minF
 	ComPtr<IDXGIDebug1> dxgiDebug;
 	VerifyD3DResult(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug)));
 	VerifyD3DResult(dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 
 	if (useWarpAdapter)
 	{
@@ -46,13 +50,13 @@ GraphicsDevice::GraphicsDevice(GraphicsFactory* pFactory, D3D_FEATURE_LEVEL minF
 		VerifyD3DResult(D3D12CreateDevice(dxgiHardwareAdapter.Get(), minFeatureLevel, IID_PPV_ARGS(&m_D3DDevice)));
 	}
 
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	ComPtr<ID3D12InfoQueue> d3dInfoQueue;
 	VerifyD3DResult(m_D3DDevice.As(&d3dInfoQueue));
 	
 	VerifyD3DResult(d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE));
 	VerifyD3DResult(d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
 void GraphicsDevice::CheckFeatureSupport(D3D12_FEATURE feature, void* pFeatureSupportData, UINT featureSupportDataSize)
