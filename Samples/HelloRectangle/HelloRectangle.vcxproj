@@ -76,6 +76,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)Samples\Bin\$(ProjectName)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -128,11 +129,24 @@ COPY /Y "$(SolutionDir)Shaders\PassThroughPS.hlsl" "$(SolutionDir)Samples\Bin\$(
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
+MKDIR "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders"
+
+COPY /Y "$(SolutionDir)Shaders\PassThroughVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\PassThroughVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\PassThroughVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\PassThroughVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\PassThroughPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\PassThroughPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\PassThroughPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\PassThroughPS.hlsl"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

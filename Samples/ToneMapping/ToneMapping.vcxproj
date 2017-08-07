@@ -41,7 +41,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -71,6 +71,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)Samples\Bin\$(ProjectName)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)Samples\Bin\$(ProjectName)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -103,10 +106,26 @@ COPY /Y "$(SolutionDir)Shaders\CalcTextureLuminancePS.hlsl" "$(SolutionDir)Sampl
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
+MKDIR "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders"
+
+COPY /Y "$(SolutionDir)Shaders\FullScreenTriangleVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FullScreenTriangleVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FullScreenTriangleVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FullScreenTriangleVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CopyTexturePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CopyTexturePS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CopyTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CopyTexturePS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CalcTextureLuminancePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CalcTextureLuminancePS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CalcTextureLuminancePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CalcTextureLuminancePS.hlsl"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
