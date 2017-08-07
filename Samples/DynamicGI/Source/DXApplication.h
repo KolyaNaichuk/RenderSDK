@@ -93,6 +93,17 @@ private:
 
 	void InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight);
 	void InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
+	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
+
+	void InitDownscaleAndReprojectDepthPass();
+	CommandList* RecordDownscaleAndReprojectDepthPass();
+
+	CommandList* RecordClearBackBufferPass();
+
+	void InitFrustumMeshCullingPass();
+	CommandList* RecordFrustumMeshCullingPass();
+
+	CommandList* RecordPresentResourceBarrierPass();
 	
 	// Old
 	void InitDetectVisibleMeshesPass();
@@ -121,18 +132,7 @@ private:
 	void InitVisualizeSpotLightTiledShadowMapPass();
 	void InitVisualizePointLightTiledShadowMapPass();
 	void InitVisualizeIntensityPass();
-	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
-	
-	void InitDownscaleAndReprojectDepthPass();
-	CommandList* RecordDownscaleAndReprojectDepthPass();
-
-	CommandList* RecordClearBackBufferPass();
-			
-	void InitFrustumMeshCullingPass();
-	CommandList* RecordFrustumMeshCullingPass();
-	
-	CommandList* RecordPresentResourceBarrierPass();
-
+		
 	CommandList* RecordDetectVisibleMeshesPass();
 	CommandList* RecordDetectVisiblePointLightsPass();
 	CommandList* RecordDetectVisibleSpotLightsPass();

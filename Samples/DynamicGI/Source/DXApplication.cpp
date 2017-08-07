@@ -919,6 +919,230 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 	//m_pDrawMeshCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawMeshCommandBuffer");
 }
 
+void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
+{
+	AppData appData;
+	appData.m_ViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
+	appData.m_ViewProjInvMatrix = Inverse(appData.m_ViewProjMatrix);
+	appData.m_PrevViewProjMatrix = appData.m_ViewProjMatrix;
+	appData.m_PrevViewProjInvMatrix = appData.m_ViewProjInvMatrix;
+
+	const Frustum cameraWorldFrustum = ExtractWorldFrustum(*m_pCamera);
+	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
+		appData.m_CameraWorldFrustumPlanes[planeIndex] = ToVector4f(cameraWorldFrustum.m_Planes[planeIndex]);
+
+	appData.m_ScreenSize = Vector2u(backBufferWidth, backBufferHeight);
+	appData.m_RcpScreenSize = Vector2f(1.0f / f32(appData.m_ScreenSize.m_X), 1.0f / f32(appData.m_ScreenSize.m_Y));
+	appData.m_ScreenHalfSize = Vector2u(appData.m_ScreenSize.m_X >> 1, appData.m_ScreenSize.m_Y >> 1);
+	appData.m_RcpScreenHalfSize = Vector2f(1.0f / f32(appData.m_ScreenHalfSize.m_X), 1.0f / f32(appData.m_ScreenHalfSize.m_Y));
+	appData.m_ScreenQuarterSize = Vector2u(appData.m_ScreenHalfSize.m_X >> 1, appData.m_ScreenHalfSize.m_Y >> 1);
+	appData.m_RcpScreenQuarterSize = Vector2f(1.0f / f32(appData.m_ScreenQuarterSize.m_X), 1.0f / f32(appData.m_ScreenQuarterSize.m_Y));
+
+	ConstantBufferDesc appDataBufferDesc(sizeof(appData));
+	m_pAppDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &appDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pAppDataBuffer");
+	m_pAppDataBuffer->Write(&appData, sizeof(appData));
+
+	// Kolya. Fix me
+	/*
+	ObjectTransform objectTransform;
+	objectTransform.m_WorldPositionMatrix = Matrix4f::IDENTITY;
+	objectTransform.m_WorldNormalMatrix = Matrix4f::IDENTITY;
+	objectTransform.m_WorldViewProjMatrix = mainViewProjMatrix;
+
+	m_pObjectTransformBuffer->Write(&objectTransform, sizeof(objectTransform));
+
+	const BasisAxes mainCameraBasis = ExtractBasisAxes(mainCameraRotation);
+	assert(IsNormalized(mainCameraBasis.m_XAxis));
+	assert(IsNormalized(mainCameraBasis.m_YAxis));
+	assert(IsNormalized(mainCameraBasis.m_ZAxis));
+
+	const Vector3f gridSize(kGridSizeX, kGridSizeY, kGridSizeZ);
+	const Vector3f gridRcpSize(Rcp(gridSize));
+	const Vector3f gridHalfSize(0.5f * gridSize);
+	const Vector3f gridNumCells(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ);
+	const Vector3f gridCellSize(gridSize / gridNumCells);
+	const Vector3f gridRcpCellSize(Rcp(gridCellSize));
+
+	// Kolya: Hard-coding grid center for now
+	//const Vector3f gridCenter(mainCameraWorldPosition + (0.25f * gridSize.m_Z) * mainCameraBasis.m_ZAxis);
+	const Vector3f gridCenter(0.5f * 549.6f, 0.5f * 548.8f, -0.5f * 562.0f);
+	const Vector3f gridMinPoint = gridCenter - gridHalfSize;
+
+	GridConfig gridConfig;
+	gridConfig.m_WorldSpaceOrigin = Vector4f(gridMinPoint.m_X, gridMinPoint.m_Y, gridMinPoint.m_Z, 0.0f);
+	gridConfig.m_Size = Vector4f(gridSize.m_X, gridSize.m_Y, gridSize.m_Z, 0.0f);
+	gridConfig.m_RcpSize = Vector4f(gridRcpSize.m_X, gridRcpSize.m_Y, gridRcpSize.m_Z, 0.0f);
+	gridConfig.m_CellSize = Vector4f(gridCellSize.m_X, gridCellSize.m_Y, gridCellSize.m_Z, 0.0f);
+	gridConfig.m_RcpCellSize = Vector4f(gridRcpCellSize.m_X, gridRcpCellSize.m_Y, gridRcpCellSize.m_Z, 0.0f);
+	gridConfig.m_NumCells = Vector4i(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, 0);
+	gridConfig.m_RcpNumCells = Rcp(Vector4f(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, 0));
+	gridConfig.m_FluxWeight = 4.0f * PI / 6.0f;//(4.0f * PI / 6.0f) * Rcp(2.0f * gridConfig.m_NumCells.m_X * gridConfig.m_NumCells.m_X);
+	gridConfig.m_BlockerPotentialValue = gridConfig.m_FluxWeight;
+
+	m_pGridConfigDataBuffer->Write(&gridConfig, sizeof(gridConfig));
+
+	Camera xAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_X, gridSize.m_Z / gridSize.m_Y);
+	xAxisCamera.SetSizeY(gridSize.m_Y);
+	xAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_X * mainCameraBasis.m_XAxis);
+	xAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationYQuaternion(PI_DIV_TWO));
+
+	Camera yAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_Y, gridSize.m_X / gridSize.m_Z);
+	yAxisCamera.SetSizeY(gridSize.m_Z);
+	yAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_Y * mainCameraBasis.m_YAxis);
+	yAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationXQuaternion(-PI_DIV_TWO));
+
+	Camera zAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_Z, gridSize.m_X / gridSize.m_Y);
+	zAxisCamera.SetSizeY(gridSize.m_Y);
+	zAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_Z * mainCameraBasis.m_ZAxis);
+	zAxisCamera.GetTransform().SetRotation(mainCameraRotation);
+
+	CameraTransform cameraTransform;
+	cameraTransform.m_ViewProjInvMatrix = Inverse(mainViewProjMatrix);
+	cameraTransform.m_ViewProjMatrices[0] = xAxisCamera.GetViewMatrix() * xAxisCamera.GetProjMatrix();
+	cameraTransform.m_ViewProjMatrices[1] = yAxisCamera.GetViewMatrix() * yAxisCamera.GetProjMatrix();
+	cameraTransform.m_ViewProjMatrices[2] = zAxisCamera.GetViewMatrix() * zAxisCamera.GetProjMatrix();
+
+	m_pCameraTransformBuffer->Write(&cameraTransform, sizeof(cameraTransform));
+
+	ViewFrustumCullingData viewFrustumCullingData;
+	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
+	viewFrustumCullingData.m_ViewFrustumPlanes[planeIndex] = mainCameraWorldFrustum.m_Planes[planeIndex];
+
+	viewFrustumCullingData.m_NumObjects = m_pMeshRenderResources->GetNumMeshes();
+	m_pViewFrustumMeshCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
+
+	if (m_pViewFrustumPointLightCullingDataBuffer != nullptr)
+	{
+	viewFrustumCullingData.m_NumObjects = pScene->GetNumPointLights();
+	m_pViewFrustumPointLightCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
+	}
+	if (m_pViewFrustumSpotLightCullingDataBuffer != nullptr)
+	{
+	viewFrustumCullingData.m_NumObjects = pScene->GetNumSpotLights();
+	m_pViewFrustumSpotLightCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
+	}
+
+	TiledLightCullingData tiledLightCullingData;
+	tiledLightCullingData.m_RcpScreenSize = Rcp(Vector2f((f32)backBufferWidth, (f32)backBufferHeight));
+	tiledLightCullingData.m_ViewMatrix = m_pCamera->GetViewMatrix();
+	tiledLightCullingData.m_ProjMatrix = m_pCamera->GetProjMatrix();
+	tiledLightCullingData.m_ProjInvMatrix = Inverse(m_pCamera->GetProjMatrix());
+
+	m_pTiledLightCullingDataBuffer->Write(&tiledLightCullingData, sizeof(tiledLightCullingData));
+
+	TiledShadingData tiledShadingData;
+	tiledShadingData.m_RcpScreenSize = Rcp(Vector2f((f32)backBufferWidth, (f32)backBufferHeight));
+	tiledShadingData.m_WorldSpaceCameraPos = mainCameraWorldPosition;
+	tiledShadingData.m_ViewProjInvMatrix = Inverse(m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix());
+
+	const DirectionalLight* pDirectionalLight = pScene->GetDirectionalLight();
+	if (pDirectionalLight != nullptr)
+	{
+	const BasisAxes lightBasis = ExtractBasisAxes(pDirectionalLight->GetTransform().GetRotation());
+
+	tiledShadingData.m_WorldSpaceLightDir = Normalize(lightBasis.m_ZAxis);
+	tiledShadingData.m_LightColor = pDirectionalLight->GetColor();
+	}
+	m_pTiledShadingDataBuffer->Write(&tiledShadingData, sizeof(tiledShadingData));
+
+	if (m_pPointLightTiledShadowMap != nullptr)
+	{
+	ShadowMapData shadowMapData;
+	shadowMapData.m_TileTexSpaceSize = Vector2f((f32)kShadowMapTileSize, (f32)kShadowMapTileSize) / Vector2f((f32)m_pPointLightTiledShadowMap->GetWidth(), (f32)m_pPointLightTiledShadowMap->GetHeight());
+
+	m_pPointLightShadowMapDataBuffer->Write(&shadowMapData, sizeof(shadowMapData));
+	}
+	if (m_pSpotLightTiledShadowMap != nullptr)
+	{
+	ShadowMapData shadowMapData;
+	shadowMapData.m_TileTexSpaceSize = Vector2f((f32)kShadowMapTileSize, (f32)kShadowMapTileSize) / Vector2f((f32)m_pSpotLightTiledShadowMap->GetWidth(), (f32)m_pSpotLightTiledShadowMap->GetHeight());
+
+	m_pSpotLightShadowMapDataBuffer->Write(&shadowMapData, sizeof(shadowMapData));
+	}
+
+	VisualizeTextureData visualizeTextureData;
+	visualizeTextureData.m_CameraProjMatrix = m_pCamera->GetProjMatrix();
+	visualizeTextureData.m_CameraNearPlane = m_pCamera->GetNearClipPlane();
+	visualizeTextureData.m_CameraFarPlane = m_pCamera->GetFarClipPlane();
+
+	m_pVisualizeTextureDataBuffer->Write(&visualizeTextureData, sizeof(visualizeTextureData));
+	*/
+}
+
+void DXApplication::InitDownscaleAndReprojectDepthPass()
+{
+	DownscaleAndReprojectDepthPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_InputResourceStates.m_PrevDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	params.m_InputResourceStates.m_ReprojectedDepthTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_pPrevDepthTexture = m_pDepthTexture;
+
+	m_pDownscaleAndReprojectDepthPass = new DownscaleAndReprojectDepthPass(&params);
+}
+
+CommandList* DXApplication::RecordDownscaleAndReprojectDepthPass()
+{
+	DownscaleAndReprojectDepthPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pDownscaleAndReprojectDepthCommandList");
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
+
+	m_pDownscaleAndReprojectDepthPass->Record(&params);
+	return params.m_pCommandList;
+}
+
+CommandList* DXApplication::RecordClearBackBufferPass()
+{
+	const Vector4f& backgroundColor = m_pCamera->GetBackgroundColor();
+	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+
+	ResourceBarrier resourceBarriers[] =
+	{
+		ResourceBarrier(pRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET),
+		ResourceBarrier(m_pDepthTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE)
+	};
+
+	CommandList* pCommandList = m_pCommandListPool->Create(L"pClearBackBufferCommandList");
+	pCommandList->Begin();
+	pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
+	pCommandList->ClearRenderTargetView(pRenderTarget->GetRTVHandle(), &backgroundColor.m_X);
+	pCommandList->ClearDepthView(m_pDepthTexture->GetDSVHandle(), 1.0f);
+	pCommandList->End();
+
+	return pCommandList;
+}
+
+void DXApplication::InitFrustumMeshCullingPass()
+{
+	assert(m_pMeshRenderResources != nullptr);
+
+	FrustumMeshCullingPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pInstanceWorldAABBBuffer = m_pMeshRenderResources->GetInstanceWorldAABBBuffer();
+	params.m_pMeshInstanceRangeBuffer = m_pMeshRenderResources->GetMeshInstanceRangeBuffer();
+	params.m_TotalNumMeshes = m_pMeshRenderResources->GetTotalNumMeshes();
+	params.m_TotalNumInstances = m_pMeshRenderResources->GetTotalNumInstances();
+	params.m_MaxNumInstancesPerMesh = m_pMeshRenderResources->GetMaxNumInstancesPerMesh();
+	params.m_InputResourceStates.m_MeshInstanceRangeBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_InstanceWorldAABBBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_VisibleInstanceRangeBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_NumVisibleInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+	m_pFrustumMeshCullingPass = new FrustumMeshCullingPass(&params);
+}
+
+CommandList* DXApplication::RecordFrustumMeshCullingPass()
+{
+	FrustumMeshCullingPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pFrustumMeshCullingCommandList");
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
+
+	m_pFrustumMeshCullingPass->Record(&params);
+	return params.m_pCommandList;
+}
+
 void DXApplication::InitDetectVisibleMeshesPass()
 {
 	assert(false);
@@ -2042,230 +2266,6 @@ void DXApplication::InitVisualizeIntensityPass()
 		m_VisualizeIntensityResources[index]->m_SRVHeapStart = srvHeapStart;
 	}
 	*/
-}
-
-void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
-{
-	AppData appData;
-	appData.m_ViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
-	appData.m_ViewProjInvMatrix = Inverse(appData.m_ViewProjMatrix);
-	appData.m_PrevViewProjMatrix = appData.m_ViewProjMatrix;
-	appData.m_PrevViewProjInvMatrix = appData.m_ViewProjInvMatrix;
-
-	const Frustum cameraWorldFrustum = ExtractWorldFrustum(*m_pCamera);
-	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
-		appData.m_CameraWorldFrustumPlanes[planeIndex] = ToVector4f(cameraWorldFrustum.m_Planes[planeIndex]);
-
-	appData.m_ScreenSize = Vector2u(backBufferWidth, backBufferHeight);
-	appData.m_RcpScreenSize = Vector2f(1.0f / f32(appData.m_ScreenSize.m_X), 1.0f / f32(appData.m_ScreenSize.m_Y));
-	appData.m_ScreenHalfSize = Vector2u(appData.m_ScreenSize.m_X >> 1, appData.m_ScreenSize.m_Y >> 1);
-	appData.m_RcpScreenHalfSize = Vector2f(1.0f / f32(appData.m_ScreenHalfSize.m_X), 1.0f / f32(appData.m_ScreenHalfSize.m_Y));
-	appData.m_ScreenQuarterSize = Vector2u(appData.m_ScreenHalfSize.m_X >> 1, appData.m_ScreenHalfSize.m_Y >> 1);
-	appData.m_RcpScreenQuarterSize = Vector2f(1.0f / f32(appData.m_RcpScreenQuarterSize.m_X), 1.0f / f32(appData.m_RcpScreenQuarterSize.m_Y));	
-
-	ConstantBufferDesc appDataBufferDesc(sizeof(appData));
-	m_pAppDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &appDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pAppDataBuffer");
-	m_pAppDataBuffer->Write(&appData, sizeof(appData));
-		
-	// Kolya. Fix me
-	/*
-	ObjectTransform objectTransform;
-	objectTransform.m_WorldPositionMatrix = Matrix4f::IDENTITY;
-	objectTransform.m_WorldNormalMatrix = Matrix4f::IDENTITY;
-	objectTransform.m_WorldViewProjMatrix = mainViewProjMatrix;
-
-	m_pObjectTransformBuffer->Write(&objectTransform, sizeof(objectTransform));
-
-	const BasisAxes mainCameraBasis = ExtractBasisAxes(mainCameraRotation);
-	assert(IsNormalized(mainCameraBasis.m_XAxis));
-	assert(IsNormalized(mainCameraBasis.m_YAxis));
-	assert(IsNormalized(mainCameraBasis.m_ZAxis));
-
-	const Vector3f gridSize(kGridSizeX, kGridSizeY, kGridSizeZ);
-	const Vector3f gridRcpSize(Rcp(gridSize));
-	const Vector3f gridHalfSize(0.5f * gridSize);
-	const Vector3f gridNumCells(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ);
-	const Vector3f gridCellSize(gridSize / gridNumCells);
-	const Vector3f gridRcpCellSize(Rcp(gridCellSize));
-	
-	// Kolya: Hard-coding grid center for now
-	//const Vector3f gridCenter(mainCameraWorldPosition + (0.25f * gridSize.m_Z) * mainCameraBasis.m_ZAxis);
-	const Vector3f gridCenter(0.5f * 549.6f, 0.5f * 548.8f, -0.5f * 562.0f);
-	const Vector3f gridMinPoint = gridCenter - gridHalfSize;
-	
-	GridConfig gridConfig;
-	gridConfig.m_WorldSpaceOrigin = Vector4f(gridMinPoint.m_X, gridMinPoint.m_Y, gridMinPoint.m_Z, 0.0f);
-	gridConfig.m_Size = Vector4f(gridSize.m_X, gridSize.m_Y, gridSize.m_Z, 0.0f);
-	gridConfig.m_RcpSize = Vector4f(gridRcpSize.m_X, gridRcpSize.m_Y, gridRcpSize.m_Z, 0.0f);
-	gridConfig.m_CellSize = Vector4f(gridCellSize.m_X, gridCellSize.m_Y, gridCellSize.m_Z, 0.0f);
-	gridConfig.m_RcpCellSize = Vector4f(gridRcpCellSize.m_X, gridRcpCellSize.m_Y, gridRcpCellSize.m_Z, 0.0f);
-	gridConfig.m_NumCells = Vector4i(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, 0);
-	gridConfig.m_RcpNumCells = Rcp(Vector4f(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, 0));
-	gridConfig.m_FluxWeight = 4.0f * PI / 6.0f;//(4.0f * PI / 6.0f) * Rcp(2.0f * gridConfig.m_NumCells.m_X * gridConfig.m_NumCells.m_X);
-	gridConfig.m_BlockerPotentialValue = gridConfig.m_FluxWeight;
-		
-	m_pGridConfigDataBuffer->Write(&gridConfig, sizeof(gridConfig));
-
-	Camera xAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_X, gridSize.m_Z / gridSize.m_Y);
-	xAxisCamera.SetSizeY(gridSize.m_Y);
-	xAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_X * mainCameraBasis.m_XAxis);
-	xAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationYQuaternion(PI_DIV_TWO));
-
-	Camera yAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_Y, gridSize.m_X / gridSize.m_Z);
-	yAxisCamera.SetSizeY(gridSize.m_Z);
-	yAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_Y * mainCameraBasis.m_YAxis);
-	yAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationXQuaternion(-PI_DIV_TWO));
-	
-	Camera zAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_Z, gridSize.m_X / gridSize.m_Y);
-	zAxisCamera.SetSizeY(gridSize.m_Y);
-	zAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_Z * mainCameraBasis.m_ZAxis);
-	zAxisCamera.GetTransform().SetRotation(mainCameraRotation);
-
-	CameraTransform cameraTransform;
-	cameraTransform.m_ViewProjInvMatrix = Inverse(mainViewProjMatrix);
-	cameraTransform.m_ViewProjMatrices[0] = xAxisCamera.GetViewMatrix() * xAxisCamera.GetProjMatrix();
-	cameraTransform.m_ViewProjMatrices[1] = yAxisCamera.GetViewMatrix() * yAxisCamera.GetProjMatrix();
-	cameraTransform.m_ViewProjMatrices[2] = zAxisCamera.GetViewMatrix() * zAxisCamera.GetProjMatrix();
-
-	m_pCameraTransformBuffer->Write(&cameraTransform, sizeof(cameraTransform));
-
-	ViewFrustumCullingData viewFrustumCullingData;
-	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
-		viewFrustumCullingData.m_ViewFrustumPlanes[planeIndex] = mainCameraWorldFrustum.m_Planes[planeIndex];
-
-	viewFrustumCullingData.m_NumObjects = m_pMeshRenderResources->GetNumMeshes();
-	m_pViewFrustumMeshCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
-
-	if (m_pViewFrustumPointLightCullingDataBuffer != nullptr)
-	{
-		viewFrustumCullingData.m_NumObjects = pScene->GetNumPointLights();
-		m_pViewFrustumPointLightCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
-	}
-	if (m_pViewFrustumSpotLightCullingDataBuffer != nullptr)
-	{
-		viewFrustumCullingData.m_NumObjects = pScene->GetNumSpotLights();
-		m_pViewFrustumSpotLightCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
-	}
-		
-	TiledLightCullingData tiledLightCullingData;
-	tiledLightCullingData.m_RcpScreenSize = Rcp(Vector2f((f32)backBufferWidth, (f32)backBufferHeight));
-	tiledLightCullingData.m_ViewMatrix = m_pCamera->GetViewMatrix();
-	tiledLightCullingData.m_ProjMatrix = m_pCamera->GetProjMatrix();
-	tiledLightCullingData.m_ProjInvMatrix = Inverse(m_pCamera->GetProjMatrix());
-
-	m_pTiledLightCullingDataBuffer->Write(&tiledLightCullingData, sizeof(tiledLightCullingData));
-
-	TiledShadingData tiledShadingData;
-	tiledShadingData.m_RcpScreenSize = Rcp(Vector2f((f32)backBufferWidth, (f32)backBufferHeight));
-	tiledShadingData.m_WorldSpaceCameraPos = mainCameraWorldPosition;
-	tiledShadingData.m_ViewProjInvMatrix = Inverse(m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix());
-
-	const DirectionalLight* pDirectionalLight = pScene->GetDirectionalLight();
-	if (pDirectionalLight != nullptr)
-	{
-		const BasisAxes lightBasis = ExtractBasisAxes(pDirectionalLight->GetTransform().GetRotation());
-
-		tiledShadingData.m_WorldSpaceLightDir = Normalize(lightBasis.m_ZAxis);
-		tiledShadingData.m_LightColor = pDirectionalLight->GetColor();
-	}
-	m_pTiledShadingDataBuffer->Write(&tiledShadingData, sizeof(tiledShadingData));
-
-	if (m_pPointLightTiledShadowMap != nullptr)
-	{
-		ShadowMapData shadowMapData;
-		shadowMapData.m_TileTexSpaceSize = Vector2f((f32)kShadowMapTileSize, (f32)kShadowMapTileSize) / Vector2f((f32)m_pPointLightTiledShadowMap->GetWidth(), (f32)m_pPointLightTiledShadowMap->GetHeight());
-
-		m_pPointLightShadowMapDataBuffer->Write(&shadowMapData, sizeof(shadowMapData));
-	}
-	if (m_pSpotLightTiledShadowMap != nullptr)
-	{
-		ShadowMapData shadowMapData;
-		shadowMapData.m_TileTexSpaceSize = Vector2f((f32)kShadowMapTileSize, (f32)kShadowMapTileSize) / Vector2f((f32)m_pSpotLightTiledShadowMap->GetWidth(), (f32)m_pSpotLightTiledShadowMap->GetHeight());
-
-		m_pSpotLightShadowMapDataBuffer->Write(&shadowMapData, sizeof(shadowMapData));
-	}
-
-	VisualizeTextureData visualizeTextureData;
-	visualizeTextureData.m_CameraProjMatrix = m_pCamera->GetProjMatrix();
-	visualizeTextureData.m_CameraNearPlane = m_pCamera->GetNearClipPlane();
-	visualizeTextureData.m_CameraFarPlane = m_pCamera->GetFarClipPlane();
-
-	m_pVisualizeTextureDataBuffer->Write(&visualizeTextureData, sizeof(visualizeTextureData));
-	*/
-}
-
-void DXApplication::InitDownscaleAndReprojectDepthPass()
-{
-	DownscaleAndReprojectDepthPass::InitParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_InputResourceStates.m_PrevDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-	params.m_InputResourceStates.m_ReprojectedDepthTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_pPrevDepthTexture = m_pDepthTexture;
-
-	m_pDownscaleAndReprojectDepthPass = new DownscaleAndReprojectDepthPass(&params);
-}
-
-CommandList* DXApplication::RecordDownscaleAndReprojectDepthPass()
-{
-	DownscaleAndReprojectDepthPass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pDownscaleAndReprojectDepthCommandList");
-	params.m_pAppDataBuffer = m_pAppDataBuffer;
-
-	m_pDownscaleAndReprojectDepthPass->Record(&params);
-	return params.m_pCommandList;
-}
-
-CommandList* DXApplication::RecordClearBackBufferPass()
-{
-	const Vector4f& backgroundColor = m_pCamera->GetBackgroundColor();
-	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-	
-	ResourceBarrier resourceBarriers[] =
-	{
-		ResourceBarrier(pRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET),
-		ResourceBarrier(m_pDepthTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE)
-	};
-		
-	CommandList* pCommandList = m_pCommandListPool->Create(L"pClearBackBufferCommandList");
-	pCommandList->Begin();
-	pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
-	pCommandList->ClearRenderTargetView(pRenderTarget->GetRTVHandle(), &backgroundColor.m_X);
-	pCommandList->ClearDepthView(m_pDepthTexture->GetDSVHandle(), 1.0f);
-	pCommandList->End();
-
-	return pCommandList;
-}
-
-void DXApplication::InitFrustumMeshCullingPass()
-{
-	assert(m_pMeshRenderResources != nullptr);
-
-	FrustumMeshCullingPass::InitParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pInstanceWorldAABBBuffer = m_pMeshRenderResources->GetInstanceWorldAABBBuffer();
-	params.m_pMeshInstanceRangeBuffer = m_pMeshRenderResources->GetMeshInstanceRangeBuffer();
-	params.m_TotalNumMeshes = m_pMeshRenderResources->GetTotalNumMeshes();
-	params.m_TotalNumInstances = m_pMeshRenderResources->GetTotalNumInstances();
-	params.m_MaxNumInstancesPerMesh = m_pMeshRenderResources->GetMaxNumInstancesPerMesh();
-	params.m_InputResourceStates.m_MeshInstanceRangeBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_InstanceWorldAABBBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_VisibleInstanceRangeBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_NumVisibleInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-
-	m_pFrustumMeshCullingPass = new FrustumMeshCullingPass(&params);
-}
-
-CommandList* DXApplication::RecordFrustumMeshCullingPass()
-{
-	FrustumMeshCullingPass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pFrustumMeshCullingCommandList");
-	params.m_pAppDataBuffer = m_pAppDataBuffer;
-
-	m_pFrustumMeshCullingPass->Record(&params);
-	return params.m_pCommandList;
 }
 
 CommandList* DXApplication::RecordDetectVisibleMeshesPass()
