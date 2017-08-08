@@ -26,7 +26,6 @@
 #include "RenderPasses/VisualizeVoxelGridPass.h"
 #include "RenderPasses/VisualizeIntensityPass.h"
 #include "RenderPasses/DownscaleAndReprojectDepthPass.h"
-#include "RenderPasses/CopyReprojectedDepthPass.h"
 #include "RenderPasses/FrustumMeshCullingPass.h"
 #include "Common/Mesh.h"
 #include "Common/MeshBatch.h"
@@ -399,7 +398,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pVisibleSpotLightIndexBuffer(nullptr)
 	, m_pCamera(nullptr)
 	, m_pDownscaleAndReprojectDepthPass(nullptr)
-	, m_pCopyReprojectedDepthPass(nullptr)
 	, m_pFrustumMeshCullingPass(nullptr)
 	, m_pAppDataBuffer(nullptr)
 #ifdef DEBUG_RENDER_PASS
@@ -432,7 +430,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 DXApplication::~DXApplication()
 {
 	SafeDelete(m_pDownscaleAndReprojectDepthPass);
-	SafeDelete(m_pCopyReprojectedDepthPass);
 	SafeDelete(m_pFrustumMeshCullingPass);
 	SafeDelete(m_pAppDataBuffer);
 
@@ -569,7 +566,6 @@ void DXApplication::OnInit()
 	InitScene(pScene, backBufferWidth, backBufferHeight);
 	
 	InitDownscaleAndReprojectDepthPass();
-	InitCopyReprojectedDepthPass();
 	InitFrustumMeshCullingPass();
 	InitConstantBuffers(pScene, backBufferWidth, backBufferHeight);
 		
@@ -632,7 +628,6 @@ void DXApplication::OnRender()
 {
 	std::vector<CommandList*> submissionBatch;
 	submissionBatch.emplace_back(RecordDownscaleAndReprojectDepthPass());
-	submissionBatch.emplace_back(RecordCopyReprojectedDepthPass());
 	submissionBatch.emplace_back(RecordClearBackBufferPass());
 	submissionBatch.emplace_back(RecordFrustumMeshCullingPass());
 	submissionBatch.emplace_back(RecordPresentResourceBarrierPass());
@@ -1076,10 +1071,12 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 
 void DXApplication::InitDownscaleAndReprojectDepthPass()
 {
+	assert(m_pDownscaleAndReprojectDepthPass == nullptr);
+
 	DownscaleAndReprojectDepthPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_InputResourceStates.m_PrevDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-	params.m_InputResourceStates.m_ReprojectedDepthTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_ReprojectedDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	params.m_pPrevDepthTexture = m_pDepthTexture;
 
 	m_pDownscaleAndReprojectDepthPass = new DownscaleAndReprojectDepthPass(&params);
@@ -1093,36 +1090,6 @@ CommandList* DXApplication::RecordDownscaleAndReprojectDepthPass()
 	params.m_pAppDataBuffer = m_pAppDataBuffer;
 
 	m_pDownscaleAndReprojectDepthPass->Record(&params);
-	return params.m_pCommandList;
-}
-
-void DXApplication::InitCopyReprojectedDepthPass()
-{
-	assert(false);
-
-	assert(m_pDownscaleAndReprojectDepthPass != nullptr);
-	const DownscaleAndReprojectDepthPass::ResourceStates* pResourceStates = m_pDownscaleAndReprojectDepthPass->GetOutputResourceStates();
-
-	CopyReprojectedDepthPass::InitParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_InputResourceStates.m_ProjectedDepthTextureState = pResourceStates->m_ReprojectedDepthTextureState;
-	params.m_InputResourceStates.m_DepthTextureState = pResourceStates->m_PrevDepthTextureState;
-	params.m_pProjectedDepthTexture = m_pDownscaleAndReprojectDepthPass->GetReprojectedDepthTexture();
-	params.m_pDepthTexture = m_pDepthTexture;
-
-	m_pCopyReprojectedDepthPass = new CopyReprojectedDepthPass(&params);
-}
-
-CommandList* DXApplication::RecordCopyReprojectedDepthPass()
-{
-	assert(false);
-
-	CopyReprojectedDepthPass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList;
-	params.m_pViewport;
-
-	m_pCopyReprojectedDepthPass->Record(&params);
 	return params.m_pCommandList;
 }
 
@@ -1150,6 +1117,7 @@ CommandList* DXApplication::RecordClearBackBufferPass()
 void DXApplication::InitFrustumMeshCullingPass()
 {
 	assert(m_pMeshRenderResources != nullptr);
+	assert(m_pFrustumMeshCullingPass == nullptr);
 
 	FrustumMeshCullingPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
