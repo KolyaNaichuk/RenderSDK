@@ -119,9 +119,9 @@ void DXApplication::OnInit()
 	const FLOAT scale = 0.5f;
 	struct Vertex
 	{
-		Vector4f clipSpacePos;
-		Vector4f color;
-	};	
+		Vector4f m_ClipSpacePos;
+		Vector4f m_Color;
+	};
 	const Vertex vertices[] = 
 	{
 		{Vector4f(-1.0f * scale,  1.0f * scale, 0.0f, 1.0f), Vector4f(0.5f, 0.0f, 0.5f, 1.0f)},
