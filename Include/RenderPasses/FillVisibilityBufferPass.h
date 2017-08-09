@@ -3,47 +3,46 @@
 #include "D3DWrapper/GraphicsResource.h"
 
 struct RenderEnv;
-
 class CommandList;
 class RootSignature;
 class PipelineState;
 
-class FrustumMeshCullingPass
+class FillVisibilityBufferPass
 {
 public:
 	struct ResourceStates
 	{
-		D3D12_RESOURCE_STATES m_MeshInstanceRangeBufferState;
-		D3D12_RESOURCE_STATES m_InstanceWorldAABBBufferState;
-		D3D12_RESOURCE_STATES m_VisibleInstanceRangeBufferState;
-		D3D12_RESOURCE_STATES m_VisibleInstanceIndexBufferState;
-		D3D12_RESOURCE_STATES m_NumVisibleInstancesBufferState;
+		D3D12_RESOURCE_STATES m_InstanceIndexBufferState;
+		D3D12_RESOURCE_STATES m_InstanceWorldViewProjMatrixBufferState;
+		D3D12_RESOURCE_STATES m_NumInstancesBufferState;
+		D3D12_RESOURCE_STATES m_DepthTextureState;
+		D3D12_RESOURCE_STATES m_VisibilityBufferState;
 	};
 
 	struct InitParams
 	{
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
-		Buffer* m_pInstanceWorldAABBBuffer;
-		Buffer* m_pMeshInstanceRangeBuffer;
-		u32 m_MaxNumMeshes;
+		Buffer* m_pInstanceIndexBuffer;
+		Buffer* m_pInstanceWorldViewProjMatrixBuffer;
+		Buffer* m_pNumInstancesBuffer;
+		DepthTexture* m_pDepthTexture;
+		bool m_ClampVerticesBehindCameraNearPlane;
 		u32 m_MaxNumInstances;
-		u32 m_MaxNumInstancesPerMesh;
 	};
 
 	struct RenderParams
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		Buffer* m_pAppDataBuffer;
 	};
 
-	FrustumMeshCullingPass(InitParams* pParams);
-	~FrustumMeshCullingPass();
+	FillVisibilityBufferPass(InitParams* pParams);
+	~FillVisibilityBufferPass();
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
-	Buffer* GetNumVisibleInstancesBuffer() { return m_pNumVisibleInstancesBuffer; }
+	Buffer* GetVisibilityBuffer() { return m_pVisibilityBuffer; }
 
 private:
 	void InitResources(InitParams* pParams);
@@ -54,13 +53,13 @@ private:
 private:
 	RootSignature* m_pRootSignature;
 	PipelineState* m_pPipelineState;
-	DescriptorHandle m_SRVHeapStart;
+	DescriptorHandle m_SRVHeapStartVS;
+	DescriptorHandle m_SRVHeapStartPS;
+	DescriptorHandle m_DSVHeapStart;
 	std::vector<ResourceBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
 
-	Buffer* m_pNumVisibleMeshesBuffer;
-	Buffer* m_pNumVisibleInstancesBuffer;
-	Buffer* m_pVisibleInstanceRangeBuffer;
-	Buffer* m_pVisibleInstanceIndexBuffer;
-	u32 m_MaxNumMeshes;
+	Buffer* m_pUnitAABBIndexBuffer;
+	Buffer* m_pVisibilityBuffer;
+	Buffer* m_pArgumentBuffer;
 };

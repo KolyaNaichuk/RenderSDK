@@ -211,6 +211,7 @@
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateRenderGBufferCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\DownscaleAndReprojectDepthPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\FillVisibilityBufferPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FrustumMeshCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\InjectVirtualPointLightsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\PropagateLightPass.h" />
@@ -283,6 +284,7 @@
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateRenderGBufferCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\DownscaleAndReprojectDepthPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\FillVisibilityBufferPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FrustumMeshCullingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\InjectVirtualPointLightsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\PropagateLightPass.cpp" />

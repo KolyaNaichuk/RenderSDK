@@ -52,7 +52,7 @@ FrustumMeshCullingPass::FrustumMeshCullingPass(InitParams* pParams)
 	, m_pNumVisibleInstancesBuffer(nullptr)
 	, m_pVisibleInstanceRangeBuffer(nullptr)
 	, m_pVisibleInstanceIndexBuffer(nullptr)
-	, m_TotalNumMeshes(pParams->m_TotalNumMeshes)
+	, m_MaxNumMeshes(pParams->m_MaxNumMeshes)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -71,22 +71,25 @@ FrustumMeshCullingPass::~FrustumMeshCullingPass()
 
 void FrustumMeshCullingPass::InitResources(InitParams* pParams)
 {
-	assert(m_ResourceBarriers.empty());
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
+	assert(m_pNumVisibleMeshesBuffer == nullptr);
 	FormattedBufferDesc numVisibleMeshesBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
 	m_pNumVisibleMeshesBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &numVisibleMeshesBufferDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FrustumMeshCullingPass::m_pNumVisibleMeshesBuffer");
 	
+	assert(m_pNumVisibleInstancesBuffer == nullptr);
 	FormattedBufferDesc numVisibleInstancesBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
 	m_pNumVisibleInstancesBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &numVisibleInstancesBufferDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FrustumMeshCullingPass::m_pNumVisibleInstancesBuffer");
 
-	StructuredBufferDesc visibleInstanceRangeBufferDesc(pParams->m_TotalNumInstances, sizeof(MeshInstanceRange), true, true);
+	assert(m_pVisibleInstanceRangeBuffer == nullptr);
+	StructuredBufferDesc visibleInstanceRangeBufferDesc(pParams->m_MaxNumInstances, sizeof(MeshInstanceRange), true, true);
 	m_pVisibleInstanceRangeBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &visibleInstanceRangeBufferDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FrustumMeshCullingPass::m_pVisibleInstanceRangeBuffer");
 
-	FormattedBufferDesc visibleInstanceIndexBufferDesc(pParams->m_TotalNumInstances, DXGI_FORMAT_R32_UINT, true, true);
+	assert(m_pVisibleInstanceIndexBuffer == nullptr);
+	FormattedBufferDesc visibleInstanceIndexBufferDesc(pParams->m_MaxNumInstances, DXGI_FORMAT_R32_UINT, true, true);
 	m_pVisibleInstanceIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &visibleInstanceIndexBufferDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FrustumMeshCullingPass::m_pVisibleInstanceIndexBuffer");
 	
@@ -95,7 +98,8 @@ void FrustumMeshCullingPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_VisibleInstanceRangeBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_NumVisibleInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	
+
+	assert(m_ResourceBarriers.empty());
 	CreateResourceBarrierIfRequired(pParams->m_pMeshInstanceRangeBuffer,
 		pParams->m_InputResourceStates.m_MeshInstanceRangeBufferState,
 		m_OutputResourceStates.m_MeshInstanceRangeBufferState);
@@ -203,6 +207,6 @@ void FrustumMeshCullingPass::Record(RenderParams* pParams)
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootConstantBufferView(kRootCBVParam, pParams->m_pAppDataBuffer);
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
-	pCommandList->Dispatch(m_TotalNumMeshes, 1, 1);
+	pCommandList->Dispatch(m_MaxNumMeshes, 1, 1);
 	pCommandList->End();
 }

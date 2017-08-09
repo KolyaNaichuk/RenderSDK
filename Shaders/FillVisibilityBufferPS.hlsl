@@ -4,7 +4,7 @@ struct PSInput
 	float4 screenSpacePos	: SV_Position;
 };
 
-RWStructuredBuffer<uint> g_VisibilityBuffer : register(u0);
+RWBuffer<uint> g_VisibilityBuffer : register(u0);
 
 [earlydepthstencil]
 void Main(PSInput input)

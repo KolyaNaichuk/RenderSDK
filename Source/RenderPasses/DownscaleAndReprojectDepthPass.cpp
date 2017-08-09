@@ -59,16 +59,17 @@ DownscaleAndReprojectDepthPass::~DownscaleAndReprojectDepthPass()
 
 void DownscaleAndReprojectDepthPass::InitReprojectResources(InitParams* pParams, UINT64 reprojectedDepthTextureWidth, UINT reprojectedDepthTextureHeight)
 {
-	assert(m_ReprojectResourceBarriers.empty());
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-			
+		
+	assert(m_pReprojectionColorTexture == nullptr);
 	ColorTexture2DDesc reprojectionColorTextureDesc(DXGI_FORMAT_R32_UINT, reprojectedDepthTextureWidth, reprojectedDepthTextureHeight, false, true, true);
 	m_pReprojectionColorTexture = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &reprojectionColorTextureDesc,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, nullptr, L"DownscaleAndReprojectDepthPass::m_pReprojectionColorTexture");
 
 	m_OutputResourceStates.m_PrevDepthTextureState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_ReprojectedDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-	
+
+	assert(m_ReprojectResourceBarriers.empty());
 	CreateReprojectResourceBarrierIfRequired(pParams->m_pPrevDepthTexture,
 		pParams->m_InputResourceStates.m_PrevDepthTextureState,
 		m_OutputResourceStates.m_PrevDepthTextureState);
@@ -115,7 +116,6 @@ void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 		if (!m_CopyResourceBarriers.empty())
 			pCommandList->ResourceBarrier(m_CopyResourceBarriers.size(), m_CopyResourceBarriers.data());
 
-		pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 		pCommandList->SetGraphicsRootDescriptorTable(kCopyRootSRVTableParam, m_CopySRVHeapStart);
 
 		D3D12_CPU_DESCRIPTOR_HANDLE copyDSVHeapStart = m_CopyDSVHeapStart;
@@ -189,6 +189,8 @@ void DownscaleAndReprojectDepthPass::InitCopyResources(InitParams* pParams, UINT
 	assert(m_CopyResourceBarriers.empty());
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
+	m_pCopyViewport = new Viewport(0.0f, 0.0f, FLOAT(reprojectedDepthTextureWidth), FLOAT(reprojectedDepthTextureHeight));
+
 	DepthStencilValue optimizedClearDepth(1.0f);
 	DepthTexture2DDesc reprojectionDepthTextureDesc(DXGI_FORMAT_R32_TYPELESS, reprojectedDepthTextureWidth, reprojectedDepthTextureHeight, true, true);
 	m_pReprojectionDepthTexture = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &reprojectionDepthTextureDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"DownscaleAndReprojectDepthPass::m_pReprojectionDepthTexture");
@@ -237,7 +239,7 @@ void DownscaleAndReprojectDepthPass::InitCopyPipelineState(InitParams* pParams)
 	pipelineStateDesc.SetPixelShader(&pixelShader);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.DepthStencilState = DepthStencilDesc(DepthStencilDesc::Always);
-	pipelineStateDesc.SetRenderTargetFormats(0, nullptr, m_pReprojectionDepthTexture->GetFormat());
+	pipelineStateDesc.SetRenderTargetFormats(0, nullptr, GetDepthStencilViewFormat(m_pReprojectionDepthTexture->GetFormat()));
 
 	m_pCopyPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"DownscaleAndReprojectDepthPass::m_pCopyPipelineState");
 }

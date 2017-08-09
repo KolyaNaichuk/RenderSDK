@@ -193,7 +193,16 @@ COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\FrustumMeshCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FrustumMeshCullingCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\FrustumMeshCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FrustumMeshCullingCS.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\FrustumMeshCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FrustumMeshCullingCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CopyReprojectedDepthPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CopyReprojectedDepthPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CopyReprojectedDepthPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CopyReprojectedDepthPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillVisibilityBufferVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillVisibilityBufferVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillVisibilityBufferPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillVisibilityBufferPS.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

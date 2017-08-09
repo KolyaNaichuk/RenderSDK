@@ -626,18 +626,21 @@ void DXApplication::OnUpdate()
 
 void DXApplication::OnRender()
 {
-	std::vector<CommandList*> submissionBatch;
-	submissionBatch.emplace_back(RecordDownscaleAndReprojectDepthPass());
-	submissionBatch.emplace_back(RecordClearBackBufferPass());
-	submissionBatch.emplace_back(RecordFrustumMeshCullingPass());
-	submissionBatch.emplace_back(RecordPresentResourceBarrierPass());
+	static const u8 commandListBatchCapacity = 30;
+	static CommandList* commandListBatch[commandListBatchCapacity];
+	
+	u8 commandListBatchSize = 0;
+	commandListBatch[commandListBatchSize++] = RecordDownscaleAndReprojectDepthPass();
+	commandListBatch[commandListBatchSize++] = RecordClearBackBufferPass();
+	commandListBatch[commandListBatchSize++] = RecordFrustumMeshCullingPass();
+	commandListBatch[commandListBatchSize++] = RecordPresentResourceBarrierPass();
 
 #ifdef DEBUG_RENDER_PASS
 	submissionBatch.emplace_back(RecordDebugRenderPass());
 #endif // DEBUG_RENDER_PASS
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
-	m_pCommandQueue->ExecuteCommandLists(submissionBatch.size(), submissionBatch.data(), m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
+	m_pCommandQueue->ExecuteCommandLists(commandListBatchSize, commandListBatch, m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
@@ -841,7 +844,7 @@ void DXApplication::OnKeyUp(UINT8 key)
 void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 {
 	GraphicsFactory factory;
-	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_12_0);
+	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_12_0, true);
 
 	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
@@ -1123,8 +1126,8 @@ void DXApplication::InitFrustumMeshCullingPass()
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pInstanceWorldAABBBuffer = m_pMeshRenderResources->GetInstanceWorldAABBBuffer();
 	params.m_pMeshInstanceRangeBuffer = m_pMeshRenderResources->GetMeshInstanceRangeBuffer();
-	params.m_TotalNumMeshes = m_pMeshRenderResources->GetTotalNumMeshes();
-	params.m_TotalNumInstances = m_pMeshRenderResources->GetTotalNumInstances();
+	params.m_MaxNumMeshes = m_pMeshRenderResources->GetTotalNumMeshes();
+	params.m_MaxNumInstances = m_pMeshRenderResources->GetTotalNumInstances();
 	params.m_MaxNumInstancesPerMesh = m_pMeshRenderResources->GetMaxNumInstancesPerMesh();
 	params.m_InputResourceStates.m_MeshInstanceRangeBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_InstanceWorldAABBBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
