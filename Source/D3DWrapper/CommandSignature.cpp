@@ -2,6 +2,16 @@
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/RootSignature.h"
 
+DrawIndexedArguments::DrawIndexedArguments(UINT indexCountPerInstance, UINT instanceCount,
+		UINT startIndexLocation, INT baseVertexLocation, UINT startInstanceLocation)
+	: m_IndexCountPerInstance(indexCountPerInstance)
+	, m_InstanceCount(instanceCount)
+	, m_StartIndexLocation(startIndexLocation)
+	, m_BaseVertexLocation(baseVertexLocation)
+	, m_StartInstanceLocation(startInstanceLocation)
+{
+}
+
 DrawArgument::DrawArgument()
 {
 	Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;

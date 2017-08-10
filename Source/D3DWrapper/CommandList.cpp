@@ -65,9 +65,9 @@ void CommandList::CopyResource(GraphicsResource* pDestResource, GraphicsResource
 	m_D3DCommandList->CopyResource(pDestResource->GetD3DObject(), pSourceResource->GetD3DObject());
 }
 
-void CommandList::CopyBufferRegion(Buffer* pDestBuffer, UINT64 destOffset, Buffer* pSourceBuffer, UINT64 sourceOffset, UINT64 numBytes)
+void CommandList::CopyBufferRegion(Buffer* pDestBuffer, UINT64 destOffsetInBytes, Buffer* pSourceBuffer, UINT64 sourceOffsetInBytes, UINT64 numBytesToCopy)
 {
-	m_D3DCommandList->CopyBufferRegion(pDestBuffer->GetD3DObject(), destOffset, pSourceBuffer->GetD3DObject(), sourceOffset, numBytes);
+	m_D3DCommandList->CopyBufferRegion(pDestBuffer->GetD3DObject(), destOffsetInBytes, pSourceBuffer->GetD3DObject(), sourceOffsetInBytes, numBytesToCopy);
 }
 
 void CommandList::ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER* pBarriers)

@@ -43,7 +43,9 @@ public:
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
+
 	Buffer* GetNumVisibleInstancesBuffer() { return m_pNumVisibleInstancesBuffer; }
+	Buffer* GetVisibleInstanceIndexBuffer() { return m_pVisibleInstanceIndexBuffer; }
 
 private:
 	void InitResources(InitParams* pParams);

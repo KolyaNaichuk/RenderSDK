@@ -3,9 +3,11 @@
 #include "D3DWrapper/GraphicsResource.h"
 
 struct RenderEnv;
+struct Viewport;
 class CommandList;
 class RootSignature;
 class PipelineState;
+class CommandSignature;
 
 class FillVisibilityBufferPass
 {
@@ -35,6 +37,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
+		Buffer* m_pNumInstancesBuffer;
 	};
 
 	FillVisibilityBufferPass(InitParams* pParams);
@@ -48,16 +51,20 @@ private:
 	void InitResources(InitParams* pParams);
 	void InitRootSignature(InitParams* pParams);
 	void InitPipelineState(InitParams* pParams);
+	void InitCommandSignature(InitParams* pParams);
 	void CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
 	RootSignature* m_pRootSignature;
 	PipelineState* m_pPipelineState;
+	CommandSignature* m_pCommandSignature;
+
 	DescriptorHandle m_SRVHeapStartVS;
 	DescriptorHandle m_SRVHeapStartPS;
 	DescriptorHandle m_DSVHeapStart;
 	std::vector<ResourceBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
+	Viewport* m_pViewport;
 
 	Buffer* m_pUnitAABBIndexBuffer;
 	Buffer* m_pVisibilityBuffer;

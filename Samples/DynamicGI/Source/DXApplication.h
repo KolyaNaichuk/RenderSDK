@@ -22,6 +22,7 @@ class MeshRenderResources;
 class LightRenderResources;
 class DownscaleAndReprojectDepthPass;
 class FrustumMeshCullingPass;
+class FillVisibilityBufferPass;
 
 // Old
 class CreateRenderGBufferCommandsPass;
@@ -102,6 +103,9 @@ private:
 
 	void InitFrustumMeshCullingPass();
 	CommandList* RecordFrustumMeshCullingPass();
+	
+	void InitFillVisibilityBufferPass();
+	CommandList* RecordFillVisibilityBufferPass();
 
 	CommandList* RecordPresentResourceBarrierPass();
 	
@@ -286,6 +290,7 @@ private:
 	// New render passes
 	DownscaleAndReprojectDepthPass* m_pDownscaleAndReprojectDepthPass;
 	FrustumMeshCullingPass* m_pFrustumMeshCullingPass;
+	FillVisibilityBufferPass* m_pFillVisibilityBufferPass;
 	Buffer* m_pAppDataBuffer;
 
 #ifdef DEBUG_RENDER_PASS

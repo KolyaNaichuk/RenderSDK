@@ -27,6 +27,7 @@
 #include "RenderPasses/VisualizeIntensityPass.h"
 #include "RenderPasses/DownscaleAndReprojectDepthPass.h"
 #include "RenderPasses/FrustumMeshCullingPass.h"
+#include "RenderPasses/FillVisibilityBufferPass.h"
 #include "Common/Mesh.h"
 #include "Common/MeshBatch.h"
 #include "Common/MeshRenderResources.h"
@@ -399,6 +400,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCamera(nullptr)
 	, m_pDownscaleAndReprojectDepthPass(nullptr)
 	, m_pFrustumMeshCullingPass(nullptr)
+	, m_pFillVisibilityBufferPass(nullptr)
 	, m_pAppDataBuffer(nullptr)
 #ifdef DEBUG_RENDER_PASS
 	, m_pDebugResources(new ResourceList())
@@ -431,6 +433,7 @@ DXApplication::~DXApplication()
 {
 	SafeDelete(m_pDownscaleAndReprojectDepthPass);
 	SafeDelete(m_pFrustumMeshCullingPass);
+	SafeDelete(m_pFillVisibilityBufferPass);
 	SafeDelete(m_pAppDataBuffer);
 
 	// Old
@@ -567,6 +570,7 @@ void DXApplication::OnInit()
 	
 	InitDownscaleAndReprojectDepthPass();
 	InitFrustumMeshCullingPass();
+	InitFillVisibilityBufferPass();
 	InitConstantBuffers(pScene, backBufferWidth, backBufferHeight);
 		
 	SafeDelete(pScene);
@@ -633,6 +637,7 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordDownscaleAndReprojectDepthPass();
 	commandListBatch[commandListBatchSize++] = RecordClearBackBufferPass();
 	commandListBatch[commandListBatchSize++] = RecordFrustumMeshCullingPass();
+	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferPass();
 	commandListBatch[commandListBatchSize++] = RecordPresentResourceBarrierPass();
 
 #ifdef DEBUG_RENDER_PASS
@@ -1087,6 +1092,8 @@ void DXApplication::InitDownscaleAndReprojectDepthPass()
 
 CommandList* DXApplication::RecordDownscaleAndReprojectDepthPass()
 {
+	assert(m_pDownscaleAndReprojectDepthPass != nullptr);
+
 	DownscaleAndReprojectDepthPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pDownscaleAndReprojectDepthCommandList");
@@ -1140,12 +1147,55 @@ void DXApplication::InitFrustumMeshCullingPass()
 
 CommandList* DXApplication::RecordFrustumMeshCullingPass()
 {
+	assert(m_pFrustumMeshCullingPass != nullptr);
+
 	FrustumMeshCullingPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pFrustumMeshCullingCommandList");
 	params.m_pAppDataBuffer = m_pAppDataBuffer;
 
 	m_pFrustumMeshCullingPass->Record(&params);
+	return params.m_pCommandList;
+}
+
+void DXApplication::InitFillVisibilityBufferPass()
+{
+	assert(m_pFillVisibilityBufferPass == nullptr);
+	assert(m_pDownscaleAndReprojectDepthPass != nullptr);
+	assert(m_pFrustumMeshCullingPass != nullptr);
+	assert(m_pMeshRenderResources);
+
+	assert(false && "Fix params.m_pInstanceWorldViewProjMatrixBuffer");
+	
+	FillVisibilityBufferPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+
+	params.m_InputResourceStates.m_InstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_InstanceWorldViewProjMatrixBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_NumInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	params.m_InputResourceStates.m_VisibilityBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	
+	params.m_pInstanceIndexBuffer = m_pFrustumMeshCullingPass->GetVisibleInstanceIndexBuffer();
+	params.m_pInstanceWorldViewProjMatrixBuffer = nullptr;
+	params.m_pNumInstancesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleInstancesBuffer();
+	params.m_pDepthTexture = m_pDownscaleAndReprojectDepthPass->GetReprojectedDepthTexture();
+	params.m_ClampVerticesBehindCameraNearPlane = true;
+	params.m_MaxNumInstances = m_pMeshRenderResources->GetTotalNumInstances();
+
+	m_pFillVisibilityBufferPass = new FillVisibilityBufferPass(&params);
+}
+
+CommandList* DXApplication::RecordFillVisibilityBufferPass()
+{
+	assert(m_pFillVisibilityBufferPass != nullptr);
+	assert(m_pFrustumMeshCullingPass != nullptr);
+	
+	FillVisibilityBufferPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pFillVisibilityBufferCommandList");
+	params.m_pNumInstancesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleInstancesBuffer();
+
 	return params.m_pCommandList;
 }
 

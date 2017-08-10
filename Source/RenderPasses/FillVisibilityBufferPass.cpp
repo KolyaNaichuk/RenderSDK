@@ -1,6 +1,8 @@
 #include "RenderPasses/FillVisibilityBufferPass.h"
 #include "D3DWrapper/CommandList.h"
+#include "D3DWrapper/CommandSignature.h"
 #include "D3DWrapper/GraphicsDevice.h"
+#include "D3DWrapper/GraphicsUtils.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
@@ -18,6 +20,8 @@ namespace
 FillVisibilityBufferPass::FillVisibilityBufferPass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
+	, m_pCommandSignature(nullptr)
+	, m_pViewport(nullptr)
 	, m_pUnitAABBIndexBuffer(nullptr)
 	, m_pVisibilityBuffer(nullptr)
 	, m_pArgumentBuffer(nullptr)
@@ -25,6 +29,7 @@ FillVisibilityBufferPass::FillVisibilityBufferPass(InitParams* pParams)
 	InitResources(pParams);
 	InitRootSignature(pParams);
 	InitPipelineState(pParams);
+	InitCommandSignature(pParams);
 }
 
 FillVisibilityBufferPass::~FillVisibilityBufferPass()
@@ -32,14 +37,44 @@ FillVisibilityBufferPass::~FillVisibilityBufferPass()
 	SafeDelete(m_pArgumentBuffer);
 	SafeDelete(m_pVisibilityBuffer);
 	SafeDelete(m_pUnitAABBIndexBuffer);
+	SafeDelete(m_pViewport);
+	SafeDelete(m_pCommandSignature);
 	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pRootSignature);
 }
 
 void FillVisibilityBufferPass::Record(RenderParams* pParams)
 {
-	assert(false);
-	// Clear visibility buffer to 0
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	CommandList* pCommandList = pParams->m_pCommandList;
+
+	pCommandList->Begin(m_pPipelineState);
+	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
+
+	ResourceBarrier copyDestBarrier(m_pArgumentBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, D3D12_RESOURCE_STATE_COPY_DEST);
+	pCommandList->ResourceBarrier(1, &copyDestBarrier);
+	pCommandList->CopyBufferRegion(m_pArgumentBuffer, sizeof(u32), pParams->m_pNumInstancesBuffer, 0, sizeof(u32));
+
+	pCommandList->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamVS, m_SRVHeapStartVS);
+	pCommandList->SetGraphicsRootDescriptorTable(kRootUAVParamPS, m_SRVHeapStartPS);
+
+	const UINT visibilityValue[] = {0, 0, 0, 0};
+	pCommandList->ClearUnorderedAccessView(m_SRVHeapStartPS, m_pVisibilityBuffer->GetUAVHandle(), m_pVisibilityBuffer, visibilityValue);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHeapStart = m_DSVHeapStart;
+	pCommandList->OMSetRenderTargets(0, nullptr, FALSE, &dsvHeapStart);
+	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	pCommandList->IASetVertexBuffers(0, 1, nullptr);
+	pCommandList->IASetIndexBuffer(m_pUnitAABBIndexBuffer->GetIBView());
+
+	Rect scissorRect(ExtractRect(m_pViewport));
+	pCommandList->RSSetViewports(1, m_pViewport);
+	pCommandList->RSSetScissorRects(1, &scissorRect);
+
+	pCommandList->ExecuteIndirect(m_pCommandSignature, 1, m_pArgumentBuffer, 0, nullptr, 0);
+	pCommandList->End();
 }
 
 void FillVisibilityBufferPass::InitResources(InitParams* pParams)
@@ -48,17 +83,23 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 
 	assert(m_pUnitAABBIndexBuffer == nullptr);
 	const u16 unitAABBTriangleStripIndices[] = {1, 0, 3, 2, 6, 0, 4, 1, 5, 3, 7, 6, 5, 4};
-	IndexBufferDesc unitAABBIndexBufferDesc(ARRAYSIZE(unitAABBTriangleStripIndices), sizeof(unitAABBTriangleStripIndices[0]));
+	const u32 unitAABBIndexCount = ARRAYSIZE(unitAABBTriangleStripIndices);
+
+	IndexBufferDesc unitAABBIndexBufferDesc(unitAABBIndexCount, sizeof(unitAABBTriangleStripIndices[0]));
 	m_pUnitAABBIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &unitAABBIndexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pUnitAABBIndexBuffer");
 	UploadData(pRenderEnv, m_pUnitAABBIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, &unitAABBIndexBufferDesc, unitAABBTriangleStripIndices, sizeof(unitAABBTriangleStripIndices));
+
+	assert(m_pArgumentBuffer == nullptr);
+	DrawIndexedArguments argumentBufferData(unitAABBIndexCount, 0, 0, 0, 0);
+	StructuredBufferDesc argumentBufferDesc(1, sizeof(argumentBufferData), false, false);
+	m_pArgumentBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &argumentBufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"FillVisibilityBufferPass::m_pArgumentBuffer");
+	UploadData(pRenderEnv, m_pArgumentBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, &argumentBufferDesc, &argumentBufferData, sizeof(argumentBufferData));
 
 	assert(m_pVisibilityBuffer == nullptr);
 	FormattedBufferDesc visibilityBufferDesc(pParams->m_MaxNumInstances, DXGI_FORMAT_R32_UINT, true, true);
 	m_pVisibilityBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &visibilityBufferDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FillVisibilityBufferPass::m_pVisibilityBuffer");
-
-	assert(m_pArgumentBuffer == nullptr);
-	assert(false && "m_pArgumentBuffer");
 
 	assert(false && "Verify m_OutputResourceStates.m_DepthTextureState");
 	m_OutputResourceStates.m_InstanceIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
@@ -87,6 +128,10 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 	CreateResourceBarrierIfRequired(m_pVisibilityBuffer,
 		pParams->m_InputResourceStates.m_VisibilityBufferState,
 		m_OutputResourceStates.m_VisibilityBufferState);
+
+	CreateResourceBarrierIfRequired(m_pArgumentBuffer,
+		D3D12_RESOURCE_STATE_COPY_DEST,
+		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 
 	m_SRVHeapStartVS = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStartVS,
@@ -121,6 +166,7 @@ void FillVisibilityBufferPass::InitPipelineState(InitParams* pParams)
 	assert(m_pRootSignature != nullptr);
 	assert(m_pPipelineState == nullptr);
 
+	m_pViewport = new Viewport(0.0f, 0.0f, FLOAT(pParams->m_pDepthTexture->GetWidth()), FLOAT(pParams->m_pDepthTexture->GetHeight()));
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	std::string clampVerticesBehindCameraNearPlaneStr = std::to_string(pParams->m_ClampVerticesBehindCameraNearPlane ? 1 : 0);
@@ -131,20 +177,31 @@ void FillVisibilityBufferPass::InitPipelineState(InitParams* pParams)
 	};
 	Shader vertexShader(L"Shaders//FillVisibilityBufferVS.hlsl", "Main", "vs_4_0", shaderDefinesVS);
 	Shader pixelShader(L"Shaders//FillVisibilityBufferPS.hlsl", "Main", "ps_4_0");
-
-	assert(false && "pipelineStateDesc.InputLayout");
-	assert(false && "pipelineStateDesc.PrimitiveTopologyType");
-
+	
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetPixelShader(&pixelShader);
-	//pipelineStateDesc.InputLayout;
-	//pipelineStateDesc.PrimitiveTopologyType;
+	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.DepthStencilState = DepthStencilDesc(DepthStencilDesc::Enabled);
 	pipelineStateDesc.SetRenderTargetFormats(0, nullptr, GetDepthStencilViewFormat(pParams->m_pDepthTexture->GetFormat()));
 
 	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FillVisibilityBufferPass::m_pPipelineState");
+}
+
+void FillVisibilityBufferPass::InitCommandSignature(InitParams* pParams)
+{
+	assert(m_pRootSignature != nullptr);
+	assert(m_pCommandSignature == nullptr);
+
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
+	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] =
+	{
+		DrawIndexedArgument()
+	};
+	CommandSignatureDesc commandSignatureDesc(sizeof(D3D12_DRAW_INDEXED_ARGUMENTS), ARRAYSIZE(argumentDescs), argumentDescs);
+	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"FillVisibilityBufferPass::m_pCommandSignature");
 }
 
 void FillVisibilityBufferPass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)

@@ -5,10 +5,22 @@
 class GraphicsDevice;
 class RootSignature;
 
+struct DrawIndexedArguments
+{
+	DrawIndexedArguments(UINT indexCountPerInstance, UINT instanceCount,
+		UINT startIndexLocation, INT baseVertexLocation, UINT startInstanceLocation);
+
+	UINT m_IndexCountPerInstance;
+	UINT m_InstanceCount;
+	UINT m_StartIndexLocation;
+	INT m_BaseVertexLocation;
+	UINT m_StartInstanceLocation;
+};
+
 struct DrawMeshCommand
 {
 	UINT m_Root32BitConstant;
-	D3D12_DRAW_INDEXED_ARGUMENTS m_DrawArgs;
+	DrawIndexedArguments m_DrawArgs;
 };
 
 struct DrawArgument : public D3D12_INDIRECT_ARGUMENT_DESC
