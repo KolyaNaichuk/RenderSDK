@@ -16,6 +16,7 @@
 #include <cassert>
 #include <memory>
 #include <fstream>
+#include <functional>
 #include <sstream>
 
 #include "Common/BasicTypes.h"

@@ -176,6 +176,94 @@ namespace
 		Vector2f m_RcpScreenQuarterSize;
 		Vector4f m_NotUsed[7];
 	};
+
+	using BufferElementFormatter = std::function<std::string (const void* pElementData)>;
+	void OutputBufferContent(RenderEnv* pRenderEnv, Buffer* pBuffer, D3D12_RESOURCE_STATES bufferState,
+		UINT elementSizeInBytes, BufferElementFormatter elementFormatter)
+	{
+		ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
+		ID3D12CommandQueue* pD3DQueue = pRenderEnv->m_pCommandQueue->GetD3DObject();
+
+		ID3D12Resource* pD3DResource = pBuffer->GetD3DObject();
+		D3D12_RESOURCE_DESC resourceDesc = pD3DResource->GetDesc();
+		assert(resourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER);
+		resourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+		ComPtr<ID3D12Resource> d3dResourceCopy;
+		VerifyD3DResult(pD3DDevice->CreateCommittedResource(pRenderEnv->m_pReadbackHeapProps,
+			D3D12_HEAP_FLAG_NONE,
+			&resourceDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			nullptr, IID_PPV_ARGS(&d3dResourceCopy)));
+		d3dResourceCopy->SetName(L"OutputBufferContent::d3dResourceCopy");
+
+		D3D12_COMMAND_LIST_TYPE commandListType = D3D12_COMMAND_LIST_TYPE_DIRECT;
+
+		ComPtr<ID3D12CommandAllocator> d3dCommandAllocator;
+		VerifyD3DResult(pD3DDevice->CreateCommandAllocator(commandListType,
+			IID_PPV_ARGS(&d3dCommandAllocator)));
+		d3dCommandAllocator->SetName(L"OutputBufferContent::d3dCommandAllocator");
+
+		ComPtr<ID3D12GraphicsCommandList> d3dCommandList;
+		VerifyD3DResult(pD3DDevice->CreateCommandList(0, commandListType,
+			d3dCommandAllocator.Get(), nullptr, IID_PPV_ARGS(&d3dCommandList)));
+		VerifyD3DResult(d3dCommandList->Close());
+		VerifyD3DResult(d3dCommandList->SetName(L"OutputBufferContent::d3dCommandList"));
+
+		UINT64 fenceValue = 0;
+		ComPtr<ID3D12Fence> d3dFence;
+		VerifyD3DResult(pD3DDevice->CreateFence(fenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&d3dFence)));
+		VerifyD3DResult(d3dFence->SetName(L"OutputBufferContent::d3dFence"));
+
+		HANDLE completionEvent = CreateEventEx(nullptr, FALSE, FALSE, EVENT_ALL_ACCESS);
+		assert(completionEvent != INVALID_HANDLE_VALUE);
+
+		d3dCommandAllocator->Reset();
+		d3dCommandList->Reset(d3dCommandAllocator.Get(), nullptr);
+		if (bufferState != D3D12_RESOURCE_STATE_COPY_SOURCE)
+		{
+			D3D12_RESOURCE_BARRIER resourceBarrier;
+			resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+			resourceBarrier.Transition.pResource = pD3DResource;
+			resourceBarrier.Transition.StateBefore = bufferState;
+			resourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
+			resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+			d3dCommandList->ResourceBarrier(1, &resourceBarrier);
+		}
+		d3dCommandList->CopyResource(d3dResourceCopy.Get(), pD3DResource);
+		d3dCommandList->Close();
+
+		++fenceValue;
+		ID3D12CommandList* d3dCommandLists[] = {d3dCommandList.Get()};
+		pD3DQueue->ExecuteCommandLists(ARRAYSIZE(d3dCommandLists), d3dCommandLists);
+		VerifyD3DResult(pD3DQueue->Signal(d3dFence.Get(), fenceValue));
+		VerifyD3DResult(d3dFence->SetEventOnCompletion(fenceValue, completionEvent));
+		WaitForSingleObject(completionEvent, INFINITE);
+		CloseHandle(completionEvent);
+
+		SIZE_T numBytes = (SIZE_T)resourceDesc.Width;
+		SIZE_T numElements = numBytes / elementSizeInBytes;
+		std::vector<u8> byteData(numBytes / sizeof(u8));
+
+		void* pResourceData = nullptr;
+		MemoryRange readRange(0, numBytes);
+		VerifyD3DResult(d3dResourceCopy->Map(0, &readRange, reinterpret_cast<void**>(&pResourceData)));
+		std::memcpy(byteData.data(), pResourceData, numBytes);
+		MemoryRange writtenRange(0, 0);
+		d3dResourceCopy->Unmap(0, &writtenRange);
+
+		std::stringstream outputStream;
+		outputStream << "numElements: " << numElements << "\n";
+		for (SIZE_T i = 0; i < numElements; ++i)
+		{ 
+			const u8* pElementData = byteData.data() + i * elementSizeInBytes;
+			outputStream << "Element " << i << "\n" << elementFormatter(pElementData) << "\n";
+		}
+		std::string outputString = outputStream.str();
+		OutputDebugStringA(outputString.c_str());
+	}
 }
 
 enum
@@ -402,19 +490,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFrustumMeshCullingPass(nullptr)
 	, m_pFillVisibilityBufferPass(nullptr)
 	, m_pAppDataBuffer(nullptr)
-#ifdef DEBUG_RENDER_PASS
-	, m_pDebugResources(new ResourceList())
-	, m_pDebugPointLightRangePerTileBuffer(nullptr)
-	, m_pDebugNumVisibleMeshesBuffer(nullptr)
-	, m_pDebugVisibleMeshIndexBuffer(nullptr)
-	, m_pDebugShadowCastingSpotLightIndexBuffer(nullptr)
-	, m_pDebugNumShadowCastingSpotLightsBuffer(nullptr)
-	, m_pDebugDrawSpotLightShadowCasterCommandBuffer(nullptr)
-	, m_pDebugNumDrawSpotLightShadowCastersBuffer(nullptr)
-	, m_pDebugSpotLightShadowMapTileBuffer(nullptr)
-	, m_pDebugSpotLightViewTileProjMatrixBuffer(nullptr)
-	, m_pDebugPointLightShadowMapTileBuffer(nullptr)
-#endif // DEBUG_RENDER_PASS
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 		m_FrameCompletionFenceValues[index] = m_pRenderEnv->m_LastSubmissionFenceValue;
@@ -541,20 +616,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pSpotLightTiledShadowMapViewport);
 	SafeDelete(m_pPointLightTiledShadowMapViewport);
 	SafeDelete(m_pVisualizeTextureDataBuffer);
-
-#ifdef DEBUG_RENDER_PASS
-	SafeDelete(m_pDebugResources);
-	SafeDelete(m_pDebugPointLightRangePerTileBuffer);
-	SafeDelete(m_pDebugNumVisibleMeshesBuffer);
-	SafeDelete(m_pDebugVisibleMeshIndexBuffer);
-	SafeDelete(m_pDebugShadowCastingSpotLightIndexBuffer);
-	SafeDelete(m_pDebugNumShadowCastingSpotLightsBuffer);
-	SafeDelete(m_pDebugDrawSpotLightShadowCasterCommandBuffer);
-	SafeDelete(m_pDebugNumDrawSpotLightShadowCastersBuffer);
-	SafeDelete(m_pDebugSpotLightShadowMapTileBuffer);
-	SafeDelete(m_pDebugSpotLightViewTileProjMatrixBuffer);
-	SafeDelete(m_pDebugPointLightShadowMapTileBuffer);
-#endif // DEBUG_RENDER_PASS
 }
 
 void DXApplication::OnInit()
@@ -639,10 +700,6 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordFrustumMeshCullingPass();
 	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferPass();
 	commandListBatch[commandListBatchSize++] = RecordPresentResourceBarrierPass();
-
-#ifdef DEBUG_RENDER_PASS
-	submissionBatch.emplace_back(RecordDebugRenderPass());
-#endif // DEBUG_RENDER_PASS
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_pCommandQueue->ExecuteCommandLists(commandListBatchSize, commandListBatch, m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
@@ -1192,8 +1249,10 @@ CommandList* DXApplication::RecordFillVisibilityBufferPass()
 	FillVisibilityBufferPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pFillVisibilityBufferCommandList");
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
 	params.m_pNumInstancesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleInstancesBuffer();
 
+	m_pFillVisibilityBufferPass->Record(&params);
 	return params.m_pCommandList;
 }
 
@@ -2921,180 +2980,23 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 }
 
 #ifdef DEBUG_RENDER_PASS
-void DXApplication::InitDebugRenderPass(const Scene* pScene)
-{
-	FormattedBufferDesc numVisibleMeshesBufferDesc(1, DXGI_FORMAT_R32_UINT, false, false);
-	m_pDebugNumVisibleMeshesBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &numVisibleMeshesBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugNumVisibleMeshesBuffer");
-
-	FormattedBufferDesc visibleMeshIndexBufferDesc(m_pMeshRenderResources->GetNumMeshes(), DXGI_FORMAT_R32_UINT, false, false);
-	m_pDebugVisibleMeshIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &visibleMeshIndexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugVisibleMeshIndexBuffer");
-
-	if (m_pPointLightRenderResources != nullptr)
-	{
-		StructuredBufferDesc lightRangePerTileBufferDesc(kNumTilesX * kNumTilesY, sizeof(Range), false, false);
-		m_pDebugPointLightRangePerTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &lightRangePerTileBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugPointLightRangePerTileBuffer");
-
-		StructuredBufferDesc shadowMapTileBufferDesc(kNumCubeMapFaces * m_pPointLightRenderResources->GetNumLights(), sizeof(ShadowMapTile), false, false);
-		m_pDebugPointLightShadowMapTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &shadowMapTileBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugPointLightShadowMapTileBuffer");
-	}
-
-	if (m_pSpotLightRenderResources != nullptr)
-	{
-		StructuredBufferDesc shadowMapTileBufferDesc(m_pSpotLightRenderResources->GetNumLights(), sizeof(ShadowMapTile), false, false);
-		m_pDebugSpotLightShadowMapTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &shadowMapTileBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugSpotLightShadowMapTileBuffer");
-
-		StructuredBufferDesc lightViewProjTileMatrixBufferDesc(m_pSpotLightRenderResources->GetNumLights(), sizeof(Matrix4f), false, false);
-		m_pDebugSpotLightViewTileProjMatrixBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &lightViewProjTileMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"pDebugSpotLightViewTileProjMatrixBuffer");
-
-		FormattedBufferDesc shadowCastingLightIndexBufferDesc(m_pMeshRenderResources->GetNumMeshes() * pScene->GetNumSpotLights(), DXGI_FORMAT_R32_UINT, false, false);
-		m_pDebugShadowCastingSpotLightIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &shadowCastingLightIndexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugShadowCastingSpotLightIndexBuffer");
-
-		FormattedBufferDesc numShadowCastingLightsBufferDesc(1, DXGI_FORMAT_R32_UINT, false, false);
-		m_pDebugNumShadowCastingSpotLightsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &numShadowCastingLightsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugNumShadowCastingSpotLightsBuffer");
-
-		StructuredBufferDesc drawCommandBufferDesc(m_pMeshRenderResources->GetNumMeshes(), sizeof(DrawMeshCommand), false, false);
-		m_pDebugDrawSpotLightShadowCasterCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugDrawSpotLightShadowCasterCommandBuffer");
-
-		FormattedBufferDesc numShadowCastersBufferDesc(1, DXGI_FORMAT_R32_UINT, false, false);
-		m_pDebugNumDrawSpotLightShadowCastersBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pReadbackHeapProps, &numShadowCastersBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pDebugNumDrawSpotLightShadowCastersBuffer");
-	}
-				
-	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleMeshesBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pVisibleMeshIndexBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	
-	if (m_pPointLightRenderResources != nullptr)
-	{
-		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pPointLightRangePerTileBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pPointLightShadowMapTileBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	}
-
-	if (m_pSpotLightRenderResources != nullptr)
-	{
-		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pShadowCastingSpotLightIndexBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pNumShadowCastingSpotLightsBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pDrawSpotLightShadowCasterCommandBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pNumDrawSpotLightShadowCastersBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pSpotLightShadowMapTileBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pSpotLightViewTileProjMatrixBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-		m_pDebugResources->m_RequiredResourceStates.emplace_back(m_pSpotLightShadowMapTileBuffer, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	}
-}
-
-CommandList* DXApplication::RecordDebugRenderPass()
-{
-	CommandList* pCommandList = m_pCommandListPool->Create(L"pDebugRenderPassCommandList");
-	pCommandList->Begin();
-	
-	pCommandList->SetRequiredResourceStates(&m_pDebugResources->m_RequiredResourceStates);
-	pCommandList->CopyResource(m_pDebugNumVisibleMeshesBuffer, m_pNumVisibleMeshesBuffer);
-	pCommandList->CopyResource(m_pDebugVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer);
-
-	if (m_pPointLightRenderResources != nullptr)
-	{
-		pCommandList->CopyResource(m_pDebugPointLightRangePerTileBuffer, m_pPointLightRangePerTileBuffer);
-		pCommandList->CopyResource(m_pDebugPointLightShadowMapTileBuffer, m_pPointLightShadowMapTileBuffer);
-	}
-
-	if (m_pSpotLightRenderResources != nullptr)
-	{
-		pCommandList->CopyResource(m_pDebugShadowCastingSpotLightIndexBuffer, m_pShadowCastingSpotLightIndexBuffer);
-		pCommandList->CopyResource(m_pDebugNumShadowCastingSpotLightsBuffer, m_pNumShadowCastingSpotLightsBuffer);
-		pCommandList->CopyResource(m_pDebugDrawSpotLightShadowCasterCommandBuffer, m_pDrawSpotLightShadowCasterCommandBuffer);
-		pCommandList->CopyResource(m_pDebugNumDrawSpotLightShadowCastersBuffer, m_pNumDrawSpotLightShadowCastersBuffer);
-		pCommandList->CopyResource(m_pDebugSpotLightShadowMapTileBuffer, m_pSpotLightShadowMapTileBuffer);
-		pCommandList->CopyResource(m_pDebugSpotLightViewTileProjMatrixBuffer, m_pSpotLightViewTileProjMatrixBuffer);
-	}
-
-	pCommandList->End();
-	return pCommandList;
-}
-
 void DXApplication::OuputDebugRenderPassResult()
 {
 	OutputDebugStringA("1.Debug =========================\n");
-
-	u32 numVisibleMeshes = 0;
-	m_pDebugNumVisibleMeshesBuffer->Read(&numVisibleMeshes, sizeof(u32));
-	OutputDebugStringA(("NumVisibleMeshes: " + std::to_string(numVisibleMeshes)).c_str());
-	OutputDebugStringA("\n");
-
-	std::vector<u32> visibleMeshIndices(numVisibleMeshes);
-	m_pDebugVisibleMeshIndexBuffer->Read(visibleMeshIndices.data(), numVisibleMeshes * sizeof(u32));
-	for (u32 i = 0; i < numVisibleMeshes; ++i)
-		OutputDebugStringA(("\t" + std::to_string(i) + ".mesh index: " + std::to_string(visibleMeshIndices[i]) + "\n").c_str());
-	OutputDebugStringA("\n");
-
-	if (m_pPointLightRenderResources != nullptr)
+	
+	auto elementFormatter = [](const void* pElementData)
 	{
-		u16 numTiles = kNumTilesX * kNumTilesY;
-		std::vector<Range> pointLightRangePerTile(numTiles);
-		m_pDebugPointLightRangePerTileBuffer->Read(pointLightRangePerTile.data(), numTiles * sizeof(Range));
+		const u32* pElement = (u32*)pElementData;
 
-		for (u16 i = 0; i < numTiles; ++i)
-		{
-			const Range& range = pointLightRangePerTile[i];
-			OutputDebugStringA("Tile:\n");
-			OutputDebugStringA(("\tstart: " + std::to_string(range.m_Start) + " length: " + std::to_string(range.m_Length)).c_str());
-			OutputDebugStringA("\n");
-		}
-		
-		u16 numPointLightShadowMapTiles = kNumCubeMapFaces * m_pPointLightRenderResources->GetNumLights();
-		std::vector<ShadowMapTile> pointLightShadowMapTiles(numPointLightShadowMapTiles);
-		m_pDebugPointLightShadowMapTileBuffer->Read(pointLightShadowMapTiles.data(), numPointLightShadowMapTiles * sizeof(ShadowMapTile));
-
-		for (u16 i = 0; i < numPointLightShadowMapTiles; ++i)
-		{
-			const ShadowMapTile& tile = pointLightShadowMapTiles[i];
-			OutputDebugStringA((std::to_string(i) + ".Tile:\n").c_str());
-			OutputDebugStringA(("\ttexSpaceTopLeftPos: (" + std::to_string(tile.m_TexSpaceTopLeftPos.m_X) + ", " + std::to_string(tile.m_TexSpaceTopLeftPos.m_Y) + ")\n").c_str());
-			OutputDebugStringA(("\ttexSpaceSize: (" + std::to_string(tile.m_TexSpaceSize.m_X) + ", " + std::to_string(tile.m_TexSpaceSize.m_Y) + ")\n").c_str());
-		}
-	}
-
-	if (m_pSpotLightRenderResources != nullptr)
-	{
-		u32 numShadowCastingSpotLights = 0;
-		m_pDebugNumShadowCastingSpotLightsBuffer->Read(&numShadowCastingSpotLights, sizeof(u32));
-		OutputDebugStringA(("NumShadowCastingSpotLights: " + std::to_string(numShadowCastingSpotLights)).c_str());
-		OutputDebugStringA("\n");
-
-		std::vector<u32> shadowCastingSpotLightIndices(numShadowCastingSpotLights);
-		m_pDebugShadowCastingSpotLightIndexBuffer->Read(shadowCastingSpotLightIndices.data(), numShadowCastingSpotLights * sizeof(u32));
-		for (u32 i = 0; i < numShadowCastingSpotLights; ++i)
-			OutputDebugStringA(("\t" + std::to_string(i) + ".light index: " + std::to_string(shadowCastingSpotLightIndices[i]) + "\n").c_str());
-		OutputDebugStringA("\n");
-
-		u32 numDrawSpotLightShadowCasters = 0;
-		m_pDebugNumDrawSpotLightShadowCastersBuffer->Read(&numDrawSpotLightShadowCasters, sizeof(u32));
-		OutputDebugStringA(("NumDrawSpotLightShadowCasters: " + std::to_string(numDrawSpotLightShadowCasters)).c_str());
-		OutputDebugStringA("\n");
-
-		std::vector<DrawMeshCommand> drawSpotLightShadowCasterCommands(numDrawSpotLightShadowCasters);
-		m_pDebugDrawSpotLightShadowCasterCommandBuffer->Read(drawSpotLightShadowCasterCommands.data(), numDrawSpotLightShadowCasters * sizeof(DrawMeshCommand));
-		for (u32 i = 0; i < numDrawSpotLightShadowCasters; ++i)
-		{
-			const DrawMeshCommand& drawCommand = drawSpotLightShadowCasterCommands[i];
-			OutputDebugStringA((std::to_string(i) + ".Command:\n").c_str());
-			OutputDebugStringA(("\tlightIndexStart: " + std::to_string(drawCommand.m_Root32BitConstant) + "\n").c_str());
-			OutputDebugStringA(("\tIndexCountPerInstance: " + std::to_string(drawCommand.m_DrawArgs.IndexCountPerInstance) + "\n").c_str());
-			OutputDebugStringA(("\tinstanceCount: " + std::to_string(drawCommand.m_DrawArgs.InstanceCount) + "\n").c_str());
-			OutputDebugStringA(("\tstartIndexLocation: " + std::to_string(drawCommand.m_DrawArgs.StartIndexLocation) + "\n").c_str());
-			OutputDebugStringA(("\tbaseVertexLocation: " + std::to_string(drawCommand.m_DrawArgs.BaseVertexLocation) + "\n").c_str());
-			OutputDebugStringA(("\tstartInstanceLocation: " + std::to_string(drawCommand.m_DrawArgs.StartInstanceLocation) + "\n").c_str());
-		}
-
-		u16 numSpotLightShadowMapTiles = m_pSpotLightRenderResources->GetNumLights();
-		std::vector<ShadowMapTile> spotLightShadowMapTiles(numSpotLightShadowMapTiles);
-		m_pDebugSpotLightShadowMapTileBuffer->Read(spotLightShadowMapTiles.data(), numSpotLightShadowMapTiles * sizeof(ShadowMapTile));
-
-		for (u16 i = 0; i < numSpotLightShadowMapTiles; ++i)
-		{
-			const ShadowMapTile& tile = spotLightShadowMapTiles[i];
-			OutputDebugStringA((std::to_string(i) + ".Tile:\n").c_str());
-			OutputDebugStringA(("\ttexSpaceTopLeftPos: (" + std::to_string(tile.m_TexSpaceTopLeftPos.m_X) + ", " + std::to_string(tile.m_TexSpaceTopLeftPos.m_Y) + ")\n").c_str());
-			OutputDebugStringA(("\ttexSpaceSize: (" + std::to_string(tile.m_TexSpaceSize.m_X) + ", " + std::to_string(tile.m_TexSpaceSize.m_Y) + ")\n").c_str());
-		}
-	}
+		std::stringstream stringStream;
+		stringStream << *pElement;
+		return stringStream.str();
+	};
+	OutputBufferContent(m_pRenderEnv,
+		m_pFillVisibilityBufferPass->GetVisibilityBuffer(),
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		sizeof(u32),
+		elementFormatter);
 
 	OutputDebugStringA("2.Debug =========================\n");
 }

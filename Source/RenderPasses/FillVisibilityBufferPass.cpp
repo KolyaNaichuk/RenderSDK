@@ -53,11 +53,12 @@ void FillVisibilityBufferPass::Record(RenderParams* pParams)
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
-	ResourceBarrier copyDestBarrier(m_pArgumentBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, D3D12_RESOURCE_STATE_COPY_DEST);
-	pCommandList->ResourceBarrier(1, &copyDestBarrier);
+	pCommandList->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
 	pCommandList->CopyBufferRegion(m_pArgumentBuffer, sizeof(u32), pParams->m_pNumInstancesBuffer, 0, sizeof(u32));
 
-	pCommandList->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	ResourceBarrier argumentBarrier(m_pArgumentBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	pCommandList->ResourceBarrier(1, &argumentBarrier);
+	
 	pCommandList->SetGraphicsRootConstantBufferView(kRootCBVParamVS, pParams->m_pAppDataBuffer);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamVS, m_SRVHeapStartVS);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamPS, m_SRVHeapStartPS);
@@ -131,17 +132,17 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 		m_OutputResourceStates.m_VisibilityBufferState);
 
 	CreateResourceBarrierIfRequired(m_pArgumentBuffer,
-		D3D12_RESOURCE_STATE_COPY_DEST,
-		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
+		D3D12_RESOURCE_STATE_COPY_DEST);
 
-	m_SRVHeapStartVS = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+	m_SRVHeapStartVS = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStartVS,
 		pParams->m_pInstanceIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate(),
 		pParams->m_pInstanceWorldMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	m_SRVHeapStartPS = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+	m_SRVHeapStartPS = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStartPS,
 		m_pVisibilityBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 

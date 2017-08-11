@@ -43,7 +43,7 @@ class RenderTiledShadowMapPass;
 class SetupTiledShadowMapPass;
 class Scene;
 
-//#define DEBUG_RENDER_PASS
+#define DEBUG_RENDER_PASS
 
 class DXApplication : public Application
 {
@@ -169,8 +169,6 @@ private:
 	void UpdateDisplayResult(DisplayResult displayResult);
 		
 #ifdef DEBUG_RENDER_PASS
-	void InitDebugRenderPass(const Scene* pScene);
-	CommandList* RecordDebugRenderPass();
 	void OuputDebugRenderPassResult();
 #endif // DEBUG_RENDER_PASS
 	
@@ -292,18 +290,4 @@ private:
 	FrustumMeshCullingPass* m_pFrustumMeshCullingPass;
 	FillVisibilityBufferPass* m_pFillVisibilityBufferPass;
 	Buffer* m_pAppDataBuffer;
-
-#ifdef DEBUG_RENDER_PASS
-	ResourceList* m_pDebugResources;
-	Buffer* m_pDebugPointLightRangePerTileBuffer;
-	Buffer* m_pDebugNumVisibleMeshesBuffer;
-	Buffer* m_pDebugVisibleMeshIndexBuffer;
-	Buffer* m_pDebugShadowCastingSpotLightIndexBuffer;
-	Buffer* m_pDebugNumShadowCastingSpotLightsBuffer;
-	Buffer* m_pDebugDrawSpotLightShadowCasterCommandBuffer;
-	Buffer* m_pDebugNumDrawSpotLightShadowCastersBuffer;
-	Buffer* m_pDebugSpotLightShadowMapTileBuffer;
-	Buffer* m_pDebugSpotLightViewTileProjMatrixBuffer;
-	Buffer* m_pDebugPointLightShadowMapTileBuffer;
-#endif // DEBUG_RENDER_PASS
 };
