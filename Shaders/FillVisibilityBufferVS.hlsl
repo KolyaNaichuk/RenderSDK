@@ -1,3 +1,5 @@
+#include "Foundation.hlsl"
+
 struct VSInput
 {
 	uint instanceId		: SV_InstanceID;
@@ -10,23 +12,30 @@ struct VSOutput
 	float4 clipSpacePos : SV_Position;
 };
 
+cbuffer AppDataBuffer : register(b0)
+{
+	AppData g_AppData;
+}
+
 Buffer<uint> g_InstanceIndexBuffer : register(t0);
-StructuredBuffer<matrix> g_InstanceWorldViewProjMatrixBuffer : register(t1);
+StructuredBuffer<matrix> g_InstanceWorldMatrixBuffer : register(t1);
 
 VSOutput Main(VSInput input)
 {
 	uint instanceIndex = g_InstanceIndexBuffer[input.instanceId];
-	matrix worldViewProjMatrix = g_InstanceWorldViewProjMatrixBuffer[instanceIndex];
-		
+	
 	float4 localSpacePos = float4(
 		((input.vertexId & 1) == 0) ? -1.0f : 1.0f,
 		((input.vertexId & 2) == 0) ? -1.0f : 1.0f,
 		((input.vertexId & 4) == 0) ? -1.0f : 1.0f,
 		1.0f);
 
+	matrix worldMatrix = g_InstanceWorldMatrixBuffer[instanceIndex];
+	float4 worldSpacePos = mul(worldMatrix, localSpacePos);
+
 	VSOutput output;
 	output.instanceIndex = instanceIndex;
-	output.clipSpacePos = mul(localSpacePos, worldViewProjMatrix);
+	output.clipSpacePos = mul(g_AppData.viewProjMatrix, worldSpacePos);
 
 #if CLAMP_VERTICES_BEHIND_CAMERA_NEAR_PLANE == 1
 	float viewSpaceDepth = output.clipSpacePos.w;

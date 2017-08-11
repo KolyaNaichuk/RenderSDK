@@ -15,7 +15,7 @@ public:
 	struct ResourceStates
 	{
 		D3D12_RESOURCE_STATES m_InstanceIndexBufferState;
-		D3D12_RESOURCE_STATES m_InstanceWorldViewProjMatrixBufferState;
+		D3D12_RESOURCE_STATES m_InstanceWorldMatrixBufferState;
 		D3D12_RESOURCE_STATES m_NumInstancesBufferState;
 		D3D12_RESOURCE_STATES m_DepthTextureState;
 		D3D12_RESOURCE_STATES m_VisibilityBufferState;
@@ -26,7 +26,7 @@ public:
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		Buffer* m_pInstanceIndexBuffer;
-		Buffer* m_pInstanceWorldViewProjMatrixBuffer;
+		Buffer* m_pInstanceWorldMatrixBuffer;
 		Buffer* m_pNumInstancesBuffer;
 		DepthTexture* m_pDepthTexture;
 		bool m_ClampVerticesBehindCameraNearPlane;
@@ -37,6 +37,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
+		Buffer* m_pAppDataBuffer;
 		Buffer* m_pNumInstancesBuffer;
 	};
 

@@ -33,8 +33,8 @@ VSOutput Main(VSInput input)
 
 	VSOutput output;
 	output.materialIndex = g_MaterialIndex;
-	output.clipSpacePos = mul(float4(input.localSpacePos, 1.0f), worldViewProjMatrix);
-	output.worldSpaceNormal = mul(float4(input.localSpaceNormal, 0.0f), worldMatrix).xyz;
+	output.clipSpacePos = mul(worldViewProjMatrix, float4(input.localSpacePos, 1.0f));
+	output.worldSpaceNormal = mul(worldMatrix, float4(input.localSpaceNormal, 0.0f)).xyz;
 	output.texCoord = input.texCoord;
 
 	return output;

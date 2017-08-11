@@ -26,7 +26,7 @@ void Main(uint3 inputPos : SV_DispatchThreadID)
 		float prevDepth = max(max(max(prevDepthLT, prevDepthRT), prevDepthLB), prevDepthRB);
 		float4 worldSpacePos = ComputeWorldSpacePosition(texCoords, prevDepth, g_AppData.prevViewProjInvMatrix);
 		
-		float4 clipSpacePos = mul(worldSpacePos, g_AppData.viewProjMatrix);
+		float4 clipSpacePos = mul(g_AppData.viewProjMatrix, worldSpacePos);
 		float4 postWDivideProjSpacePos = clipSpacePos / clipSpacePos.w;
 						
 		float viewSpaceDepth = clipSpacePos.w;

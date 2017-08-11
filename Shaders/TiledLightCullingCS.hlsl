@@ -107,7 +107,7 @@ void CullPointLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePl
 		uint lightIndex = g_PointLightIndexBuffer[index];
 
 		Sphere viewSpaceLightBounds = g_PointLightBoundsBuffer[lightIndex];
-		viewSpaceLightBounds.center = mul(float4(viewSpaceLightBounds.center.xyz, 1.0f), g_LightCullingData.viewMatrix).xyz;
+		viewSpaceLightBounds.center = mul(g_LightCullingData.viewMatrix, float4(viewSpaceLightBounds.center.xyz, 1.0f)).xyz;
 
 		if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceLightBounds))
 		{
@@ -127,7 +127,7 @@ void CullSpotLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePla
 		uint lightIndex = g_SpotLightIndexBuffer[index];
 
 		Sphere viewSpaceLightBounds = g_SpotLightBoundsBuffer[lightIndex];
-		viewSpaceLightBounds.center = mul(float4(viewSpaceLightBounds.center.xyz, 1.0f), g_LightCullingData.viewMatrix).xyz;
+		viewSpaceLightBounds.center = mul(g_LightCullingData.viewMatrix, float4(viewSpaceLightBounds.center.xyz, 1.0f)).xyz;
 
 		if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceLightBounds))
 		{

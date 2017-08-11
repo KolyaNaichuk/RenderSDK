@@ -1164,20 +1164,18 @@ void DXApplication::InitFillVisibilityBufferPass()
 	assert(m_pDownscaleAndReprojectDepthPass != nullptr);
 	assert(m_pFrustumMeshCullingPass != nullptr);
 	assert(m_pMeshRenderResources);
-
-	assert(false && "Fix params.m_pInstanceWorldViewProjMatrixBuffer");
-	
+		
 	FillVisibilityBufferPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 
 	params.m_InputResourceStates.m_InstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_InstanceWorldViewProjMatrixBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_NumInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	params.m_InputResourceStates.m_VisibilityBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	
 	params.m_pInstanceIndexBuffer = m_pFrustumMeshCullingPass->GetVisibleInstanceIndexBuffer();
-	params.m_pInstanceWorldViewProjMatrixBuffer = nullptr;
+	params.m_pInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
 	params.m_pNumInstancesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleInstancesBuffer();
 	params.m_pDepthTexture = m_pDownscaleAndReprojectDepthPass->GetReprojectedDepthTexture();
 	params.m_ClampVerticesBehindCameraNearPlane = true;

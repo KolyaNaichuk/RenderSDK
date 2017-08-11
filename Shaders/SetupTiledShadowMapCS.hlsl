@@ -56,7 +56,8 @@ void Main(uint3 tileId : SV_DispatchThreadID)
 			tile.texSpaceSize.x + 2.0f * tile.texSpaceTopLeftPos.x - 1.0f, 1.0f - tile.texSpaceSize.y - 2.0f * tile.texSpaceTopLeftPos.y, 0.0f, 1.0f
 		};
 		
-		matrix lightViewProjTileMatrix = mul(lightViewProjMatrix, shadowMapTileProjMatrix);
+		//Matrix is expected to be stored in column-major order
+		//matrix lightViewProjTileMatrix = mul(shadowMapTileProjMatrix, lightViewProjMatrix);
 		g_LightViewProjTileMatrixBuffer[tileIndex] = transpose(lightViewProjTileMatrix);
 	}
 }

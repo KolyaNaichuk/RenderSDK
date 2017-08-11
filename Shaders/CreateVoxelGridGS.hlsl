@@ -42,7 +42,7 @@ void Main(triangle GSInput input[3], inout TriangleStream<GSOutput> outputStream
 	for (int index = 0; index < 3; ++index)
 	{
 		GSOutput output;
-		output.clipSpacePos = mul(input[index].worldSpacePos, g_Transform.viewProjMatrices[viewIndex]);
+		output.clipSpacePos = mul(g_Transform.viewProjMatrices[viewIndex], input[index].worldSpacePos);
 		output.worldSpacePos = input[index].worldSpacePos;
 		output.worldSpaceNormal = input[index].worldSpaceNormal;
 

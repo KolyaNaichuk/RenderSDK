@@ -11,8 +11,9 @@ namespace
 {
 	enum RootParams
 	{
-		kRootSRVTableParamVS = 0,
-		kRootUAVParamPS,
+		kRootCBVParamVS = 0,
+		kRootSRVTableParamVS,
+		kRootSRVTableParamPS,
 		kNumRootParams
 	};
 }
@@ -57,8 +58,9 @@ void FillVisibilityBufferPass::Record(RenderParams* pParams)
 	pCommandList->CopyBufferRegion(m_pArgumentBuffer, sizeof(u32), pParams->m_pNumInstancesBuffer, 0, sizeof(u32));
 
 	pCommandList->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	pCommandList->SetGraphicsRootConstantBufferView(kRootCBVParamVS, pParams->m_pAppDataBuffer);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamVS, m_SRVHeapStartVS);
-	pCommandList->SetGraphicsRootDescriptorTable(kRootUAVParamPS, m_SRVHeapStartPS);
+	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamPS, m_SRVHeapStartPS);
 
 	const UINT visibilityValue[] = {0, 0, 0, 0};
 	pCommandList->ClearUnorderedAccessView(m_SRVHeapStartPS, m_pVisibilityBuffer->GetUAVHandle(), m_pVisibilityBuffer, visibilityValue);
@@ -101,11 +103,10 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 	m_pVisibilityBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &visibilityBufferDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FillVisibilityBufferPass::m_pVisibilityBuffer");
 
-	assert(false && "Verify m_OutputResourceStates.m_DepthTextureState");
 	m_OutputResourceStates.m_InstanceIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_InstanceWorldViewProjMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_NumInstancesBufferState = D3D12_RESOURCE_STATE_COPY_SOURCE;
-	m_OutputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_DEPTH_READ;
+	m_OutputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	m_OutputResourceStates.m_VisibilityBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
 	assert(m_ResourceBarriers.empty());
@@ -113,9 +114,9 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_InstanceIndexBufferState,
 		m_OutputResourceStates.m_InstanceIndexBufferState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pInstanceWorldViewProjMatrixBuffer,
-		pParams->m_InputResourceStates.m_InstanceWorldViewProjMatrixBufferState,
-		m_OutputResourceStates.m_InstanceWorldViewProjMatrixBufferState);
+	CreateResourceBarrierIfRequired(pParams->m_pInstanceWorldMatrixBuffer,
+		pParams->m_InputResourceStates.m_InstanceWorldMatrixBufferState,
+		m_OutputResourceStates.m_InstanceWorldMatrixBufferState);
 
 	CreateResourceBarrierIfRequired(pParams->m_pNumInstancesBuffer,
 		pParams->m_InputResourceStates.m_NumInstancesBufferState,
@@ -138,7 +139,7 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 		pParams->m_pInstanceIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate(),
-		pParams->m_pInstanceWorldViewProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		pParams->m_pInstanceWorldMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_SRVHeapStartPS = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStartPS,
@@ -151,12 +152,14 @@ void FillVisibilityBufferPass::InitRootSignature(InitParams* pParams)
 {
 	assert(m_pRootSignature == nullptr);
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
+	rootParams[kRootCBVParamVS] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_VERTEX);
 
 	D3D12_DESCRIPTOR_RANGE descriptorRangesVS[] = {SRVDescriptorRange(2, 0)};
 	rootParams[kRootSRVTableParamVS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesVS), descriptorRangesVS, D3D12_SHADER_VISIBILITY_VERTEX);
 	
-	rootParams[kRootUAVParamPS] = RootUAVParameter(0, D3D12_SHADER_VISIBILITY_PIXEL);
-
+	D3D12_DESCRIPTOR_RANGE descriptorRangesPS[] = {UAVDescriptorRange(1, 0)};
+	rootParams[kRootSRVTableParamPS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesPS), descriptorRangesPS, D3D12_SHADER_VISIBILITY_PIXEL);
+	
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
 	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"FillVisibilityBufferPass::m_pRootSignature");
 }
@@ -176,14 +179,14 @@ void FillVisibilityBufferPass::InitPipelineState(InitParams* pParams)
 		ShaderMacro()
 	};
 	Shader vertexShader(L"Shaders//FillVisibilityBufferVS.hlsl", "Main", "vs_4_0", shaderDefinesVS);
-	Shader pixelShader(L"Shaders//FillVisibilityBufferPS.hlsl", "Main", "ps_4_0");
+	Shader pixelShader(L"Shaders//FillVisibilityBufferPS.hlsl", "Main", "ps_5_0");
 	
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetPixelShader(&pixelShader);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipelineStateDesc.DepthStencilState = DepthStencilDesc(DepthStencilDesc::Enabled);
+	pipelineStateDesc.DepthStencilState = DepthStencilDesc(DepthStencilDesc::EnabledNoWrites);
 	pipelineStateDesc.SetRenderTargetFormats(0, nullptr, GetDepthStencilViewFormat(pParams->m_pDepthTexture->GetFormat()));
 
 	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FillVisibilityBufferPass::m_pPipelineState");
@@ -191,9 +194,7 @@ void FillVisibilityBufferPass::InitPipelineState(InitParams* pParams)
 
 void FillVisibilityBufferPass::InitCommandSignature(InitParams* pParams)
 {
-	assert(m_pRootSignature != nullptr);
 	assert(m_pCommandSignature == nullptr);
-
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] =
@@ -201,7 +202,7 @@ void FillVisibilityBufferPass::InitCommandSignature(InitParams* pParams)
 		DrawIndexedArgument()
 	};
 	CommandSignatureDesc commandSignatureDesc(sizeof(D3D12_DRAW_INDEXED_ARGUMENTS), ARRAYSIZE(argumentDescs), argumentDescs);
-	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"FillVisibilityBufferPass::m_pCommandSignature");
+	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, nullptr, &commandSignatureDesc, L"FillVisibilityBufferPass::m_pCommandSignature");
 }
 
 void FillVisibilityBufferPass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)

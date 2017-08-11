@@ -61,6 +61,7 @@ struct DepthStencilDesc : public D3D12_DEPTH_STENCIL_DESC
 	{
 		Disabled,
 		Enabled,
+		EnabledNoWrites,
 		Always
 	};
 	DepthStencilDesc(Id id = Disabled);

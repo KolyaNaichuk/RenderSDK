@@ -73,7 +73,7 @@ void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> o
 		{
 			GSOutput output;
 
-			output.clipSpacePos = mul(input[vertexIndex].worldSpacePos, lightViewTileProjMatrix);
+			output.clipSpacePos = mul(lightViewTileProjMatrix, input[vertexIndex].worldSpacePos);
 			output.tileClipDist = tileClipSignedDist[vertexIndex];
 
 			outputStream.Append(output);
@@ -124,7 +124,7 @@ void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> o
 	{
 		GSOutput output;
 
-		output.clipSpacePos = mul(input[vertexIndex].worldSpacePos, lightViewTileProjMatrix);
+		output.clipSpacePos = mul(lightViewTileProjMatrix, input[vertexIndex].worldSpacePos);
 		output.tileClipDist = tileClipSignedDist[vertexIndex];
 
 		outputStream.Append(output);

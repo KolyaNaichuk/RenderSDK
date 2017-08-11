@@ -33,7 +33,7 @@ VSOutput Main(VSInput input)
 {
 	VSOutput output;
 
-	output.worldSpacePos = mul(float4(input.localSpacePos.xyz, 1.0f), g_Transform.worldPositionMatrix);
+	output.worldSpacePos = mul(g_Transform.worldPositionMatrix, float4(input.localSpacePos.xyz, 1.0f));
 	output.lightIndexOffset = g_LightIndexOffset + input.instanceId;
 
 	return output;
