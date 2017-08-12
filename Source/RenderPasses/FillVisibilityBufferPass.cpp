@@ -63,7 +63,7 @@ void FillVisibilityBufferPass::Record(RenderParams* pParams)
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamVS, m_SRVHeapStartVS);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamPS, m_SRVHeapStartPS);
 
-	const UINT visibilityValue[] = {0, 0, 0, 0};
+	const u32 visibilityValue[] = {0, 0, 0, 0};
 	pCommandList->ClearUnorderedAccessView(m_SRVHeapStartPS, m_pVisibilityBuffer->GetUAVHandle(), m_pVisibilityBuffer, visibilityValue);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHeapStart = m_DSVHeapStart;
@@ -139,7 +139,7 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStartVS,
 		pParams->m_pInstanceIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate(),
+	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		pParams->m_pInstanceWorldMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_SRVHeapStartPS = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();

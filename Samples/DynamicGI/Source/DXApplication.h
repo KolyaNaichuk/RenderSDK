@@ -43,7 +43,7 @@ class RenderTiledShadowMapPass;
 class SetupTiledShadowMapPass;
 class Scene;
 
-#define DEBUG_RENDER_PASS
+//#define DEBUG_RENDER_PASS
 
 class DXApplication : public Application
 {

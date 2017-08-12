@@ -259,7 +259,7 @@ namespace
 		for (SIZE_T i = 0; i < numElements; ++i)
 		{ 
 			const u8* pElementData = byteData.data() + i * elementSizeInBytes;
-			outputStream << "Element " << i << "\n" << elementFormatter(pElementData) << "\n";
+			outputStream << i << ":\n" << elementFormatter(pElementData) << "\n";
 		}
 		std::string outputString = outputStream.str();
 		OutputDebugStringA(outputString.c_str());
@@ -906,7 +906,7 @@ void DXApplication::OnKeyUp(UINT8 key)
 void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 {
 	GraphicsFactory factory;
-	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_12_0, true);
+	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_11_0);
 
 	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
@@ -990,7 +990,7 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	appData.m_ViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
 	appData.m_ViewProjInvMatrix = Inverse(appData.m_ViewProjMatrix);
 	appData.m_PrevViewProjMatrix = appData.m_ViewProjMatrix;
-	appData.m_PrevViewProjInvMatrix = appData.m_ViewProjInvMatrix;
+	appData.m_PrevViewProjInvMatrix = Inverse(appData.m_PrevViewProjMatrix);
 
 	const Frustum cameraWorldFrustum = ExtractWorldFrustum(*m_pCamera);
 	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
@@ -1232,8 +1232,8 @@ void DXApplication::InitFillVisibilityBufferPass()
 	params.m_InputResourceStates.m_VisibilityBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	
 	params.m_pInstanceIndexBuffer = m_pFrustumMeshCullingPass->GetVisibleInstanceIndexBuffer();
-	params.m_pInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
 	params.m_pNumInstancesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleInstancesBuffer();
+	params.m_pInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
 	params.m_pDepthTexture = m_pDownscaleAndReprojectDepthPass->GetReprojectedDepthTexture();
 	params.m_ClampVerticesBehindCameraNearPlane = true;
 	params.m_MaxNumInstances = m_pMeshRenderResources->GetTotalNumInstances();
@@ -2989,7 +2989,7 @@ void DXApplication::OuputDebugRenderPassResult()
 		const u32* pElement = (u32*)pElementData;
 
 		std::stringstream stringStream;
-		stringStream << *pElement;
+		stringStream << "visible: " << *pElement;
 		return stringStream.str();
 	};
 	OutputBufferContent(m_pRenderEnv,
