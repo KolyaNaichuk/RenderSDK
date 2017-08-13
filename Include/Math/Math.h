@@ -54,7 +54,7 @@ T Saturate(T value)
 }
 
 template <typename T>
-bool IsEqual(T left, T right, T epsilon)
+bool AreEqual(T left, T right, T epsilon)
 {
     return (Abs(left - right) < epsilon);
 }

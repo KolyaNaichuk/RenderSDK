@@ -28,4 +28,4 @@ bool IsNormalized(const Plane& plane, f32 epsilon = EPSILON);
 f32 SignedDistanceToPoint(const Plane& plane, const Vector3f& point);
 Plane::HalfSpace ClassifyPoint(const Plane& plane, const Vector3f& point);
 const Plane TransformPlane(const Plane& plane, const Transform& transform);
-const Vector4f ToVector4f(const Plane& plane);
+const Vector4f ToVector(const Plane& plane);

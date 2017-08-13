@@ -10,7 +10,7 @@ float Main(PSInput input) : SV_Depth
 {
 	int2 texturePos = int2(input.screenSpacePos.xy);
 
-	float invDepthInt = g_ReprojectedDepthTexture[texturePos].r;
+	uint invDepthInt = g_ReprojectedDepthTexture[texturePos].r;
 	float invDepth = asfloat(invDepthInt);
 	float depth = 1.0f - invDepth;
 

@@ -23,3 +23,4 @@ enum ConvertionFlags
 };
 
 void ConvertMesh(Mesh* pMesh, u8 convertionFlags);
+void ConvertToUnitCubeAsLocalCoordSystem(Mesh* pMesh);

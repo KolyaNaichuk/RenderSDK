@@ -75,9 +75,14 @@ f32 Dot(const Vector2f& vec1, const Vector2f& vec2)
 	return (vec1.m_X * vec2.m_X + vec1.m_Y * vec2.m_Y);
 }
 
-bool IsEqual(const Vector2f& vec1, const Vector2f& vec2, f32 epsilon)
+bool AreEqual(const Vector2f& vec1, const Vector2f& vec2, f32 epsilon)
 {
-	return (::IsEqual(vec1.m_X, vec2.m_X, epsilon) && ::IsEqual(vec1.m_Y, vec2.m_Y, epsilon));
+	return ::AreEqual(vec1.m_X, vec2.m_X, epsilon) && ::AreEqual(vec1.m_Y, vec2.m_Y, epsilon);
+}
+
+bool AreOrthogonal(const Vector2f& vec1, const Vector2f& vec2, f32 epsilon)
+{
+	return ::AreEqual(Dot(vec1, vec2), 0.0f, epsilon);
 }
 
 const Vector2f Min(const Vector2f& vec1, const Vector2f& vec2)

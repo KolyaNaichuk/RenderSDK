@@ -77,7 +77,7 @@ const Matrix4f& Transform::GetWorldToLocalMatrix() const
 	if (m_DirtyFlags & DirtyFlag_WorldToLocalMatrix)
 	{
 		Matrix4f invScalingMatrix = CreateScalingMatrix(Rcp(m_Scaling));
-		Matrix4f invRotationMatrix = CreateRotationMatrix(Inverse(m_Rotation));
+		Matrix4f invRotationMatrix = Transpose(CreateRotationMatrix(m_Rotation));
 		Matrix4f invTranslationMatrix = CreateTranslationMatrix(-m_Position);
 
 		m_WorldToLocalMatrix = invTranslationMatrix * invRotationMatrix * invScalingMatrix;

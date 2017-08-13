@@ -74,12 +74,12 @@ f32 Dot(const Vector4f& vec1, const Vector4f& vec2)
     return (vec1.m_X * vec2.m_X + vec1.m_Y * vec2.m_Y + vec1.m_Z * vec2.m_Z + vec1.m_W * vec2.m_W);
 }
 
-bool IsEqual(const Vector4f& vec1, const Vector4f& vec2, f32 epsilon)
+bool AreEqual(const Vector4f& vec1, const Vector4f& vec2, f32 epsilon)
 {
-    return (::IsEqual(vec1.m_X, vec2.m_X, epsilon) &&
-        ::IsEqual(vec1.m_Y, vec2.m_Y, epsilon) &&
-        ::IsEqual(vec1.m_Z, vec2.m_Z, epsilon) &&
-        ::IsEqual(vec1.m_W, vec2.m_W, epsilon));
+    return (::AreEqual(vec1.m_X, vec2.m_X, epsilon) &&
+        ::AreEqual(vec1.m_Y, vec2.m_Y, epsilon) &&
+        ::AreEqual(vec1.m_Z, vec2.m_Z, epsilon) &&
+        ::AreEqual(vec1.m_W, vec2.m_W, epsilon));
 }
 
 const Vector4f Min(const Vector4f& vec1, const Vector4f& vec2)

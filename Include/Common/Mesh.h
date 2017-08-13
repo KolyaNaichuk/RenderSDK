@@ -97,8 +97,13 @@ public:
 	const IndexData* GetIndexData() const { return m_pIndexData; };
 
 	u32 GetNumInstances() const { return m_NumInstances; }
+
+	Matrix4f* GetInstanceWorldMatrices() { return m_pInstanceWorldMatrices; }
 	const Matrix4f* GetInstanceWorldMatrices() const { return m_pInstanceWorldMatrices; }
+
+	AxisAlignedBox* GetInstanceWorldAABBs() { return m_pInstanceWorldAABBs; }
 	const AxisAlignedBox* GetInstanceWorldAABBs() const { return m_pInstanceWorldAABBs; }
+	
 	void RecalcInstanceWorldAABBs();
 	
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType() const { return m_PrimitiveTopologyType; }

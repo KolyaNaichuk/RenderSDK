@@ -32,7 +32,7 @@ f32 LengthSquared(const Vector4f& vec);
 const Vector4f Normalize(const Vector4f& vec);
 const Vector4f Rcp(const Vector4f& vec);
 f32 Dot(const Vector4f& vec1, const Vector4f& vec2);
-bool IsEqual(const Vector4f& vec1, const Vector4f& vec2, f32 epsilon = EPSILON);
+bool AreEqual(const Vector4f& vec1, const Vector4f& vec2, f32 epsilon = EPSILON);
 const Vector4f Min(const Vector4f& vec1, const Vector4f& vec2);
 const Vector4f Max(const Vector4f& vec1, const Vector4f& vec2);
 bool IsNormalized(const Vector4f& vec, f32 epsilon = EPSILON);

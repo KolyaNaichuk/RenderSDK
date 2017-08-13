@@ -142,7 +142,7 @@ void DownscaleAndReprojectDepthPass::InitReprojectRootSignature(InitParams* pPar
 	D3D12_ROOT_PARAMETER rootParams[kReprojectNumRootParams];
 	rootParams[kReprojectRootCBVParam] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
 
-	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = { SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0) };
+	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = {SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0)};
 	rootParams[kReprojectRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), descriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
 
 	StaticSamplerDesc samplerDesc(StaticSamplerDesc::MaxPoint, 0, D3D12_SHADER_VISIBILITY_ALL);

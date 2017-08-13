@@ -85,6 +85,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		
 		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
+		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
 		mesh.RecalcInstanceWorldAABBs();
 
 		pMeshBatch->AddMesh(&mesh);
@@ -158,6 +159,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
+		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
 		mesh.RecalcInstanceWorldAABBs();
 
 		pMeshBatch->AddMesh(&mesh);
@@ -231,6 +233,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
+		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
 		mesh.RecalcInstanceWorldAABBs();
 
 		pMeshBatch->AddMesh(&mesh);
@@ -304,6 +307,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
+		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
 		mesh.RecalcInstanceWorldAABBs();
 
 		pMeshBatch->AddMesh(&mesh);
@@ -377,6 +381,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
+		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
 		mesh.RecalcInstanceWorldAABBs();
 
 		pMeshBatch->AddMesh(&mesh);
@@ -477,6 +482,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
+		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
 		mesh.RecalcInstanceWorldAABBs();
 
 		pMeshBatch->AddMesh(&mesh);
@@ -577,6 +583,7 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
+		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
 		mesh.RecalcInstanceWorldAABBs();
 
 		pMeshBatch->AddMesh(&mesh);

@@ -86,11 +86,16 @@ const Vector3f Cross(const Vector3f& vec1, const Vector3f& vec2)
         vec1.m_X * vec2.m_Y - vec1.m_Y * vec2.m_X);
 }
 
-bool IsEqual(const Vector3f& vec1, const Vector3f& vec2, f32 epsilon)
+bool AreEqual(const Vector3f& vec1, const Vector3f& vec2, f32 epsilon)
 {
-    return (::IsEqual(vec1.m_X, vec2.m_X, epsilon) && 
-        ::IsEqual(vec1.m_Y, vec2.m_Y, epsilon) &&
-        ::IsEqual(vec1.m_Z, vec2.m_Z, epsilon));
+    return (::AreEqual(vec1.m_X, vec2.m_X, epsilon) &&
+        ::AreEqual(vec1.m_Y, vec2.m_Y, epsilon) &&
+        ::AreEqual(vec1.m_Z, vec2.m_Z, epsilon));
+}
+
+bool AreOrthogonal(const Vector3f& vec1, const Vector3f& vec2, f32 epsilon)
+{
+	return ::AreEqual(Dot(vec1, vec2), 0.0f, epsilon);
 }
 
 const Vector3f Min(const Vector3f& vec1, const Vector3f& vec2)

@@ -994,7 +994,7 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 
 	const Frustum cameraWorldFrustum = ExtractWorldFrustum(*m_pCamera);
 	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
-		appData.m_CameraWorldFrustumPlanes[planeIndex] = ToVector4f(cameraWorldFrustum.m_Planes[planeIndex]);
+		appData.m_CameraWorldFrustumPlanes[planeIndex] = ToVector(cameraWorldFrustum.m_Planes[planeIndex]);
 
 	appData.m_ScreenSize = Vector2u(backBufferWidth, backBufferHeight);
 	appData.m_RcpScreenSize = Vector2f(1.0f / f32(appData.m_ScreenSize.m_X), 1.0f / f32(appData.m_ScreenSize.m_Y));

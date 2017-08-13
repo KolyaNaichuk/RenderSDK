@@ -14,6 +14,8 @@ AxisAlignedBox::AxisAlignedBox(const Vector3f& center, const Vector3f& radius)
 
 AxisAlignedBox::AxisAlignedBox(u32 numPoints, const Vector3f* pFirstPoint)
 {
+	assert(numPoints > 0);
+
 	Vector3f minPoint = *pFirstPoint;
 	Vector3f maxPoint = *pFirstPoint;
 

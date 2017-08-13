@@ -3,6 +3,8 @@
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
+#include "Math/OrientedBox.h"
+#include "Math/Transform.h"
 
 namespace
 {
@@ -134,5 +136,42 @@ void ConvertMesh(Mesh* pMesh, u8 convertionFlags)
 		{
 			FlipIndicesWindingOrder(numIndices, pIndexData->Get32BitIndices());
 		}
+	}
+}
+
+void ConvertToUnitCubeAsLocalCoordSystem(Mesh* pMesh)
+{
+	VertexData* pVertexData = pMesh->GetVertexData();
+	
+	const u32 numVertices = pVertexData->GetNumVertices();
+	Vector3f* localSpacePositions = pVertexData->GetPositions();
+	Vector3f* localSpaceNormals = pVertexData->GetNormals();
+	Matrix4f* instanceWorldMatrices = pMesh->GetInstanceWorldMatrices();
+	
+	const u32 numInstances = pMesh->GetNumInstances();
+	for (u32 instanceIndex = 0; instanceIndex < numInstances; ++instanceIndex)
+	{	
+		std::vector<Vector3f> worldSpacePositions(numVertices);
+		for (u32 positionIndex = 0; positionIndex < numVertices; ++positionIndex)
+			worldSpacePositions[positionIndex] = TransformPoint(localSpacePositions[positionIndex], instanceWorldMatrices[instanceIndex]);
+		
+		OrientedBox worldSpaceBox(numVertices, worldSpacePositions.data());
+
+		Matrix4f scalingMatrix = CreateScalingMatrix(
+			AreEqual(worldSpaceBox.m_Radius.m_X, 0.0f, EPSILON) ? 1.0f : worldSpaceBox.m_Radius.m_X,
+			AreEqual(worldSpaceBox.m_Radius.m_Y, 0.0f, EPSILON) ? 1.0f : worldSpaceBox.m_Radius.m_Y,
+			AreEqual(worldSpaceBox.m_Radius.m_Z, 0.0f, EPSILON) ? 1.0f : worldSpaceBox.m_Radius.m_Z);
+
+		Matrix4f rotationMatrix = CreateRotationMatrix(worldSpaceBox.m_Orientation);
+		Matrix4f translationMatrix = CreateTranslationMatrix(worldSpaceBox.m_Center);
+		
+		Matrix4f unitCubeToWorldSpaceMatrix = scalingMatrix * rotationMatrix * translationMatrix;
+		if (instanceIndex == numInstances - 1)
+		{
+			Matrix4f worldToUnitCubeSpaceMatrix = Inverse(unitCubeToWorldSpaceMatrix);
+			for (u32 positionIndex = 0; positionIndex < numVertices; ++positionIndex)
+				localSpacePositions[positionIndex] = TransformPoint(worldSpacePositions[positionIndex], worldToUnitCubeSpaceMatrix);
+		}
+		instanceWorldMatrices[instanceIndex] = unitCubeToWorldSpaceMatrix;
 	}
 }

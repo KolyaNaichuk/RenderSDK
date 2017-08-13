@@ -191,12 +191,12 @@ const Quaternion CreateRotationZQuaternion(f32 angleInRadians)
 	return Quaternion(0.0f, 0.0f, sinHalfAngle, cosHalfAngle);
 }
 
-bool IsEqual(const Quaternion& quat1, const Quaternion& quat2, f32 epsilon)
+bool AreEqual(const Quaternion& quat1, const Quaternion& quat2, f32 epsilon)
 {
-	return ::IsEqual(quat1.m_X, quat2.m_X, epsilon) &&
-		::IsEqual(quat1.m_Y, quat2.m_Y, epsilon) &&
-		::IsEqual(quat1.m_Z, quat2.m_Z, epsilon) &&
-		::IsEqual(quat1.m_W, quat2.m_W, epsilon);
+	return ::AreEqual(quat1.m_X, quat2.m_X, epsilon) &&
+		::AreEqual(quat1.m_Y, quat2.m_Y, epsilon) &&
+		::AreEqual(quat1.m_Z, quat2.m_Z, epsilon) &&
+		::AreEqual(quat1.m_W, quat2.m_W, epsilon);
 }
 
 const Quaternion Conjugate(const Quaternion& quat)

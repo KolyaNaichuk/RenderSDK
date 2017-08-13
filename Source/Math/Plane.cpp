@@ -62,7 +62,7 @@ const Plane TransformPlane(const Plane& plane, const Transform& transform)
 	return Plane(Vector3f(transformedVec.m_X, transformedVec.m_Y, transformedVec.m_Z), transformedVec.m_W);
 }
 
-const Vector4f ToVector4f(const Plane& plane)
+const Vector4f ToVector(const Plane& plane)
 {
 	return Vector4f(plane.m_Normal.m_X, plane.m_Normal.m_Y, plane.m_Normal.m_Z, plane.m_SignedDistFromOrigin);
 }

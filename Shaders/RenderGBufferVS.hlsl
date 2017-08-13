@@ -20,7 +20,7 @@ cbuffer InstanceOffsetBuffer : register(b0)
 	uint g_MaterialIndex;	// Kolya. Check if I could pass it directly to pixel shader
 }
 
-StructuredBuffer<uint> g_InstanceIndexBuffer : register(t0);
+Buffer<uint> g_InstanceIndexBuffer : register(t0);
 StructuredBuffer<matrix> g_InstanceWorldMatrixBuffer : register(t1); // Kolya. Potential issue with matrix storage
 StructuredBuffer<matrix> g_InstanceWorldViewProjMatrixBuffer : register(t2); // Kolya. Potential issue with matrix storage
 
@@ -34,7 +34,9 @@ VSOutput Main(VSInput input)
 	VSOutput output;
 	output.materialIndex = g_MaterialIndex;
 	output.clipSpacePos = mul(worldViewProjMatrix, float4(input.localSpacePos, 1.0f));
-	output.worldSpaceNormal = mul(worldMatrix, float4(input.localSpaceNormal, 0.0f)).xyz;
+	// Kolya. Should use transposed of inverse world matrix as world matrix can contain non-uniform scale
+	// Normals should be transformed to unit cube space as positions
+	output.worldSpaceNormal = ;// mul(worldMatrix, float4(input.localSpaceNormal, 0.0f)).xyz;
 	output.texCoord = input.texCoord;
 
 	return output;
