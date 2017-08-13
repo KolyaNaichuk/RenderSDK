@@ -154,7 +154,24 @@ Used resources:
 
 /*
 To do:
-1.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
+1.Using unit cube as local coordinate system for meshes to be able to use the same world matrix for OOB.
+Investigate if this is an optimal solution.
+- There seems to be some precision loss when converting to unit cube and back to world space.
+- Need to use transposed of inverse world matrix for normal transformation as scale is not guaranteed to be uniform anymore.
+- Should I use dedicated world space OOB for each mesh object instead of transforming unit cube?
+
+2.Missing conversion for normals when converting mesh vertex data to unit cube space.
+See ConvertToUnitCubeAsLocalCoordSystem() in MeshUtilities.
+
+3.OOB for a set of points mimics AABB. Improve implementation.
+
+4.When converting plane mesh to unit cube space, world matrix is not optimal for OOB.
+For an example, plane in original coordinates is passing through point (0, 0, 0).
+OOB will have coordinates expanding from -1 to 1 not merely passing through 0 when world matrix is applied.
+
+5.Make camera transform part of Scene object. Can check format OpenGEX for inspiration - http://opengex.org/
+
+6.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
 against MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER and MAX_NUM_POINT_LIGHTS_PER_SHADOW_CASTER
 while writing data to the local storage
 */
