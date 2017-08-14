@@ -1,19 +1,4 @@
-struct MeshInstanceRange
-{
-	uint instanceOffset;
-	uint numInstances;
-	uint meshIndex;
-};
-
-struct MeshInfo
-{
-	uint meshType;
-	uint meshTypeOffset;
-	uint materialIndex;
-	uint indexCountPerInstance;
-	uint startIndexLocation;
-	int  baseVertexLocation;
-};
+#include "Foundation.hlsl"
 
 struct DrawCommand
 {
@@ -24,12 +9,11 @@ struct DrawCommand
 
 StructuredBuffer<uint> g_VisibilityBuffer : register(t0);
 StructuredBuffer<uint> g_InstanceIndexBuffer : register(t1);
-StructuredBuffer<MeshInstanceRange> g_MeshInstanceRangeBuffer : register(t2);
-StructuredBuffer<MeshInfo> g_MeshInfoBuffer : register(t3);
+StructuredBuffer<MeshInfo> g_MeshInfoBuffer : register(t2);
 
 RWStructuredBuffer<uint> g_VisibleInstanceIndexBuffer : register(u0);
 RWStructuredBuffer<uint> g_NumVisibleMeshesPerTypeBuffer : register(u1);
-RWStructuredBuffer<DrawCommand> g_DrawVisibleInstanceCommandBuffer : register(u2);
+RWStructuredBuffer<DrawCommand> g_DrawCommandBuffer : register(u2);
 
 groupshared uint g_NumVisibleInstances;
 groupshared uint g_VisibleInstanceIndices[MAX_NUM_INSTANCES];
@@ -43,10 +27,10 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 	}
 	GroupMemoryBarrierWithGroupSync();
 
-	MeshInstanceRange meshInstanceRange = g_MeshInstanceRangeBuffer[groupId.x];
-	for (uint index = localIndex; index < meshInstanceRange.numInstances; index += THREAD_GROUP_SIZE)
+	MeshInfo meshInfo = g_MeshInfoBuffer[groupId.x];
+	for (uint index = localIndex; index < meshInfo.numInstances; index += THREAD_GROUP_SIZE)
 	{
-		uint instanceIndex = g_InstanceIndexBuffer[meshInstanceRange.instanceOffset + index];
+		uint instanceIndex = g_InstanceIndexBuffer[meshInfo.instanceOffset + index];
 		if (g_VisibilityBuffer[instanceIndex] > 0)
 		{
 			uint listIndex;
@@ -60,13 +44,11 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 	{
 		if (g_NumVisibleInstances > 0)
 		{
-			MeshInfo meshInfo = g_MeshInfoBuffer[meshInstanceRange.meshIndex];
-
 			uint commandOffset;
 			InterlockedAdd(g_NumVisibleMeshesPerTypeBuffer[meshInfo.meshType], 1, commandOffset);
 			commandOffset += meshInfo.meshTypeOffset;
 
-			g_DrawVisibleInstanceCommandBuffer[commandOffset].instanceOffset = meshInstanceRange.instanceOffset;
+			g_DrawVisibleInstanceCommandBuffer[commandOffset].instanceOffset = meshInfo.instanceOffset;
 			g_DrawVisibleInstanceCommandBuffer[commandOffset].materialIndex = meshInfo.materialIndex;
 			g_DrawVisibleInstanceCommandBuffer[commandOffset].args.indexCountPerInstance = meshInfo.indexCountPerInstance;
 			g_DrawVisibleInstanceCommandBuffer[commandOffset].args.instanceCount = g_NumVisibleInstances;
@@ -78,5 +60,5 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 	GroupMemoryBarrierWithGroupSync();
 
 	for (uint index = localIndex; index < g_NumVisibleInstances; index += THREAD_GROUP_SIZE)
-		g_VisibleInstanceIndexBuffer[meshInstanceRange.instanceOffset + index] = g_VisibleInstanceIndices[index];
+		g_VisibleInstanceIndexBuffer[meshInfo.instanceOffset + index] = g_VisibleInstanceIndices[index];
 }

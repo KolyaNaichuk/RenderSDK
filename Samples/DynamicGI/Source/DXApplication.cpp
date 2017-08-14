@@ -170,7 +170,11 @@ OOB will have coordinates expanding from -1 to 1 not merely passing through 0 wh
 
 5.Make camera transform part of Scene object. Can check format OpenGEX for inspiration - http://opengex.org/
 
-6.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
+6.MeshRenderResources, LightRenderResources should not be part of Common folder
+
+7.Review to-dos
+
+8.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
 against MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER and MAX_NUM_POINT_LIGHTS_PER_SHADOW_CASTER
 while writing data to the local storage
 */
@@ -1202,13 +1206,13 @@ void DXApplication::InitFrustumMeshCullingPass()
 	FrustumMeshCullingPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pInstanceWorldAABBBuffer = m_pMeshRenderResources->GetInstanceWorldAABBBuffer();
-	params.m_pMeshInstanceRangeBuffer = m_pMeshRenderResources->GetMeshInstanceRangeBuffer();
+	params.m_pMeshInfoBuffer = m_pMeshRenderResources->GetMeshInfoBuffer();
 	params.m_MaxNumMeshes = m_pMeshRenderResources->GetTotalNumMeshes();
 	params.m_MaxNumInstances = m_pMeshRenderResources->GetTotalNumInstances();
 	params.m_MaxNumInstancesPerMesh = m_pMeshRenderResources->GetMaxNumInstancesPerMesh();
-	params.m_InputResourceStates.m_MeshInstanceRangeBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_MeshInfoBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_InstanceWorldAABBBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_VisibleInstanceRangeBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_VisibleMeshInfoBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_NumVisibleInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 

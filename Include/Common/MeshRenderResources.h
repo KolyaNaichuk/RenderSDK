@@ -9,6 +9,28 @@ class MeshBatch;
 struct InputLayoutDesc;
 struct RenderEnv;
 
+struct MeshRenderInfo
+{
+	MeshRenderInfo(u32 numInstances, u32 instanceOffset, u32 meshType, u32 meshTypeOffset, u32 materialIndex, u32 indexCountPerInstance, u32 startIndexLocation, i32 baseVertexLocation)
+		: m_NumInstances(numInstances)
+		, m_InstanceOffset(instanceOffset)
+		, m_MeshType(meshType)
+		, m_MeshTypeOffset(meshTypeOffset)
+		, m_MaterialIndex(materialIndex)
+		, m_IndexCountPerInstance(indexCountPerInstance)
+		, m_StartIndexLocation(startIndexLocation)
+		, m_BaseVertexLocation(baseVertexLocation)
+	{}
+	u32 m_NumInstances;
+	u32 m_InstanceOffset;
+	u32 m_MeshType;
+	u32 m_MeshTypeOffset;
+	u32 m_MaterialIndex;
+	u32 m_IndexCountPerInstance;
+	u32 m_StartIndexLocation;
+	i32 m_BaseVertexLocation;
+};
+
 class MeshRenderResources
 {
 public:
@@ -21,8 +43,6 @@ public:
 	u32 GetMaxNumInstancesPerMesh() const { return m_MaxNumInstancesPerMesh; }
 		
 	Buffer* GetMeshInfoBuffer() { return m_pMeshInfoBuffer; }
-	Buffer* GetMeshInstanceRangeBuffer() { return m_pMeshInstanceRangeBuffer; }
-
 	Buffer* GetInstanceWorldMatrixBuffer() { return m_pInstanceWorldMatrixBuffer; }
 	Buffer* GetInstanceWorldAABBBuffer() { return m_pInstanceWorldAABBBuffer; }
 
@@ -48,8 +68,6 @@ private:
 	u32 m_MaxNumInstancesPerMesh;
 
 	Buffer* m_pMeshInfoBuffer;
-	Buffer* m_pMeshInstanceRangeBuffer;
-
 	Buffer* m_pInstanceWorldMatrixBuffer;
 	Buffer* m_pInstanceWorldAABBBuffer;
 

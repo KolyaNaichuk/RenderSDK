@@ -22,6 +22,18 @@ struct Range
 	uint length;
 };
 
+struct MeshInfo
+{
+	uint numInstances;
+	uint instanceOffset;
+	uint meshType;
+	uint meshTypeOffset;
+	uint materialIndex;
+	uint indexCountPerInstance;
+	uint startIndexLocation;
+	int  baseVertexLocation;
+};
+
 struct DrawIndexedArgs
 {
 	uint indexCountPerInstance;

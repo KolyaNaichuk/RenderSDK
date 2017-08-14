@@ -13,9 +13,9 @@ class FrustumMeshCullingPass
 public:
 	struct ResourceStates
 	{
-		D3D12_RESOURCE_STATES m_MeshInstanceRangeBufferState;
+		D3D12_RESOURCE_STATES m_MeshInfoBufferState;
 		D3D12_RESOURCE_STATES m_InstanceWorldAABBBufferState;
-		D3D12_RESOURCE_STATES m_VisibleInstanceRangeBufferState;
+		D3D12_RESOURCE_STATES m_VisibleMeshInfoBufferState;
 		D3D12_RESOURCE_STATES m_VisibleInstanceIndexBufferState;
 		D3D12_RESOURCE_STATES m_NumVisibleInstancesBufferState;
 	};
@@ -25,7 +25,7 @@ public:
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		Buffer* m_pInstanceWorldAABBBuffer;
-		Buffer* m_pMeshInstanceRangeBuffer;
+		Buffer* m_pMeshInfoBuffer;
 		u32 m_MaxNumMeshes;
 		u32 m_MaxNumInstances;
 		u32 m_MaxNumInstancesPerMesh;
@@ -62,7 +62,7 @@ private:
 
 	Buffer* m_pNumVisibleMeshesBuffer;
 	Buffer* m_pNumVisibleInstancesBuffer;
-	Buffer* m_pVisibleInstanceRangeBuffer;
+	Buffer* m_pVisibleMeshInfoBuffer;
 	Buffer* m_pVisibleInstanceIndexBuffer;
 	u32 m_MaxNumMeshes;
 };

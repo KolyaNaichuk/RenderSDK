@@ -21,7 +21,6 @@ MeshRenderResources::MeshRenderResources(RenderEnv* pRenderEnv, u32 numMeshTypes
 	, m_TotalNumInstances(0)
 	, m_MaxNumInstancesPerMesh(CalcMaxNumInstancesPerMesh(numMeshTypes, ppFirstMeshType))
 	, m_pMeshInfoBuffer(nullptr)
-	, m_pMeshInstanceRangeBuffer(nullptr)
 	, m_pInstanceWorldMatrixBuffer(nullptr)
 	, m_pInstanceWorldAABBBuffer(nullptr)
 {
@@ -33,7 +32,6 @@ MeshRenderResources::MeshRenderResources(RenderEnv* pRenderEnv, u32 numMeshTypes
 MeshRenderResources::~MeshRenderResources()
 {
 	SafeDelete(m_pMeshInfoBuffer);
-	SafeDelete(m_pMeshInstanceRangeBuffer);
 	SafeDelete(m_pInstanceWorldMatrixBuffer);
 	SafeDelete(m_pInstanceWorldAABBBuffer);
 
@@ -46,36 +44,6 @@ MeshRenderResources::~MeshRenderResources()
 
 void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)
 {
-	struct MeshInstanceRange
-	{
-		MeshInstanceRange(u32 instanceOffset, u32 numInstances, u32 meshIndex)
-			: m_InstanceOffset(instanceOffset)
-			, m_NumInstances(numInstances)
-			, m_MeshIndex(meshIndex)
-		{}
-		u32 m_InstanceOffset;
-		u32 m_NumInstances;
-		u32 m_MeshIndex;
-	};
-
-	struct MeshRenderInfo
-	{
-		MeshRenderInfo(u32 meshType, u32 meshTypeOffset, u32 materialIndex, u32 indexCountPerInstance, u32 startIndexLocation, i32 baseVertexLocation)
-			: m_MeshType(meshType)
-			, m_MeshTypeOffset(meshTypeOffset)
-			, m_MaterialIndex(materialIndex)
-			, m_IndexCountPerInstance(indexCountPerInstance)
-			, m_StartIndexLocation(startIndexLocation)
-			, m_BaseVertexLocation(baseVertexLocation)
-		{}
-		u32 m_MeshType;
-		u32 m_MeshTypeOffset;
-		u32 m_MaterialIndex;
-		u32 m_IndexCountPerInstance;
-		u32 m_StartIndexLocation;
-		i32 m_BaseVertexLocation;
-	};
-
 	m_TotalNumMeshes = 0;
 	for (u32 meshType = 0; meshType < numMeshTypes; ++meshType)
 	{
@@ -85,10 +53,7 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 
 	std::vector<MeshRenderInfo> meshInfoBufferData;
 	meshInfoBufferData.reserve(m_TotalNumMeshes);
-
-	std::vector<MeshInstanceRange> meshInstanceRangeBufferData;
-	meshInstanceRangeBufferData.reserve(m_TotalNumMeshes);
-
+	
 	u32 meshTypeOffset = 0;
 	u32 instanceOffset = 0;
 
@@ -99,10 +64,11 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 		const MeshInfo* pFirstMeshInfo = pMeshBatch->GetMeshInfos();
 		for (u32 meshIndex = 0; meshIndex < pMeshBatch->GetNumMeshes(); ++meshIndex)
 		{
-			u32 globalMeshIndex = meshInfoBufferData.size();
 			const MeshInfo& meshInfo = pFirstMeshInfo[meshIndex];
 
 			meshInfoBufferData.emplace_back(
+				meshInfo.m_InstanceCount,
+				instanceOffset,
 				meshType,
 				meshTypeOffset,
 				meshInfo.m_MaterialIndex,
@@ -110,14 +76,8 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 				meshInfo.m_StartIndexLocation,
 				meshInfo.m_BaseVertexLocation);
 
-			meshInstanceRangeBufferData.emplace_back(
-				instanceOffset,
-				meshInfo.m_InstanceCount,
-				globalMeshIndex);
-
 			instanceOffset += meshInfo.m_InstanceCount;
 		}
-
 		meshTypeOffset += pMeshBatch->GetNumMeshes();
 	}
 
@@ -125,11 +85,6 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 	m_pMeshInfoBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &meshInfoBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pMeshInfoBuffer");
 	UploadData(pRenderEnv, m_pMeshInfoBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 		&meshInfoBufferDesc, meshInfoBufferData.data(), m_TotalNumMeshes * sizeof(MeshRenderInfo));
-
-	StructuredBufferDesc meshInstanceRangeBufferDesc(m_TotalNumMeshes, sizeof(MeshInstanceRange), true, false);
-	m_pMeshInstanceRangeBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &meshInstanceRangeBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pMeshInstanceRangeBuffer");
-	UploadData(pRenderEnv, m_pMeshInstanceRangeBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-		&meshInstanceRangeBufferDesc, meshInstanceRangeBufferData.data(), m_TotalNumMeshes * sizeof(MeshInstanceRange));
 }
 
 void MeshRenderResources::InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)

@@ -4,6 +4,7 @@
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
+#include "Common/MeshRenderResources.h"
 
 namespace
 {
@@ -15,19 +16,6 @@ namespace
 	};
 
 	// Kolya. Duplicating structures. Could be moved to separate file
-	struct MeshInstanceRange
-	{
-		MeshInstanceRange(u32 instanceOffset, u32 numInstances, u32 meshIndex)
-			: m_InstanceOffset(instanceOffset)
-			, m_NumInstances(numInstances)
-			, m_MeshIndex(meshIndex)
-		{
-		}
-		u32 m_InstanceOffset;
-		u32 m_NumInstances;
-		u32 m_MeshIndex;
-	};
-
 	struct DrawIndexedArgs
 	{
 		DrawIndexedArgs(u32 indexCountPerInstance, u32 instanceCount, u32 startIndexLocation, i32 baseVertexLocation, u32 startInstanceLocation)
@@ -50,7 +38,7 @@ FrustumMeshCullingPass::FrustumMeshCullingPass(InitParams* pParams)
 	, m_pPipelineState(nullptr)
 	, m_pNumVisibleMeshesBuffer(nullptr)
 	, m_pNumVisibleInstancesBuffer(nullptr)
-	, m_pVisibleInstanceRangeBuffer(nullptr)
+	, m_pVisibleMeshInfoBuffer(nullptr)
 	, m_pVisibleInstanceIndexBuffer(nullptr)
 	, m_MaxNumMeshes(pParams->m_MaxNumMeshes)
 {
@@ -63,7 +51,7 @@ FrustumMeshCullingPass::~FrustumMeshCullingPass()
 {
 	SafeDelete(m_pNumVisibleMeshesBuffer);
 	SafeDelete(m_pNumVisibleInstancesBuffer);
-	SafeDelete(m_pVisibleInstanceRangeBuffer);
+	SafeDelete(m_pVisibleMeshInfoBuffer);
 	SafeDelete(m_pVisibleInstanceIndexBuffer);
 	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pRootSignature);
@@ -83,34 +71,34 @@ void FrustumMeshCullingPass::InitResources(InitParams* pParams)
 	m_pNumVisibleInstancesBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &numVisibleInstancesBufferDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FrustumMeshCullingPass::m_pNumVisibleInstancesBuffer");
 
-	assert(m_pVisibleInstanceRangeBuffer == nullptr);
-	StructuredBufferDesc visibleInstanceRangeBufferDesc(pParams->m_MaxNumInstances, sizeof(MeshInstanceRange), true, true);
-	m_pVisibleInstanceRangeBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &visibleInstanceRangeBufferDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FrustumMeshCullingPass::m_pVisibleInstanceRangeBuffer");
+	assert(m_pVisibleMeshInfoBuffer == nullptr);
+	StructuredBufferDesc visibleMeshInfoBufferDesc(pParams->m_MaxNumMeshes, sizeof(MeshRenderInfo), true, true);
+	m_pVisibleMeshInfoBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &visibleMeshInfoBufferDesc,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FrustumMeshCullingPass::m_pVisibleMeshInfoBuffer");
 
 	assert(m_pVisibleInstanceIndexBuffer == nullptr);
 	FormattedBufferDesc visibleInstanceIndexBufferDesc(pParams->m_MaxNumInstances, DXGI_FORMAT_R32_UINT, true, true);
 	m_pVisibleInstanceIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &visibleInstanceIndexBufferDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FrustumMeshCullingPass::m_pVisibleInstanceIndexBuffer");
 	
-	m_OutputResourceStates.m_MeshInstanceRangeBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_MeshInfoBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_InstanceWorldAABBBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_VisibleInstanceRangeBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	m_OutputResourceStates.m_VisibleMeshInfoBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_NumVisibleInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
 	assert(m_ResourceBarriers.empty());
-	CreateResourceBarrierIfRequired(pParams->m_pMeshInstanceRangeBuffer,
-		pParams->m_InputResourceStates.m_MeshInstanceRangeBufferState,
-		m_OutputResourceStates.m_MeshInstanceRangeBufferState);
+	CreateResourceBarrierIfRequired(pParams->m_pMeshInfoBuffer,
+		pParams->m_InputResourceStates.m_MeshInfoBufferState,
+		m_OutputResourceStates.m_MeshInfoBufferState);
 
 	CreateResourceBarrierIfRequired(pParams->m_pInstanceWorldAABBBuffer,
 		pParams->m_InputResourceStates.m_InstanceWorldAABBBufferState,
 		m_OutputResourceStates.m_InstanceWorldAABBBufferState);
 
-	CreateResourceBarrierIfRequired(m_pVisibleInstanceRangeBuffer,
-		pParams->m_InputResourceStates.m_VisibleInstanceRangeBufferState,
-		m_OutputResourceStates.m_VisibleInstanceRangeBufferState);
+	CreateResourceBarrierIfRequired(m_pVisibleMeshInfoBuffer,
+		pParams->m_InputResourceStates.m_VisibleMeshInfoBufferState,
+		m_OutputResourceStates.m_VisibleMeshInfoBufferState);
 
 	CreateResourceBarrierIfRequired(m_pVisibleInstanceIndexBuffer,
 		pParams->m_InputResourceStates.m_VisibleInstanceIndexBufferState,
@@ -122,7 +110,7 @@ void FrustumMeshCullingPass::InitResources(InitParams* pParams)
 
 	m_SRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStart,
-		pParams->m_pMeshInstanceRangeBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		pParams->m_pMeshInfoBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 			
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		pParams->m_pInstanceWorldAABBBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -134,7 +122,7 @@ void FrustumMeshCullingPass::InitResources(InitParams* pParams)
 		m_pNumVisibleInstancesBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-		m_pVisibleInstanceRangeBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pVisibleMeshInfoBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 			
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		m_pVisibleInstanceIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
