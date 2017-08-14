@@ -22,19 +22,19 @@ struct DrawCommand
 	DrawIndexedArgs args;
 };
 
-StructuredBuffer<uint> g_VisibilityBuffer : register(t0);
-StructuredBuffer<uint> g_InstanceIndexBuffer : register(t1);
+Buffer<uint> g_VisibilityBuffer : register(t0);
+Buffer<uint> g_InstanceIndexBuffer : register(t1);
 StructuredBuffer<MeshInstanceRange> g_MeshInstanceRangeBuffer : register(t2);
 StructuredBuffer<MeshInfo> g_MeshInfoBuffer : register(t3);
 
-RWStructuredBuffer<uint> g_VisibleInstanceIndexBuffer : register(u0);
-RWStructuredBuffer<uint> g_NumVisibleMeshesPerTypeBuffer : register(u1);
+RWBuffer<uint> g_VisibleInstanceIndexBuffer : register(u0);
+RWBuffer<uint> g_NumVisibleMeshesPerTypeBuffer : register(u1);
 RWStructuredBuffer<DrawCommand> g_DrawVisibleInstanceCommandBuffer : register(u2);
 
-RWStructuredBuffer<uint> g_OccludedInstanceIndexBuffer : register(u3);
-RWStructuredBuffer<uint> g_NumOccludedMeshesBuffer : register(u4);
+RWBuffer<uint> g_NumOccludedMeshesBuffer : register(u3);
+RWBuffer<uint> g_NumOccludedInstancesBuffer : register(u4);
 RWStructuredBuffer<MeshInstanceRange> g_OccludedInstanceRangeBuffer : register(u5);
-RWStructuredBuffer<DrawCommand> g_DrawOccludedInstanceCommandBuffer : register(u6);
+RWBuffer<uint> g_OccludedInstanceIndexBuffer : register(u6);
 
 groupshared uint g_NumVisibleInstances;
 groupshared uint g_VisibleInstanceIndices[MAX_NUM_INSTANCES];
@@ -94,7 +94,7 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 		if (g_NumOccludedInstances > 0)
 		{
 			uint instanceOffset;
-			InterlockedAdd(g_DrawOccludedInstanceCommandBuffer[0].args.instanceCount, g_NumOccludedInstances, instanceOffset);
+			InterlockedAdd(g_NumOccludedInstancesBuffer[0], g_NumOccludedInstances, instanceOffset);
 			g_OccludedInstanceOffset = instanceOffset;
 
 			uint meshOffset;

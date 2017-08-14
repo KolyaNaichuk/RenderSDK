@@ -12,7 +12,6 @@
 #include "D3DWrapper/SwapChain.h"
 #include "RenderPasses/ClearVoxelGridPass.h"
 #include "RenderPasses/CreateVoxelGridPass.h"
-#include "RenderPasses/CreateRenderGBufferCommandsPass.h"
 #include "RenderPasses/CreateRenderShadowMapCommandsPass.h"
 #include "RenderPasses/InjectVirtualPointLightsPass.h"
 #include "RenderPasses/PropagateLightPass.h"
@@ -480,7 +479,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pDetectVisibleMeshesPass(nullptr)
 	, m_pDetectVisiblePointLightsPass(nullptr)
 	, m_pDetectVisibleSpotLightsPass(nullptr)
-	, m_pCreateRenderGBufferCommandsPass(nullptr)
 	, m_pCreateRenderShadowMapCommandsPass(nullptr)
 	, m_pCreateRenderShadowMapCommandsArgumentBuffer(nullptr)
 	, m_pRenderSpotLightTiledShadowMapPass(nullptr)
@@ -580,7 +578,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pTiledDirectLightShadingPass);
 	SafeDelete(m_pTiledIndirectLightShadingPass);
 	SafeDelete(m_pRenderGBufferPass);
-	SafeDelete(m_pCreateRenderGBufferCommandsPass);
 	SafeDelete(m_pCreateRenderShadowMapCommandsPass);
 	SafeDelete(m_pCreateRenderShadowMapCommandsArgumentBuffer);
 	SafeDelete(m_pRenderSpotLightTiledShadowMapPass);
@@ -744,7 +741,6 @@ void DXApplication::OnRender()
 	if (m_pSpotLightRenderResources != nullptr)
 		submissionBatch.emplace_back(RecordDetectVisibleSpotLightsPass());
 
-	submissionBatch.emplace_back(RecordCreateRenderGBufferCommandsPass());
 	submissionBatch.emplace_back(RecordRenderGBufferPass());
 	submissionBatch.emplace_back(RecordTiledLightCullingPass());
 
@@ -1376,31 +1372,6 @@ void DXApplication::InitDetectVisibleSpotLightsPass()
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisibleSpotLightIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pViewFrustumSpotLightCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	*/
-}
-
-void DXApplication::InitCreateRenderGBufferCommandsPass()
-{
-	assert(false);
-	/*
-	Buffer* pMeshDescBuffer = m_pMeshRenderResources->GetMeshDescBuffer();
-
-	CreateRenderGBufferCommandsPass::InitParams initParams;
-	initParams.m_pRenderEnv = m_pRenderEnv;
-	initParams.m_NumMeshesInBatch = m_pMeshRenderResources->GetNumMeshes();
-
-	m_pCreateRenderGBufferCommandsPass = new CreateRenderGBufferCommandsPass(&initParams);
-
-	m_pCreateRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleMeshesBuffer, m_pNumVisibleMeshesBuffer->GetReadState());
-	m_pCreateRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(m_pVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer->GetReadState());
-	m_pCreateRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(pMeshDescBuffer, pMeshDescBuffer->GetReadState());
-	m_pCreateRenderGBufferCommandsResources->m_RequiredResourceStates.emplace_back(m_pDrawMeshCommandBuffer, m_pDrawMeshCommandBuffer->GetWriteState());
-
-	m_pCreateRenderGBufferCommandsResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
-	m_pDevice->CopyDescriptor(m_pCreateRenderGBufferCommandsResources->m_SRVHeapStart, m_pNumVisibleMeshesBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisibleMeshIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMeshDescBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDrawMeshCommandBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	*/
 }
 
@@ -2441,21 +2412,6 @@ CommandList* DXApplication::RecordDetectVisibleSpotLightsPass()
 	renderParams.m_pNumVisibleObjectsBuffer = m_pNumVisibleSpotLightsBuffer;
 
 	m_pDetectVisibleSpotLightsPass->Record(&renderParams);
-	return renderParams.m_pCommandList;
-	*/
-	return nullptr;
-}
-
-CommandList* DXApplication::RecordCreateRenderGBufferCommandsPass()
-{
-	assert(false);
-	/*
-	CreateRenderGBufferCommandsPass::RenderParams renderParams;
-	renderParams.m_pRenderEnv = m_pRenderEnv;
-	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pCreateRenderGBufferCommandsCommandList");
-	renderParams.m_pResources = m_pCreateRenderGBufferCommandsResources;
-
-	m_pCreateRenderGBufferCommandsPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
 	*/
 	return nullptr;

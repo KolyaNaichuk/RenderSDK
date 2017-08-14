@@ -153,9 +153,6 @@ COPY /Y "$(SolutionDir)Shaders\FullScreenTriangleVS.hlsl" "$(SolutionDir)Samples
 COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelGridPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeVoxelGridPS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelGridPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeVoxelGridPS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateRenderGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateRenderGBufferCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateRenderGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateRenderGBufferCommandsCS.hlsl"
-
 COPY /Y "$(SolutionDir)Shaders\RenderGBufferVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderGBufferVS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderGBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderGBufferVS.hlsl"
 
@@ -202,7 +199,13 @@ COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferVS.hlsl" "$(SolutionDir)Sampl
 COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillVisibilityBufferVS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillVisibilityBufferPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillVisibilityBufferPS.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillVisibilityBufferPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateMainDrawCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateMainDrawCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateMainDrawCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateMainDrawCommandsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateFalseNegativeDrawCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateFalseNegativeDrawCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

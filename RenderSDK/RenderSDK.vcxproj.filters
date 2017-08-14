@@ -183,9 +183,6 @@
     <ClInclude Include="..\Include\D3DWrapper\Common.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\CreateRenderGBufferCommandsPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\CreateRenderShadowMapCommandsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -247,6 +244,9 @@
       <Filter>RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\FillVisibilityBufferPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateMainDrawCommandsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -401,9 +401,6 @@
     <ClCompile Include="..\Source\D3DWrapper\GraphicsResource.cpp">
       <Filter>D3DWrapper</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\CreateRenderGBufferCommandsPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\CreateRenderShadowMapCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
@@ -462,6 +459,9 @@
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\FillVisibilityBufferPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateMainDrawCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
@@ -535,9 +535,6 @@
     <None Include="..\Shaders\RenderGBufferVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\CreateRenderGBufferCommandsCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\CreateRenderShadowMapCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -571,12 +568,6 @@
     <None Include="..\Shaders\FillVisibilityBufferVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\CreateFalseNegativeOcclusionCommandsCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CreateMainOcclusionCommandsCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\CopyReprojectedDepthPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -587,6 +578,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\FrustumMeshCullingCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateMainDrawCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

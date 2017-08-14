@@ -208,8 +208,8 @@
     <ClInclude Include="..\Include\Math\Vector4.h" />
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
     <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CreateMainDrawCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\CreateRenderGBufferCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\DownscaleAndReprojectDepthPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FillVisibilityBufferPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FrustumMeshCullingPass.h" />
@@ -281,8 +281,8 @@
     <ClCompile Include="..\Source\Math\Vector4.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CreateMainDrawCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CreateRenderGBufferCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\DownscaleAndReprojectDepthPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FillVisibilityBufferPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FrustumMeshCullingPass.cpp" />
@@ -467,19 +467,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\CreateRenderGBufferCommandsCS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Shaders\CreateRenderShadowMapCommandsCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
@@ -617,10 +604,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\CreateFalseNegativeOcclusionCommandsCS.hlsl">
+    <None Include="..\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl">
       <FileType>Document</FileType>
     </None>
-    <None Include="..\Shaders\CreateMainOcclusionCommandsCS.hlsl">
+    <None Include="..\Shaders\CreateMainDrawCommandsCS.hlsl">
       <FileType>Document</FileType>
     </None>
     <None Include="..\Shaders\CopyReprojectedDepthPS.hlsl">

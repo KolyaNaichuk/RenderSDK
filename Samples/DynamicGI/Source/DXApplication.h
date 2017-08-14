@@ -25,7 +25,6 @@ class FrustumMeshCullingPass;
 class FillVisibilityBufferPass;
 
 // Old
-class CreateRenderGBufferCommandsPass;
 class RenderGBufferPass;
 class ClearVoxelGridPass;
 class CreateVoxelGridPass;
@@ -113,7 +112,6 @@ private:
 	void InitDetectVisibleMeshesPass();
 	void InitDetectVisiblePointLightsPass();
 	void InitDetectVisibleSpotLightsPass();
-	void InitCreateRenderGBufferCommandsPass();
 	void InitRenderGBufferPass(UINT backBufferWidth, UINT backBufferHeight);
 	void InitTiledLightCullingPass();
 	void InitTiledShadingPass();
@@ -140,7 +138,6 @@ private:
 	CommandList* RecordDetectVisibleMeshesPass();
 	CommandList* RecordDetectVisiblePointLightsPass();
 	CommandList* RecordDetectVisibleSpotLightsPass();
-	CommandList* RecordCreateRenderGBufferCommandsPass();
 	CommandList* RecordRenderGBufferPass();
 	CommandList* RecordTiledLightCullingPass();
 	CommandList* RecordUpdateCreateRenderShadowMapCommandsArgumentBufferPass();
@@ -260,7 +257,6 @@ private:
 	ViewFrustumCullingPass* m_pDetectVisibleMeshesPass;
 	ViewFrustumCullingPass* m_pDetectVisiblePointLightsPass;
 	ViewFrustumCullingPass* m_pDetectVisibleSpotLightsPass;
-	CreateRenderGBufferCommandsPass* m_pCreateRenderGBufferCommandsPass;
 	CreateRenderShadowMapCommandsPass* m_pCreateRenderShadowMapCommandsPass;
 	Buffer* m_pCreateRenderShadowMapCommandsArgumentBuffer;
 	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass;
