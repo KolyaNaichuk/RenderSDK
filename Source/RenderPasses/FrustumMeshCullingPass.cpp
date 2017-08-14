@@ -14,23 +14,6 @@ namespace
 		kRootSRVTableParam,
 		kNumRootParams
 	};
-
-	// Kolya. Duplicating structures. Could be moved to separate file
-	struct DrawIndexedArgs
-	{
-		DrawIndexedArgs(u32 indexCountPerInstance, u32 instanceCount, u32 startIndexLocation, i32 baseVertexLocation, u32 startInstanceLocation)
-			: m_IndexCountPerInstance(indexCountPerInstance)
-			, m_InstanceCount(instanceCount)
-			, m_StartIndexLocation(startIndexLocation)
-			, m_BaseVertexLocation(baseVertexLocation)
-			, m_StartInstanceLocation(startInstanceLocation)
-		{}
-		u32 m_IndexCountPerInstance;
-		u32 m_InstanceCount;
-		u32 m_StartIndexLocation;
-		i32 m_BaseVertexLocation;
-		u32 m_StartInstanceLocation;
-	};
 }
 
 FrustumMeshCullingPass::FrustumMeshCullingPass(InitParams* pParams)
@@ -186,11 +169,11 @@ void FrustumMeshCullingPass::Record(RenderParams* pParams)
 		pCommandList->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
 		
 	const UINT clearValues[4] = {0, 0, 0, 0};
-	DescriptorHandle numVisibleMeshesBufferHandle(m_SRVHeapStart, 2);
-	pCommandList->ClearUnorderedAccessView(numVisibleMeshesBufferHandle, m_pNumVisibleMeshesBuffer->GetUAVHandle(), m_pNumVisibleMeshesBuffer, clearValues);
+	pCommandList->ClearUnorderedAccessView(DescriptorHandle(m_SRVHeapStart, 2),
+		m_pNumVisibleMeshesBuffer->GetUAVHandle(), m_pNumVisibleMeshesBuffer, clearValues);
 	
-	DescriptorHandle numVisibleInstancesBufferHandle(m_SRVHeapStart, 3);
-	pCommandList->ClearUnorderedAccessView(numVisibleInstancesBufferHandle, m_pNumVisibleInstancesBuffer->GetUAVHandle(), m_pNumVisibleInstancesBuffer, clearValues);
+	pCommandList->ClearUnorderedAccessView(DescriptorHandle(m_SRVHeapStart, 3),
+		m_pNumVisibleInstancesBuffer->GetUAVHandle(), m_pNumVisibleInstancesBuffer, clearValues);
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootConstantBufferView(kRootCBVParam, pParams->m_pAppDataBuffer);

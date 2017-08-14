@@ -17,6 +17,15 @@ struct DrawIndexedArguments
 	UINT m_StartInstanceLocation;
 };
 
+struct DispatchArguments
+{
+	DispatchArguments(UINT threadGroupCountX, UINT threadGroupCountY, UINT threadGroupCountZ);
+
+	UINT m_ThreadGroupCountX;
+	UINT m_ThreadGroupCountY;
+	UINT m_ThreadGroupCountZ;
+};
+
 struct DrawMeshCommand
 {
 	UINT m_Root32BitConstant;

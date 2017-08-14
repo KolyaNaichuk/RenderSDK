@@ -12,6 +12,13 @@ DrawIndexedArguments::DrawIndexedArguments(UINT indexCountPerInstance, UINT inst
 {
 }
 
+DispatchArguments::DispatchArguments(UINT threadGroupCountX, UINT threadGroupCountY, UINT threadGroupCountZ)
+	: m_ThreadGroupCountX(threadGroupCountX)
+	, m_ThreadGroupCountY(threadGroupCountY)
+	, m_ThreadGroupCountZ(threadGroupCountZ)
+{
+}
+
 DrawArgument::DrawArgument()
 {
 	Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;

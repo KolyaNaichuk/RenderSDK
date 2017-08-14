@@ -202,7 +202,7 @@ void FillVisibilityBufferPass::InitCommandSignature(InitParams* pParams)
 	{
 		DrawIndexedArgument()
 	};
-	CommandSignatureDesc commandSignatureDesc(sizeof(D3D12_DRAW_INDEXED_ARGUMENTS), ARRAYSIZE(argumentDescs), argumentDescs);
+	CommandSignatureDesc commandSignatureDesc(sizeof(DrawIndexedArguments), ARRAYSIZE(argumentDescs), argumentDescs);
 	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, nullptr, &commandSignatureDesc, L"FillVisibilityBufferPass::m_pCommandSignature");
 }
 
