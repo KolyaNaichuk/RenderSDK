@@ -407,10 +407,12 @@ private:
 };
 
 template <typename DestBufferDesc>
-void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, D3D12_RESOURCE_STATES destBufferStateAfter,
-	const DestBufferDesc* pDestBufferDesc, const void* pUploadData, SIZE_T numUploadBytes)
+void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, DestBufferDesc destBufferDesc,
+	D3D12_RESOURCE_STATES destBufferStateAfter, const void* pUploadData, SIZE_T numUploadBytes)
 {
-	Buffer* pUploadBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, pDestBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"UploadData::pUploadBuffer");
+	destBufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+	Buffer* pUploadBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &destBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"UploadData::pUploadBuffer");
 	pUploadBuffer->Write(pUploadData, numUploadBytes);
 
 	ResourceBarrier resourceBarrier(pDestBuffer, D3D12_RESOURCE_STATE_COPY_DEST, destBufferStateAfter);

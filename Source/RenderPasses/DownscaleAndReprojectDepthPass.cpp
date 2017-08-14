@@ -193,7 +193,8 @@ void DownscaleAndReprojectDepthPass::InitCopyResources(InitParams* pParams, UINT
 
 	DepthStencilValue optimizedClearDepth(1.0f);
 	DepthTexture2DDesc reprojectionDepthTextureDesc(DXGI_FORMAT_R32_TYPELESS, reprojectedDepthTextureWidth, reprojectedDepthTextureHeight, true, true);
-	m_pReprojectionDepthTexture = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &reprojectionDepthTextureDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"DownscaleAndReprojectDepthPass::m_pReprojectionDepthTexture");
+	m_pReprojectionDepthTexture = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &reprojectionDepthTextureDesc,
+		pParams->m_InputResourceStates.m_ReprojectedDepthTextureState, &optimizedClearDepth, L"DownscaleAndReprojectDepthPass::m_pReprojectionDepthTexture");
 
 	CreateCopyResourceBarrierIfRequired(m_pReprojectionDepthTexture,
 		pParams->m_InputResourceStates.m_ReprojectedDepthTextureState,

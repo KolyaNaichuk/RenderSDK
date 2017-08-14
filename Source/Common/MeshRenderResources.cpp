@@ -83,8 +83,8 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 
 	StructuredBufferDesc meshInfoBufferDesc(m_TotalNumMeshes, sizeof(MeshRenderInfo), true, false);
 	m_pMeshInfoBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &meshInfoBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pMeshInfoBuffer");
-	UploadData(pRenderEnv, m_pMeshInfoBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-		&meshInfoBufferDesc, meshInfoBufferData.data(), m_TotalNumMeshes * sizeof(MeshRenderInfo));
+	UploadData(pRenderEnv, m_pMeshInfoBuffer, meshInfoBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+		meshInfoBufferData.data(), m_TotalNumMeshes * sizeof(MeshRenderInfo));
 }
 
 void MeshRenderResources::InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)
@@ -121,13 +121,13 @@ void MeshRenderResources::InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u3
 
 	StructuredBufferDesc instanceAABBBufferDesc(m_TotalNumInstances, sizeof(AxisAlignedBox), true, false);
 	m_pInstanceWorldAABBBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &instanceAABBBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pInstanceWorldAABBBuffer");
-	UploadData(pRenderEnv, m_pInstanceWorldAABBBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-		&instanceAABBBufferDesc, instanceAABBBufferData.data(), m_TotalNumInstances * sizeof(AxisAlignedBox));
+	UploadData(pRenderEnv, m_pInstanceWorldAABBBuffer, instanceAABBBufferDesc,
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, instanceAABBBufferData.data(), m_TotalNumInstances * sizeof(AxisAlignedBox));
 
 	StructuredBufferDesc instanceWorldMatrixBufferDesc(m_TotalNumInstances, sizeof(Matrix4f), true, false);
 	m_pInstanceWorldMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &instanceWorldMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pInstanceWorldMatrixBuffer");
-	UploadData(pRenderEnv, m_pInstanceWorldMatrixBuffer, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-		&instanceWorldMatrixBufferDesc, instanceWorldMatrixBufferData.data(), m_TotalNumInstances * sizeof(Matrix4f));
+	UploadData(pRenderEnv, m_pInstanceWorldMatrixBuffer, instanceWorldMatrixBufferDesc,
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, instanceWorldMatrixBufferData.data(), m_TotalNumInstances * sizeof(Matrix4f));
 }
 
 void MeshRenderResources::InitPerMeshTypeResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)
@@ -265,7 +265,8 @@ void MeshRenderResources::InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, 
 
 	VertexBufferDesc bufferDesc(numVertices, m_VertexStrideInBytes[meshType]);
 	m_VertexBuffers[meshType] = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pVertexBuffer");
-	UploadData(pRenderEnv, m_VertexBuffers[meshType], D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &bufferDesc, pVertexData, sizeInBytes);
+	UploadData(pRenderEnv, m_VertexBuffers[meshType], bufferDesc,
+		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, pVertexData, sizeInBytes);
 	
 	SafeArrayDelete(pVertexData);
 }
@@ -287,7 +288,8 @@ void MeshRenderResources::InitIndexBuffer(RenderEnv* pRenderEnv, u32 meshType, c
 	else
 		pIndexData = pMeshBatch->Get32BitIndices();
 	
-	UploadData(pRenderEnv, m_IndexBuffers[meshType], D3D12_RESOURCE_STATE_INDEX_BUFFER, &bufferDesc, pIndexData, sizeInBytes);
+	UploadData(pRenderEnv, m_IndexBuffers[meshType], bufferDesc,
+		D3D12_RESOURCE_STATE_INDEX_BUFFER, pIndexData, sizeInBytes);
 }
 
 namespace

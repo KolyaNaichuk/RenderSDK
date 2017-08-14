@@ -15,9 +15,10 @@ public:
 	{
 		D3D12_RESOURCE_STATES m_MeshInfoBufferState;
 		D3D12_RESOURCE_STATES m_InstanceWorldAABBBufferState;
+		D3D12_RESOURCE_STATES m_NumVisibleMeshesBufferState;
 		D3D12_RESOURCE_STATES m_VisibleMeshInfoBufferState;
-		D3D12_RESOURCE_STATES m_VisibleInstanceIndexBufferState;
 		D3D12_RESOURCE_STATES m_NumVisibleInstancesBufferState;
+		D3D12_RESOURCE_STATES m_VisibleInstanceIndexBufferState;
 	};
 
 	struct InitParams
@@ -44,6 +45,8 @@ public:
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
 
+	Buffer* GetNumVisibleMeshesBuffer() { return m_pNumVisibleMeshesBuffer; }
+	Buffer* GetVisibleMeshInfoBuffer() { return m_pVisibleMeshInfoBuffer; }
 	Buffer* GetNumVisibleInstancesBuffer() { return m_pNumVisibleInstancesBuffer; }
 	Buffer* GetVisibleInstanceIndexBuffer() { return m_pVisibleInstanceIndexBuffer; }
 

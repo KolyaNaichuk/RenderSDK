@@ -5,11 +5,6 @@
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/Fence.h"
 
-namespace
-{
-	const UINT MAX_NUM_COMMAND_LISTS = 25;
-}
-
 CommandQueueDesc::CommandQueueDesc(D3D12_COMMAND_LIST_TYPE type)
 {
 	Type = type;
@@ -28,9 +23,9 @@ CommandQueue::CommandQueue(GraphicsDevice* pDevice, const CommandQueueDesc* pDes
 
 void CommandQueue::ExecuteCommandLists(UINT numCommandLists, CommandList** ppCommandLists, Fence* pCompletionFence, UINT64 completionFenceValue)
 {
-	ID3D12CommandList* d3dCommandLists[MAX_NUM_COMMAND_LISTS];
+	ID3D12CommandList* d3dCommandLists[MAX_NUM_COMMAND_LISTS_IN_BATCH];
 
-	assert(numCommandLists < MAX_NUM_COMMAND_LISTS);
+	assert(numCommandLists < MAX_NUM_COMMAND_LISTS_IN_BATCH);
 	for (UINT listIndex = 0; listIndex < numCommandLists; ++listIndex)
 	{
 		CommandList* pCommandList = ppCommandLists[listIndex];

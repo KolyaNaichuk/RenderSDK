@@ -27,6 +27,7 @@
 #include "RenderPasses/DownscaleAndReprojectDepthPass.h"
 #include "RenderPasses/FrustumMeshCullingPass.h"
 #include "RenderPasses/FillVisibilityBufferPass.h"
+#include "RenderPasses/CreateMainDrawCommandsPass.h"
 #include "Common/Mesh.h"
 #include "Common/MeshBatch.h"
 #include "Common/MeshRenderResources.h"
@@ -168,13 +169,19 @@ See ConvertToUnitCubeAsLocalCoordSystem() in MeshUtilities.
 For an example, plane in original coordinates is passing through point (0, 0, 0).
 OOB will have coordinates expanding from -1 to 1 not merely passing through 0 when world matrix is applied.
 
-5.Make camera transform part of Scene object. Can check format OpenGEX for inspiration - http://opengex.org/
+5.Make camera transform part of Scene object.
+Can check format OpenGEX for inspiration - http://opengex.org/
 
 6.MeshRenderResources, LightRenderResources should not be part of Common folder
 
 7.Review to-dos
 
-8.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
+8.Use output resource states to initialize input resource states from the previous pass.
+
+9.Use Task graph for resource state transaition after each render pass.
+https://patterns.eecs.berkeley.edu/?page_id=609
+
+10.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
 against MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER and MAX_NUM_POINT_LIGHTS_PER_SHADOW_CASTER
 while writing data to the local storage
 */
@@ -508,6 +515,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pDownscaleAndReprojectDepthPass(nullptr)
 	, m_pFrustumMeshCullingPass(nullptr)
 	, m_pFillVisibilityBufferPass(nullptr)
+	, m_pCreateMainDrawCommandsPass(nullptr)
 	, m_pAppDataBuffer(nullptr)
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -528,6 +536,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pDownscaleAndReprojectDepthPass);
 	SafeDelete(m_pFrustumMeshCullingPass);
 	SafeDelete(m_pFillVisibilityBufferPass);
+	SafeDelete(m_pCreateMainDrawCommandsPass);
 	SafeDelete(m_pAppDataBuffer);
 
 	// Old
@@ -650,6 +659,7 @@ void DXApplication::OnInit()
 	InitDownscaleAndReprojectDepthPass();
 	InitFrustumMeshCullingPass();
 	InitFillVisibilityBufferPass();
+	InitCreateMainDrawCommandsPass();
 	InitConstantBuffers(pScene, backBufferWidth, backBufferHeight);
 		
 	SafeDelete(pScene);
@@ -709,14 +719,14 @@ void DXApplication::OnUpdate()
 
 void DXApplication::OnRender()
 {
-	static const u8 commandListBatchCapacity = 30;
-	static CommandList* commandListBatch[commandListBatchCapacity];
+	static CommandList* commandListBatch[MAX_NUM_COMMAND_LISTS_IN_BATCH];
 	
 	u8 commandListBatchSize = 0;
 	commandListBatch[commandListBatchSize++] = RecordDownscaleAndReprojectDepthPass();
 	commandListBatch[commandListBatchSize++] = RecordClearBackBufferPass();
 	commandListBatch[commandListBatchSize++] = RecordFrustumMeshCullingPass();
 	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferPass();
+	commandListBatch[commandListBatchSize++] = RecordCreateMainDrawCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordPresentResourceBarrierPass();
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
@@ -1210,8 +1220,10 @@ void DXApplication::InitFrustumMeshCullingPass()
 	params.m_MaxNumMeshes = m_pMeshRenderResources->GetTotalNumMeshes();
 	params.m_MaxNumInstances = m_pMeshRenderResources->GetTotalNumInstances();
 	params.m_MaxNumInstancesPerMesh = m_pMeshRenderResources->GetMaxNumInstancesPerMesh();
+
 	params.m_InputResourceStates.m_MeshInfoBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_InstanceWorldAABBBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_NumVisibleMeshesBufferState = D3D12_RESOURCE_STATE_COPY_SOURCE;
 	params.m_InputResourceStates.m_VisibleMeshInfoBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_NumVisibleInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -1270,6 +1282,55 @@ CommandList* DXApplication::RecordFillVisibilityBufferPass()
 	params.m_pNumInstancesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleInstancesBuffer();
 
 	m_pFillVisibilityBufferPass->Record(&params);
+	return params.m_pCommandList;
+}
+
+void DXApplication::InitCreateMainDrawCommandsPass()
+{
+	assert(m_pFrustumMeshCullingPass != nullptr);
+	assert(m_pFillVisibilityBufferPass != nullptr);
+	assert(m_pCreateMainDrawCommandsPass == nullptr);
+
+	const FrustumMeshCullingPass::ResourceStates* pFrustumMeshCullingPassStates = 
+		m_pFrustumMeshCullingPass->GetOutputResourceStates();
+	
+	const FillVisibilityBufferPass::ResourceStates* pFillVisibilityBufferPassStates =
+		m_pFillVisibilityBufferPass->GetOutputResourceStates();
+
+	CreateMainDrawCommandsPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+
+	params.m_InputResourceStates.m_NumMeshesBufferState = pFrustumMeshCullingPassStates->m_NumVisibleMeshesBufferState;
+	params.m_InputResourceStates.m_MeshInfoBufferState = pFrustumMeshCullingPassStates->m_VisibleMeshInfoBufferState;
+	params.m_InputResourceStates.m_InstanceIndexBufferState = pFillVisibilityBufferPassStates->m_InstanceIndexBufferState;
+	params.m_InputResourceStates.m_VisibilityBufferState = pFillVisibilityBufferPassStates->m_VisibilityBufferState;
+	params.m_InputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_NumVisibleMeshesPerTypeBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_DrawCommandBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_NumOccludedInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_OccludedInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+	params.m_pNumMeshesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer();
+	params.m_pMeshInfoBuffer = m_pFrustumMeshCullingPass->GetVisibleMeshInfoBuffer();
+	params.m_pInstanceIndexBuffer = m_pFrustumMeshCullingPass->GetVisibleInstanceIndexBuffer();
+	params.m_pVisibilityBuffer = m_pFillVisibilityBufferPass->GetVisibilityBuffer();
+	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
+	params.m_MaxNumMeshes = m_pMeshRenderResources->GetTotalNumMeshes();
+	params.m_MaxNumInstances = m_pMeshRenderResources->GetTotalNumInstances();
+	params.m_MaxNumInstancesPerMesh = m_pMeshRenderResources->GetMaxNumInstancesPerMesh();
+
+	m_pCreateMainDrawCommandsPass = new CreateMainDrawCommandsPass(&params);
+}
+
+CommandList* DXApplication::RecordCreateMainDrawCommandsPass()
+{
+	assert(m_pCreateMainDrawCommandsPass != nullptr);
+	CreateMainDrawCommandsPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pCreateMainDrawCommandsCommandList");
+	params.m_pNumMeshesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer();
+
+	m_pCreateMainDrawCommandsPass->Record(&params);
 	return params.m_pCommandList;
 }
 

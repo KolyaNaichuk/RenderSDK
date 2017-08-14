@@ -47,28 +47,29 @@ void FrustumMeshCullingPass::InitResources(InitParams* pParams)
 	assert(m_pNumVisibleMeshesBuffer == nullptr);
 	FormattedBufferDesc numVisibleMeshesBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
 	m_pNumVisibleMeshesBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &numVisibleMeshesBufferDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FrustumMeshCullingPass::m_pNumVisibleMeshesBuffer");
+		pParams->m_InputResourceStates.m_NumVisibleMeshesBufferState, L"FrustumMeshCullingPass::m_pNumVisibleMeshesBuffer");
 	
 	assert(m_pNumVisibleInstancesBuffer == nullptr);
 	FormattedBufferDesc numVisibleInstancesBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
 	m_pNumVisibleInstancesBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &numVisibleInstancesBufferDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FrustumMeshCullingPass::m_pNumVisibleInstancesBuffer");
+		pParams->m_InputResourceStates.m_NumVisibleInstancesBufferState, L"FrustumMeshCullingPass::m_pNumVisibleInstancesBuffer");
 
 	assert(m_pVisibleMeshInfoBuffer == nullptr);
 	StructuredBufferDesc visibleMeshInfoBufferDesc(pParams->m_MaxNumMeshes, sizeof(MeshRenderInfo), true, true);
 	m_pVisibleMeshInfoBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &visibleMeshInfoBufferDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FrustumMeshCullingPass::m_pVisibleMeshInfoBuffer");
+		pParams->m_InputResourceStates.m_VisibleMeshInfoBufferState, L"FrustumMeshCullingPass::m_pVisibleMeshInfoBuffer");
 
 	assert(m_pVisibleInstanceIndexBuffer == nullptr);
 	FormattedBufferDesc visibleInstanceIndexBufferDesc(pParams->m_MaxNumInstances, DXGI_FORMAT_R32_UINT, true, true);
 	m_pVisibleInstanceIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &visibleInstanceIndexBufferDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FrustumMeshCullingPass::m_pVisibleInstanceIndexBuffer");
+		pParams->m_InputResourceStates.m_VisibleInstanceIndexBufferState, L"FrustumMeshCullingPass::m_pVisibleInstanceIndexBuffer");
 	
 	m_OutputResourceStates.m_MeshInfoBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_InstanceWorldAABBBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_NumVisibleMeshesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_VisibleMeshInfoBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	m_OutputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_NumVisibleInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	m_OutputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
 	assert(m_ResourceBarriers.empty());
 	CreateResourceBarrierIfRequired(pParams->m_pMeshInfoBuffer,
@@ -79,17 +80,21 @@ void FrustumMeshCullingPass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_InstanceWorldAABBBufferState,
 		m_OutputResourceStates.m_InstanceWorldAABBBufferState);
 
+	CreateResourceBarrierIfRequired(m_pNumVisibleMeshesBuffer,
+		pParams->m_InputResourceStates.m_NumVisibleMeshesBufferState,
+		m_OutputResourceStates.m_NumVisibleMeshesBufferState);
+
 	CreateResourceBarrierIfRequired(m_pVisibleMeshInfoBuffer,
 		pParams->m_InputResourceStates.m_VisibleMeshInfoBufferState,
 		m_OutputResourceStates.m_VisibleMeshInfoBufferState);
 
-	CreateResourceBarrierIfRequired(m_pVisibleInstanceIndexBuffer,
-		pParams->m_InputResourceStates.m_VisibleInstanceIndexBufferState,
-		m_OutputResourceStates.m_VisibleInstanceIndexBufferState);
-
 	CreateResourceBarrierIfRequired(m_pNumVisibleInstancesBuffer,
 		pParams->m_InputResourceStates.m_NumVisibleInstancesBufferState,
 		m_OutputResourceStates.m_NumVisibleInstancesBufferState);
+
+	CreateResourceBarrierIfRequired(m_pVisibleInstanceIndexBuffer,
+		pParams->m_InputResourceStates.m_VisibleInstanceIndexBufferState,
+		m_OutputResourceStates.m_VisibleInstanceIndexBufferState);
 
 	m_SRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStart,

@@ -90,19 +90,21 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 
 	IndexBufferDesc unitAABBIndexBufferDesc(unitAABBIndexCount, sizeof(unitAABBTriangleStripIndices[0]));
 	m_pUnitAABBIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &unitAABBIndexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pUnitAABBIndexBuffer");
-	UploadData(pRenderEnv, m_pUnitAABBIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, &unitAABBIndexBufferDesc, unitAABBTriangleStripIndices, sizeof(unitAABBTriangleStripIndices));
+	UploadData(pRenderEnv, m_pUnitAABBIndexBuffer, unitAABBIndexBufferDesc,
+		D3D12_RESOURCE_STATE_INDEX_BUFFER, unitAABBTriangleStripIndices, sizeof(unitAABBTriangleStripIndices));
 
 	assert(m_pArgumentBuffer == nullptr);
 	DrawIndexedArguments argumentBufferData(unitAABBIndexCount, 0, 0, 0, 0);
 	StructuredBufferDesc argumentBufferDesc(1, sizeof(argumentBufferData), false, false);
 	m_pArgumentBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &argumentBufferDesc,
 		D3D12_RESOURCE_STATE_COPY_DEST, L"FillVisibilityBufferPass::m_pArgumentBuffer");
-	UploadData(pRenderEnv, m_pArgumentBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, &argumentBufferDesc, &argumentBufferData, sizeof(argumentBufferData));
+	UploadData(pRenderEnv, m_pArgumentBuffer, argumentBufferDesc,
+		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, &argumentBufferData, sizeof(argumentBufferData));
 
 	assert(m_pVisibilityBuffer == nullptr);
 	FormattedBufferDesc visibilityBufferDesc(pParams->m_MaxNumInstances, DXGI_FORMAT_R32_UINT, true, true);
 	m_pVisibilityBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &visibilityBufferDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"FillVisibilityBufferPass::m_pVisibilityBuffer");
+		pParams->m_InputResourceStates.m_VisibilityBufferState, L"FillVisibilityBufferPass::m_pVisibilityBuffer");
 
 	m_OutputResourceStates.m_InstanceIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;

@@ -86,34 +86,35 @@ void CreateMainDrawCommandsPass::InitResources(InitParams* pParams)
 	assert(m_pVisibleInstanceIndexBuffer == nullptr);
 	FormattedBufferDesc visibleInstanceIndexBufferDesc(pParams->m_MaxNumInstances, DXGI_FORMAT_R32_UINT, true, true);
 	m_pVisibleInstanceIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &visibleInstanceIndexBufferDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"CreateMainDrawCommandsPass::m_pVisibleInstanceIndexBuffer");
+		pParams->m_InputResourceStates.m_VisibleInstanceIndexBufferState, L"CreateMainDrawCommandsPass::m_pVisibleInstanceIndexBuffer");
 
 	assert(m_pNumVisibleMeshesPerTypeBuffer == nullptr);
 	FormattedBufferDesc numVisibleMeshesPerTypeBufferDesc(pParams->m_NumMeshTypes, DXGI_FORMAT_R32_UINT, false, true);
 	m_pNumVisibleMeshesPerTypeBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &numVisibleMeshesPerTypeBufferDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"CreateMainDrawCommandsPass::m_pNumVisibleMeshesPerTypeBuffer");
+		pParams->m_InputResourceStates.m_NumVisibleMeshesPerTypeBufferState, L"CreateMainDrawCommandsPass::m_pNumVisibleMeshesPerTypeBuffer");
 
 	assert(m_pDrawCommandBuffer == nullptr);
 	StructuredBufferDesc drawCommandBuffer(pParams->m_MaxNumMeshes, sizeof(DrawCommand), false, true);
 	m_pDrawCommandBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &drawCommandBuffer,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"CreateMainDrawCommandsPass::m_pDrawCommandBuffer");
+		pParams->m_InputResourceStates.m_DrawCommandBufferState, L"CreateMainDrawCommandsPass::m_pDrawCommandBuffer");
 
 	assert(m_pNumOccludedInstancesBuffer == nullptr);
 	FormattedBufferDesc numOccludedInstancesBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
 	m_pNumOccludedInstancesBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &numOccludedInstancesBufferDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"CreateMainDrawCommandsPass::m_pNumOccludedInstancesBuffer");
+		pParams->m_InputResourceStates.m_NumOccludedInstancesBufferState, L"CreateMainDrawCommandsPass::m_pNumOccludedInstancesBuffer");
 
 	assert(m_pOccludedInstanceIndexBuffer == nullptr);
 	FormattedBufferDesc occludedInstanceIndexBufferDesc(pParams->m_MaxNumInstances, DXGI_FORMAT_R32_UINT, true, true);
 	m_pOccludedInstanceIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &occludedInstanceIndexBufferDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"CreateMainDrawCommandsPass::m_pOccludedInstanceIndexBuffer");
+		pParams->m_InputResourceStates.m_OccludedInstanceIndexBufferState, L"CreateMainDrawCommandsPass::m_pOccludedInstanceIndexBuffer");
 
 	assert(m_pArgumentBuffer == nullptr);
 	DispatchArguments argumentBufferData(0, 1, 1);
 	StructuredBufferDesc argumentBufferDesc(1, sizeof(argumentBufferData), false, true);
 	m_pArgumentBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &argumentBufferDesc,
 		D3D12_RESOURCE_STATE_COPY_DEST, L"CreateMainDrawCommandsPass::m_pArgumentBuffer");
-	UploadData(pRenderEnv, m_pArgumentBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, &argumentBufferDesc, &argumentBufferData, sizeof(m_pArgumentBuffer));
+	UploadData(pRenderEnv, m_pArgumentBuffer, argumentBufferDesc,
+		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, &argumentBufferData, sizeof(m_pArgumentBuffer));
 
 	m_OutputResourceStates.m_NumMeshesBufferState = D3D12_RESOURCE_STATE_COPY_SOURCE;
 	m_OutputResourceStates.m_VisibilityBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;

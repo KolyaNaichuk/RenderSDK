@@ -23,6 +23,7 @@ class LightRenderResources;
 class DownscaleAndReprojectDepthPass;
 class FrustumMeshCullingPass;
 class FillVisibilityBufferPass;
+class CreateMainDrawCommandsPass;
 
 // Old
 class RenderGBufferPass;
@@ -105,6 +106,9 @@ private:
 	
 	void InitFillVisibilityBufferPass();
 	CommandList* RecordFillVisibilityBufferPass();
+
+	void InitCreateMainDrawCommandsPass();
+	CommandList* RecordCreateMainDrawCommandsPass();
 
 	CommandList* RecordPresentResourceBarrierPass();
 	
@@ -285,5 +289,6 @@ private:
 	DownscaleAndReprojectDepthPass* m_pDownscaleAndReprojectDepthPass;
 	FrustumMeshCullingPass* m_pFrustumMeshCullingPass;
 	FillVisibilityBufferPass* m_pFillVisibilityBufferPass;
+	CreateMainDrawCommandsPass* m_pCreateMainDrawCommandsPass;
 	Buffer* m_pAppDataBuffer;
 };

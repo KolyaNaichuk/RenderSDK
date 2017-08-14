@@ -133,11 +133,13 @@ void DXApplication::OnInit()
 
 	VertexBufferDesc vertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]));
 	m_pVertexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pVertexBuffer");
-	UploadData(m_pRenderEnv, m_pVertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &vertexBufferDesc, vertices, sizeof(vertices));
+	UploadData(m_pRenderEnv, m_pVertexBuffer, vertexBufferDesc,
+		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, vertices, sizeof(vertices));
 	
 	IndexBufferDesc indexBufferDesc(ARRAYSIZE(indices), sizeof(indices[0]));
 	m_pIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pIndexBuffer");
-	UploadData(m_pRenderEnv, m_pIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, &indexBufferDesc, indices, sizeof(indices));
+	UploadData(m_pRenderEnv, m_pIndexBuffer, indexBufferDesc,
+		D3D12_RESOURCE_STATE_INDEX_BUFFER, indices, sizeof(indices));
 }
 
 void DXApplication::OnUpdate()
