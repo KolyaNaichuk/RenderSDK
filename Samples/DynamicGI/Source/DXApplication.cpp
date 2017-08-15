@@ -1325,6 +1325,7 @@ void DXApplication::InitCreateMainDrawCommandsPass()
 CommandList* DXApplication::RecordCreateMainDrawCommandsPass()
 {
 	assert(m_pCreateMainDrawCommandsPass != nullptr);
+	
 	CreateMainDrawCommandsPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pCreateMainDrawCommandsCommandList");

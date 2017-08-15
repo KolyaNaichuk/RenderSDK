@@ -114,7 +114,7 @@ void CreateMainDrawCommandsPass::InitResources(InitParams* pParams)
 	m_pArgumentBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &argumentBufferDesc,
 		D3D12_RESOURCE_STATE_COPY_DEST, L"CreateMainDrawCommandsPass::m_pArgumentBuffer");
 	UploadData(pRenderEnv, m_pArgumentBuffer, argumentBufferDesc,
-		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, &argumentBufferData, sizeof(m_pArgumentBuffer));
+		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, &argumentBufferData, sizeof(argumentBufferData));
 
 	m_OutputResourceStates.m_NumMeshesBufferState = D3D12_RESOURCE_STATE_COPY_SOURCE;
 	m_OutputResourceStates.m_VisibilityBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;

@@ -51,6 +51,12 @@ public:
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
 
+	Buffer* GetVisibleInstanceIndexBuffer() { return m_pVisibleInstanceIndexBuffer; }
+	Buffer* GetNumVisibleMeshesPerTypeBuffer() { return m_pNumVisibleMeshesPerTypeBuffer; }
+	Buffer* GetDrawCommandBuffer() { return m_pDrawCommandBuffer; }
+	Buffer* GetNumOccludedInstancesBuffer() { return m_pNumOccludedInstancesBuffer; }
+	Buffer* GetOccludedInstanceIndexBuffer() { return m_pOccludedInstanceIndexBuffer; }
+
 private:
 	void InitResources(InitParams* pParams);
 	void InitRootSignature(InitParams* pParams);
