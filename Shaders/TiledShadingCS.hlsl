@@ -15,8 +15,8 @@ struct TiledShadingData
 	float  notUsed3;
 	float3 worldSpaceCameraPos;
 	float  notUsed4;
-	matrix viewProjInvMatrix;
-	matrix notUsed5[2];
+	float4x4 viewProjInvMatrix;
+	float4x4 notUsed5[2];
 };
 
 cbuffer TiledShadingDataBuffer : register(b0)

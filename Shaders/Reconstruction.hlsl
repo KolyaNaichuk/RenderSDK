@@ -31,7 +31,7 @@ result = afterWDivideProjSpacePosition * InvProjMatrix = {x/z, y/z, 1, 1/z}
 viewSpacePosition = result / result.w;
 */
 
-float ComputeViewSpaceDepth(float hardwareDepth, matrix projMatrix)
+float ComputeViewSpaceDepth(float hardwareDepth, float4x4 projMatrix)
 {
 	return projMatrix._m23 / (hardwareDepth - projMatrix._m22);
 }
@@ -41,7 +41,7 @@ float NormalizeViewSpaceDepth(float viewSpaceDepth, float nearPlane, float farPl
 	return (viewSpaceDepth - nearPlane) / (farPlane - nearPlane);
 }
 
-float4 ComputeViewSpacePosition(float2 texCoord, float hardwareDepth, matrix projInvMatrix)
+float4 ComputeViewSpacePosition(float2 texCoord, float hardwareDepth, float4x4 projInvMatrix)
 {
 	float4 postWDivideProjSpacePos = float4(2.0f * texCoord.x - 1.0f, 1.0f - 2.0f * texCoord.y, hardwareDepth, 1.0f);
 	
@@ -51,7 +51,7 @@ float4 ComputeViewSpacePosition(float2 texCoord, float hardwareDepth, matrix pro
 	return viewSpacePos;
 }
 
-float4 ComputeWorldSpacePosition(float2 texCoord, float hardwareDepth, matrix viewProjInvMatrix)
+float4 ComputeWorldSpacePosition(float2 texCoord, float hardwareDepth, float4x4 viewProjInvMatrix)
 {
 	float4 postWDivideProjSpacePos = float4(2.0f * texCoord.x - 1.0f, 1.0f - 2.0f * texCoord.y, hardwareDepth, 1.0f);
 

@@ -18,7 +18,7 @@ cbuffer AppDataBuffer : register(b0)
 }
 
 Buffer<uint> g_InstanceIndexBuffer : register(t0);
-StructuredBuffer<matrix> g_InstanceWorldMatrixBuffer : register(t1);
+StructuredBuffer<float4x4> g_InstanceWorldOBBMatrixBuffer : register(t1);
 
 VSOutput Main(VSInput input)
 {
@@ -30,7 +30,7 @@ VSOutput Main(VSInput input)
 		((input.vertexId & 4) == 0) ? -1.0f : 1.0f,
 		1.0f);
 
-	matrix worldMatrix = g_InstanceWorldMatrixBuffer[instanceIndex];
+	float4x4 worldMatrix = g_InstanceWorldOBBMatrixBuffer[instanceIndex];
 	float4 worldSpacePos = mul(worldMatrix, localSpacePos);
 
 	VSOutput output;

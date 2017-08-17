@@ -9,10 +9,12 @@
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
+#include "Math/Transform.h"
 
 namespace
 {
 	u32 CalcMaxNumInstancesPerMesh(u32 numMeshTypes, MeshBatch** ppFirstMeshType);
+	const Matrix4f ExtractUnitAABBToWorldOBBTransform(const OrientedBox& worldOBB);
 }
 
 MeshRenderResources::MeshRenderResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)
@@ -23,6 +25,7 @@ MeshRenderResources::MeshRenderResources(RenderEnv* pRenderEnv, u32 numMeshTypes
 	, m_pMeshInfoBuffer(nullptr)
 	, m_pInstanceWorldMatrixBuffer(nullptr)
 	, m_pInstanceWorldAABBBuffer(nullptr)
+	, m_pInstanceWorldOBBMatrixBuffer(nullptr)
 {
 	InitPerMeshResources(pRenderEnv, numMeshTypes, ppFirstMeshType);
 	InitPerMeshInstanceResources(pRenderEnv, numMeshTypes, ppFirstMeshType);
@@ -34,6 +37,7 @@ MeshRenderResources::~MeshRenderResources()
 	SafeDelete(m_pMeshInfoBuffer);
 	SafeDelete(m_pInstanceWorldMatrixBuffer);
 	SafeDelete(m_pInstanceWorldAABBBuffer);
+	SafeDelete(m_pInstanceWorldOBBMatrixBuffer);
 
 	for (u32 meshType = 0; meshType < m_NumMeshTypes; ++meshType)
 	{
@@ -82,7 +86,9 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 	}
 
 	StructuredBufferDesc meshInfoBufferDesc(m_TotalNumMeshes, sizeof(MeshRenderInfo), true, false);
-	m_pMeshInfoBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &meshInfoBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pMeshInfoBuffer");
+	m_pMeshInfoBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &meshInfoBufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pMeshInfoBuffer");
+	
 	UploadData(pRenderEnv, m_pMeshInfoBuffer, meshInfoBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 		meshInfoBufferData.data(), m_TotalNumMeshes * sizeof(MeshRenderInfo));
 }
@@ -96,8 +102,11 @@ void MeshRenderResources::InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u3
 		m_TotalNumInstances += pMeshBatch->GetNumMeshInstances();
 	}
 
-	std::vector<AxisAlignedBox> instanceAABBBufferData;
-	instanceAABBBufferData.reserve(m_TotalNumInstances);
+	std::vector<AxisAlignedBox> instanceWorldAABBBufferData;
+	instanceWorldAABBBufferData.reserve(m_TotalNumInstances);
+
+	std::vector<Matrix4f> instanceWorldOBBMatrixBufferData;
+	instanceWorldOBBMatrixBufferData.reserve(m_TotalNumInstances);
 
 	std::vector<Matrix4f> instanceWorldMatrixBufferData;
 	instanceWorldMatrixBufferData.reserve(m_TotalNumInstances);
@@ -105,27 +114,46 @@ void MeshRenderResources::InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u3
 	for (u32 meshType = 0; meshType < numMeshTypes; ++meshType)
 	{
 		const MeshBatch* pMeshBatch = ppFirstMeshType[meshType];
+		const u32 numInstances = pMeshBatch->GetNumMeshInstances();
 
 		const AxisAlignedBox* pFirstInstanceWorldAABB = pMeshBatch->GetMeshInstanceWorldAABBs();
-		instanceAABBBufferData.insert(
-			instanceAABBBufferData.end(),
+		instanceWorldAABBBufferData.insert(
+			instanceWorldAABBBufferData.end(),
 			pFirstInstanceWorldAABB,
-			pFirstInstanceWorldAABB + pMeshBatch->GetNumMeshInstances());
+			pFirstInstanceWorldAABB + numInstances);
+
+		const OrientedBox* pFirstInstanceWorldOBB = pMeshBatch->GetMeshInstanceWorldOBBs();
+		for (u32 instanceIndex = 0; instanceIndex < numInstances; ++instanceIndex)
+		{
+			const OrientedBox& instanceWorldOBB = pFirstInstanceWorldOBB[instanceIndex];
+			instanceWorldOBBMatrixBufferData.emplace_back(ExtractUnitAABBToWorldOBBTransform(instanceWorldOBB));
+		}
 
 		const Matrix4f* pFirstInstanceWorldMatrix = pMeshBatch->GetMeshInstanceWorldMatrices();
 		instanceWorldMatrixBufferData.insert(
 			instanceWorldMatrixBufferData.end(),
 			pFirstInstanceWorldMatrix,
-			pFirstInstanceWorldMatrix + pMeshBatch->GetNumMeshInstances());
+			pFirstInstanceWorldMatrix + numInstances);
 	}
 
-	StructuredBufferDesc instanceAABBBufferDesc(m_TotalNumInstances, sizeof(AxisAlignedBox), true, false);
-	m_pInstanceWorldAABBBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &instanceAABBBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pInstanceWorldAABBBuffer");
-	UploadData(pRenderEnv, m_pInstanceWorldAABBBuffer, instanceAABBBufferDesc,
-		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, instanceAABBBufferData.data(), m_TotalNumInstances * sizeof(AxisAlignedBox));
+	StructuredBufferDesc instanceWorldAABBBufferDesc(m_TotalNumInstances, sizeof(AxisAlignedBox), true, false);
+	m_pInstanceWorldAABBBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps,
+		&instanceWorldAABBBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pInstanceWorldAABBBuffer");
+	
+	UploadData(pRenderEnv, m_pInstanceWorldAABBBuffer, instanceWorldAABBBufferDesc,
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, instanceWorldAABBBufferData.data(), m_TotalNumInstances * sizeof(AxisAlignedBox));
+
+	StructuredBufferDesc instanceWorldOBBMatrixBufferDesc(m_TotalNumInstances, sizeof(Matrix4f), true, false);
+	m_pInstanceWorldOBBMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps,
+		&instanceWorldOBBMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pInstanceWorldOBBMatrixBuffer");
+	
+	UploadData(pRenderEnv, m_pInstanceWorldOBBMatrixBuffer, instanceWorldOBBMatrixBufferDesc,
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, instanceWorldOBBMatrixBufferData.data(), m_TotalNumInstances * sizeof(Matrix4f));
 
 	StructuredBufferDesc instanceWorldMatrixBufferDesc(m_TotalNumInstances, sizeof(Matrix4f), true, false);
-	m_pInstanceWorldMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &instanceWorldMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pInstanceWorldMatrixBuffer");
+	m_pInstanceWorldMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps,
+		&instanceWorldMatrixBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pInstanceWorldMatrixBuffer");
+	
 	UploadData(pRenderEnv, m_pInstanceWorldMatrixBuffer, instanceWorldMatrixBufferDesc,
 		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, instanceWorldMatrixBufferData.data(), m_TotalNumInstances * sizeof(Matrix4f));
 }
@@ -301,5 +329,18 @@ namespace
 			maxNumInstancesPerMesh = Max(maxNumInstancesPerMesh, ppFirstMeshType[meshType]->GetMaxNumInstancesPerMesh());
 
 		return maxNumInstancesPerMesh;
+	}
+
+	const Matrix4f ExtractUnitAABBToWorldOBBTransform(const OrientedBox& worldOBB)
+	{
+		f32 xScale = AreEqual(worldOBB.m_Radius.m_X, 0.0f, EPSILON) ? 1.0f : worldOBB.m_Radius.m_X;
+		f32 yScale = AreEqual(worldOBB.m_Radius.m_Y, 0.0f, EPSILON) ? 1.0f : worldOBB.m_Radius.m_Y;
+		f32 zScale = AreEqual(worldOBB.m_Radius.m_Z, 0.0f, EPSILON) ? 1.0f : worldOBB.m_Radius.m_Z;
+
+		Matrix4f scalingMatrix = CreateScalingMatrix(xScale, yScale, zScale);
+		Matrix4f rotationMatrix = CreateRotationMatrix(worldOBB.m_Orientation);
+		Matrix4f translationMatrix = CreateTranslationMatrix(worldOBB.m_Center);
+
+		return (scalingMatrix * rotationMatrix * translationMatrix);
 	}
 }

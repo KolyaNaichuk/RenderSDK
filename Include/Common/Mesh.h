@@ -3,6 +3,7 @@
 #include "D3DWrapper/Common.h"
 
 struct AxisAlignedBox;
+struct OrientedBox;
 struct Material;
 struct Vector2f;
 struct Vector3f;
@@ -104,7 +105,10 @@ public:
 	AxisAlignedBox* GetInstanceWorldAABBs() { return m_pInstanceWorldAABBs; }
 	const AxisAlignedBox* GetInstanceWorldAABBs() const { return m_pInstanceWorldAABBs; }
 	
-	void RecalcInstanceWorldAABBs();
+	OrientedBox* GetInstanceWorldOBBs() { return m_pInstanceWorldOBBs; }
+	const OrientedBox* GetInstanceWorldOBBs() const { return m_pInstanceWorldOBBs; }
+
+	void RecalcInstanceWorldBounds();
 	
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType() const { return m_PrimitiveTopologyType; }
 	D3D12_PRIMITIVE_TOPOLOGY GetPrimitiveTopology() const { return m_PrimitiveTopology; }
@@ -118,6 +122,7 @@ private:
 	u32 m_NumInstances;
 	Matrix4f* m_pInstanceWorldMatrices;
 	AxisAlignedBox* m_pInstanceWorldAABBs;
+	OrientedBox* m_pInstanceWorldOBBs;
 
 	u32 m_pMaterialIndex;
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE m_PrimitiveTopologyType;

@@ -1,5 +1,12 @@
 #include "Math/OrientedBox.h"
 
+OrientedBox::OrientedBox()
+	: m_Center(Vector3f::ZERO)
+	, m_Orientation(Vector3f::RIGHT, Vector3f::UP, Vector3f::FORWARD)
+	, m_Radius(Vector3f::ZERO)
+{
+}
+
 OrientedBox::OrientedBox(const Vector3f& center, const BasisAxes& orientation, const Vector3f& radius)
 	: m_Center(center)
 	, m_Orientation(orientation)

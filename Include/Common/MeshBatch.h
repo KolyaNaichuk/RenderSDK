@@ -5,6 +5,7 @@
 #include "Math/Vector4.h"
 #include "Math/Matrix4.h"
 #include "Math/AxisAlignedBox.h"
+#include "Math/OrientedBox.h"
 #include "D3DWrapper/Common.h"
 
 class Mesh;
@@ -46,6 +47,7 @@ public:
 	u32 GetMaxNumInstancesPerMesh() const { return m_MaxNumInstancesPerMesh; }
 	u32 GetNumMeshInstances() const { return m_MeshInstanceWorldAABBs.size(); }
 	const AxisAlignedBox* GetMeshInstanceWorldAABBs() const { return m_MeshInstanceWorldAABBs.data(); }
+	const OrientedBox* GetMeshInstanceWorldOBBs() const { return m_MeshInstanceWorldOBBs.data(); }
 	const Matrix4f* GetMeshInstanceWorldMatrices() const { return m_MeshInstanceWorldMatrices.data(); }
 
 	u32 GetNumVertices() const;
@@ -76,6 +78,7 @@ private:
 
 	std::vector<MeshInfo> m_MeshInfos;
 	std::vector<AxisAlignedBox> m_MeshInstanceWorldAABBs;
+	std::vector<OrientedBox> m_MeshInstanceWorldOBBs;
 	std::vector<Matrix4f> m_MeshInstanceWorldMatrices;
 
 	u32 m_MaxNumInstancesPerMesh;

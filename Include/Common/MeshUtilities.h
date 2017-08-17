@@ -2,7 +2,8 @@
 
 #include "Common/Common.h"
 
-class Mesh;
+class VertexData;
+class IndexData;
 struct Vector3f;
 
 enum FaceNormalWeight
@@ -22,5 +23,4 @@ enum ConvertionFlags
 	ConvertionFlag_LeftHandedCoordSystem = ConvertionFlag_FlipZCoord | ConvertionFlag_FlipWindingOrder | ConvertionFlag_FlipTexCoords
 };
 
-void ConvertMesh(Mesh* pMesh, u8 convertionFlags);
-void ConvertToUnitCubeAsLocalCoordSystem(Mesh* pMesh);
+void ConvertVertexAndIndexData(u8 convertionFlags, VertexData* pVertexData, IndexData* pIndexData);

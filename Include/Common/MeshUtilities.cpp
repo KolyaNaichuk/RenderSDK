@@ -80,10 +80,8 @@ void ComputeNormals(u32 numVertices, const Vector3f* pPositions, u32 numIndices,
 	assert(false);
 }
 
-void ConvertMesh(Mesh* pMesh, u8 convertionFlags)
+void ConvertVertexAndIndexData(u8 convertionFlags, VertexData* pVertexData, IndexData* pIndexData)
 {
-	VertexData* pVertexData = pMesh->GetVertexData();
-
 	const u32 numVertices = pVertexData->GetNumVertices();
 	const u8 vertexFormatFlags = pVertexData->GetFormatFlags();
 
@@ -125,53 +123,13 @@ void ConvertMesh(Mesh* pMesh, u8 convertionFlags)
 	
 	if (convertionFlags & ConvertionFlag_FlipWindingOrder)
 	{
-		IndexData* pIndexData = pMesh->GetIndexData();
-		const u32 numIndices = pIndexData->GetNumIndices();
-
 		if (pIndexData->GetFormat() == DXGI_FORMAT_R16_UINT)
 		{
-			FlipIndicesWindingOrder(numIndices, pIndexData->Get16BitIndices());
-		}			
+			FlipIndicesWindingOrder(pIndexData->GetNumIndices(), pIndexData->Get16BitIndices());
+		}
 		else
 		{
-			FlipIndicesWindingOrder(numIndices, pIndexData->Get32BitIndices());
+			FlipIndicesWindingOrder(pIndexData->GetNumIndices(), pIndexData->Get32BitIndices());
 		}
-	}
-}
-
-void ConvertToUnitCubeAsLocalCoordSystem(Mesh* pMesh)
-{
-	VertexData* pVertexData = pMesh->GetVertexData();
-	
-	const u32 numVertices = pVertexData->GetNumVertices();
-	Vector3f* localSpacePositions = pVertexData->GetPositions();
-	Vector3f* localSpaceNormals = pVertexData->GetNormals();
-	Matrix4f* instanceWorldMatrices = pMesh->GetInstanceWorldMatrices();
-	
-	const u32 numInstances = pMesh->GetNumInstances();
-	for (u32 instanceIndex = 0; instanceIndex < numInstances; ++instanceIndex)
-	{	
-		std::vector<Vector3f> worldSpacePositions(numVertices);
-		for (u32 positionIndex = 0; positionIndex < numVertices; ++positionIndex)
-			worldSpacePositions[positionIndex] = TransformPoint(localSpacePositions[positionIndex], instanceWorldMatrices[instanceIndex]);
-		
-		OrientedBox worldSpaceBox(numVertices, worldSpacePositions.data());
-
-		Matrix4f scalingMatrix = CreateScalingMatrix(
-			AreEqual(worldSpaceBox.m_Radius.m_X, 0.0f, EPSILON) ? 1.0f : worldSpaceBox.m_Radius.m_X,
-			AreEqual(worldSpaceBox.m_Radius.m_Y, 0.0f, EPSILON) ? 1.0f : worldSpaceBox.m_Radius.m_Y,
-			AreEqual(worldSpaceBox.m_Radius.m_Z, 0.0f, EPSILON) ? 1.0f : worldSpaceBox.m_Radius.m_Z);
-
-		Matrix4f rotationMatrix = CreateRotationMatrix(worldSpaceBox.m_Orientation);
-		Matrix4f translationMatrix = CreateTranslationMatrix(worldSpaceBox.m_Center);
-		
-		Matrix4f unitCubeToWorldSpaceMatrix = scalingMatrix * rotationMatrix * translationMatrix;
-		if (instanceIndex == numInstances - 1)
-		{
-			Matrix4f worldToUnitCubeSpaceMatrix = Inverse(unitCubeToWorldSpaceMatrix);
-			for (u32 positionIndex = 0; positionIndex < numVertices; ++positionIndex)
-				localSpacePositions[positionIndex] = TransformPoint(worldSpacePositions[positionIndex], worldToUnitCubeSpaceMatrix);
-		}
-		instanceWorldMatrices[instanceIndex] = unitCubeToWorldSpaceMatrix;
 	}
 }

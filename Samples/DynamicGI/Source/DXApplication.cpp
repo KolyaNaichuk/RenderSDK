@@ -154,34 +154,27 @@ Used resources:
 
 /*
 To do:
-1.Using unit cube as local coordinate system for meshes to be able to use the same world matrix for OOB.
-Investigate if this is an optimal solution.
-- There seems to be some precision loss when converting to unit cube and back to world space.
-- Need to use transposed of inverse world matrix for normal transformation as scale is not guaranteed to be uniform anymore.
-- Should I use dedicated world space OOB for each mesh object instead of transforming unit cube?
+1.OOB for a set of points mimics AABB. Improve implementation.
 
-2.Missing conversion for normals when converting mesh vertex data to unit cube space.
-See ConvertToUnitCubeAsLocalCoordSystem() in MeshUtilities.
-
-3.OOB for a set of points mimics AABB. Improve implementation.
-
-4.When converting plane mesh to unit cube space, world matrix is not optimal for OOB.
+2.When converting plane mesh to unit cube space, world matrix is not optimal for OOB.
 For an example, plane in original coordinates is passing through point (0, 0, 0).
 OOB will have coordinates expanding from -1 to 1 not merely passing through 0 when world matrix is applied.
 
-5.Make camera transform part of Scene object.
+3.Make camera transform part of Scene object.
 Can check format OpenGEX for inspiration - http://opengex.org/
 
-6.MeshRenderResources, LightRenderResources should not be part of Common folder
+4.MeshRenderResources, LightRenderResources should not be part of Common folder
 
-7.Review to-dos
+5.Review to-dos
 
-8.Use output resource states to initialize input resource states from the previous pass.
+6.Use output resource states to initialize input resource states from the previous pass.
 
-9.Use Task graph for resource state transaition after each render pass.
+7.Use Task graph for resource state transaition after each render pass.
 https://patterns.eecs.berkeley.edu/?page_id=609
 
-10.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
+8.Fix compilation warnings for x64 build
+
+9.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
 against MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER and MAX_NUM_POINT_LIGHTS_PER_SHADOW_CASTER
 while writing data to the local storage
 */
@@ -1255,14 +1248,14 @@ void DXApplication::InitFillVisibilityBufferPass()
 	params.m_pRenderEnv = m_pRenderEnv;
 
 	params.m_InputResourceStates.m_InstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_InstanceWorldOBBMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_NumInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	params.m_InputResourceStates.m_VisibilityBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	
 	params.m_pInstanceIndexBuffer = m_pFrustumMeshCullingPass->GetVisibleInstanceIndexBuffer();
 	params.m_pNumInstancesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleInstancesBuffer();
-	params.m_pInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
+	params.m_pInstanceWorldOBBMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldOBBMatrixBuffer();
 	params.m_pDepthTexture = m_pDownscaleAndReprojectDepthPass->GetReprojectedDepthTexture();
 	params.m_ClampVerticesBehindCameraNearPlane = true;
 	params.m_MaxNumInstances = m_pMeshRenderResources->GetTotalNumInstances();

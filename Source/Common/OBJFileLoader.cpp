@@ -401,11 +401,10 @@ Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshFlags)
 			Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
 			pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 						
-			Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, objFileMesh.m_MaterialIndex, primitiveTopologyType, primitiveTopology);
-			if (convertMeshFlags != 0)
-				ConvertMesh(&mesh, convertMeshFlags);
-			mesh.RecalcInstanceWorldAABBs();
-
+			ConvertVertexAndIndexData(convertMeshFlags, pVertexData, pIndexData);
+			Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices,
+				objFileMesh.m_MaterialIndex, primitiveTopologyType, primitiveTopology);
+			
 			pMeshBatch->AddMesh(&mesh);
 		}
 	}

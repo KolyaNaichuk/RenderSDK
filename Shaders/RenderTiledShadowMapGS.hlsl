@@ -31,7 +31,7 @@ struct Frustum
 #if LIGHT_TYPE == LIGHT_TYPE_POINT
 Buffer<uint> g_ShadowCastingPointLightIndexBuffer : register(t0);
 StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t1);
-StructuredBuffer<matrix> g_PointLightViewTileProjMatrixBuffer : register(t2);
+StructuredBuffer<float4x4> g_PointLightViewTileProjMatrixBuffer : register(t2);
 StructuredBuffer<Frustum> g_PointLightFrustumBuffer : register(t3);
 
 [maxvertexcount(NUM_CUBE_MAP_FACES * NUM_VERTICES)]
@@ -68,7 +68,7 @@ void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> o
 		if (isFaceInvisible)
 			continue;
 
-		matrix lightViewTileProjMatrix = g_PointLightViewTileProjMatrixBuffer[frustumIndex];
+		float4x4 lightViewTileProjMatrix = g_PointLightViewTileProjMatrixBuffer[frustumIndex];
 		for (uint vertexIndex = 0; vertexIndex < NUM_VERTICES; ++vertexIndex)
 		{
 			GSOutput output;
@@ -87,7 +87,7 @@ void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> o
 #if LIGHT_TYPE == LIGHT_TYPE_SPOT
 Buffer<uint> g_ShadowCastingSpotLightIndexBuffer : register(t0);
 StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t1);
-StructuredBuffer<matrix> g_SpotLightViewTileProjMatrixBuffer : register(t2);
+StructuredBuffer<float4x4> g_SpotLightViewTileProjMatrixBuffer : register(t2);
 StructuredBuffer<Frustum> g_SpotLightFrustumBuffer : register(t3);
 
 [maxvertexcount(NUM_VERTICES)]
@@ -119,7 +119,7 @@ void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> o
 	if (isFaceInvisible)
 		return;
 
-	matrix lightViewTileProjMatrix = g_SpotLightViewTileProjMatrixBuffer[lightIndex];
+	float4x4 lightViewTileProjMatrix = g_SpotLightViewTileProjMatrixBuffer[lightIndex];
 	for (uint vertexIndex = 0; vertexIndex < NUM_VERTICES; ++vertexIndex)
 	{
 		GSOutput output;

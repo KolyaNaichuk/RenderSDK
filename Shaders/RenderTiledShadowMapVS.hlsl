@@ -13,9 +13,9 @@ struct VSOutput
 
 struct ObjectTransform
 {
-	matrix worldPositionMatrix;
-	matrix worldNormalMatrix;
-	matrix worldViewProjMatrix;
+	float4x4 worldPositionMatrix;
+	float4x4 worldNormalMatrix;
+	float4x4 worldViewProjMatrix;
 	float4 notUsed[4];
 };
 

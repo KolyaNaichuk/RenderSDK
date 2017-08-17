@@ -14,6 +14,7 @@ namespace
 		kRootSRVTableParam = 0,
 		kNumRootParams
 	};
+
 	struct DrawCommand
 	{
 		UINT m_InstanceOffset;

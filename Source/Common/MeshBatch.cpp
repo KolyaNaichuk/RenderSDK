@@ -89,6 +89,10 @@ void MeshBatch::AddMesh(const Mesh* pMesh)
 	m_MeshInstanceWorldAABBs.insert(m_MeshInstanceWorldAABBs.end(),
 		pMesh->GetInstanceWorldAABBs(),
 		pMesh->GetInstanceWorldAABBs() + numInstances);
+
+	m_MeshInstanceWorldOBBs.insert(m_MeshInstanceWorldOBBs.end(),
+		pMesh->GetInstanceWorldOBBs(),
+		pMesh->GetInstanceWorldOBBs() + numInstances);
 	
 	m_MeshInstanceWorldMatrices.insert(m_MeshInstanceWorldMatrices.end(),
 		pMesh->GetInstanceWorldMatrices(),

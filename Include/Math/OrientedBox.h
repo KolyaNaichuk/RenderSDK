@@ -4,6 +4,7 @@
 
 struct OrientedBox
 {
+	OrientedBox();
 	OrientedBox(const Vector3f& center, const BasisAxes& orientation, const Vector3f& radius);
 	OrientedBox(u32 numPoints, const Vector3f* pFirstPoint);
 

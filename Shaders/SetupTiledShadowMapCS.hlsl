@@ -21,10 +21,10 @@ cbuffer ShadowMapDataBuffer : register(b0)
 
 Buffer<uint> g_NumLightsBuffer : register(t0);
 Buffer<uint> g_LightIndexBuffer : register(t1);
-StructuredBuffer<matrix> g_LightViewProjMatrixBuffer : register(t2);
+StructuredBuffer<float4x4> g_LightViewProjMatrixBuffer : register(t2);
 
 RWStructuredBuffer<ShadowMapTile> g_ShadowMapTileBuffer : register(u0);
-RWStructuredBuffer<matrix> g_LightViewProjTileMatrixBuffer : register(u1);
+RWStructuredBuffer<float4x4> g_LightViewProjTileMatrixBuffer : register(u1);
 
 [numthreads(THREAD_GROUP_SIZE, 1, 1)]
 void Main(uint3 tileId : SV_DispatchThreadID)
@@ -47,8 +47,8 @@ void Main(uint3 tileId : SV_DispatchThreadID)
 
 		g_ShadowMapTileBuffer[tileIndex] = tile;
 
-		matrix lightViewProjMatrix = g_LightViewProjMatrixBuffer[tileIndex];
-		matrix shadowMapTileProjMatrix = 
+		float4x4 lightViewProjMatrix = g_LightViewProjMatrixBuffer[tileIndex];
+		float4x4 shadowMapTileProjMatrix = 
 		{
 			tile.texSpaceSize.x, 0.0f, 0.0f, 0.0f,
 			0.0f, tile.texSpaceSize.y, 0.0f, 0.0f,

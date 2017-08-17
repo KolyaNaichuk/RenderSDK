@@ -25,16 +25,16 @@ struct GridConfig
 
 struct ObjectTransform
 {
-	matrix worldPositionMatrix;
-	matrix worldNormalMatrix;
-	matrix worldViewProjMatrix;
+	float4x4 worldPositionMatrix;
+	float4x4 worldNormalMatrix;
+	float4x4 worldViewProjMatrix;
 	float4 notUsed[4];
 };
 
 struct CameraTransform
 {
-	matrix viewProjInvMatrix;
-	matrix viewProjMatrices[3];
+	float4x4 viewProjInvMatrix;
+	float4x4 viewProjMatrices[3];
 };
 
 int3 ComputeGridCell(GridConfig gridConfig, float3 worldSpacePos)

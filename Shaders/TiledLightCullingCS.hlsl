@@ -9,9 +9,9 @@ struct TiledLightCullingData
 	float4 notUsed2;
 	float4 notUsed3;
 	float4 notUsed4;
-	matrix viewMatrix;
-	matrix projMatrix;
-	matrix projInvMatrix;
+	float4x4 viewMatrix;
+	float4x4 projMatrix;
+	float4x4 projInvMatrix;
 };
 
 #define NUM_THREADS_PER_TILE	(TILE_SIZE * TILE_SIZE)

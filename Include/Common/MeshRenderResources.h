@@ -3,10 +3,7 @@
 #include "D3DWrapper/PipelineState.h"
 
 class Buffer;
-class CommandList;
 class MeshBatch;
-
-struct InputLayoutDesc;
 struct RenderEnv;
 
 struct MeshRenderInfo
@@ -45,6 +42,7 @@ public:
 	Buffer* GetMeshInfoBuffer() { return m_pMeshInfoBuffer; }
 	Buffer* GetInstanceWorldMatrixBuffer() { return m_pInstanceWorldMatrixBuffer; }
 	Buffer* GetInstanceWorldAABBBuffer() { return m_pInstanceWorldAABBBuffer; }
+	Buffer* GetInstanceWorldOBBMatrixBuffer() { return m_pInstanceWorldOBBMatrixBuffer; }
 
 	const InputLayoutDesc& GetInputLayout(u32 meshType) const { return m_InputLayouts[meshType]; }
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType(u32 meshType) const { return m_PrimitiveTopologyTypes[meshType]; }
@@ -70,6 +68,7 @@ private:
 	Buffer* m_pMeshInfoBuffer;
 	Buffer* m_pInstanceWorldMatrixBuffer;
 	Buffer* m_pInstanceWorldAABBBuffer;
+	Buffer* m_pInstanceWorldOBBMatrixBuffer;
 
 	using InputElements = std::vector<InputElementDesc>;
 	

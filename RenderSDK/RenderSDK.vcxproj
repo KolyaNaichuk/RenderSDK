@@ -156,6 +156,7 @@
     <ClInclude Include="..\Include\Common\Color.h" />
     <ClInclude Include="..\Include\Common\Common.h" />
     <ClInclude Include="..\Include\Common\FileUtilities.h" />
+    <ClInclude Include="..\Include\Common\GeometryBuffer.h" />
     <ClInclude Include="..\Include\Common\LightRenderResources.h" />
     <ClInclude Include="..\Include\Common\Material.h" />
     <ClInclude Include="..\Include\Common\MeshRenderResources.h" />
@@ -190,6 +191,7 @@
     <ClInclude Include="..\Include\Math\AxisAlignedBox.h" />
     <ClInclude Include="..\Include\Math\Frustum.h" />
     <ClInclude Include="..\Include\Math\Hash.h" />
+    <ClInclude Include="..\Include\Math\Matrix3.h" />
     <ClInclude Include="..\Include\Math\OrientedBox.h" />
     <ClInclude Include="..\Include\Math\Quad.h" />
     <ClInclude Include="..\Include\Math\Sphere.h" />
@@ -233,6 +235,7 @@
     <ClCompile Include="..\Source\Common\Camera.cpp" />
     <ClCompile Include="..\Source\Common\Common.cpp" />
     <ClCompile Include="..\Source\Common\FileUtilities.cpp" />
+    <ClCompile Include="..\Source\Common\GeometryBuffer.cpp" />
     <ClCompile Include="..\Source\Common\Light.cpp" />
     <ClCompile Include="..\Source\Common\LightRenderResources.cpp" />
     <ClCompile Include="..\Source\Common\Material.cpp" />
@@ -263,6 +266,7 @@
     <ClCompile Include="..\Source\Math\AxisAlignedBox.cpp" />
     <ClCompile Include="..\Source\Math\Cone.cpp" />
     <ClCompile Include="..\Source\Math\Frustum.cpp" />
+    <ClCompile Include="..\Source\Math\Matrix3.cpp" />
     <ClCompile Include="..\Source\Math\OrientedBox.cpp" />
     <ClCompile Include="..\Source\Math\Quad.cpp" />
     <ClCompile Include="..\Source\Math\Sphere.cpp" />

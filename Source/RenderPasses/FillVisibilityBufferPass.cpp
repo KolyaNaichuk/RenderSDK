@@ -107,7 +107,7 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_VisibilityBufferState, L"FillVisibilityBufferPass::m_pVisibilityBuffer");
 
 	m_OutputResourceStates.m_InstanceIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_InstanceWorldOBBMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_NumInstancesBufferState = D3D12_RESOURCE_STATE_COPY_SOURCE;
 	m_OutputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	m_OutputResourceStates.m_VisibilityBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -117,9 +117,9 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_InstanceIndexBufferState,
 		m_OutputResourceStates.m_InstanceIndexBufferState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pInstanceWorldMatrixBuffer,
-		pParams->m_InputResourceStates.m_InstanceWorldMatrixBufferState,
-		m_OutputResourceStates.m_InstanceWorldMatrixBufferState);
+	CreateResourceBarrierIfRequired(pParams->m_pInstanceWorldOBBMatrixBuffer,
+		pParams->m_InputResourceStates.m_InstanceWorldOBBMatrixBufferState,
+		m_OutputResourceStates.m_InstanceWorldOBBMatrixBufferState);
 
 	CreateResourceBarrierIfRequired(pParams->m_pNumInstancesBuffer,
 		pParams->m_InputResourceStates.m_NumInstancesBufferState,
@@ -142,7 +142,7 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 		pParams->m_pInstanceIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-		pParams->m_pInstanceWorldMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		pParams->m_pInstanceWorldOBBMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_SRVHeapStartPS = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStartPS,

@@ -8,7 +8,7 @@
 
 struct VisualizeTextureData
 {
-	matrix cameraProjMatrix;
+	float4x4 cameraProjMatrix;
 	float cameraNearPlane;
 	float cameraFarPlane;
 	float notUsed[46];

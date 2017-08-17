@@ -81,13 +81,10 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
 		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 
+		ConvertVertexAndIndexData(ConvertionFlag_LeftHandedCoordSystem, pVertexData, pIndexData);
 		Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		
-		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
-		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
-		mesh.RecalcInstanceWorldAABBs();
-
 		pMeshBatch->AddMesh(&mesh);
 	}
 	{
@@ -155,12 +152,9 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
 		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 
+		ConvertVertexAndIndexData(ConvertionFlag_LeftHandedCoordSystem, pVertexData, pIndexData);
 		Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
-		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
-		mesh.RecalcInstanceWorldAABBs();
 
 		pMeshBatch->AddMesh(&mesh);
 	}
@@ -229,12 +223,9 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
 		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 
+		ConvertVertexAndIndexData(ConvertionFlag_LeftHandedCoordSystem, pVertexData, pIndexData);
 		Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
-		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
-		mesh.RecalcInstanceWorldAABBs();
 
 		pMeshBatch->AddMesh(&mesh);
 	}
@@ -303,12 +294,9 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
 		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 
+		ConvertVertexAndIndexData(ConvertionFlag_LeftHandedCoordSystem, pVertexData, pIndexData);
 		Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
-		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
-		mesh.RecalcInstanceWorldAABBs();
 
 		pMeshBatch->AddMesh(&mesh);
 	}
@@ -377,12 +365,9 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
 		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 
+		ConvertVertexAndIndexData(ConvertionFlag_LeftHandedCoordSystem, pVertexData, pIndexData);
 		Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
-		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
-		mesh.RecalcInstanceWorldAABBs();
 
 		pMeshBatch->AddMesh(&mesh);
 	}
@@ -478,12 +463,9 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
 		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 
+		ConvertVertexAndIndexData(ConvertionFlag_LeftHandedCoordSystem, pVertexData, pIndexData);
 		Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
-		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
-		mesh.RecalcInstanceWorldAABBs();
 
 		pMeshBatch->AddMesh(&mesh);
 	}
@@ -579,12 +561,9 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
 		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 
+		ConvertVertexAndIndexData(ConvertionFlag_LeftHandedCoordSystem, pVertexData, pIndexData);
 		Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, materialIndex,
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		ConvertMesh(&mesh, ConvertionFlag_LeftHandedCoordSystem);
-		ConvertToUnitCubeAsLocalCoordSystem(&mesh);
-		mesh.RecalcInstanceWorldAABBs();
 
 		pMeshBatch->AddMesh(&mesh);
 	}
