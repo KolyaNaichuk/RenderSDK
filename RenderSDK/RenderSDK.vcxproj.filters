@@ -514,9 +514,6 @@
     <None Include="..\Shaders\ScaleTexture.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\Packing.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\Lighting.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -596,6 +593,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\Encoding.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

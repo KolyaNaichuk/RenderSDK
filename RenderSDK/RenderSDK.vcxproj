@@ -393,11 +393,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\Packing.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Shaders\RenderGBufferVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
@@ -626,6 +621,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\FillDepthBufferWithMeshTypePS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\Encoding.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

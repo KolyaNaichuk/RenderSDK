@@ -104,11 +104,14 @@ private:
 	void InitFrustumMeshCullingPass();
 	CommandList* RecordFrustumMeshCullingPass();
 	
-	void InitFillVisibilityBufferPass();
-	CommandList* RecordFillVisibilityBufferPass();
+	void InitFillVisibilityBufferMainPass();
+	CommandList* RecordFillVisibilityBufferMainPass();
 
 	void InitCreateMainDrawCommandsPass();
 	CommandList* RecordCreateMainDrawCommandsPass();
+
+	void InitFillVisibilityBufferFalseNegativePass();
+	CommandList* RecordFillVisibilityBufferFalseNegativePass();
 
 	CommandList* RecordPresentResourceBarrierPass();
 	
@@ -288,7 +291,8 @@ private:
 	// New render passes
 	DownscaleAndReprojectDepthPass* m_pDownscaleAndReprojectDepthPass;
 	FrustumMeshCullingPass* m_pFrustumMeshCullingPass;
-	FillVisibilityBufferPass* m_pFillVisibilityBufferPass;
+	FillVisibilityBufferPass* m_pFillVisibilityBufferMainPass;
 	CreateMainDrawCommandsPass* m_pCreateMainDrawCommandsPass;
+	FillVisibilityBufferPass* m_pFillVisibilityBufferFalseNegativePass;
 	Buffer* m_pAppDataBuffer;
 };
