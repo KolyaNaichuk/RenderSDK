@@ -36,6 +36,7 @@
 #include "Common/Camera.h"
 #include "Common/Scene.h"
 #include "Common/SceneLoader.h"
+#include "Common/GeometryBuffer.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 #include "Math/Matrix4.h"
@@ -506,6 +507,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pNumVisibleSpotLightsBuffer(nullptr)
 	, m_pVisibleSpotLightIndexBuffer(nullptr)
 	, m_pCamera(nullptr)
+	, m_pGeometryBuffer(nullptr)
 	, m_pDownscaleAndReprojectDepthPass(nullptr)
 	, m_pFrustumMeshCullingPass(nullptr)
 	, m_pFillVisibilityBufferMainPass(nullptr)
@@ -528,6 +530,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 
 DXApplication::~DXApplication()
 {
+	SafeDelete(m_pCamera);
+	SafeDelete(m_pGeometryBuffer);
 	SafeDelete(m_pDownscaleAndReprojectDepthPass);
 	SafeDelete(m_pFrustumMeshCullingPass);
 	SafeDelete(m_pFillVisibilityBufferMainPass);
@@ -560,7 +564,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pSetupSpotLightTiledShadowMapPass);
 	SafeDelete(m_pSetupPointLightTiledShadowMapPass);
 	SafeDelete(m_pCommandListPool);
-	SafeDelete(m_pCamera);
 	SafeDelete(m_pPointLightRenderResources);
 	SafeDelete(m_pNumVisiblePointLightsBuffer);
 	SafeDelete(m_pVisiblePointLightIndexBuffer);
@@ -1345,8 +1348,8 @@ void DXApplication::InitFillVisibilityBufferFalseNegativePass()
 	params.m_pRenderEnv = m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_OccludedInstanceIndexBufferState;
-	params.m_InputResourceStates.m_InstanceWorldOBBMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_NumInstancesBufferState = pCreateMainDrawCommandsPassStates->m_NumOccludedInstancesBufferState;
+	params.m_InputResourceStates.m_InstanceWorldOBBMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	params.m_InputResourceStates.m_VisibilityBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 

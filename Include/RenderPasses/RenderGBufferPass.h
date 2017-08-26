@@ -1,53 +1,81 @@
 #pragma once
 
-#include "D3DWrapper/Common.h"
+#include "D3DWrapper/GraphicsResource.h"
 
-struct Viewport;
 struct RenderEnv;
+struct Viewport;
+class CommandList;
+class CommandSignature;
 class RootSignature;
 class PipelineState;
-class CommandSignature;
-class CommandList;
-class Buffer;
-class MeshBatch;
 
 class RenderGBufferPass
 {
 public:
-	enum ShaderFlags
+	struct ResourceStates
 	{
-		ShaderFlag_HasTexCoords = 1 << 0,
-		ShaderFlag_HasDiffuseMap = 1 << 1,
-		ShaderFlag_HasSpecularMap = 1 << 2,
-		ShaderFlag_HasSpecularPowerMap = 1 << 3
+		D3D12_RESOURCE_STATES m_TexCoordTextureState;
+		D3D12_RESOURCE_STATES m_NormalTextureState;
+		D3D12_RESOURCE_STATES m_MaterialTextureState;
+		D3D12_RESOURCE_STATES m_DepthTextureState;
+		D3D12_RESOURCE_STATES m_InstanceIndexBufferState;
+		D3D12_RESOURCE_STATES m_InstanceWorldMatrixBufferState;
+		D3D12_RESOURCE_STATES m_NumVisibleMeshesPerTypeBufferState;
+		D3D12_RESOURCE_STATES m_DrawCommandBufferState;
 	};
+
 	struct InitParams
 	{
 		RenderEnv* m_pRenderEnv;
-		DXGI_FORMAT m_NormalRTVFormat;
-		DXGI_FORMAT m_DiffuseRTVFormat;
-		DXGI_FORMAT m_SpecularRTVFormat;
-		DXGI_FORMAT m_DSVFormat;
-		u8 m_ShaderFlags;
-		MeshBatch* m_pMeshBatch;
+		ResourceStates m_InputResourceStates;
+		D3D12_INPUT_LAYOUT_DESC* m_pInputLayoutDesc;
+		D3D12_PRIMITIVE_TOPOLOGY_TYPE m_PrimitiveTopologyType;
+		ColorTexture* m_pTexCoordTexture;
+		ColorTexture* m_pNormalTexture;
+		ColorTexture* m_pMaterialTexture;
+		DepthTexture* m_pDepthTexture;
+		Buffer* m_pInstanceIndexBuffer;
+		Buffer* m_pInstanceWorldMatrixBuffer;
+		Buffer* m_NumVisibleMeshesPerTypeBuffer;
+		Buffer* m_DrawCommandBuffer;
 	};
+
 	struct RenderParams
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
+		Buffer* m_pAppDataBuffer;
+		D3D12_PRIMITIVE_TOPOLOGY m_PrimitiveTopology;
+		Buffer* m_pVertexBuffer;
+		Buffer* m_pIndexBuffer;
+		Buffer* m_pNumVisibleMeshesPerTypeBuffer;
+		UINT64 m_NumVisibleMeshesPerTypeBufferOffset;
+		Buffer* m_pDrawCommandBuffer;
+		UINT64 m_DrawCommandBufferOffset;
 		Viewport* m_pViewport;
-		MeshBatch* m_pMeshBatch;
-		Buffer* m_pDrawMeshCommandBuffer;
-		Buffer* m_pNumDrawMeshesBuffer;
+		u32 m_MaxNumMeshes;
 	};
 
 	RenderGBufferPass(InitParams* pParams);
 	~RenderGBufferPass();
 
 	void Record(RenderParams* pParams);
+	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
+
+private:
+	void InitResources(InitParams* pParams);
+	void InitRootSignature(InitParams* pParams);
+	void InitPipelineState(InitParams* pParams);
+	void InitCommandSignature(InitParams* pParams);
+	void CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
 	RootSignature* m_pRootSignature;
 	PipelineState* m_pPipelineState;
 	CommandSignature* m_pCommandSignature;
+	DescriptorHandle m_SRVHeapStartVS;
+	DescriptorHandle m_RTVHeapStart;
+	DescriptorHandle m_DSVHeapStart;
+	std::vector<ResourceBarrier> m_ResourceBarriers;
+	ResourceStates m_OutputResourceStates;
 };

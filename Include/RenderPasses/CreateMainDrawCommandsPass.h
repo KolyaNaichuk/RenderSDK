@@ -1,12 +1,20 @@
 #pragma once
 
 #include "D3DWrapper/GraphicsResource.h"
+#include "D3DWrapper/CommandSignature.h"
 
 struct RenderEnv;
 class CommandList;
 class RootSignature;
 class PipelineState;
 class CommandSignature;
+
+struct DrawCommand
+{
+	UINT m_InstanceOffset;
+	UINT m_MaterialIndex;
+	DrawIndexedArguments m_Args;
+};
 
 class CreateMainDrawCommandsPass
 {

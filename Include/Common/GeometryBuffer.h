@@ -8,17 +8,22 @@ class ColorTexture;
 class GeometryBuffer
 {
 public:
-	GeometryBuffer(RenderEnv* pRenderEnv, UINT64 width, UINT height);
+	struct InitParams
+	{
+		RenderEnv* m_pRenderEnv;
+		UINT64 m_BufferWidth;
+		UINT m_BufferHeight;
+	};
+
+	GeometryBuffer(InitParams* pParams);
 	~GeometryBuffer();
 
-	ColorTexture* GetTexture0() { return m_pTexture0; };
-	ColorTexture* GetTexture1() { return m_pTexture1; };
-	ColorTexture* GetTexture2() { return m_pTexture2; };
-	ColorTexture* GetTexture3() { return m_pTexture3; };
-
+	ColorTexture* GetTexCoordTexture() { return m_pTexCoordTexture; };
+	ColorTexture* GetNormalTexture() { return m_pNormalTexture; };
+	ColorTexture* GetMaterialTexture() { return m_pMaterialTexture; };
+		
 private:
-	ColorTexture* m_pTexture0;
-	ColorTexture* m_pTexture1;
-	ColorTexture* m_pTexture2;
-	ColorTexture* m_pTexture3;
+	ColorTexture* m_pTexCoordTexture;
+	ColorTexture* m_pNormalTexture;
+	ColorTexture* m_pMaterialTexture;
 };

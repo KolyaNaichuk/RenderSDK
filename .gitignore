@@ -18,3 +18,4 @@ ipch/
 Samples/ToneMapping/x64/
 Samples/DynamicGI/x64/
 Samples/HelloRectangle/x64/
+.vs/

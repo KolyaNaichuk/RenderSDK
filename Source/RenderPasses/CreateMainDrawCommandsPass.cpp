@@ -1,6 +1,5 @@
 #include "RenderPasses/CreateMainDrawCommandsPass.h"
 #include "D3DWrapper/CommandList.h"
-#include "D3DWrapper/CommandSignature.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsUtils.h"
 #include "D3DWrapper/PipelineState.h"
@@ -13,13 +12,6 @@ namespace
 	{
 		kRootSRVTableParam = 0,
 		kNumRootParams
-	};
-
-	struct DrawCommand
-	{
-		UINT m_InstanceOffset;
-		UINT m_MaterialIndex;
-		DrawIndexedArguments m_Args;
 	};
 }
 

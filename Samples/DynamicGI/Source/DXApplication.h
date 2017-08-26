@@ -20,6 +20,7 @@ class Fence;
 class Camera;
 class MeshRenderResources;
 class LightRenderResources;
+class GeometryBuffer;
 class DownscaleAndReprojectDepthPass;
 class FrustumMeshCullingPass;
 class FillVisibilityBufferPass;
@@ -197,6 +198,7 @@ private:
 	DescriptorHeap* m_pShaderInvisibleSRVHeap;
 	DescriptorHeap* m_pShaderVisibleSRVHeap;
 	DepthTexture* m_pDepthTexture;
+
 	DepthTexture* m_pSpotLightTiledShadowMap;
 	DepthTexture* m_pPointLightTiledShadowMap;
 	ColorTexture* m_pDiffuseTexture;
@@ -286,9 +288,9 @@ private:
 	Buffer* m_pNumVisibleSpotLightsBuffer;
 	Buffer* m_pVisibleSpotLightIndexBuffer;
 	
-	Camera* m_pCamera;
-
 	// New render passes
+	Camera* m_pCamera;
+	GeometryBuffer* m_pGeometryBuffer;
 	DownscaleAndReprojectDepthPass* m_pDownscaleAndReprojectDepthPass;
 	FrustumMeshCullingPass* m_pFrustumMeshCullingPass;
 	FillVisibilityBufferPass* m_pFillVisibilityBufferMainPass;
