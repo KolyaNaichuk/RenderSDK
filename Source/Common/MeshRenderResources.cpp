@@ -27,9 +27,9 @@ MeshRenderResources::MeshRenderResources(RenderEnv* pRenderEnv, u32 numMeshTypes
 	, m_pInstanceWorldAABBBuffer(nullptr)
 	, m_pInstanceWorldOBBMatrixBuffer(nullptr)
 {
+	InitPerMeshTypeResources(pRenderEnv, numMeshTypes, ppFirstMeshType);
 	InitPerMeshResources(pRenderEnv, numMeshTypes, ppFirstMeshType);
 	InitPerMeshInstanceResources(pRenderEnv, numMeshTypes, ppFirstMeshType);
-	InitPerMeshTypeResources(pRenderEnv, numMeshTypes, ppFirstMeshType);
 }
 
 MeshRenderResources::~MeshRenderResources()
@@ -63,6 +63,7 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 
 	for (u32 meshType = 0; meshType < numMeshTypes; ++meshType)
 	{
+		m_MeshTypeOffsets[meshType] = meshTypeOffset;
 		const MeshBatch* pMeshBatch = ppFirstMeshType[meshType];
 
 		const MeshInfo* pFirstMeshInfo = pMeshBatch->GetMeshInfos();
@@ -160,6 +161,7 @@ void MeshRenderResources::InitPerMeshInstanceResources(RenderEnv* pRenderEnv, u3
 
 void MeshRenderResources::InitPerMeshTypeResources(RenderEnv* pRenderEnv, u32 numMeshTypes, MeshBatch** ppFirstMeshType)
 {
+	m_MeshTypeOffsets.resize(numMeshTypes);
 	m_VertexStrideInBytes.resize(numMeshTypes);
 	m_InputElements.resize(numMeshTypes);
 	m_InputLayouts.resize(numMeshTypes);

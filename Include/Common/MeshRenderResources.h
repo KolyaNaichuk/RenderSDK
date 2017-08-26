@@ -44,6 +44,7 @@ public:
 	Buffer* GetInstanceWorldAABBBuffer() { return m_pInstanceWorldAABBBuffer; }
 	Buffer* GetInstanceWorldOBBMatrixBuffer() { return m_pInstanceWorldOBBMatrixBuffer; }
 
+	u32 GetMeshTypeOffset(u32 meshType) const { return m_MeshTypeOffsets[meshType]; }
 	const InputLayoutDesc& GetInputLayout(u32 meshType) const { return m_InputLayouts[meshType]; }
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType(u32 meshType) const { return m_PrimitiveTopologyTypes[meshType]; }
 	D3D12_PRIMITIVE_TOPOLOGY GetPrimitiveTopology(u32 meshType) const { return m_PrimitiveTopologies[meshType]; }
@@ -72,6 +73,7 @@ private:
 
 	using InputElements = std::vector<InputElementDesc>;
 	
+	std::vector<u32> m_MeshTypeOffsets;
 	std::vector<u32> m_VertexStrideInBytes;
 	std::vector<InputElements> m_InputElements;
 	std::vector<InputLayoutDesc> m_InputLayouts;

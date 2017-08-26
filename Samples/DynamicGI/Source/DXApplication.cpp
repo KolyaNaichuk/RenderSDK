@@ -30,13 +30,13 @@
 #include "RenderPasses/CreateMainDrawCommandsPass.h"
 #include "Common/Mesh.h"
 #include "Common/MeshBatch.h"
+#include "Common/GeometryBuffer.h"
 #include "Common/MeshRenderResources.h"
 #include "Common/LightRenderResources.h"
 #include "Common/Color.h"
 #include "Common/Camera.h"
 #include "Common/Scene.h"
 #include "Common/SceneLoader.h"
-#include "Common/GeometryBuffer.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 #include "Math/Matrix4.h"
@@ -471,7 +471,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pRenderEnv(new RenderEnv())
 	, m_pFence(nullptr)
 	, m_BackBufferIndex(0)
-	, m_pRenderGBufferPass(nullptr)
 	, m_pTiledLightCullingPass(nullptr)
 	, m_pTiledShadingPass(nullptr)
 	, m_pTiledDirectLightShadingPass(nullptr)
@@ -512,6 +511,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFrustumMeshCullingPass(nullptr)
 	, m_pFillVisibilityBufferMainPass(nullptr)
 	, m_pCreateMainDrawCommandsPass(nullptr)
+	, m_pRenderGBufferMainPass(nullptr)
 	, m_pFillVisibilityBufferFalseNegativePass(nullptr)
 	, m_pAppDataBuffer(nullptr)
 {
@@ -537,6 +537,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pFillVisibilityBufferMainPass);
 	SafeDelete(m_pCreateMainDrawCommandsPass);
 	SafeDelete(m_pFillVisibilityBufferFalseNegativePass);
+	SafeDelete(m_pRenderGBufferMainPass);	
 	SafeDelete(m_pAppDataBuffer);
 
 	// Old
@@ -589,7 +590,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pTiledShadingPass);
 	SafeDelete(m_pTiledDirectLightShadingPass);
 	SafeDelete(m_pTiledIndirectLightShadingPass);
-	SafeDelete(m_pRenderGBufferPass);
 	SafeDelete(m_pCreateRenderShadowMapCommandsPass);
 	SafeDelete(m_pCreateRenderShadowMapCommandsArgumentBuffer);
 	SafeDelete(m_pRenderSpotLightTiledShadowMapPass);
@@ -659,6 +659,7 @@ void DXApplication::OnInit()
 	InitFrustumMeshCullingPass();
 	InitFillVisibilityBufferMainPass();
 	InitCreateMainDrawCommandsPass();
+	InitRenderGBufferMainPass(backBufferWidth, backBufferHeight);
 	InitFillVisibilityBufferFalseNegativePass();
 	InitConstantBuffers(pScene, backBufferWidth, backBufferHeight);
 		
@@ -723,10 +724,11 @@ void DXApplication::OnRender()
 	
 	u8 commandListBatchSize = 0;
 	commandListBatch[commandListBatchSize++] = RecordDownscaleAndReprojectDepthPass();
-	commandListBatch[commandListBatchSize++] = RecordClearBackBufferPass();
+	commandListBatch[commandListBatchSize++] = RecordClearResourcesPass();
 	commandListBatch[commandListBatchSize++] = RecordFrustumMeshCullingPass();
 	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferMainPass();
 	commandListBatch[commandListBatchSize++] = RecordCreateMainDrawCommandsPass();
+	commandListBatch[commandListBatchSize++] = RecordRenderGBufferMainPass();
 	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferFalseNegativePass();
 	commandListBatch[commandListBatchSize++] = RecordPresentResourceBarrierPass();
 
@@ -972,6 +974,8 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
+	m_pGeometryBuffer = new GeometryBuffer(m_pRenderEnv, backBufferWidth, backBufferHeight);
+
 	DepthStencilValue optimizedClearDepth(1.0f);
 	DepthTexture2DDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, backBufferWidth, backBufferHeight, true, true);
 	m_pDepthTexture = new DepthTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &depthTexDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"m_pDepthTexture");
@@ -1188,24 +1192,32 @@ CommandList* DXApplication::RecordDownscaleAndReprojectDepthPass()
 	return params.m_pCommandList;
 }
 
-CommandList* DXApplication::RecordClearBackBufferPass()
+CommandList* DXApplication::RecordClearResourcesPass()
 {
 	const Vector4f& backgroundColor = m_pCamera->GetBackgroundColor();
-	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+
+	ColorTexture* pBackBuffer = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+	ColorTexture* pTexCoordTexture = m_pGeometryBuffer->GetTexCoordTexture();
+	ColorTexture* pNormalTexture = m_pGeometryBuffer->GetNormalTexture();
+	ColorTexture* pMaterialTexture = m_pGeometryBuffer->GetMaterialTexture();
 
 	ResourceBarrier resourceBarriers[] =
 	{
-		ResourceBarrier(pRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET),
+		ResourceBarrier(pBackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET),
 		ResourceBarrier(m_pDepthTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE)
 	};
 
-	CommandList* pCommandList = m_pCommandListPool->Create(L"pClearBackBufferCommandList");
+	CommandList* pCommandList = m_pCommandListPool->Create(L"pClearResourcesCommandList");
 	pCommandList->Begin();
-	pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
-	pCommandList->ClearRenderTargetView(pRenderTarget->GetRTVHandle(), &backgroundColor.m_X);
-	pCommandList->ClearDepthView(m_pDepthTexture->GetDSVHandle(), 1.0f);
-	pCommandList->End();
 
+	pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
+	pCommandList->ClearRenderTargetView(pBackBuffer->GetRTVHandle(), &backgroundColor.m_X);
+	pCommandList->ClearRenderTargetView(pTexCoordTexture->GetRTVHandle(), &Vector4f::ZERO.m_X);
+	pCommandList->ClearRenderTargetView(pNormalTexture->GetRTVHandle(), &Vector4f::ZERO.m_X);
+	pCommandList->ClearRenderTargetView(pMaterialTexture->GetRTVHandle(), &Vector4f::ZERO.m_X);
+	pCommandList->ClearDepthView(m_pDepthTexture->GetDSVHandle(), 1.0f);
+	
+	pCommandList->End();
 	return pCommandList;
 }
 
@@ -1375,6 +1387,62 @@ CommandList* DXApplication::RecordFillVisibilityBufferFalseNegativePass()
 	return params.m_pCommandList;
 }
 
+void DXApplication::InitRenderGBufferMainPass(UINT bufferWidth, UINT bufferHeight)
+{
+	assert(m_pGeometryBuffer != nullptr);
+	assert(m_pMeshRenderResources != nullptr);
+	assert(m_pCreateMainDrawCommandsPass != nullptr);
+	assert(m_pRenderGBufferMainPass == nullptr);
+
+	const CreateMainDrawCommandsPass::ResourceStates* pCreateMainDrawCommandsPassStates =
+		m_pCreateMainDrawCommandsPass->GetOutputResourceStates();
+	
+	RenderGBufferPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_BufferWidth = bufferWidth;
+	params.m_BufferHeight = bufferHeight;
+	
+	params.m_InputResourceStates.m_TexCoordTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	params.m_InputResourceStates.m_NormalTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	params.m_InputResourceStates.m_MaterialTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	params.m_InputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_VisibleInstanceIndexBufferState;
+	params.m_InputResourceStates.m_NumVisibleMeshesPerTypeBufferState = pCreateMainDrawCommandsPassStates->m_NumVisibleMeshesPerTypeBufferState;
+	params.m_InputResourceStates.m_DrawCommandBufferState = pCreateMainDrawCommandsPassStates->m_DrawCommandBufferState;
+
+	params.m_pMeshRenderResources = m_pMeshRenderResources;
+	params.m_pTexCoordTexture = m_pGeometryBuffer->GetTexCoordTexture();
+	params.m_pNormalTexture = m_pGeometryBuffer->GetNormalTexture();
+	params.m_pMaterialTexture = m_pGeometryBuffer->GetMaterialTexture();
+	params.m_pDepthTexture = m_pDepthTexture;
+	params.m_pInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
+	params.m_pInstanceIndexBuffer = m_pCreateMainDrawCommandsPass->GetVisibleInstanceIndexBuffer();
+	params.m_NumVisibleMeshesPerTypeBuffer = m_pCreateMainDrawCommandsPass->GetNumVisibleMeshesPerTypeBuffer();
+	params.m_DrawCommandBuffer = m_pCreateMainDrawCommandsPass->GetDrawCommandBuffer();
+	
+	m_pRenderGBufferMainPass = new RenderGBufferPass(&params);
+}
+
+CommandList* DXApplication::RecordRenderGBufferMainPass()
+{
+	assert(false);
+	/*
+	RenderGBufferPass::RenderParams renderParams;
+	renderParams.m_pRenderEnv = m_pRenderEnv;
+	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferCommandList");
+	renderParams.m_pResources = m_pRenderGBufferResources;
+	renderParams.m_pViewport = m_pBackBufferViewport;
+	renderParams.m_pMeshBatch = m_pMeshRenderResources;
+	renderParams.m_pDrawMeshCommandBuffer = m_pDrawMeshCommandBuffer;
+	renderParams.m_pNumDrawMeshesBuffer = m_pNumVisibleMeshesBuffer;
+
+	m_pRenderGBufferPass->Record(&renderParams);
+	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
+}
+
 void DXApplication::InitDetectVisibleMeshesPass()
 {
 	assert(false);
@@ -1478,62 +1546,6 @@ void DXApplication::InitDetectVisibleSpotLightsPass()
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisibleSpotLightIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pViewFrustumSpotLightCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	*/
-}
-
-void DXApplication::InitRenderGBufferPass(UINT backBufferWidth, UINT backBufferHeight)
-{
-	assert(false);
-	/*
-	const FLOAT optimizedClearColor[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-
-	ColorTexture2DDesc diffuseTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, backBufferWidth, backBufferHeight, true, true, false);
-	m_pDiffuseTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &diffuseTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pDiffuseTexture");
-
-	ColorTexture2DDesc normalTexDesc(DXGI_FORMAT_R8G8B8A8_SNORM, backBufferWidth, backBufferHeight, true, true, false);
-	m_pNormalTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &normalTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pNormalTexture");
-
-	ColorTexture2DDesc specularTexDesc(DXGI_FORMAT_R8G8B8A8_UNORM, backBufferWidth, backBufferHeight, true, true, false);
-	m_pSpecularTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &specularTexDesc, D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pSpecularTexture");
-
-	ColorTexture2DDesc accumLightTexDesc(DXGI_FORMAT_R10G10B10A2_UNORM, backBufferWidth, backBufferHeight, false, true, true);
-	m_pAccumLightTexture = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &accumLightTexDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, optimizedClearColor, L"m_pAccumLightTexture");
-
-	ConstantBufferDesc objectTransformBufferDesc(sizeof(ObjectTransform));
-	m_pObjectTransformBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &objectTransformBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pObjectTransformBuffer");
-
-	ConstantBufferDesc visualizeTextureDataBufferDesc(sizeof(VisualizeTextureData));
-	m_pVisualizeTextureDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &visualizeTextureDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pVisualizeTextureDataBuffer");
-
-	Buffer* pMaterialBuffer = m_pMeshRenderResources->GetMaterialBuffer();
-
-	RenderGBufferPass::InitParams initParams;
-	initParams.m_pRenderEnv = m_pRenderEnv;
-	initParams.m_NormalRTVFormat = GetRenderTargetViewFormat(m_pNormalTexture->GetFormat());
-	initParams.m_DiffuseRTVFormat = GetRenderTargetViewFormat(m_pDiffuseTexture->GetFormat());
-	initParams.m_SpecularRTVFormat = GetRenderTargetViewFormat(m_pSpecularTexture->GetFormat());
-	initParams.m_DSVFormat = GetDepthStencilViewFormat(m_pDepthTexture->GetFormat());
-	initParams.m_ShaderFlags = 0;
-	initParams.m_pMeshBatch = m_pMeshRenderResources;
-
-	m_pRenderGBufferPass = new RenderGBufferPass(&initParams);
-
-	m_pRenderGBufferResources->m_RequiredResourceStates.emplace_back(m_pNormalTexture, m_pNormalTexture->GetWriteState());
-	m_pRenderGBufferResources->m_RequiredResourceStates.emplace_back(m_pDiffuseTexture, m_pDiffuseTexture->GetWriteState());
-	m_pRenderGBufferResources->m_RequiredResourceStates.emplace_back(m_pSpecularTexture, m_pSpecularTexture->GetWriteState());
-	m_pRenderGBufferResources->m_RequiredResourceStates.emplace_back(m_pDepthTexture, m_pDepthTexture->GetWriteState());
-	m_pRenderGBufferResources->m_RequiredResourceStates.emplace_back(pMaterialBuffer, pMaterialBuffer->GetReadState());
-	m_pRenderGBufferResources->m_RequiredResourceStates.emplace_back(m_pDrawMeshCommandBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-	m_pRenderGBufferResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleMeshesBuffer, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-
-	m_pRenderGBufferResources->m_RTVHeapStart = m_pShaderInvisibleRTVHeap->Allocate();
-	m_pRenderGBufferResources->m_DSVHeapStart = m_pDepthTexture->GetDSVHandle();
-	m_pRenderGBufferResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
-	m_pDevice->CopyDescriptor(m_pRenderGBufferResources->m_RTVHeapStart, m_pNormalTexture->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	m_pDevice->CopyDescriptor(m_pShaderInvisibleRTVHeap->Allocate(), m_pDiffuseTexture->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	m_pDevice->CopyDescriptor(m_pShaderInvisibleRTVHeap->Allocate(), m_pSpecularTexture->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	m_pDevice->CopyDescriptor(m_pRenderGBufferResources->m_SRVHeapStart, m_pObjectTransformBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMaterialBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	*/
 }
 
@@ -2518,25 +2530,6 @@ CommandList* DXApplication::RecordDetectVisibleSpotLightsPass()
 	renderParams.m_pNumVisibleObjectsBuffer = m_pNumVisibleSpotLightsBuffer;
 
 	m_pDetectVisibleSpotLightsPass->Record(&renderParams);
-	return renderParams.m_pCommandList;
-	*/
-	return nullptr;
-}
-
-CommandList* DXApplication::RecordRenderGBufferPass()
-{	
-	assert(false);
-	/*
-	RenderGBufferPass::RenderParams renderParams;
-	renderParams.m_pRenderEnv = m_pRenderEnv;
-	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferCommandList");
-	renderParams.m_pResources = m_pRenderGBufferResources;
-	renderParams.m_pViewport = m_pBackBufferViewport;
-	renderParams.m_pMeshBatch = m_pMeshRenderResources;
-	renderParams.m_pDrawMeshCommandBuffer = m_pDrawMeshCommandBuffer;
-	renderParams.m_pNumDrawMeshesBuffer = m_pNumVisibleMeshesBuffer;
-
-	m_pRenderGBufferPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
 	*/
 	return nullptr;

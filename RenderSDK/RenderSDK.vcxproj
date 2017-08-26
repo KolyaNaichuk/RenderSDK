@@ -230,7 +230,6 @@
     <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Include\Common\MeshUtilities.cpp" />
     <ClCompile Include="..\Source\Common\Application.cpp" />
     <ClCompile Include="..\Source\Common\Camera.cpp" />
     <ClCompile Include="..\Source\Common\Common.cpp" />
@@ -243,6 +242,7 @@
     <ClCompile Include="..\Source\Common\MeshBatch.cpp" />
     <ClCompile Include="..\Source\Common\Mesh.cpp" />
     <ClCompile Include="..\Source\Common\MeshFactory.cpp" />
+    <ClCompile Include="..\Source\Common\MeshUtilities.cpp" />
     <ClCompile Include="..\Source\Common\OBJFileLoader.cpp" />
     <ClCompile Include="..\Source\Common\Scene.cpp" />
     <ClCompile Include="..\Source\Common\SceneLoader.cpp" />

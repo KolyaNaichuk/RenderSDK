@@ -249,11 +249,11 @@
     <ClInclude Include="..\Include\RenderPasses\CreateMainDrawCommandsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Common\GeometryBuffer.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Math\Matrix3.h">
       <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\GeometryBuffer.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -455,9 +455,6 @@
     <ClCompile Include="..\Source\Common\MeshFactory.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="..\Include\Common\MeshUtilities.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\Common\MeshBatch.cpp">
       <Filter>Common</Filter>
     </ClCompile>
@@ -470,11 +467,14 @@
     <ClCompile Include="..\Source\RenderPasses\CreateMainDrawCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\Common\GeometryBuffer.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\Math\Matrix3.cpp">
       <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\MeshUtilities.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\GeometryBuffer.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -18,9 +18,9 @@ class Buffer;
 class Fence;
 
 class Camera;
+class GeometryBuffer;
 class MeshRenderResources;
 class LightRenderResources;
-class GeometryBuffer;
 class DownscaleAndReprojectDepthPass;
 class FrustumMeshCullingPass;
 class FillVisibilityBufferPass;
@@ -100,7 +100,7 @@ private:
 	void InitDownscaleAndReprojectDepthPass();
 	CommandList* RecordDownscaleAndReprojectDepthPass();
 
-	CommandList* RecordClearBackBufferPass();
+	CommandList* RecordClearResourcesPass();
 
 	void InitFrustumMeshCullingPass();
 	CommandList* RecordFrustumMeshCullingPass();
@@ -111,16 +111,18 @@ private:
 	void InitCreateMainDrawCommandsPass();
 	CommandList* RecordCreateMainDrawCommandsPass();
 
+	void InitRenderGBufferMainPass(UINT bufferWidth, UINT bufferHeight);
+	CommandList* RecordRenderGBufferMainPass();
+
 	void InitFillVisibilityBufferFalseNegativePass();
 	CommandList* RecordFillVisibilityBufferFalseNegativePass();
-
+		
 	CommandList* RecordPresentResourceBarrierPass();
 	
 	// Old
 	void InitDetectVisibleMeshesPass();
 	void InitDetectVisiblePointLightsPass();
 	void InitDetectVisibleSpotLightsPass();
-	void InitRenderGBufferPass(UINT backBufferWidth, UINT backBufferHeight);
 	void InitTiledLightCullingPass();
 	void InitTiledShadingPass();
 	void InitSetupSpotLightTiledShadowMapPass();
@@ -146,7 +148,6 @@ private:
 	CommandList* RecordDetectVisibleMeshesPass();
 	CommandList* RecordDetectVisiblePointLightsPass();
 	CommandList* RecordDetectVisibleSpotLightsPass();
-	CommandList* RecordRenderGBufferPass();
 	CommandList* RecordTiledLightCullingPass();
 	CommandList* RecordUpdateCreateRenderShadowMapCommandsArgumentBufferPass();
 	CommandList* RecordCreateRenderShadowMapCommandsPass();
@@ -252,7 +253,6 @@ private:
 	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers];
 	UINT m_BackBufferIndex;
 
-	RenderGBufferPass* m_pRenderGBufferPass;
 	TiledLightCullingPass* m_pTiledLightCullingPass;
 	TiledShadingPass* m_pTiledShadingPass;
 	TiledShadingPass* m_pTiledDirectLightShadingPass;
@@ -295,6 +295,7 @@ private:
 	FrustumMeshCullingPass* m_pFrustumMeshCullingPass;
 	FillVisibilityBufferPass* m_pFillVisibilityBufferMainPass;
 	CreateMainDrawCommandsPass* m_pCreateMainDrawCommandsPass;
+	RenderGBufferPass* m_pRenderGBufferMainPass;
 	FillVisibilityBufferPass* m_pFillVisibilityBufferFalseNegativePass;
 	Buffer* m_pAppDataBuffer;
 };

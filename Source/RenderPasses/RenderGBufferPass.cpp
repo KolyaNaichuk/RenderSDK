@@ -21,7 +21,7 @@ namespace
 		kNumRootParams
 	};
 
-	bool HasVertexSemantic(const D3D12_INPUT_LAYOUT_DESC* pInputLayoutDesc, LPCSTR pSemanticName);
+	bool HasVertexSemantic(const InputLayoutDesc& inputLayoutDesc, LPCSTR pSemanticName);
 }
 
 RenderGBufferPass::RenderGBufferPass(InitParams* pParams)
@@ -37,13 +37,17 @@ RenderGBufferPass::RenderGBufferPass(InitParams* pParams)
 
 RenderGBufferPass::~RenderGBufferPass()
 {
-	SafeDelete(m_pCommandSignature);
-	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pRootSignature);
+	SafeDelete(m_pPipelineState);
+	SafeDelete(m_pCommandSignature);
 }
 
 void RenderGBufferPass::Record(RenderParams* pParams)
 {
+	MeshRenderResources* pMeshRenderResources = pParams->m_pMeshRenderResources;
+	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
+	const u32 meshType = 0;
+
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 		
@@ -53,13 +57,7 @@ void RenderGBufferPass::Record(RenderParams* pParams)
 
 	if (!m_ResourceBarriers.empty())
 		pCommandList->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
-		
-	const FLOAT clearValue[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-	pCommandList->ClearRenderTargetView(m_RTVHeapStart, clearValue);
-	pCommandList->ClearRenderTargetView(DescriptorHandle(m_RTVHeapStart, 1), clearValue);
-	pCommandList->ClearRenderTargetView(DescriptorHandle(m_RTVHeapStart, 2), clearValue);
-	pCommandList->ClearDepthStencilView(m_DSVHeapStart, 1.0f);
-	
+					
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = m_RTVHeapStart;
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHeapStart = m_DSVHeapStart;
 	pCommandList->OMSetRenderTargets(3, &rtvHeapStart, TRUE, &dsvHeapStart);
@@ -67,17 +65,17 @@ void RenderGBufferPass::Record(RenderParams* pParams)
 	pCommandList->SetGraphicsRootConstantBufferView(kRootCBVParamVS, pParams->m_pAppDataBuffer);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamVS, m_SRVHeapStartVS);
 	
-	pCommandList->IASetPrimitiveTopology(pParams->m_PrimitiveTopology);
-	pCommandList->IASetVertexBuffers(0, 1, pParams->m_pVertexBuffer->GetVBView());
-	pCommandList->IASetIndexBuffer(pParams->m_pIndexBuffer->GetIBView());
+	pCommandList->IASetPrimitiveTopology(pMeshRenderResources->GetPrimitiveTopology(meshType));
+	pCommandList->IASetVertexBuffers(0, 1, pMeshRenderResources->GetVertexBuffer(meshType)->GetVBView());
+	pCommandList->IASetIndexBuffer(pMeshRenderResources->GetIndexBuffer(meshType)->GetIBView());
 	
 	Rect scissorRect(ExtractRect(pParams->m_pViewport));
 	pCommandList->RSSetViewports(1, pParams->m_pViewport);
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 	
-	pCommandList->ExecuteIndirect(m_pCommandSignature, pParams->m_MaxNumMeshes,
-		pParams->m_pDrawCommandBuffer, pParams->m_DrawCommandBufferOffset,
-		pParams->m_pNumVisibleMeshesPerTypeBuffer, pParams->m_NumVisibleMeshesPerTypeBufferOffset);
+	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshRenderResources->GetTotalNumMeshes(),
+		pParams->m_pDrawCommandBuffer, pMeshRenderResources->GetMeshTypeOffset(meshType) * sizeof(DrawCommand),
+		pParams->m_pNumVisibleMeshesPerTypeBuffer, meshType * sizeof(u32));
 	
 	pCommandList->End();
 }
@@ -85,7 +83,7 @@ void RenderGBufferPass::Record(RenderParams* pParams)
 void RenderGBufferPass::InitResources(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-
+	
 	m_OutputResourceStates.m_TexCoordTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	m_OutputResourceStates.m_NormalTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	m_OutputResourceStates.m_MaterialTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -157,7 +155,7 @@ void RenderGBufferPass::InitRootSignature(InitParams* pParams)
 	rootParams[kRootCBVParamVS] = RootCBVParameter(1, D3D12_SHADER_VISIBILITY_VERTEX);
 
 	D3D12_DESCRIPTOR_RANGE descriptorRangesVS[] = {SRVDescriptorRange(2, 0)};
-	rootParams[kRootSRVTableParamVS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesVS), &descriptorRangesVS[0], D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParams[kRootSRVTableParamVS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesVS), descriptorRangesVS, D3D12_SHADER_VISIBILITY_VERTEX);
 
 	rootParams[kRoot32BitConstantParamPS] = Root32BitConstantsParameter(0, D3D12_SHADER_VISIBILITY_PIXEL, 1);
 
@@ -169,23 +167,28 @@ void RenderGBufferPass::InitPipelineState(InitParams* pParams)
 {
 	assert(m_pRootSignature != nullptr);
 	assert(m_pPipelineState == nullptr);
-
+	
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	
+	const MeshRenderResources* pMeshRenderResources = pParams->m_pMeshRenderResources;
+	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
+	const u32 meshType = 0;
 
 	Shader vertexShader(L"Shaders//RenderGBufferVS.hlsl", "Main", "vs_4_0");
 	Shader pixelShader(L"Shaders//RenderGBufferPS.hlsl", "Main", "ps_4_0");
 
-	assert(pParams->m_pInputLayoutDesc->NumElements == 3);
-	assert(HasVertexSemantic(pParams->m_pInputLayoutDesc, "POSITION"));
-	assert(HasVertexSemantic(pParams->m_pInputLayoutDesc, "NORMAL"));
-	assert(HasVertexSemantic(pParams->m_pInputLayoutDesc, "TEXCOORD"));
+	const InputLayoutDesc& inputLayout = pMeshRenderResources->GetInputLayout(meshType);
+	assert(inputLayout.NumElements == 3);
+	assert(HasVertexSemantic(inputLayout, "POSITION"));
+	assert(HasVertexSemantic(inputLayout, "NORMAL"));
+	assert(HasVertexSemantic(inputLayout, "TEXCOORD"));
 
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetPixelShader(&pixelShader);
-	pipelineStateDesc.InputLayout = *pParams->m_pInputLayoutDesc;
-	pipelineStateDesc.PrimitiveTopologyType = pParams->m_PrimitiveTopologyType;
+	pipelineStateDesc.InputLayout = inputLayout;
+	pipelineStateDesc.PrimitiveTopologyType = pMeshRenderResources->GetPrimitiveTopologyType(meshType);
 	pipelineStateDesc.DepthStencilState = DepthStencilDesc(DepthStencilDesc::Enabled);
 
 	const DXGI_FORMAT rtvFormats[] =
@@ -225,11 +228,11 @@ void RenderGBufferPass::CreateResourceBarrierIfRequired(GraphicsResource* pResou
 
 namespace
 {
-	bool HasVertexSemantic(const D3D12_INPUT_LAYOUT_DESC* pInputLayoutDesc, LPCSTR pSemanticName)
+	bool HasVertexSemantic(const InputLayoutDesc& inputLayoutDesc, LPCSTR pSemanticName)
 	{
-		for (UINT index = 0; index < pInputLayoutDesc->NumElements; ++index)
+		for (UINT index = 0; index < inputLayoutDesc.NumElements; ++index)
 		{
-			const D3D12_INPUT_ELEMENT_DESC& inputElementDesc = pInputLayoutDesc->pInputElementDescs[index];
+			const D3D12_INPUT_ELEMENT_DESC& inputElementDesc = inputLayoutDesc.pInputElementDescs[index];
 			if (std::strcmp(inputElementDesc.SemanticName, pSemanticName) == 0)
 				return true;
 		}

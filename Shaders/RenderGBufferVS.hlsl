@@ -1,6 +1,8 @@
+#include "Foundation.hlsl"
+
 struct VSInput
 {
-	uint   instanceId			: SV_InstanceID
+	uint   instanceId			: SV_InstanceID;
 	float3 localSpacePos		: POSITION;
 	float3 localSpaceNormal		: NORMAL;
 	float2 texCoord				: TEXCOORD;

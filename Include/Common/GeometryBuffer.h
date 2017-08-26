@@ -8,14 +8,7 @@ class ColorTexture;
 class GeometryBuffer
 {
 public:
-	struct InitParams
-	{
-		RenderEnv* m_pRenderEnv;
-		UINT64 m_BufferWidth;
-		UINT m_BufferHeight;
-	};
-
-	GeometryBuffer(InitParams* pParams);
+	GeometryBuffer(RenderEnv* pRenderEnv, UINT bufferWidth, UINT bufferHeight);
 	~GeometryBuffer();
 
 	ColorTexture* GetTexCoordTexture() { return m_pTexCoordTexture; };

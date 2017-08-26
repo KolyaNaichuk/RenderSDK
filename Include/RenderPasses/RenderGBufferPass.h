@@ -8,6 +8,7 @@ class CommandList;
 class CommandSignature;
 class RootSignature;
 class PipelineState;
+class MeshRenderResources;
 
 class RenderGBufferPass
 {
@@ -27,9 +28,10 @@ public:
 	struct InitParams
 	{
 		RenderEnv* m_pRenderEnv;
+		UINT m_BufferWidth;
+		UINT m_BufferHeight;
 		ResourceStates m_InputResourceStates;
-		D3D12_INPUT_LAYOUT_DESC* m_pInputLayoutDesc;
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE m_PrimitiveTopologyType;
+		MeshRenderResources* m_pMeshRenderResources;
 		ColorTexture* m_pTexCoordTexture;
 		ColorTexture* m_pNormalTexture;
 		ColorTexture* m_pMaterialTexture;
@@ -45,15 +47,10 @@ public:
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
 		Buffer* m_pAppDataBuffer;
-		D3D12_PRIMITIVE_TOPOLOGY m_PrimitiveTopology;
-		Buffer* m_pVertexBuffer;
-		Buffer* m_pIndexBuffer;
+		MeshRenderResources* m_pMeshRenderResources;
 		Buffer* m_pNumVisibleMeshesPerTypeBuffer;
-		UINT64 m_NumVisibleMeshesPerTypeBufferOffset;
 		Buffer* m_pDrawCommandBuffer;
-		UINT64 m_DrawCommandBufferOffset;
 		Viewport* m_pViewport;
-		u32 m_MaxNumMeshes;
 	};
 
 	RenderGBufferPass(InitParams* pParams);
@@ -61,7 +58,7 @@ public:
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
-
+	
 private:
 	void InitResources(InitParams* pParams);
 	void InitRootSignature(InitParams* pParams);
@@ -76,6 +73,6 @@ private:
 	DescriptorHandle m_SRVHeapStartVS;
 	DescriptorHandle m_RTVHeapStart;
 	DescriptorHandle m_DSVHeapStart;
-	std::vector<ResourceBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
+	std::vector<ResourceBarrier> m_ResourceBarriers;
 };
