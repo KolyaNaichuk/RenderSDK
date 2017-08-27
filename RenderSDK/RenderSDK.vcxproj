@@ -159,6 +159,7 @@
     <ClInclude Include="..\Include\Common\GeometryBuffer.h" />
     <ClInclude Include="..\Include\Common\LightRenderResources.h" />
     <ClInclude Include="..\Include\Common\Material.h" />
+    <ClInclude Include="..\Include\Common\MaterialRenderResources.h" />
     <ClInclude Include="..\Include\Common\MeshRenderResources.h" />
     <ClInclude Include="..\Include\Common\MeshBatch.h" />
     <ClInclude Include="..\Include\Common\Mesh.h" />
@@ -238,6 +239,7 @@
     <ClCompile Include="..\Source\Common\Light.cpp" />
     <ClCompile Include="..\Source\Common\LightRenderResources.cpp" />
     <ClCompile Include="..\Source\Common\Material.cpp" />
+    <ClCompile Include="..\Source\Common\MaterialRenderResources.cpp" />
     <ClCompile Include="..\Source\Common\MeshRenderResources.cpp" />
     <ClCompile Include="..\Source\Common\MeshBatch.cpp" />
     <ClCompile Include="..\Source\Common\Mesh.cpp" />

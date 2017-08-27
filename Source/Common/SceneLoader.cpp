@@ -36,38 +36,38 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
 				
-		Material* pMaterial = nullptr;
+		Material* pMaterial = new Material(L"Floor");
 		if (settings == CornellBoxSettings_Original)
 		{
-			pMaterial = new Material(
-				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
-				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
-				Vector4f::ZERO, 0.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(0.725f, 0.71f, 0.68f);
+			pMaterial->m_DiffuseColor = Vector3f(0.725f, 0.71f, 0.68f);
+			pMaterial->m_SpecularColor = Vector3f::ZERO;
+			pMaterial->m_Shininess = 0.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test1)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test2)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test3)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else 
 		{
@@ -107,38 +107,38 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
 		
-		Material* pMaterial = nullptr;
+		Material* pMaterial = new Material(L"Ceiling");
 		if (settings == CornellBoxSettings_Original)
 		{
-			pMaterial = new Material(
-				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
-				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
-				Vector4f::ZERO, 0.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(0.725f, 0.71f, 0.68f);
+			pMaterial->m_DiffuseColor = Vector3f(0.725f, 0.71f, 0.68f);
+			pMaterial->m_SpecularColor = Vector3f::ZERO;
+			pMaterial->m_Shininess = 0.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test1)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test2)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test3)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else
 		{
@@ -178,38 +178,38 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
 		
-		Material* pMaterial = nullptr;
+		Material* pMaterial = new Material(L"Back wall");
 		if (settings == CornellBoxSettings_Original)
 		{
-			pMaterial = new Material(
-				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
-				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
-				Vector4f::ZERO, 0.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(0.725f, 0.71f, 0.68f);
+			pMaterial->m_DiffuseColor = Vector3f(0.725f, 0.71f, 0.68f);
+			pMaterial->m_SpecularColor = Vector3f::ZERO;
+			pMaterial->m_Shininess = 0.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test1)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test2)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test3)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else
 		{
@@ -249,38 +249,38 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
 		
-		Material* pMaterial = nullptr;
+		Material* pMaterial = new Material(L"Right wall");
 		if (settings == CornellBoxSettings_Original)
 		{
-			pMaterial = new Material(
-				Vector4f(0.14f, 0.45f, 0.091f, 1.0f),
-				Vector4f(0.14f, 0.45f, 0.091f, 1.0f),
-				Vector4f::ZERO, 0.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(0.14f, 0.45f, 0.091f);
+			pMaterial->m_DiffuseColor = Vector3f(0.14f, 0.45f, 0.091f);
+			pMaterial->m_SpecularColor = Vector3f::ZERO;
+			pMaterial->m_Shininess = 0.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test1)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test2)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test3)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else
 		{
@@ -320,38 +320,38 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
 		
-		Material* pMaterial = nullptr;
+		Material* pMaterial = new Material(L"Left wall");
 		if (settings == CornellBoxSettings_Original)
 		{
-			pMaterial = new Material(
-				Vector4f(0.63f, 0.065f, 0.05f, 1.0f),
-				Vector4f(0.63f, 0.065f, 0.05f, 1.0f),
-				Vector4f::ZERO, 0.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(0.63f, 0.065f, 0.05f);
+			pMaterial->m_DiffuseColor = Vector3f(0.63f, 0.065f, 0.05f);
+			pMaterial->m_SpecularColor = Vector3f::ZERO;
+			pMaterial->m_Shininess = 0.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test1)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test2)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test3)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else
 		{
@@ -418,38 +418,38 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
 		
-		Material* pMaterial = nullptr;
+		Material* pMaterial = new Material(L"Short block");
 		if (settings == CornellBoxSettings_Original)
 		{
-			pMaterial = new Material(
-				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
-				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
-				Vector4f::ZERO, 0.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(0.725f, 0.71f, 0.68f);
+			pMaterial->m_DiffuseColor = Vector3f(0.725f, 0.71f, 0.68f);
+			pMaterial->m_SpecularColor = Vector3f::ZERO;
+			pMaterial->m_Shininess = 0.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test1)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test2)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test3)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else
 		{
@@ -516,38 +516,38 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 		VertexData* pVertexData = new VertexData(numVertices, &positions[0], &normals[0]);
 		IndexData* pIndexData = new IndexData(numIndices, &indices[0]);
 		
-		Material* pMaterial = nullptr;
+		Material* pMaterial = new Material(L"Tall block");
 		if (settings == CornellBoxSettings_Original)
 		{
-			pMaterial = new Material(
-				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
-				Vector4f(0.725f, 0.71f, 0.68f, 1.0f),
-				Vector4f::ZERO, 0.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(0.725f, 0.71f, 0.68f);
+			pMaterial->m_DiffuseColor = Vector3f(0.725f, 0.71f, 0.68f);
+			pMaterial->m_SpecularColor = Vector3f::ZERO;
+			pMaterial->m_Shininess = 0.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test1)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test2)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else if (settings == CornellBoxSettings_Test3)
 		{
-			pMaterial = new Material(
-				Vector4f(1.0f, 0.0f, 1.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f),
-				Vector4f(1.0f, 0.8f, 0.0f, 1.0f), 100.0f,
-				Vector4f::ZERO);
+			pMaterial->m_AmbientColor = Vector3f(1.0f, 0.0f, 1.0f);
+			pMaterial->m_DiffuseColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_SpecularColor = Vector3f(1.0f, 0.8f, 0.0f);
+			pMaterial->m_Shininess = 100.0f;
+			pMaterial->m_EmissiveColor = Vector3f::ZERO;
 		}
 		else
 		{
@@ -612,7 +612,6 @@ Scene* SceneLoader::LoadCornellBox(CornellBoxSettings settings)
 	{
 		assert(false);
 	}
-
 	return pScene;
 }
 

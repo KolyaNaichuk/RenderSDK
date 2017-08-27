@@ -2,6 +2,7 @@
 
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
+#include "Common/Material.h"
 
 class VertexData;
 class IndexData;
@@ -37,34 +38,6 @@ namespace OBJFile
 		u32 m_MaterialIndex;
 		std::vector<MeshTriangle> m_Triangles;
 	};
-
-	struct Material
-	{
-		Material(const std::wstring& name)
-			: m_Name(name)
-		{}
-		std::wstring m_Name;
-
-		Vector3f m_AmbientColor;
-		std::wstring m_AmbientMapName;
-
-		Vector3f m_DiffuseColor;
-		std::wstring m_DiffuseMapName;
-
-		Vector3f m_SpecularColor;
-		std::wstring m_SpecularMapName;
-
-		f32 m_SpecularPower;
-		std::wstring m_SpecularPowerMapName;
-
-		Vector3f m_EmissiveColor;
-		std::wstring m_EmissiveMapName;
-
-		f32 m_Opacity;
-		std::wstring m_OpacityMapName;
-
-		f32 m_IndexOfRefraction;
-	};
 	
 	struct Object
 	{
@@ -99,7 +72,7 @@ private:
 	std::vector<Vector3f> m_Normals;
 
 	std::wstring m_MaterialFileName;
-	std::vector<OBJFile::Material> m_Materials;
+	std::vector<Material> m_Materials;
 	u32 m_CurrentMaterialIndex;
 
 	std::vector<OBJFile::Object> m_Objects;

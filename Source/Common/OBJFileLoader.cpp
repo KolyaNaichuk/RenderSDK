@@ -329,11 +329,11 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 			}
 			else if (_wcsicmp(pToken, L"Ns") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_SpecularPower = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_Shininess = OBJFile::ExtractFloat(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"map_Ns") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_SpecularPowerMapName = OBJFile::ExtractString(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_ShininessMapName = OBJFile::ExtractString(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"d") == 0)
 			{
@@ -410,19 +410,21 @@ Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshFlags)
 	}
 	pScene->AddMeshBatch(pMeshBatch);
 
+	assert(false);
+	/*
 	std::vector<std::string> materialMasks;
 	for (const OBJFile::Material& material : m_Materials)
 	{
 		Material* pMaterial = new Material(Vector4f(material.m_AmbientColor.m_X, material.m_AmbientColor.m_Y, material.m_AmbientColor.m_Z, 1.0f),
 			Vector4f(material.m_DiffuseColor.m_X, material.m_DiffuseColor.m_Y, material.m_DiffuseColor.m_Z, 1.0f),
 			Vector4f(material.m_SpecularColor.m_X, material.m_SpecularColor.m_Y, material.m_SpecularColor.m_Z, 1.0f),
-			material.m_SpecularPower,
+			material.m_Shininess,
 			Vector4f(material.m_EmissiveColor.m_X, material.m_EmissiveColor.m_Y, material.m_EmissiveColor.m_Z, 1.0f));
 
 		pMaterial->m_AmbientMapName = material.m_AmbientMapName;
 		pMaterial->m_DiffuseMapName = material.m_DiffuseMapName;
 		pMaterial->m_SpecularMapName = material.m_SpecularMapName;
-		pMaterial->m_SpecularPowerMapName = material.m_SpecularPowerMapName;
+		pMaterial->m_ShininessMapName = material.m_ShininessMapName;
 		pMaterial->m_EmissiveMapName = material.m_EmissiveMapName;
 
 		pScene->AddMaterial(pMaterial);
@@ -431,7 +433,7 @@ Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshFlags)
 		mask[0] = pMaterial->m_AmbientMapName.empty() ? '0' : '1';
 		mask[1] = pMaterial->m_DiffuseMapName.empty() ? '0' : '1';
 		mask[2] = pMaterial->m_SpecularMapName.empty() ? '0' : '1';
-		mask[3] = pMaterial->m_SpecularPowerMapName.empty() ? '0' : '1';
+		mask[3] = pMaterial->m_ShininessMapName.empty() ? '0' : '1';
 		mask[4] = pMaterial->m_EmissiveMapName.empty() ? '0' : '1';
 
 		if (mask == "00000\n")
@@ -443,6 +445,7 @@ Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshFlags)
 	std::sort(materialMasks.begin(), materialMasks.end());
 	for (const auto& mask : materialMasks)
 		OutputDebugStringA(mask.c_str());
+	*/
 	
 	return pScene;
 }
@@ -515,15 +518,9 @@ void OBJFileLoader::Clear()
 
 	m_MaterialFileName.clear();
 	m_Materials.clear();
-	m_CurrentMaterialIndex = 0;
 	m_Materials.emplace_back(OBJFile::kDefaultMaterialName);
+	m_CurrentMaterialIndex = m_Materials.size() - 1;
 
-	OBJFile::Material& defaultMaterial = m_Materials.back();
-	defaultMaterial.m_DiffuseColor = Vector3f(0.6f, 0.6f, 0.0f);
-	defaultMaterial.m_Opacity = 1.0f;
-	defaultMaterial.m_IndexOfRefraction = 1.0f;
-	defaultMaterial.m_SpecularPower = 0.0f;
-		
 	m_Objects.clear();
 	m_pCurrentObject = nullptr;
 	

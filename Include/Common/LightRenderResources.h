@@ -2,7 +2,6 @@
 
 #include "Common/Common.h"
 
-class CommandList;
 class Buffer;
 class PointLight;
 class SpotLight;

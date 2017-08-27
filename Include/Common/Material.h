@@ -1,21 +1,30 @@
 #pragma once
 
-#include "Math/Vector4.h"
+#include "Math/Vector3.h"
 
 struct Material
 {
-	Material(const Vector4f& ambientColor, const Vector4f& diffuseColor, const Vector4f& specularColor,
-		f32 specularPower, const Vector4f& emissiveColor);
-	
-	Vector4f m_AmbientColor;
-	Vector4f m_DiffuseColor;
-	Vector4f m_SpecularColor;
-	f32	m_SpecularPower;
-	Vector4f m_EmissiveColor;
+	Material(const std::wstring& name);
 
+	std::wstring m_Name;
+
+	Vector3f m_AmbientColor;
 	std::wstring m_AmbientMapName;
+
+	Vector3f m_DiffuseColor;
 	std::wstring m_DiffuseMapName;
+
+	Vector3f m_SpecularColor;
 	std::wstring m_SpecularMapName;
-	std::wstring m_SpecularPowerMapName;
+
+	f32 m_Shininess;
+	std::wstring m_ShininessMapName;
+
+	Vector3f m_EmissiveColor;
 	std::wstring m_EmissiveMapName;
+
+	f32 m_Opacity;
+	std::wstring m_OpacityMapName;
+
+	f32 m_IndexOfRefraction;
 };

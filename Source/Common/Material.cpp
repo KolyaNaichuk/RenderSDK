@@ -1,11 +1,13 @@
 #include "Common/Material.h"
 
-Material::Material(const Vector4f& ambientColor, const Vector4f& diffuseColor, const Vector4f& specularColor,
-	f32 specularPower, const Vector4f& emissiveColor)
-	: m_AmbientColor(ambientColor)
-	, m_DiffuseColor(diffuseColor)
-	, m_SpecularColor(specularColor)
-	, m_SpecularPower(specularPower)
-	, m_EmissiveColor(emissiveColor)
+Material::Material(const std::wstring& name)
+	: m_Name(name)
+	, m_AmbientColor(Vector3f::ZERO)
+	, m_DiffuseColor(Vector3f::ZERO)
+	, m_SpecularColor(Vector3f::ZERO)
+	, m_Shininess(1.0f)
+	, m_EmissiveColor(Vector3f::ZERO)
+	, m_Opacity(1.0f)
+	, m_IndexOfRefraction(1.0f)
 {
 }
