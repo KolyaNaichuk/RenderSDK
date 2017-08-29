@@ -18,13 +18,13 @@
 // http://go.microsoft.com/fwlink/?LinkID=615561
 //--------------------------------------------------------------------------------------
 
-#include "DDSTextureLoader/DDSTextureLoader12.h"
+#include "DDSTextureLoader12.h"
 
 #include <assert.h>
 #include <algorithm>
 #include <memory>
 
-#include "d3dx12.h"
+#include <d3dx12.h>
 
 using namespace DirectX;
 

@@ -4,7 +4,6 @@
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/RenderEnv.h"
-#include "DDSTextureLoader/DDSTextureLoader12.h"
 #include "Math/Vector4.h"
 
 MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u32 numMaterials, Material** ppMaterials)
@@ -39,16 +38,6 @@ MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u32 numM
 		}
 		else
 		{
-			ComPtr<ID3D12Resource> d3dTexture;
-			std::unique_ptr<std::uint8_t[]> byteData;
-			std::vector<D3D12_SUBRESOURCE_DATA> subresources;
-			
-			HRESULT result = DirectX::LoadDDSTextureFromFile(pRenderEnv->m_pDevice->GetD3DObject(),
-				pMaterial->m_DiffuseMapName.c_str(), &d3dTexture, byteData, subresources);
-			VerifyD3DResult(result);
-
-			assert(false && "What is the heap where texture was created?");
-			m_Textures.emplace_back(new ColorTexture(pRenderEnv, d3dTexture, diffuseMapDebugName.c_str()));
 		}
 		
 		if (pMaterial->m_SpecularMapName.empty())

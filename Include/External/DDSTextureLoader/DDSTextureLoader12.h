@@ -26,6 +26,7 @@
 #include <vector>
 #include <stdint.h>
 
+
 namespace DirectX
 {
     enum DDS_ALPHA_MODE

@@ -10,9 +10,6 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{cdfc8819-7e01-4a64-ad55-d4d9eee98bb6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="DDSTextureLoader">
-      <UniqueIdentifier>{719216ed-8ae2-47b7-8ce1-405c4d23ebc8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="D3DWrapper">
       <UniqueIdentifier>{df923963-1277-46f8-b455-1351c2a4b4c5}</UniqueIdentifier>
     </Filter>
@@ -255,12 +252,6 @@
     <ClInclude Include="..\Include\Common\MaterialRenderResources.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\DDSTextureLoader\DDSTextureLoader12.h">
-      <Filter>DDSTextureLoader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Source\DDSTextureLoader\d3dx12.h">
-      <Filter>DDSTextureLoader</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -481,9 +472,6 @@
     </ClCompile>
     <ClCompile Include="..\Source\Common\MaterialRenderResources.cpp">
       <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DDSTextureLoader\DDSTextureLoader12.cpp">
-      <Filter>DDSTextureLoader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

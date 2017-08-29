@@ -185,7 +185,6 @@
     <ClInclude Include="..\Include\D3DWrapper\RootSignature.h" />
     <ClInclude Include="..\Include\D3DWrapper\SwapChain.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsUtils.h" />
-    <ClInclude Include="..\Include\DDSTextureLoader\DDSTextureLoader12.h" />
     <ClInclude Include="..\Include\Math\AxisAngle.h" />
     <ClInclude Include="..\Include\Math\BasisAxes.h" />
     <ClInclude Include="..\Include\Math\Cone.h" />
@@ -229,7 +228,6 @@
     <ClInclude Include="..\Include\RenderPasses\VisualizeIntensityPass.h" />
     <ClInclude Include="..\Include\RenderPasses\VisualizeTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h" />
-    <ClInclude Include="..\Source\DDSTextureLoader\d3dx12.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Common\Application.cpp" />
@@ -263,7 +261,6 @@
     <ClCompile Include="..\Source\D3DWrapper\RootSignature.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\SwapChain.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\GraphicsUtils.cpp" />
-    <ClCompile Include="..\Source\DDSTextureLoader\DDSTextureLoader12.cpp" />
     <ClCompile Include="..\Source\Math\AxisAngle.cpp" />
     <ClCompile Include="..\Source\Math\BasisAxes.cpp" />
     <ClCompile Include="..\Source\Math\AxisAlignedBox.cpp" />
@@ -631,6 +628,11 @@
     <None Include="..\Shaders\Encoding.hlsl">
       <FileType>Document</FileType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Include\External\DirectXTex\DirectXTex_Desktop_2017_Win10.vcxproj">
+      <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
