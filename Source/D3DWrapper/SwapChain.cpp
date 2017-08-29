@@ -37,7 +37,7 @@ SwapChain::SwapChain(GraphicsFactory* pFactory, RenderEnv* pRenderEnv, SwapChain
 		ComPtr<ID3D12Resource> d3dBuffer;
 		VerifyD3DResult(m_DXGISwapChain->GetBuffer(index, IID_PPV_ARGS(&d3dBuffer)));
 		
-		ColorTexture* pBuffer = new ColorTexture(pRenderEnv, d3dBuffer, D3D12_RESOURCE_STATE_PRESENT, L"BackBuffer");
+		ColorTexture* pBuffer = new ColorTexture(pRenderEnv, d3dBuffer, L"BackBuffer");
 		m_ppFirstBuffer[index] = pBuffer;
 	}
 }

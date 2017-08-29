@@ -260,8 +260,8 @@ struct Tex3DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 class GraphicsResource
 {
 protected:
-	GraphicsResource(ComPtr<ID3D12Resource> d3dResource, D3D12_RESOURCE_STATES initialState);
-	GraphicsResource(const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES initialState);
+	GraphicsResource(ComPtr<ID3D12Resource> d3dResource);
+	GraphicsResource(const D3D12_RESOURCE_DESC* pDesc);
 
 public:
 	ID3D12Resource* GetD3DObject() { return m_D3DResource.Get(); }
@@ -290,8 +290,7 @@ public:
 		const ColorTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
-	ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource,
-		D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+	ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource, LPCWSTR pName);
 
 	UINT64 GetWidth() const { return m_Desc.Width; }
 	UINT GetHeight() const { return m_Desc.Height; }

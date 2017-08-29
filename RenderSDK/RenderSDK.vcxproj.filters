@@ -45,9 +45,6 @@
     <ClInclude Include="..\Include\Math\OverlapTest.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\DDSTextureLoader\DDSTextureLoader.h">
-      <Filter>DDSTextureLoader</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Common\Material.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -258,6 +255,12 @@
     <ClInclude Include="..\Include\Common\MaterialRenderResources.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\DDSTextureLoader\DDSTextureLoader12.h">
+      <Filter>DDSTextureLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\DDSTextureLoader\d3dx12.h">
+      <Filter>DDSTextureLoader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -280,9 +283,6 @@
     </ClCompile>
     <ClCompile Include="..\Source\Math\OverlapTest.cpp">
       <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DDSTextureLoader\DDSTextureLoader.cpp">
-      <Filter>DDSTextureLoader</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\Camera.cpp">
       <Filter>Common</Filter>
@@ -481,6 +481,9 @@
     </ClCompile>
     <ClCompile Include="..\Source\Common\MaterialRenderResources.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\DDSTextureLoader\DDSTextureLoader12.cpp">
+      <Filter>DDSTextureLoader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

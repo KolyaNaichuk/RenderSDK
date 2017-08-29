@@ -671,13 +671,13 @@ Tex3DUnorderedAccessViewDesc::Tex3DUnorderedAccessViewDesc(DXGI_FORMAT format, U
 	Texture3D.WSize = depthSliceCount;
 }
 
-GraphicsResource::GraphicsResource(ComPtr<ID3D12Resource> d3dResource, D3D12_RESOURCE_STATES initialState)
+GraphicsResource::GraphicsResource(ComPtr<ID3D12Resource> d3dResource)
 	: m_D3DResource(d3dResource)
 	, m_Desc(d3dResource->GetDesc())
 {
 }
 
-GraphicsResource::GraphicsResource(const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES initialState)
+GraphicsResource::GraphicsResource(const D3D12_RESOURCE_DESC* pDesc)
 	: m_Desc(*pDesc)
 {
 }
@@ -731,7 +731,7 @@ HeapProperties::HeapProperties(D3D12_CPU_PAGE_PROPERTY cpuPageProperty, D3D12_ME
 ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const ColorTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 	const FLOAT optimizedClearColor[4], LPCWSTR pName)
-	: GraphicsResource(pTexDesc, initialState)
+	: GraphicsResource(pTexDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
 	CreateTex1DViews(pRenderEnv, pTexDesc);
@@ -740,7 +740,7 @@ ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* p
 ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const ColorTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 	const FLOAT optimizedClearColor[4], LPCWSTR pName)
-	: GraphicsResource(pTexDesc, initialState)
+	: GraphicsResource(pTexDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
 	CreateTex2DViews(pRenderEnv, pTexDesc);
@@ -749,15 +749,18 @@ ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* p
 ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const ColorTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 	const FLOAT optimizedClearColor[4], LPCWSTR pName)
-	: GraphicsResource(pTexDesc, initialState)
+	: GraphicsResource(pTexDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
 	CreateTex3DViews(pRenderEnv, pTexDesc);
 }
 
-ColorTexture::ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
-	: GraphicsResource(d3dResource, initialState)
+ColorTexture::ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource, LPCWSTR pName)
+	: GraphicsResource(d3dResource)
 {
+#ifdef _DEBUG
+	VerifyD3DResult(m_D3DResource->SetName(pName));
+#endif
 	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
 	{
 		CreateTex1DViews(pRenderEnv, &m_Desc);
@@ -925,7 +928,7 @@ void ColorTexture::CreateTex3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_
 DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const DepthTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 	const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName)
-	: GraphicsResource(pTexDesc, initialState)
+	: GraphicsResource(pTexDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
 	CreateTex1DViews(pRenderEnv, pTexDesc);
@@ -934,7 +937,7 @@ DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* p
 DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const DepthTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 	const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName)
-	: GraphicsResource(pTexDesc, initialState)
+	: GraphicsResource(pTexDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
 	CreateTex2DViews(pRenderEnv, pTexDesc);
@@ -943,7 +946,7 @@ DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* p
 DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const DepthTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 	const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName)
-	: GraphicsResource(pTexDesc, initialState)
+	: GraphicsResource(pTexDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
 	CreateTex3DViews(pRenderEnv, pTexDesc);
@@ -1034,7 +1037,7 @@ void DepthTexture::CreateTex3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const ConstantBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
-	: GraphicsResource(pBufferDesc, initialState)
+	: GraphicsResource(pBufferDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateConstantBufferView(pRenderEnv, pBufferDesc);
@@ -1042,7 +1045,7 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const VertexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
-	: GraphicsResource(pBufferDesc, initialState)
+	: GraphicsResource(pBufferDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateVertexBufferView(pRenderEnv, pBufferDesc);
@@ -1050,7 +1053,7 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const IndexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
-	: GraphicsResource(pBufferDesc, initialState)
+	: GraphicsResource(pBufferDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateIndexBufferView(pRenderEnv, pBufferDesc);
@@ -1058,7 +1061,7 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const StructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
-	: GraphicsResource(pBufferDesc, initialState)
+	: GraphicsResource(pBufferDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateStructuredBufferViews(pRenderEnv, pBufferDesc);
@@ -1066,7 +1069,7 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const FormattedBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
-	: GraphicsResource(pBufferDesc, initialState)
+	: GraphicsResource(pBufferDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateFormattedBufferViews(pRenderEnv, pBufferDesc);
