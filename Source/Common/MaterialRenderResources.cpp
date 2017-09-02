@@ -1,10 +1,17 @@
 #include "Common/MaterialRenderResources.h"
 #include "Common/Material.h"
+#include "Common/FileUtilities.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/RenderEnv.h"
+#include "External/DirectXTex/DirectXTex.h"
 #include "Math/Vector4.h"
+
+namespace
+{
+	ColorTexture* LoadTexture(RenderEnv* pRenderEnv, const wchar_t* pFilePath, bool forceSRGB);
+}
 
 MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u32 numMaterials, Material** ppMaterials)
 {
@@ -103,4 +110,112 @@ MaterialRenderResources::~MaterialRenderResources()
 {
 	for (decltype(m_Textures.size()) index = 0; index < m_Textures.size(); ++index)
 		SafeDelete(m_Textures[index]);
+}
+
+namespace
+{
+	ColorTexture* LoadTexture(RenderEnv* pRenderEnv, const wchar_t* pFilePath, bool forceSRGB)
+	{
+		DirectX::ScratchImage image;
+
+		const std::wstring fileName = ExtractFileNameWithExtension(pFilePath);
+		const std::wstring fileExtension = ExtractFileExtension(pFilePath);
+		
+		if ((fileExtension == L"DDS") || (fileExtension == L"dds"))
+		{
+			VerifyD3DResult(DirectX::LoadFromDDSFile(pFilePath, DirectX::DDS_FLAGS_NONE, nullptr, image));
+		}
+		else if ((fileExtension == L"TGA") || (fileExtension == L"tga"))
+		{
+			DirectX::ScratchImage tempImage;
+			VerifyD3DResult(DirectX::LoadFromTGAFile(pFilePath, nullptr, tempImage));
+			VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));
+		}
+		else
+		{
+			DirectX::ScratchImage tempImage;
+			VerifyD3DResult(DirectX::LoadFromWICFile(pFilePath, DirectX::WIC_FLAGS_NONE, nullptr, tempImage));
+			VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));
+		}
+				
+		const DirectX::TexMetadata& metaData = image.GetMetadata();
+		const DXGI_FORMAT format = forceSRGB ? DirectX::MakeSRGB(metaData.format) : metaData.format;
+
+		D3D12_RESOURCE_DIMENSION dimension = D3D12_RESOURCE_DIMENSION_UNKNOWN;
+		if (metaData.dimension == DirectX::TEX_DIMENSION_TEXTURE1D)
+			dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+		else if (metaData.dimension == DirectX::TEX_DIMENSION_TEXTURE2D)
+			dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		else if (metaData.dimension == DirectX::TEX_DIMENSION_TEXTURE3D)
+			dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+
+		assert(dimension != D3D12_RESOURCE_DIMENSION_UNKNOWN);
+		assert(!metaData.IsCubemap());
+
+		const UINT16 depthOrArraySize = (dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D) ? UINT16(metaData.depth) : UINT16(metaData.arraySize);
+
+		ColorTextureDesc textureDesc(dimension, format, UINT64(metaData.width), UINT(metaData.height), false, true, false, depthOrArraySize);
+		ColorTexture* pTexture = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &textureDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST, nullptr, fileName.c_str());
+		
+		static const UINT maxNumSubresources = 64;
+		static D3D12_PLACED_SUBRESOURCE_FOOTPRINT subresourceFootprints[maxNumSubresources];
+		static UINT numRows[maxNumSubresources];
+		static UINT64 rowSizeInBytes[maxNumSubresources];
+		
+		const UINT numSubresources = UINT(metaData.mipLevels * metaData.arraySize);
+		assert(numSubresources <= maxNumSubresources);
+
+		Buffer* pUploadBuffer = nullptr;
+		assert(pUploadBuffer != nullptr);
+		UINT* pUploadStartMem = nullptr;
+		assert(pUploadStartMem != nullptr);		
+		UINT64 uploadOffsetInBytes = 0;
+		assert(false && "baseOffsetInBytes");
+		
+		UINT64 textureSizeInBytes = 0;
+		pRenderEnv->m_pDevice->GetCopyableFootprints(&textureDesc, 0, numSubresources, uploadOffsetInBytes, subresourceFootprints, numRows, rowSizeInBytes, &textureSizeInBytes);
+		
+		for (decltype(metaData.arraySize) arrayIndex = 0; arrayIndex < metaData.arraySize; ++arrayIndex)
+		{
+			for (decltype(metaData.mipLevels) mipIndex = 0; mipIndex < metaData.mipLevels; ++mipIndex)
+			{
+				const UINT subresourceIndex = UINT(mipIndex + (arrayIndex * metaData.mipLevels));
+
+				const D3D12_PLACED_SUBRESOURCE_FOOTPRINT& subresourceFootprint = subresourceFootprints[subresourceIndex];
+				const UINT subresourceNumRows = numRows[subresourceIndex];
+				const UINT subresourceRowPitch = subresourceFootprint.Footprint.RowPitch;
+				const UINT subresourceDepth = subresourceFootprint.Footprint.Depth;
+				UINT* pDestSubresourceMem = pUploadStartMem + subresourceFootprint.Offset;
+
+				for (UINT slice = 0; slice < subresourceDepth; ++slice)
+				{
+					const DirectX::Image* pSubimage = image.GetImage(mipIndex, arrayIndex, slice);
+					assert(pSubimage != nullptr);
+					const UINT8* pSrcSubresourceMem = pSubimage->pixels;
+					
+					const UINT bytesToCopy = Min(subresourceRowPitch, pSubimage->rowPitch);
+					for (UINT row = 0; row < subresourceNumRows; ++row)
+					{
+						std::memcpy(pDestSubresourceMem, pSrcSubresourceMem, bytesToCopy);
+
+						pDestSubresourceMem += subresourceRowPitch;
+						pSrcSubresourceMem += pSubimage->rowPitch;
+					}
+				}
+			}
+		}
+
+		CommandList* pCommandList = nullptr;
+		assert(pCommandList != nullptr);
+		for (UINT subresourceIndex = 0; subresourceIndex < numSubresources; ++subresourceIndex)
+		{
+			TextureCopyLocation destLocation(pTexture, subresourceIndex);
+			TextureCopyLocation sourceLocation(pUploadBuffer, subresourceFootprints[subresourceIndex]);
+
+			pCommandList->CopyTextureRegion(&destLocation, 0, 0, 0, &sourceLocation, nullptr);
+		}
+
+		return pTexture;
+	}
 }

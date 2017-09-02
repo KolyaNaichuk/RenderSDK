@@ -69,3 +69,9 @@ void GraphicsDevice::CopyDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE destDescriptor, 
 {
 	m_D3DDevice->CopyDescriptorsSimple(1, destDescriptor, srcDescriptor, descriptorHeapType);
 }
+
+void GraphicsDevice::GetCopyableFootprints(const D3D12_RESOURCE_DESC* pResourceDesc, UINT firstSubresource, UINT numSubresources, UINT64 baseOffsetInBytes,
+	D3D12_PLACED_SUBRESOURCE_FOOTPRINT* pFootprints, UINT* pNumRows, UINT64* pRowSizeInBytes, UINT64* pTotalBytes)
+{
+	m_D3DDevice->GetCopyableFootprints(pResourceDesc, firstSubresource, numSubresources, baseOffsetInBytes, pFootprints, pNumRows, pRowSizeInBytes, pTotalBytes);
+}

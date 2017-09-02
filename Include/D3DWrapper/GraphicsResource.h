@@ -133,6 +133,16 @@ struct CounterBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 		UINT structureByteStride, UINT64 counterOffsetInBytes);
 };
 
+struct ColorTextureDesc : public D3D12_RESOURCE_DESC
+{
+	ColorTextureDesc(D3D12_RESOURCE_DIMENSION dimension, DXGI_FORMAT format, UINT64 width, UINT height,
+		bool createRTV, bool createSRV, bool createUAV,
+		UINT16 depthOrArraySize = 1, UINT16 mipLevels = 1,
+		UINT sampleCount = 1, UINT sampleQuality = 0,
+		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		UINT64 alignment = 0);
+};
+
 struct ColorTexture1DDesc : public D3D12_RESOURCE_DESC
 {
 	ColorTexture1DDesc(DXGI_FORMAT format, UINT64 width,
@@ -290,6 +300,10 @@ public:
 		const ColorTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
+	ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const ColorTextureDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+		const FLOAT optimizedClearColor[4], LPCWSTR pName);
+
 	ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource, LPCWSTR pName);
 
 	UINT64 GetWidth() const { return m_Desc.Width; }
@@ -403,6 +417,12 @@ public:
 
 private:
 	DescriptorHandle m_Handle;
+};
+
+struct TextureCopyLocation : public D3D12_TEXTURE_COPY_LOCATION
+{
+	TextureCopyLocation(GraphicsResource* pGraphicsResource, UINT subresourceIndex);
+	TextureCopyLocation(GraphicsResource* pGraphicsResource, const D3D12_PLACED_SUBRESOURCE_FOOTPRINT& footprint);
 };
 
 template <typename DestBufferDesc>

@@ -300,6 +300,30 @@ CounterBufferUAVDesc::CounterBufferUAVDesc(UINT64 firstElement, UINT numElements
 	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 }
 
+ColorTextureDesc::ColorTextureDesc(D3D12_RESOURCE_DIMENSION dimension, DXGI_FORMAT format, UINT64 width, UINT height,
+	bool createRTV, bool createSRV, bool createUAV, UINT16 depthOrArraySize, UINT16 mipLevels,
+	UINT sampleCount, UINT sampleQuality, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
+{
+	Dimension = dimension;
+	Alignment = alignment;
+	Width = width;
+	Height = height;
+	DepthOrArraySize = depthOrArraySize;
+	MipLevels = mipLevels;
+	Format = format;
+	SampleDesc.Count = sampleCount;
+	SampleDesc.Quality = sampleQuality;
+	Layout = layout;
+
+	Flags = D3D12_RESOURCE_FLAG_NONE;
+	if (createRTV)
+		Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+	if (!createSRV)
+		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+	if (createUAV)
+		Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+}
+
 ColorTexture1DDesc::ColorTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool createRTV, bool createSRV, bool createUAV,
 	UINT16 arraySize, UINT16 mipLevels, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
 {
@@ -755,6 +779,29 @@ ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* p
 	CreateTex3DViews(pRenderEnv, pTexDesc);
 }
 
+ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const ColorTextureDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const FLOAT optimizedClearColor[4], LPCWSTR pName)
+	: GraphicsResource(pTexDesc)
+{
+	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
+	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
+	{
+		CreateTex1DViews(pRenderEnv, &m_Desc);
+		return;
+	}
+	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
+	{
+		CreateTex2DViews(pRenderEnv, &m_Desc);
+		return;
+	}
+	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
+	{
+		CreateTex3DViews(pRenderEnv, &m_Desc);
+		return;
+	}
+}
+
 ColorTexture::ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource, LPCWSTR pName)
 	: GraphicsResource(d3dResource)
 {
@@ -1206,4 +1253,18 @@ Sampler::Sampler(RenderEnv* pRenderEnv, const D3D12_SAMPLER_DESC* pDesc)
 
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 	pD3DDevice->CreateSampler(pDesc, m_Handle);
+}
+
+TextureCopyLocation::TextureCopyLocation(GraphicsResource* pGraphicsResource, UINT subresourceIndex)
+{
+	pResource = pGraphicsResource->GetD3DObject();
+	Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+	SubresourceIndex = subresourceIndex;
+}
+
+TextureCopyLocation::TextureCopyLocation(GraphicsResource* pGraphicsResource, const D3D12_PLACED_SUBRESOURCE_FOOTPRINT& footprint)
+{
+	pResource = pGraphicsResource->GetD3DObject();
+	Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+	PlacedFootprint = footprint;
 }
