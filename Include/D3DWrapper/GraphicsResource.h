@@ -276,6 +276,9 @@ protected:
 public:
 	ID3D12Resource* GetD3DObject() { return m_D3DResource.Get(); }
 	DXGI_FORMAT GetFormat() const { return m_Desc.Format; }
+
+	void* Map(UINT subresource, SIZE_T numBytesToRead);
+	void Unmap(UINT subresource, SIZE_T numBytesWritten);
 			
 	void Write(const void* pInputData, SIZE_T numBytes);
 	void Read(void* pOutputData, SIZE_T numBytes);

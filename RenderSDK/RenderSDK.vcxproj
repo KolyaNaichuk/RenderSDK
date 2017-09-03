@@ -170,6 +170,7 @@
     <ClInclude Include="..\Include\Common\Scene.h" />
     <ClInclude Include="..\Include\Common\SceneLoader.h" />
     <ClInclude Include="..\Include\Common\SceneObject.h" />
+    <ClInclude Include="..\Include\Common\StringUtilities.h" />
     <ClInclude Include="..\Include\Common\Window.h" />
     <ClInclude Include="..\Include\D3DWrapper\CommandList.h" />
     <ClInclude Include="..\Include\D3DWrapper\CommandQueue.h" />
@@ -248,6 +249,7 @@
     <ClCompile Include="..\Source\Common\Scene.cpp" />
     <ClCompile Include="..\Source\Common\SceneLoader.cpp" />
     <ClCompile Include="..\Source\Common\SceneObject.cpp" />
+    <ClCompile Include="..\Source\Common\StringUtilities.cpp" />
     <ClCompile Include="..\Source\Common\Window.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\CommandList.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\CommandQueue.cpp" />

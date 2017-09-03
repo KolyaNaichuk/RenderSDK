@@ -3,6 +3,7 @@
 #include "Common/Mesh.h"
 #include "Common/MeshBatch.h"
 #include "Common/MeshUtilities.h"
+#include "Common/StringUtilities.h"
 #include "Common/Scene.h"
 #include "Common/Material.h"
 #include "Math/Hash.h"
@@ -50,20 +51,7 @@ namespace OBJFile
 
 		return std::wstring(stringBuffer);
 	}
-		
-	std::wstring AnsiToWideString(const char* pAnsiString)
-	{
-		int ansiStringLength = std::strlen(pAnsiString);
-		assert(ansiStringLength > 0);
-
-		int wideStringLength = MultiByteToWideChar(CP_ACP, 0, pAnsiString, ansiStringLength, nullptr, 0);
-		std::wstring wideString(wideStringLength, L'\0');
-		int numWrittenCharacters = MultiByteToWideChar(CP_ACP, 0, pAnsiString, ansiStringLength, &wideString[0], wideStringLength);
-		assert(numWrittenCharacters == wideStringLength);
-
-		return wideString;
-	}
-
+	
 	std::vector<MeshTriangle> Triangulate(const MeshFace& meshFace)
 	{
 		assert(meshFace.size() > 2);
@@ -103,7 +91,7 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 	if (!LoadDataFromFile(pFilePath, FileMode::Text, byteStringFileData))
 		return false;
 
-	std::wstring wideStringFileData = OBJFile::AnsiToWideString(&byteStringFileData[0]);
+	std::wstring wideStringFileData = AnsiToWideString(&byteStringFileData[0]);
 
 	wchar_t* pLineContext = nullptr;
 	wchar_t* pLine = wcstok_s(&wideStringFileData[0], L"\n", &pLineContext);
@@ -232,7 +220,7 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 	if (!LoadDataFromFile(pFilePath, FileMode::Text, byteStringFileData))
 		return false;
 
-	std::wstring wideStringFileData = OBJFile::AnsiToWideString(&byteStringFileData[0]);
+	std::wstring wideStringFileData = AnsiToWideString(byteStringFileData.data());
 
 	wchar_t* pLineContext = nullptr;
 	wchar_t* pLine = wcstok_s(&wideStringFileData[0], L"\n", &pLineContext);

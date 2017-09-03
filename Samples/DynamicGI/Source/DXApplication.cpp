@@ -164,18 +164,19 @@ OOB will have coordinates expanding from -1 to 1 not merely passing through 0 wh
 3.Make camera transform part of Scene object.
 Can check format OpenGEX for inspiration - http://opengex.org/
 
-4.MeshRenderResources, LightRenderResources should not be part of Common folder
+4.MeshRenderResources, LightRenderResources, MaterialRenderResources should not be part of Common folder
+5.Using std::experimental::filesystem::path from OBJFileLoader. Should be consistent with the code.
 
-5.Review to-dos
+6.Review to-dos
 
-6.Use output resource states to initialize input resource states from the previous pass.
+7.Use output resource states to initialize input resource states from the previous pass.
 
-7.Use Task graph for resource state transaition after each render pass.
+8.Use Task graph for resource state transition after each render pass.
 https://patterns.eecs.berkeley.edu/?page_id=609
 
 8.Fix compilation warnings for x64 build
 
-9.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
+10.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
 against MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER and MAX_NUM_POINT_LIGHTS_PER_SHADOW_CASTER
 while writing data to the local storage
 */

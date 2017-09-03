@@ -706,32 +706,34 @@ GraphicsResource::GraphicsResource(const D3D12_RESOURCE_DESC* pDesc)
 {
 }
 
+void* GraphicsResource::Map(UINT subresource, SIZE_T numBytesToRead)
+{
+	void* pResourceData = nullptr;
+	MemoryRange readRange(0, numBytesToRead);
+	VerifyD3DResult(GetD3DObject()->Map(subresource, &readRange, reinterpret_cast<void**>(&pResourceData)));
+	return pResourceData;
+}
+
+void GraphicsResource::Unmap(UINT subresource, SIZE_T numBytesWritten)
+{
+	MemoryRange writtenRange(0, numBytesWritten);
+	GetD3DObject()->Unmap(subresource, &writtenRange);
+}
+
 void GraphicsResource::Write(const void* pInputData, SIZE_T numBytes)
 {
 	const UINT subresource = 0;
-	void* pResourceData = nullptr;
-
-	MemoryRange readRange(0, 0);
-	VerifyD3DResult(GetD3DObject()->Map(subresource, &readRange, reinterpret_cast<void**>(&pResourceData)));
-
+	void* pResourceData = Map(subresource, 0);
 	std::memcpy(pResourceData, pInputData, numBytes);
-
-	MemoryRange writtenRange(0, numBytes);
-	GetD3DObject()->Unmap(subresource, &writtenRange);
+	Unmap(subresource, numBytes);
 }
 
 void GraphicsResource::Read(void* pOutputData, SIZE_T numBytes)
 {
 	const UINT subresource = 0;
-	void* pResourceData = nullptr;
-
-	MemoryRange readRange(0, numBytes);
-	VerifyD3DResult(GetD3DObject()->Map(subresource, &readRange, reinterpret_cast<void**>(&pResourceData)));
-
+	void* pResourceData = Map(subresource, numBytes);
 	std::memcpy(pOutputData, pResourceData, numBytes);
-
-	MemoryRange writtenRange(0, 0);
-	GetD3DObject()->Unmap(subresource, &writtenRange);
+	Unmap(subresource, 0);
 }
 
 HeapProperties::HeapProperties(D3D12_HEAP_TYPE type)
