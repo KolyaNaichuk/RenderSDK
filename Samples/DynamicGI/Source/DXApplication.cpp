@@ -33,6 +33,7 @@
 #include "Common/GeometryBuffer.h"
 #include "Common/MeshRenderResources.h"
 #include "Common/LightRenderResources.h"
+#include "Common/MaterialRenderResources.h"
 #include "Common/Color.h"
 #include "Common/Camera.h"
 #include "Common/Scene.h"
@@ -499,14 +500,15 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pVisualizeSpotLightTiledShadowMapPass(nullptr)
 	, m_pVisualizePointLightTiledShadowMapPass(nullptr)
 	, m_pVisualizeIntensityPass(nullptr)
-	, m_pMeshRenderResources(nullptr)
-	, m_pPointLightRenderResources(nullptr)
 	, m_pNumVisiblePointLightsBuffer(nullptr)
 	, m_pVisiblePointLightIndexBuffer(nullptr)
-	, m_pSpotLightRenderResources(nullptr)
 	, m_pNumVisibleSpotLightsBuffer(nullptr)
 	, m_pVisibleSpotLightIndexBuffer(nullptr)
 	, m_pCamera(nullptr)
+	, m_pMeshRenderResources(nullptr)
+	, m_pPointLightRenderResources(nullptr)
+	, m_pSpotLightRenderResources(nullptr)
+	, m_pMaterialRenderResources(nullptr)
 	, m_pGeometryBuffer(nullptr)
 	, m_pDownscaleAndReprojectDepthPass(nullptr)
 	, m_pFrustumMeshCullingPass(nullptr)
@@ -533,6 +535,10 @@ DXApplication::~DXApplication()
 {
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pGeometryBuffer);
+	SafeDelete(m_pMeshRenderResources);
+	SafeDelete(m_pPointLightRenderResources);
+	SafeDelete(m_pSpotLightRenderResources);
+	SafeDelete(m_pMaterialRenderResources);
 	SafeDelete(m_pDownscaleAndReprojectDepthPass);
 	SafeDelete(m_pFrustumMeshCullingPass);
 	SafeDelete(m_pFillVisibilityBufferMainPass);
@@ -566,13 +572,10 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pSetupSpotLightTiledShadowMapPass);
 	SafeDelete(m_pSetupPointLightTiledShadowMapPass);
 	SafeDelete(m_pCommandListPool);
-	SafeDelete(m_pPointLightRenderResources);
 	SafeDelete(m_pNumVisiblePointLightsBuffer);
 	SafeDelete(m_pVisiblePointLightIndexBuffer);
-	SafeDelete(m_pSpotLightRenderResources);
 	SafeDelete(m_pNumVisibleSpotLightsBuffer);
 	SafeDelete(m_pVisibleSpotLightIndexBuffer);
-	SafeDelete(m_pMeshRenderResources);
 	SafeDelete(m_pShadowCastingPointLightIndexBuffer);
 	SafeDelete(m_pNumShadowCastingPointLightsBuffer);
 	SafeDelete(m_pDrawPointLightShadowCasterCommandBuffer);
@@ -653,7 +656,7 @@ void DXApplication::OnInit()
 
 	InitRenderEnv(backBufferWidth, backBufferHeight);
 	
-	Scene* pScene = SceneLoader::LoadCornellBox();
+	Scene* pScene = SceneLoader::LoadCube();
 	InitScene(pScene, backBufferWidth, backBufferHeight);
 	
 	InitDownscaleAndReprojectDepthPass();
@@ -1006,6 +1009,9 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 
 	if (pScene->GetNumSpotLights() > 0)
 		m_pSpotLightRenderResources = new LightRenderResources(m_pRenderEnv, pScene->GetNumSpotLights(), pScene->GetSpotLights());
+
+	if (pScene->GetNumMaterials() > 0)
+		m_pMaterialRenderResources = new MaterialRenderResources(m_pRenderEnv, pScene->GetNumMaterials(), pScene->GetMaterials());
 		
 	//Kolya. Fix me
 	//Vector3u shadowMapCommandsArgumentBufferValues(0, 1, 1);

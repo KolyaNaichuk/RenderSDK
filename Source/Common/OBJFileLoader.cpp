@@ -13,45 +13,6 @@
 
 namespace OBJFile
 {
-	FaceElement ExtractFaceElement(const wchar_t* pFaceElementToken)
-	{
-		i32 positionIndex, texCoordIndex, normalIndex;
-		int numConvertedValues = swscanf_s(pFaceElementToken, L"%d/%d/%d", &positionIndex, &texCoordIndex, &normalIndex);
-		assert(numConvertedValues == 3);
-
-		assert(positionIndex > 0);
-		--positionIndex;
-
-		assert(texCoordIndex > 0);
-		--texCoordIndex;
-
-		assert(normalIndex > 0);
-		--normalIndex;
-
-		return FaceElement(positionIndex, normalIndex, texCoordIndex);
-	}
-
-	f32 ExtractFloat(wchar_t** ppTokenContext)
-	{
-		return f32(_wtof(wcstok_s(nullptr, L" \t", ppTokenContext)));
-	}
-		
-	std::wstring ExtractString(wchar_t** ppTokenContext)
-	{
-		static const u16 MAX_STRING_LENGTH = 256;
-
-		wchar_t* pStringToken = wcstok_s(nullptr, L" \t", ppTokenContext);
-		assert(pStringToken != nullptr);
-
-		wchar_t stringBuffer[MAX_STRING_LENGTH];
-		::ZeroMemory(stringBuffer, sizeof(stringBuffer));
-		
-		int numConvertedValues = swscanf_s(pStringToken, L"%s", &stringBuffer[0], MAX_STRING_LENGTH);
-		assert(numConvertedValues == 1);
-
-		return std::wstring(stringBuffer);
-	}
-	
 	std::vector<MeshTriangle> Triangulate(const MeshFace& meshFace)
 	{
 		assert(meshFace.size() > 2);
@@ -72,6 +33,7 @@ Scene* OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8
 	if (!loadedOBJFile)
 		return nullptr;
 
+	std::wstring materialDirectoryPath;
 	if (!m_MaterialFileName.empty())
 	{
 		std::experimental::filesystem::path materialFilePath(pOBJFilePath);
@@ -80,9 +42,12 @@ Scene* OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8
 		bool loadedMaterialFile = LoadMaterialFile(materialFilePath.c_str());
 		if (!loadedMaterialFile)
 			return nullptr;
-	}
 
-	return PopulateScene(use32BitIndices, convertMeshFlags);
+		materialFilePath.remove_filename();
+		materialDirectoryPath = materialFilePath.c_str();
+	}
+	assert(!materialDirectoryPath.empty());
+	return PopulateScene(use32BitIndices, convertMeshFlags, materialDirectoryPath.c_str());
 }
 
 bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, u8 convertMeshFlags)
@@ -105,24 +70,24 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 		{
 			if (_wcsicmp(pToken, L"v") == 0)
 			{
-				f32 x = OBJFile::ExtractFloat(&pTokenContext);
-				f32 y = OBJFile::ExtractFloat(&pTokenContext);
-				f32 z = OBJFile::ExtractFloat(&pTokenContext);
+				f32 x = ExtractFloat(&pTokenContext);
+				f32 y = ExtractFloat(&pTokenContext);
+				f32 z = ExtractFloat(&pTokenContext);
 
 				m_Positions.emplace_back(x, y, z);
 			}
 			else if (_wcsicmp(pToken, L"vt") == 0)
 			{
-				f32 u = OBJFile::ExtractFloat(&pTokenContext);
-				f32 v = OBJFile::ExtractFloat(&pTokenContext);
+				f32 u = ExtractFloat(&pTokenContext);
+				f32 v = ExtractFloat(&pTokenContext);
 
 				m_TexCoords.emplace_back(u, v);
 			}
 			else if (_wcsicmp(pToken, L"vn") == 0)
 			{
-				f32 x = OBJFile::ExtractFloat(&pTokenContext);
-				f32 y = OBJFile::ExtractFloat(&pTokenContext);
-				f32 z = OBJFile::ExtractFloat(&pTokenContext);
+				f32 x = ExtractFloat(&pTokenContext);
+				f32 y = ExtractFloat(&pTokenContext);
+				f32 z = ExtractFloat(&pTokenContext);
 
 				m_Normals.emplace_back(x, y, z);
 			}
@@ -154,10 +119,8 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 				meshFace.reserve(3);
 
 				while (wchar_t* pFaceElementToken = wcstok_s(nullptr, L" \t\r", &pTokenContext))
-				{
-					meshFace.emplace_back(OBJFile::ExtractFaceElement(pFaceElementToken));
-				}
-
+					meshFace.emplace_back(ExtractFaceElement(pFaceElementToken));
+				
 				auto meshTriangles = Triangulate(meshFace);
 				m_pCurrentMesh->m_Triangles.insert(m_pCurrentMesh->m_Triangles.end(), meshTriangles.cbegin(), meshTriangles.cend());
 			}
@@ -171,7 +134,7 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 			}
 			else if (_wcsicmp(pToken, L"usemtl") == 0)
 			{
-				std::wstring materialName = OBJFile::ExtractString(&pTokenContext);
+				std::wstring materialName = ExtractString(&pTokenContext);
 				if (m_Materials[m_CurrentMaterialIndex].m_Name != materialName)
 				{
 					m_CurrentMaterialIndex = FindMaterialIndex(materialName);
@@ -184,7 +147,7 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 			}
 			else if (_wcsicmp(pToken, L"g") == 0)
 			{
-				std::wstring groupName = OBJFile::ExtractString(&pTokenContext);
+				std::wstring groupName = ExtractString(&pTokenContext);
 				if (m_CurrentGroupName != groupName)
 				{
 					m_Objects.emplace_back(groupName);
@@ -196,7 +159,7 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 			}
 			else if (_wcsicmp(pToken, L"o") == 0)
 			{
-				std::wstring objectName = OBJFile::ExtractString(&pTokenContext);
+				std::wstring objectName = ExtractString(&pTokenContext);
 				if ((m_pCurrentObject == nullptr) || (m_pCurrentObject->m_Name != objectName))
 				{
 					m_Objects.emplace_back(objectName);
@@ -206,7 +169,7 @@ bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, 
 			}
 			else if (_wcsicmp(pToken, L"mtllib") == 0)
 			{
-				m_MaterialFileName = OBJFile::ExtractString(&pTokenContext);
+				m_MaterialFileName = ExtractString(&pTokenContext);
 			}
 		}
 		pLine = wcstok_s(nullptr, L"\n", &pLineContext);
@@ -238,7 +201,7 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 			}
 			else if (_wcsicmp(pToken, L"newmtl") == 0)
 			{
-				std::wstring materialName = OBJFile::ExtractString(&pTokenContext);
+				std::wstring materialName = ExtractString(&pTokenContext);
 
 				m_CurrentMaterialIndex = FindMaterialIndex(materialName);
 				assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
@@ -253,13 +216,13 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 			}
 			else if (_wcsicmp(pToken, L"Ka") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_X = OBJFile::ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_Y = OBJFile::ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_Z = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_X = ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_Y = ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_Z = ExtractFloat(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"map_Ka") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_AmbientMapName = OBJFile::ExtractString(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_AmbientMapFilePath = ExtractString(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"Kd spectral") == 0)
 			{
@@ -271,13 +234,13 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 			}
 			else if (_wcsicmp(pToken, L"Kd") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_X = OBJFile::ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_Y = OBJFile::ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_Z = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_X = ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_Y = ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_Z = ExtractFloat(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"map_Kd") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_DiffuseMapName = OBJFile::ExtractString(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_DiffuseMapFilePath = ExtractString(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"Ks spectral") == 0)
 			{
@@ -289,13 +252,13 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 			}
 			else if (_wcsicmp(pToken, L"Ks") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_X = OBJFile::ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_Y = OBJFile::ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_Z = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_X = ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_Y = ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_Z = ExtractFloat(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"map_Ks") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_SpecularMapName = OBJFile::ExtractString(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_SpecularMapFilePath = ExtractString(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"Ke spectral") == 0)
 			{
@@ -307,33 +270,33 @@ bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
 			}
 			else if (_wcsicmp(pToken, L"Ke") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_X = OBJFile::ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_Y = OBJFile::ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_Z = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_X = ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_Y = ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_Z = ExtractFloat(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"map_Ke") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_EmissiveMapName = OBJFile::ExtractString(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_EmissiveMapFilePath = ExtractString(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"Ns") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_Shininess = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_Shininess = ExtractFloat(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"map_Ns") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_ShininessMapName = OBJFile::ExtractString(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_ShininessMapFilePath = ExtractString(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"d") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_Opacity = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_Opacity = ExtractFloat(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"map_d") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_OpacityMapName = OBJFile::ExtractString(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_OpacityMapFilePath = ExtractString(&pTokenContext);
 			}
 			else if (_wcsicmp(pToken, L"Ni") == 0)
 			{
-				m_Materials[m_CurrentMaterialIndex].m_IndexOfRefraction = OBJFile::ExtractFloat(&pTokenContext);
+				m_Materials[m_CurrentMaterialIndex].m_IndexOfRefraction = ExtractFloat(&pTokenContext);
 			}
 		}
 		pLine = wcstok_s(nullptr, L"\n", &pLineContext);
@@ -351,7 +314,7 @@ u32 OBJFileLoader::FindMaterialIndex(const std::wstring& materialName) const
 	return OBJFile::kUnknownIndex;
 }
 
-Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshFlags)
+Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshFlags, const wchar_t* materialDirectoryPath)
 {
 	u8 vertexFormat = 0;
 	
@@ -398,50 +361,39 @@ Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshFlags)
 	}
 	pScene->AddMeshBatch(pMeshBatch);
 
-	assert(false);
-	/*
-	std::vector<std::string> materialMasks;
-	for (const OBJFile::Material& material : m_Materials)
+	std::experimental::filesystem::path materialDirectory(materialDirectoryPath);
+	for (const Material& material : m_Materials)
 	{
-		Material* pMaterial = new Material(Vector4f(material.m_AmbientColor.m_X, material.m_AmbientColor.m_Y, material.m_AmbientColor.m_Z, 1.0f),
-			Vector4f(material.m_DiffuseColor.m_X, material.m_DiffuseColor.m_Y, material.m_DiffuseColor.m_Z, 1.0f),
-			Vector4f(material.m_SpecularColor.m_X, material.m_SpecularColor.m_Y, material.m_SpecularColor.m_Z, 1.0f),
-			material.m_Shininess,
-			Vector4f(material.m_EmissiveColor.m_X, material.m_EmissiveColor.m_Y, material.m_EmissiveColor.m_Z, 1.0f));
+		Material* pMaterial = new Material(material);
+		
+		if (!pMaterial->m_AmbientMapFilePath.empty())
+			pMaterial->m_AmbientMapFilePath = materialDirectory / std::experimental::filesystem::path(pMaterial->m_AmbientMapFilePath);
 
-		pMaterial->m_AmbientMapName = material.m_AmbientMapName;
-		pMaterial->m_DiffuseMapName = material.m_DiffuseMapName;
-		pMaterial->m_SpecularMapName = material.m_SpecularMapName;
-		pMaterial->m_ShininessMapName = material.m_ShininessMapName;
-		pMaterial->m_EmissiveMapName = material.m_EmissiveMapName;
+		if (!pMaterial->m_DiffuseMapFilePath.empty())
+			pMaterial->m_DiffuseMapFilePath = materialDirectory / std::experimental::filesystem::path(pMaterial->m_DiffuseMapFilePath);
+		
+		if (!pMaterial->m_SpecularMapFilePath.empty())
+			pMaterial->m_SpecularMapFilePath = materialDirectory / std::experimental::filesystem::path(pMaterial->m_SpecularMapFilePath);
 
+		if (!pMaterial->m_ShininessMapFilePath.empty())
+			pMaterial->m_ShininessMapFilePath = materialDirectory / std::experimental::filesystem::path(pMaterial->m_ShininessMapFilePath);
+
+		if (!pMaterial->m_EmissiveMapFilePath.empty())
+			pMaterial->m_EmissiveMapFilePath = materialDirectory / std::experimental::filesystem::path(pMaterial->m_EmissiveMapFilePath);
+
+		if (!pMaterial->m_OpacityMapFilePath.empty())
+			pMaterial->m_OpacityMapFilePath = materialDirectory / std::experimental::filesystem::path(pMaterial->m_OpacityMapFilePath);
+		
 		pScene->AddMaterial(pMaterial);
-
-		std::string mask(6, '\n');
-		mask[0] = pMaterial->m_AmbientMapName.empty() ? '0' : '1';
-		mask[1] = pMaterial->m_DiffuseMapName.empty() ? '0' : '1';
-		mask[2] = pMaterial->m_SpecularMapName.empty() ? '0' : '1';
-		mask[3] = pMaterial->m_ShininessMapName.empty() ? '0' : '1';
-		mask[4] = pMaterial->m_EmissiveMapName.empty() ? '0' : '1';
-
-		if (mask == "00000\n")
-			OutputDebugStringA("");
-
-		materialMasks.emplace_back(std::move(mask));
 	}
-
-	std::sort(materialMasks.begin(), materialMasks.end());
-	for (const auto& mask : materialMasks)
-		OutputDebugStringA(mask.c_str());
-	*/
-	
+		
 	return pScene;
 }
 
 template <typename Index>
 void OBJFileLoader::GenerateVertexAndIndexData(const OBJFile::Mesh& mesh, VertexData** ppVertexData, IndexData** ppIndexData)
 {
-	assert((sizeof(u16) == sizeof(Index)) || (sizeof(u32) == sizeof(Index)));
+	static_assert((sizeof(u16) == sizeof(Index)) || (sizeof(u32) == sizeof(Index)), "Invalid index type");
 
 	struct FaceElementHasher
 	{
@@ -494,7 +446,7 @@ void OBJFileLoader::GenerateVertexAndIndexData(const OBJFile::Mesh& mesh, Vertex
 		}
 	}
 
-	*ppVertexData = new VertexData(positions.size(), positions.data(), normals.data(), nullptr, texCoords.data());
+	*ppVertexData = new VertexData(positions.size(), positions.data(), normals.data(), texCoords.data());
 	*ppIndexData = new IndexData(indices.size(), indices.data());
 }
 
@@ -516,4 +468,46 @@ void OBJFileLoader::Clear()
 	m_pCurrentMesh = nullptr;
 
 	m_CurrentGroupName = OBJFile::kDefaultGroupName;
+}
+
+OBJFile::FaceElement OBJFileLoader::ExtractFaceElement(const wchar_t* pFaceElementToken)
+{
+	i32 positionIndex, texCoordIndex, normalIndex;
+	int numConvertedValues = swscanf_s(pFaceElementToken, L"%d/%d/%d", &positionIndex, &texCoordIndex, &normalIndex);
+	assert(numConvertedValues == 3);
+
+	const i32 numPositions = m_Positions.size();
+	const i32 numTexCoords = m_TexCoords.size();
+	const i32 numNormals = m_Normals.size();
+
+	assert(positionIndex != 0);
+	assert(texCoordIndex != 0);
+	assert(normalIndex != 0);
+
+	positionIndex = (positionIndex > 0) ? (positionIndex - 1) : (numPositions + positionIndex);
+	texCoordIndex = (texCoordIndex > 0) ? (texCoordIndex - 1) : (numTexCoords + texCoordIndex);
+	normalIndex = (normalIndex > 0) ? (normalIndex - 1) : (numNormals + normalIndex);
+	
+	return OBJFile::FaceElement(positionIndex, normalIndex, texCoordIndex);
+}
+
+f32 OBJFileLoader::ExtractFloat(wchar_t** ppTokenContext)
+{
+	return f32(_wtof(wcstok_s(nullptr, L" \t", ppTokenContext)));
+}
+
+std::wstring OBJFileLoader::ExtractString(wchar_t** ppTokenContext)
+{
+	static const u16 MAX_STRING_LENGTH = 256;
+
+	wchar_t* pStringToken = wcstok_s(nullptr, L" \t", ppTokenContext);
+	assert(pStringToken != nullptr);
+
+	wchar_t stringBuffer[MAX_STRING_LENGTH];
+	::ZeroMemory(stringBuffer, sizeof(stringBuffer));
+
+	int numConvertedValues = swscanf_s(pStringToken, L"%s", &stringBuffer[0], MAX_STRING_LENGTH);
+	assert(numConvertedValues == 1);
+
+	return std::wstring(stringBuffer);
 }

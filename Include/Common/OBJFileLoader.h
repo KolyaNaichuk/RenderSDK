@@ -59,12 +59,16 @@ private:
 	bool LoadMaterialFile(const wchar_t* pFilePath);
 	
 	u32 FindMaterialIndex(const std::wstring& materialName) const;
-	Scene* PopulateScene(bool use32BitIndices, u8 convertMeshFlags);
+	Scene* PopulateScene(bool use32BitIndices, u8 convertMeshFlags, const wchar_t* materialDirectoryPath);
 	
 	template <typename Index>
 	void GenerateVertexAndIndexData(const OBJFile::Mesh& mesh, VertexData** ppVertexData, IndexData** ppIndexData);
 		
 	void Clear();
+
+	OBJFile::FaceElement ExtractFaceElement(const wchar_t* pFaceElementToken);
+	f32 ExtractFloat(wchar_t** ppTokenContext);
+	std::wstring ExtractString(wchar_t** ppTokenContext);
 	
 private:
 	std::vector<Vector3f> m_Positions;

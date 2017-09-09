@@ -21,6 +21,7 @@ class Camera;
 class GeometryBuffer;
 class MeshRenderResources;
 class LightRenderResources;
+class MaterialRenderResources;
 class DownscaleAndReprojectDepthPass;
 class FrustumMeshCullingPass;
 class FillVisibilityBufferPass;
@@ -280,16 +281,17 @@ private:
 	VisualizeTexturePass* m_pVisualizeSpotLightTiledShadowMapPass;
 	VisualizeTexturePass* m_pVisualizePointLightTiledShadowMapPass;
 	VisualizeIntensityPass* m_pVisualizeIntensityPass;
-	MeshRenderResources* m_pMeshRenderResources;
-	LightRenderResources* m_pPointLightRenderResources;
 	Buffer* m_pNumVisiblePointLightsBuffer;
 	Buffer* m_pVisiblePointLightIndexBuffer;
-	LightRenderResources* m_pSpotLightRenderResources;
 	Buffer* m_pNumVisibleSpotLightsBuffer;
 	Buffer* m_pVisibleSpotLightIndexBuffer;
 	
 	// New render passes
 	Camera* m_pCamera;
+	MeshRenderResources* m_pMeshRenderResources;
+	LightRenderResources* m_pPointLightRenderResources;
+	LightRenderResources* m_pSpotLightRenderResources;
+	MaterialRenderResources* m_pMaterialRenderResources;
 	GeometryBuffer* m_pGeometryBuffer;
 	DownscaleAndReprojectDepthPass* m_pDownscaleAndReprojectDepthPass;
 	FrustumMeshCullingPass* m_pFrustumMeshCullingPass;

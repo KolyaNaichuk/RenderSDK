@@ -11,7 +11,7 @@
 
 namespace
 {
-	void GenerateImageData(UINT width, UINT height, DXGI_FORMAT format, std::uint8_t* pPixelBytes, DirectX::ScratchImage& image);
+	void GenerateImageData(UINT width, UINT height, DXGI_FORMAT format, u8* pPixelBytes, DirectX::ScratchImage& image);
 	void LoadImageDataFromFile(const std::wstring& filePath, DirectX::ScratchImage& image);
 		
 	void SetupImageDataForUpload(RenderEnv* pRenderEnv,
@@ -24,46 +24,123 @@ namespace
 		std::vector<ResourceBarrier>& pendingBarriers);
 }
 
-MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u32 numMaterials, Material** ppMaterials)
+MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials)
+	: m_pMeshTypePerMaterialIDBuffer(nullptr)
+	, m_pResourceInfoIndexPerMaterialIDBuffer(nullptr)
+	, m_pResourceInfoBuffer(nullptr)
 {
+	assert(numMaterials > 0);
+
+	InitMeshTypePerMaterialIDBuffer(pRenderEnv, numMaterials);
+	InitResourceInfoIndexPerMaterialIDBuffer(pRenderEnv, numMaterials);
+	InitResourceInfoBuffer(pRenderEnv, numMaterials);
+	InitTextures(pRenderEnv, numMaterials, ppMaterials);
+}
+
+MaterialRenderResources::~MaterialRenderResources()
+{
+	SafeDelete(m_pMeshTypePerMaterialIDBuffer);
+	SafeDelete(m_pResourceInfoIndexPerMaterialIDBuffer);
+	SafeDelete(m_pResourceInfoBuffer);
+	
+	for (ColorTexture* pTexture : m_Textures)
+		SafeDelete(pTexture);
+}
+
+void MaterialRenderResources::InitMeshTypePerMaterialIDBuffer(RenderEnv* pRenderEnv, u16 numMaterials)
+{
+	assert(m_pMeshTypePerMaterialIDBuffer == nullptr);
+
+	const u16 meshType = 0;
+	std::vector<u16> bufferData(numMaterials, meshType);
+
+	FormattedBufferDesc bufferDesc(numMaterials, DXGI_FORMAT_R16_UINT, true, false);
+	m_pMeshTypePerMaterialIDBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"MaterialRenderResources::m_pMeshTypePerMaterialIDBuffer");
+
+	UploadData(pRenderEnv, m_pMeshTypePerMaterialIDBuffer, bufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		bufferData.data(), bufferData.size() * sizeof(bufferData[0]));
+}
+
+void MaterialRenderResources::InitResourceInfoIndexPerMaterialIDBuffer(RenderEnv* pRenderEnv, u16 numMaterials)
+{
+	assert(m_pResourceInfoIndexPerMaterialIDBuffer == nullptr);
+
+	std::vector<u16> bufferData(numMaterials);
+	for (u16 index = 0; index < numMaterials; ++index)
+		bufferData[index] = index;
+
+	FormattedBufferDesc bufferDesc(numMaterials, DXGI_FORMAT_R16_UINT, true, false);
+	m_pResourceInfoIndexPerMaterialIDBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"MaterialRenderResources::m_pResourceInfoIndexPerMaterialIDBuffer");
+
+	UploadData(pRenderEnv, m_pResourceInfoIndexPerMaterialIDBuffer, bufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		bufferData.data(), bufferData.size() * sizeof(bufferData[0]));
+}
+
+void MaterialRenderResources::InitResourceInfoBuffer(RenderEnv* pRenderEnv, u16 numMaterials)
+{
+	struct ResourceInfo
+	{
+		u32 m_DiffuseMapIndex;
+		u32 m_SpecularMapIndex;
+		u32 m_ShininessMapIndex;
+	};
+	std::vector<ResourceInfo> bufferData(numMaterials);
+	for (u16 index = 0; index < numMaterials; ++index)
+	{
+		bufferData[index].m_DiffuseMapIndex = 3 * index;
+		bufferData[index].m_SpecularMapIndex = bufferData[index].m_DiffuseMapIndex + 1;
+		bufferData[index].m_ShininessMapIndex = bufferData[index].m_DiffuseMapIndex + 2;
+	}
+	StructuredBufferDesc bufferDesc(numMaterials, sizeof(bufferData[0]), true, false);
+	m_pResourceInfoBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"MaterialRenderResources::m_pResourceInfoBuffer");
+
+	UploadData(pRenderEnv, m_pResourceInfoBuffer, bufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		bufferData.data(), bufferData.size() * sizeof(bufferData[0]));
+}
+
+void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials)
+{
+	assert(m_Textures.empty());
+
 	static const bool forceSRGB = true;
 	static const u8 numTexturesPerMaterial = 3;
 	
-	const u32 maxNumTextures = numMaterials * numTexturesPerMaterial;
-	m_Textures.reserve(maxNumTextures);
+	const u16 maxNumTextures = numMaterials * numTexturesPerMaterial;
 
 	std::vector<Buffer*> uploadBuffers;
-	uploadBuffers.reserve(maxNumTextures);
+	std::vector<ResourceBarrier> pendingBarriers;
 
-	std::vector<ResourceBarrier> pendingBarriers;	
+	m_Textures.reserve(maxNumTextures);
+	uploadBuffers.reserve(maxNumTextures);
 	pendingBarriers.reserve(maxNumTextures);
 
 	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"UploadCommandList");
 	pUploadCommandList->Begin();
-	
-	for (u32 index = 0; index < numMaterials; ++index)
+
+	for (u16 index = 0; index < numMaterials; ++index)
 	{
 		const Material* pMaterial = ppMaterials[index];
 		{
 			const std::wstring debugMapName = L"Diffuse Map: " + pMaterial->m_Name;
 
 			DirectX::ScratchImage image;
-			if (pMaterial->m_DiffuseMapName.empty())
+			if (pMaterial->m_DiffuseMapFilePath.empty())
 			{
-				BYTE pixelBytes[4] =
+				u8 pixelBytes[4] =
 				{
-					BYTE(255.0f * pMaterial->m_DiffuseColor.m_X),
-					BYTE(255.0f * pMaterial->m_DiffuseColor.m_Y),
-					BYTE(255.0f * pMaterial->m_DiffuseColor.m_Z),
+					u8(255.0f * pMaterial->m_DiffuseColor.m_X),
+					u8(255.0f * pMaterial->m_DiffuseColor.m_Y),
+					u8(255.0f * pMaterial->m_DiffuseColor.m_Z),
 					255
 				};
 				GenerateImageData(1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, pixelBytes, image);
 			}
 			else
 			{
-				assert(false && "Uninitialized path");
-				std::wstring mapPath;
-				LoadImageDataFromFile(mapPath, image);
+				LoadImageDataFromFile(pMaterial->m_DiffuseMapFilePath, image);
 			}
 			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingBarriers);
 		}
@@ -71,44 +148,40 @@ MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u32 numM
 			const std::wstring debugMapName = L"Specular Map: " + pMaterial->m_Name;
 
 			DirectX::ScratchImage image;
-			if (pMaterial->m_SpecularMapName.empty())
+			if (pMaterial->m_SpecularMapFilePath.empty())
 			{
-				BYTE pixelBytes[4] =
+				u8 pixelBytes[4] =
 				{
-					BYTE(255.0f * pMaterial->m_SpecularColor.m_X),
-					BYTE(255.0f * pMaterial->m_SpecularColor.m_Y),
-					BYTE(255.0f * pMaterial->m_SpecularColor.m_Z),
+					u8(255.0f * pMaterial->m_SpecularColor.m_X),
+					u8(255.0f * pMaterial->m_SpecularColor.m_Y),
+					u8(255.0f * pMaterial->m_SpecularColor.m_Z),
 					255
 				};
 				GenerateImageData(1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, pixelBytes, image);
 			}
 			else
 			{
-				assert(false && "Uninitialized path");
-				std::wstring mapPath;
-				LoadImageDataFromFile(mapPath, image);
+				LoadImageDataFromFile(pMaterial->m_SpecularMapFilePath, image);
 			}
 			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingBarriers);
 		}
 		{
 			const std::wstring debugMapName = L"Shininess Map: " + pMaterial->m_Name;
-			
+
 			DirectX::ScratchImage image;
-			if (pMaterial->m_ShininessMapName.empty())
+			if (pMaterial->m_ShininessMapFilePath.empty())
 			{
 				const std::size_t numBytes = sizeof(f32);
 				static_assert(sizeof(pMaterial->m_Shininess) == numBytes, "Shininess is expected to be 32 bit");
 
-				BYTE pixelBytes[numBytes];
+				u8 pixelBytes[numBytes];
 				std::memcpy(pixelBytes, &pMaterial->m_Shininess, numBytes);
-							
+
 				GenerateImageData(1, 1, DXGI_FORMAT_R32_FLOAT, pixelBytes, image);
 			}
 			else
 			{
-				assert(false && "Uninitialized path");
-				std::wstring mapPath;
-				LoadImageDataFromFile(mapPath, image);
+				LoadImageDataFromFile(pMaterial->m_ShininessMapFilePath, image);
 			}
 			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingBarriers);
 		}
@@ -123,17 +196,21 @@ MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u32 numM
 
 	for (Buffer* pBuffer : uploadBuffers)
 		SafeDelete(pBuffer);
-}
 
-MaterialRenderResources::~MaterialRenderResources()
-{
-	for (ColorTexture* pTexture : m_Textures)
-		SafeDelete(pTexture);
+	std::size_t textureIndex = 0;
+	m_TextureHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
+	pRenderEnv->m_pDevice->CopyDescriptor(m_TextureHeapStart, m_Textures[textureIndex]->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	for (++textureIndex; textureIndex < m_Textures.size(); ++textureIndex)
+	{
+		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+			m_Textures[textureIndex]->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
 }
 
 namespace
 {
-	void GenerateImageData(UINT width, UINT height, DXGI_FORMAT format, std::uint8_t* pPixelBytes, DirectX::ScratchImage& image)
+	void GenerateImageData(UINT width, UINT height, DXGI_FORMAT format, u8* pPixelBytes, DirectX::ScratchImage& image)
 	{
 		DirectX::Image sourceImage;
 		sourceImage.width = width;
@@ -143,14 +220,12 @@ namespace
 		sourceImage.slicePitch = sourceImage.height * sourceImage.rowPitch;
 		sourceImage.pixels = pPixelBytes;
 		
-		image.InitializeFromImage(sourceImage);
+		VerifyD3DResult(image.InitializeFromImage(sourceImage));
 	}
 	
 	void LoadImageDataFromFile(const std::wstring& filePath, DirectX::ScratchImage& image)
 	{
-		const std::wstring fileName = ExtractFileNameWithExtension(filePath);
 		const std::wstring fileExtension = ExtractFileExtension(filePath);
-
 		if ((fileExtension == L"DDS") || (fileExtension == L"dds"))
 		{
 			VerifyD3DResult(DirectX::LoadFromDDSFile(filePath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, image));
@@ -218,7 +293,7 @@ namespace
 		Buffer* pUploadBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &uploadBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, debugBufferName.c_str());
 		uploadHeapBuffers.emplace_back(pUploadBuffer);
 
-		BYTE* pUploadMem = (BYTE*)pUploadBuffer->Map(0, textureSizeInBytes);
+		u8* pUploadMem = (u8*)pUploadBuffer->Map(0, textureSizeInBytes);
 		for (decltype(metaData.arraySize) arrayIndex = 0; arrayIndex < metaData.arraySize; ++arrayIndex)
 		{
 			for (decltype(metaData.mipLevels) mipIndex = 0; mipIndex < metaData.mipLevels; ++mipIndex)
@@ -229,13 +304,13 @@ namespace
 				const UINT subresourceNumRows = numRows[subresourceIndex];
 				const UINT subresourceRowPitch = subresourceFootprint.Footprint.RowPitch;
 				const UINT subresourceDepth = subresourceFootprint.Footprint.Depth;
-				BYTE* pDestSubresourceMem = pUploadMem + subresourceFootprint.Offset;
+				u8* pDestSubresourceMem = pUploadMem + subresourceFootprint.Offset;
 
 				for (UINT slice = 0; slice < subresourceDepth; ++slice)
 				{
 					const DirectX::Image* pSubimage = image.GetImage(mipIndex, arrayIndex, slice);
 					assert(pSubimage != nullptr);
-					const BYTE* pSrcSubresourceMem = pSubimage->pixels;
+					const u8* pSrcSubresourceMem = pSubimage->pixels;
 
 					const UINT bytesToCopy = Min(subresourceRowPitch, pSubimage->rowPitch);
 					for (UINT row = 0; row < subresourceNumRows; ++row)

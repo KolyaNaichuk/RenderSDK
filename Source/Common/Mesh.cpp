@@ -17,7 +17,7 @@ VertexData::~VertexData()
 }
 
 VertexData::VertexData(u32 numVertices, const Vector3f* pPositions, const Vector3f* pNormals,
-	const Vector4f* pColors, const Vector2f* pTexCoords, const Vector3f* pTangents)
+	const Vector2f* pTexCoords, const Vector4f* pColors, const Vector3f* pTangents)
 	: m_NumVertices(numVertices)
 	, m_FormatFlags(0)
 	, m_pPositions(nullptr)

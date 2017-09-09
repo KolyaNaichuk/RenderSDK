@@ -14,7 +14,7 @@ class VertexData
 {
 public:
 	VertexData(u32 numVertices, const Vector3f* pPositions, const Vector3f* pNormals = nullptr,
-		const Vector4f* pColors = nullptr, const Vector2f* pTexCoords = nullptr, const Vector3f* pTangents = nullptr);	
+		const Vector2f* pTexCoords = nullptr, const Vector4f* pColors = nullptr, const Vector3f* pTangents = nullptr);
 	~VertexData();
 
 	enum FormatFlags
