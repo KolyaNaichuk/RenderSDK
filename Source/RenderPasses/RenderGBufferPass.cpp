@@ -83,10 +83,13 @@ void RenderGBufferPass::Record(RenderParams* pParams)
 void RenderGBufferPass::InitResources(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-	
+
+	const MeshRenderResources* pMeshRenderResources = pParams->m_pMeshRenderResources;
+	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
+			
 	m_OutputResourceStates.m_TexCoordTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	m_OutputResourceStates.m_NormalTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	m_OutputResourceStates.m_MaterialTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	m_OutputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	m_OutputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	m_OutputResourceStates.m_InstanceIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
@@ -102,9 +105,9 @@ void RenderGBufferPass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_NormalTextureState,
 		m_OutputResourceStates.m_NormalTextureState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pMaterialTexture,
-		pParams->m_InputResourceStates.m_MaterialTextureState,
-		m_OutputResourceStates.m_MaterialTextureState);
+	CreateResourceBarrierIfRequired(pParams->m_pMaterialIDTexture,
+		pParams->m_InputResourceStates.m_MaterialIDTextureState,
+		m_OutputResourceStates.m_MaterialIDTextureState);
 
 	CreateResourceBarrierIfRequired(pParams->m_pDepthTexture,
 		pParams->m_InputResourceStates.m_DepthTextureState,
@@ -141,7 +144,7 @@ void RenderGBufferPass::InitResources(InitParams* pParams)
 		pParams->m_pNormalTexture->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate(),
-		pParams->m_pMaterialTexture->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		pParams->m_pMaterialIDTexture->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	m_DSVHeapStart = pParams->m_pDepthTexture->GetDSVHandle();
 }
@@ -159,7 +162,7 @@ void RenderGBufferPass::InitRootSignature(InitParams* pParams)
 
 	rootParams[kRoot32BitConstantParamPS] = Root32BitConstantsParameter(0, D3D12_SHADER_VISIBILITY_PIXEL, 1);
 
-	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
+	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"RenderGBufferPass::m_pRootSignature");
 }
 
@@ -195,7 +198,7 @@ void RenderGBufferPass::InitPipelineState(InitParams* pParams)
 	{
 		GetRenderTargetViewFormat(pParams->m_pTexCoordTexture->GetFormat()),
 		GetRenderTargetViewFormat(pParams->m_pNormalTexture->GetFormat()),
-		GetRenderTargetViewFormat(pParams->m_pMaterialTexture->GetFormat())
+		GetRenderTargetViewFormat(pParams->m_pMaterialIDTexture->GetFormat())
 	};
 	const DXGI_FORMAT dsvFormat = GetDepthStencilViewFormat(pParams->m_pDepthTexture->GetFormat());
 	pipelineStateDesc.SetRenderTargetFormats(ARRAYSIZE(rtvFormats), rtvFormats, dsvFormat);

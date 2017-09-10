@@ -186,18 +186,22 @@ namespace
 {
 	struct AppData
 	{
+		Matrix4f m_ProjMatrix;
 		Matrix4f m_ViewProjMatrix;
 		Matrix4f m_ViewProjInvMatrix;
 		Matrix4f m_PrevViewProjMatrix;
 		Matrix4f m_PrevViewProjInvMatrix;
 		Vector4f m_CameraWorldFrustumPlanes[Frustum::NumPlanes];
+		f32 m_CameraNearPlane;
+		f32 m_CameraFarPlane;
+		Vector2f m_NotUsed1;
 		Vector2u m_ScreenSize;
 		Vector2f m_RcpScreenSize;
 		Vector2u m_ScreenHalfSize;
 		Vector2f m_RcpScreenHalfSize;
 		Vector2u m_ScreenQuarterSize;
 		Vector2f m_RcpScreenQuarterSize;
-		Vector4f m_NotUsed[7];
+		Vector4f m_NotUsed2[2];
 	};
 
 	using BufferElementFormatter = std::function<std::string (const void* pElementData)>;
@@ -398,14 +402,6 @@ struct ShadowMapTile
 	Vector2f m_TexSpaceSize;
 };
 
-struct VisualizeTextureData
-{
-	Matrix4f m_CameraProjMatrix;
-	f32 m_CameraNearPlane;
-	f32 m_CameraFarPlane;
-	f32 m_NotUsed[46];
-};
-
 DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Global Illumination", 0, 0, kTileSize * kNumTilesX, kTileSize * kNumTilesY)
 	, m_DisplayResult(DisplayResult::Unspecified)
@@ -446,7 +442,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pViewFrustumPointLightCullingDataBuffer(nullptr)
 	, m_pTiledLightCullingDataBuffer(nullptr)
 	, m_pTiledShadingDataBuffer(nullptr)
-	, m_pVisualizeTextureDataBuffer(nullptr)
 	, m_pDrawMeshCommandBuffer(nullptr)
 	, m_pNumVisibleMeshesBuffer(nullptr)
 	, m_pVisibleMeshIndexBuffer(nullptr)
@@ -495,7 +490,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pVisualizeAccumLightPass(nullptr)
 	, m_pVisualizeDiffuseBufferPass(nullptr)
 	, m_pVisualizeSpecularBufferPass(nullptr)
-	, m_pVisualizeNormalBufferPass(nullptr)
 	, m_pVisualizeDepthBufferPass(nullptr)
 	, m_pVisualizeSpotLightTiledShadowMapPass(nullptr)
 	, m_pVisualizePointLightTiledShadowMapPass(nullptr)
@@ -520,14 +514,13 @@ DXApplication::DXApplication(HINSTANCE hApp)
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 		m_FrameCompletionFenceValues[index] = m_pRenderEnv->m_LastSubmissionFenceValue;
-	
-	for (u8 index = 0; index < 2; ++index)
-	{
-		m_IntensityRCoeffsTextures[index] = nullptr;
-		m_IntensityGCoeffsTextures[index] = nullptr;
-		m_IntensityBCoeffsTextures[index] = nullptr;
-	}
 
+	::ZeroMemory(m_VisualizeNormalBufferPasses, sizeof(m_VisualizeNormalBufferPasses));
+
+	::ZeroMemory(m_IntensityRCoeffsTextures, sizeof(m_IntensityRCoeffsTextures));
+	::ZeroMemory(m_IntensityGCoeffsTextures, sizeof(m_IntensityGCoeffsTextures));
+	::ZeroMemory(m_IntensityBCoeffsTextures, sizeof(m_IntensityBCoeffsTextures));
+	
 	UpdateDisplayResult(DisplayResult::ShadingResult);
 }
 
@@ -547,6 +540,11 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pRenderGBufferMainPass);	
 	SafeDelete(m_pAppDataBuffer);
 
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
+		SafeDelete(m_VisualizeNormalBufferPasses[index]);
+	}
+	
 	// Old
 	for (u8 index = 0; index < 2; ++index)
 	{
@@ -558,7 +556,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pVisualizeAccumLightPass);
 	SafeDelete(m_pVisualizeDiffuseBufferPass);
 	SafeDelete(m_pVisualizeSpecularBufferPass);
-	SafeDelete(m_pVisualizeNormalBufferPass);
 	SafeDelete(m_pVisualizeDepthBufferPass);
 	SafeDelete(m_pVisualizeSpotLightTiledShadowMapPass);
 	SafeDelete(m_pVisualizePointLightTiledShadowMapPass);
@@ -645,7 +642,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pBackBufferViewport);
 	SafeDelete(m_pSpotLightTiledShadowMapViewport);
 	SafeDelete(m_pPointLightTiledShadowMapViewport);
-	SafeDelete(m_pVisualizeTextureDataBuffer);
 }
 
 void DXApplication::OnInit()
@@ -659,14 +655,15 @@ void DXApplication::OnInit()
 	Scene* pScene = SceneLoader::LoadCube();
 	InitScene(pScene, backBufferWidth, backBufferHeight);
 	
+	InitConstantBuffers(pScene, backBufferWidth, backBufferHeight);
 	InitDownscaleAndReprojectDepthPass();
 	InitFrustumMeshCullingPass();
 	InitFillVisibilityBufferMainPass();
 	InitCreateMainDrawCommandsPass();
 	InitRenderGBufferMainPass(backBufferWidth, backBufferHeight);
 	InitFillVisibilityBufferFalseNegativePass();
-	InitConstantBuffers(pScene, backBufferWidth, backBufferHeight);
-		
+	InitVisualizeNormalBufferPass();
+
 	SafeDelete(pScene);
 
 	/*
@@ -734,6 +731,7 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordCreateMainDrawCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordRenderGBufferMainPass();
 	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferFalseNegativePass();
+	commandListBatch[commandListBatchSize++] = RecordVisualizeNormalBufferPass();
 	commandListBatch[commandListBatchSize++] = RecordPresentResourceBarrierPass();
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
@@ -1026,6 +1024,7 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
 {
 	AppData appData;
+	appData.m_ProjMatrix = m_pCamera->GetProjMatrix();
 	appData.m_ViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
 	appData.m_ViewProjInvMatrix = Inverse(appData.m_ViewProjMatrix);
 	appData.m_PrevViewProjMatrix = appData.m_ViewProjMatrix;
@@ -1035,6 +1034,8 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
 		appData.m_CameraWorldFrustumPlanes[planeIndex] = ToVector(cameraWorldFrustum.m_Planes[planeIndex]);
 
+	appData.m_CameraNearPlane = m_pCamera->GetNearClipPlane();
+	appData.m_CameraFarPlane = m_pCamera->GetFarClipPlane();
 	appData.m_ScreenSize = Vector2u(backBufferWidth, backBufferHeight);
 	appData.m_RcpScreenSize = Vector2f(1.0f / f32(appData.m_ScreenSize.m_X), 1.0f / f32(appData.m_ScreenSize.m_Y));
 	appData.m_ScreenHalfSize = Vector2u(appData.m_ScreenSize.m_X >> 1, appData.m_ScreenSize.m_Y >> 1);
@@ -1163,13 +1164,6 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 
 	m_pSpotLightShadowMapDataBuffer->Write(&shadowMapData, sizeof(shadowMapData));
 	}
-
-	VisualizeTextureData visualizeTextureData;
-	visualizeTextureData.m_CameraProjMatrix = m_pCamera->GetProjMatrix();
-	visualizeTextureData.m_CameraNearPlane = m_pCamera->GetNearClipPlane();
-	visualizeTextureData.m_CameraFarPlane = m_pCamera->GetFarClipPlane();
-
-	m_pVisualizeTextureDataBuffer->Write(&visualizeTextureData, sizeof(visualizeTextureData));
 	*/
 }
 
@@ -1206,7 +1200,7 @@ CommandList* DXApplication::RecordClearResourcesPass()
 	ColorTexture* pBackBuffer = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	ColorTexture* pTexCoordTexture = m_pGeometryBuffer->GetTexCoordTexture();
 	ColorTexture* pNormalTexture = m_pGeometryBuffer->GetNormalTexture();
-	ColorTexture* pMaterialTexture = m_pGeometryBuffer->GetMaterialTexture();
+	ColorTexture* pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
 
 	ResourceBarrier resourceBarriers[] =
 	{
@@ -1221,7 +1215,7 @@ CommandList* DXApplication::RecordClearResourcesPass()
 	pCommandList->ClearRenderTargetView(pBackBuffer->GetRTVHandle(), &backgroundColor.m_X);
 	pCommandList->ClearRenderTargetView(pTexCoordTexture->GetRTVHandle(), &Vector4f::ZERO.m_X);
 	pCommandList->ClearRenderTargetView(pNormalTexture->GetRTVHandle(), &Vector4f::ZERO.m_X);
-	pCommandList->ClearRenderTargetView(pMaterialTexture->GetRTVHandle(), &Vector4f::ZERO.m_X);
+	pCommandList->ClearRenderTargetView(pMaterialIDTexture->GetRTVHandle(), &Vector4f::ZERO.m_X);
 	pCommandList->ClearDepthView(m_pDepthTexture->GetDSVHandle(), 1.0f);
 	
 	pCommandList->End();
@@ -1411,7 +1405,7 @@ void DXApplication::InitRenderGBufferMainPass(UINT bufferWidth, UINT bufferHeigh
 	
 	params.m_InputResourceStates.m_TexCoordTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	params.m_InputResourceStates.m_NormalTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	params.m_InputResourceStates.m_MaterialTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	params.m_InputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	params.m_InputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_VisibleInstanceIndexBufferState;
@@ -1421,7 +1415,7 @@ void DXApplication::InitRenderGBufferMainPass(UINT bufferWidth, UINT bufferHeigh
 	params.m_pMeshRenderResources = m_pMeshRenderResources;
 	params.m_pTexCoordTexture = m_pGeometryBuffer->GetTexCoordTexture();
 	params.m_pNormalTexture = m_pGeometryBuffer->GetNormalTexture();
-	params.m_pMaterialTexture = m_pGeometryBuffer->GetMaterialTexture();
+	params.m_pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
 	params.m_pDepthTexture = m_pDepthTexture;
 	params.m_pInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
 	params.m_pInstanceIndexBuffer = m_pCreateMainDrawCommandsPass->GetVisibleInstanceIndexBuffer();
@@ -1433,21 +1427,52 @@ void DXApplication::InitRenderGBufferMainPass(UINT bufferWidth, UINT bufferHeigh
 
 CommandList* DXApplication::RecordRenderGBufferMainPass()
 {
-	assert(false);
-	/*
-	RenderGBufferPass::RenderParams renderParams;
-	renderParams.m_pRenderEnv = m_pRenderEnv;
-	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferCommandList");
-	renderParams.m_pResources = m_pRenderGBufferResources;
-	renderParams.m_pViewport = m_pBackBufferViewport;
-	renderParams.m_pMeshBatch = m_pMeshRenderResources;
-	renderParams.m_pDrawMeshCommandBuffer = m_pDrawMeshCommandBuffer;
-	renderParams.m_pNumDrawMeshesBuffer = m_pNumVisibleMeshesBuffer;
+	assert(m_pRenderGBufferMainPass != nullptr);
+	
+	RenderGBufferPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferMainPassCommandList");
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
+	params.m_pMeshRenderResources = m_pMeshRenderResources;
+	params.m_pNumVisibleMeshesPerTypeBuffer = m_pCreateMainDrawCommandsPass->GetNumVisibleMeshesPerTypeBuffer();
+	params.m_pDrawCommandBuffer = m_pCreateMainDrawCommandsPass->GetDrawCommandBuffer();
+	params.m_pViewport = m_pBackBufferViewport;
 
-	m_pRenderGBufferPass->Record(&renderParams);
-	return renderParams.m_pCommandList;
-	*/
-	return nullptr;
+	m_pRenderGBufferMainPass->Record(&params);
+	return params.m_pCommandList;
+}
+
+void DXApplication::InitVisualizeNormalBufferPass()
+{
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
+		assert(m_VisualizeNormalBufferPasses[index] == nullptr);
+
+		VisualizeTexturePass::InitParams params;
+		params.m_pRenderEnv = m_pRenderEnv;
+		params.m_InputResourceStates.m_InputTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		params.m_InputResourceStates.m_BackBufferTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		params.m_pInputTexture = m_pGeometryBuffer->GetNormalTexture();
+		params.m_pBackBufferTexture = m_pSwapChain->GetBackBuffer(index);
+		params.m_TextureType = VisualizeTexturePass::TextureType_GBufferNormal;
+
+		m_VisualizeNormalBufferPasses[index] = new VisualizeTexturePass(&params);
+	}
+}
+
+CommandList* DXApplication::RecordVisualizeNormalBufferPass()
+{
+	VisualizeTexturePass* pVisualizeTexturePass = m_VisualizeNormalBufferPasses[m_BackBufferIndex];
+	assert(pVisualizeTexturePass != nullptr);
+
+	VisualizeTexturePass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeNormalBufferCommandList");
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
+	params.m_pViewport = m_pBackBufferViewport;
+
+	pVisualizeTexturePass->Record(&params);
+	return params.m_pCommandList;
 }
 
 void DXApplication::InitDetectVisibleMeshesPass()
@@ -2334,33 +2359,6 @@ void DXApplication::InitVisualizeSpecularBufferPass()
 	*/
 }
 
-void DXApplication::InitVisualizeNormalBufferPass()
-{
-	assert(false);
-	/*
-	VisualizeTexturePass::InitParams initParams;
-	initParams.m_pRenderEnv = m_pRenderEnv;
-	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
-	initParams.m_TextureType = VisualizeTexturePass::TextureType_GBufferNormal;
-
-	m_pVisualizeNormalBufferPass = new VisualizeTexturePass(&initParams);
-
-	for (u8 index = 0; index < kNumBackBuffers; ++index)
-	{
-		ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
-
-		m_VisualizeNormalBufferResources[index]->m_RequiredResourceStates.emplace_back(pRenderTarget, pRenderTarget->GetWriteState());
-		m_VisualizeNormalBufferResources[index]->m_RequiredResourceStates.emplace_back(m_pNormalTexture, m_pNormalTexture->GetReadState());
-
-		m_VisualizeNormalBufferResources[index]->m_RTVHeapStart = pRenderTarget->GetRTVHandle();
-		m_VisualizeNormalBufferResources[index]->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
-
-		m_pDevice->CopyDescriptor(m_VisualizeNormalBufferResources[index]->m_SRVHeapStart, m_pVisualizeTextureDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pNormalTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
-	*/
-}
-
 void DXApplication::InitVisualizeDepthBufferPass()
 {
 	assert(false);
@@ -2827,22 +2825,6 @@ CommandList* DXApplication::RecordVisualizeSpecularBufferPass()
 	renderParams.m_pViewport = m_pBackBufferViewport;
 
 	m_pVisualizeSpecularBufferPass->Record(&renderParams);
-	return renderParams.m_pCommandList;
-	*/
-	return nullptr;
-}
-
-CommandList* DXApplication::RecordVisualizeNormalBufferPass()
-{
-	assert(false);
-	/*
-	VisualizeTexturePass::RenderParams renderParams;
-	renderParams.m_pRenderEnv = m_pRenderEnv;
-	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeNormalBufferCommandList");
-	renderParams.m_pResources = m_VisualizeNormalBufferResources[m_BackBufferIndex];
-	renderParams.m_pViewport = m_pBackBufferViewport;
-
-	m_pVisualizeNormalBufferPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
 	*/
 	return nullptr;

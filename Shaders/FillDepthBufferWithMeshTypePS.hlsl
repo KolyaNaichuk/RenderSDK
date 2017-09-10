@@ -9,15 +9,15 @@ cbuffer NumMeshTypesBuffer : register(b0)
 	uint g_NumMeshTypes;
 }
 
-Texture2D<uint> g_GBuffer : register(t0); // Kolya. Not sure about GBuffer format
-StructuredBuffer<uint> g_MeshTypePerMaterialIndexBuffer : register(t1);
+Texture2D<uint> g_MaterialIDTexture : register(t0);
+Buffer<uint> g_MeshTypePerMaterialIDBuffer : register(t1);
 
 float Main(PSInput input) : SV_Depth
 {
 	int3 texturePos = int3(input.screenSpacePos.xy, 0);
 
-	uint materialIndex = g_GBuffer[texturePos].r;
-	uint meshType = g_MeshTypePerMaterialIndexBuffer[materialIndex];
+	uint materialID = g_MaterialIDTexture[texturePos].r;
+	uint meshType = g_MeshTypePerMaterialIDBuffer[materialID];
 
 	return float(meshType) / float(g_NumMeshTypes);
 }

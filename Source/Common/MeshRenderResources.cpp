@@ -76,7 +76,7 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 				instanceOffset,
 				meshType,
 				meshTypeOffset,
-				meshInfo.m_MaterialIndex,
+				meshInfo.m_MaterialID,
 				meshInfo.m_IndexCountPerInstance,
 				meshInfo.m_StartIndexLocation,
 				meshInfo.m_BaseVertexLocation);

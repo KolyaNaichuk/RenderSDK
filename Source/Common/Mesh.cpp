@@ -175,14 +175,14 @@ const u32* IndexData::Get32BitIndices() const
 }
 
 Mesh::Mesh(VertexData* pVertexData, IndexData* pIndexData, u32 numInstances, Matrix4f* pInstanceWorldMatrices,
-	u32 materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
+	u32 materialID, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
 	: m_pVertexData(pVertexData)
 	, m_pIndexData(pIndexData)
 	, m_NumInstances(numInstances)
 	, m_pInstanceWorldMatrices(pInstanceWorldMatrices)
 	, m_pInstanceWorldAABBs(new AxisAlignedBox[numInstances])
 	, m_pInstanceWorldOBBs(new OrientedBox[numInstances])
-	, m_pMaterialIndex(materialIndex)
+	, m_MaterialID(materialID)
 	, m_PrimitiveTopologyType(primitiveTopologyType)
 	, m_PrimitiveTopology(primitiveTopology)
 {

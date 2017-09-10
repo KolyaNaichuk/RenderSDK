@@ -5,7 +5,7 @@
 GeometryBuffer::GeometryBuffer(RenderEnv* pRenderEnv, UINT bufferWidth, UINT bufferHeight)
 	: m_pTexCoordTexture(nullptr)
 	, m_pNormalTexture(nullptr)
-	, m_pMaterialTexture(nullptr)
+	, m_pMaterialIDTexture(nullptr)
 {
 	const FLOAT optimizedClearColor[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 		
@@ -17,14 +17,14 @@ GeometryBuffer::GeometryBuffer(RenderEnv* pRenderEnv, UINT bufferWidth, UINT buf
 	m_pNormalTexture = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &normalTextureDesc,
 		D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pNormalTexture");
 
-	ColorTexture2DDesc materialTextureDesc(DXGI_FORMAT_R16_UINT, bufferWidth, bufferHeight, true, true, false);
-	m_pMaterialTexture = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &materialTextureDesc,
-		D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pMaterialTexture");
+	ColorTexture2DDesc materialIDTextureDesc(DXGI_FORMAT_R16_UINT, bufferWidth, bufferHeight, true, true, false);
+	m_pMaterialIDTexture = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &materialIDTextureDesc,
+		D3D12_RESOURCE_STATE_RENDER_TARGET, optimizedClearColor, L"m_pMaterialIDTexture");
 }
 
 GeometryBuffer::~GeometryBuffer()
 {
 	SafeDelete(m_pTexCoordTexture);
 	SafeDelete(m_pNormalTexture);
-	SafeDelete(m_pMaterialTexture);
+	SafeDelete(m_pMaterialIDTexture);
 }

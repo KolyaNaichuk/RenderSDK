@@ -84,7 +84,7 @@ void MeshBatch::AddMesh(const Mesh* pMesh)
 		numIndices,
 		startIndexLocation,
 		baseVertexLocation,
-		pMesh->GetMaterialIndex());
+		pMesh->GetMaterialID());
 	
 	m_MeshInstanceWorldAABBs.insert(m_MeshInstanceWorldAABBs.end(),
 		pMesh->GetInstanceWorldAABBs(),

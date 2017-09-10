@@ -154,6 +154,7 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 void FillVisibilityBufferPass::InitRootSignature(InitParams* pParams)
 {
 	assert(m_pRootSignature == nullptr);
+
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kRootCBVParamVS] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_VERTEX);
 

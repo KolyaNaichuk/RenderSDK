@@ -17,7 +17,7 @@ public:
 	{
 		D3D12_RESOURCE_STATES m_TexCoordTextureState;
 		D3D12_RESOURCE_STATES m_NormalTextureState;
-		D3D12_RESOURCE_STATES m_MaterialTextureState;
+		D3D12_RESOURCE_STATES m_MaterialIDTextureState;
 		D3D12_RESOURCE_STATES m_DepthTextureState;
 		D3D12_RESOURCE_STATES m_InstanceIndexBufferState;
 		D3D12_RESOURCE_STATES m_InstanceWorldMatrixBufferState;
@@ -34,7 +34,7 @@ public:
 		MeshRenderResources* m_pMeshRenderResources;
 		ColorTexture* m_pTexCoordTexture;
 		ColorTexture* m_pNormalTexture;
-		ColorTexture* m_pMaterialTexture;
+		ColorTexture* m_pMaterialIDTexture;
 		DepthTexture* m_pDepthTexture;
 		Buffer* m_pInstanceIndexBuffer;
 		Buffer* m_pInstanceWorldMatrixBuffer;

@@ -1,13 +1,6 @@
 #include "Common/SceneLoader.h"
-#include "Common/Scene.h"
-#include "Common/Mesh.h"
-#include "Common/MeshBatch.h"
 #include "Common/MeshUtilities.h"
-#include "Common/Light.h"
-#include "Common/Color.h"
-#include "Common/Material.h"
 #include "Common/OBJFileLoader.h"
-#include "Math/BasisAxes.h"
 
 Scene* SceneLoader::LoadCube()
 {

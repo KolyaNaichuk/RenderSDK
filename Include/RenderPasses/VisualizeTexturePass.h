@@ -1,6 +1,6 @@
 #pragma once
 
-#include "D3DWrapper/Common.h"
+#include "D3DWrapper/GraphicsResource.h"
 
 struct RenderEnv;
 struct Viewport;
@@ -13,17 +13,24 @@ class VisualizeTexturePass
 public:
 	enum TextureType
 	{
-		TextureType_GBufferDiffuse = 1,
-		TextureType_GBufferSpecular,
-		TextureType_GBufferNormal,
+		TextureType_GBufferNormal = 1,
+		TextureType_GBufferTexCoord,
 		TextureType_Depth,
 		TextureType_Other
+	};
+
+	struct ResourceStates
+	{
+		D3D12_RESOURCE_STATES m_InputTextureState;
+		D3D12_RESOURCE_STATES m_BackBufferTextureState;
 	};
 
 	struct InitParams
 	{
 		RenderEnv* m_pRenderEnv;
-		DXGI_FORMAT m_RTVFormat;
+		ResourceStates m_InputResourceStates;
+		ColorTexture* m_pInputTexture;
+		ColorTexture* m_pBackBufferTexture;
 		TextureType m_TextureType;
 	};
 
@@ -31,6 +38,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
+		Buffer* m_pAppDataBuffer;
 		Viewport* m_pViewport;
 	};
 
@@ -38,8 +46,19 @@ public:
 	~VisualizeTexturePass();
 
 	void Record(RenderParams* pParams);
+	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
+
+private:
+	void InitResources(InitParams* pParams);
+	void InitRootSignature(InitParams* pParams);
+	void InitPipelineState(InitParams* pParams);
+	void CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
 	RootSignature* m_pRootSignature;
 	PipelineState* m_pPipelineState;
+	DescriptorHandle m_SRVHeapStart;
+	DescriptorHandle m_RTVHeapStart;
+	std::vector<ResourceBarrier> m_ResourceBarriers;
+	ResourceStates m_OutputResourceStates;
 };

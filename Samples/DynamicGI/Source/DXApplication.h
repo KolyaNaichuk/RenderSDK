@@ -117,7 +117,10 @@ private:
 
 	void InitFillVisibilityBufferFalseNegativePass();
 	CommandList* RecordFillVisibilityBufferFalseNegativePass();
-		
+	
+	void InitVisualizeNormalBufferPass();
+	CommandList* RecordVisualizeNormalBufferPass();
+
 	CommandList* RecordPresentResourceBarrierPass();
 	
 	// Old
@@ -140,7 +143,6 @@ private:
 	void InitVisualizeAccumLightPass();
 	void InitVisualizeDiffuseBufferPass();
 	void InitVisualizeSpecularBufferPass();
-	void InitVisualizeNormalBufferPass();
 	void InitVisualizeDepthBufferPass();
 	void InitVisualizeSpotLightTiledShadowMapPass();
 	void InitVisualizePointLightTiledShadowMapPass();
@@ -166,7 +168,6 @@ private:
 	CommandList* RecordVisualizeAccumLightPass();
 	CommandList* RecordVisualizeDiffuseBufferPass();
 	CommandList* RecordVisualizeSpecularBufferPass();
-	CommandList* RecordVisualizeNormalBufferPass();
 	CommandList* RecordVisualizeDepthBufferPass();
 	CommandList* RecordVisualizeSpotLightTiledShadowMapPass();
 	CommandList* RecordVisualizePointLightTiledShadowMapPass();
@@ -225,7 +226,6 @@ private:
 	Buffer* m_pViewFrustumPointLightCullingDataBuffer;
 	Buffer* m_pTiledLightCullingDataBuffer;
 	Buffer* m_pTiledShadingDataBuffer;
-	Buffer* m_pVisualizeTextureDataBuffer;
 	Buffer* m_pDrawMeshCommandBuffer;
 	Buffer* m_pNumVisibleMeshesBuffer;
 	Buffer* m_pVisibleMeshIndexBuffer;
@@ -276,7 +276,6 @@ private:
 	VisualizeTexturePass* m_pVisualizeAccumLightPass;
 	VisualizeTexturePass* m_pVisualizeDiffuseBufferPass;
 	VisualizeTexturePass* m_pVisualizeSpecularBufferPass;
-	VisualizeTexturePass* m_pVisualizeNormalBufferPass;
 	VisualizeTexturePass* m_pVisualizeDepthBufferPass;
 	VisualizeTexturePass* m_pVisualizeSpotLightTiledShadowMapPass;
 	VisualizeTexturePass* m_pVisualizePointLightTiledShadowMapPass;
@@ -299,5 +298,6 @@ private:
 	CreateMainDrawCommandsPass* m_pCreateMainDrawCommandsPass;
 	RenderGBufferPass* m_pRenderGBufferMainPass;
 	FillVisibilityBufferPass* m_pFillVisibilityBufferFalseNegativePass;
+	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers];
 	Buffer* m_pAppDataBuffer;
 };

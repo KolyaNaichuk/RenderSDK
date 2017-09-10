@@ -36,9 +36,9 @@ float ComputeViewSpaceDepth(float hardwareDepth, float4x4 projMatrix)
 	return projMatrix._m23 / (hardwareDepth - projMatrix._m22);
 }
 
-float NormalizeViewSpaceDepth(float viewSpaceDepth, float nearPlane, float farPlane)
+float NormalizeViewSpaceDepth(float viewSpaceDepth, float nearViewPlane, float farViewPlane)
 {
-	return (viewSpaceDepth - nearPlane) / (farPlane - nearPlane);
+	return (viewSpaceDepth - nearViewPlane) / (farViewPlane - nearViewPlane);
 }
 
 float4 ComputeViewSpacePosition(float2 texCoord, float hardwareDepth, float4x4 projInvMatrix)

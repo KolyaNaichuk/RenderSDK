@@ -87,7 +87,7 @@ class Mesh
 {
 public:
 	Mesh(VertexData* pVertexData, IndexData* pIndexData, u32 numInstances, Matrix4f* pInstanceWorldMatrices,
-		u32 materialIndex, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
+		u32 materialID, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
 	
 	~Mesh();
 
@@ -113,7 +113,7 @@ public:
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetPrimitiveTopologyType() const { return m_PrimitiveTopologyType; }
 	D3D12_PRIMITIVE_TOPOLOGY GetPrimitiveTopology() const { return m_PrimitiveTopology; }
 	
-	u32 GetMaterialIndex() const { return m_pMaterialIndex; }
+	u32 GetMaterialID() const { return m_MaterialID; }
 	
 private:
 	VertexData* m_pVertexData;
@@ -124,7 +124,7 @@ private:
 	AxisAlignedBox* m_pInstanceWorldAABBs;
 	OrientedBox* m_pInstanceWorldOBBs;
 
-	u32 m_pMaterialIndex;
+	u32 m_MaterialID;
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE m_PrimitiveTopologyType;
 	D3D12_PRIMITIVE_TOPOLOGY m_PrimitiveTopology;
 };

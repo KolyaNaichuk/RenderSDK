@@ -13,10 +13,10 @@ public:
 
 	ColorTexture* GetTexCoordTexture() { return m_pTexCoordTexture; };
 	ColorTexture* GetNormalTexture() { return m_pNormalTexture; };
-	ColorTexture* GetMaterialTexture() { return m_pMaterialTexture; };
+	ColorTexture* GetMaterialIDTexture() { return m_pMaterialIDTexture; };
 		
 private:
 	ColorTexture* m_pTexCoordTexture;
 	ColorTexture* m_pNormalTexture;
-	ColorTexture* m_pMaterialTexture;
+	ColorTexture* m_pMaterialIDTexture;
 };

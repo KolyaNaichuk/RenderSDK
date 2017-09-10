@@ -8,12 +8,12 @@ struct RenderEnv;
 
 struct MeshRenderInfo
 {
-	MeshRenderInfo(u32 numInstances, u32 instanceOffset, u32 meshType, u32 meshTypeOffset, u32 materialIndex, u32 indexCountPerInstance, u32 startIndexLocation, i32 baseVertexLocation)
+	MeshRenderInfo(u32 numInstances, u32 instanceOffset, u32 meshType, u32 meshTypeOffset, u32 materialID, u32 indexCountPerInstance, u32 startIndexLocation, i32 baseVertexLocation)
 		: m_NumInstances(numInstances)
 		, m_InstanceOffset(instanceOffset)
 		, m_MeshType(meshType)
 		, m_MeshTypeOffset(meshTypeOffset)
-		, m_MaterialIndex(materialIndex)
+		, m_MaterialID(materialID)
 		, m_IndexCountPerInstance(indexCountPerInstance)
 		, m_StartIndexLocation(startIndexLocation)
 		, m_BaseVertexLocation(baseVertexLocation)
@@ -22,7 +22,7 @@ struct MeshRenderInfo
 	u32 m_InstanceOffset;
 	u32 m_MeshType;
 	u32 m_MeshTypeOffset;
-	u32 m_MaterialIndex;
+	u32 m_MaterialID;
 	u32 m_IndexCountPerInstance;
 	u32 m_StartIndexLocation;
 	i32 m_BaseVertexLocation;

@@ -55,7 +55,7 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 			g_VisibleMeshInfoBuffer[meshOffset].instanceOffset = instanceOffset;
 			g_VisibleMeshInfoBuffer[meshOffset].meshType = meshInfo.meshType;
 			g_VisibleMeshInfoBuffer[meshOffset].meshTypeOffset = meshInfo.meshTypeOffset;
-			g_VisibleMeshInfoBuffer[meshOffset].materialIndex = meshInfo.materialIndex;
+			g_VisibleMeshInfoBuffer[meshOffset].materialID = meshInfo.materialID;
 			g_VisibleMeshInfoBuffer[meshOffset].indexCountPerInstance = meshInfo.indexCountPerInstance;
 			g_VisibleMeshInfoBuffer[meshOffset].startIndexLocation = meshInfo.startIndexLocation;
 			g_VisibleMeshInfoBuffer[meshOffset].baseVertexLocation = meshInfo.baseVertexLocation;

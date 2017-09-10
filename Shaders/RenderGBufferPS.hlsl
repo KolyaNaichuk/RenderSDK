@@ -11,12 +11,12 @@ struct PSOutput
 {
 	float2 texCoord				: SV_Target0;
 	float4 worldSpaceNormal		: SV_Target1;
-	uint materialIndex			: SV_Target2;
+	uint materialID				: SV_Target2;
 };
 
-cbuffer MaterialIndexBuffer : register(b0)
+cbuffer MaterialIDBuffer : register(b0)
 {
-	uint g_MaterialIndex;
+	uint g_MaterialID;
 }
 
 PSOutput Main(PSInput input)
@@ -26,7 +26,7 @@ PSOutput Main(PSInput input)
 	PSOutput output;
 	output.texCoord = frac(input.texCoord);
 	output.worldSpaceNormal = float4(worldSpaceNormal, 0.0f);
-	output.materialIndex = g_MaterialIndex;
+	output.materialID = g_MaterialID;
 
 	return output;
 }

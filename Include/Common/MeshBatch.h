@@ -12,20 +12,20 @@ class Mesh;
 
 struct MeshInfo
 {
-	MeshInfo(u32 instanceCount, u32 instanceOffset, u32 indexCountPerInstance, u32 startIndexLocation, i32 baseVertexLocation, u32 materialIndex)
+	MeshInfo(u32 instanceCount, u32 instanceOffset, u32 indexCountPerInstance, u32 startIndexLocation, i32 baseVertexLocation, u32 materialID)
 		: m_InstanceCount(instanceCount)
 		, m_InstanceOffset(instanceOffset)
 		, m_IndexCountPerInstance(indexCountPerInstance)
 		, m_StartIndexLocation(startIndexLocation)
 		, m_BaseVertexLocation(baseVertexLocation)
-		, m_MaterialIndex(materialIndex)
+		, m_MaterialID(materialID)
 	{}
 	u32 m_InstanceCount;
 	u32 m_InstanceOffset;
 	u32 m_IndexCountPerInstance;
 	u32 m_StartIndexLocation;
 	i32 m_BaseVertexLocation;
-	u32 m_MaterialIndex;
+	u32 m_MaterialID;
 };
 
 class MeshBatch

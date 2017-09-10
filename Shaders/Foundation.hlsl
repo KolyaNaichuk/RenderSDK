@@ -28,7 +28,7 @@ struct MeshInfo
 	uint instanceOffset;
 	uint meshType;
 	uint meshTypeOffset;
-	uint materialIndex;
+	uint materialID;
 	uint indexCountPerInstance;
 	uint startIndexLocation;
 	int  baseVertexLocation;
@@ -45,18 +45,22 @@ struct DrawIndexedArgs
 
 struct AppData
 {
+	float4x4 projMatrix;
 	float4x4 viewProjMatrix;
 	float4x4 viewProjInvMatrix;
 	float4x4 prevViewProjMatrix;
 	float4x4 prevViewProjInvMatrix;
 	float4 cameraWorldFrustumPlanes[6];
+	float cameraNearPlane;
+	float cameraFarPlane;
+	float2 notUsed1;
 	uint2 screenSize;
 	float2 rcpScreenSize;
 	uint2 screenHalfSize;
 	float2 rcpScreenHalfSize;
 	uint2 screenQuarterSize;
 	float2 rcpScreenQuarterSize;
-	float4 notUsed[7];
+	float4 notUsed2[2];
 };
 
 #endif // __FOUNDATION__

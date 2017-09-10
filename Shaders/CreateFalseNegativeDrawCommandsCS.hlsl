@@ -3,7 +3,7 @@
 struct DrawCommand
 {
 	uint instanceOffset;
-	uint materialIndex;
+	uint materialID;
 	DrawIndexedArgs args;
 };
 
@@ -49,7 +49,7 @@ void Main(uint3 groupId : SV_GroupID, uint localIndex : SV_GroupIndex)
 			commandOffset += meshInfo.meshTypeOffset;
 
 			g_DrawVisibleInstanceCommandBuffer[commandOffset].instanceOffset = meshInfo.instanceOffset;
-			g_DrawVisibleInstanceCommandBuffer[commandOffset].materialIndex = meshInfo.materialIndex;
+			g_DrawVisibleInstanceCommandBuffer[commandOffset].materialID = meshInfo.materialID;
 			g_DrawVisibleInstanceCommandBuffer[commandOffset].args.indexCountPerInstance = meshInfo.indexCountPerInstance;
 			g_DrawVisibleInstanceCommandBuffer[commandOffset].args.instanceCount = g_NumVisibleInstances;
 			g_DrawVisibleInstanceCommandBuffer[commandOffset].args.startIndexLocation = meshInfo.startIndexLocation;
