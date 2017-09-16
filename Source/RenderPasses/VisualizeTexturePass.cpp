@@ -79,7 +79,7 @@ void VisualizeTexturePass::InitResources(InitParams* pParams)
 
 	m_SRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStart,
-		pParams->m_pInputTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		pParams->m_InputTextureSRV, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_RTVHeapStart = pParams->m_pBackBuffer->GetRTVHandle();
 }

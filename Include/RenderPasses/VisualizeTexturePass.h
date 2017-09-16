@@ -29,7 +29,8 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
-		ColorTexture* m_pInputTexture;
+		GraphicsResource* m_pInputTexture;
+		DescriptorHandle m_InputTextureSRV;
 		ColorTexture* m_pBackBuffer;
 		TextureType m_TextureType;
 	};

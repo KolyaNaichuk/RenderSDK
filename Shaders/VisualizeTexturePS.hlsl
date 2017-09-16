@@ -35,7 +35,7 @@ float4 Main(PSInput input) : SV_Target
 #if (TEXTURE_TYPE == TEXTURE_TYPE_DEPTH)
 	float hardwareDepth = g_Texture.Sample(g_Sampler, input.texCoord).r;
 	float viewSpaceDepth = ComputeViewSpaceDepth(hardwareDepth, g_AppData.projMatrix);
-	float normalizedDepth = NormalizeViewSpaceDepth(viewSpaceDepth, g_AppData.cameraNearPlane, g_VisualizeData.cameraFarPlane);
+	float normalizedDepth = NormalizeViewSpaceDepth(viewSpaceDepth, g_AppData.cameraNearPlane, g_AppData.cameraFarPlane);
 	return float4(normalizedDepth.rrr, 1.0f);
 #endif // TEXTURE_TYPE_DEPTH
 

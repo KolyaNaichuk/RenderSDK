@@ -53,11 +53,10 @@ public:
 	enum class DisplayResult
 	{
 		ShadingResult,
-		IndirectLightIntensityResult,
-		DiffuseBuffer,
-		SpecularBuffer,
-		NormalBuffer,
 		DepthBuffer,
+		NormalBuffer,
+		TexCoordBuffer,
+		IndirectLightIntensityResult,
 		SpotLightTiledShadowMap,
 		PointLightTiledShadowMap,
 		VoxelGridDiffuse,
@@ -118,10 +117,16 @@ private:
 	void InitFillVisibilityBufferFalseNegativePass();
 	CommandList* RecordFillVisibilityBufferFalseNegativePass();
 	
+	void InitVisualizeDepthBufferPass();
+	CommandList* RecordVisualizeDepthBufferPass();
+
 	void InitVisualizeNormalBufferPass();
 	CommandList* RecordVisualizeNormalBufferPass();
 
-	CommandList* RecordPresentResourceBarrierPass();
+	void InitVisualizeTexCoordBufferPass();
+	CommandList* RecordVisualizeTexCoordBufferPass();
+
+	CommandList* RecordPostRenderPass();
 	
 	// Old
 	void InitDetectVisibleMeshesPass();
@@ -141,9 +146,6 @@ private:
 	void InitVisualizeVoxelGridDiffusePass();
 	void InitVisualizeVoxelGridNormalPass();
 	void InitVisualizeAccumLightPass();
-	void InitVisualizeDiffuseBufferPass();
-	void InitVisualizeSpecularBufferPass();
-	void InitVisualizeDepthBufferPass();
 	void InitVisualizeSpotLightTiledShadowMapPass();
 	void InitVisualizePointLightTiledShadowMapPass();
 	void InitVisualizeIntensityPass();
@@ -166,9 +168,6 @@ private:
 	CommandList* RecordVisualizeVoxelGridDiffusePass();
 	CommandList* RecordVisualizeVoxelGridNormalPass();
 	CommandList* RecordVisualizeAccumLightPass();
-	CommandList* RecordVisualizeDiffuseBufferPass();
-	CommandList* RecordVisualizeSpecularBufferPass();
-	CommandList* RecordVisualizeDepthBufferPass();
 	CommandList* RecordVisualizeSpotLightTiledShadowMapPass();
 	CommandList* RecordVisualizePointLightTiledShadowMapPass();
 	CommandList* RecordVisualizeIntensityPass();
@@ -274,9 +273,6 @@ private:
 	SetupTiledShadowMapPass* m_pSetupSpotLightTiledShadowMapPass;
 	SetupTiledShadowMapPass* m_pSetupPointLightTiledShadowMapPass;
 	VisualizeTexturePass* m_pVisualizeAccumLightPass;
-	VisualizeTexturePass* m_pVisualizeDiffuseBufferPass;
-	VisualizeTexturePass* m_pVisualizeSpecularBufferPass;
-	VisualizeTexturePass* m_pVisualizeDepthBufferPass;
 	VisualizeTexturePass* m_pVisualizeSpotLightTiledShadowMapPass;
 	VisualizeTexturePass* m_pVisualizePointLightTiledShadowMapPass;
 	VisualizeIntensityPass* m_pVisualizeIntensityPass;
@@ -298,6 +294,8 @@ private:
 	CreateMainDrawCommandsPass* m_pCreateMainDrawCommandsPass;
 	RenderGBufferPass* m_pRenderGBufferMainPass;
 	FillVisibilityBufferPass* m_pFillVisibilityBufferFalseNegativePass;
+	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers];
+	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers];
 	Buffer* m_pAppDataBuffer;
 };

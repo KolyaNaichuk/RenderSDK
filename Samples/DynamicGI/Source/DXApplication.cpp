@@ -488,9 +488,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pSetupSpotLightTiledShadowMapPass(nullptr)
 	, m_pSetupPointLightTiledShadowMapPass(nullptr)
 	, m_pVisualizeAccumLightPass(nullptr)
-	, m_pVisualizeDiffuseBufferPass(nullptr)
-	, m_pVisualizeSpecularBufferPass(nullptr)
-	, m_pVisualizeDepthBufferPass(nullptr)
 	, m_pVisualizeSpotLightTiledShadowMapPass(nullptr)
 	, m_pVisualizePointLightTiledShadowMapPass(nullptr)
 	, m_pVisualizeIntensityPass(nullptr)
@@ -516,12 +513,14 @@ DXApplication::DXApplication(HINSTANCE hApp)
 		m_FrameCompletionFenceValues[index] = m_pRenderEnv->m_LastSubmissionFenceValue;
 
 	::ZeroMemory(m_VisualizeNormalBufferPasses, sizeof(m_VisualizeNormalBufferPasses));
+	::ZeroMemory(m_VisualizeDepthBufferPasses, sizeof(m_VisualizeDepthBufferPasses));
+	::ZeroMemory(m_VisualizeTexCoordBufferPasses, sizeof(m_VisualizeTexCoordBufferPasses));
 
 	::ZeroMemory(m_IntensityRCoeffsTextures, sizeof(m_IntensityRCoeffsTextures));
 	::ZeroMemory(m_IntensityGCoeffsTextures, sizeof(m_IntensityGCoeffsTextures));
 	::ZeroMemory(m_IntensityBCoeffsTextures, sizeof(m_IntensityBCoeffsTextures));
 	
-	UpdateDisplayResult(DisplayResult::ShadingResult);
+	UpdateDisplayResult(DisplayResult::DepthBuffer);
 }
 
 DXApplication::~DXApplication()
@@ -543,6 +542,8 @@ DXApplication::~DXApplication()
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
 		SafeDelete(m_VisualizeNormalBufferPasses[index]);
+		SafeDelete(m_VisualizeDepthBufferPasses[index]);
+		SafeDelete(m_VisualizeTexCoordBufferPasses[index]);
 	}
 	
 	// Old
@@ -554,9 +555,6 @@ DXApplication::~DXApplication()
 	}	
 
 	SafeDelete(m_pVisualizeAccumLightPass);
-	SafeDelete(m_pVisualizeDiffuseBufferPass);
-	SafeDelete(m_pVisualizeSpecularBufferPass);
-	SafeDelete(m_pVisualizeDepthBufferPass);
 	SafeDelete(m_pVisualizeSpotLightTiledShadowMapPass);
 	SafeDelete(m_pVisualizePointLightTiledShadowMapPass);
 	SafeDelete(m_pVisualizeIntensityPass);
@@ -662,21 +660,19 @@ void DXApplication::OnInit()
 	InitCreateMainDrawCommandsPass();
 	InitRenderGBufferMainPass(backBufferWidth, backBufferHeight);
 	InitFillVisibilityBufferFalseNegativePass();
+	InitVisualizeDepthBufferPass();
 	InitVisualizeNormalBufferPass();
+	InitVisualizeTexCoordBufferPass();
 
 	SafeDelete(pScene);
 
-	/*
-	InitDetectVisibleMeshesPass();
-	
+	/*	
 	if (m_pPointLightRenderResources != nullptr)
 		InitDetectVisiblePointLightsPass();
 				
 	if (m_pSpotLightRenderResources != nullptr)
 		InitDetectVisibleSpotLightsPass();
 	
-	InitCreateRenderGBufferCommandsPass();
-	InitRenderGBufferPass(backBufferWidth, backBufferHeight);
 	InitTiledLightCullingPass();
 	InitCreateRenderShadowMapCommandsPass();
 	
@@ -702,10 +698,7 @@ void DXApplication::OnInit()
 	InitVisualizeVoxelGridNormalPass();
 
 	InitVisualizeAccumLightPass();
-	InitVisualizeDiffuseBufferPass();
 	InitVisualizeSpecularBufferPass();
-	InitVisualizeNormalBufferPass();
-	InitVisualizeDepthBufferPass();
 	InitVisualizePointLightTiledShadowMapPass();
 	InitVisualizeIntensityPass();
 
@@ -731,9 +724,9 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordCreateMainDrawCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordRenderGBufferMainPass();
 	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferFalseNegativePass();
-	commandListBatch[commandListBatchSize++] = RecordVisualizeNormalBufferPass();
-	commandListBatch[commandListBatchSize++] = RecordPresentResourceBarrierPass();
-
+	commandListBatch[commandListBatchSize++] = RecordDisplayResultPass();
+	commandListBatch[commandListBatchSize++] = RecordPostRenderPass();
+				
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_pCommandQueue->ExecuteCommandLists(commandListBatchSize, commandListBatch, m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
@@ -803,24 +796,19 @@ void DXApplication::OnKeyDown(UINT8 key)
 	{
 		case '1':
 		{
-			UpdateDisplayResult(DisplayResult::DiffuseBuffer);
+			UpdateDisplayResult(DisplayResult::DepthBuffer);
 			break;
 		}
 		case '2':
 		{
-			UpdateDisplayResult(DisplayResult::SpecularBuffer);
+			UpdateDisplayResult(DisplayResult::NormalBuffer);
 			break;
 		}
 		case '3':
 		{
-			UpdateDisplayResult(DisplayResult::NormalBuffer);
+			UpdateDisplayResult(DisplayResult::TexCoordBuffer);
 			break;
-		}
-		case '4':
-		{
-			UpdateDisplayResult(DisplayResult::DepthBuffer);
-			break;
-		}
+		}		
 		case '5':
 		{
 			UpdateDisplayResult(DisplayResult::VoxelGridDiffuse);
@@ -981,7 +969,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	params.m_BufferWidth = backBufferWidth;
 	params.m_BufferHeight = backBufferHeight;
 	params.m_InputResourceStates.m_TexCoordTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	params.m_InputResourceStates.m_NormalTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_NormalTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	params.m_InputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
 	m_pGeometryBuffer = new GeometryBuffer(&params);
@@ -1446,6 +1434,40 @@ CommandList* DXApplication::RecordRenderGBufferMainPass()
 	return params.m_pCommandList;
 }
 
+void DXApplication::InitVisualizeDepthBufferPass()
+{
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
+		assert(m_VisualizeDepthBufferPasses[index] == nullptr);
+		
+		VisualizeTexturePass::InitParams params;
+		params.m_pRenderEnv = m_pRenderEnv;
+		params.m_InputResourceStates.m_InputTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		params.m_pInputTexture = m_pDepthTexture;
+		params.m_InputTextureSRV = m_pDepthTexture->GetSRVHandle();
+		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
+		params.m_TextureType = VisualizeTexturePass::TextureType_Depth;
+
+		m_VisualizeDepthBufferPasses[index] = new VisualizeTexturePass(&params);
+	}
+}
+
+CommandList* DXApplication::RecordVisualizeDepthBufferPass()
+{
+	VisualizeTexturePass* pVisualizeTexturePass = m_VisualizeDepthBufferPasses[m_BackBufferIndex];
+	assert(pVisualizeTexturePass != nullptr);
+
+	VisualizeTexturePass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeDepthBufferCommandList");
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
+	params.m_pViewport = m_pBackBufferViewport;
+
+	pVisualizeTexturePass->Record(&params);
+	return params.m_pCommandList;
+}
+
 void DXApplication::InitVisualizeNormalBufferPass()
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -1457,6 +1479,7 @@ void DXApplication::InitVisualizeNormalBufferPass()
 		params.m_InputResourceStates.m_InputTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		params.m_pInputTexture = m_pGeometryBuffer->GetNormalTexture();
+		params.m_InputTextureSRV = m_pGeometryBuffer->GetNormalTexture()->GetSRVHandle();
 		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
 		params.m_TextureType = VisualizeTexturePass::TextureType_GBufferNormal;
 
@@ -1472,6 +1495,40 @@ CommandList* DXApplication::RecordVisualizeNormalBufferPass()
 	VisualizeTexturePass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeNormalBufferCommandList");
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
+	params.m_pViewport = m_pBackBufferViewport;
+
+	pVisualizeTexturePass->Record(&params);
+	return params.m_pCommandList;
+}
+
+void DXApplication::InitVisualizeTexCoordBufferPass()
+{
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
+		assert(m_VisualizeTexCoordBufferPasses[index] == nullptr);
+
+		VisualizeTexturePass::InitParams params;
+		params.m_pRenderEnv = m_pRenderEnv;
+		params.m_InputResourceStates.m_InputTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		params.m_pInputTexture = m_pGeometryBuffer->GetTexCoordTexture();
+		params.m_InputTextureSRV = m_pGeometryBuffer->GetTexCoordTexture()->GetSRVHandle();
+		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
+		params.m_TextureType = VisualizeTexturePass::TextureType_GBufferTexCoord;
+
+		m_VisualizeTexCoordBufferPasses[index] = new VisualizeTexturePass(&params);
+	}
+}
+
+CommandList* DXApplication::RecordVisualizeTexCoordBufferPass()
+{
+	VisualizeTexturePass* pVisualizeTexturePass = m_VisualizeTexCoordBufferPasses[m_BackBufferIndex];
+	assert(pVisualizeTexturePass != nullptr);
+
+	VisualizeTexturePass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeTexCoordBufferCommandList");
 	params.m_pAppDataBuffer = m_pAppDataBuffer;
 	params.m_pViewport = m_pBackBufferViewport;
 
@@ -2309,87 +2366,6 @@ void DXApplication::InitVisualizeAccumLightPass()
 	*/
 }
 
-void DXApplication::InitVisualizeDiffuseBufferPass()
-{
-	assert(false);
-	/*
-	VisualizeTexturePass::InitParams initParams;
-	initParams.m_pRenderEnv = m_pRenderEnv;
-	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
-	initParams.m_TextureType = VisualizeTexturePass::TextureType_GBufferDiffuse;
-
-	m_pVisualizeDiffuseBufferPass = new VisualizeTexturePass(&initParams);
-
-	for (u8 index = 0; index < kNumBackBuffers; ++index)
-	{
-		ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
-
-		m_VisualizeDiffuseBufferResources[index]->m_RequiredResourceStates.emplace_back(pRenderTarget, pRenderTarget->GetWriteState());
-		m_VisualizeDiffuseBufferResources[index]->m_RequiredResourceStates.emplace_back(m_pDiffuseTexture, m_pDiffuseTexture->GetReadState());
-
-		m_VisualizeDiffuseBufferResources[index]->m_RTVHeapStart = pRenderTarget->GetRTVHandle();
-		m_VisualizeDiffuseBufferResources[index]->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
-
-		m_pDevice->CopyDescriptor(m_VisualizeDiffuseBufferResources[index]->m_SRVHeapStart, m_pVisualizeTextureDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDiffuseTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
-	*/
-}
-
-void DXApplication::InitVisualizeSpecularBufferPass()
-{
-	assert(false);
-	/*
-	VisualizeTexturePass::InitParams initParams;
-	initParams.m_pRenderEnv = m_pRenderEnv;
-	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
-	initParams.m_TextureType = VisualizeTexturePass::TextureType_GBufferSpecular;
-
-	m_pVisualizeSpecularBufferPass = new VisualizeTexturePass(&initParams);
-
-	for (u8 index = 0; index < kNumBackBuffers; ++index)
-	{
-		ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
-
-		m_VisualizeSpecularBufferResources[index]->m_RequiredResourceStates.emplace_back(pRenderTarget, pRenderTarget->GetWriteState());
-		m_VisualizeSpecularBufferResources[index]->m_RequiredResourceStates.emplace_back(m_pSpecularTexture, m_pSpecularTexture->GetReadState());
-
-		m_VisualizeSpecularBufferResources[index]->m_RTVHeapStart = pRenderTarget->GetRTVHandle();
-		m_VisualizeSpecularBufferResources[index]->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
-
-		m_pDevice->CopyDescriptor(m_VisualizeSpecularBufferResources[index]->m_SRVHeapStart, m_pVisualizeTextureDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpecularTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
-	*/
-}
-
-void DXApplication::InitVisualizeDepthBufferPass()
-{
-	assert(false);
-	/*
-	VisualizeTexturePass::InitParams initParams;
-	initParams.m_pRenderEnv = m_pRenderEnv;
-	initParams.m_RTVFormat = GetRenderTargetViewFormat(m_pSwapChain->GetBackBuffer(m_BackBufferIndex)->GetFormat());
-	initParams.m_TextureType = VisualizeTexturePass::TextureType_Depth;
-
-	m_pVisualizeDepthBufferPass = new VisualizeTexturePass(&initParams);
-
-	for (u8 index = 0; index < kNumBackBuffers; ++index)
-	{
-		ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(index);
-
-		m_VisualizeDepthBufferResources[index]->m_RequiredResourceStates.emplace_back(pRenderTarget, pRenderTarget->GetWriteState());
-		m_VisualizeDepthBufferResources[index]->m_RequiredResourceStates.emplace_back(m_pDepthTexture, m_pDepthTexture->GetReadState());
-
-		m_VisualizeDepthBufferResources[index]->m_RTVHeapStart = pRenderTarget->GetRTVHandle();
-		m_VisualizeDepthBufferResources[index]->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
-
-		m_pDevice->CopyDescriptor(m_VisualizeDepthBufferResources[index]->m_SRVHeapStart, m_pVisualizeTextureDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pDepthTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
-	*/
-}
-
 void DXApplication::InitVisualizeSpotLightTiledShadowMapPass()
 {
 	assert(false);
@@ -2802,54 +2778,6 @@ CommandList* DXApplication::RecordVisualizeAccumLightPass()
 	return nullptr;
 }
 
-CommandList* DXApplication::RecordVisualizeDiffuseBufferPass()
-{
-	assert(false);
-	/*
-	VisualizeTexturePass::RenderParams renderParams;
-	renderParams.m_pRenderEnv = m_pRenderEnv;
-	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeDiffuseBufferCommandList");
-	renderParams.m_pResources = m_VisualizeDiffuseBufferResources[m_BackBufferIndex];
-	renderParams.m_pViewport = m_pBackBufferViewport;
-
-	m_pVisualizeDiffuseBufferPass->Record(&renderParams);
-	return renderParams.m_pCommandList;
-	*/
-	return nullptr;
-}
-
-CommandList* DXApplication::RecordVisualizeSpecularBufferPass()
-{
-	assert(false);
-	/*
-	VisualizeTexturePass::RenderParams renderParams;
-	renderParams.m_pRenderEnv = m_pRenderEnv;
-	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeSpecularBufferCommandList");
-	renderParams.m_pResources = m_VisualizeSpecularBufferResources[m_BackBufferIndex];
-	renderParams.m_pViewport = m_pBackBufferViewport;
-
-	m_pVisualizeSpecularBufferPass->Record(&renderParams);
-	return renderParams.m_pCommandList;
-	*/
-	return nullptr;
-}
-
-CommandList* DXApplication::RecordVisualizeDepthBufferPass()
-{
-	assert(false);
-	/*
-	VisualizeTexturePass::RenderParams renderParams;
-	renderParams.m_pRenderEnv = m_pRenderEnv;
-	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeDepthBufferCommandList");
-	renderParams.m_pResources = m_VisualizeDepthBufferResources[m_BackBufferIndex];
-	renderParams.m_pViewport = m_pBackBufferViewport;
-
-	m_pVisualizeDepthBufferPass->Record(&renderParams);
-	return renderParams.m_pCommandList;
-	*/
-	return nullptr;
-}
-
 CommandList* DXApplication::RecordVisualizeSpotLightTiledShadowMapPass()
 {
 	assert(false);
@@ -2904,18 +2832,16 @@ CommandList* DXApplication::RecordDisplayResultPass()
 	if (m_DisplayResult == DisplayResult::ShadingResult)
 		return RecordVisualizeAccumLightPass();
 
-	if (m_DisplayResult == DisplayResult::DiffuseBuffer)
-		return RecordVisualizeDiffuseBufferPass();
-
-	if (m_DisplayResult == DisplayResult::SpecularBuffer)
-		return RecordVisualizeSpecularBufferPass();
-		
+	if (m_DisplayResult == DisplayResult::DepthBuffer)
+		return RecordVisualizeDepthBufferPass();
+				
 	if (m_DisplayResult == DisplayResult::NormalBuffer)
 		return RecordVisualizeNormalBufferPass();
 
-	if (m_DisplayResult == DisplayResult::DepthBuffer)
-		return RecordVisualizeDepthBufferPass();
+	if (m_DisplayResult == DisplayResult::TexCoordBuffer)
+		return RecordVisualizeTexCoordBufferPass();
 
+	/*
 	if (m_DisplayResult == DisplayResult::SpotLightTiledShadowMap)
 		return RecordVisualizeSpotLightTiledShadowMapPass();
 
@@ -2930,21 +2856,46 @@ CommandList* DXApplication::RecordDisplayResultPass()
 
 	if (m_DisplayResult == DisplayResult::IndirectLightIntensityResult)
 		return RecordVisualizeIntensityPass();
+	*/
 	
 	assert(false);
 	return nullptr;
 }
 
-CommandList* DXApplication::RecordPresentResourceBarrierPass()
-{
-	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-	ResourceBarrier resourceBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-		
+CommandList* DXApplication::RecordPostRenderPass()
+{			
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pPresentResourceBarrierCommandList");
 	pCommandList->Begin();
-	pCommandList->ResourceBarrier(1, &resourceBarrier);
-	pCommandList->End();
+	
+	{
+		ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+		ResourceBarrier resourceBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		pCommandList->ResourceBarrier(1, &resourceBarrier);
+	}
 
+	if (m_DisplayResult == DisplayResult::DepthBuffer)
+	{
+		ResourceBarrier resourceBarrier(m_pDepthTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		pCommandList->ResourceBarrier(1, &resourceBarrier);
+	}
+	else if (m_DisplayResult == DisplayResult::NormalBuffer)
+	{
+		const GeometryBuffer::ResourceStates* pResourceStates = m_pGeometryBuffer->GetOutputResourceStates();
+		ResourceBarrier resourceBarrier(m_pGeometryBuffer->GetNormalTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, pResourceStates->m_NormalTextureState);
+		pCommandList->ResourceBarrier(1, &resourceBarrier);
+	}
+	else if (m_DisplayResult == DisplayResult::TexCoordBuffer)
+	{
+		const GeometryBuffer::ResourceStates* pResourceStates = m_pGeometryBuffer->GetOutputResourceStates();
+		ResourceBarrier resourceBarrier(m_pGeometryBuffer->GetTexCoordTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, pResourceStates->m_TexCoordTextureState);
+		pCommandList->ResourceBarrier(1, &resourceBarrier);
+	}
+	else
+	{
+		assert(false);
+	}
+
+	pCommandList->End();
 	return pCommandList;
 }
 
@@ -3006,13 +2957,9 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 
 		m_pWindow->SetWindowText(stream.str().c_str());
 	}
-	else if (m_DisplayResult == DisplayResult::DiffuseBuffer)
+	else if (m_DisplayResult == DisplayResult::TexCoordBuffer)
 	{
-		m_pWindow->SetWindowText(L"Diffuse buffer");
-	}
-	else if (m_DisplayResult == DisplayResult::SpecularBuffer)
-	{
-		m_pWindow->SetWindowText(L"Specular buffer");
+		m_pWindow->SetWindowText(L"Texture coord buffer");
 	}
 	else if (m_DisplayResult == DisplayResult::NormalBuffer)
 	{
