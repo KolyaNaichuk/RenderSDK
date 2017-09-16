@@ -9,7 +9,7 @@ Camera::Camera(ProjType projType, f32 nearClipPlane, f32 farClipPlane, f32 aspec
 	, m_NearClipPlane(nearClipPlane)
 	, m_FarClipPlane(farClipPlane)
 	, m_AspectRatio(aspectRatio)
-	, m_FovYInRadians(PI_DIV_FOUR)
+	, m_FovYInRadians(PI_DIV_4)
 	, m_SizeY(10.0f)
 	, m_DirtyFlags(DirtyFlag_ProjMatrix)
 {

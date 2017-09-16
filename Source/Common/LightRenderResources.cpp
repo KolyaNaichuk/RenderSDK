@@ -70,10 +70,10 @@ LightRenderResources::LightRenderResources(RenderEnv* pRenderEnv, u32 numPointLi
 	lightViewProjMatrices.reserve(kNumCubeMapFaces * m_NumLights);
 
 	Quaternion cubeMapWorldSpaceRotations[kNumCubeMapFaces];
-	cubeMapWorldSpaceRotations[kCubeMapFacePosX] = CreateRotationYQuaternion(PI_DIV_TWO);
-	cubeMapWorldSpaceRotations[kCubeMapFaceNegX] = CreateRotationYQuaternion(-PI_DIV_TWO);
-	cubeMapWorldSpaceRotations[kCubeMapFacePosY] = CreateRotationXQuaternion(-PI_DIV_TWO);
-	cubeMapWorldSpaceRotations[kCubeMapFaceNegY] = CreateRotationXQuaternion(PI_DIV_TWO);
+	cubeMapWorldSpaceRotations[kCubeMapFacePosX] = CreateRotationYQuaternion(PI_DIV_2);
+	cubeMapWorldSpaceRotations[kCubeMapFaceNegX] = CreateRotationYQuaternion(-PI_DIV_2);
+	cubeMapWorldSpaceRotations[kCubeMapFacePosY] = CreateRotationXQuaternion(-PI_DIV_2);
+	cubeMapWorldSpaceRotations[kCubeMapFaceNegY] = CreateRotationXQuaternion(PI_DIV_2);
 	cubeMapWorldSpaceRotations[kCubeMapFacePosZ] = Quaternion();
 	cubeMapWorldSpaceRotations[kCubeMapFaceNegZ] = CreateRotationYQuaternion(PI);
 		
@@ -88,7 +88,7 @@ LightRenderResources::LightRenderResources(RenderEnv* pRenderEnv, u32 numPointLi
 		lightBounds.emplace_back(lightWorldSpacePos, pLight->GetAttenEndRange());
 		lightProps.emplace_back(pLight->GetColor(), pLight->GetAttenStartRange());
 
-		Matrix4f lightProjMatrix = CreatePerspectiveFovProjMatrix(PI_DIV_TWO, 1.0f, 0.001f, pLight->GetAttenEndRange());
+		Matrix4f lightProjMatrix = CreatePerspectiveFovProjMatrix(PI_DIV_2, 1.0f, 0.001f, pLight->GetAttenEndRange());
 		Frustum lightSpaceFrustum(lightProjMatrix);
 		
 		for (u8 faceIndex = 0; faceIndex < kNumCubeMapFaces; ++faceIndex)

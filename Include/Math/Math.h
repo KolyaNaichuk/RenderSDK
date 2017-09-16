@@ -6,9 +6,9 @@
 static const f32 PI = 3.141592654f;
 static const f32 TWO_PI = 6.283185307f;
 static const f32 RCP_PI = 0.318309886f;
-static const f32 RCP_TWO_PI = 0.159154943f;
-static const f32 PI_DIV_TWO = 1.570796327f;
-static const f32 PI_DIV_FOUR = 0.785398163f;
+static const f32 RCP_2_PI = 0.159154943f;
+static const f32 PI_DIV_2 = 1.570796327f;
+static const f32 PI_DIV_4 = 0.785398163f;
 static const f32 EPSILON = 1e-6f;
 
 template <typename T>

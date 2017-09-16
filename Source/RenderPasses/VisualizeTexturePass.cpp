@@ -66,22 +66,22 @@ void VisualizeTexturePass::InitResources(InitParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	
 	m_OutputResourceStates.m_InputTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_BackBufferTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	m_OutputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	
 	assert(m_ResourceBarriers.empty());
 	CreateResourceBarrierIfRequired(pParams->m_pInputTexture,
 		pParams->m_InputResourceStates.m_InputTextureState,
 		m_OutputResourceStates.m_InputTextureState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pBackBufferTexture,
-		pParams->m_InputResourceStates.m_BackBufferTextureState,
-		m_OutputResourceStates.m_BackBufferTextureState);
+	CreateResourceBarrierIfRequired(pParams->m_pBackBuffer,
+		pParams->m_InputResourceStates.m_BackBufferState,
+		m_OutputResourceStates.m_BackBufferState);
 
 	m_SRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStart,
 		pParams->m_pInputTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	m_RTVHeapStart = pParams->m_pBackBufferTexture->GetRTVHandle();
+	m_RTVHeapStart = pParams->m_pBackBuffer->GetRTVHandle();
 }
 
 void VisualizeTexturePass::InitRootSignature(InitParams* pParams)
@@ -120,7 +120,7 @@ void VisualizeTexturePass::InitPipelineState(InitParams* pParams)
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetPixelShader(&pixelShader);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipelineStateDesc.SetRenderTargetFormat(GetRenderTargetViewFormat(pParams->m_pBackBufferTexture->GetFormat()));
+	pipelineStateDesc.SetRenderTargetFormat(GetRenderTargetViewFormat(pParams->m_pBackBuffer->GetFormat()));
 
 	m_pPipelineState = new PipelineState(pParams->m_pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeTexturePass::m_pPipelineState");
 }

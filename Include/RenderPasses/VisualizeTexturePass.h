@@ -22,7 +22,7 @@ public:
 	struct ResourceStates
 	{
 		D3D12_RESOURCE_STATES m_InputTextureState;
-		D3D12_RESOURCE_STATES m_BackBufferTextureState;
+		D3D12_RESOURCE_STATES m_BackBufferState;
 	};
 
 	struct InitParams
@@ -30,7 +30,7 @@ public:
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		ColorTexture* m_pInputTexture;
-		ColorTexture* m_pBackBufferTexture;
+		ColorTexture* m_pBackBuffer;
 		TextureType m_TextureType;
 	};
 

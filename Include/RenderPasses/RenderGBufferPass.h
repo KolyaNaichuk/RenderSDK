@@ -51,6 +51,7 @@ public:
 		Buffer* m_pNumVisibleMeshesPerTypeBuffer;
 		Buffer* m_pDrawCommandBuffer;
 		Viewport* m_pViewport;
+		bool m_ClearGBufferBeforeRendering;
 	};
 
 	RenderGBufferPass(InitParams* pParams);

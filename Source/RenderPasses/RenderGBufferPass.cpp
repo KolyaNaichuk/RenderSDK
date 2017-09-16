@@ -62,6 +62,16 @@ void RenderGBufferPass::Record(RenderParams* pParams)
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHeapStart = m_DSVHeapStart;
 	pCommandList->OMSetRenderTargets(3, &rtvHeapStart, TRUE, &dsvHeapStart);
 
+	if (pParams->m_ClearGBufferBeforeRendering)
+	{
+		const FLOAT clearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+		pCommandList->ClearRenderTargetView(m_RTVHeapStart, clearColor);
+		pCommandList->ClearRenderTargetView(DescriptorHandle(m_RTVHeapStart, 1), clearColor);
+		pCommandList->ClearRenderTargetView(DescriptorHandle(m_RTVHeapStart, 2), clearColor);
+		pCommandList->ClearDepthView(m_DSVHeapStart, 1.0f);
+	}
+
 	pCommandList->SetGraphicsRootConstantBufferView(kRootCBVParamVS, pParams->m_pAppDataBuffer);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamVS, m_SRVHeapStartVS);
 	

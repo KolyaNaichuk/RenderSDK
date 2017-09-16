@@ -976,7 +976,15 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
-	m_pGeometryBuffer = new GeometryBuffer(m_pRenderEnv, backBufferWidth, backBufferHeight);
+	GeometryBuffer::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_BufferWidth = backBufferWidth;
+	params.m_BufferHeight = backBufferHeight;
+	params.m_InputResourceStates.m_TexCoordTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	params.m_InputResourceStates.m_NormalTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+	m_pGeometryBuffer = new GeometryBuffer(&params);
 
 	DepthStencilValue optimizedClearDepth(1.0f);
 	DepthTexture2DDesc depthTexDesc(DXGI_FORMAT_R32_TYPELESS, backBufferWidth, backBufferHeight, true, true);
@@ -994,9 +1002,9 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 
 void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
 {
-	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.1f, 1300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
-	m_pCamera->GetTransform().SetPosition(Vector3f(0.5f * 549.6f, 0.5f * 548.8f, 700.0f));
-	m_pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(PI));
+	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.0001f, 3.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
+	m_pCamera->GetTransform().SetPosition(Vector3f(0.0f, 1.0f, -2.5f));
+	m_pCamera->GetTransform().SetRotation(CreateRotationXQuaternion(ToRadians(22.0f)));
 	m_pCamera->SetBackgroundColor(Color::BISQUE);
 
 	if (pScene->GetNumMeshBatches() > 0)
@@ -1016,9 +1024,6 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 	//StructuredBufferDesc shadowMapCommandsArgumentBufferDesc(1, sizeof(shadowMapCommandsArgumentBufferValues), false, false);
 	//m_pCreateRenderShadowMapCommandsArgumentBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &shadowMapCommandsArgumentBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pCreateRenderShadowMapCommandsArgumentBuffer");
 	//UploadData(m_pRenderEnv, m_pCreateRenderShadowMapCommandsArgumentBuffer, &shadowMapCommandsArgumentBufferDesc, &shadowMapCommandsArgumentBufferValues, sizeof(shadowMapCommandsArgumentBufferValues));
-
-	//StructuredBufferDesc drawCommandBufferDesc(pMeshBatch->GetNumMeshes(), sizeof(DrawMeshCommand), true, true);
-	//m_pDrawMeshCommandBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &drawCommandBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pDrawMeshCommandBuffer");
 }
 
 void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
@@ -1198,14 +1203,10 @@ CommandList* DXApplication::RecordClearResourcesPass()
 	const Vector4f& backgroundColor = m_pCamera->GetBackgroundColor();
 
 	ColorTexture* pBackBuffer = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-	ColorTexture* pTexCoordTexture = m_pGeometryBuffer->GetTexCoordTexture();
-	ColorTexture* pNormalTexture = m_pGeometryBuffer->GetNormalTexture();
-	ColorTexture* pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
-
+	
 	ResourceBarrier resourceBarriers[] =
 	{
 		ResourceBarrier(pBackBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET),
-		ResourceBarrier(m_pDepthTexture, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE)
 	};
 
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pClearResourcesCommandList");
@@ -1213,10 +1214,6 @@ CommandList* DXApplication::RecordClearResourcesPass()
 
 	pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
 	pCommandList->ClearRenderTargetView(pBackBuffer->GetRTVHandle(), &backgroundColor.m_X);
-	pCommandList->ClearRenderTargetView(pTexCoordTexture->GetRTVHandle(), &Vector4f::ZERO.m_X);
-	pCommandList->ClearRenderTargetView(pNormalTexture->GetRTVHandle(), &Vector4f::ZERO.m_X);
-	pCommandList->ClearRenderTargetView(pMaterialIDTexture->GetRTVHandle(), &Vector4f::ZERO.m_X);
-	pCommandList->ClearDepthView(m_pDepthTexture->GetDSVHandle(), 1.0f);
 	
 	pCommandList->End();
 	return pCommandList;
@@ -1395,18 +1392,24 @@ void DXApplication::InitRenderGBufferMainPass(UINT bufferWidth, UINT bufferHeigh
 	assert(m_pCreateMainDrawCommandsPass != nullptr);
 	assert(m_pRenderGBufferMainPass == nullptr);
 
+	const GeometryBuffer::ResourceStates* pGeometryBufferStates =
+		m_pGeometryBuffer->GetOutputResourceStates();
+
 	const CreateMainDrawCommandsPass::ResourceStates* pCreateMainDrawCommandsPassStates =
 		m_pCreateMainDrawCommandsPass->GetOutputResourceStates();
+
+	const DownscaleAndReprojectDepthPass::ResourceStates* pDownscaleAndReprojectDepthPassStates =
+		m_pDownscaleAndReprojectDepthPass->GetOutputResourceStates();
 	
 	RenderGBufferPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_BufferWidth = bufferWidth;
 	params.m_BufferHeight = bufferHeight;
 	
-	params.m_InputResourceStates.m_TexCoordTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	params.m_InputResourceStates.m_NormalTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	params.m_InputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	params.m_InputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	params.m_InputResourceStates.m_TexCoordTextureState = pGeometryBufferStates->m_TexCoordTextureState;
+	params.m_InputResourceStates.m_NormalTextureState = pGeometryBufferStates->m_NormalTextureState;
+	params.m_InputResourceStates.m_MaterialIDTextureState = pGeometryBufferStates->m_MaterialIDTextureState;
+	params.m_InputResourceStates.m_DepthTextureState = pDownscaleAndReprojectDepthPassStates->m_PrevDepthTextureState;
 	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_VisibleInstanceIndexBufferState;
 	params.m_InputResourceStates.m_NumVisibleMeshesPerTypeBufferState = pCreateMainDrawCommandsPassStates->m_NumVisibleMeshesPerTypeBufferState;
@@ -1437,6 +1440,7 @@ CommandList* DXApplication::RecordRenderGBufferMainPass()
 	params.m_pNumVisibleMeshesPerTypeBuffer = m_pCreateMainDrawCommandsPass->GetNumVisibleMeshesPerTypeBuffer();
 	params.m_pDrawCommandBuffer = m_pCreateMainDrawCommandsPass->GetDrawCommandBuffer();
 	params.m_pViewport = m_pBackBufferViewport;
+	params.m_ClearGBufferBeforeRendering = true;
 
 	m_pRenderGBufferMainPass->Record(&params);
 	return params.m_pCommandList;
@@ -1451,9 +1455,9 @@ void DXApplication::InitVisualizeNormalBufferPass()
 		VisualizeTexturePass::InitParams params;
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_InputTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		params.m_InputResourceStates.m_BackBufferTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		params.m_pInputTexture = m_pGeometryBuffer->GetNormalTexture();
-		params.m_pBackBufferTexture = m_pSwapChain->GetBackBuffer(index);
+		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
 		params.m_TextureType = VisualizeTexturePass::TextureType_GBufferNormal;
 
 		m_VisualizeNormalBufferPasses[index] = new VisualizeTexturePass(&params);
