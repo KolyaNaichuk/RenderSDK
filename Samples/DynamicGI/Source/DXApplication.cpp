@@ -29,6 +29,7 @@
 #include "RenderPasses/FillVisibilityBufferPass.h"
 #include "RenderPasses/CreateMainDrawCommandsPass.h"
 #include "RenderPasses/CreateFalseNegativeDrawCommandsPass.h"
+#include "RenderPasses/FillDepthBufferWithMeshTypePass.h"
 #include "Common/Mesh.h"
 #include "Common/MeshBatch.h"
 #include "Common/GeometryBuffer.h"
@@ -510,6 +511,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFillVisibilityBufferFalseNegativePass(nullptr)
 	, m_pCreateFalseNegativeDrawCommandsPass(nullptr)
 	, m_pRenderGBufferFalseNegativePass(nullptr)
+	, m_pFillDepthBufferWithMeshTypePass(nullptr)
 	, m_pAppDataBuffer(nullptr)
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -518,6 +520,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	::ZeroMemory(m_VisualizeNormalBufferPasses, sizeof(m_VisualizeNormalBufferPasses));
 	::ZeroMemory(m_VisualizeDepthBufferPasses, sizeof(m_VisualizeDepthBufferPasses));
 	::ZeroMemory(m_VisualizeTexCoordBufferPasses, sizeof(m_VisualizeTexCoordBufferPasses));
+	::ZeroMemory(m_VisualizeDepthBufferWithMeshTypePasses, sizeof(m_VisualizeDepthBufferWithMeshTypePasses));
 
 	::ZeroMemory(m_IntensityRCoeffsTextures, sizeof(m_IntensityRCoeffsTextures));
 	::ZeroMemory(m_IntensityGCoeffsTextures, sizeof(m_IntensityGCoeffsTextures));
@@ -542,6 +545,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pFillVisibilityBufferFalseNegativePass);
 	SafeDelete(m_pCreateFalseNegativeDrawCommandsPass);
 	SafeDelete(m_pRenderGBufferFalseNegativePass);
+	SafeDelete(m_pFillDepthBufferWithMeshTypePass);
 	SafeDelete(m_pAppDataBuffer);
 
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -549,6 +553,7 @@ DXApplication::~DXApplication()
 		SafeDelete(m_VisualizeNormalBufferPasses[index]);
 		SafeDelete(m_VisualizeDepthBufferPasses[index]);
 		SafeDelete(m_VisualizeTexCoordBufferPasses[index]);
+		SafeDelete(m_VisualizeDepthBufferWithMeshTypePasses[index]);
 	}
 	
 	// Old
@@ -670,10 +675,13 @@ void DXApplication::OnInit()
 	InitCreateFalseNegativeDrawCommandsPass();
 	InitRenderGBufferFalseNegativePass(backBufferWidth, backBufferHeight);
 
+	InitFillDepthBufferWithMeshTypePass();
+
 	InitVisualizeDepthBufferPass();
 	InitVisualizeNormalBufferPass();
 	InitVisualizeTexCoordBufferPass();
-
+	InitVisualizeDepthBufferWithMeshTypePass();
+		
 	SafeDelete(pScene);
 
 	/*	
@@ -736,6 +744,7 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferFalseNegativePass();
 	commandListBatch[commandListBatchSize++] = RecordCreateFalseNegativeDrawCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordRenderGBufferFalseNegativePass();
+	commandListBatch[commandListBatchSize++] = RecordFillDepthBufferWithMeshTypePass();
 	commandListBatch[commandListBatchSize++] = RecordDisplayResultPass();
 	commandListBatch[commandListBatchSize++] = RecordPostRenderPass();
 				
@@ -820,7 +829,12 @@ void DXApplication::OnKeyDown(UINT8 key)
 		{
 			UpdateDisplayResult(DisplayResult::TexCoordBuffer);
 			break;
-		}		
+		}
+		case '4':
+		{
+			UpdateDisplayResult(DisplayResult::DepthBufferWithMeshType);
+			break;
+		}
 		case '5':
 		{
 			UpdateDisplayResult(DisplayResult::VoxelGridDiffuse);
@@ -954,7 +968,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	DescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 80, false);
 	m_pShaderInvisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
-	DescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 2, false);
+	DescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 8, false);
 	m_pShaderInvisibleDSVHeap = new DescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pShaderInvisibleDSVHeap");
 
 	m_pBackBufferViewport = new Viewport(0.0f, 0.0f, (FLOAT)backBufferWidth, (FLOAT)backBufferHeight);
@@ -982,7 +996,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	params.m_BufferHeight = backBufferHeight;
 	params.m_InputResourceStates.m_TexCoordTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	params.m_InputResourceStates.m_NormalTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	params.m_InputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	params.m_InputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
 	m_pGeometryBuffer = new GeometryBuffer(&params);
 
@@ -1559,6 +1573,41 @@ CommandList* DXApplication::RecordRenderGBufferFalseNegativePass()
 	return params.m_pCommandList;
 }
 
+void DXApplication::InitFillDepthBufferWithMeshTypePass()
+{
+	assert(m_pFillDepthBufferWithMeshTypePass == nullptr);
+	assert(m_pGeometryBuffer != nullptr);
+	assert(m_pMaterialRenderResources != nullptr);
+
+	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
+		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
+
+	FillDepthBufferWithMeshTypePass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;	
+	params.m_InputResourceStates.m_MaterialIDTextureState = pRenderGBufferFalseNegativePassStates->m_MaterialIDTextureState;
+	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_DepthTextureWithMeshTypeState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	params.m_pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
+	params.m_pMeshTypePerMaterialIDBuffer = m_pMaterialRenderResources->GetMeshTypePerMaterialIDBuffer();
+
+	m_pFillDepthBufferWithMeshTypePass = new FillDepthBufferWithMeshTypePass(&params);
+}
+
+CommandList* DXApplication::RecordFillDepthBufferWithMeshTypePass()
+{
+	assert(m_pFillDepthBufferWithMeshTypePass != nullptr);
+	assert(m_pMeshRenderResources != nullptr);
+
+	FillDepthBufferWithMeshTypePass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pFillDepthBufferWithMeshTypePassCommandList");
+	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
+	params.m_pViewport = m_pBackBufferViewport;
+
+	m_pFillDepthBufferWithMeshTypePass->Record(&params);
+	return params.m_pCommandList;
+}
+
 void DXApplication::InitVisualizeDepthBufferPass()
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -1654,6 +1703,46 @@ CommandList* DXApplication::RecordVisualizeTexCoordBufferPass()
 	VisualizeTexturePass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeTexCoordBufferCommandList");
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
+	params.m_pViewport = m_pBackBufferViewport;
+
+	pVisualizeTexturePass->Record(&params);
+	return params.m_pCommandList;
+}
+
+void DXApplication::InitVisualizeDepthBufferWithMeshTypePass()
+{
+	assert(m_pFillDepthBufferWithMeshTypePass != nullptr);
+	DepthTexture* pDepthTextureWithMeshType = m_pFillDepthBufferWithMeshTypePass->GetDepthTextureWithMeshType();
+
+	const FillDepthBufferWithMeshTypePass::ResourceStates* pResourceStates =
+		m_pFillDepthBufferWithMeshTypePass->GetOutputResourceStates();
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
+		assert(m_VisualizeDepthBufferWithMeshTypePasses[index] == nullptr);
+
+		VisualizeTexturePass::InitParams params;
+		params.m_pRenderEnv = m_pRenderEnv;
+		params.m_InputResourceStates.m_InputTextureState = pResourceStates->m_MaterialIDTextureState;
+		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		params.m_pInputTexture = pDepthTextureWithMeshType;
+		params.m_InputTextureSRV = pDepthTextureWithMeshType->GetSRVHandle();
+		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
+		params.m_TextureType = VisualizeTexturePass::TextureType_Depth;
+
+		m_VisualizeDepthBufferWithMeshTypePasses[index] = new VisualizeTexturePass(&params);
+	}
+}
+
+CommandList* DXApplication::RecordVisualizeDepthBufferWithMeshTypePass()
+{
+	VisualizeTexturePass* pVisualizeTexturePass = m_VisualizeDepthBufferWithMeshTypePasses[m_BackBufferIndex];
+	assert(pVisualizeTexturePass != nullptr);
+
+	VisualizeTexturePass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeDepthBufferWithMeshTypeCommandList");
 	params.m_pAppDataBuffer = m_pAppDataBuffer;
 	params.m_pViewport = m_pBackBufferViewport;
 
@@ -2966,6 +3055,9 @@ CommandList* DXApplication::RecordDisplayResultPass()
 	if (m_DisplayResult == DisplayResult::TexCoordBuffer)
 		return RecordVisualizeTexCoordBufferPass();
 
+	if (m_DisplayResult == DisplayResult::DepthBufferWithMeshType)
+		return RecordVisualizeDepthBufferWithMeshTypePass();
+
 	/*
 	if (m_DisplayResult == DisplayResult::SpotLightTiledShadowMap)
 		return RecordVisualizeSpotLightTiledShadowMapPass();
@@ -3015,11 +3107,7 @@ CommandList* DXApplication::RecordPostRenderPass()
 		ResourceBarrier resourceBarrier(m_pGeometryBuffer->GetTexCoordTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, pResourceStates->m_TexCoordTextureState);
 		pCommandList->ResourceBarrier(1, &resourceBarrier);
 	}
-	else
-	{
-		assert(false);
-	}
-
+	
 	pCommandList->End();
 	return pCommandList;
 }
@@ -3109,6 +3197,10 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 	else if (m_DisplayResult == DisplayResult::VoxelGridNormal)
 	{
 		m_pWindow->SetWindowText(L"Voxel grid normal");
+	}
+	else if (m_DisplayResult == DisplayResult::DepthBufferWithMeshType)
+	{
+		m_pWindow->SetWindowText(L"Depth buffer with mesh type");
 	}
 	else
 	{

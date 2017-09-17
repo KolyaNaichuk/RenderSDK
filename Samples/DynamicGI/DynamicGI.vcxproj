@@ -205,7 +205,10 @@ COPY /Y "$(SolutionDir)Shaders\CreateMainDrawCommandsCS.hlsl" "$(SolutionDir)Sam
 COPY /Y "$(SolutionDir)Shaders\CreateMainDrawCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateMainDrawCommandsCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\CreateFalseNegativeDrawCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateFalseNegativeDrawCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\CreateFalseNegativeDrawCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FillDepthBufferWithMeshTypePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillDepthBufferWithMeshTypePS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillDepthBufferWithMeshTypePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillDepthBufferWithMeshTypePS.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

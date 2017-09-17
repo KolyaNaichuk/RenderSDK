@@ -27,6 +27,7 @@ class FrustumMeshCullingPass;
 class FillVisibilityBufferPass;
 class CreateMainDrawCommandsPass;
 class CreateFalseNegativeDrawCommandsPass;
+class FillDepthBufferWithMeshTypePass;
 
 // Old
 class RenderGBufferPass;
@@ -57,6 +58,7 @@ public:
 		DepthBuffer,
 		NormalBuffer,
 		TexCoordBuffer,
+		DepthBufferWithMeshType,
 		IndirectLightIntensityResult,
 		SpotLightTiledShadowMap,
 		PointLightTiledShadowMap,
@@ -124,6 +126,9 @@ private:
 	void InitRenderGBufferFalseNegativePass(UINT bufferWidth, UINT bufferHeight);
 	CommandList* RecordRenderGBufferFalseNegativePass();
 	
+	void InitFillDepthBufferWithMeshTypePass();
+	CommandList* RecordFillDepthBufferWithMeshTypePass();
+
 	void InitVisualizeDepthBufferPass();
 	CommandList* RecordVisualizeDepthBufferPass();
 
@@ -132,6 +137,9 @@ private:
 
 	void InitVisualizeTexCoordBufferPass();
 	CommandList* RecordVisualizeTexCoordBufferPass();
+
+	void InitVisualizeDepthBufferWithMeshTypePass();
+	CommandList* RecordVisualizeDepthBufferWithMeshTypePass();
 
 	CommandList* RecordPostRenderPass();
 	
@@ -303,8 +311,10 @@ private:
 	FillVisibilityBufferPass* m_pFillVisibilityBufferFalseNegativePass;
 	CreateFalseNegativeDrawCommandsPass* m_pCreateFalseNegativeDrawCommandsPass;
 	RenderGBufferPass* m_pRenderGBufferFalseNegativePass;
+	FillDepthBufferWithMeshTypePass* m_pFillDepthBufferWithMeshTypePass;
 	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers];
+	VisualizeTexturePass* m_VisualizeDepthBufferWithMeshTypePasses[kNumBackBuffers];
 	Buffer* m_pAppDataBuffer;
 };

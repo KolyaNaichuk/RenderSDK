@@ -14,7 +14,7 @@ Buffer<uint> g_MeshTypePerMaterialIDBuffer : register(t1);
 
 float Main(PSInput input) : SV_Depth
 {
-	int3 texturePos = int3(input.screenSpacePos.xy, 0);
+	uint2 texturePos = uint2(input.screenSpacePos.xy);
 
 	uint materialID = g_MaterialIDTexture[texturePos].r;
 	uint meshType = g_MeshTypePerMaterialIDBuffer[materialID];
