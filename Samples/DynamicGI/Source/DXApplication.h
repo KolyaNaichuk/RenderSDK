@@ -26,6 +26,7 @@ class DownscaleAndReprojectDepthPass;
 class FrustumMeshCullingPass;
 class FillVisibilityBufferPass;
 class CreateMainDrawCommandsPass;
+class CreateFalseNegativeDrawCommandsPass;
 
 // Old
 class RenderGBufferPass;
@@ -116,6 +117,9 @@ private:
 
 	void InitFillVisibilityBufferFalseNegativePass();
 	CommandList* RecordFillVisibilityBufferFalseNegativePass();
+
+	void InitCreateFalseNegativeDrawCommandsPass();
+	CommandList* RecordCreateFalseNegativeDrawCommandsPass();
 	
 	void InitVisualizeDepthBufferPass();
 	CommandList* RecordVisualizeDepthBufferPass();
@@ -294,6 +298,7 @@ private:
 	CreateMainDrawCommandsPass* m_pCreateMainDrawCommandsPass;
 	RenderGBufferPass* m_pRenderGBufferMainPass;
 	FillVisibilityBufferPass* m_pFillVisibilityBufferFalseNegativePass;
+	CreateFalseNegativeDrawCommandsPass* m_pCreateFalseNegativeDrawCommandsPass;
 	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers];

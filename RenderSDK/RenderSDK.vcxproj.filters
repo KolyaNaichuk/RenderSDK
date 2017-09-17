@@ -255,6 +255,12 @@
     <ClInclude Include="..\Include\Common\StringUtilities.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateFalseNegativeDrawCommandsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\Common.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -478,6 +484,9 @@
     </ClCompile>
     <ClCompile Include="..\Source\Common\StringUtilities.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp">
+      <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

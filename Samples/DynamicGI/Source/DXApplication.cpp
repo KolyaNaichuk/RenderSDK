@@ -28,6 +28,7 @@
 #include "RenderPasses/FrustumMeshCullingPass.h"
 #include "RenderPasses/FillVisibilityBufferPass.h"
 #include "RenderPasses/CreateMainDrawCommandsPass.h"
+#include "RenderPasses/CreateFalseNegativeDrawCommandsPass.h"
 #include "Common/Mesh.h"
 #include "Common/MeshBatch.h"
 #include "Common/GeometryBuffer.h"
@@ -507,6 +508,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCreateMainDrawCommandsPass(nullptr)
 	, m_pRenderGBufferMainPass(nullptr)
 	, m_pFillVisibilityBufferFalseNegativePass(nullptr)
+	, m_pCreateFalseNegativeDrawCommandsPass(nullptr)
 	, m_pAppDataBuffer(nullptr)
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -536,6 +538,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pFillVisibilityBufferMainPass);
 	SafeDelete(m_pCreateMainDrawCommandsPass);
 	SafeDelete(m_pFillVisibilityBufferFalseNegativePass);
+	SafeDelete(m_pCreateFalseNegativeDrawCommandsPass);
 	SafeDelete(m_pRenderGBufferMainPass);	
 	SafeDelete(m_pAppDataBuffer);
 
@@ -656,10 +659,14 @@ void DXApplication::OnInit()
 	InitConstantBuffers(pScene, backBufferWidth, backBufferHeight);
 	InitDownscaleAndReprojectDepthPass();
 	InitFrustumMeshCullingPass();
+	
 	InitFillVisibilityBufferMainPass();
 	InitCreateMainDrawCommandsPass();
 	InitRenderGBufferMainPass(backBufferWidth, backBufferHeight);
+	
 	InitFillVisibilityBufferFalseNegativePass();
+	InitCreateFalseNegativeDrawCommandsPass();
+
 	InitVisualizeDepthBufferPass();
 	InitVisualizeNormalBufferPass();
 	InitVisualizeTexCoordBufferPass();
@@ -724,6 +731,7 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordCreateMainDrawCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordRenderGBufferMainPass();
 	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferFalseNegativePass();
+	commandListBatch[commandListBatchSize++] = RecordCreateFalseNegativeDrawCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordDisplayResultPass();
 	commandListBatch[commandListBatchSize++] = RecordPostRenderPass();
 				
@@ -1293,7 +1301,7 @@ void DXApplication::InitCreateMainDrawCommandsPass()
 	const FrustumMeshCullingPass::ResourceStates* pFrustumMeshCullingPassStates = 
 		m_pFrustumMeshCullingPass->GetOutputResourceStates();
 	
-	const FillVisibilityBufferPass::ResourceStates* pFillVisibilityBufferPassStates =
+	const FillVisibilityBufferPass::ResourceStates* pFillVisibilityBufferMainPassStates =
 		m_pFillVisibilityBufferMainPass->GetOutputResourceStates();
 
 	CreateMainDrawCommandsPass::InitParams params;
@@ -1301,13 +1309,13 @@ void DXApplication::InitCreateMainDrawCommandsPass()
 
 	params.m_InputResourceStates.m_NumMeshesBufferState = pFrustumMeshCullingPassStates->m_NumVisibleMeshesBufferState;
 	params.m_InputResourceStates.m_MeshInfoBufferState = pFrustumMeshCullingPassStates->m_VisibleMeshInfoBufferState;
-	params.m_InputResourceStates.m_InstanceIndexBufferState = pFillVisibilityBufferPassStates->m_InstanceIndexBufferState;
-	params.m_InputResourceStates.m_VisibilityBufferState = pFillVisibilityBufferPassStates->m_VisibilityBufferState;
+	params.m_InputResourceStates.m_InstanceIndexBufferState = pFillVisibilityBufferMainPassStates->m_InstanceIndexBufferState;
+	params.m_InputResourceStates.m_VisibilityBufferState = pFillVisibilityBufferMainPassStates->m_VisibilityBufferState;
 	params.m_InputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_NumVisibleMeshesPerTypeBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_DrawCommandBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_NumOccludedInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_OccludedInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_OccludedInstanceIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
 	params.m_pNumMeshesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer();
 	params.m_pMeshInfoBuffer = m_pFrustumMeshCullingPass->GetVisibleMeshInfoBuffer();
@@ -1327,10 +1335,71 @@ CommandList* DXApplication::RecordCreateMainDrawCommandsPass()
 	
 	CreateMainDrawCommandsPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pCreateMainDrawCommandsCommandList");
+	params.m_pCommandList = m_pCommandListPool->Create(L"pCreateMainDrawCommandsList");
 	params.m_pNumMeshesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer();
 
 	m_pCreateMainDrawCommandsPass->Record(&params);
+	return params.m_pCommandList;
+}
+
+void DXApplication::InitRenderGBufferMainPass(UINT bufferWidth, UINT bufferHeight)
+{
+	assert(m_pGeometryBuffer != nullptr);
+	assert(m_pMeshRenderResources != nullptr);
+	assert(m_pCreateMainDrawCommandsPass != nullptr);
+	assert(m_pRenderGBufferMainPass == nullptr);
+
+	const GeometryBuffer::ResourceStates* pGeometryBufferStates =
+		m_pGeometryBuffer->GetOutputResourceStates();
+
+	const CreateMainDrawCommandsPass::ResourceStates* pCreateMainDrawCommandsPassStates =
+		m_pCreateMainDrawCommandsPass->GetOutputResourceStates();
+
+	const DownscaleAndReprojectDepthPass::ResourceStates* pDownscaleAndReprojectDepthPassStates =
+		m_pDownscaleAndReprojectDepthPass->GetOutputResourceStates();
+
+	RenderGBufferPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_BufferWidth = bufferWidth;
+	params.m_BufferHeight = bufferHeight;
+
+	params.m_InputResourceStates.m_TexCoordTextureState = pGeometryBufferStates->m_TexCoordTextureState;
+	params.m_InputResourceStates.m_NormalTextureState = pGeometryBufferStates->m_NormalTextureState;
+	params.m_InputResourceStates.m_MaterialIDTextureState = pGeometryBufferStates->m_MaterialIDTextureState;
+	params.m_InputResourceStates.m_DepthTextureState = pDownscaleAndReprojectDepthPassStates->m_PrevDepthTextureState;
+	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_VisibleInstanceIndexBufferState;
+	params.m_InputResourceStates.m_NumVisibleMeshesPerTypeBufferState = pCreateMainDrawCommandsPassStates->m_NumVisibleMeshesPerTypeBufferState;
+	params.m_InputResourceStates.m_DrawCommandBufferState = pCreateMainDrawCommandsPassStates->m_DrawCommandBufferState;
+
+	params.m_pMeshRenderResources = m_pMeshRenderResources;
+	params.m_pTexCoordTexture = m_pGeometryBuffer->GetTexCoordTexture();
+	params.m_pNormalTexture = m_pGeometryBuffer->GetNormalTexture();
+	params.m_pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
+	params.m_pDepthTexture = m_pDepthTexture;
+	params.m_pInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
+	params.m_pInstanceIndexBuffer = m_pCreateMainDrawCommandsPass->GetVisibleInstanceIndexBuffer();
+	params.m_NumVisibleMeshesPerTypeBuffer = m_pCreateMainDrawCommandsPass->GetNumVisibleMeshesPerTypeBuffer();
+	params.m_DrawCommandBuffer = m_pCreateMainDrawCommandsPass->GetDrawCommandBuffer();
+
+	m_pRenderGBufferMainPass = new RenderGBufferPass(&params);
+}
+
+CommandList* DXApplication::RecordRenderGBufferMainPass()
+{
+	assert(m_pRenderGBufferMainPass != nullptr);
+
+	RenderGBufferPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferMainPassCommandList");
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
+	params.m_pMeshRenderResources = m_pMeshRenderResources;
+	params.m_pNumVisibleMeshesPerTypeBuffer = m_pCreateMainDrawCommandsPass->GetNumVisibleMeshesPerTypeBuffer();
+	params.m_pDrawCommandBuffer = m_pCreateMainDrawCommandsPass->GetDrawCommandBuffer();
+	params.m_pViewport = m_pBackBufferViewport;
+	params.m_ClearGBufferBeforeRendering = true;
+
+	m_pRenderGBufferMainPass->Record(&params);
 	return params.m_pCommandList;
 }
 
@@ -1344,7 +1413,7 @@ void DXApplication::InitFillVisibilityBufferFalseNegativePass()
 
 	FillVisibilityBufferPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
-	
+
 	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_OccludedInstanceIndexBufferState;
 	params.m_InputResourceStates.m_NumInstancesBufferState = pCreateMainDrawCommandsPassStates->m_NumOccludedInstancesBufferState;
 	params.m_InputResourceStates.m_InstanceWorldOBBMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
@@ -1373,64 +1442,55 @@ CommandList* DXApplication::RecordFillVisibilityBufferFalseNegativePass()
 	return params.m_pCommandList;
 }
 
-void DXApplication::InitRenderGBufferMainPass(UINT bufferWidth, UINT bufferHeight)
+void DXApplication::InitCreateFalseNegativeDrawCommandsPass()
 {
-	assert(m_pGeometryBuffer != nullptr);
-	assert(m_pMeshRenderResources != nullptr);
+	assert(m_pFrustumMeshCullingPass != nullptr);
+	assert(m_pFillVisibilityBufferFalseNegativePass != nullptr);
 	assert(m_pCreateMainDrawCommandsPass != nullptr);
-	assert(m_pRenderGBufferMainPass == nullptr);
+	assert(m_pCreateFalseNegativeDrawCommandsPass == nullptr);
 
-	const GeometryBuffer::ResourceStates* pGeometryBufferStates =
-		m_pGeometryBuffer->GetOutputResourceStates();
+	const FrustumMeshCullingPass::ResourceStates* pFrustumMeshCullingPassStates =
+		m_pFrustumMeshCullingPass->GetOutputResourceStates();
+
+	const FillVisibilityBufferPass::ResourceStates* pFillVisibilityBufferFalseNegativePassStates =
+		m_pFillVisibilityBufferFalseNegativePass->GetOutputResourceStates();
 
 	const CreateMainDrawCommandsPass::ResourceStates* pCreateMainDrawCommandsPassStates =
 		m_pCreateMainDrawCommandsPass->GetOutputResourceStates();
 
-	const DownscaleAndReprojectDepthPass::ResourceStates* pDownscaleAndReprojectDepthPassStates =
-		m_pDownscaleAndReprojectDepthPass->GetOutputResourceStates();
-	
-	RenderGBufferPass::InitParams params;
+	CreateFalseNegativeDrawCommandsPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_BufferWidth = bufferWidth;
-	params.m_BufferHeight = bufferHeight;
 	
-	params.m_InputResourceStates.m_TexCoordTextureState = pGeometryBufferStates->m_TexCoordTextureState;
-	params.m_InputResourceStates.m_NormalTextureState = pGeometryBufferStates->m_NormalTextureState;
-	params.m_InputResourceStates.m_MaterialIDTextureState = pGeometryBufferStates->m_MaterialIDTextureState;
-	params.m_InputResourceStates.m_DepthTextureState = pDownscaleAndReprojectDepthPassStates->m_PrevDepthTextureState;
-	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_VisibleInstanceIndexBufferState;
-	params.m_InputResourceStates.m_NumVisibleMeshesPerTypeBufferState = pCreateMainDrawCommandsPassStates->m_NumVisibleMeshesPerTypeBufferState;
-	params.m_InputResourceStates.m_DrawCommandBufferState = pCreateMainDrawCommandsPassStates->m_DrawCommandBufferState;
+	params.m_InputResourceStates.m_NumMeshesBufferState = pCreateMainDrawCommandsPassStates->m_NumMeshesBufferState;
+	params.m_InputResourceStates.m_MeshInfoBufferState = pCreateMainDrawCommandsPassStates->m_MeshInfoBufferState;
+	params.m_InputResourceStates.m_InstanceIndexBufferState = pFillVisibilityBufferFalseNegativePassStates->m_InstanceIndexBufferState;
+	params.m_InputResourceStates.m_VisibilityBufferState = pFillVisibilityBufferFalseNegativePassStates->m_VisibilityBufferState;
+	params.m_InputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_NumVisibleMeshesPerTypeBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_DrawCommandBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
-	params.m_pMeshRenderResources = m_pMeshRenderResources;
-	params.m_pTexCoordTexture = m_pGeometryBuffer->GetTexCoordTexture();
-	params.m_pNormalTexture = m_pGeometryBuffer->GetNormalTexture();
-	params.m_pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
-	params.m_pDepthTexture = m_pDepthTexture;
-	params.m_pInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
-	params.m_pInstanceIndexBuffer = m_pCreateMainDrawCommandsPass->GetVisibleInstanceIndexBuffer();
-	params.m_NumVisibleMeshesPerTypeBuffer = m_pCreateMainDrawCommandsPass->GetNumVisibleMeshesPerTypeBuffer();
-	params.m_DrawCommandBuffer = m_pCreateMainDrawCommandsPass->GetDrawCommandBuffer();
-	
-	m_pRenderGBufferMainPass = new RenderGBufferPass(&params);
+	params.m_pNumMeshesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer();
+	params.m_pMeshInfoBuffer = m_pFrustumMeshCullingPass->GetVisibleMeshInfoBuffer();
+	params.m_pInstanceIndexBuffer = m_pCreateMainDrawCommandsPass->GetOccludedInstanceIndexBuffer();
+	params.m_pVisibilityBuffer = m_pFillVisibilityBufferFalseNegativePass->GetVisibilityBuffer();
+	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
+	params.m_MaxNumMeshes = m_pMeshRenderResources->GetTotalNumMeshes();
+	params.m_MaxNumInstances = m_pMeshRenderResources->GetTotalNumInstances();
+	params.m_MaxNumInstancesPerMesh = m_pMeshRenderResources->GetMaxNumInstancesPerMesh();
+
+	m_pCreateFalseNegativeDrawCommandsPass = new CreateFalseNegativeDrawCommandsPass(&params);
 }
 
-CommandList* DXApplication::RecordRenderGBufferMainPass()
+CommandList* DXApplication::RecordCreateFalseNegativeDrawCommandsPass()
 {
-	assert(m_pRenderGBufferMainPass != nullptr);
+	assert(m_pCreateFalseNegativeDrawCommandsPass != nullptr);
 	
-	RenderGBufferPass::RenderParams params;
+	CreateFalseNegativeDrawCommandsPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferMainPassCommandList");
-	params.m_pAppDataBuffer = m_pAppDataBuffer;
-	params.m_pMeshRenderResources = m_pMeshRenderResources;
-	params.m_pNumVisibleMeshesPerTypeBuffer = m_pCreateMainDrawCommandsPass->GetNumVisibleMeshesPerTypeBuffer();
-	params.m_pDrawCommandBuffer = m_pCreateMainDrawCommandsPass->GetDrawCommandBuffer();
-	params.m_pViewport = m_pBackBufferViewport;
-	params.m_ClearGBufferBeforeRendering = true;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pCreateFalseNegativeDrawCommandsList");
+	params.m_pNumMeshesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer();
 
-	m_pRenderGBufferMainPass->Record(&params);
+	m_pCreateFalseNegativeDrawCommandsPass->Record(&params);
 	return params.m_pCommandList;
 }
 

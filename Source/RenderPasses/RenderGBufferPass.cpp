@@ -1,5 +1,5 @@
 #include "RenderPasses/RenderGBufferPass.h"
-#include "RenderPasses/CreateMainDrawCommandsPass.h"
+#include "RenderPasses/Common.h"
 #include "Common/MeshRenderResources.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RootSignature.h"

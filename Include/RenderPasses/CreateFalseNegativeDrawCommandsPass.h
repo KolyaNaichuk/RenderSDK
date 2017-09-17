@@ -8,7 +8,7 @@ class RootSignature;
 class PipelineState;
 class CommandSignature;
 
-class CreateMainDrawCommandsPass
+class CreateFalseNegativeDrawCommandsPass
 {
 public:
 	struct ResourceStates
@@ -20,8 +20,6 @@ public:
 		D3D12_RESOURCE_STATES m_VisibleInstanceIndexBufferState;
 		D3D12_RESOURCE_STATES m_NumVisibleMeshesPerTypeBufferState;
 		D3D12_RESOURCE_STATES m_DrawCommandBufferState;
-		D3D12_RESOURCE_STATES m_NumOccludedInstancesBufferState;
-		D3D12_RESOURCE_STATES m_OccludedInstanceIndexBufferState;
 	};
 
 	struct InitParams
@@ -45,8 +43,8 @@ public:
 		Buffer* m_pNumMeshesBuffer;
 	};
 
-	CreateMainDrawCommandsPass(InitParams* pParams);
-	~CreateMainDrawCommandsPass();
+	CreateFalseNegativeDrawCommandsPass(InitParams* pParams);
+	~CreateFalseNegativeDrawCommandsPass();
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
@@ -54,9 +52,7 @@ public:
 	Buffer* GetVisibleInstanceIndexBuffer() { return m_pVisibleInstanceIndexBuffer; }
 	Buffer* GetNumVisibleMeshesPerTypeBuffer() { return m_pNumVisibleMeshesPerTypeBuffer; }
 	Buffer* GetDrawCommandBuffer() { return m_pDrawCommandBuffer; }
-	Buffer* GetNumOccludedInstancesBuffer() { return m_pNumOccludedInstancesBuffer; }
-	Buffer* GetOccludedInstanceIndexBuffer() { return m_pOccludedInstanceIndexBuffer; }
-
+	
 private:
 	void InitResources(InitParams* pParams);
 	void InitRootSignature(InitParams* pParams);
@@ -76,7 +72,5 @@ private:
 	Buffer* m_pVisibleInstanceIndexBuffer;
 	Buffer* m_pNumVisibleMeshesPerTypeBuffer;
 	Buffer* m_pDrawCommandBuffer;
-	Buffer* m_pNumOccludedInstancesBuffer;
-	Buffer* m_pOccludedInstanceIndexBuffer;
 	Buffer* m_pArgumentBuffer;
 };

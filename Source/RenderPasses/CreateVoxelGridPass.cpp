@@ -23,6 +23,7 @@ CreateVoxelGridPass::CreateVoxelGridPass(InitParams* pParams)
 	, m_pPipelineState(nullptr)
 	, m_pCommandSignature(nullptr)
 {
+	assert(false);
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 
@@ -59,8 +60,8 @@ CreateVoxelGridPass::CreateVoxelGridPass(InitParams* pParams)
 		Constant32BitArgument(kConstant32BitRootParamPS, 0, 1),
 		DrawIndexedArgument()
 	};
-	CommandSignatureDesc commandSignatureDesc(sizeof(DrawMeshCommand), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
-	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"RenderGBufferPass::m_pCommandSignature");
+	//CommandSignatureDesc commandSignatureDesc(sizeof(DrawMeshCommand), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
+	//m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"RenderGBufferPass::m_pCommandSignature");
 }
 
 CreateVoxelGridPass::~CreateVoxelGridPass()

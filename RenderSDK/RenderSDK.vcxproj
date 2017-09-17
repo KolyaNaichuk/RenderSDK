@@ -211,6 +211,8 @@
     <ClInclude Include="..\Include\Math\Vector4.h" />
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
     <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\Common.h" />
+    <ClInclude Include="..\Include\RenderPasses\CreateFalseNegativeDrawCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateMainDrawCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h" />
     <ClInclude Include="..\Include\RenderPasses\DownscaleAndReprojectDepthPass.h" />
@@ -287,6 +289,7 @@
     <ClCompile Include="..\Source\Math\Vector4.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateMainDrawCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\DownscaleAndReprojectDepthPass.cpp" />

@@ -26,12 +26,6 @@ struct DispatchArguments
 	UINT m_ThreadGroupCountZ;
 };
 
-struct DrawMeshCommand
-{
-	UINT m_Root32BitConstant;
-	DrawIndexedArguments m_DrawArgs;
-};
-
 struct DrawArgument : public D3D12_INDIRECT_ARGUMENT_DESC
 {
 	DrawArgument();

@@ -21,6 +21,8 @@ RenderTiledShadowMapPass::RenderTiledShadowMapPass(InitParams* pParams)
 	, m_pRootSignature(nullptr)
 	, m_pCommandSignature(nullptr)
 {
+	assert(false && "Kolya. Fix me");
+
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 		
@@ -61,8 +63,8 @@ RenderTiledShadowMapPass::RenderTiledShadowMapPass(InitParams* pParams)
 		Constant32BitArgument(kConstant32BitRootParamVS, 0, 1),
 		DrawIndexedArgument()
 	};
-	CommandSignatureDesc commandSignatureDesc(sizeof(DrawMeshCommand), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
-	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"RenderTiledShadowMapPass::m_pCommandSignature");
+	//CommandSignatureDesc commandSignatureDesc(sizeof(DrawMeshCommand), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
+	//m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"RenderTiledShadowMapPass::m_pCommandSignature");
 }
 
 RenderTiledShadowMapPass::~RenderTiledShadowMapPass()
