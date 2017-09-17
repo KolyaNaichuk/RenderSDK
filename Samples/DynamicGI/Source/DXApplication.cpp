@@ -509,6 +509,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pRenderGBufferMainPass(nullptr)
 	, m_pFillVisibilityBufferFalseNegativePass(nullptr)
 	, m_pCreateFalseNegativeDrawCommandsPass(nullptr)
+	, m_pRenderGBufferFalseNegativePass(nullptr)
 	, m_pAppDataBuffer(nullptr)
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -537,9 +538,10 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pFrustumMeshCullingPass);
 	SafeDelete(m_pFillVisibilityBufferMainPass);
 	SafeDelete(m_pCreateMainDrawCommandsPass);
+	SafeDelete(m_pRenderGBufferMainPass);
 	SafeDelete(m_pFillVisibilityBufferFalseNegativePass);
 	SafeDelete(m_pCreateFalseNegativeDrawCommandsPass);
-	SafeDelete(m_pRenderGBufferMainPass);	
+	SafeDelete(m_pRenderGBufferFalseNegativePass);
 	SafeDelete(m_pAppDataBuffer);
 
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -666,6 +668,7 @@ void DXApplication::OnInit()
 	
 	InitFillVisibilityBufferFalseNegativePass();
 	InitCreateFalseNegativeDrawCommandsPass();
+	InitRenderGBufferFalseNegativePass(backBufferWidth, backBufferHeight);
 
 	InitVisualizeDepthBufferPass();
 	InitVisualizeNormalBufferPass();
@@ -732,6 +735,7 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordRenderGBufferMainPass();
 	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferFalseNegativePass();
 	commandListBatch[commandListBatchSize++] = RecordCreateFalseNegativeDrawCommandsPass();
+	commandListBatch[commandListBatchSize++] = RecordRenderGBufferFalseNegativePass();
 	commandListBatch[commandListBatchSize++] = RecordDisplayResultPass();
 	commandListBatch[commandListBatchSize++] = RecordPostRenderPass();
 				
@@ -941,7 +945,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 
 	m_pCommandListPool = new CommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 10, false);
+	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, false);
 	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
 	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 180, true);
@@ -1491,6 +1495,67 @@ CommandList* DXApplication::RecordCreateFalseNegativeDrawCommandsPass()
 	params.m_pNumMeshesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer();
 
 	m_pCreateFalseNegativeDrawCommandsPass->Record(&params);
+	return params.m_pCommandList;
+}
+
+void DXApplication::InitRenderGBufferFalseNegativePass(UINT bufferWidth, UINT bufferHeight)
+{
+	assert(m_pRenderGBufferFalseNegativePass == nullptr);
+	assert(m_pRenderGBufferMainPass != nullptr);
+	assert(m_pFillVisibilityBufferFalseNegativePass != nullptr);
+	assert(m_pCreateFalseNegativeDrawCommandsPass != nullptr);
+
+	const RenderGBufferPass::ResourceStates* pRenderGBufferMainPassStates =
+		m_pRenderGBufferMainPass->GetOutputResourceStates();
+
+	const FillVisibilityBufferPass::ResourceStates* pFillVisibilityBufferFalseNegativePassStates =
+		m_pFillVisibilityBufferFalseNegativePass->GetOutputResourceStates();
+
+	const CreateFalseNegativeDrawCommandsPass::ResourceStates* pCreateFalseNegativeDrawCommandsPassStates =
+		m_pCreateFalseNegativeDrawCommandsPass->GetOutputResourceStates();
+	
+	RenderGBufferPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_BufferWidth = bufferWidth;
+	params.m_BufferHeight = bufferHeight;
+
+	params.m_InputResourceStates.m_TexCoordTextureState = pRenderGBufferMainPassStates->m_TexCoordTextureState;
+	params.m_InputResourceStates.m_NormalTextureState = pRenderGBufferMainPassStates->m_NormalTextureState;
+	params.m_InputResourceStates.m_MaterialIDTextureState = pRenderGBufferMainPassStates->m_MaterialIDTextureState;
+	params.m_InputResourceStates.m_DepthTextureState = pFillVisibilityBufferFalseNegativePassStates->m_DepthTextureState;
+	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = pRenderGBufferMainPassStates->m_InstanceWorldMatrixBufferState;
+	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_VisibleInstanceIndexBufferState;
+	params.m_InputResourceStates.m_NumVisibleMeshesPerTypeBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_NumVisibleMeshesPerTypeBufferState;
+	params.m_InputResourceStates.m_DrawCommandBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_DrawCommandBufferState;
+
+	params.m_pMeshRenderResources = m_pMeshRenderResources;
+	params.m_pTexCoordTexture = m_pGeometryBuffer->GetTexCoordTexture();
+	params.m_pNormalTexture = m_pGeometryBuffer->GetNormalTexture();
+	params.m_pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
+	params.m_pDepthTexture = m_pDepthTexture;
+	params.m_pInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
+	params.m_pInstanceIndexBuffer = m_pCreateFalseNegativeDrawCommandsPass->GetVisibleInstanceIndexBuffer();
+	params.m_NumVisibleMeshesPerTypeBuffer = m_pCreateFalseNegativeDrawCommandsPass->GetNumVisibleMeshesPerTypeBuffer();
+	params.m_DrawCommandBuffer = m_pCreateFalseNegativeDrawCommandsPass->GetDrawCommandBuffer();
+	
+	m_pRenderGBufferFalseNegativePass = new RenderGBufferPass(&params);
+}
+
+CommandList* DXApplication::RecordRenderGBufferFalseNegativePass()
+{
+	assert(m_pRenderGBufferFalseNegativePass != nullptr);
+
+	RenderGBufferPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pRecordRenderGBufferFalseNegativePassCommandList");
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
+	params.m_pMeshRenderResources = m_pMeshRenderResources;
+	params.m_pNumVisibleMeshesPerTypeBuffer = m_pCreateFalseNegativeDrawCommandsPass->GetNumVisibleMeshesPerTypeBuffer();
+	params.m_pDrawCommandBuffer = m_pCreateFalseNegativeDrawCommandsPass->GetDrawCommandBuffer();
+	params.m_pViewport = m_pBackBufferViewport;
+	params.m_ClearGBufferBeforeRendering = false;
+
+	m_pRenderGBufferFalseNegativePass->Record(&params);
 	return params.m_pCommandList;
 }
 

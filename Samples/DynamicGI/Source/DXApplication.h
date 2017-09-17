@@ -120,6 +120,9 @@ private:
 
 	void InitCreateFalseNegativeDrawCommandsPass();
 	CommandList* RecordCreateFalseNegativeDrawCommandsPass();
+
+	void InitRenderGBufferFalseNegativePass(UINT bufferWidth, UINT bufferHeight);
+	CommandList* RecordRenderGBufferFalseNegativePass();
 	
 	void InitVisualizeDepthBufferPass();
 	CommandList* RecordVisualizeDepthBufferPass();
@@ -299,6 +302,7 @@ private:
 	RenderGBufferPass* m_pRenderGBufferMainPass;
 	FillVisibilityBufferPass* m_pFillVisibilityBufferFalseNegativePass;
 	CreateFalseNegativeDrawCommandsPass* m_pCreateFalseNegativeDrawCommandsPass;
+	RenderGBufferPass* m_pRenderGBufferFalseNegativePass;
 	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers];
