@@ -316,20 +316,6 @@ enum
 	kShadowMapTileSize = 512,
 };
 
-struct ObjectTransform
-{
-	Matrix4f m_WorldPositionMatrix;
-	Matrix4f m_WorldNormalMatrix;
-	Matrix4f m_WorldViewProjMatrix;
-	Vector4f m_NotUsed[4];
-};
-
-struct CameraTransform
-{
-	Matrix4f m_ViewProjInvMatrix;
-	Matrix4f m_ViewProjMatrices[3];
-};
-
 struct GridConfig
 {
 	Vector4f m_WorldSpaceOrigin;
@@ -519,6 +505,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 
 	::ZeroMemory(m_VisualizeNormalBufferPasses, sizeof(m_VisualizeNormalBufferPasses));
 	::ZeroMemory(m_VisualizeDepthBufferPasses, sizeof(m_VisualizeDepthBufferPasses));
+	::ZeroMemory(m_VisualizeReprojectedDepthBufferPasses, sizeof(m_VisualizeReprojectedDepthBufferPasses));
 	::ZeroMemory(m_VisualizeTexCoordBufferPasses, sizeof(m_VisualizeTexCoordBufferPasses));
 	::ZeroMemory(m_VisualizeDepthBufferWithMeshTypePasses, sizeof(m_VisualizeDepthBufferWithMeshTypePasses));
 
@@ -552,6 +539,7 @@ DXApplication::~DXApplication()
 	{
 		SafeDelete(m_VisualizeNormalBufferPasses[index]);
 		SafeDelete(m_VisualizeDepthBufferPasses[index]);
+		SafeDelete(m_VisualizeReprojectedDepthBufferPasses[index]);
 		SafeDelete(m_VisualizeTexCoordBufferPasses[index]);
 		SafeDelete(m_VisualizeDepthBufferWithMeshTypePasses[index]);
 	}
@@ -678,6 +666,7 @@ void DXApplication::OnInit()
 	InitFillDepthBufferWithMeshTypePass();
 
 	InitVisualizeDepthBufferPass();
+	InitVisualizeReprojectedDepthBufferPass();
 	InitVisualizeNormalBufferPass();
 	InitVisualizeTexCoordBufferPass();
 	InitVisualizeDepthBufferWithMeshTypePass();
@@ -822,35 +811,40 @@ void DXApplication::OnKeyDown(UINT8 key)
 		}
 		case '2':
 		{
-			UpdateDisplayResult(DisplayResult::NormalBuffer);
+			UpdateDisplayResult(DisplayResult::ReprojectedDepthBuffer);
 			break;
 		}
 		case '3':
 		{
-			UpdateDisplayResult(DisplayResult::TexCoordBuffer);
+			UpdateDisplayResult(DisplayResult::NormalBuffer);
 			break;
 		}
 		case '4':
 		{
-			UpdateDisplayResult(DisplayResult::DepthBufferWithMeshType);
+			UpdateDisplayResult(DisplayResult::TexCoordBuffer);
 			break;
 		}
 		case '5':
 		{
-			UpdateDisplayResult(DisplayResult::VoxelGridDiffuse);
+			UpdateDisplayResult(DisplayResult::DepthBufferWithMeshType);
 			break;
 		}
 		case '6':
 		{
-			UpdateDisplayResult(DisplayResult::VoxelGridNormal);
+			UpdateDisplayResult(DisplayResult::VoxelGridDiffuse);
 			break;
 		}
 		case '7':
 		{
-			UpdateDisplayResult(DisplayResult::SpotLightTiledShadowMap);
+			UpdateDisplayResult(DisplayResult::VoxelGridNormal);
 			break;
 		}
 		case '8':
+		{
+			UpdateDisplayResult(DisplayResult::SpotLightTiledShadowMap);
+			break;
+		}
+		case '9':
 		{
 			UpdateDisplayResult(DisplayResult::PointLightTiledShadowMap);
 			break;
@@ -1642,6 +1636,46 @@ CommandList* DXApplication::RecordVisualizeDepthBufferPass()
 	return params.m_pCommandList;
 }
 
+void DXApplication::InitVisualizeReprojectedDepthBufferPass()
+{
+	assert(m_pDownscaleAndReprojectDepthPass != nullptr);
+	DepthTexture* pProjectedDepthTexture = m_pDownscaleAndReprojectDepthPass->GetReprojectedDepthTexture();
+
+	const DownscaleAndReprojectDepthPass::ResourceStates* pResourceStates =
+		m_pDownscaleAndReprojectDepthPass->GetOutputResourceStates();
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
+		assert(m_VisualizeReprojectedDepthBufferPasses[index] == nullptr);
+
+		VisualizeTexturePass::InitParams params;
+		params.m_pRenderEnv = m_pRenderEnv;
+		params.m_InputResourceStates.m_InputTextureState = pResourceStates->m_ReprojectedDepthTextureState;
+		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		params.m_pInputTexture = pProjectedDepthTexture;
+		params.m_InputTextureSRV = pProjectedDepthTexture->GetSRVHandle();
+		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
+		params.m_TextureType = VisualizeTexturePass::TextureType_Depth;
+
+		m_VisualizeReprojectedDepthBufferPasses[index] = new VisualizeTexturePass(&params);
+	}
+}
+
+CommandList* DXApplication::RecordVisualizeReprojectedDepthBufferPass()
+{
+	VisualizeTexturePass* pVisualizeTexturePass = m_VisualizeReprojectedDepthBufferPasses[m_BackBufferIndex];
+	assert(pVisualizeTexturePass != nullptr);
+
+	VisualizeTexturePass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeReprojectedDepthBufferCommandList");
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
+	params.m_pViewport = m_pBackBufferViewport;
+
+	pVisualizeTexturePass->Record(&params);
+	return params.m_pCommandList;
+}
+
 void DXApplication::InitVisualizeNormalBufferPass()
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -1724,7 +1758,7 @@ void DXApplication::InitVisualizeDepthBufferWithMeshTypePass()
 
 		VisualizeTexturePass::InitParams params;
 		params.m_pRenderEnv = m_pRenderEnv;
-		params.m_InputResourceStates.m_InputTextureState = pResourceStates->m_MaterialIDTextureState;
+		params.m_InputResourceStates.m_InputTextureState = pResourceStates->m_DepthTextureWithMeshTypeState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		params.m_pInputTexture = pDepthTextureWithMeshType;
 		params.m_InputTextureSRV = pDepthTextureWithMeshType->GetSRVHandle();
@@ -3048,6 +3082,9 @@ CommandList* DXApplication::RecordDisplayResultPass()
 
 	if (m_DisplayResult == DisplayResult::DepthBuffer)
 		return RecordVisualizeDepthBufferPass();
+
+	if (m_DisplayResult == DisplayResult::ReprojectedDepthBuffer)
+		return RecordVisualizeReprojectedDepthBufferPass();
 				
 	if (m_DisplayResult == DisplayResult::NormalBuffer)
 		return RecordVisualizeNormalBufferPass();
@@ -3095,6 +3132,11 @@ CommandList* DXApplication::RecordPostRenderPass()
 		ResourceBarrier resourceBarrier(m_pDepthTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		pCommandList->ResourceBarrier(1, &resourceBarrier);
 	}
+	else if (m_DisplayResult == DisplayResult::ReprojectedDepthBuffer)
+	{
+		ResourceBarrier resourceBarrier(m_pDownscaleAndReprojectDepthPass->GetReprojectedDepthTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		pCommandList->ResourceBarrier(1, &resourceBarrier);
+	}
 	else if (m_DisplayResult == DisplayResult::NormalBuffer)
 	{
 		const GeometryBuffer::ResourceStates* pResourceStates = m_pGeometryBuffer->GetOutputResourceStates();
@@ -3106,6 +3148,16 @@ CommandList* DXApplication::RecordPostRenderPass()
 		const GeometryBuffer::ResourceStates* pResourceStates = m_pGeometryBuffer->GetOutputResourceStates();
 		ResourceBarrier resourceBarrier(m_pGeometryBuffer->GetTexCoordTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, pResourceStates->m_TexCoordTextureState);
 		pCommandList->ResourceBarrier(1, &resourceBarrier);
+	}
+	else if (m_DisplayResult == DisplayResult::DepthBufferWithMeshType)
+	{
+		const FillDepthBufferWithMeshTypePass::ResourceStates* pResourceStates = m_pFillDepthBufferWithMeshTypePass->GetOutputResourceStates();
+		ResourceBarrier resourceBarrier(m_pFillDepthBufferWithMeshTypePass->GetDepthTextureWithMeshType(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		pCommandList->ResourceBarrier(1, &resourceBarrier);
+	}
+	else
+	{
+		assert(false);
 	}
 	
 	pCommandList->End();
@@ -3181,6 +3233,10 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 	else if (m_DisplayResult == DisplayResult::DepthBuffer)
 	{
 		m_pWindow->SetWindowText(L"Depth buffer");
+	}
+	else if (m_DisplayResult == DisplayResult::ReprojectedDepthBuffer)
+	{
+		m_pWindow->SetWindowText(L"Reprojected depth buffer");
 	}
 	else if (m_DisplayResult == DisplayResult::SpotLightTiledShadowMap)
 	{

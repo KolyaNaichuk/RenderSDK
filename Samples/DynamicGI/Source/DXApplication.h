@@ -56,6 +56,7 @@ public:
 	{
 		ShadingResult,
 		DepthBuffer,
+		ReprojectedDepthBuffer,
 		NormalBuffer,
 		TexCoordBuffer,
 		DepthBufferWithMeshType,
@@ -89,12 +90,12 @@ public:
 	~DXApplication();
 
 private:
-	virtual void OnInit();
-	virtual void OnUpdate();
-	virtual void OnRender();
-	virtual void OnDestroy();
-	virtual void OnKeyDown(UINT8 key);
-	virtual void OnKeyUp(UINT8 key);
+	void OnInit() override;
+	void OnUpdate() override;
+	void OnRender() override;
+	void OnDestroy() override;
+	void OnKeyDown(UINT8 key) override;
+	void OnKeyUp(UINT8 key) override;
 
 	void InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight);
 	void InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
@@ -131,6 +132,9 @@ private:
 
 	void InitVisualizeDepthBufferPass();
 	CommandList* RecordVisualizeDepthBufferPass();
+
+	void InitVisualizeReprojectedDepthBufferPass();
+	CommandList* RecordVisualizeReprojectedDepthBufferPass();
 
 	void InitVisualizeNormalBufferPass();
 	CommandList* RecordVisualizeNormalBufferPass();
@@ -313,6 +317,7 @@ private:
 	RenderGBufferPass* m_pRenderGBufferFalseNegativePass;
 	FillDepthBufferWithMeshTypePass* m_pFillDepthBufferWithMeshTypePass;
 	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers];
+	VisualizeTexturePass* m_VisualizeReprojectedDepthBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeDepthBufferWithMeshTypePasses[kNumBackBuffers];
