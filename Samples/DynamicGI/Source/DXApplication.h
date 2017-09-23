@@ -41,7 +41,7 @@ class VisualizeVoxelGridPass;
 class VisualizeIntensityPass;
 class TiledLightCullingPass;
 class TiledShadingPass;
-class ViewFrustumCullingPass;
+class FrustumLightCullingPass;
 class CreateRenderShadowMapCommandsPass;
 class RenderTiledShadowMapPass;
 class SetupTiledShadowMapPass;
@@ -145,11 +145,12 @@ private:
 	void InitVisualizeDepthBufferWithMeshTypePass();
 	CommandList* RecordVisualizeDepthBufferWithMeshTypePass();
 
+	void InitFrustumPointLightCullingPass();
+	CommandList* RecordFrustumPointLightCullingPass();
+
 	CommandList* RecordPostRenderPass();
 	
 	// Old
-	void InitDetectVisibleMeshesPass();
-	void InitDetectVisiblePointLightsPass();
 	void InitDetectVisibleSpotLightsPass();
 	void InitTiledLightCullingPass();
 	void InitTiledShadingPass();
@@ -168,9 +169,7 @@ private:
 	void InitVisualizeSpotLightTiledShadowMapPass();
 	void InitVisualizePointLightTiledShadowMapPass();
 	void InitVisualizeIntensityPass();
-		
-	CommandList* RecordDetectVisibleMeshesPass();
-	CommandList* RecordDetectVisiblePointLightsPass();
+	
 	CommandList* RecordDetectVisibleSpotLightsPass();
 	CommandList* RecordTiledLightCullingPass();
 	CommandList* RecordUpdateCreateRenderShadowMapCommandsArgumentBufferPass();
@@ -239,14 +238,11 @@ private:
 	Buffer* m_pCameraTransformBuffer;
 	Buffer* m_pGridBuffer;
 	Buffer* m_pGridConfigDataBuffer;
-	Buffer* m_pViewFrustumMeshCullingDataBuffer;
 	Buffer* m_pViewFrustumSpotLightCullingDataBuffer;
 	Buffer* m_pViewFrustumPointLightCullingDataBuffer;
 	Buffer* m_pTiledLightCullingDataBuffer;
 	Buffer* m_pTiledShadingDataBuffer;
 	Buffer* m_pDrawMeshCommandBuffer;
-	Buffer* m_pNumVisibleMeshesBuffer;
-	Buffer* m_pVisibleMeshIndexBuffer;
 	Buffer* m_pNumPointLightsPerTileBuffer;
 	Buffer* m_pPointLightIndexPerTileBuffer;
 	Buffer* m_pPointLightRangePerTileBuffer;
@@ -282,9 +278,7 @@ private:
 	PropagateLightPass* m_pPropagateLightPass;
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridDiffusePass;
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridNormalPass;
-	ViewFrustumCullingPass* m_pDetectVisibleMeshesPass;
-	ViewFrustumCullingPass* m_pDetectVisiblePointLightsPass;
-	ViewFrustumCullingPass* m_pDetectVisibleSpotLightsPass;
+	FrustumLightCullingPass* m_pDetectVisibleSpotLightsPass;
 	CreateRenderShadowMapCommandsPass* m_pCreateRenderShadowMapCommandsPass;
 	Buffer* m_pCreateRenderShadowMapCommandsArgumentBuffer;
 	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass;
@@ -316,6 +310,7 @@ private:
 	CreateFalseNegativeDrawCommandsPass* m_pCreateFalseNegativeDrawCommandsPass;
 	RenderGBufferPass* m_pRenderGBufferFalseNegativePass;
 	FillDepthBufferWithMeshTypePass* m_pFillDepthBufferWithMeshTypePass;
+	FrustumLightCullingPass* m_pFrustumPointLightCullingPass;
 	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeReprojectedDepthBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers];

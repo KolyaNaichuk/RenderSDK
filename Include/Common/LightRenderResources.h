@@ -18,14 +18,14 @@ public:
 	
 	u32 GetNumLights() const { return m_NumLights; }
 
-	Buffer* GetLightBoundsBuffer() { return m_pLightBoundsBuffer; }
+	Buffer* GetLightWorldBoundsBuffer() { return m_pLightWorldBoundsBuffer; }
 	Buffer* GetLightPropsBuffer() { return m_pLightPropsBuffer; }
 	Buffer* GetLightFrustumBuffer() { return m_pLightFrustumBuffer; }
 	Buffer* GetLightViewProjMatrixBuffer() { return m_pLightViewProjMatrixBuffer; }
 
 private:
 	u32 m_NumLights;
-	Buffer* m_pLightBoundsBuffer;
+	Buffer* m_pLightWorldBoundsBuffer;
 	Buffer* m_pLightPropsBuffer;
 	Buffer* m_pLightFrustumBuffer;
 	Buffer* m_pLightViewProjMatrixBuffer;

@@ -165,8 +165,8 @@ COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\
 COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledShadingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledShadingCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ViewFrustumCullingCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ViewFrustumCullingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FrustumLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FrustumLightCullingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FrustumLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FrustumLightCullingCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"

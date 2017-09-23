@@ -20,7 +20,7 @@
 #include "RenderPasses/SetupTiledShadowMapPass.h"
 #include "RenderPasses/TiledLightCullingPass.h"
 #include "RenderPasses/TiledShadingPass.h"
-#include "RenderPasses/ViewFrustumCullingPass.h"
+#include "RenderPasses/FrustumLightCullingPass.h"
 #include "RenderPasses/VisualizeTexturePass.h"
 #include "RenderPasses/VisualizeVoxelGridPass.h"
 #include "RenderPasses/VisualizeIntensityPass.h"
@@ -158,28 +158,29 @@ Used resources:
 
 /*
 To do:
-1.OOB for a set of points mimics AABB. Improve implementation.
+1.FillDepthBufferWithMeshType needs more testing. Looks like 16 bit depth might not be enough.
+2.OOB for a set of points mimics AABB. Improve implementation.
 
-2.When converting plane mesh to unit cube space, world matrix is not optimal for OOB.
+3.When converting plane mesh to unit cube space, world matrix is not optimal for OOB.
 For an example, plane in original coordinates is passing through point (0, 0, 0).
 OOB will have coordinates expanding from -1 to 1 not merely passing through 0 when world matrix is applied.
 
-3.Make camera transform part of Scene object.
+4.Make camera transform part of Scene object.
 Can check format OpenGEX for inspiration - http://opengex.org/
 
-4.MeshRenderResources, LightRenderResources, MaterialRenderResources should not be part of Common folder
-5.Using std::experimental::filesystem::path from OBJFileLoader. Should be consistent with the code.
+5.MeshRenderResources, LightRenderResources, MaterialRenderResources should not be part of Common folder
+6.Using std::experimental::filesystem::path from OBJFileLoader. Should be consistent with the code.
 
-6.Review to-dos
+7.Review to-dos
 
-7.Use output resource states to initialize input resource states from the previous pass.
+8.Use output resource states to initialize input resource states from the previous pass.
 
-8.Use Task graph for resource state transition after each render pass.
+9.Use Task graph for resource state transition after each render pass.
 https://patterns.eecs.berkeley.edu/?page_id=609
 
-8.Fix compilation warnings for x64 build
+10.Fix compilation warnings for x64 build
 
-10.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
+11.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
 against MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER and MAX_NUM_POINT_LIGHTS_PER_SHADOW_CASTER
 while writing data to the local storage
 */
@@ -425,14 +426,11 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCameraTransformBuffer(nullptr)
 	, m_pGridBuffer(nullptr)
 	, m_pGridConfigDataBuffer(nullptr)
-	, m_pViewFrustumMeshCullingDataBuffer(nullptr)
 	, m_pViewFrustumSpotLightCullingDataBuffer(nullptr)
 	, m_pViewFrustumPointLightCullingDataBuffer(nullptr)
 	, m_pTiledLightCullingDataBuffer(nullptr)
 	, m_pTiledShadingDataBuffer(nullptr)
 	, m_pDrawMeshCommandBuffer(nullptr)
-	, m_pNumVisibleMeshesBuffer(nullptr)
-	, m_pVisibleMeshIndexBuffer(nullptr)
 	, m_pNumPointLightsPerTileBuffer(nullptr)
 	, m_pPointLightIndexPerTileBuffer(nullptr)
 	, m_pPointLightRangePerTileBuffer(nullptr)
@@ -466,8 +464,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pPropagateLightPass(nullptr)
 	, m_pVisualizeVoxelGridDiffusePass(nullptr)
 	, m_pVisualizeVoxelGridNormalPass(nullptr)
-	, m_pDetectVisibleMeshesPass(nullptr)
-	, m_pDetectVisiblePointLightsPass(nullptr)
 	, m_pDetectVisibleSpotLightsPass(nullptr)
 	, m_pCreateRenderShadowMapCommandsPass(nullptr)
 	, m_pCreateRenderShadowMapCommandsArgumentBuffer(nullptr)
@@ -498,6 +494,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCreateFalseNegativeDrawCommandsPass(nullptr)
 	, m_pRenderGBufferFalseNegativePass(nullptr)
 	, m_pFillDepthBufferWithMeshTypePass(nullptr)
+	, m_pFrustumPointLightCullingPass(nullptr)
 	, m_pAppDataBuffer(nullptr)
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -533,6 +530,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCreateFalseNegativeDrawCommandsPass);
 	SafeDelete(m_pRenderGBufferFalseNegativePass);
 	SafeDelete(m_pFillDepthBufferWithMeshTypePass);
+	SafeDelete(m_pFrustumPointLightCullingPass);
 	SafeDelete(m_pAppDataBuffer);
 
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -591,8 +589,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCreateRenderShadowMapCommandsArgumentBuffer);
 	SafeDelete(m_pRenderSpotLightTiledShadowMapPass);
 	SafeDelete(m_pRenderPointLightTiledShadowMapPass);
-	SafeDelete(m_pDetectVisibleMeshesPass);
-	SafeDelete(m_pDetectVisiblePointLightsPass);
 	SafeDelete(m_pDetectVisibleSpotLightsPass);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pUploadHeapProps);
@@ -603,8 +599,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pShaderInvisibleRTVHeap);
 	SafeDelete(m_pShaderVisibleSRVHeap);
 	SafeDelete(m_pRenderEnv);
-	SafeDelete(m_pNumVisibleMeshesBuffer);
-	SafeDelete(m_pVisibleMeshIndexBuffer);
 	SafeDelete(m_pNumPointLightsPerTileBuffer);
 	SafeDelete(m_pPointLightIndexPerTileBuffer);
 	SafeDelete(m_pPointLightRangePerTileBuffer);
@@ -612,7 +606,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pSpotLightIndexPerTileBuffer);
 	SafeDelete(m_pSpotLightRangePerTileBuffer);
 	SafeDelete(m_pDrawMeshCommandBuffer);
-	SafeDelete(m_pViewFrustumMeshCullingDataBuffer);
 	SafeDelete(m_pViewFrustumSpotLightCullingDataBuffer);
 	SafeDelete(m_pViewFrustumPointLightCullingDataBuffer);
 	SafeDelete(m_pTiledLightCullingDataBuffer);
@@ -670,13 +663,13 @@ void DXApplication::OnInit()
 	InitVisualizeNormalBufferPass();
 	InitVisualizeTexCoordBufferPass();
 	InitVisualizeDepthBufferWithMeshTypePass();
-		
+	
+	if (m_pPointLightRenderResources != nullptr)
+		InitFrustumPointLightCullingPass();
+
 	SafeDelete(pScene);
 
-	/*	
-	if (m_pPointLightRenderResources != nullptr)
-		InitDetectVisiblePointLightsPass();
-				
+	/*				
 	if (m_pSpotLightRenderResources != nullptr)
 		InitDetectVisibleSpotLightsPass();
 	
@@ -734,6 +727,10 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordCreateFalseNegativeDrawCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordRenderGBufferFalseNegativePass();
 	commandListBatch[commandListBatchSize++] = RecordFillDepthBufferWithMeshTypePass();
+
+	if (m_pFrustumPointLightCullingPass != nullptr)
+		commandListBatch[commandListBatchSize++] = RecordFrustumPointLightCullingPass();
+
 	commandListBatch[commandListBatchSize++] = RecordDisplayResultPass();
 	commandListBatch[commandListBatchSize++] = RecordPostRenderPass();
 				
@@ -1784,74 +1781,33 @@ CommandList* DXApplication::RecordVisualizeDepthBufferWithMeshTypePass()
 	return params.m_pCommandList;
 }
 
-void DXApplication::InitDetectVisibleMeshesPass()
+void DXApplication::InitFrustumPointLightCullingPass()
 {
-	assert(false);
-	/*
-	FormattedBufferDesc numVisibleMeshesBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
-	m_pNumVisibleMeshesBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numVisibleMeshesBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumVisibleMeshesBuffer");
-
-	FormattedBufferDesc visibleMeshIndexBufferDesc(m_pMeshRenderResources->GetNumMeshes(), DXGI_FORMAT_R32_UINT, true, true);
-	m_pVisibleMeshIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &visibleMeshIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pVisibleMeshIndexBuffer");
-
-	ConstantBufferDesc viewFrustumCullingDataBufferDesc(sizeof(ViewFrustumCullingData));
-	m_pViewFrustumMeshCullingDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &viewFrustumCullingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pViewFrustumMeshCullingDataBuffer");
-	
-	Buffer* pMeshBoundsBuffer = m_pMeshRenderResources->GetMeshBoundsBuffer();
-
-	ViewFrustumCullingPass::InitParams initParams;
-	initParams.m_pRenderEnv = m_pRenderEnv;
-	initParams.m_ObjectBoundsType = ObjectBoundsType_AABB;
-	initParams.m_NumObjects = m_pMeshRenderResources->GetNumMeshes();
-
-	m_pDetectVisibleMeshesPass = new ViewFrustumCullingPass(&initParams);
-
-	m_pDetectVisibleMeshesResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleMeshesBuffer, m_pNumVisibleMeshesBuffer->GetWriteState());
-	m_pDetectVisibleMeshesResources->m_RequiredResourceStates.emplace_back(m_pVisibleMeshIndexBuffer, m_pVisibleMeshIndexBuffer->GetWriteState());
-	m_pDetectVisibleMeshesResources->m_RequiredResourceStates.emplace_back(pMeshBoundsBuffer, pMeshBoundsBuffer->GetReadState());
-
-	m_pDetectVisibleMeshesResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
-	m_pDevice->CopyDescriptor(m_pDetectVisibleMeshesResources->m_SRVHeapStart, m_pNumVisibleMeshesBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisibleMeshIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pMeshBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pViewFrustumMeshCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	*/
-}
-
-void DXApplication::InitDetectVisiblePointLightsPass()
-{
-	assert(false);
-	/*
+	assert(m_pFrustumPointLightCullingPass == nullptr);
 	assert(m_pPointLightRenderResources != nullptr);
 	
-	ConstantBufferDesc viewFrustumCullingDataBufferDesc(sizeof(ViewFrustumCullingData));
-	m_pViewFrustumPointLightCullingDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &viewFrustumCullingDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pViewFrustumPointLightCullingDataBuffer");
+	FrustumLightCullingPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_InputResourceStates.m_LightWorldBoundsBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_NumVisibleLightsBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_VisibleLightIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_pLightWorldBoundsBuffer = m_pPointLightRenderResources->GetLightWorldBoundsBuffer();
+	params.m_NumLights = m_pPointLightRenderResources->GetNumLights();
 
-	FormattedBufferDesc numVisibleLightsBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
-	m_pNumVisiblePointLightsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &numVisibleLightsBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pNumVisiblePointLightsBuffer");
+	m_pFrustumPointLightCullingPass = new FrustumLightCullingPass(&params);
+}
 
-	FormattedBufferDesc visibleLightIndexBufferDesc(m_pPointLightRenderResources->GetNumLights(), DXGI_FORMAT_R32_UINT, true, true);
-	m_pVisiblePointLightIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &visibleLightIndexBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pVisiblePointLightIndexBuffer");
-	
-	Buffer* pLightBoundsBuffer = m_pPointLightRenderResources->GetLightBoundsBuffer();
+CommandList* DXApplication::RecordFrustumPointLightCullingPass()
+{
+	assert(m_pFrustumPointLightCullingPass != nullptr);
 
-	ViewFrustumCullingPass::InitParams initParams;
-	initParams.m_pRenderEnv = m_pRenderEnv;
-	initParams.m_ObjectBoundsType = ObjectBoundsType_Sphere;
-	initParams.m_NumObjects = m_pPointLightRenderResources->GetNumLights();
+	FrustumLightCullingPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pFrustumPointLightCullingCommandList");
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
 
-	m_pDetectVisiblePointLightsPass = new ViewFrustumCullingPass(&initParams);
-	
-	m_pDetectVisiblePointLightsResources->m_RequiredResourceStates.emplace_back(m_pNumVisiblePointLightsBuffer, m_pNumVisiblePointLightsBuffer->GetWriteState());
-	m_pDetectVisiblePointLightsResources->m_RequiredResourceStates.emplace_back(m_pVisiblePointLightIndexBuffer, m_pVisiblePointLightIndexBuffer->GetWriteState());
-	m_pDetectVisiblePointLightsResources->m_RequiredResourceStates.emplace_back(pLightBoundsBuffer, pLightBoundsBuffer->GetReadState());
-
-	m_pDetectVisiblePointLightsResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
-	m_pDevice->CopyDescriptor(m_pDetectVisiblePointLightsResources->m_SRVHeapStart, m_pNumVisiblePointLightsBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pVisiblePointLightIndexBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pViewFrustumPointLightCullingDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	*/
+	m_pFrustumPointLightCullingPass->Record(&params);
+	return params.m_pCommandList;
 }
 
 void DXApplication::InitDetectVisibleSpotLightsPass()
@@ -1871,12 +1827,12 @@ void DXApplication::InitDetectVisibleSpotLightsPass()
 
 	Buffer* pLightBoundsBuffer = m_pSpotLightRenderResources->GetLightBoundsBuffer();
 
-	ViewFrustumCullingPass::InitParams initParams;
+	FrustumLightCullingPass::InitParams initParams;
 	initParams.m_pRenderEnv = m_pRenderEnv;
 	initParams.m_ObjectBoundsType = ObjectBoundsType_Sphere;
 	initParams.m_NumObjects = m_pSpotLightRenderResources->GetNumLights();
 
-	m_pDetectVisibleSpotLightsPass = new ViewFrustumCullingPass(&initParams);
+	m_pDetectVisibleSpotLightsPass = new FrustumLightCullingPass(&initParams);
 	
 	m_pDetectVisibleSpotLightsResources->m_RequiredResourceStates.emplace_back(m_pNumVisibleSpotLightsBuffer, m_pNumVisibleSpotLightsBuffer->GetWriteState());
 	m_pDetectVisibleSpotLightsResources->m_RequiredResourceStates.emplace_back(m_pVisibleSpotLightIndexBuffer, m_pVisibleSpotLightIndexBuffer->GetWriteState());
@@ -2720,43 +2676,11 @@ void DXApplication::InitVisualizeIntensityPass()
 	*/
 }
 
-CommandList* DXApplication::RecordDetectVisibleMeshesPass()
-{
-	assert(false);
-	/*
-	ViewFrustumCullingPass::RenderParams renderParams;
-	renderParams.m_pRenderEnv = m_pRenderEnv;
-	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pDetectVisibleMeshesCommandList");
-	renderParams.m_pResources = m_pDetectVisibleMeshesResources;
-	renderParams.m_pNumVisibleObjectsBuffer = m_pNumVisibleMeshesBuffer;
-
-	m_pDetectVisibleMeshesPass->Record(&renderParams);
-	return renderParams.m_pCommandList;
-	*/
-	return nullptr;
-}
-
-CommandList* DXApplication::RecordDetectVisiblePointLightsPass()
-{
-	assert(false);
-	/*
-	ViewFrustumCullingPass::RenderParams renderParams;
-	renderParams.m_pRenderEnv = m_pRenderEnv;
-	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pDetectVisiblePointLightsCommandList");
-	renderParams.m_pResources = m_pDetectVisiblePointLightsResources;
-	renderParams.m_pNumVisibleObjectsBuffer = m_pNumVisiblePointLightsBuffer;
-
-	m_pDetectVisiblePointLightsPass->Record(&renderParams);
-	return renderParams.m_pCommandList;
-	*/
-	return nullptr;
-}
-
 CommandList* DXApplication::RecordDetectVisibleSpotLightsPass()
 {
 	assert(false);
 	/*
-	ViewFrustumCullingPass::RenderParams renderParams;
+	FrustumLightCullingPass::RenderParams renderParams;
 	renderParams.m_pRenderEnv = m_pRenderEnv;
 	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pDetectVisibleSpotLightsCommandList");
 	renderParams.m_pResources = m_pDetectVisibleSpotLightsResources;
@@ -3267,22 +3191,27 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 #ifdef DEBUG_RENDER_PASS
 void DXApplication::OuputDebugRenderPassResult()
 {
+	static unsigned frameNumber = 0;
+	static unsigned frameNumberForOutput = 5;
+
 	OutputDebugStringA("1.Debug =========================\n");
-	
-	auto elementFormatter = [](const void* pElementData)
+	++frameNumber;
+	if (frameNumber == frameNumberForOutput)
 	{
-		const u32* pElement = (u32*)pElementData;
+		auto elementFormatter = [](const void* pElementData)
+		{
+			const u32* pElement = (u32*)pElementData;
 
-		std::stringstream stringStream;
-		stringStream << "visible: " << *pElement;
-		return stringStream.str();
-	};
-	OutputBufferContent(m_pRenderEnv,
-		m_pFillVisibilityBufferMainPass->GetVisibilityBuffer(),
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		sizeof(u32),
-		elementFormatter);
-
+			std::stringstream stringStream;
+			stringStream << "index: " << *pElement;
+			return stringStream.str();
+		};
+		OutputBufferContent(m_pRenderEnv,
+			m_pFrustumPointLightCullingPass->GetVisibleLightIndexBuffer(),
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			sizeof(u32),
+			elementFormatter);
+	}		
 	OutputDebugStringA("2.Debug =========================\n");
 }
 #endif // DEBUG_RENDER_PASS

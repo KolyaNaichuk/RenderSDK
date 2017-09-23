@@ -228,7 +228,7 @@
     <ClInclude Include="..\Include\RenderPasses\SetupTiledShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledLightCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledShadingPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\ViewFrustumCullingPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\FrustumLightCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\VisualizeIntensityPass.h" />
     <ClInclude Include="..\Include\RenderPasses\VisualizeTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h" />
@@ -306,7 +306,7 @@
     <ClCompile Include="..\Source\RenderPasses\SetupTiledShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledLightCullingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledShadingPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\ViewFrustumCullingPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\FrustumLightCullingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VisualizeIntensityPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VisualizeTexturePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelGridPass.cpp" />
@@ -457,7 +457,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\ViewFrustumCullingCS.hlsl">
+    <None Include="..\Shaders\FrustumLightCullingCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>

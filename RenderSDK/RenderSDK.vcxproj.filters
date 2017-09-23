@@ -129,9 +129,6 @@
     <ClInclude Include="..\Include\RenderPasses\TiledShadingPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\ViewFrustumCullingPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -264,6 +261,9 @@
     <ClInclude Include="..\Include\RenderPasses\FillDepthBufferWithMeshTypePass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\FrustumLightCullingPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -369,9 +369,6 @@
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\TiledShadingPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\ViewFrustumCullingPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelGridPass.cpp">
@@ -494,6 +491,9 @@
     <ClCompile Include="..\Source\RenderPasses\FillDepthBufferWithMeshTypePass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\FrustumLightCullingPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -539,9 +539,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\OverlapTest.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\ViewFrustumCullingCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\Foundation.hlsl">
@@ -614,6 +611,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\Encoding.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\FrustumLightCullingCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
