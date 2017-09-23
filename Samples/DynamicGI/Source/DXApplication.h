@@ -148,17 +148,14 @@ private:
 	void InitFrustumPointLightCullingPass();
 	CommandList* RecordFrustumPointLightCullingPass();
 
+	void InitFrustumSpotLightCullingPass();
+	CommandList* RecordFrustumSpotLightCullingPass();
+
 	CommandList* RecordPostRenderPass();
 	
 	// Old
-	void InitDetectVisibleSpotLightsPass();
 	void InitTiledLightCullingPass();
 	void InitTiledShadingPass();
-	void InitSetupSpotLightTiledShadowMapPass();
-	void InitSetupPointLightTiledShadowMapPass();
-	void InitCreateRenderShadowMapCommandsPass();
-	void InitRenderSpotLightTiledShadowMapPass();
-	void InitRenderPointLightTiledShadowMapPass();
 	void InitClearVoxelGridPass();
 	void InitCreateVoxelGridPass();
 	void InitInjectVirtualPointLightsPass();
@@ -166,11 +163,16 @@ private:
 	void InitVisualizeVoxelGridDiffusePass();
 	void InitVisualizeVoxelGridNormalPass();
 	void InitVisualizeAccumLightPass();
+	void InitVisualizeIntensityPass();
+
+	void InitSetupSpotLightTiledShadowMapPass();
+	void InitSetupPointLightTiledShadowMapPass();
+	void InitCreateRenderShadowMapCommandsPass();
+	void InitRenderSpotLightTiledShadowMapPass();
+	void InitRenderPointLightTiledShadowMapPass();
 	void InitVisualizeSpotLightTiledShadowMapPass();
 	void InitVisualizePointLightTiledShadowMapPass();
-	void InitVisualizeIntensityPass();
-	
-	CommandList* RecordDetectVisibleSpotLightsPass();
+
 	CommandList* RecordTiledLightCullingPass();
 	CommandList* RecordUpdateCreateRenderShadowMapCommandsArgumentBufferPass();
 	CommandList* RecordCreateRenderShadowMapCommandsPass();
@@ -238,8 +240,6 @@ private:
 	Buffer* m_pCameraTransformBuffer;
 	Buffer* m_pGridBuffer;
 	Buffer* m_pGridConfigDataBuffer;
-	Buffer* m_pViewFrustumSpotLightCullingDataBuffer;
-	Buffer* m_pViewFrustumPointLightCullingDataBuffer;
 	Buffer* m_pTiledLightCullingDataBuffer;
 	Buffer* m_pTiledShadingDataBuffer;
 	Buffer* m_pDrawMeshCommandBuffer;
@@ -278,7 +278,6 @@ private:
 	PropagateLightPass* m_pPropagateLightPass;
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridDiffusePass;
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridNormalPass;
-	FrustumLightCullingPass* m_pDetectVisibleSpotLightsPass;
 	CreateRenderShadowMapCommandsPass* m_pCreateRenderShadowMapCommandsPass;
 	Buffer* m_pCreateRenderShadowMapCommandsArgumentBuffer;
 	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass;
@@ -289,11 +288,7 @@ private:
 	VisualizeTexturePass* m_pVisualizeSpotLightTiledShadowMapPass;
 	VisualizeTexturePass* m_pVisualizePointLightTiledShadowMapPass;
 	VisualizeIntensityPass* m_pVisualizeIntensityPass;
-	Buffer* m_pNumVisiblePointLightsBuffer;
-	Buffer* m_pVisiblePointLightIndexBuffer;
-	Buffer* m_pNumVisibleSpotLightsBuffer;
-	Buffer* m_pVisibleSpotLightIndexBuffer;
-	
+		
 	// New render passes
 	Camera* m_pCamera;
 	MeshRenderResources* m_pMeshRenderResources;
@@ -311,6 +306,7 @@ private:
 	RenderGBufferPass* m_pRenderGBufferFalseNegativePass;
 	FillDepthBufferWithMeshTypePass* m_pFillDepthBufferWithMeshTypePass;
 	FrustumLightCullingPass* m_pFrustumPointLightCullingPass;
+	FrustumLightCullingPass* m_pFrustumSpotLightCullingPass;
 	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeReprojectedDepthBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers];
