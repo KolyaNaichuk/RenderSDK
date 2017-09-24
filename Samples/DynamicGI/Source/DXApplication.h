@@ -151,10 +151,12 @@ private:
 	void InitFrustumSpotLightCullingPass();
 	CommandList* RecordFrustumSpotLightCullingPass();
 
+	void InitTiledLightCullingPass();
+	CommandList* RecordTiledLightCullingPass();
+
 	CommandList* RecordPostRenderPass();
 	
 	// Old
-	void InitTiledLightCullingPass();
 	void InitTiledShadingPass();
 	void InitClearVoxelGridPass();
 	void InitCreateVoxelGridPass();
@@ -173,7 +175,6 @@ private:
 	void InitVisualizeSpotLightTiledShadowMapPass();
 	void InitVisualizePointLightTiledShadowMapPass();
 
-	CommandList* RecordTiledLightCullingPass();
 	CommandList* RecordUpdateCreateRenderShadowMapCommandsArgumentBufferPass();
 	CommandList* RecordCreateRenderShadowMapCommandsPass();
 	CommandList* RecordSetupSpotLightTiledShadowMapPass();
@@ -240,7 +241,6 @@ private:
 	Buffer* m_pCameraTransformBuffer;
 	Buffer* m_pGridBuffer;
 	Buffer* m_pGridConfigDataBuffer;
-	Buffer* m_pTiledLightCullingDataBuffer;
 	Buffer* m_pTiledShadingDataBuffer;
 	Buffer* m_pDrawMeshCommandBuffer;
 	Buffer* m_pNumPointLightsPerTileBuffer;

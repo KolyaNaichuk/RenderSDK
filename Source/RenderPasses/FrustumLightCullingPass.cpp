@@ -68,7 +68,7 @@ void FrustumLightCullingPass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_NumVisibleLightsBufferState, L"m_pNumVisibleLightsBuffer");
 
 	assert(m_pVisibleLightIndexBuffer == nullptr);
-	FormattedBufferDesc visibleLightIndexBufferDesc(pParams->m_NumLights, DXGI_FORMAT_R32_UINT, true, true);
+	FormattedBufferDesc visibleLightIndexBufferDesc(pParams->m_NumTotalLights, DXGI_FORMAT_R32_UINT, true, true);
 	m_pVisibleLightIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &visibleLightIndexBufferDesc,
 		pParams->m_InputResourceStates.m_VisibleLightIndexBufferState, L"m_pVisibleLightIndexBuffer");
 	
@@ -122,10 +122,10 @@ void FrustumLightCullingPass::InitPipelineState(InitParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	const u16 threadGroupSize = 64;
-	m_NumThreadGroupsX = (u16)Ceil((f32)pParams->m_NumLights / (f32)threadGroupSize);
+	m_NumThreadGroupsX = (u16)Ceil((f32)pParams->m_NumTotalLights / (f32)threadGroupSize);
 
 	std::string threadGroupSizeStr = std::to_string(threadGroupSize);
-	std::string numTotalLightsStr = std::to_string(pParams->m_NumLights);
+	std::string numTotalLightsStr = std::to_string(pParams->m_NumTotalLights);
 
 	const ShaderMacro shaderDefines[] =
 	{

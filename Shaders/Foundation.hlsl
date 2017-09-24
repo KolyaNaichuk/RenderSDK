@@ -45,22 +45,28 @@ struct DrawIndexedArgs
 
 struct AppData
 {
+	float4x4 viewMatrix;
+	float4x4 viewInvMatrix;
 	float4x4 projMatrix;
+	float4x4 projInvMatrix;
+	
 	float4x4 viewProjMatrix;
 	float4x4 viewProjInvMatrix;
 	float4x4 prevViewProjMatrix;
 	float4x4 prevViewProjInvMatrix;
+	
+	float4x4 notUsed1;
 	float4 cameraWorldFrustumPlanes[6];
 	float cameraNearPlane;
 	float cameraFarPlane;
-	float2 notUsed1;
+	float2 notUsed2;
 	uint2 screenSize;
 	float2 rcpScreenSize;
 	uint2 screenHalfSize;
 	float2 rcpScreenHalfSize;
 	uint2 screenQuarterSize;
 	float2 rcpScreenQuarterSize;
-	float4 notUsed2[2];
+	float4 notUsed3[2];
 };
 
 #endif // __FOUNDATION__

@@ -22,7 +22,7 @@ public:
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		Buffer* m_pLightWorldBoundsBuffer;
-		u32 m_NumLights;
+		u32 m_NumTotalLights;
 	};
 
 	struct RenderParams
