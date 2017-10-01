@@ -209,6 +209,7 @@
     <ClInclude Include="..\Include\Math\Vector2.h" />
     <ClInclude Include="..\Include\Math\Vector3.h" />
     <ClInclude Include="..\Include\Math\Vector4.h" />
+    <ClInclude Include="..\Include\RenderPasses\CalcShadingRectanglesPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
     <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h" />
     <ClInclude Include="..\Include\RenderPasses\Common.h" />
@@ -216,7 +217,7 @@
     <ClInclude Include="..\Include\RenderPasses\CreateMainDrawCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h" />
     <ClInclude Include="..\Include\RenderPasses\DownscaleAndReprojectDepthPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\FillDepthBufferWithMeshTypePass.h" />
+    <ClInclude Include="..\Include\RenderPasses\FillMeshTypeDepthBufferPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FillVisibilityBufferPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FrustumMeshCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\InjectVirtualPointLightsPass.h" />
@@ -288,13 +289,14 @@
     <ClCompile Include="..\Source\Math\Vector2.cpp" />
     <ClCompile Include="..\Source\Math\Vector3.cpp" />
     <ClCompile Include="..\Source\Math\Vector4.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CalcShadingRectanglesPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateMainDrawCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\DownscaleAndReprojectDepthPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\FillDepthBufferWithMeshTypePass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\FillMeshTypeDepthBufferPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FillVisibilityBufferPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FrustumMeshCullingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\InjectVirtualPointLightsPass.cpp" />
@@ -444,7 +446,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\TiledShadingCS.hlsl">
+    <None Include="..\Shaders\TiledShadingPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
@@ -627,7 +629,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\FillDepthBufferWithMeshTypePS.hlsl">
+    <None Include="..\Shaders\FillMeshTypeDepthBufferPS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
@@ -640,6 +642,14 @@
     <ProjectReference Include="..\Include\External\DirectXTex\DirectXTex_Desktop_2017_Win10.vcxproj">
       <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\CalcShadingRectanglesCS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\TiledShadingVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

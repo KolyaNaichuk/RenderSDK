@@ -27,10 +27,15 @@ class FrustumMeshCullingPass;
 class FillVisibilityBufferPass;
 class CreateMainDrawCommandsPass;
 class CreateFalseNegativeDrawCommandsPass;
-class FillDepthBufferWithMeshTypePass;
+class FillMeshTypeDepthBufferPass;
+class RenderGBufferPass;
+class TiledLightCullingPass;
+class TiledShadingPass;
+class CalcShadingRectanglesPass;
+class FrustumLightCullingPass;
+class Scene;
 
 // Old
-class RenderGBufferPass;
 class ClearVoxelGridPass;
 class CreateVoxelGridPass;
 class InjectVirtualPointLightsPass;
@@ -39,13 +44,9 @@ class VisualizeVoxelGridPass;
 class VisualizeTexturePass;
 class VisualizeVoxelGridPass;
 class VisualizeIntensityPass;
-class TiledLightCullingPass;
-class TiledShadingPass;
-class FrustumLightCullingPass;
 class CreateRenderShadowMapCommandsPass;
 class RenderTiledShadowMapPass;
 class SetupTiledShadowMapPass;
-class Scene;
 
 //#define DEBUG_RENDER_PASS
 
@@ -127,8 +128,11 @@ private:
 	void InitRenderGBufferFalseNegativePass(UINT bufferWidth, UINT bufferHeight);
 	CommandList* RecordRenderGBufferFalseNegativePass();
 	
-	void InitFillDepthBufferWithMeshTypePass();
-	CommandList* RecordFillDepthBufferWithMeshTypePass();
+	void InitFillMeshTypeDepthBufferPass();
+	CommandList* RecordFillMeshTypeDepthBufferPass();
+
+	void InitCalcShadingRectanglesPass();
+	CommandList* RecordCalcShadingRectanglesPass();
 
 	void InitVisualizeDepthBufferPass();
 	CommandList* RecordVisualizeDepthBufferPass();
@@ -153,11 +157,13 @@ private:
 
 	void InitTiledLightCullingPass();
 	CommandList* RecordTiledLightCullingPass();
+		
+	void InitTiledShadingPass();
+	CommandList* RecordTiledShadingPass();
 
 	CommandList* RecordPostRenderPass();
 	
 	// Old
-	void InitTiledShadingPass();
 	void InitClearVoxelGridPass();
 	void InitCreateVoxelGridPass();
 	void InitInjectVirtualPointLightsPass();
@@ -181,7 +187,6 @@ private:
 	CommandList* RecordSetupPointLightTiledShadowMapPass();
 	CommandList* RecordRenderSpotLightTiledShadowMapPass();
 	CommandList* RecordRenderPointLightTiledShadowMapPass();
-	CommandList* RecordTiledShadingPass();
 	CommandList* RecordClearVoxelGridPass();
 	CommandList* RecordCreateVoxelGridPass();
 	CommandList* RecordInjectVirtualPointLightsPass();
@@ -237,18 +242,8 @@ private:
 	Viewport* m_pBackBufferViewport;
 	Viewport* m_pSpotLightTiledShadowMapViewport;
 	Viewport* m_pPointLightTiledShadowMapViewport;
-	Buffer* m_pObjectTransformBuffer;
-	Buffer* m_pCameraTransformBuffer;
 	Buffer* m_pGridBuffer;
 	Buffer* m_pGridConfigDataBuffer;
-	Buffer* m_pTiledShadingDataBuffer;
-	Buffer* m_pDrawMeshCommandBuffer;
-	Buffer* m_pNumPointLightsPerTileBuffer;
-	Buffer* m_pPointLightIndexPerTileBuffer;
-	Buffer* m_pPointLightRangePerTileBuffer;
-	Buffer* m_pNumSpotLightsPerTileBuffer;
-	Buffer* m_pSpotLightIndexPerTileBuffer;
-	Buffer* m_pSpotLightRangePerTileBuffer;
 	Buffer* m_pShadowCastingPointLightIndexBuffer;
 	Buffer* m_pNumShadowCastingPointLightsBuffer;
 	Buffer* m_pDrawPointLightShadowCasterCommandBuffer;
@@ -268,10 +263,6 @@ private:
 	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers];
 	UINT m_BackBufferIndex;
 
-	TiledLightCullingPass* m_pTiledLightCullingPass;
-	TiledShadingPass* m_pTiledShadingPass;
-	TiledShadingPass* m_pTiledDirectLightShadingPass;
-	TiledShadingPass* m_pTiledIndirectLightShadingPass;
 	ClearVoxelGridPass* m_pClearVoxelGridPass;
 	CreateVoxelGridPass* m_pCreateVoxelGridPass;
 	InjectVirtualPointLightsPass* m_pInjectVirtualPointLightsPass;
@@ -304,9 +295,12 @@ private:
 	FillVisibilityBufferPass* m_pFillVisibilityBufferFalseNegativePass;
 	CreateFalseNegativeDrawCommandsPass* m_pCreateFalseNegativeDrawCommandsPass;
 	RenderGBufferPass* m_pRenderGBufferFalseNegativePass;
-	FillDepthBufferWithMeshTypePass* m_pFillDepthBufferWithMeshTypePass;
+	FillMeshTypeDepthBufferPass* m_pFillMeshTypeDepthBufferPass;
+	CalcShadingRectanglesPass* m_pCalcShadingRectanglesPass;
 	FrustumLightCullingPass* m_pFrustumPointLightCullingPass;
 	FrustumLightCullingPass* m_pFrustumSpotLightCullingPass;
+	TiledLightCullingPass* m_pTiledLightCullingPass;
+	TiledShadingPass* m_pTiledShadingPass;
 	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeReprojectedDepthBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers];

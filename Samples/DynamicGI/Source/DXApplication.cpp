@@ -29,7 +29,8 @@
 #include "RenderPasses/FillVisibilityBufferPass.h"
 #include "RenderPasses/CreateMainDrawCommandsPass.h"
 #include "RenderPasses/CreateFalseNegativeDrawCommandsPass.h"
-#include "RenderPasses/FillDepthBufferWithMeshTypePass.h"
+#include "RenderPasses/FillMeshTypeDepthBufferPass.h"
+#include "RenderPasses/CalcShadingRectanglesPass.h"
 #include "Common/Mesh.h"
 #include "Common/MeshBatch.h"
 #include "Common/GeometryBuffer.h"
@@ -200,6 +201,7 @@ namespace
 		Matrix4f m_PrevViewProjInvMatrix;
 
 		Matrix4f m_NotUsed1;
+		Vector4f m_CameraWorldSpacePos;
 		Vector4f m_CameraWorldFrustumPlanes[Frustum::NumPlanes];
 		f32 m_CameraNearPlane;
 		f32 m_CameraFarPlane;
@@ -210,7 +212,10 @@ namespace
 		Vector2f m_RcpScreenHalfSize;
 		Vector2u m_ScreenQuarterSize;
 		Vector2f m_RcpScreenQuarterSize;
-		Vector4f m_NotUsed3[2];
+		Vector4f m_SunWorldSpaceDir;
+
+		Vector4f m_SunLightColor;
+		Vector4f m_NotUsed3[15];
 	};
 
 	using BufferElementFormatter = std::function<std::string (const void* pElementData)>;
@@ -338,28 +343,6 @@ struct GridConfig
 	Vector4f m_NotUsed2[8];
 };
 
-struct ViewFrustumCullingData
-{
-	Plane m_ViewFrustumPlanes[6];
-	u32 m_NumObjects;
-	Vector3u m_NotUsed1;
-	Vector4f m_NotUsed2[9];
-};
-
-struct TiledShadingData
-{
-	Vector2f m_RcpScreenSize;
-	Vector2f m_NotUsed1;
-	Vector3f m_WorldSpaceLightDir;
-	f32 m_NotUsed2;
-	Vector3f m_LightColor;
-	f32 m_NotUsed3;
-	Vector3f m_WorldSpaceCameraPos;
-	f32 m_NotUsed4;
-	Matrix4f m_ViewProjInvMatrix;
-	Matrix4f m_NotUsed5[2];
-};
-
 struct Voxel
 {
 	f32 m_NumOccluders;
@@ -410,18 +393,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pBackBufferViewport(nullptr)
 	, m_pSpotLightTiledShadowMapViewport(nullptr)
 	, m_pPointLightTiledShadowMapViewport(nullptr)
-	, m_pObjectTransformBuffer(nullptr)
-	, m_pCameraTransformBuffer(nullptr)
 	, m_pGridBuffer(nullptr)
 	, m_pGridConfigDataBuffer(nullptr)
-	, m_pTiledShadingDataBuffer(nullptr)
-	, m_pDrawMeshCommandBuffer(nullptr)
-	, m_pNumPointLightsPerTileBuffer(nullptr)
-	, m_pPointLightIndexPerTileBuffer(nullptr)
-	, m_pPointLightRangePerTileBuffer(nullptr)
-	, m_pNumSpotLightsPerTileBuffer(nullptr)
-	, m_pSpotLightIndexPerTileBuffer(nullptr)
-	, m_pSpotLightRangePerTileBuffer(nullptr)
 	, m_pShadowCastingPointLightIndexBuffer(nullptr)
 	, m_pNumShadowCastingPointLightsBuffer(nullptr)
 	, m_pDrawPointLightShadowCasterCommandBuffer(nullptr)
@@ -439,10 +412,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pRenderEnv(new RenderEnv())
 	, m_pFence(nullptr)
 	, m_BackBufferIndex(0)
-	, m_pTiledLightCullingPass(nullptr)
-	, m_pTiledShadingPass(nullptr)
-	, m_pTiledDirectLightShadingPass(nullptr)
-	, m_pTiledIndirectLightShadingPass(nullptr)
 	, m_pClearVoxelGridPass(nullptr)
 	, m_pCreateVoxelGridPass(nullptr)
 	, m_pInjectVirtualPointLightsPass(nullptr)
@@ -473,9 +442,12 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFillVisibilityBufferFalseNegativePass(nullptr)
 	, m_pCreateFalseNegativeDrawCommandsPass(nullptr)
 	, m_pRenderGBufferFalseNegativePass(nullptr)
-	, m_pFillDepthBufferWithMeshTypePass(nullptr)
+	, m_pFillMeshTypeDepthBufferPass(nullptr)
+	, m_pCalcShadingRectanglesPass(nullptr)
 	, m_pFrustumPointLightCullingPass(nullptr)
 	, m_pFrustumSpotLightCullingPass(nullptr)
+	, m_pTiledLightCullingPass(nullptr)
+	, m_pTiledShadingPass(nullptr)
 	, m_pAppDataBuffer(nullptr)
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -510,9 +482,12 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pFillVisibilityBufferFalseNegativePass);
 	SafeDelete(m_pCreateFalseNegativeDrawCommandsPass);
 	SafeDelete(m_pRenderGBufferFalseNegativePass);
-	SafeDelete(m_pFillDepthBufferWithMeshTypePass);
+	SafeDelete(m_pFillMeshTypeDepthBufferPass);
+	SafeDelete(m_pCalcShadingRectanglesPass);
 	SafeDelete(m_pFrustumPointLightCullingPass);
 	SafeDelete(m_pFrustumSpotLightCullingPass);
+	SafeDelete(m_pTiledLightCullingPass);
+	SafeDelete(m_pTiledShadingPass);
 	SafeDelete(m_pAppDataBuffer);
 
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -559,10 +534,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pPropagateLightPass);
 	SafeDelete(m_pVisualizeVoxelGridDiffusePass);
 	SafeDelete(m_pVisualizeVoxelGridNormalPass);
-	SafeDelete(m_pTiledLightCullingPass);
-	SafeDelete(m_pTiledShadingPass);
-	SafeDelete(m_pTiledDirectLightShadingPass);
-	SafeDelete(m_pTiledIndirectLightShadingPass);
 	SafeDelete(m_pCreateRenderShadowMapCommandsPass);
 	SafeDelete(m_pCreateRenderShadowMapCommandsArgumentBuffer);
 	SafeDelete(m_pRenderSpotLightTiledShadowMapPass);
@@ -576,18 +547,8 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pShaderInvisibleRTVHeap);
 	SafeDelete(m_pShaderVisibleSRVHeap);
 	SafeDelete(m_pRenderEnv);
-	SafeDelete(m_pNumPointLightsPerTileBuffer);
-	SafeDelete(m_pPointLightIndexPerTileBuffer);
-	SafeDelete(m_pPointLightRangePerTileBuffer);
-	SafeDelete(m_pNumSpotLightsPerTileBuffer);
-	SafeDelete(m_pSpotLightIndexPerTileBuffer);
-	SafeDelete(m_pSpotLightRangePerTileBuffer);
-	SafeDelete(m_pDrawMeshCommandBuffer);
-	SafeDelete(m_pTiledShadingDataBuffer);
 	SafeDelete(m_pGridConfigDataBuffer);
 	SafeDelete(m_pGridBuffer);
-	SafeDelete(m_pCameraTransformBuffer);
-	SafeDelete(m_pObjectTransformBuffer);
 	SafeDelete(m_pDiffuseTexture);
 	SafeDelete(m_pNormalTexture);
 	SafeDelete(m_pSpecularTexture);
@@ -628,13 +589,16 @@ void DXApplication::OnInit()
 	InitFillVisibilityBufferFalseNegativePass();
 	InitCreateFalseNegativeDrawCommandsPass();
 	InitRenderGBufferFalseNegativePass(backBufferWidth, backBufferHeight);
-	InitFillDepthBufferWithMeshTypePass();
+	InitFillMeshTypeDepthBufferPass();
+	InitCalcShadingRectanglesPass();
 	
 	if (m_pPointLightRenderResources != nullptr)
 		InitFrustumPointLightCullingPass();
 	if (m_pSpotLightRenderResources != nullptr)
 		InitFrustumSpotLightCullingPass();
 	InitTiledLightCullingPass();
+	
+	InitTiledShadingPass();
 
 	InitVisualizeDepthBufferPass();
 	InitVisualizeReprojectedDepthBufferPass();
@@ -644,8 +608,7 @@ void DXApplication::OnInit()
 		
 	SafeDelete(pScene);
 
-	/*	
-	InitTiledLightCullingPass();
+	/*
 	InitCreateRenderShadowMapCommandsPass();
 	
 	if (m_pPointLightRenderResources != nullptr)
@@ -663,9 +626,7 @@ void DXApplication::OnInit()
 	InitClearVoxelGridPass();
 	InitInjectVirtualPointLightsPass();
 	InitPropagateLightPass();
-	
-	InitTiledShadingPass();
-
+		
 	InitVisualizeVoxelGridDiffusePass();
 	InitVisualizeVoxelGridNormalPass();
 
@@ -698,7 +659,8 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferFalseNegativePass();
 	commandListBatch[commandListBatchSize++] = RecordCreateFalseNegativeDrawCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordRenderGBufferFalseNegativePass();
-	commandListBatch[commandListBatchSize++] = RecordFillDepthBufferWithMeshTypePass();
+	commandListBatch[commandListBatchSize++] = RecordFillMeshTypeDepthBufferPass();
+	commandListBatch[commandListBatchSize++] = RecordCalcShadingRectanglesPass();
 
 	if (m_pFrustumPointLightCullingPass != nullptr)
 		commandListBatch[commandListBatchSize++] = RecordFrustumPointLightCullingPass();
@@ -706,6 +668,8 @@ void DXApplication::OnRender()
 		commandListBatch[commandListBatchSize++] = RecordFrustumSpotLightCullingPass();
 	
 	commandListBatch[commandListBatchSize++] = RecordTiledLightCullingPass();
+	commandListBatch[commandListBatchSize++] = RecordTiledShadingPass();
+
 	commandListBatch[commandListBatchSize++] = RecordDisplayResultPass();
 	commandListBatch[commandListBatchSize++] = RecordPostRenderPass();
 				
@@ -727,17 +691,6 @@ void DXApplication::OnRender()
 	m_pFence->WaitForSignalOnCPU(m_FrameCompletionFenceValues[m_BackBufferIndex]);
 	
 	/*
-	submissionBatch.emplace_back(RecordDetectVisibleMeshesPass());
-	
-	if (m_pPointLightRenderResources != nullptr)
-		submissionBatch.emplace_back(RecordDetectVisiblePointLightsPass());
-
-	if (m_pSpotLightRenderResources != nullptr)
-		submissionBatch.emplace_back(RecordDetectVisibleSpotLightsPass());
-
-	submissionBatch.emplace_back(RecordRenderGBufferPass());
-	submissionBatch.emplace_back(RecordTiledLightCullingPass());
-
 	if ((m_pPointLightRenderResources != nullptr) || (m_pSpotLightRenderResources != nullptr))
 	{
 		submissionBatch.emplace_back(RecordUpdateCreateRenderShadowMapCommandsArgumentBufferPass());
@@ -1008,6 +961,8 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 
 void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
 {
+	const Vector3f& cameraWorldSpacePos = m_pCamera->GetTransform().GetPosition();
+
 	AppData appData;
 	appData.m_ViewMatrix = m_pCamera->GetViewMatrix();
 	appData.m_ViewInvMatrix = Inverse(appData.m_ViewMatrix);
@@ -1018,6 +973,7 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	appData.m_PrevViewProjMatrix = appData.m_ViewProjMatrix;
 	appData.m_PrevViewProjInvMatrix = Inverse(appData.m_PrevViewProjMatrix);
 
+	appData.m_CameraWorldSpacePos = Vector4f(cameraWorldSpacePos.m_X, cameraWorldSpacePos.m_Y, cameraWorldSpacePos.m_Z, 1.0f);
 	const Frustum cameraWorldFrustum = ExtractWorldFrustum(*m_pCamera);
 	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
 		appData.m_CameraWorldFrustumPlanes[planeIndex] = ToVector(cameraWorldFrustum.m_Planes[planeIndex]);
@@ -1030,6 +986,8 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	appData.m_RcpScreenHalfSize = Vector2f(1.0f / f32(appData.m_ScreenHalfSize.m_X), 1.0f / f32(appData.m_ScreenHalfSize.m_Y));
 	appData.m_ScreenQuarterSize = Vector2u(appData.m_ScreenHalfSize.m_X >> 1, appData.m_ScreenHalfSize.m_Y >> 1);
 	appData.m_RcpScreenQuarterSize = Vector2f(1.0f / f32(appData.m_ScreenQuarterSize.m_X), 1.0f / f32(appData.m_ScreenQuarterSize.m_Y));
+	appData.m_SunWorldSpaceDir = Vector4f(0.0f, -1.0f, 0.0f, 0.0f);
+	appData.m_SunLightColor = Color::WHITE;
 
 	ConstantBufferDesc appDataBufferDesc(sizeof(appData));
 	m_pAppDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &appDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pAppDataBuffer");
@@ -1542,39 +1500,63 @@ CommandList* DXApplication::RecordRenderGBufferFalseNegativePass()
 	return params.m_pCommandList;
 }
 
-void DXApplication::InitFillDepthBufferWithMeshTypePass()
+void DXApplication::InitFillMeshTypeDepthBufferPass()
 {
-	assert(m_pFillDepthBufferWithMeshTypePass == nullptr);
+	assert(m_pFillMeshTypeDepthBufferPass == nullptr);
 	assert(m_pGeometryBuffer != nullptr);
 	assert(m_pMaterialRenderResources != nullptr);
 
 	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
 
-	FillDepthBufferWithMeshTypePass::InitParams params;
+	FillMeshTypeDepthBufferPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;	
 	params.m_InputResourceStates.m_MaterialIDTextureState = pRenderGBufferFalseNegativePassStates->m_MaterialIDTextureState;
 	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_DepthTextureWithMeshTypeState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	params.m_InputResourceStates.m_MeshTypeDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	params.m_pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
 	params.m_pMeshTypePerMaterialIDBuffer = m_pMaterialRenderResources->GetMeshTypePerMaterialIDBuffer();
 
-	m_pFillDepthBufferWithMeshTypePass = new FillDepthBufferWithMeshTypePass(&params);
+	m_pFillMeshTypeDepthBufferPass = new FillMeshTypeDepthBufferPass(&params);
 }
 
-CommandList* DXApplication::RecordFillDepthBufferWithMeshTypePass()
+CommandList* DXApplication::RecordFillMeshTypeDepthBufferPass()
 {
-	assert(m_pFillDepthBufferWithMeshTypePass != nullptr);
+	assert(m_pFillMeshTypeDepthBufferPass != nullptr);
 	assert(m_pMeshRenderResources != nullptr);
 
-	FillDepthBufferWithMeshTypePass::RenderParams params;
+	FillMeshTypeDepthBufferPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pFillDepthBufferWithMeshTypePassCommandList");
 	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
 	params.m_pViewport = m_pBackBufferViewport;
 
-	m_pFillDepthBufferWithMeshTypePass->Record(&params);
+	m_pFillMeshTypeDepthBufferPass->Record(&params);
 	return params.m_pCommandList;
+}
+
+void DXApplication::InitCalcShadingRectanglesPass()
+{
+	assert(m_pCalcShadingRectanglesPass == nullptr);
+	assert(m_pFillMeshTypeDepthBufferPass != nullptr);
+
+	const FillMeshTypeDepthBufferPass::ResourceStates* pFillMeshTypeDepthBufferPassStates =
+		m_pFillMeshTypeDepthBufferPass->GetOutputResourceStates();
+
+	CalcShadingRectanglesPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_InputResourceStates.m_MeshTypeDepthTextureState = pFillMeshTypeDepthBufferPassStates->m_MeshTypeDepthTextureState;
+	params.m_InputResourceStates.m_ShadingRectangleBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_pMeshTypeDepthTexture = m_pFillMeshTypeDepthBufferPass->GetMeshTypeDepthTexture();
+	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
+	
+	m_pCalcShadingRectanglesPass = new CalcShadingRectanglesPass(&params);
+}
+
+CommandList* DXApplication::RecordCalcShadingRectanglesPass()
+{
+	assert(false);
+	return nullptr;
 }
 
 void DXApplication::InitVisualizeDepthBufferPass()
@@ -1725,11 +1707,11 @@ CommandList* DXApplication::RecordVisualizeTexCoordBufferPass()
 
 void DXApplication::InitVisualizeDepthBufferWithMeshTypePass()
 {
-	assert(m_pFillDepthBufferWithMeshTypePass != nullptr);
-	DepthTexture* pDepthTextureWithMeshType = m_pFillDepthBufferWithMeshTypePass->GetDepthTextureWithMeshType();
+	assert(m_pFillMeshTypeDepthBufferPass != nullptr);
+	DepthTexture* pDepthTextureWithMeshType = m_pFillMeshTypeDepthBufferPass->GetMeshTypeDepthTexture();
 
-	const FillDepthBufferWithMeshTypePass::ResourceStates* pResourceStates =
-		m_pFillDepthBufferWithMeshTypePass->GetOutputResourceStates();
+	const FillMeshTypeDepthBufferPass::ResourceStates* pResourceStates =
+		m_pFillMeshTypeDepthBufferPass->GetOutputResourceStates();
 
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
@@ -1737,7 +1719,7 @@ void DXApplication::InitVisualizeDepthBufferWithMeshTypePass()
 
 		VisualizeTexturePass::InitParams params;
 		params.m_pRenderEnv = m_pRenderEnv;
-		params.m_InputResourceStates.m_InputTextureState = pResourceStates->m_DepthTextureWithMeshTypeState;
+		params.m_InputResourceStates.m_InputTextureState = pResourceStates->m_MeshTypeDepthTextureState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		params.m_pInputTexture = pDepthTextureWithMeshType;
 		params.m_InputTextureSRV = pDepthTextureWithMeshType->GetSRVHandle();
@@ -1986,6 +1968,30 @@ void DXApplication::InitTiledShadingPass()
 		m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pSpotLightRangePerTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 	*/
+}
+
+CommandList* DXApplication::RecordTiledShadingPass()
+{
+	assert(false);
+	/*
+	TiledShadingPass::RenderParams renderParams;
+	renderParams.m_pRenderEnv = m_pRenderEnv;
+	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pTiledShadingCommandList");
+	renderParams.m_pResources = m_pTiledShadingResources;
+	renderParams.m_pAccumLightTexture = m_pAccumLightTexture;
+
+	TiledShadingPass* pTiledShadingPass = m_pTiledShadingPass;
+	if (m_ShadingMode == TileShadingMode::DirectLight)
+	pTiledShadingPass = m_pTiledDirectLightShadingPass;
+	else if (m_ShadingMode == TileShadingMode::IndirectLight)
+	pTiledShadingPass = m_pTiledIndirectLightShadingPass;
+	else
+	assert(m_ShadingMode == TileShadingMode::DirectAndIndirectLight);
+
+	pTiledShadingPass->Record(&renderParams);
+	return renderParams.m_pCommandList;
+	*/
+	return nullptr;
 }
 
 void DXApplication::InitSetupSpotLightTiledShadowMapPass()
@@ -2747,30 +2753,6 @@ CommandList* DXApplication::RecordRenderPointLightTiledShadowMapPass()
 	return nullptr;
 }
 
-CommandList* DXApplication::RecordTiledShadingPass()
-{
-	assert(false);
-	/*
-	TiledShadingPass::RenderParams renderParams;
-	renderParams.m_pRenderEnv = m_pRenderEnv;
-	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pTiledShadingCommandList");
-	renderParams.m_pResources = m_pTiledShadingResources;
-	renderParams.m_pAccumLightTexture = m_pAccumLightTexture;
-
-	TiledShadingPass* pTiledShadingPass = m_pTiledShadingPass;
-	if (m_ShadingMode == TileShadingMode::DirectLight)
-		pTiledShadingPass = m_pTiledDirectLightShadingPass;
-	else if (m_ShadingMode == TileShadingMode::IndirectLight)
-		pTiledShadingPass = m_pTiledIndirectLightShadingPass;
-	else
-		assert(m_ShadingMode == TileShadingMode::DirectAndIndirectLight);
-
-	pTiledShadingPass->Record(&renderParams);
-	return renderParams.m_pCommandList;
-	*/
-	return nullptr;
-}
-
 CommandList* DXApplication::RecordClearVoxelGridPass()
 {
 	assert(false);
@@ -3009,8 +2991,8 @@ CommandList* DXApplication::RecordPostRenderPass()
 	}
 	else if (m_DisplayResult == DisplayResult::DepthBufferWithMeshType)
 	{
-		const FillDepthBufferWithMeshTypePass::ResourceStates* pResourceStates = m_pFillDepthBufferWithMeshTypePass->GetOutputResourceStates();
-		ResourceBarrier resourceBarrier(m_pFillDepthBufferWithMeshTypePass->GetDepthTextureWithMeshType(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		const FillMeshTypeDepthBufferPass::ResourceStates* pResourceStates = m_pFillMeshTypeDepthBufferPass->GetOutputResourceStates();
+		ResourceBarrier resourceBarrier(m_pFillMeshTypeDepthBufferPass->GetMeshTypeDepthTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		pCommandList->ResourceBarrier(1, &resourceBarrier);
 	}
 	else

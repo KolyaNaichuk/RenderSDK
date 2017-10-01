@@ -1,66 +1,58 @@
 #include "Lighting.hlsl"
 #include "OverlapTest.hlsl"
 #include "Reconstruction.hlsl"
+#include "SphericalHarmonics.hlsl"
 #include "Foundation.hlsl"
 #include "VoxelGrid.hlsl"
-#include "SphericalHarmonics.hlsl"
 
-struct TiledShadingData
+struct PSInput
 {
-	float2 rcpScreenSize;
-	float2 notUsed1;
-	float3 worldSpaceLightDir;
-	float  notUsed2;
-	float3 lightColor;
-	float  notUsed3;
-	float3 worldSpaceCameraPos;
-	float  notUsed4;
-	float4x4 viewProjInvMatrix;
-	float4x4 notUsed5[2];
+	float4 screenSpacePos	: SV_Position;
+	float2 texCoord			: TEXCOORD0;
 };
 
-cbuffer TiledShadingDataBuffer : register(b0)
+cbuffer AppDataBuffer : register(b0)
 {
-	TiledShadingData g_ShadingData;
-}
-
-cbuffer GridConfigDataBuffer : register(b1)
-{
-	GridConfig g_GridConfigData;
+	AppData g_AppData;
 }
 
 Texture2D g_DepthTexture : register(t0);
 Texture2D g_NormalTexture : register(t1);
-Texture2D g_DiffuseTexture : register(t2);
-Texture2D g_SpecularTexture : register(t3);
 
-Texture3D g_IntensityRCoeffsTexture : register(t4);
-Texture3D g_IntensityGCoeffsTexture : register(t5);
-Texture3D g_IntensityBCoeffsTexture : register(t6);
+#if ENABLE_POINT_LIGHTS == 1
+StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t2);
+StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t3);
+Buffer<uint> g_PointLightIndexPerTileBuffer : register(t4);
+StructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(t5);
+#endif // ENABLE_POINT_LIGHTS
 
-StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t7);
-StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t8);
-Buffer<uint> g_PointLightIndexPerTileBuffer : register(t9);
-StructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(t10);
+#if ENABLE_SPOT_LIGHTS == 1
+StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t6);
+StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t7);
+Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t8);
+StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t9);
+#endif // ENABLE_SPOT_LIGHTS
 
-StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t11);
-StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t12);
-Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t13);
-StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t14);
+#if ENABLE_INDIRECT_LIGHT == 1
+Texture3D g_IntensityRCoeffsTexture : register(t10);
+Texture3D g_IntensityGCoeffsTexture : register(t11);
+Texture3D g_IntensityBCoeffsTexture : register(t12);
+#endif // ENABLE_INDIRECT_LIGHT
 
 SamplerState g_LinearSampler : register(s0);
-RWTexture2D<float4> g_AccumLightTexture : register(u0);
 
-[numthreads(TILE_SIZE, TILE_SIZE, 1)]
-void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID)
+[earlydepthstencil]
+float4 Main(PSInput input) : SV_Target
 {
-	float hardwareDepth = g_DepthTexture[globalThreadId.xy].x;
-	float2 texCoord = (float2(globalThreadId.xy) + 0.5f) * g_ShadingData.rcpScreenSize;
-	float3 worldSpacePos = ComputeWorldSpacePosition(texCoord, hardwareDepth, g_ShadingData.viewProjInvMatrix).xyz;
-	float3 worldSpaceDirToViewer = normalize(g_ShadingData.worldSpaceCameraPos - worldSpacePos);
-	float3 worldSpaceNormal = g_NormalTexture[globalThreadId.xy].xyz;
-	float3 diffuseAlbedo = g_DiffuseTexture[globalThreadId.xy].rgb;
-	float4 specularAlbedo = g_SpecularTexture[globalThreadId.xy].rgba;
+	uint2 texturePos = uint2(input.screenSpacePos.xy);
+
+	float hardwareDepth = g_DepthTexture[texturePos].x;
+	float3 worldSpacePos = ComputeWorldSpacePosition(input.texCoord, hardwareDepth, g_AppData.viewProjInvMatrix).xyz;
+	float3 worldSpaceDirToViewer = normalize(g_AppData.cameraWorldSpacePos.xyz - worldSpacePos);
+	float3 worldSpaceNormal = g_NormalTexture[texturePos].xyz;
+	
+	float3 diffuseAlbedo = g_DiffuseTexture[texturePos].rgb;
+	float4 specularAlbedo = g_SpecularTexture[texturePos].rgba;
 	uint tileIndex = tileId.y * NUM_TILES_X + tileId.x;
 
 	float3 pointLightsContrib = float3(0.0f, 0.0f, 0.0f);
@@ -108,7 +100,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID)
 #endif // ENABLE_SPOT_LIGHTS
 
 #if ENABLE_DIRECTIONAL_LIGHT == 1
-	float3 directionalLightContrib = CalcDirectionalLightContribution(g_ShadingData.worldSpaceLightDir, g_ShadingData.lightColor, worldSpaceDirToViewer,
+	float3 directionalLightContrib = CalcDirectionalLightContribution(g_AppData.sunWorldSpaceDir.xyz, g_AppData.sunLightColor, worldSpaceDirToViewer,
 		worldSpaceNormal, diffuseAlbedo, specularAlbedo.rgb, specularAlbedo.a);
 #else // ENABLE_DIRECTIONAL_LIGHT
 	float3 directionalLightContrib = float3(0.0f, 0.0f, 0.0f);
@@ -139,6 +131,5 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID)
 	float3 indirectRadiance = float3(0.0f, 0.0f, 0.0f);
 #endif // ENABLE_INDIRECT_LIGHT
 
-	float3 combinedRadiance = directRadiance + indirectRadiance;
-	g_AccumLightTexture[globalThreadId.xy] = float4(combinedRadiance, 1.0f);
+	return float4(directRadiance + indirectRadiance, 1.0f);
 }

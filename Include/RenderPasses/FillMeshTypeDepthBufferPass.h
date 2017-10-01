@@ -8,14 +8,14 @@ class CommandList;
 class RootSignature;
 class PipelineState;
 
-class FillDepthBufferWithMeshTypePass
+class FillMeshTypeDepthBufferPass
 {
 public:
 	struct ResourceStates
 	{
 		D3D12_RESOURCE_STATES m_MaterialIDTextureState;
 		D3D12_RESOURCE_STATES m_MeshTypePerMaterialIDBufferState;
-		D3D12_RESOURCE_STATES m_DepthTextureWithMeshTypeState;
+		D3D12_RESOURCE_STATES m_MeshTypeDepthTextureState;
 	};
 
 	struct InitParams
@@ -34,12 +34,12 @@ public:
 		Viewport* m_pViewport;
 	};
 
-	FillDepthBufferWithMeshTypePass(InitParams* pParams);
-	~FillDepthBufferWithMeshTypePass();
+	FillMeshTypeDepthBufferPass(InitParams* pParams);
+	~FillMeshTypeDepthBufferPass();
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
-	DepthTexture* GetDepthTextureWithMeshType() { return m_pDepthTextureWithMeshType; }
+	DepthTexture* GetMeshTypeDepthTexture() { return m_pMeshTypeDepthTexture; }
 
 private:
 	void InitResources(InitParams* pParams);
@@ -54,5 +54,5 @@ private:
 	DescriptorHandle m_DSVHeapStart;
 	std::vector<ResourceBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
-	DepthTexture* m_pDepthTextureWithMeshType;
+	DepthTexture* m_pMeshTypeDepthTexture;
 };

@@ -258,10 +258,13 @@
     <ClInclude Include="..\Include\RenderPasses\Common.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\FillDepthBufferWithMeshTypePass.h">
+    <ClInclude Include="..\Include\RenderPasses\FrustumLightCullingPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\FrustumLightCullingPass.h">
+    <ClInclude Include="..\Include\RenderPasses\CalcShadingRectanglesPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\FillMeshTypeDepthBufferPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -488,10 +491,13 @@
     <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\FillDepthBufferWithMeshTypePass.cpp">
+    <ClCompile Include="..\Source\RenderPasses\FrustumLightCullingPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\FrustumLightCullingPass.cpp">
+    <ClCompile Include="..\Source\RenderPasses\CalcShadingRectanglesPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\FillMeshTypeDepthBufferPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
@@ -533,9 +539,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\Lighting.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\TiledShadingCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\OverlapTest.hlsl">
@@ -598,9 +601,6 @@
     <None Include="..\Shaders\FillVisibilityBufferPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\FillDepthBufferWithMeshTypePS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\FrustumMeshCullingCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -614,6 +614,18 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\FrustumLightCullingCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\TiledShadingPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\TiledShadingVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CalcShadingRectanglesCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\FillMeshTypeDepthBufferPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

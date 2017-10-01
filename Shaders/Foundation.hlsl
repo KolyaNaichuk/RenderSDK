@@ -56,6 +56,7 @@ struct AppData
 	float4x4 prevViewProjInvMatrix;
 	
 	float4x4 notUsed1;
+	float4 cameraWorldSpacePos;
 	float4 cameraWorldFrustumPlanes[6];
 	float cameraNearPlane;
 	float cameraFarPlane;
@@ -66,7 +67,10 @@ struct AppData
 	float2 rcpScreenHalfSize;
 	uint2 screenQuarterSize;
 	float2 rcpScreenQuarterSize;
-	float4 notUsed3[2];
+	float4 sunWorldSpaceDir;
+
+	float4 sunLightColor;
+	float4 notUsed3[15];
 };
 
 #endif // __FOUNDATION__

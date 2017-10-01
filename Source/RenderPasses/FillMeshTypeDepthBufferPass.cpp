@@ -1,4 +1,4 @@
-#include "RenderPasses/FillDepthBufferWithMeshTypePass.h"
+#include "RenderPasses/FillMeshTypeDepthBufferPass.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsUtils.h"
@@ -16,24 +16,24 @@ namespace
 	};
 }
 
-FillDepthBufferWithMeshTypePass::FillDepthBufferWithMeshTypePass(InitParams* pParams)
+FillMeshTypeDepthBufferPass::FillMeshTypeDepthBufferPass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
-	, m_pDepthTextureWithMeshType(nullptr)
+	, m_pMeshTypeDepthTexture(nullptr)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
 	InitPipelineState(pParams);
 }
 
-FillDepthBufferWithMeshTypePass::~FillDepthBufferWithMeshTypePass()
+FillMeshTypeDepthBufferPass::~FillMeshTypeDepthBufferPass()
 {
 	SafeDelete(m_pRootSignature);
 	SafeDelete(m_pPipelineState);
-	SafeDelete(m_pDepthTextureWithMeshType);
+	SafeDelete(m_pMeshTypeDepthTexture);
 }
 
-void FillDepthBufferWithMeshTypePass::Record(RenderParams* pParams)
+void FillMeshTypeDepthBufferPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
@@ -63,20 +63,20 @@ void FillDepthBufferWithMeshTypePass::Record(RenderParams* pParams)
 	pCommandList->End();
 }
 
-void FillDepthBufferWithMeshTypePass::InitResources(InitParams* pParams)
+void FillMeshTypeDepthBufferPass::InitResources(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	m_OutputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_DepthTextureWithMeshTypeState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	m_OutputResourceStates.m_MeshTypeDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 
 	DepthStencilValue optimizedClearDepth(1.0f);
 
-	assert(m_pDepthTextureWithMeshType == nullptr);
+	assert(m_pMeshTypeDepthTexture == nullptr);
 	DepthTexture2DDesc depthTextureDesc(DXGI_FORMAT_R16_TYPELESS, pParams->m_pMaterialIDTexture->GetWidth(), pParams->m_pMaterialIDTexture->GetHeight(), true, true);
-	m_pDepthTextureWithMeshType = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &depthTextureDesc,
-		pParams->m_InputResourceStates.m_DepthTextureWithMeshTypeState, &optimizedClearDepth, L"FillDepthBufferWithMeshTypePass::m_pDepthTextureWithMeshType");
+	m_pMeshTypeDepthTexture = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &depthTextureDesc,
+		pParams->m_InputResourceStates.m_MeshTypeDepthTextureState, &optimizedClearDepth, L"FillMeshTypeDepthBufferPass::m_pMeshTypeDepthTexture");
 
 	assert(m_ResourceBarriers.empty());
 	CreateResourceBarrierIfRequired(pParams->m_pMaterialIDTexture,
@@ -87,9 +87,9 @@ void FillDepthBufferWithMeshTypePass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_MeshTypePerMaterialIDBufferState,
 		m_OutputResourceStates.m_MeshTypePerMaterialIDBufferState);
 
-	CreateResourceBarrierIfRequired(m_pDepthTextureWithMeshType,
-		pParams->m_InputResourceStates.m_DepthTextureWithMeshTypeState,
-		m_OutputResourceStates.m_DepthTextureWithMeshTypeState);
+	CreateResourceBarrierIfRequired(m_pMeshTypeDepthTexture,
+		pParams->m_InputResourceStates.m_MeshTypeDepthTextureState,
+		m_OutputResourceStates.m_MeshTypeDepthTextureState);
 
 	m_SRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStart,
@@ -98,10 +98,10 @@ void FillDepthBufferWithMeshTypePass::InitResources(InitParams* pParams)
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		pParams->m_pMeshTypePerMaterialIDBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	m_DSVHeapStart = m_pDepthTextureWithMeshType->GetDSVHandle();
+	m_DSVHeapStart = m_pMeshTypeDepthTexture->GetDSVHandle();
 }
 
-void FillDepthBufferWithMeshTypePass::InitRootSignature(InitParams* pParams)
+void FillMeshTypeDepthBufferPass::InitRootSignature(InitParams* pParams)
 {
 	assert(m_pRootSignature == nullptr);
 
@@ -112,10 +112,10 @@ void FillDepthBufferWithMeshTypePass::InitRootSignature(InitParams* pParams)
 	rootParams[kRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), descriptorRanges, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"FillDepthBufferWithMeshTypePass::m_pRootSignature");
+	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"FillMeshTypeDepthBufferPass::m_pRootSignature");
 }
 
-void FillDepthBufferWithMeshTypePass::InitPipelineState(InitParams* pParams)
+void FillMeshTypeDepthBufferPass::InitPipelineState(InitParams* pParams)
 {
 	assert(m_pRootSignature != nullptr);
 	assert(m_pPipelineState == nullptr);
@@ -123,7 +123,7 @@ void FillDepthBufferWithMeshTypePass::InitPipelineState(InitParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//FillDepthBufferWithMeshTypePS.hlsl", "Main", "ps_4_0");
+	Shader pixelShader(L"Shaders//FillMeshTypeDepthBufferPS.hlsl", "Main", "ps_4_0");
 
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
@@ -131,12 +131,12 @@ void FillDepthBufferWithMeshTypePass::InitPipelineState(InitParams* pParams)
 	pipelineStateDesc.SetPixelShader(&pixelShader);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.DepthStencilState = DepthStencilDesc(DepthStencilDesc::Always);
-	pipelineStateDesc.SetRenderTargetFormats(0, nullptr, GetDepthStencilViewFormat(m_pDepthTextureWithMeshType->GetFormat()));
+	pipelineStateDesc.SetRenderTargetFormats(0, nullptr, GetDepthStencilViewFormat(m_pMeshTypeDepthTexture->GetFormat()));
 
-	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FillDepthBufferWithMeshTypePass::m_pPipelineState");
+	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FillMeshTypeDepthBufferPass::m_pPipelineState");
 }
 
-void FillDepthBufferWithMeshTypePass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void FillMeshTypeDepthBufferPass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
 		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
