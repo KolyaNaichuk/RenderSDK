@@ -57,7 +57,7 @@ void CreateMainDrawCommandsPass::Record(RenderParams* pParams)
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
 
-	pCommandList->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 	pCommandList->CopyBufferRegion(m_pArgumentBuffer, 0, pParams->m_pNumMeshesBuffer, 0, sizeof(UINT));
 
 	ResourceBarrier argumentBarrier(m_pArgumentBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);

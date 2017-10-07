@@ -88,6 +88,10 @@ DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat)
 			return DXGI_FORMAT_R16G16B16A16_FLOAT;
 		case DXGI_FORMAT_R32_UINT:
 			return DXGI_FORMAT_R32_UINT;
+		case DXGI_FORMAT_R16G16_SNORM:
+			return DXGI_FORMAT_R16G16_SNORM;
+		case DXGI_FORMAT_R8G8B8A8_SNORM:
+			return DXGI_FORMAT_R8G8B8A8_SNORM;
 	}
 	assert(false);
 	return resourceFormat;

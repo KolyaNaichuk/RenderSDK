@@ -284,9 +284,6 @@ COPY /Y "$(SolutionDir)Shaders\FullScreenTriangleVS.hlsl" "$(SolutionDir)Samples
 COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelGridPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeVoxelGridPS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelGridPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeVoxelGridPS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateRenderGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateRenderGBufferCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateRenderGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateRenderGBufferCommandsCS.hlsl"
-
 COPY /Y "$(SolutionDir)Shaders\RenderGBufferVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderGBufferVS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderGBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderGBufferVS.hlsl"
 
@@ -296,11 +293,8 @@ COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledShadingCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledShadingCS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ViewFrustumCullingCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ViewFrustumCullingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FrustumLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FrustumLightCullingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FrustumLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FrustumLightCullingCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
@@ -333,7 +327,25 @@ COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferVS.hlsl" "$(SolutionDir)Sampl
 COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillVisibilityBufferVS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillVisibilityBufferPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillVisibilityBufferPS.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillVisibilityBufferPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateMainDrawCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateMainDrawCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateMainDrawCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateMainDrawCommandsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateFalseNegativeDrawCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateFalseNegativeDrawCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FillMeshTypeDepthBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillMeshTypeDepthBufferPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillMeshTypeDepthBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillMeshTypeDepthBufferPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CalcShadingRectanglesCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CalcShadingRectanglesCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CalcShadingRectanglesCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CalcShadingRectanglesCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\TiledShadingVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledShadingVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\TiledShadingVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledShadingVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\TiledShadingPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledShadingPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\TiledShadingPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledShadingPS.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -385,6 +397,11 @@ COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferPS.hlsl" "$(SolutionDir)Sampl
     <ClInclude Include="Source\DXApplication.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Include\External\DirectXTex\DirectXTex_Desktop_2017_Win10.vcxproj">
+      <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

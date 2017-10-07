@@ -53,7 +53,7 @@ void FillVisibilityBufferPass::Record(RenderParams* pParams)
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
-	pCommandList->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 	pCommandList->CopyBufferRegion(m_pArgumentBuffer, sizeof(u32), pParams->m_pNumInstancesBuffer, 0, sizeof(u32));
 
 	ResourceBarrier argumentBarrier(m_pArgumentBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);

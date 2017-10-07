@@ -52,7 +52,7 @@ InjectVirtualPointLightsPass::InjectVirtualPointLightsPass(InitParams* pParams)
 	srvDescriptorRanges.push_back(UAVDescriptorRange(6, 0));
 
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kSRVRootParam] = RootDescriptorTableParameter(srvDescriptorRanges.size(), srvDescriptorRanges.data(), D3D12_SHADER_VISIBILITY_ALL);
+	rootParams[kSRVRootParam] = RootDescriptorTableParameter((UINT)srvDescriptorRanges.size(), srvDescriptorRanges.data(), D3D12_SHADER_VISIBILITY_ALL);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
 	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"InjectVirtualPointLightsPass::m_pRootSignature");

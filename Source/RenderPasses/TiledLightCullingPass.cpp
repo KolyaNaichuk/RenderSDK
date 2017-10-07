@@ -59,7 +59,7 @@ void TiledLightCullingPass::Record(RenderParams* pParams)
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 
 	if (!m_ResourceBarriers.empty())
-		pCommandList->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
+		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootConstantBufferView(kRootCBVParam, pParams->m_pAppDataBuffer);
@@ -250,7 +250,7 @@ void TiledLightCullingPass::InitRootSignature(InitParams* pParams)
 		descriptorRanges.push_back(SRVDescriptorRange(3, 4));
 		descriptorRanges.push_back(UAVDescriptorRange(3, 3));
 	}
-	rootParams[kRootSRVTableParam] = RootDescriptorTableParameter(descriptorRanges.size(), descriptorRanges.data(), D3D12_SHADER_VISIBILITY_ALL);
+	rootParams[kRootSRVTableParam] = RootDescriptorTableParameter((UINT)descriptorRanges.size(), descriptorRanges.data(), D3D12_SHADER_VISIBILITY_ALL);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
 	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"TiledLightCullingPass::m_pRootSignature");

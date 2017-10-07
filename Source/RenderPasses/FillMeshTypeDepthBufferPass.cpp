@@ -42,7 +42,7 @@ void FillMeshTypeDepthBufferPass::Record(RenderParams* pParams)
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	
 	if (!m_ResourceBarriers.empty())
-		pCommandList->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
+		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetGraphicsRoot32BitConstant(kRoot32BitConstantParam, pParams->m_NumMeshTypes, 0);

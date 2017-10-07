@@ -171,7 +171,7 @@ void FrustumMeshCullingPass::Record(RenderParams* pParams)
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 
 	if (!m_ResourceBarriers.empty())
-		pCommandList->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
+		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 		
 	const UINT clearValues[4] = {0, 0, 0, 0};
 	pCommandList->ClearUnorderedAccessView(DescriptorHandle(m_SRVHeapStart, 2),

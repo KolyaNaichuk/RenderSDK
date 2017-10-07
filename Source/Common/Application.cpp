@@ -45,11 +45,11 @@ int Application::Run(int showCommand)
 			}
 			else if (msg.message == WM_KEYDOWN)
 			{
-				OnKeyDown(msg.wParam);
+				OnKeyDown((UINT8)msg.wParam);
 			}
 			else if (msg.message == WM_KEYUP)
 			{
-				OnKeyUp(msg.wParam);
+				OnKeyUp((UINT8)msg.wParam);
 			}
 		}
 

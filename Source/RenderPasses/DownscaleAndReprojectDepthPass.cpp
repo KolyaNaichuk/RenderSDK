@@ -99,7 +99,7 @@ void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 		pCommandList->SetComputeRootSignature(m_pReprojectRootSignature);
 
 		if (!m_ReprojectResourceBarriers.empty())
-			pCommandList->ResourceBarrier(m_ReprojectResourceBarriers.size(), m_ReprojectResourceBarriers.data());
+			pCommandList->ResourceBarrier((UINT)m_ReprojectResourceBarriers.size(), m_ReprojectResourceBarriers.data());
 
 		const UINT clearDepthValue[4] = {0, 0, 0, 0};
 		DescriptorHandle reprojectedDepthTextureHandle(m_ReprojectSRVHeapStart, 1);
@@ -114,7 +114,7 @@ void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 		pCommandList->SetGraphicsRootSignature(m_pCopyRootSignature);
 
 		if (!m_CopyResourceBarriers.empty())
-			pCommandList->ResourceBarrier(m_CopyResourceBarriers.size(), m_CopyResourceBarriers.data());
+			pCommandList->ResourceBarrier((UINT)m_CopyResourceBarriers.size(), m_CopyResourceBarriers.data());
 
 		pCommandList->SetGraphicsRootDescriptorTable(kCopyRootSRVTableParam, m_CopySRVHeapStart);
 
