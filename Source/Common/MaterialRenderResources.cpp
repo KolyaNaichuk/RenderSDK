@@ -51,10 +51,12 @@ void MaterialRenderResources::InitMeshTypePerMaterialIDBuffer(RenderEnv* pRender
 {
 	assert(m_pMeshTypePerMaterialIDBuffer == nullptr);
 
-	const u16 meshType = 0;
-	std::vector<u16> bufferData(numMaterials, meshType);
-
-	FormattedBufferDesc bufferDesc(numMaterials, DXGI_FORMAT_R16_UINT, true, false);
+	const u16 meshType = 0;	
+	std::vector<u16> bufferData(numMaterials + 1, std::numeric_limits<u16>::max());
+	for (u16 index = 1; index < bufferData.size(); ++index)
+		bufferData[index] = meshType;
+		
+	FormattedBufferDesc bufferDesc(bufferData.size(), DXGI_FORMAT_R16_UINT, true, false);
 	m_pMeshTypePerMaterialIDBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc,
 		D3D12_RESOURCE_STATE_COPY_DEST, L"MaterialRenderResources::m_pMeshTypePerMaterialIDBuffer");
 
@@ -66,11 +68,11 @@ void MaterialRenderResources::InitResourceInfoIndexPerMaterialIDBuffer(RenderEnv
 {
 	assert(m_pResourceInfoIndexPerMaterialIDBuffer == nullptr);
 
-	std::vector<u16> bufferData(numMaterials);
-	for (u16 index = 0; index < numMaterials; ++index)
-		bufferData[index] = index;
+	std::vector<u16> bufferData(numMaterials + 1, std::numeric_limits<u16>::max());
+	for (u16 index = 1; index < bufferData.size(); ++index)
+		bufferData[index] = index - 1;
 
-	FormattedBufferDesc bufferDesc(numMaterials, DXGI_FORMAT_R16_UINT, true, false);
+	FormattedBufferDesc bufferDesc(bufferData.size(), DXGI_FORMAT_R16_UINT, true, false);
 	m_pResourceInfoIndexPerMaterialIDBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc,
 		D3D12_RESOURCE_STATE_COPY_DEST, L"MaterialRenderResources::m_pResourceInfoIndexPerMaterialIDBuffer");
 
@@ -312,7 +314,7 @@ namespace
 					assert(pSubimage != nullptr);
 					const u8* pSrcSubresourceMem = pSubimage->pixels;
 
-					const UINT bytesToCopy = Min(subresourceRowPitch, pSubimage->rowPitch);
+					const UINT bytesToCopy = Min(subresourceRowPitch, (UINT)pSubimage->rowPitch);
 					for (UINT row = 0; row < subresourceNumRows; ++row)
 					{
 						std::memcpy(pDestSubresourceMem, pSrcSubresourceMem, bytesToCopy);

@@ -70,13 +70,14 @@ void MeshRenderResources::InitPerMeshResources(RenderEnv* pRenderEnv, u32 numMes
 		for (u32 meshIndex = 0; meshIndex < pMeshBatch->GetNumMeshes(); ++meshIndex)
 		{
 			const MeshInfo& meshInfo = pFirstMeshInfo[meshIndex];
+			const u32 materialID = meshInfo.m_MaterialID + 1;
 
 			meshInfoBufferData.emplace_back(
 				meshInfo.m_InstanceCount,
 				instanceOffset,
 				meshType,
 				meshTypeOffset,
-				meshInfo.m_MaterialID,
+				materialID,
 				meshInfo.m_IndexCountPerInstance,
 				meshInfo.m_StartIndexLocation,
 				meshInfo.m_BaseVertexLocation);
@@ -228,7 +229,7 @@ void MeshRenderResources::InitInputLayout(RenderEnv* pRenderEnv, u32 meshType, c
 	}
 
 	m_VertexStrideInBytes[meshType] = byteOffset;
-	m_InputLayouts[meshType] = InputLayoutDesc(m_InputElements[meshType].size(), m_InputElements[meshType].data());
+	m_InputLayouts[meshType] = InputLayoutDesc((UINT)m_InputElements[meshType].size(), m_InputElements[meshType].data());
 }
 
 void MeshRenderResources::InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, const MeshBatch* pMeshBatch)
