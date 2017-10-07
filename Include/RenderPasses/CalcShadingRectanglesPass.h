@@ -12,15 +12,18 @@ class CalcShadingRectanglesPass
 public:
 	struct ResourceStates
 	{
-		D3D12_RESOURCE_STATES m_MeshTypeDepthTextureState;
-		D3D12_RESOURCE_STATES m_ShadingRectangleBufferState;
+		D3D12_RESOURCE_STATES m_MaterialIDTextureState;
+		D3D12_RESOURCE_STATES m_MeshTypePerMaterialIDBufferState;
+		D3D12_RESOURCE_STATES m_ShadingRectangleMinPointBufferState;
+		D3D12_RESOURCE_STATES m_ShadingRectangleMaxPointBufferState;
 	};
 
 	struct InitParams
 	{
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
-		DepthTexture* m_pMeshTypeDepthTexture;
+		ColorTexture* m_pMaterialIDTexture;
+		Buffer* m_pMeshTypePerMaterialIDBuffer;
 		u32 m_NumMeshTypes;
 	};
 
@@ -36,7 +39,8 @@ public:
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
-	Buffer* GetScreenRectPerMeshTypeBuffer() { return m_pShadngRectangleBuffer; }
+	Buffer* GetShadingRectangleMinPointBuffer() { return m_pShadingRectangleMinPointBuffer; }
+	Buffer* GetShadingRectangleMaxPointBuffer() { return m_pShadingRectangleMaxPointBuffer; }
 
 private:
 	void InitResources(InitParams* pParams);
@@ -50,7 +54,8 @@ private:
 	DescriptorHandle m_SRVHeapStart;
 	std::vector<ResourceBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
-	Buffer* m_pShadngRectangleBuffer;
+	Buffer* m_pShadingRectangleMinPointBuffer;
+	Buffer* m_pShadingRectangleMaxPointBuffer;
 	u32 m_NumThreadGroupsX;
 	u32 m_NumThreadGroupsY;
 };

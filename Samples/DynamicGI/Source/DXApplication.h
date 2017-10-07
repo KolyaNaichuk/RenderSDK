@@ -128,12 +128,12 @@ private:
 	void InitRenderGBufferFalseNegativePass(UINT bufferWidth, UINT bufferHeight);
 	CommandList* RecordRenderGBufferFalseNegativePass();
 	
-	void InitFillMeshTypeDepthBufferPass();
-	CommandList* RecordFillMeshTypeDepthBufferPass();
-
 	void InitCalcShadingRectanglesPass();
 	CommandList* RecordCalcShadingRectanglesPass();
 
+	void InitFillMeshTypeDepthBufferPass();
+	CommandList* RecordFillMeshTypeDepthBufferPass();
+		
 	void InitVisualizeDepthBufferPass();
 	CommandList* RecordVisualizeDepthBufferPass();
 

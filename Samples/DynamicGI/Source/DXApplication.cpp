@@ -589,16 +589,16 @@ void DXApplication::OnInit()
 	InitFillVisibilityBufferFalseNegativePass();
 	InitCreateFalseNegativeDrawCommandsPass();
 	InitRenderGBufferFalseNegativePass(backBufferWidth, backBufferHeight);
-	InitFillMeshTypeDepthBufferPass();
 	InitCalcShadingRectanglesPass();
-	
+	InitFillMeshTypeDepthBufferPass();
+		
 	if (m_pPointLightRenderResources != nullptr)
 		InitFrustumPointLightCullingPass();
 	if (m_pSpotLightRenderResources != nullptr)
 		InitFrustumSpotLightCullingPass();
 	InitTiledLightCullingPass();
 	
-	InitTiledShadingPass();
+	//InitTiledShadingPass();
 
 	InitVisualizeDepthBufferPass();
 	InitVisualizeReprojectedDepthBufferPass();
@@ -659,16 +659,16 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferFalseNegativePass();
 	commandListBatch[commandListBatchSize++] = RecordCreateFalseNegativeDrawCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordRenderGBufferFalseNegativePass();
-	commandListBatch[commandListBatchSize++] = RecordFillMeshTypeDepthBufferPass();
 	commandListBatch[commandListBatchSize++] = RecordCalcShadingRectanglesPass();
-
+	commandListBatch[commandListBatchSize++] = RecordFillMeshTypeDepthBufferPass();
+	
 	if (m_pFrustumPointLightCullingPass != nullptr)
 		commandListBatch[commandListBatchSize++] = RecordFrustumPointLightCullingPass();
 	if (m_pFrustumSpotLightCullingPass != nullptr)
 		commandListBatch[commandListBatchSize++] = RecordFrustumSpotLightCullingPass();
 	
 	commandListBatch[commandListBatchSize++] = RecordTiledLightCullingPass();
-	commandListBatch[commandListBatchSize++] = RecordTiledShadingPass();
+	//commandListBatch[commandListBatchSize++] = RecordTiledShadingPass();
 
 	commandListBatch[commandListBatchSize++] = RecordDisplayResultPass();
 	commandListBatch[commandListBatchSize++] = RecordPostRenderPass();
@@ -1336,7 +1336,7 @@ CommandList* DXApplication::RecordRenderGBufferMainPass()
 
 	RenderGBufferPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferMainPassCommandList");
+	params.m_pCommandList = m_pCommandListPool->Create(L"pRenderGBufferMainCommandList");
 	params.m_pAppDataBuffer = m_pAppDataBuffer;
 	params.m_pMeshRenderResources = m_pMeshRenderResources;
 	params.m_pNumVisibleMeshesPerTypeBuffer = m_pCreateMainDrawCommandsPass->GetNumVisibleMeshesPerTypeBuffer();
@@ -1488,7 +1488,7 @@ CommandList* DXApplication::RecordRenderGBufferFalseNegativePass()
 
 	RenderGBufferPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pRecordRenderGBufferFalseNegativePassCommandList");
+	params.m_pCommandList = m_pCommandListPool->Create(L"pRecordRenderGBufferFalseNegativeCommandList");
 	params.m_pAppDataBuffer = m_pAppDataBuffer;
 	params.m_pMeshRenderResources = m_pMeshRenderResources;
 	params.m_pNumVisibleMeshesPerTypeBuffer = m_pCreateFalseNegativeDrawCommandsPass->GetNumVisibleMeshesPerTypeBuffer();
@@ -1500,19 +1500,54 @@ CommandList* DXApplication::RecordRenderGBufferFalseNegativePass()
 	return params.m_pCommandList;
 }
 
+void DXApplication::InitCalcShadingRectanglesPass()
+{
+	assert(m_pCalcShadingRectanglesPass == nullptr);
+	assert(m_pRenderGBufferFalseNegativePass != nullptr);
+	assert(m_pMaterialRenderResources != nullptr);
+		
+	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
+		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
+
+	CalcShadingRectanglesPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_InputResourceStates.m_MaterialIDTextureState = pRenderGBufferFalseNegativePassStates->m_MaterialIDTextureState;
+	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_ShadingRectangleMinPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_ShadingRectangleMaxPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
+	params.m_pMeshTypePerMaterialIDBuffer = m_pMaterialRenderResources->GetMeshTypePerMaterialIDBuffer();
+	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
+	
+	m_pCalcShadingRectanglesPass = new CalcShadingRectanglesPass(&params);
+}
+
+CommandList* DXApplication::RecordCalcShadingRectanglesPass()
+{
+	assert(m_pCalcShadingRectanglesPass != nullptr);
+
+	CalcShadingRectanglesPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pCalcShadingRectanglesCommandList");
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
+
+	m_pCalcShadingRectanglesPass->Record(&params);
+	return params.m_pCommandList;
+}
+
 void DXApplication::InitFillMeshTypeDepthBufferPass()
 {
 	assert(m_pFillMeshTypeDepthBufferPass == nullptr);
 	assert(m_pGeometryBuffer != nullptr);
 	assert(m_pMaterialRenderResources != nullptr);
-
-	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
-		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
+	
+	const CalcShadingRectanglesPass::ResourceStates* pCalcShadingRectanglesPassStates =
+		m_pCalcShadingRectanglesPass->GetOutputResourceStates();
 
 	FillMeshTypeDepthBufferPass::InitParams params;
-	params.m_pRenderEnv = m_pRenderEnv;	
-	params.m_InputResourceStates.m_MaterialIDTextureState = pRenderGBufferFalseNegativePassStates->m_MaterialIDTextureState;
-	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_InputResourceStates.m_MaterialIDTextureState = pCalcShadingRectanglesPassStates->m_MaterialIDTextureState;
+	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = pCalcShadingRectanglesPassStates->m_MeshTypePerMaterialIDBufferState;
 	params.m_InputResourceStates.m_MeshTypeDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	params.m_pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
 	params.m_pMeshTypePerMaterialIDBuffer = m_pMaterialRenderResources->GetMeshTypePerMaterialIDBuffer();
@@ -1527,36 +1562,12 @@ CommandList* DXApplication::RecordFillMeshTypeDepthBufferPass()
 
 	FillMeshTypeDepthBufferPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pFillDepthBufferWithMeshTypePassCommandList");
+	params.m_pCommandList = m_pCommandListPool->Create(L"pFillMeshTypeDepthBufferCommandList");
 	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
 	params.m_pViewport = m_pBackBufferViewport;
 
 	m_pFillMeshTypeDepthBufferPass->Record(&params);
 	return params.m_pCommandList;
-}
-
-void DXApplication::InitCalcShadingRectanglesPass()
-{
-	assert(m_pCalcShadingRectanglesPass == nullptr);
-	assert(m_pFillMeshTypeDepthBufferPass != nullptr);
-
-	const FillMeshTypeDepthBufferPass::ResourceStates* pFillMeshTypeDepthBufferPassStates =
-		m_pFillMeshTypeDepthBufferPass->GetOutputResourceStates();
-
-	CalcShadingRectanglesPass::InitParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_InputResourceStates.m_MeshTypeDepthTextureState = pFillMeshTypeDepthBufferPassStates->m_MeshTypeDepthTextureState;
-	params.m_InputResourceStates.m_ShadingRectangleBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_pMeshTypeDepthTexture = m_pFillMeshTypeDepthBufferPass->GetMeshTypeDepthTexture();
-	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
-	
-	m_pCalcShadingRectanglesPass = new CalcShadingRectanglesPass(&params);
-}
-
-CommandList* DXApplication::RecordCalcShadingRectanglesPass()
-{
-	assert(false);
-	return nullptr;
 }
 
 void DXApplication::InitVisualizeDepthBufferPass()
@@ -3112,20 +3123,27 @@ void DXApplication::OuputDebugRenderPassResult()
 
 	OutputDebugStringA("1.Debug =========================\n");
 	++frameNumber;
+
+	using ElementType = Vector2u;
 	if (frameNumber == frameNumberForOutput)
 	{
 		auto elementFormatter = [](const void* pElementData)
 		{
-			const Vector2u* pElement = (Vector2u*)pElementData;
+			const ElementType* pElement = (ElementType*)pElementData;
 
 			std::stringstream stringStream;
 			stringStream << pElement->m_X << ", " << pElement->m_Y;
 			return stringStream.str();
 		};
 		OutputBufferContent(m_pRenderEnv,
-			m_pTiledLightCullingPass->GetPointLightRangePerTileBuffer(),
+			m_pCalcShadingRectanglesPass->GetShadingRectangleMinPointBuffer(),
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-			sizeof(Vector2u),
+			sizeof(ElementType),
+			elementFormatter);
+		OutputBufferContent(m_pRenderEnv,
+			m_pCalcShadingRectanglesPass->GetShadingRectangleMaxPointBuffer(),
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			sizeof(ElementType),
 			elementFormatter);
 	}		
 	OutputDebugStringA("2.Debug =========================\n");

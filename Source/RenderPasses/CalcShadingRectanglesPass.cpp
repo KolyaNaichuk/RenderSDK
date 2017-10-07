@@ -5,7 +5,7 @@
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
-#include "Math/Vector4.h"
+#include "Math/Vector2.h"
 
 namespace
 {
@@ -20,7 +20,8 @@ namespace
 CalcShadingRectanglesPass::CalcShadingRectanglesPass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
-	, m_pShadngRectangleBuffer(nullptr)
+	, m_pShadingRectangleMinPointBuffer(nullptr)
+	, m_pShadingRectangleMaxPointBuffer(nullptr)
 	, m_NumThreadGroupsX(0)
 	, m_NumThreadGroupsY(0)
 {
@@ -33,7 +34,8 @@ CalcShadingRectanglesPass::~CalcShadingRectanglesPass()
 {
 	SafeDelete(m_pRootSignature);
 	SafeDelete(m_pPipelineState);
-	SafeDelete(m_pShadngRectangleBuffer);
+	SafeDelete(m_pShadingRectangleMinPointBuffer);
+	SafeDelete(m_pShadingRectangleMaxPointBuffer);
 }
 
 void CalcShadingRectanglesPass::Record(RenderParams* pParams)
@@ -45,10 +47,15 @@ void CalcShadingRectanglesPass::Record(RenderParams* pParams)
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 
 	if (!m_ResourceBarriers.empty())
-		pCommandList->ResourceBarrier(m_ResourceBarriers.size(), m_ResourceBarriers.data());
+		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	
+	const UINT minValue[4] = {0xffffffff, 0, 0, 0};
+	pCommandList->ClearUnorderedAccessView(m_SRVHeapStart, m_pShadingRectangleMinPointBuffer->GetUAVHandle(),
+		m_pShadingRectangleMinPointBuffer, minValue);
 
-	const UINT clearValue[4] = {0xffffffff, 0xffffffff, 0, 0};
-	pCommandList->ClearUnorderedAccessView(m_SRVHeapStart, m_pShadngRectangleBuffer->GetUAVHandle(), m_pShadngRectangleBuffer, clearValue);
+	const UINT maxValue[4] = {0, 0, 0, 0};
+	pCommandList->ClearUnorderedAccessView(DescriptorHandle(m_SRVHeapStart, 1), m_pShadingRectangleMaxPointBuffer->GetUAVHandle(),
+		m_pShadingRectangleMaxPointBuffer, maxValue);
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootConstantBufferView(kRootCBVParam, pParams->m_pAppDataBuffer);
@@ -61,30 +68,50 @@ void CalcShadingRectanglesPass::Record(RenderParams* pParams)
 void CalcShadingRectanglesPass::InitResources(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-	
-	assert(m_pShadngRectangleBuffer == nullptr);
-	StructuredBufferDesc shadingRectBufferDesc(pParams->m_NumMeshTypes, sizeof(Vector4u), true, true);
-	m_pShadngRectangleBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shadingRectBufferDesc,
-		pParams->m_InputResourceStates.m_ShadingRectangleBufferState, L"m_pShadngRectangleBuffer");
+	StructuredBufferDesc shadingRectBufferDesc(pParams->m_NumMeshTypes, sizeof(Vector2u), true, true);
 
-	m_OutputResourceStates.m_MeshTypeDepthTextureState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_ShadingRectangleBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	assert(m_pShadingRectangleMinPointBuffer == nullptr);
+	m_pShadingRectangleMinPointBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shadingRectBufferDesc,
+		pParams->m_InputResourceStates.m_ShadingRectangleMinPointBufferState, L"m_pShadingRectangleMinPointBuffer");
+
+	assert(m_pShadingRectangleMaxPointBuffer == nullptr);
+	m_pShadingRectangleMaxPointBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shadingRectBufferDesc,
+		pParams->m_InputResourceStates.m_ShadingRectangleMaxPointBufferState, L"m_pShadingRectangleMaxPointBuffer");
+
+	m_OutputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_ShadingRectangleMinPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	m_OutputResourceStates.m_ShadingRectangleMaxPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
 	assert(m_ResourceBarriers.empty());
-	CreateResourceBarrierIfRequired(pParams->m_pMeshTypeDepthTexture,
-		pParams->m_InputResourceStates.m_MeshTypeDepthTextureState,
-		m_OutputResourceStates.m_MeshTypeDepthTextureState);
+	CreateResourceBarrierIfRequired(m_pShadingRectangleMinPointBuffer,
+		pParams->m_InputResourceStates.m_ShadingRectangleMinPointBufferState,
+		m_OutputResourceStates.m_ShadingRectangleMinPointBufferState);
 
-	CreateResourceBarrierIfRequired(m_pShadngRectangleBuffer,
-		pParams->m_InputResourceStates.m_ShadingRectangleBufferState,
-		m_OutputResourceStates.m_ShadingRectangleBufferState);
+	CreateResourceBarrierIfRequired(m_pShadingRectangleMaxPointBuffer,
+		pParams->m_InputResourceStates.m_ShadingRectangleMaxPointBufferState,
+		m_OutputResourceStates.m_ShadingRectangleMaxPointBufferState);
+
+	CreateResourceBarrierIfRequired(pParams->m_pMaterialIDTexture,
+		pParams->m_InputResourceStates.m_MaterialIDTextureState,
+		m_OutputResourceStates.m_MaterialIDTextureState);
+
+	CreateResourceBarrierIfRequired(pParams->m_pMeshTypePerMaterialIDBuffer,
+		pParams->m_InputResourceStates.m_MeshTypePerMaterialIDBufferState,
+		m_OutputResourceStates.m_MeshTypePerMaterialIDBufferState);
 
 	m_SRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStart,
-		m_pShadngRectangleBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pShadingRectangleMinPointBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-		pParams->m_pMeshTypeDepthTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pShadingRectangleMaxPointBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+		pParams->m_pMaterialIDTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+		pParams->m_pMeshTypePerMaterialIDBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void CalcShadingRectanglesPass::InitRootSignature(InitParams* pParams)
@@ -94,7 +121,7 @@ void CalcShadingRectanglesPass::InitRootSignature(InitParams* pParams)
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kRootCBVParam] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
 
-	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = {UAVDescriptorRange(1, 0), SRVDescriptorRange(1, 0)};
+	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = {UAVDescriptorRange(2, 0), SRVDescriptorRange(2, 0)};
 	rootParams[kRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), descriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
@@ -111,8 +138,8 @@ void CalcShadingRectanglesPass::InitPipelineState(InitParams* pParams)
 	const u8 numThreadsX = 16;
 	const u8 numThreadsY = 16;
 
-	m_NumThreadGroupsX = (u32)Ceil((f32)pParams->m_pMeshTypeDepthTexture->GetWidth() / (f32)numThreadsX);
-	m_NumThreadGroupsY = (u32)Ceil((f32)pParams->m_pMeshTypeDepthTexture->GetHeight() / (f32)numThreadsY);
+	m_NumThreadGroupsX = (u32)Ceil((f32)pParams->m_pMaterialIDTexture->GetWidth() / (f32)numThreadsX);
+	m_NumThreadGroupsY = (u32)Ceil((f32)pParams->m_pMaterialIDTexture->GetHeight() / (f32)numThreadsY);
 
 	std::string numThreadsXStr = std::to_string(numThreadsX);
 	std::string numThreadsYStr = std::to_string(numThreadsY);
