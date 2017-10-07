@@ -15,8 +15,8 @@ public:
 	~MaterialRenderResources();
 	
 	u16 GetNumTextures() const { return (u16)m_Textures.size(); }
-	DescriptorHandle GetTextureHeapStart() { return m_TextureHeapStart; }
-
+	ColorTexture** GetTextures() { return m_Textures.data(); }
+	
 	Buffer* GetMeshTypePerMaterialIDBuffer() { return m_pMeshTypePerMaterialIDBuffer; }
 	Buffer* GetResourceInfoIndexPerMaterialIDBuffer() { return m_pResourceInfoIndexPerMaterialIDBuffer; }
 	Buffer* GetResourceInfoBuffer() { return m_pResourceInfoBuffer; }
@@ -31,7 +31,5 @@ private:
 	Buffer* m_pMeshTypePerMaterialIDBuffer;
 	Buffer* m_pResourceInfoIndexPerMaterialIDBuffer;
 	Buffer* m_pResourceInfoBuffer;
-
 	std::vector<ColorTexture*> m_Textures;
-	DescriptorHandle m_TextureHeapStart;
 };

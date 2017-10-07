@@ -70,7 +70,9 @@ struct AppData
 	float4 sunWorldSpaceDir;
 
 	float4 sunLightColor;
-	float4 notUsed3[15];
+	uint2 screenTileSize;
+	uint2 numScreenTiles;
+	float4 notUsed3[14];
 };
 
 #endif // __FOUNDATION__

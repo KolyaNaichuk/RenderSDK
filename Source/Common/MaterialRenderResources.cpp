@@ -198,16 +198,6 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 
 	for (Buffer* pBuffer : uploadBuffers)
 		SafeDelete(pBuffer);
-
-	std::size_t textureIndex = 0;
-	m_TextureHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
-	pRenderEnv->m_pDevice->CopyDescriptor(m_TextureHeapStart, m_Textures[textureIndex]->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	for (++textureIndex; textureIndex < m_Textures.size(); ++textureIndex)
-	{
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			m_Textures[textureIndex]->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
 }
 
 namespace

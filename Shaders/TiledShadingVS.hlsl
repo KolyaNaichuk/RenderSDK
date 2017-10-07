@@ -15,21 +15,23 @@ cbuffer MeshTypeDataBuffer : register(b0)
 	uint g_NumMeshTypes;
 };
 
-StructuredBuffer<uint4> g_ShadingRectangleBuffer : register(t0);
+StructuredBuffer<uint2> g_ShadingRectangleMinPointBuffer : register(t0);
+StructuredBuffer<uint2> g_ShadingRectangleMaxPointBuffer : register(t1);
 
 VSOutput Main(VSInput input)
 {
-	float4 screenRect = g_ShadingRectangleBuffer[g_MeshType];
+	float2 minPoint = g_ShadingRectangleMinPointBuffer[g_MeshType];
+	float2 maxPoint = g_ShadingRectangleMaxPointBuffer[g_MeshType];
 	
 	float2 screenSpaceCorner = float2(0.0f, 0.0f);
 	if (input.vertexId == 0)
-		screenSpaceCorner = screenRect.xw;
+		screenSpaceCorner = float2(minPoint.x, maxPoint.y);
 	else if (input.vertexId == 1)
-		screenSpaceCorner = screenRect.xy;
+		screenSpaceCorner = minPoint;
 	else if (input.vertexId == 2)
-		screenSpaceCorner = screenRect.zw;
+		screenSpaceCorner = maxPoint;
 	else if (input.vertexId == 3)
-		screenSpaceCorner = screenRect.zy;
+		screenSpaceCorner = float2(maxPoint.x, minPoint.y);
 
 	float2 texSpaceCorner = (screenSpaceCorner.xy + 0.5f) * g_AppData.rcpScreenSize;
 	float2 clipSpaceXY = float2(2.0f * texSpaceCorner.x - 1.0f, 1.0f - 2.0f * texSpaceCorner.y);

@@ -215,7 +215,9 @@ namespace
 		Vector4f m_SunWorldSpaceDir;
 
 		Vector4f m_SunLightColor;
-		Vector4f m_NotUsed3[15];
+		Vector2u m_ScreenTileSize;
+		Vector2u m_NumScreenTiles;
+		Vector4f m_NotUsed3[14];
 	};
 
 	using BufferElementFormatter = std::function<std::string (const void* pElementData)>;
@@ -988,7 +990,9 @@ void DXApplication::InitConstantBuffers(const Scene* pScene, UINT backBufferWidt
 	appData.m_RcpScreenQuarterSize = Vector2f(1.0f / f32(appData.m_ScreenQuarterSize.m_X), 1.0f / f32(appData.m_ScreenQuarterSize.m_Y));
 	appData.m_SunWorldSpaceDir = Vector4f(0.0f, -1.0f, 0.0f, 0.0f);
 	appData.m_SunLightColor = Color::WHITE;
-
+	appData.m_ScreenTileSize = Vector2u(kTileSize, kTileSize);
+	appData.m_NumScreenTiles = Vector2u(kNumTilesX, kNumTilesY);
+	
 	ConstantBufferDesc appDataBufferDesc(sizeof(appData));
 	m_pAppDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &appDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pAppDataBuffer");
 	m_pAppDataBuffer->Write(&appData, sizeof(appData));
