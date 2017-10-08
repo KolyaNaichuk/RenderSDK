@@ -3,6 +3,7 @@
 #include "D3DWrapper/GraphicsResource.h"
 
 struct RenderEnv;
+struct Viewport;
 class RootSignature;
 class PipelineState;
 class CommandList;
@@ -28,12 +29,12 @@ public:
 		D3D12_RESOURCE_STATES m_MaterialIDTextureState;
 		D3D12_RESOURCE_STATES m_FirstResourceIndexPerMaterialIDBufferState;
 		
-		D3D12_RESOURCE_STATES m_PointLightBoundsBufferState;
+		D3D12_RESOURCE_STATES m_PointLightWorldBoundsBufferState;
 		D3D12_RESOURCE_STATES m_PointLightPropsBufferState;
 		D3D12_RESOURCE_STATES m_PointLightIndexPerTileBufferState;
 		D3D12_RESOURCE_STATES m_PointLightRangePerTileBufferState;
 
-		D3D12_RESOURCE_STATES m_SpotLightBoundsBufferState;
+		D3D12_RESOURCE_STATES m_SpotLightWorldBoundsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightPropsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightIndexPerTileBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightRangePerTileBufferState;
@@ -46,9 +47,9 @@ public:
 	struct InitParams
 	{
 		RenderEnv* m_pRenderEnv;
-		ResourceStates m_InputResourceStates;
 		ShadingMode m_ShadingMode;
-		
+		ResourceStates m_InputResourceStates;
+				
 		ColorTexture* m_pAccumLightTexture;
 		DepthTexture* m_pMeshTypeDepthTexture;
 		Buffer* m_pShadingRectangleMinPointBuffer;
@@ -58,19 +59,19 @@ public:
 		ColorTexture* m_pNormalTexture;
 		ColorTexture* m_pMaterialIDTexture;
 		Buffer* m_pFirstResourceIndexPerMaterialIDBuffer;
-		bool m_EnableDirectionalLight;
-
 		u16 m_NumMaterialTextures;
 		ColorTexture** m_ppMaterialTextures;
-		
+
+		bool m_EnableDirectionalLight;
+						
 		bool m_EnablePointLights;
-		Buffer* m_pPointLightBoundsBuffer;
+		Buffer* m_pPointLightWorldBoundsBuffer;
 		Buffer* m_pPointLightPropsBuffer;
 		Buffer* m_pPointLightIndexPerTileBuffer;
 		Buffer* m_pPointLightRangePerTileBuffer;
 
 		bool m_EnableSpotLights;
-		Buffer* m_pSpotLightBoundsBuffer;
+		Buffer* m_pSpotLightWorldBoundsBuffer;
 		Buffer* m_pSpotLightPropsBuffer;
 		Buffer* m_pSpotLightIndexPerTileBuffer;
 		Buffer* m_pSpotLightRangePerTileBuffer;
@@ -85,6 +86,8 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
+		Buffer* m_pAppDataBuffer;
+		Viewport* m_pViewport;
 	};
 	
 	TiledShadingPass(InitParams* pParams);

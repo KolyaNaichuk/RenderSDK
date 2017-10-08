@@ -11,10 +11,10 @@ Scene* SceneLoader::LoadCube()
 	OBJFileLoader fileLoader;
 	Scene* pScene = fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
 
-	PointLight* pPointLight = new PointLight("Point light", 3.0f);
+	PointLight* pPointLight = new PointLight("Point light", 5.0f);
 	pPointLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight->SetIntensity(1.0f);
-	pPointLight->GetTransform().SetPosition(Vector3f(0.0f, 1.0f, 0.0f));
+	pPointLight->GetTransform().SetPosition(Vector3f(0.0f, 2.0f, -2.5f));
 
 	pScene->AddPointLight(pPointLight);
 

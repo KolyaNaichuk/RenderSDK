@@ -37,11 +37,13 @@ public:
 	void SetGraphicsRootSignature(RootSignature* pRootSignature);
 	void SetGraphicsRootDescriptorTable(UINT rootParamIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle);
 	void SetGraphicsRoot32BitConstant(UINT rootParamIndex, UINT srcData, UINT destOffsetIn32BitValues);
+	void SetGraphicsRoot32BitConstants(UINT rootParamIndex, UINT num32BitValues, const void* pSrcData, UINT destOffsetIn32BitValues);
 	void SetGraphicsRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer);
 	
 	void SetComputeRootSignature(RootSignature* pRootSignature);
 	void SetComputeRootDescriptorTable(UINT rootParamIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle);
 	void SetComputeRoot32BitConstant(UINT rootParamIndex, UINT srcData, UINT destOffsetIn32BitValues);
+	void SetComputeRoot32BitConstants(UINT rootParamIndex, UINT num32BitValues, const void* pSrcData, UINT destOffsetIn32BitValues);
 	void SetComputeRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer);
 
 	void SetDescriptorHeaps(DescriptorHeap* pSRVDescriptorHeap, DescriptorHeap* pSamplerDescriptorHeap = nullptr);

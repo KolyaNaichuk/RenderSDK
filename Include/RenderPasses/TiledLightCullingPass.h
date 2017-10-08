@@ -16,13 +16,13 @@ public:
 
 		D3D12_RESOURCE_STATES m_NumPointLightsBufferState;
 		D3D12_RESOURCE_STATES m_PointLightIndexBufferState;
-		D3D12_RESOURCE_STATES m_PointLightBoundsBufferState;
+		D3D12_RESOURCE_STATES m_PointLightWorldBoundsBufferState;
 		D3D12_RESOURCE_STATES m_PointLightIndexPerTileBufferState;
 		D3D12_RESOURCE_STATES m_PointLightRangePerTileBufferState;
 
 		D3D12_RESOURCE_STATES m_NumSpotLightsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightIndexBufferState;
-		D3D12_RESOURCE_STATES m_SpotLightBoundsBufferState;
+		D3D12_RESOURCE_STATES m_SpotLightWorldBoundsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightIndexPerTileBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightRangePerTileBufferState;
 	};

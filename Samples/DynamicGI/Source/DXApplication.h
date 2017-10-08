@@ -134,6 +134,18 @@ private:
 	void InitFillMeshTypeDepthBufferPass();
 	CommandList* RecordFillMeshTypeDepthBufferPass();
 		
+	void InitFrustumPointLightCullingPass();
+	CommandList* RecordFrustumPointLightCullingPass();
+
+	void InitFrustumSpotLightCullingPass();
+	CommandList* RecordFrustumSpotLightCullingPass();
+
+	void InitTiledLightCullingPass();
+	CommandList* RecordTiledLightCullingPass();
+		
+	void InitTiledShadingPass();
+	CommandList* RecordTiledShadingPass();
+
 	void InitVisualizeDepthBufferPass();
 	CommandList* RecordVisualizeDepthBufferPass();
 
@@ -149,17 +161,8 @@ private:
 	void InitVisualizeDepthBufferWithMeshTypePass();
 	CommandList* RecordVisualizeDepthBufferWithMeshTypePass();
 
-	void InitFrustumPointLightCullingPass();
-	CommandList* RecordFrustumPointLightCullingPass();
-
-	void InitFrustumSpotLightCullingPass();
-	CommandList* RecordFrustumSpotLightCullingPass();
-
-	void InitTiledLightCullingPass();
-	CommandList* RecordTiledLightCullingPass();
-		
-	void InitTiledShadingPass();
-	CommandList* RecordTiledShadingPass();
+	void InitVisualizeAccumLightPass();
+	CommandList* RecordVisualizeAccumLightPass();
 
 	CommandList* RecordPostRenderPass();
 	
@@ -170,7 +173,6 @@ private:
 	void InitPropagateLightPass();
 	void InitVisualizeVoxelGridDiffusePass();
 	void InitVisualizeVoxelGridNormalPass();
-	void InitVisualizeAccumLightPass();
 	void InitVisualizeIntensityPass();
 
 	void InitSetupSpotLightTiledShadowMapPass();
@@ -193,7 +195,6 @@ private:
 	CommandList* RecordPropagateLightPass();
 	CommandList* RecordVisualizeVoxelGridDiffusePass();
 	CommandList* RecordVisualizeVoxelGridNormalPass();
-	CommandList* RecordVisualizeAccumLightPass();
 	CommandList* RecordVisualizeSpotLightTiledShadowMapPass();
 	CommandList* RecordVisualizePointLightTiledShadowMapPass();
 	CommandList* RecordVisualizeIntensityPass();
@@ -224,15 +225,14 @@ private:
 	DescriptorHeap* m_pShaderInvisibleRTVHeap;
 	DescriptorHeap* m_pShaderInvisibleDSVHeap;
 	DescriptorHeap* m_pShaderInvisibleSRVHeap;
+	DescriptorHeap* m_pShaderInvisibleSamplerHeap;
 	DescriptorHeap* m_pShaderVisibleSRVHeap;
+	DescriptorHeap* m_pShaderVisibleSamplerHeap;
 	DepthTexture* m_pDepthTexture;
+	ColorTexture* m_pAccumLightTexture;
 
 	DepthTexture* m_pSpotLightTiledShadowMap;
-	DepthTexture* m_pPointLightTiledShadowMap;
-	ColorTexture* m_pDiffuseTexture;
-	ColorTexture* m_pNormalTexture;
-	ColorTexture* m_pSpecularTexture;
-	ColorTexture* m_pAccumLightTexture;
+	DepthTexture* m_pPointLightTiledShadowMap;		
 	ColorTexture* m_IntensityRCoeffsTextures[2];
 	ColorTexture* m_IntensityGCoeffsTextures[2];
 	ColorTexture* m_IntensityBCoeffsTextures[2];
@@ -258,6 +258,7 @@ private:
 	Buffer* m_pPointLightShadowMapDataBuffer;
 	Buffer* m_pPointLightShadowMapTileBuffer;
 	Buffer* m_pPointLightViewTileProjMatrixBuffer;
+
 	RenderEnv* m_pRenderEnv;
 	Fence* m_pFence;
 	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers];
@@ -275,7 +276,6 @@ private:
 	RenderTiledShadowMapPass* m_pRenderPointLightTiledShadowMapPass;
 	SetupTiledShadowMapPass* m_pSetupSpotLightTiledShadowMapPass;
 	SetupTiledShadowMapPass* m_pSetupPointLightTiledShadowMapPass;
-	VisualizeTexturePass* m_pVisualizeAccumLightPass;
 	VisualizeTexturePass* m_pVisualizeSpotLightTiledShadowMapPass;
 	VisualizeTexturePass* m_pVisualizePointLightTiledShadowMapPass;
 	VisualizeIntensityPass* m_pVisualizeIntensityPass;
@@ -301,6 +301,7 @@ private:
 	FrustumLightCullingPass* m_pFrustumSpotLightCullingPass;
 	TiledLightCullingPass* m_pTiledLightCullingPass;
 	TiledShadingPass* m_pTiledShadingPass;
+	VisualizeTexturePass* m_pVisualizeAccumLightPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeReprojectedDepthBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers];

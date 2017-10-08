@@ -190,7 +190,7 @@ void FillVisibilityBufferPass::InitPipelineState(InitParams* pParams)
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetPixelShader(&pixelShader);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipelineStateDesc.DepthStencilState = DepthStencilDesc(DepthStencilDesc::EnabledNoWrites);
+	pipelineStateDesc.DepthStencilState = DepthStencilDesc(DepthStencilDesc::EnabledLessNoWrites);
 	pipelineStateDesc.SetRenderTargetFormats(0, nullptr, GetDepthStencilViewFormat(pParams->m_pDepthTexture->GetFormat()));
 
 	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FillVisibilityBufferPass::m_pPipelineState");

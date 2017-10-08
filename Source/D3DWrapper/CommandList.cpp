@@ -114,6 +114,11 @@ void CommandList::SetGraphicsRoot32BitConstant(UINT rootParamIndex, UINT srcData
 	m_D3DCommandList->SetGraphicsRoot32BitConstant(rootParamIndex, srcData, destOffsetIn32BitValues);
 }
 
+void CommandList::SetGraphicsRoot32BitConstants(UINT rootParamIndex, UINT num32BitValues, const void* pSrcData, UINT destOffsetIn32BitValues)
+{
+	m_D3DCommandList->SetGraphicsRoot32BitConstants(rootParamIndex, num32BitValues, pSrcData, destOffsetIn32BitValues);
+}
+
 void CommandList::SetGraphicsRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer)
 {
 	ID3D12Resource* pD3DResource = pBuffer->GetD3DObject();
@@ -133,6 +138,11 @@ void CommandList::SetComputeRootDescriptorTable(UINT rootParamIndex, D3D12_GPU_D
 void CommandList::SetComputeRoot32BitConstant(UINT rootParamIndex, UINT srcData, UINT destOffsetIn32BitValues)
 {
 	m_D3DCommandList->SetComputeRoot32BitConstant(rootParamIndex, srcData, destOffsetIn32BitValues);
+}
+
+void CommandList::SetComputeRoot32BitConstants(UINT rootParamIndex, UINT num32BitValues, const void* pSrcData, UINT destOffsetIn32BitValues)
+{
+	m_D3DCommandList->SetComputeRoot32BitConstants(rootParamIndex, num32BitValues, pSrcData, destOffsetIn32BitValues);
 }
 
 void CommandList::SetComputeRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer)

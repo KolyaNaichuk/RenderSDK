@@ -23,14 +23,14 @@ Texture2D<uint> g_MaterialIDTexture : register(t3);
 Buffer<uint> g_FirstResourceIndexPerMaterialIDBuffer : register(t4);
 
 #if ENABLE_POINT_LIGHTS == 1
-StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t5);
+StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t5);
 StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t6);
 Buffer<uint> g_PointLightIndexPerTileBuffer : register(t7);
 StructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(t8);
 #endif // ENABLE_POINT_LIGHTS
 
 #if ENABLE_SPOT_LIGHTS == 1
-StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t9);
+StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t9);
 StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t10);
 Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t11);
 StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t12);
@@ -42,7 +42,7 @@ Texture3D<float4> g_IntensityGCoeffsTexture : register(t14);
 Texture3D<float4> g_IntensityBCoeffsTexture : register(t15);
 #endif // ENABLE_INDIRECT_LIGHT
 
-Texture2D<float4> g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t16);
+Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t16);
 
 SamplerState g_AnisoSampler : register(s0);
 SamplerState g_LinearSampler : register(s1);
@@ -58,9 +58,9 @@ float4 Main(PSInput input) : SV_Target
 	uint materialID = g_MaterialIDTexture[texturePos].x;
 	
 	uint firstTextureIndex = g_FirstResourceIndexPerMaterialIDBuffer[materialID];
-	Texture2D<float4> diffuseTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex)];
-	Texture2D<float4> specularTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex + 1)];
-	Texture2D<float> shininessTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex + 2)];
+	Texture2D diffuseTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex)];
+	Texture2D specularTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex + 1)];
+	Texture2D shininessTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex + 2)];
 	
 	float3 diffuseAlbedo = diffuseTexture.Sample(g_AnisoSampler, texCoord).rgb;
 	float3 specularAlbedo = specularTexture.Sample(g_AnisoSampler, texCoord).rgb;
@@ -82,8 +82,8 @@ float4 Main(PSInput input) : SV_Target
 	{
 		uint lightIndex = g_PointLightIndexPerTileBuffer[lightIndexPerTile];
 
-		float3 worldSpaceLightPos = g_PointLightBoundsBuffer[lightIndex].center;
-		float attenEndRange = g_PointLightBoundsBuffer[lightIndex].radius;
+		float3 worldSpaceLightPos = g_PointLightWorldBoundsBuffer[lightIndex].center;
+		float attenEndRange = g_PointLightWorldBoundsBuffer[lightIndex].radius;
 		float attenStartRange = g_PointLightPropsBuffer[lightIndex].attenStartRange;
 		float3 lightColor = g_PointLightPropsBuffer[lightIndex].color;
 
@@ -101,7 +101,7 @@ float4 Main(PSInput input) : SV_Target
 	{
 		uint lightIndex = g_SpotLightIndexPerTileBuffer[lightIndexPerTile];
 
-		Sphere lightBounds = g_SpotLightBoundsBuffer[lightIndex];
+		Sphere lightBounds = g_SpotLightWorldBoundsBuffer[lightIndex];
 		float3 worldSpaceLightDir = g_SpotLightPropsBuffer[lightIndex].worldSpaceDir;
 		float3 worldSpaceLightPos = lightBounds.center - lightBounds.radius * worldSpaceLightDir;
 		float attenEndRange = g_SpotLightPropsBuffer[lightIndex].attenEndRange;

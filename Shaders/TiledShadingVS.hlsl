@@ -1,3 +1,5 @@
+#include "Foundation.hlsl"
+
 struct VSInput
 {
 	uint vertexId		: SV_VertexID;
@@ -9,7 +11,12 @@ struct VSOutput
 	float2 texCoord		: TEXCOORD0;
 };
 
-cbuffer MeshTypeDataBuffer : register(b0)
+cbuffer AppDataBuffer : register(b0)
+{
+	AppData g_AppData;
+}
+
+cbuffer MeshTypeDataBuffer : register(b1)
 {
 	uint g_MeshType;
 	uint g_NumMeshTypes;

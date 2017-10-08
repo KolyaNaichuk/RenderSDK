@@ -118,7 +118,7 @@ LightRenderResources::LightRenderResources(RenderEnv* pRenderEnv, u32 numPointLi
 	m_pLightPropsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps,
 		&lightPropsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightRenderResources::m_pLightPropsBuffer");
 	UploadData(pRenderEnv, m_pLightPropsBuffer, lightPropsBufferDesc,
-		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, lightProps.data(), m_NumLights * sizeof(PointLightProps));
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, lightProps.data(), m_NumLights * sizeof(PointLightProps));
 
 	StructuredBufferDesc lightFrustumBufferDesc(kNumCubeMapFaces * m_NumLights, sizeof(LightFrustum), true, false);
 	m_pLightFrustumBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps,
@@ -198,7 +198,7 @@ LightRenderResources::LightRenderResources(RenderEnv* pRenderEnv, u32 numSpotLig
 	m_pLightPropsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps,
 		&lightPropsBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"LightRenderResources::m_pLightPropsBuffer");
 	UploadData(pRenderEnv, m_pLightPropsBuffer, lightPropsBufferDesc,
-		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, lightProps.data(), m_NumLights * sizeof(SpotLightProps));
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, lightProps.data(), m_NumLights * sizeof(SpotLightProps));
 	
 	StructuredBufferDesc lightFrustumBufferDesc(m_NumLights, sizeof(LightFrustum), true, false);
 	m_pLightFrustumBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps,

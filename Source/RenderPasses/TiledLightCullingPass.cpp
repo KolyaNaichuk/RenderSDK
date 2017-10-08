@@ -85,12 +85,12 @@ void TiledLightCullingPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_NumPointLightsBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_PointLightIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_PointLightBoundsBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_PointLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_PointLightIndexPerTileBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_PointLightRangePerTileBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_NumSpotLightsBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_SpotLightBoundsBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_SpotLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightIndexPerTileBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_SpotLightRangePerTileBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 		
@@ -146,8 +146,8 @@ void TiledLightCullingPass::InitResources(InitParams* pParams)
 			m_OutputResourceStates.m_PointLightIndexBufferState);
 
 		CreateResourceBarrierIfRequired(pParams->m_pPointLightWorldBoundsBuffer,
-			pParams->m_InputResourceStates.m_PointLightBoundsBufferState,
-			m_OutputResourceStates.m_PointLightBoundsBufferState);
+			pParams->m_InputResourceStates.m_PointLightWorldBoundsBufferState,
+			m_OutputResourceStates.m_PointLightWorldBoundsBufferState);
 		
 		CreateResourceBarrierIfRequired(m_pPointLightIndexPerTileBuffer,
 			pParams->m_InputResourceStates.m_PointLightIndexPerTileBufferState,
@@ -169,8 +169,8 @@ void TiledLightCullingPass::InitResources(InitParams* pParams)
 			m_OutputResourceStates.m_SpotLightIndexBufferState);
 
 		CreateResourceBarrierIfRequired(pParams->m_pSpotLightWorldBoundsBuffer,
-			pParams->m_InputResourceStates.m_SpotLightBoundsBufferState,
-			m_OutputResourceStates.m_SpotLightBoundsBufferState);
+			pParams->m_InputResourceStates.m_SpotLightWorldBoundsBufferState,
+			m_OutputResourceStates.m_SpotLightWorldBoundsBufferState);
 		
 		CreateResourceBarrierIfRequired(m_pSpotLightIndexPerTileBuffer,
 			pParams->m_InputResourceStates.m_SpotLightIndexPerTileBufferState,

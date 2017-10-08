@@ -26,22 +26,19 @@ namespace
 
 MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials)
 	: m_pMeshTypePerMaterialIDBuffer(nullptr)
-	, m_pResourceInfoIndexPerMaterialIDBuffer(nullptr)
-	, m_pResourceInfoBuffer(nullptr)
+	, m_pFirstResourceIndexPerMaterialIDBuffer(nullptr)
 {
 	assert(numMaterials > 0);
 
 	InitMeshTypePerMaterialIDBuffer(pRenderEnv, numMaterials);
-	InitResourceInfoIndexPerMaterialIDBuffer(pRenderEnv, numMaterials);
-	InitResourceInfoBuffer(pRenderEnv, numMaterials);
+	InitFirstResourceIndexPerMaterialIDBuffer(pRenderEnv, numMaterials);
 	InitTextures(pRenderEnv, numMaterials, ppMaterials);
 }
 
 MaterialRenderResources::~MaterialRenderResources()
 {
 	SafeDelete(m_pMeshTypePerMaterialIDBuffer);
-	SafeDelete(m_pResourceInfoIndexPerMaterialIDBuffer);
-	SafeDelete(m_pResourceInfoBuffer);
+	SafeDelete(m_pFirstResourceIndexPerMaterialIDBuffer);
 	
 	for (ColorTexture* pTexture : m_Textures)
 		SafeDelete(pTexture);
@@ -51,10 +48,10 @@ void MaterialRenderResources::InitMeshTypePerMaterialIDBuffer(RenderEnv* pRender
 {
 	assert(m_pMeshTypePerMaterialIDBuffer == nullptr);
 
-	const u16 meshType = 0;	
-	std::vector<u16> bufferData(numMaterials + 1, std::numeric_limits<u16>::max());
-	for (u16 index = 1; index < bufferData.size(); ++index)
-		bufferData[index] = meshType;
+	const u16 meshType = 0;
+	std::vector<u16> bufferData(1 + numMaterials, std::numeric_limits<u16>::max());
+	for (u16 materialID = 1; materialID < bufferData.size(); ++materialID)
+		bufferData[materialID] = meshType;
 		
 	FormattedBufferDesc bufferDesc(bufferData.size(), DXGI_FORMAT_R16_UINT, true, false);
 	m_pMeshTypePerMaterialIDBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc,
@@ -64,42 +61,19 @@ void MaterialRenderResources::InitMeshTypePerMaterialIDBuffer(RenderEnv* pRender
 		bufferData.data(), bufferData.size() * sizeof(bufferData[0]));
 }
 
-void MaterialRenderResources::InitResourceInfoIndexPerMaterialIDBuffer(RenderEnv* pRenderEnv, u16 numMaterials)
+void MaterialRenderResources::InitFirstResourceIndexPerMaterialIDBuffer(RenderEnv* pRenderEnv, u16 numMaterials)
 {
-	assert(m_pResourceInfoIndexPerMaterialIDBuffer == nullptr);
+	assert(m_pFirstResourceIndexPerMaterialIDBuffer == nullptr);
 
-	std::vector<u16> bufferData(numMaterials + 1, std::numeric_limits<u16>::max());
-	for (u16 index = 1; index < bufferData.size(); ++index)
-		bufferData[index] = index - 1;
+	std::vector<u16> bufferData(1 + numMaterials, std::numeric_limits<u16>::max());
+	for (u16 materialID = 1; materialID < bufferData.size(); ++materialID)
+		bufferData[materialID] = 3 * (materialID - 1);
 
 	FormattedBufferDesc bufferDesc(bufferData.size(), DXGI_FORMAT_R16_UINT, true, false);
-	m_pResourceInfoIndexPerMaterialIDBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc,
-		D3D12_RESOURCE_STATE_COPY_DEST, L"MaterialRenderResources::m_pResourceInfoIndexPerMaterialIDBuffer");
+	m_pFirstResourceIndexPerMaterialIDBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"MaterialRenderResources::m_pFirstResourceIndexPerMaterialIDBuffer");
 
-	UploadData(pRenderEnv, m_pResourceInfoIndexPerMaterialIDBuffer, bufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		bufferData.data(), bufferData.size() * sizeof(bufferData[0]));
-}
-
-void MaterialRenderResources::InitResourceInfoBuffer(RenderEnv* pRenderEnv, u16 numMaterials)
-{
-	struct ResourceInfo
-	{
-		u32 m_DiffuseMapIndex;
-		u32 m_SpecularMapIndex;
-		u32 m_ShininessMapIndex;
-	};
-	std::vector<ResourceInfo> bufferData(numMaterials);
-	for (u16 index = 0; index < numMaterials; ++index)
-	{
-		bufferData[index].m_DiffuseMapIndex = 3 * index;
-		bufferData[index].m_SpecularMapIndex = bufferData[index].m_DiffuseMapIndex + 1;
-		bufferData[index].m_ShininessMapIndex = bufferData[index].m_DiffuseMapIndex + 2;
-	}
-	StructuredBufferDesc bufferDesc(numMaterials, sizeof(bufferData[0]), true, false);
-	m_pResourceInfoBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc,
-		D3D12_RESOURCE_STATE_COPY_DEST, L"MaterialRenderResources::m_pResourceInfoBuffer");
-
-	UploadData(pRenderEnv, m_pResourceInfoBuffer, bufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+	UploadData(pRenderEnv, m_pFirstResourceIndexPerMaterialIDBuffer, bufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 		bufferData.data(), bufferData.size() * sizeof(bufferData[0]));
 }
 
