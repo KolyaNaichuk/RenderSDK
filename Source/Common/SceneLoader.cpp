@@ -28,6 +28,16 @@ Scene* SceneLoader::LoadCube()
 	return pScene;
 }
 
+Scene* SceneLoader::LoadErato()
+{
+	const wchar_t* pathToOBJFile = L"..\\..\\Resources\\Erato\\erato-1.obj";
+
+	OBJFileLoader fileLoader;
+	Scene* pScene = fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
+
+	return pScene;
+}
+
 Scene* SceneLoader::LoadSponza()
 {
 	const wchar_t* pathToOBJFile = L"..\\..\\Resources\\Sponza\\sponza.obj";
