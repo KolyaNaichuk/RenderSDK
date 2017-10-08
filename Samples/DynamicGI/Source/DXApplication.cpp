@@ -963,8 +963,7 @@ void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBuff
 	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.0001f, 3.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
 	m_pCamera->GetTransform().SetPosition(Vector3f(0.0f, 1.0f, -2.5f));
 	m_pCamera->GetTransform().SetRotation(CreateRotationXQuaternion(ToRadians(22.0f)));
-	m_pCamera->SetBackgroundColor(Color::BISQUE);
-
+	
 	if (pScene->GetNumMeshBatches() > 0)
 		m_pMeshRenderResources = new MeshRenderResources(m_pRenderEnv, pScene->GetNumMeshBatches(), pScene->GetMeshBatches());
 

@@ -18,12 +18,11 @@ Scene* SceneLoader::LoadCube()
 
 	pScene->AddPointLight(pPointLight);
 
-	SpotLight* pSpotLight = new SpotLight("Spot light", 3.0f, PI_DIV_4, PI_DIV_2);
+	SpotLight* pSpotLight = new SpotLight("Spot light", 5.0f, PI_DIV_4, PI_DIV_2);
 	pSpotLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight->SetIntensity(1.0f);
-	pSpotLight->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, -1.0f));
-	pSpotLight->GetTransform().SetRotation(CreateRotationXQuaternion(PI_DIV_2));
-
+	pSpotLight->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, -1.05f));
+	
 	pScene->AddSpotLight(pSpotLight);
 
 	return pScene;
