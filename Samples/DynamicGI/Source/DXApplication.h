@@ -100,7 +100,6 @@ private:
 
 	void InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight);
 	void InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
-	void InitConstantBuffers(const Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
 
 	void InitDownscaleAndReprojectDepthPass();
 	CommandList* RecordDownscaleAndReprojectDepthPass();
@@ -208,7 +207,7 @@ private:
 	
 private:
 	enum { kNumBackBuffers = 3 };
-
+	
 	DisplayResult m_DisplayResult;
 	TileShadingMode m_ShadingMode;
 	IndirectLightIntensity m_IndirectLightIntensity;
@@ -307,5 +306,6 @@ private:
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeDepthBufferWithMeshTypePasses[kNumBackBuffers];
-	Buffer* m_pAppDataBuffer;
+	Buffer* m_pAppDataBuffers[kNumBackBuffers];
+	void* m_pAppDataPointers[kNumBackBuffers];
 };
