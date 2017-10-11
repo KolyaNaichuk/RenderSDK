@@ -451,6 +451,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pTiledLightCullingPass(nullptr)
 	, m_pTiledShadingPass(nullptr)
 {
+	VerifyD3DResult(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED));
+
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 		m_FrameCompletionFenceValues[index] = m_pRenderEnv->m_LastSubmissionFenceValue;
 
@@ -471,6 +473,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 
 DXApplication::~DXApplication()
 {
+	CoUninitialize();
+
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pGeometryBuffer);
 	SafeDelete(m_pMeshRenderResources);
