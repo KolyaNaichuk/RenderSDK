@@ -870,8 +870,50 @@ void DXApplication::OnDestroy()
 
 void DXApplication::OnKeyDown(UINT8 key)
 {
+	const f32 cameraMoveSpeed = 0.05f;
+
+	Transform& cameraTransform = m_pCamera->GetTransform();
+	BasisAxes cameraBasisAxes = ExtractBasisAxes(cameraTransform.GetRotation());
+	
 	switch (key)
 	{
+		case 'a':
+		case 'A':
+		{
+			cameraTransform.SetPosition(cameraTransform.GetPosition() - cameraMoveSpeed * cameraBasisAxes.m_XAxis);
+			break;
+		}
+		case 'd':
+		case 'D':
+		{
+			cameraTransform.SetPosition(cameraTransform.GetPosition() + cameraMoveSpeed * cameraBasisAxes.m_XAxis);
+			break;
+		}
+		case 'w':
+		case 'W':
+		{
+			cameraTransform.SetPosition(cameraTransform.GetPosition() + cameraMoveSpeed * cameraBasisAxes.m_ZAxis);
+			break;
+		}
+		case 's':
+		case 'S':
+		{
+			cameraTransform.SetPosition(cameraTransform.GetPosition() - cameraMoveSpeed * cameraBasisAxes.m_ZAxis);
+			break;
+		}
+		case 'q':
+		case 'Q':
+		{
+			cameraTransform.SetPosition(cameraTransform.GetPosition() + cameraMoveSpeed * cameraBasisAxes.m_YAxis);
+			break;
+		}
+		case 'e':
+		case 'E':
+		{
+			cameraTransform.SetPosition(cameraTransform.GetPosition() - cameraMoveSpeed * cameraBasisAxes.m_YAxis);
+			break;
+		}
+
 		case '1':
 		{
 			UpdateDisplayResult(DisplayResult::ShadingResult);
@@ -1108,7 +1150,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 
 void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
 {
-	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.0001f, 3.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
+	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.0001f, 300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
 	m_pCamera->GetTransform().SetPosition(Vector3f(0.0f, 1.0f, -2.5f));
 	m_pCamera->GetTransform().SetRotation(CreateRotationXQuaternion(ToRadians(22.0f)));
 	
