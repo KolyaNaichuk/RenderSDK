@@ -30,21 +30,6 @@ struct ClearValue : D3D12_CLEAR_VALUE
 	ClearValue(DXGI_FORMAT format, const DepthStencilValue* pDepthStencilValue);
 };
 
-struct VertexBufferView : public D3D12_VERTEX_BUFFER_VIEW
-{
-	VertexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes);
-};
-
-struct IndexBufferView : public D3D12_INDEX_BUFFER_VIEW
-{
-	IndexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes);
-};
-
-struct ConstantBufferViewDesc : public D3D12_CONSTANT_BUFFER_VIEW_DESC
-{
-	ConstantBufferViewDesc(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes);
-};
-
 struct MemoryRange : public D3D12_RANGE
 {
 	MemoryRange(SIZE_T begin, SIZE_T end);
@@ -61,6 +46,11 @@ struct ConstantBufferDesc : public D3D12_RESOURCE_DESC
 	ConstantBufferDesc(UINT64 sizeInBytes, UINT64 alignment = 0);
 };
 
+struct ConstantBufferViewDesc : public D3D12_CONSTANT_BUFFER_VIEW_DESC
+{
+	ConstantBufferViewDesc(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes);
+};
+
 struct VertexBufferDesc : public D3D12_RESOURCE_DESC
 {
 	VertexBufferDesc(UINT numVertices, UINT strideInBytes, UINT64 alignment = 0);
@@ -69,12 +59,22 @@ struct VertexBufferDesc : public D3D12_RESOURCE_DESC
 	UINT StrideInBytes;
 };
 
+struct VertexBufferView : public D3D12_VERTEX_BUFFER_VIEW
+{
+	VertexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes);
+};
+
 struct IndexBufferDesc : public D3D12_RESOURCE_DESC
 {
 	IndexBufferDesc(UINT numIndices, UINT strideInBytes, UINT64 alignment = 0);
 
 	UINT NumIndices;
 	UINT StrideInBytes;
+};
+
+struct IndexBufferView : public D3D12_INDEX_BUFFER_VIEW
+{
+	IndexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes);
 };
 
 struct StructuredBufferDesc : public D3D12_RESOURCE_DESC

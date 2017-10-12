@@ -107,28 +107,6 @@ ResourceBarrier::ResourceBarrier(GraphicsResource* pResource, D3D12_RESOURCE_STA
 	Transition.Subresource = subresource;
 }
 
-VertexBufferView::VertexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes)
-{
-	BufferLocation = bufferLocation;
-	SizeInBytes = sizeInBytes;
-	StrideInBytes = strideInBytes;
-}
-
-IndexBufferView::IndexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes)
-{
-	assert((strideInBytes == sizeof(u16)) || (strideInBytes == sizeof(u32)));
-	
-	BufferLocation = bufferLocation;
-	SizeInBytes = sizeInBytes;
-	Format = (strideInBytes == sizeof(u16)) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
-}
-
-ConstantBufferViewDesc::ConstantBufferViewDesc(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes)
-{
-	BufferLocation = bufferLocation;
-	SizeInBytes = sizeInBytes;
-}
-
 MemoryRange::MemoryRange(SIZE_T begin, SIZE_T end)
 {
 	Begin = begin;
@@ -150,6 +128,12 @@ ConstantBufferDesc::ConstantBufferDesc(UINT64 sizeInBytes, UINT64 alignment)
 	Flags = D3D12_RESOURCE_FLAG_NONE;
 }
 
+ConstantBufferViewDesc::ConstantBufferViewDesc(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes)
+{
+	BufferLocation = bufferLocation;
+	SizeInBytes = sizeInBytes;
+}
+
 VertexBufferDesc::VertexBufferDesc(UINT numVertices, UINT strideInBytes, UINT64 alignment)
 {
 	Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
@@ -164,6 +148,13 @@ VertexBufferDesc::VertexBufferDesc(UINT numVertices, UINT strideInBytes, UINT64 
 	Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	Flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 	NumVertices = numVertices;
+	StrideInBytes = strideInBytes;
+}
+
+VertexBufferView::VertexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes)
+{
+	BufferLocation = bufferLocation;
+	SizeInBytes = sizeInBytes;
 	StrideInBytes = strideInBytes;
 }
 
@@ -182,6 +173,15 @@ IndexBufferDesc::IndexBufferDesc(UINT numIndices, UINT strideInBytes, UINT64 ali
 	Flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 	NumIndices = numIndices;
 	StrideInBytes = strideInBytes;
+}
+
+IndexBufferView::IndexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes)
+{
+	assert((strideInBytes == sizeof(u16)) || (strideInBytes == sizeof(u32)));
+
+	BufferLocation = bufferLocation;
+	SizeInBytes = sizeInBytes;
+	Format = (strideInBytes == sizeof(u16)) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
 }
 
 StructuredBufferDesc::StructuredBufferDesc(UINT numElements, UINT structureByteStride, bool createSRV, bool createUAV, UINT64 alignment)
