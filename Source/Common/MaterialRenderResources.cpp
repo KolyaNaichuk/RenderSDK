@@ -198,15 +198,33 @@ namespace
 		}
 		else if ((fileExtension == L"TGA") || (fileExtension == L"tga"))
 		{
-			DirectX::ScratchImage tempImage;
-			VerifyD3DResult(DirectX::LoadFromTGAFile(filePath.c_str(), nullptr, tempImage));
-			VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));
+			// KolyaMipLevels
+			bool enableMipLevels = false;
+			if (enableMipLevels)
+			{
+				DirectX::ScratchImage tempImage;
+				VerifyD3DResult(DirectX::LoadFromTGAFile(filePath.c_str(), nullptr, tempImage));
+				VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));
+			}
+			else
+			{
+				VerifyD3DResult(DirectX::LoadFromTGAFile(filePath.c_str(), nullptr, image));
+			}
 		}
 		else
 		{
-			DirectX::ScratchImage tempImage;
-			VerifyD3DResult(DirectX::LoadFromWICFile(filePath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, tempImage));
-			VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));
+			// KolyaMipLevels
+			bool enableMipLevels = false;
+			if (enableMipLevels)
+			{
+				DirectX::ScratchImage tempImage;
+				VerifyD3DResult(DirectX::LoadFromWICFile(filePath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, tempImage));
+				VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));
+			}
+			else
+			{
+				VerifyD3DResult(DirectX::LoadFromWICFile(filePath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, image));
+			}
 		}
 	}
 
@@ -240,7 +258,8 @@ namespace
 
 		const UINT16 depthOrArraySize = (dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D) ? UINT16(metaData.depth) : UINT16(metaData.arraySize);
 
-		ColorTextureDesc textureDesc(dimension, format, UINT64(metaData.width), UINT(metaData.height), false, true, false, depthOrArraySize);
+		ColorTextureDesc textureDesc(dimension, format, UINT64(metaData.width), UINT(metaData.height),
+			false, true, false, depthOrArraySize, UINT16(metaData.mipLevels));
 		ColorTexture* pTexture = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &textureDesc,
 			D3D12_RESOURCE_STATE_COPY_DEST, nullptr, debugImageName.c_str());
 

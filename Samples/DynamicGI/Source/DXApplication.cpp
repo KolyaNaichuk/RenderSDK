@@ -159,12 +159,13 @@ Used resources:
 
 /*
 To do:
-1.FillDepthBufferWithMeshType needs more testing. Looks like 16 bit depth might not be enough.
-2.OOB for a set of points mimics AABB. Improve implementation.
+1.OOB for a set of points mimics AABB. Improve implementation.
 
-3.When converting plane mesh to unit cube space, world matrix is not optimal for OOB.
+2.When converting plane mesh to unit cube space, world matrix is not optimal for OOB.
 For an example, plane in original coordinates is passing through point (0, 0, 0).
 OOB will have coordinates expanding from -1 to 1 not merely passing through 0 when world matrix is applied.
+
+3.Add support for mip levels. Search for keyword "KolyaMipLevels"
 
 4.Make camera transform part of Scene object.
 Can check format OpenGEX for inspiration - http://opengex.org/
@@ -580,9 +581,9 @@ void DXApplication::OnInit()
 {
 	InitRenderEnv(kBackBufferWidth, kBackBufferHeight);
 	
-	Scene* pScene = SceneLoader::LoadCube();
+	Scene* pScene = SceneLoader::LoadSponza();
 	InitScene(pScene, kBackBufferWidth, kBackBufferHeight);
-	
+		
 	InitDownscaleAndReprojectDepthPass();
 	InitFrustumMeshCullingPass();
 	
@@ -672,7 +673,7 @@ void DXApplication::OnUpdate()
 	appData.m_RcpScreenHalfSize = Vector2f(1.0f / f32(appData.m_ScreenHalfSize.m_X), 1.0f / f32(appData.m_ScreenHalfSize.m_Y));
 	appData.m_ScreenQuarterSize = Vector2u(appData.m_ScreenHalfSize.m_X >> 1, appData.m_ScreenHalfSize.m_Y >> 1);
 	appData.m_RcpScreenQuarterSize = Vector2f(1.0f / f32(appData.m_ScreenQuarterSize.m_X), 1.0f / f32(appData.m_ScreenQuarterSize.m_Y));
-	appData.m_SunWorldSpaceDir = Vector4f(0.0f, -1.0f, 0.0f, 0.0f);
+	appData.m_SunWorldSpaceDir = Vector4f(-2.0f, -1.0f, 0.0f, 0.0f);
 	appData.m_SunLightColor = Color::WHITE;
 	appData.m_ScreenTileSize = Vector2u(kTileSize, kTileSize);
 	appData.m_NumScreenTiles = Vector2u(kNumTilesX, kNumTilesY);
@@ -874,7 +875,8 @@ void DXApplication::OnDestroy()
 
 void DXApplication::OnKeyDown(UINT8 key)
 {
-	const f32 cameraMoveSpeed = 0.05f;
+	const f32 cameraMoveSpeed = 1.0f;
+	const f32 rotationInDegrees = 1.0f;
 
 	Transform& cameraTransform = m_pCamera->GetTransform();
 	BasisAxes cameraBasisAxes = ExtractBasisAxes(cameraTransform.GetRotation());
@@ -915,6 +917,24 @@ void DXApplication::OnKeyDown(UINT8 key)
 		case 'E':
 		{
 			cameraTransform.SetPosition(cameraTransform.GetPosition() - cameraMoveSpeed * cameraBasisAxes.m_YAxis);
+			break;
+		}
+		case 'x':
+		case 'X':
+		{
+			cameraTransform.SetRotation(cameraTransform.GetRotation() * CreateRotationXQuaternion(ToRadians(rotationInDegrees)));
+			break;
+		}
+		case 'y':
+		case 'Y':
+		{
+			cameraTransform.SetRotation(cameraTransform.GetRotation() * CreateRotationYQuaternion(ToRadians(rotationInDegrees)));
+			break;
+		}
+		case 'z':
+		case 'Z':
+		{
+			cameraTransform.SetRotation(cameraTransform.GetRotation() * CreateRotationZQuaternion(ToRadians(rotationInDegrees)));
 			break;
 		}
 
@@ -1077,10 +1097,10 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, false);
 	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 180, true);
+	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 512, true);
 	m_pShaderVisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
-	DescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 100, false);
+	DescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 512, false);
 	m_pShaderInvisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
 	DescriptorHeapDesc shaderVisibleSamplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 10, true);
@@ -1155,8 +1175,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
 {
 	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.0001f, 300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
-	m_pCamera->GetTransform().SetPosition(Vector3f(0.0f, 1.0f, -2.5f));
-	m_pCamera->GetTransform().SetRotation(CreateRotationXQuaternion(ToRadians(22.0f)));
+	m_pCamera->GetTransform().SetPosition(Vector3f(-60.5f, 651.5f, 38.6f));
 	
 	if (pScene->GetNumMeshBatches() > 0)
 		m_pMeshRenderResources = new MeshRenderResources(m_pRenderEnv, pScene->GetNumMeshBatches(), pScene->GetMeshBatches());
@@ -1705,13 +1724,17 @@ CommandList* DXApplication::RecordVisualizeReprojectedDepthBufferPass()
 
 void DXApplication::InitVisualizeNormalBufferPass()
 {
+	assert(m_pTiledShadingPass != nullptr);
+	const TiledShadingPass::ResourceStates* pTiledShadingPassStates =
+		m_pTiledShadingPass->GetOutputResourceStates();
+
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
 		assert(m_VisualizeNormalBufferPasses[index] == nullptr);
 
 		VisualizeTexturePass::InitParams params;
 		params.m_pRenderEnv = m_pRenderEnv;
-		params.m_InputResourceStates.m_InputTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_NormalTextureState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
 		params.m_pInputTexture = m_pGeometryBuffer->GetNormalTexture();
 		params.m_InputTextureSRV = m_pGeometryBuffer->GetNormalTexture()->GetSRVHandle();
@@ -1739,13 +1762,17 @@ CommandList* DXApplication::RecordVisualizeNormalBufferPass()
 
 void DXApplication::InitVisualizeTexCoordBufferPass()
 {
+	assert(m_pTiledShadingPass != nullptr);
+	const TiledShadingPass::ResourceStates* pTiledShadingPassStates =
+		m_pTiledShadingPass->GetOutputResourceStates();
+
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
 		assert(m_VisualizeTexCoordBufferPasses[index] == nullptr);
 
 		VisualizeTexturePass::InitParams params;
 		params.m_pRenderEnv = m_pRenderEnv;
-		params.m_InputResourceStates.m_InputTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_TexCoordTextureState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
 		params.m_pInputTexture = m_pGeometryBuffer->GetTexCoordTexture();
 		params.m_InputTextureSRV = m_pGeometryBuffer->GetTexCoordTexture()->GetSRVHandle();
@@ -2026,7 +2053,7 @@ void DXApplication::InitTiledShadingPass()
 	params.m_pFirstResourceIndexPerMaterialIDBuffer = m_pMaterialRenderResources->GetFirstResourceIndexPerMaterialIDBuffer();
 	params.m_NumMaterialTextures = m_pMaterialRenderResources->GetNumTextures();
 	params.m_ppMaterialTextures = m_pMaterialRenderResources->GetTextures();
-	params.m_EnableDirectionalLight = false;
+	params.m_EnableDirectionalLight = true;
 	
 	params.m_InputResourceStates.m_AccumLightTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	params.m_InputResourceStates.m_MeshTypeDepthTextureState = pFillMeshTypeDepthBufferPassStates->m_MeshTypeDepthTextureState;
@@ -3065,29 +3092,13 @@ CommandList* DXApplication::RecordPostRenderPass()
 		ResourceBarrier resourceBarrier(m_pDownscaleAndReprojectDepthPass->GetReprojectedDepthTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		pCommandList->ResourceBarrier(1, &resourceBarrier);
 	}
-	else if (m_DisplayResult == DisplayResult::NormalBuffer)
-	{
-		const GeometryBuffer::ResourceStates* pResourceStates = m_pGeometryBuffer->GetOutputResourceStates();
-		ResourceBarrier resourceBarrier(m_pGeometryBuffer->GetNormalTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, pResourceStates->m_NormalTextureState);
-		pCommandList->ResourceBarrier(1, &resourceBarrier);
-	}
-	else if (m_DisplayResult == DisplayResult::TexCoordBuffer)
-	{
-		const GeometryBuffer::ResourceStates* pResourceStates = m_pGeometryBuffer->GetOutputResourceStates();
-		ResourceBarrier resourceBarrier(m_pGeometryBuffer->GetTexCoordTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, pResourceStates->m_TexCoordTextureState);
-		pCommandList->ResourceBarrier(1, &resourceBarrier);
-	}
 	else if (m_DisplayResult == DisplayResult::DepthBufferWithMeshType)
 	{
 		const FillMeshTypeDepthBufferPass::ResourceStates* pResourceStates = m_pFillMeshTypeDepthBufferPass->GetOutputResourceStates();
 		ResourceBarrier resourceBarrier(m_pFillMeshTypeDepthBufferPass->GetMeshTypeDepthTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		pCommandList->ResourceBarrier(1, &resourceBarrier);
 	}
-	else
-	{
-		assert(false);
-	}
-	
+		
 	pCommandList->End();
 	return pCommandList;
 }

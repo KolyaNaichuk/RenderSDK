@@ -45,3 +45,11 @@ Scene* SceneLoader::LoadSponza()
 	OBJFileLoader fileLoader;
 	return fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
 }
+
+Scene* SceneLoader::LoadSibenik()
+{
+	const wchar_t* pathToOBJFile = L"..\\..\\Resources\\Sibenik\\sibenik.obj";
+
+	OBJFileLoader fileLoader;
+	return fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
+}

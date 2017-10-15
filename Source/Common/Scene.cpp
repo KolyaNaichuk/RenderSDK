@@ -1,7 +1,8 @@
 #include "Common/Scene.h"
 
 Scene::Scene()
-	: m_pDirectionalLight(nullptr)
+	: m_WorldBounds(Vector3f::ZERO, Vector3f::ZERO)
+	, m_pDirectionalLight(nullptr)
 {
 }
 
@@ -22,9 +23,27 @@ Scene::~Scene()
 	SafeDelete(m_pDirectionalLight);
 }
 
+const AxisAlignedBox& Scene::GetWorldBounds() const
+{
+	return m_WorldBounds;
+}
+
 void Scene::AddMeshBatch(MeshBatch* pMeshBatch)
 {
-	m_MeshBatches.emplace_back(pMeshBatch);
+	const u32 numMeshInstances = pMeshBatch->GetNumMeshInstances();
+	if (numMeshInstances > 0)
+	{
+		const AxisAlignedBox* instanceWorldAABBs = pMeshBatch->GetMeshInstanceWorldAABBs();
+
+		u32 instanceIndex = 0;
+		if (m_MeshBatches.empty())
+			m_WorldBounds = instanceWorldAABBs[instanceIndex++];
+		
+		while (instanceIndex < numMeshInstances)
+			m_WorldBounds = AxisAlignedBox(m_WorldBounds, instanceWorldAABBs[instanceIndex++]);
+
+		m_MeshBatches.emplace_back(pMeshBatch);
+	}
 }
 
 std::size_t Scene::GetNumMeshBatches() const
