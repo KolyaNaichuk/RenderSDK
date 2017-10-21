@@ -348,14 +348,14 @@ Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshFlags, c
 			else
 				GenerateVertexAndIndexData<u16>(objFileMesh, &pVertexData, &pIndexData);
 
-			u32 numInstances = 1;
+			const u8 numInstances = 1;
 			Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
 			pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
-						
+
 			ConvertVertexAndIndexData(convertMeshFlags, pVertexData, pIndexData);
 			Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices,
 				objFileMesh.m_MaterialIndex, primitiveTopologyType, primitiveTopology);
-			
+
 			pMeshBatch->AddMesh(&mesh);
 		}
 	}

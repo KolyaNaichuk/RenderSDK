@@ -163,6 +163,7 @@ private:
 	void InitVisualizeAccumLightPass();
 	CommandList* RecordVisualizeAccumLightPass();
 
+	CommandList* RecordDisplayResultPass();
 	CommandList* RecordPostRenderPass();
 	
 	// Old
@@ -197,8 +198,7 @@ private:
 	CommandList* RecordVisualizeSpotLightTiledShadowMapPass();
 	CommandList* RecordVisualizePointLightTiledShadowMapPass();
 	CommandList* RecordVisualizeIntensityPass();
-	CommandList* RecordDisplayResultPass();
-	
+		
 	void UpdateDisplayResult(DisplayResult displayResult);
 		
 #ifdef DEBUG_RENDER_PASS

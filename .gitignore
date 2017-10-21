@@ -1,11 +1,15 @@
 RenderSDK/Bin/
+RenderSDK/x64/
 Library/
 Samples/Bin/
 Samples/DynamicGI/Win32/
+Samples/DynamicGI/x64/
 Samples/DynamicGI/Shaders/
 Samples/HelloRectangle/Win32/
+Samples/HelloRectangle/x64/
 Samples/HelloRectangle/Shaders/
 Samples/ToneMapping/Win32/
+Samples/ToneMapping/x64/
 Samples/ToneMapping/Shaders/
 *.db
 *.opendb
@@ -13,9 +17,5 @@ Samples/ToneMapping/Shaders/
 *.sdf
 *.suo
 *.user
-RenderSDK/x64/
 ipch/
-Samples/ToneMapping/x64/
-Samples/DynamicGI/x64/
-Samples/HelloRectangle/x64/
 .vs/

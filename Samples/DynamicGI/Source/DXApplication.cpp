@@ -314,8 +314,8 @@ namespace
 enum
 {
 	kTileSize = 16,
-	kNumTilesX = 40,
-	kNumTilesY = 40,
+	kNumTilesX = 90,
+	kNumTilesY = 60,
 	kBackBufferWidth = kNumTilesX * kTileSize,
 	kBackBufferHeight = kNumTilesY * kTileSize,
 
@@ -583,7 +583,7 @@ void DXApplication::OnInit()
 	
 	Scene* pScene = SceneLoader::LoadSponza();
 	InitScene(pScene, kBackBufferWidth, kBackBufferHeight);
-		
+	
 	InitDownscaleAndReprojectDepthPass();
 	InitFrustumMeshCullingPass();
 	
@@ -639,10 +639,6 @@ void DXApplication::OnInit()
 	InitVisualizeSpecularBufferPass();
 	InitVisualizePointLightTiledShadowMapPass();
 	InitVisualizeIntensityPass();
-
-#ifdef DEBUG_RENDER_PASS
-	InitDebugRenderPass(pScene);
-#endif // DEBUG_RENDER_PASS
 	*/
 }
 
@@ -673,7 +669,7 @@ void DXApplication::OnUpdate()
 	appData.m_RcpScreenHalfSize = Vector2f(1.0f / f32(appData.m_ScreenHalfSize.m_X), 1.0f / f32(appData.m_ScreenHalfSize.m_Y));
 	appData.m_ScreenQuarterSize = Vector2u(appData.m_ScreenHalfSize.m_X >> 1, appData.m_ScreenHalfSize.m_Y >> 1);
 	appData.m_RcpScreenQuarterSize = Vector2f(1.0f / f32(appData.m_ScreenQuarterSize.m_X), 1.0f / f32(appData.m_ScreenQuarterSize.m_Y));
-	appData.m_SunWorldSpaceDir = Vector4f(-2.0f, -1.0f, 0.0f, 0.0f);
+	appData.m_SunWorldSpaceDir = Vector4f(0.0f, 0.0f, 1.0f, 0.0f);
 	appData.m_SunLightColor = Color::WHITE;
 	appData.m_ScreenTileSize = Vector2u(kTileSize, kTileSize);
 	appData.m_NumScreenTiles = Vector2u(kNumTilesX, kNumTilesY);
@@ -876,13 +872,34 @@ void DXApplication::OnDestroy()
 void DXApplication::OnKeyDown(UINT8 key)
 {
 	const f32 cameraMoveSpeed = 1.0f;
-	const f32 rotationInDegrees = 1.0f;
+	const f32 rotationInDegrees = 2.0f;
 
 	Transform& cameraTransform = m_pCamera->GetTransform();
 	BasisAxes cameraBasisAxes = ExtractBasisAxes(cameraTransform.GetRotation());
-	
+
 	switch (key)
 	{
+		case VK_UP:
+		{
+			cameraTransform.SetRotation(CreateRotationXQuaternion(ToRadians(-rotationInDegrees)) * cameraTransform.GetRotation());
+			break;
+		}
+		case VK_DOWN:
+		{
+			cameraTransform.SetRotation(CreateRotationXQuaternion(ToRadians(rotationInDegrees)) * cameraTransform.GetRotation());
+			break;
+		}
+		case VK_LEFT:
+		{
+			cameraTransform.SetRotation(CreateRotationYQuaternion(ToRadians(-rotationInDegrees)) * cameraTransform.GetRotation());
+			break;
+		}
+		case VK_RIGHT:
+		{
+			cameraTransform.SetRotation(CreateRotationYQuaternion(ToRadians(rotationInDegrees)) * cameraTransform.GetRotation());
+			break;
+		}
+
 		case 'a':
 		case 'A':
 		{
@@ -919,25 +936,7 @@ void DXApplication::OnKeyDown(UINT8 key)
 			cameraTransform.SetPosition(cameraTransform.GetPosition() - cameraMoveSpeed * cameraBasisAxes.m_YAxis);
 			break;
 		}
-		case 'x':
-		case 'X':
-		{
-			cameraTransform.SetRotation(cameraTransform.GetRotation() * CreateRotationXQuaternion(ToRadians(rotationInDegrees)));
-			break;
-		}
-		case 'y':
-		case 'Y':
-		{
-			cameraTransform.SetRotation(cameraTransform.GetRotation() * CreateRotationYQuaternion(ToRadians(rotationInDegrees)));
-			break;
-		}
-		case 'z':
-		case 'Z':
-		{
-			cameraTransform.SetRotation(cameraTransform.GetRotation() * CreateRotationZQuaternion(ToRadians(rotationInDegrees)));
-			break;
-		}
-
+				
 		case '1':
 		{
 			UpdateDisplayResult(DisplayResult::ShadingResult);
@@ -1078,6 +1077,24 @@ void DXApplication::OnKeyDown(UINT8 key)
 		}
 		*/
 	}
+
+#if 0
+	const auto& pos = cameraTransform.GetPosition();
+	const auto& rot = cameraTransform.GetRotation();
+	
+	std::stringstream stream;
+	stream << "Position: "
+		<< pos.m_X << ", "
+		<< pos.m_Y << ", "
+		<< pos.m_Z << ", "
+		<< " rotation: "
+		<< rot.m_X << ", "
+		<< rot.m_Y << ", "
+		<< rot.m_Z << ", "
+		<< rot.m_W << "\n";
+
+	OutputDebugStringA(stream.str().c_str());
+#endif
 }
 
 void DXApplication::OnKeyUp(UINT8 key)
@@ -1174,9 +1191,12 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 
 void DXApplication::InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight)
 {
-	m_pCamera = new Camera(Camera::ProjType_Perspective, 0.0001f, 300.0f, FLOAT(backBufferWidth) / FLOAT(backBufferHeight));
-	m_pCamera->GetTransform().SetPosition(Vector3f(-60.5f, 651.5f, 38.6f));
-	
+	f32 aspectRatio = FLOAT(backBufferWidth) / FLOAT(backBufferHeight);
+
+	m_pCamera = new Camera(Camera::ProjType_Perspective, pScene->GetCamera()->GetNearClipPlane(), pScene->GetCamera()->GetFarClipPlane(), aspectRatio);	
+	m_pCamera->GetTransform().SetPosition(pScene->GetCamera()->GetTransform().GetPosition());
+	m_pCamera->GetTransform().SetRotation(pScene->GetCamera()->GetTransform().GetRotation());
+			
 	if (pScene->GetNumMeshBatches() > 0)
 		m_pMeshRenderResources = new MeshRenderResources(m_pRenderEnv, pScene->GetNumMeshBatches(), pScene->GetMeshBatches());
 
@@ -2053,7 +2073,7 @@ void DXApplication::InitTiledShadingPass()
 	params.m_pFirstResourceIndexPerMaterialIDBuffer = m_pMaterialRenderResources->GetFirstResourceIndexPerMaterialIDBuffer();
 	params.m_NumMaterialTextures = m_pMaterialRenderResources->GetNumTextures();
 	params.m_ppMaterialTextures = m_pMaterialRenderResources->GetTextures();
-	params.m_EnableDirectionalLight = true;
+	params.m_EnableDirectionalLight = false;
 	
 	params.m_InputResourceStates.m_AccumLightTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	params.m_InputResourceStates.m_MeshTypeDepthTextureState = pFillMeshTypeDepthBufferPassStates->m_MeshTypeDepthTextureState;
@@ -3076,15 +3096,9 @@ CommandList* DXApplication::RecordPostRenderPass()
 		ResourceBarrier resourceBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 		pCommandList->ResourceBarrier(1, &resourceBarrier);
 	}
-	
 	if (m_DisplayResult == DisplayResult::ShadingResult)
 	{
 		ResourceBarrier resourceBarrier(m_pAccumLightTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		pCommandList->ResourceBarrier(1, &resourceBarrier);
-	}
-	else if (m_DisplayResult == DisplayResult::DepthBuffer)
-	{
-		ResourceBarrier resourceBarrier(m_pDepthTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 		pCommandList->ResourceBarrier(1, &resourceBarrier);
 	}
 	else if (m_DisplayResult == DisplayResult::ReprojectedDepthBuffer)
@@ -3212,7 +3226,7 @@ void DXApplication::OuputDebugRenderPassResult()
 	OutputDebugStringA("1.Debug =========================\n");
 	++frameNumber;
 
-	using ElementType = Vector2u;
+	using ElementType = u32;
 	if (frameNumber == frameNumberForOutput)
 	{
 		auto elementFormatter = [](const void* pElementData)
@@ -3220,17 +3234,11 @@ void DXApplication::OuputDebugRenderPassResult()
 			const ElementType* pElement = (ElementType*)pElementData;
 
 			std::stringstream stringStream;
-			stringStream << pElement->m_X << ", " << pElement->m_Y;
 			return stringStream.str();
 		};
 		OutputBufferContent(m_pRenderEnv,
-			m_pCalcShadingRectanglesPass->GetShadingRectangleMinPointBuffer(),
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-			sizeof(ElementType),
-			elementFormatter);
-		OutputBufferContent(m_pRenderEnv,
-			m_pCalcShadingRectanglesPass->GetShadingRectangleMaxPointBuffer(),
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer(),
+			D3D12_RESOURCE_STATE_COPY_SOURCE,
 			sizeof(ElementType),
 			elementFormatter);
 	}		

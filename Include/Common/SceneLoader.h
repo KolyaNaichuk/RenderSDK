@@ -9,4 +9,5 @@ public:
 	static Scene* LoadErato();
 	static Scene* LoadSponza();
 	static Scene* LoadSibenik();
+	static Scene* LoadCornellBox();
 };

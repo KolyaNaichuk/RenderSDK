@@ -2,30 +2,46 @@
 
 Scene::Scene()
 	: m_WorldBounds(Vector3f::ZERO, Vector3f::ZERO)
+	, m_pCamera(nullptr)
 	, m_pDirectionalLight(nullptr)
 {
 }
 
 Scene::~Scene()
 {	
-	for (std::size_t index = 0; index < m_MeshBatches.size(); ++index)
+	SafeDelete(m_pCamera);
+	SafeDelete(m_pDirectionalLight);
+
+	for (decltype(m_MeshBatches.size()) index = 0; index < m_MeshBatches.size(); ++index)
 		SafeDelete(m_MeshBatches[index]);
 
-	for (std::size_t index = 0; index < m_Materials.size(); ++index)
+	for (decltype(m_Materials.size()) index = 0; index < m_Materials.size(); ++index)
 		SafeDelete(m_Materials[index]);
 	
-	for (std::size_t index = 0; index < m_PointLights.size(); ++index)
+	for (decltype(m_PointLights.size()) index = 0; index < m_PointLights.size(); ++index)
 		SafeDelete(m_PointLights[index]);
 	
-	for (std::size_t index = 0; index < m_SpotLights.size(); ++index)
+	for (decltype(m_SpotLights.size()) index = 0; index < m_SpotLights.size(); ++index)
 		SafeDelete(m_SpotLights[index]);
-
-	SafeDelete(m_pDirectionalLight);
 }
 
 const AxisAlignedBox& Scene::GetWorldBounds() const
 {
 	return m_WorldBounds;
+}
+
+Camera* Scene::GetCamera()
+{
+	return m_pCamera;
+}
+
+void Scene::SetCamera(Camera* pCamera)
+{
+	if (m_pCamera != pCamera)
+	{
+		SafeDelete(m_pCamera);
+		m_pCamera = pCamera;
+	}
 }
 
 void Scene::AddMeshBatch(MeshBatch* pMeshBatch)
@@ -101,7 +117,7 @@ SpotLight** Scene::GetSpotLights()
 	return m_SpotLights.data();
 }
 
-const DirectionalLight* Scene::GetDirectionalLight() const
+DirectionalLight* Scene::GetDirectionalLight()
 {
 	return m_pDirectionalLight;
 }
