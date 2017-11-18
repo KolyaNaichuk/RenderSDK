@@ -1,5 +1,3 @@
-#include "VoxelGrid.hlsl"
-
 struct GSInput
 {
 	float4 worldSpacePos		: SV_Position;
@@ -9,7 +7,7 @@ struct GSInput
 struct GSOutput
 {
 	float4 clipSpacePos			: SV_Position;
-	float4 worldSpacePos		: POSITION;
+	float3 worldSpacePos		: POSITION;
 	float3 worldSpaceNormal		: NORMAL;
 };
 
@@ -37,13 +35,15 @@ int FindViewDirectionWithLargestProjectedArea(float3 worldSpaceFaceNormal)
 void Main(triangle GSInput input[3], inout TriangleStream<GSOutput> outputStream)
 {
 	float3 worldSpaceFaceNormal = normalize(input[0].worldSpaceNormal + input[1].worldSpaceNormal + input[2].worldSpaceNormal);
-	int viewIndex = FindViewDirectionWithLargestProjectedArea(worldSpaceFaceNormal);
 	
+	int viewIndex = FindViewDirectionWithLargestProjectedArea(worldSpaceFaceNormal);
+	float4x4 viewProjMatrix = g_Transform.viewProjMatrices[viewIndex];
+
 	for (int index = 0; index < 3; ++index)
 	{
 		GSOutput output;
-		output.clipSpacePos = mul(g_Transform.viewProjMatrices[viewIndex], input[index].worldSpacePos);
-		output.worldSpacePos = input[index].worldSpacePos;
+		output.clipSpacePos = mul(viewProjMatrix, input[index].worldSpacePos);
+		output.worldSpacePos = input[index].worldSpacePos.xyz;
 		output.worldSpaceNormal = input[index].worldSpaceNormal;
 
 		outputStream.Append(output);

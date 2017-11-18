@@ -10,7 +10,6 @@
 #include "D3DWrapper/Fence.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/SwapChain.h"
-#include "RenderPasses/ClearVoxelGridPass.h"
 #include "RenderPasses/CreateVoxelGridPass.h"
 #include "RenderPasses/CreateRenderShadowMapCommandsPass.h"
 #include "RenderPasses/InjectVirtualPointLightsPass.h"
@@ -416,7 +415,6 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pRenderEnv(new RenderEnv())
 	, m_pFence(nullptr)
 	, m_BackBufferIndex(0)
-	, m_pClearVoxelGridPass(nullptr)
 	, m_pCreateVoxelGridPass(nullptr)
 	, m_pInjectVirtualPointLightsPass(nullptr)
 	, m_pPropagateLightPass(nullptr)
@@ -538,7 +536,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pNumShadowCastingSpotLightsBuffer);
 	SafeDelete(m_pDrawSpotLightShadowCasterCommandBuffer);
 	SafeDelete(m_pNumDrawSpotLightShadowCastersBuffer);
-	SafeDelete(m_pClearVoxelGridPass);
 	SafeDelete(m_pCreateVoxelGridPass);
 	SafeDelete(m_pInjectVirtualPointLightsPass);
 	SafeDelete(m_pPropagateLightPass);
@@ -628,7 +625,6 @@ void DXApplication::OnInit()
 	}
 	
 	InitCreateVoxelGridPass();
-	InitClearVoxelGridPass();
 	InitInjectVirtualPointLightsPass();
 	InitPropagateLightPass();
 		
@@ -850,8 +846,6 @@ void DXApplication::OnRender()
 		submissionBatch.emplace_back(RecordSetupSpotLightTiledShadowMapPass());
 		submissionBatch.emplace_back(RecordRenderSpotLightTiledShadowMapPass());
 	}
-			
-	submissionBatch.emplace_back(RecordClearVoxelGridPass());
 	submissionBatch.emplace_back(RecordCreateVoxelGridPass());
 	submissionBatch.emplace_back(RecordInjectVirtualPointLightsPass());
 
@@ -2128,27 +2122,6 @@ void DXApplication::InitTiledShadingPass()
 		params.m_pSpotLightIndexPerTileBuffer = nullptr;
 		params.m_pSpotLightRangePerTileBuffer = nullptr;
 	}
-	
-	bool enableIndirectLight = false;
-	if (enableIndirectLight)
-	{
-		assert(false);
-		params.m_EnableIndirectLight = true;
-		params.m_pIntensityRCoeffsTexture = nullptr;
-		params.m_pIntensityGCoeffsTexture = nullptr;
-		params.m_pIntensityBCoeffsTexture = nullptr;
-
-		params.m_InputResourceStates.m_IntensityRCoeffsTextureState;
-		params.m_InputResourceStates.m_IntensityGCoeffsTextureState;
-		params.m_InputResourceStates.m_IntensityBCoeffsTextureState;
-	}
-	else
-	{
-		params.m_EnableIndirectLight = false;
-		params.m_pIntensityRCoeffsTexture = nullptr;
-		params.m_pIntensityGCoeffsTexture = nullptr;
-		params.m_pIntensityBCoeffsTexture = nullptr;
-	}
 
 	m_pTiledShadingPass = new TiledShadingPass(&params);
 }
@@ -2440,26 +2413,6 @@ void DXApplication::InitRenderPointLightTiledShadowMapPass()
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pPointLightViewTileProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), pLightFrustumBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	*/
-}
-
-void DXApplication::InitClearVoxelGridPass()
-{
-	assert(false);
-	/*
-	ClearVoxelGridPass::InitParams initParams;
-	initParams.m_pRenderEnv = m_pRenderEnv;
-	initParams.m_NumGridCellsX = kNumGridCellsX;
-	initParams.m_NumGridCellsY = kNumGridCellsY;
-	initParams.m_NumGridCellsZ = kNumGridCellsZ;
-
-	m_pClearVoxelGridPass = new ClearVoxelGridPass(&initParams);
-
-	m_pClearVoxelGridResources->m_RequiredResourceStates.emplace_back(m_pGridBuffer, m_pGridBuffer->GetWriteState());
-	m_pClearVoxelGridResources->m_SRVHeapStart = m_pShaderVisibleSRVHeap->Allocate();
-
-	m_pDevice->CopyDescriptor(m_pClearVoxelGridResources->m_SRVHeapStart, m_pGridConfigDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	m_pDevice->CopyDescriptor(m_pShaderVisibleSRVHeap->Allocate(), m_pGridBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	*/
 }
 
@@ -2894,21 +2847,6 @@ CommandList* DXApplication::RecordRenderPointLightTiledShadowMapPass()
 	renderParams.m_pNumDrawShadowCastersBuffer = m_pNumDrawPointLightShadowCastersBuffer;
 
 	m_pRenderPointLightTiledShadowMapPass->Record(&renderParams);
-	return renderParams.m_pCommandList;
-	*/
-	return nullptr;
-}
-
-CommandList* DXApplication::RecordClearVoxelGridPass()
-{
-	assert(false);
-	/*
-	ClearVoxelGridPass::RenderParams renderParams;
-	renderParams.m_pRenderEnv = m_pRenderEnv;
-	renderParams.m_pCommandList = m_pCommandListPool->Create(L"pClearGridCommandList");
-	renderParams.m_pResources = m_pClearVoxelGridResources;
-
-	m_pClearVoxelGridPass->Record(&renderParams);
 	return renderParams.m_pCommandList;
 	*/
 	return nullptr;

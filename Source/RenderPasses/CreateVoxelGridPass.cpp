@@ -1,67 +1,36 @@
 #include "RenderPasses/CreateVoxelGridPass.h"
 #include "D3DWrapper/PipelineState.h"
-#include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/CommandSignature.h"
 #include "D3DWrapper/CommandList.h"
-#include "D3DWrapper/GraphicsResource.h"
-#include "D3DWrapper/GraphicsUtils.h"
 #include "D3DWrapper/DescriptorHeap.h"
+#include "D3DWrapper/GraphicsUtils.h"
+#include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "Common/MeshRenderResources.h"
 
-enum RootParams
+namespace
 {
-	kCBVRootParamVS = 0,
-	kCBVRootParamGS,
-	kSRVRootParamPS,
-	kConstant32BitRootParamPS,
-	kNumRootParams
-};
+	enum RootParams
+	{
+		kCBVRootParamVS = 0,
+		kCBVRootParamGS,
+		kSRVRootParamPS,
+		kConstant32BitRootParamPS,
+		kNumRootParams
+	};
+}
 
 CreateVoxelGridPass::CreateVoxelGridPass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 	, m_pCommandSignature(nullptr)
+	, m_pVoxelColorAndOcclusionMaskTexture(nullptr)
+	, m_pVoxelNormalMasksTexture(nullptr)
 {
-	assert(false);
-	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
-
-	Shader vertexShader(L"Shaders//CreateVoxelGridVS.hlsl", "Main", "vs_4_0");
-	Shader geometryShader(L"Shaders//CreateVoxelGridGS.hlsl", "Main", "gs_4_0");
-	Shader pixelShader(L"Shaders//CreateVoxelGridPS.hlsl", "Main", "ps_5_1");
-	
-	D3D12_DESCRIPTOR_RANGE descriptorRangesVS[] = {CBVDescriptorRange(1, 0)};
-	D3D12_DESCRIPTOR_RANGE descriptorRangesGS[] = {CBVDescriptorRange(1, 0)};
-	D3D12_DESCRIPTOR_RANGE descriptorRangesPS[] = {CBVDescriptorRange(1, 0), SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0)};
-		
-	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kCBVRootParamVS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesVS), &descriptorRangesVS[0], D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParams[kCBVRootParamGS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesGS), &descriptorRangesGS[0], D3D12_SHADER_VISIBILITY_GEOMETRY);
-	rootParams[kSRVRootParamPS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesPS), &descriptorRangesPS[0], D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParams[kConstant32BitRootParamPS] = Root32BitConstantsParameter(1, D3D12_SHADER_VISIBILITY_PIXEL, 1);
-		
-	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CreateVoxelGridPass::m_pRootSignature");
-		
-	GraphicsPipelineStateDesc pipelineStateDesc;
-	pipelineStateDesc.SetRootSignature(m_pRootSignature);
-	pipelineStateDesc.SetVertexShader(&vertexShader);
-	pipelineStateDesc.SetGeometryShader(&geometryShader);
-	pipelineStateDesc.SetPixelShader(&pixelShader);
-	pipelineStateDesc.RasterizerState = RasterizerDesc(RasterizerDesc::CullNoneConservative);
-	//pipelineStateDesc.InputLayout = *pMeshBatch->GetInputLayout(); // Kolya. Fix me
-	//pipelineStateDesc.PrimitiveTopologyType = pMeshBatch->GetPrimitiveTopologyType(); // Kolya. Fix me
-	
-	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CreateVoxelGridPass::m_pPipelineState");
-
-	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] =
-	{
-		Constant32BitArgument(kConstant32BitRootParamPS, 0, 1),
-		DrawIndexedArgument()
-	};
-	//CommandSignatureDesc commandSignatureDesc(sizeof(DrawMeshCommand), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
-	//m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"RenderGBufferPass::m_pCommandSignature");
+	InitResources(pParams);
+	InitRootSignature(pParams);
+	InitPipelineState(pParams);
+	InitCommandSignature(pParams);
 }
 
 CreateVoxelGridPass::~CreateVoxelGridPass()
@@ -69,6 +38,8 @@ CreateVoxelGridPass::~CreateVoxelGridPass()
 	SafeDelete(m_pCommandSignature);
 	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pRootSignature);
+	SafeDelete(m_pVoxelColorAndOcclusionMaskTexture);
+	SafeDelete(m_pVoxelNormalMasksTexture);
 }
 
 void CreateVoxelGridPass::Record(RenderParams* pParams)
@@ -103,4 +74,72 @@ void CreateVoxelGridPass::Record(RenderParams* pParams)
 	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshBatch->GetNumMeshes(), pParams->m_pDrawMeshCommandBuffer, 0, pParams->m_pNumDrawMeshesBuffer, 0);
 	pCommandList->End();
 	*/
+}
+
+void CreateVoxelGridPass::InitResources(InitParams* pParams)
+{
+}
+
+void CreateVoxelGridPass::InitRootSignature(InitParams* pParams)
+{
+	assert(false);
+	/*
+	D3D12_DESCRIPTOR_RANGE descriptorRangesVS[] = { CBVDescriptorRange(1, 0) };
+	D3D12_DESCRIPTOR_RANGE descriptorRangesGS[] = { CBVDescriptorRange(1, 0) };
+	D3D12_DESCRIPTOR_RANGE descriptorRangesPS[] = { CBVDescriptorRange(1, 0), SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0) };
+
+	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
+	rootParams[kCBVRootParamVS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesVS), &descriptorRangesVS[0], D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParams[kCBVRootParamGS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesGS), &descriptorRangesGS[0], D3D12_SHADER_VISIBILITY_GEOMETRY);
+	rootParams[kSRVRootParamPS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesPS), &descriptorRangesPS[0], D3D12_SHADER_VISIBILITY_PIXEL);
+	rootParams[kConstant32BitRootParamPS] = Root32BitConstantsParameter(1, D3D12_SHADER_VISIBILITY_PIXEL, 1);
+
+	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CreateVoxelGridPass::m_pRootSignature");
+	*/
+}
+
+void CreateVoxelGridPass::InitPipelineState(InitParams* pParams)
+{
+	assert(false);
+	// DepthStencilDesc disabled
+
+	/*
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
+	Shader vertexShader(L"Shaders//CreateVoxelGridVS.hlsl", "Main", "vs_4_0");
+	Shader geometryShader(L"Shaders//CreateVoxelGridGS.hlsl", "Main", "gs_4_0");
+	Shader pixelShader(L"Shaders//CreateVoxelGridPS.hlsl", "Main", "ps_5_1");
+
+	GraphicsPipelineStateDesc pipelineStateDesc;
+	pipelineStateDesc.SetRootSignature(m_pRootSignature);
+	pipelineStateDesc.SetVertexShader(&vertexShader);
+	pipelineStateDesc.SetGeometryShader(&geometryShader);
+	pipelineStateDesc.SetPixelShader(&pixelShader);
+	pipelineStateDesc.RasterizerState = RasterizerDesc(RasterizerDesc::CullNoneConservative);
+	pipelineStateDesc.InputLayout = *pMeshBatch->GetInputLayout(); // Kolya. Fix me
+	pipelineStateDesc.PrimitiveTopologyType = pMeshBatch->GetPrimitiveTopologyType(); // Kolya. Fix me
+
+	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CreateVoxelGridPass::m_pPipelineState");
+	*/
+}
+
+void CreateVoxelGridPass::InitCommandSignature(InitParams* pParams)
+{
+	assert(false);
+	/*
+	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] =
+	{
+		Constant32BitArgument(kConstant32BitRootParamPS, 0, 1),
+		DrawIndexedArgument()
+	};
+	CommandSignatureDesc commandSignatureDesc(sizeof(DrawMeshCommand), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
+	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"RenderGBufferPass::m_pCommandSignature");
+	*/
+}
+
+void CreateVoxelGridPass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+{
+	if (currState != requiredState)
+		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
 }

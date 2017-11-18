@@ -108,9 +108,6 @@
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -267,6 +264,9 @@
     <ClInclude Include="..\Include\RenderPasses\FillMeshTypeDepthBufferPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateVoxelizeCommandsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -351,9 +351,6 @@
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp">
@@ -500,6 +497,9 @@
     <ClCompile Include="..\Source\RenderPasses\FillMeshTypeDepthBufferPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateVoxelizeCommandsPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -511,25 +511,10 @@
     <None Include="..\Shaders\FullScreenTriangleVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\CreateVoxelGridVS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CreateVoxelGridPS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CreateVoxelGridGS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\VisualizeVoxelGridPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\Reconstruction.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\ClearVoxelGridCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\VoxelGrid.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\CalcTextureLuminancePS.hlsl">
@@ -626,6 +611,18 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\FillMeshTypeDepthBufferPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateVoxelGridVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateVoxelGridPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateVoxelGridGS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateVoxelizeCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

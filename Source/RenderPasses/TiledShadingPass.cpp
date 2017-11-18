@@ -102,10 +102,6 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_SpotLightIndexPerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightRangePerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	
-	m_OutputResourceStates.m_IntensityRCoeffsTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_IntensityGCoeffsTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_IntensityBCoeffsTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-
 	assert(m_ResourceBarriers.empty());
 	CreateResourceBarrierIfRequired(pParams->m_pAccumLightTexture,
 		pParams->m_InputResourceStates.m_AccumLightTextureState,
@@ -181,21 +177,6 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 			m_OutputResourceStates.m_SpotLightRangePerTileBufferState);
 	}
 
-	if (pParams->m_EnableIndirectLight)
-	{
-		CreateResourceBarrierIfRequired(pParams->m_pIntensityRCoeffsTexture,
-			pParams->m_InputResourceStates.m_IntensityRCoeffsTextureState,
-			m_OutputResourceStates.m_IntensityRCoeffsTextureState);
-
-		CreateResourceBarrierIfRequired(pParams->m_pIntensityGCoeffsTexture,
-			pParams->m_InputResourceStates.m_IntensityGCoeffsTextureState,
-			m_OutputResourceStates.m_IntensityGCoeffsTextureState);
-
-		CreateResourceBarrierIfRequired(pParams->m_pIntensityBCoeffsTexture,
-			pParams->m_InputResourceStates.m_IntensityBCoeffsTextureState,
-			m_OutputResourceStates.m_IntensityBCoeffsTextureState);
-	}
-
 	m_SRVHeapStartVS = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStartVS,
 		pParams->m_pShadingRectangleMinPointBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -248,18 +229,6 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 			pParams->m_pSpotLightRangePerTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
-
-	if (pParams->m_EnableIndirectLight)
-	{
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pIntensityRCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pIntensityGCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pIntensityBCoeffsTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
 	
 	for (decltype(pParams->m_NumMaterialTextures) index = 0; index < pParams->m_NumMaterialTextures; ++index)
 	{
@@ -306,11 +275,8 @@ void TiledShadingPass::InitRootSignature(InitParams* pParams)
 	
 	if (pParams->m_EnableSpotLights)
 		srvRangesPS.push_back(SRVDescriptorRange(4, 9));
-	
-	if (pParams->m_EnableIndirectLight)
-		srvRangesPS.push_back(SRVDescriptorRange(3, 13));
-	
-	srvRangesPS.push_back(SRVDescriptorRange(pParams->m_NumMaterialTextures, 16));
+		
+	srvRangesPS.push_back(SRVDescriptorRange(pParams->m_NumMaterialTextures, 13));
 	rootParams[kRootSRVTableParamPS] = RootDescriptorTableParameter((UINT)srvRangesPS.size(), srvRangesPS.data(), D3D12_SHADER_VISIBILITY_PIXEL);
 
 	std::vector<D3D12_DESCRIPTOR_RANGE> samplerRangesPS = {SamplerRange(2, 0)};
@@ -332,7 +298,6 @@ void TiledShadingPass::InitPipelineState(InitParams* pParams)
 	std::string enablePointLightsStr = std::to_string(pParams->m_EnablePointLights ? 1 : 0);
 	std::string enableSpotLightsStr = std::to_string(pParams->m_EnableSpotLights ? 1 : 0);
 	std::string enableDirectionalLightStr = std::to_string(pParams->m_EnableDirectionalLight ? 1 : 0);
-	std::string enableIndirectLightStr = std::to_string(pParams->m_EnableIndirectLight ? 1 : 0);
 
 	const ShaderMacro shaderDefines[] =
 	{
@@ -341,7 +306,6 @@ void TiledShadingPass::InitPipelineState(InitParams* pParams)
 		ShaderMacro("ENABLE_POINT_LIGHTS", enablePointLightsStr.c_str()),
 		ShaderMacro("ENABLE_SPOT_LIGHTS", enableSpotLightsStr.c_str()),
 		ShaderMacro("ENABLE_DIRECTIONAL_LIGHT", enableDirectionalLightStr.c_str()),
-		ShaderMacro("ENABLE_INDIRECT_LIGHT", enableIndirectLightStr.c_str()),
 		ShaderMacro()
 	};
 	

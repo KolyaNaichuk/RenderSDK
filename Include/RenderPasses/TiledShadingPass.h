@@ -38,10 +38,6 @@ public:
 		D3D12_RESOURCE_STATES m_SpotLightPropsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightIndexPerTileBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightRangePerTileBufferState;
-
-		D3D12_RESOURCE_STATES m_IntensityRCoeffsTextureState;
-		D3D12_RESOURCE_STATES m_IntensityGCoeffsTextureState;
-		D3D12_RESOURCE_STATES m_IntensityBCoeffsTextureState;
 	};
 
 	struct InitParams
@@ -75,11 +71,6 @@ public:
 		Buffer* m_pSpotLightPropsBuffer;
 		Buffer* m_pSpotLightIndexPerTileBuffer;
 		Buffer* m_pSpotLightRangePerTileBuffer;
-
-		bool m_EnableIndirectLight;
-		ColorTexture* m_pIntensityRCoeffsTexture;
-		ColorTexture* m_pIntensityGCoeffsTexture;
-		ColorTexture* m_pIntensityBCoeffsTexture;
 	};
 	
 	struct RenderParams

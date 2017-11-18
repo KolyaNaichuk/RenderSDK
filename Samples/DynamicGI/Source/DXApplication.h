@@ -36,7 +36,6 @@ class FrustumLightCullingPass;
 class Scene;
 
 // Old
-class ClearVoxelGridPass;
 class CreateVoxelGridPass;
 class InjectVirtualPointLightsPass;
 class PropagateLightPass;
@@ -167,7 +166,6 @@ private:
 	CommandList* RecordPostRenderPass();
 	
 	// Old
-	void InitClearVoxelGridPass();
 	void InitCreateVoxelGridPass();
 	void InitInjectVirtualPointLightsPass();
 	void InitPropagateLightPass();
@@ -189,7 +187,6 @@ private:
 	CommandList* RecordSetupPointLightTiledShadowMapPass();
 	CommandList* RecordRenderSpotLightTiledShadowMapPass();
 	CommandList* RecordRenderPointLightTiledShadowMapPass();
-	CommandList* RecordClearVoxelGridPass();
 	CommandList* RecordCreateVoxelGridPass();
 	CommandList* RecordInjectVirtualPointLightsPass();
 	CommandList* RecordPropagateLightPass();
@@ -263,7 +260,6 @@ private:
 	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers];
 	UINT m_BackBufferIndex;
 
-	ClearVoxelGridPass* m_pClearVoxelGridPass;
 	CreateVoxelGridPass* m_pCreateVoxelGridPass;
 	InjectVirtualPointLightsPass* m_pInjectVirtualPointLightsPass;
 	PropagateLightPass* m_pPropagateLightPass;

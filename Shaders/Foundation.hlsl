@@ -43,6 +43,13 @@ struct DrawIndexedArgs
 	uint startInstanceLocation;
 };
 
+struct DispatchArgs
+{
+	uint threadGroupCountX;
+	uint threadGroupCountY;
+	uint threadGroupCountZ;
+};
+
 struct AppData
 {
 	float4x4 viewMatrix;

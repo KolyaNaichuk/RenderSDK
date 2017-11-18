@@ -1,39 +1,37 @@
-#include "VoxelGrid.hlsl"
+#include "Foundation.hlsl"
 
 struct VSInput
 {
+	uint   instanceId			: SV_InstanceID;
 	float3 localSpacePos		: POSITION;
 	float3 localSpaceNormal		: NORMAL;
-
-#ifdef HAS_TEXCOORD
 	float2 texCoord				: TEXCOORD;
-#endif // HAS_TEXCOORD
 };
 
 struct VSOutput
 {
 	float4 worldSpacePos		: SV_Position;
-	float4 worldSpaceNormal		: NORMAL;
-
-#ifdef HAS_TEXCOORD
+	float3 worldSpaceNormal		: NORMAL;
 	float2 texCoord				: TEXCOORD;
-#endif // HAS_TEXCOORD
 };
 
-cbuffer ObjectTransformBuffer : register(b0)
+cbuffer InstanceOffsetBuffer : register(b0)
 {
-	ObjectTransform g_Transform;
+	uint g_InstanceOffset;
 }
+
+Buffer<uint> g_InstanceIndexBuffer : register(t0);
+StructuredBuffer<float4x4> g_InstanceWorldMatrixBuffer : register(t1);
 
 VSOutput Main(VSInput input)
 {
-	VSOutput output;
-	output.worldSpacePos = mul(g_Transform.worldPositionMatrix, float4(input.localSpacePos.xyz, 1.0f));
-	output.worldSpaceNormal = mul(g_Transform.worldNormalMatrix, float4(input.localSpaceNormal.xyz, 0.0f));
-
-#ifdef HAS_TEXCOORD
-	output.texCoord = input.texCoord;
-#endif // HAS_TEXCOORD
+	uint instanceIndex = g_InstanceIndexBuffer[g_InstanceOffset + input.instanceId];
+	float4x4 worldMatrix = g_InstanceWorldMatrixBuffer[instanceIndex];
 	
+	VSOutput output;
+	output.clipSpacePos = mul(worldMatrix, float4(input.localSpacePos, 1.0f));
+	output.worldSpaceNormal = mul(worldMatrix, float4(input.localSpaceNormal, 0.0f)).xyz;
+	output.texCoord = input.texCoord;
+
 	return output;
 }

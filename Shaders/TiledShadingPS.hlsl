@@ -36,13 +36,7 @@ Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t11);
 StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t12);
 #endif // ENABLE_SPOT_LIGHTS
 
-#if ENABLE_INDIRECT_LIGHT == 1
-Texture3D<float4> g_IntensityRCoeffsTexture : register(t13);
-Texture3D<float4> g_IntensityGCoeffsTexture : register(t14);
-Texture3D<float4> g_IntensityBCoeffsTexture : register(t15);
-#endif // ENABLE_INDIRECT_LIGHT
-
-Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t16);
+Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t13);
 
 SamplerState g_AnisoSampler : register(s0);
 SamplerState g_LinearSampler : register(s1);
@@ -124,29 +118,7 @@ float4 Main(PSInput input) : SV_Target
 #endif // ENABLE_DIRECTIONAL_LIGHT
 	
 	float3 directRadiance = pointLightsContrib + spotLightsContrib + directionalLightContrib;
-
-#if ENABLE_INDIRECT_LIGHT == 1
-	float3 gridSpacePos = worldSpacePos - g_GridConfigData.worldSpaceOrigin.xyz;
-	float3 gridTexCoord = gridSpacePos * g_GridConfigData.rcpSize.xyz;
-	gridTexCoord.y = 1.0f - gridTexCoord;
-
-	SHSpectralCoeffs incidentIntensityCoeffs;
-	incidentIntensityCoeffs.r = g_IntensityRCoeffsTexture.SampleLevel(g_LinearSampler, gridTexCoord, 0.0f);
-	incidentIntensityCoeffs.g = g_IntensityGCoeffsTexture.SampleLevel(g_LinearSampler, gridTexCoord, 0.0f);
-	incidentIntensityCoeffs.b = g_IntensityBCoeffsTexture.SampleLevel(g_LinearSampler, gridTexCoord, 0.0f);
-
-	float4 cosineCoeffs = SHProjectClampedCosine(worldSpaceNormal);
-	float3 incidentIrradiance;
-	incidentIrradiance.r = dot(incidentIntensityCoeffs.r, cosineCoeffs);
-	incidentIrradiance.g = dot(incidentIntensityCoeffs.g, cosineCoeffs);
-	incidentIrradiance.b = dot(incidentIntensityCoeffs.b, cosineCoeffs);
-	incidentIrradiance = max(incidentIrradiance, 0.0f);
-
-	float3 diffuseBRDF = diffuseAlbedo * g_RcpPI;
-	float3 indirectRadiance = diffuseBRDF * incidentIrradiance;
-#else // ENABLE_INDIRECT_LIGHT
 	float3 indirectRadiance = float3(0.0f, 0.0f, 0.0f);
-#endif // ENABLE_INDIRECT_LIGHT
 
 	return float4(directRadiance + indirectRadiance, 1.0f);
 }
