@@ -1,12 +1,5 @@
 #include "Foundation.hlsl"
 
-struct DrawCommand
-{
-	uint instanceOffset;
-	uint materialID;
-	DrawIndexedArgs args;
-};
-
 Buffer<uint> g_VisibilityBuffer : register(t0);
 Buffer<uint> g_InstanceIndexBuffer : register(t1);
 StructuredBuffer<MeshInfo> g_MeshInfoBuffer : register(t2);

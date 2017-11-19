@@ -14,19 +14,12 @@ void Main()
 #endif // SET_ARGUMENTS
 
 #ifdef CREATE_COMMANDS
-struct VoxelizeCommand
-{
-	uint instanceOffset;
-	uint materialID;
-	DrawIndexedArgs args;
-};
-
-RWBuffer<uint> g_NumMeshesBuffer : register(t0);
+RWBuffer<uint> g_NumCommandsPerMeshTypeBuffer : register(u0);
+RWStructuredBuffer<DrawCommand> g_VoxelizeCommandBuffer : register(u1);
+Buffer<uint> g_NumMeshesBuffer : register(t0);
 StructuredBuffer<MeshInfo> g_MeshInfoBuffer : register(t1);
-RWBuffer<uint> g_NumMeshesPerTypeBuffer : register(u0);
-RWStructuredBuffer<VoxelizeCommand> g_VoxelizeCommandBuffer : register(u1);
 
-groupshared uint g_NumMeshesPerType[NUM_MESH_TYPES];
+groupshared uint g_NumCommandsPerMeshType[NUM_MESH_TYPES];
 groupshared uint g_GlobalOffset[NUM_MESH_TYPES];
 
 [numthreads(NUM_THREADS_PER_GROUP, 1, 1)]
@@ -34,7 +27,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint localThreadIndex : SV
 {
 	for (uint index = localThreadIndex; index < NUM_MESH_TYPES; index += NUM_THREADS_PER_GROUP)
 	{
-		g_NumMeshesPerType[index] = 0;
+		g_NumCommandsPerMeshType[index] = 0;
 	}
 	GroupMemoryBarrierWithGroupSync();
 
@@ -45,14 +38,14 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint localThreadIndex : SV
 	if (meshIndex < numMeshes)
 	{
 		MeshInfo meshInfo = g_MeshInfoBuffer[meshIndex];
-		InterlockedAdd(g_NumMeshesPerType[meshInfo.meshType], 1, localOffset);
+		InterlockedAdd(g_NumCommandsPerMeshType[meshInfo.meshType], 1, localOffset);
 	}
 	GroupMemoryBarrierWithGroupSync();
 
 	for (uint index = localThreadIndex; index < NUM_MESH_TYPES; index += NUM_THREADS_PER_GROUP)
 	{
 		uint globalOffset;
-		InterlockedAdd(g_NumMeshesPerTypeBuffer[index], g_NumMeshesPerType[index], globalOffset);
+		InterlockedAdd(g_NumCommandsPerMeshTypeBuffer[index], g_NumCommandsPerMeshType[index], globalOffset);
 		g_GlobalOffset[index] = globalOffset;
 	}
 	GroupMemoryBarrierWithGroupSync();

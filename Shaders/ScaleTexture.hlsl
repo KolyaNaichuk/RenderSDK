@@ -35,7 +35,7 @@ void Main(uint3 groupId : SV_GroupID, uint3 groupThreadId : SV_GroupThreadID)
 	
 	if ((samplePos.x < textureSize.x) && (samplePos.y < textureSize.y))
 	{
-		float2 texCoord = (float2(samplePos.x, samplePos.y) + 0.5f) / float2(textureSize.x, textureSize.y);
+		float2 texCoord = (float2(samplePos) + 0.5f) / float2(textureSize);
 		OutputTexture[samplePos] = InputTexture.Sample(LinearSampler, texCoord);
 	}
 }

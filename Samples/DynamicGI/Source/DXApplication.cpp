@@ -12,6 +12,7 @@
 #include "D3DWrapper/SwapChain.h"
 #include "RenderPasses/CreateVoxelGridPass.h"
 #include "RenderPasses/CreateRenderShadowMapCommandsPass.h"
+#include "RenderPasses/CreateVoxelizeCommandsPass.h"
 #include "RenderPasses/InjectVirtualPointLightsPass.h"
 #include "RenderPasses/PropagateLightPass.h"
 #include "RenderPasses/RenderGBufferPass.h"
@@ -368,7 +369,7 @@ struct ShadowMapTile
 
 DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Global Illumination", 0, 0, kBackBufferWidth, kBackBufferHeight)
-	, m_DisplayResult(DisplayResult::Unspecified)
+	, m_DisplayResult(DisplayResult::Unknown)
 	, m_ShadingMode(TileShadingMode::DirectAndIndirectLight)
 	, m_IndirectLightIntensity(IndirectLightIntensity_Accumulated)
 	, m_IndirectLightComponent(IndirectLightComponent_Red)
@@ -448,6 +449,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pFrustumPointLightCullingPass(nullptr)
 	, m_pFrustumSpotLightCullingPass(nullptr)
 	, m_pTiledLightCullingPass(nullptr)
+	, m_pCreateVoxelizeCommandsPass(nullptr)
 	, m_pTiledShadingPass(nullptr)
 {
 	VerifyD3DResult(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED));
@@ -493,6 +495,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pFrustumPointLightCullingPass);
 	SafeDelete(m_pFrustumSpotLightCullingPass);
 	SafeDelete(m_pTiledLightCullingPass);
+	SafeDelete(m_pCreateVoxelizeCommandsPass);
 	SafeDelete(m_pTiledShadingPass);
 
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -599,6 +602,7 @@ void DXApplication::OnInit()
 		InitFrustumSpotLightCullingPass();
 	InitTiledLightCullingPass();
 	
+	InitCreateVoxelizeCommandsPass();
 	InitTiledShadingPass();
 
 	InitVisualizeAccumLightPass();
@@ -808,6 +812,7 @@ void DXApplication::OnRender()
 		commandListBatch[commandListBatchSize++] = RecordFrustumSpotLightCullingPass();
 	
 	commandListBatch[commandListBatchSize++] = RecordTiledLightCullingPass();
+	commandListBatch[commandListBatchSize++] = RecordCreateVoxelizeCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordTiledShadingPass();
 
 	commandListBatch[commandListBatchSize++] = RecordDisplayResultPass();
@@ -1263,8 +1268,8 @@ void DXApplication::InitFrustumMeshCullingPass()
 
 	params.m_InputResourceStates.m_MeshInfoBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_InstanceWorldAABBBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_NumVisibleMeshesBufferState = D3D12_RESOURCE_STATE_COPY_SOURCE;
-	params.m_InputResourceStates.m_VisibleMeshInfoBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_NumVisibleMeshesBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_VisibleMeshInfoBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_NumVisibleInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
@@ -2027,6 +2032,44 @@ CommandList* DXApplication::RecordTiledLightCullingPass()
 	params.m_pAppDataBuffer = m_pAppDataBuffers[m_BackBufferIndex];
 		
 	m_pTiledLightCullingPass->Record(&params);
+	return params.m_pCommandList;
+}
+
+void DXApplication::InitCreateVoxelizeCommandsPass()
+{	
+	assert(m_pCreateVoxelizeCommandsPass == nullptr);
+	assert(m_pFrustumMeshCullingPass != nullptr);
+	assert(m_pCreateFalseNegativeDrawCommandsPass != nullptr);
+	assert(m_pMeshRenderResources != nullptr);
+
+	const CreateFalseNegativeDrawCommandsPass::ResourceStates* pResourceStates =
+		m_pCreateFalseNegativeDrawCommandsPass->GetOutputResourceStates();
+
+	CreateVoxelizeCommandsPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	
+	params.m_InputResourceStates.m_NumMeshesBufferState = pResourceStates->m_NumMeshesBufferState;
+	params.m_InputResourceStates.m_MeshInfoBufferState = pResourceStates->m_MeshInfoBufferState;
+	params.m_InputResourceStates.m_NumCommandsPerMeshTypeBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_VoxelizeCommandBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+	params.m_pNumMeshesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer();
+	params.m_pMeshInfoBuffer = m_pFrustumMeshCullingPass->GetVisibleMeshInfoBuffer();
+	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
+	params.m_MaxNumMeshes = m_pMeshRenderResources->GetTotalNumMeshes();
+		
+	m_pCreateVoxelizeCommandsPass = new CreateVoxelizeCommandsPass(&params);
+}
+
+CommandList* DXApplication::RecordCreateVoxelizeCommandsPass()
+{
+	assert(m_pCreateVoxelizeCommandsPass != nullptr);
+
+	CreateVoxelizeCommandsPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pCreateVoxelizeCommandsCommandList");
+
+	m_pCreateVoxelizeCommandsPass->Record(&params);
 	return params.m_pCommandList;
 }
 
@@ -3140,10 +3183,6 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 	else if (m_DisplayResult == DisplayResult::VoxelGridDiffuse)
 	{
 		m_pWindow->SetWindowText(L"Voxel grid diffuse");
-	}
-	else if (m_DisplayResult == DisplayResult::VoxelGridNormal)
-	{
-		m_pWindow->SetWindowText(L"Voxel grid normal");
 	}
 	else if (m_DisplayResult == DisplayResult::DepthBufferWithMeshType)
 	{

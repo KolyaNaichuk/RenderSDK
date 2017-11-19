@@ -16,7 +16,7 @@ public:
 	{
 		D3D12_RESOURCE_STATES m_NumMeshesBufferState;
 		D3D12_RESOURCE_STATES m_MeshInfoBufferState;
-		D3D12_RESOURCE_STATES m_NumMeshesPerTypeBufferState;
+		D3D12_RESOURCE_STATES m_NumCommandsPerMeshTypeBufferState;
 		D3D12_RESOURCE_STATES m_VoxelizeCommandBufferState;
 	};
 
@@ -25,6 +25,9 @@ public:
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		Buffer* m_pNumMeshesBuffer;
+		Buffer* m_pMeshInfoBuffer;
+		u32 m_NumMeshTypes;
+		u32 m_MaxNumMeshes;
 	};
 	
 	struct RenderParams
@@ -38,6 +41,8 @@ public:
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
+
+	Buffer* GetNumCommandsPerMeshTypeBuffer() { return m_pNumCommandsPerMeshTypeBuffer; }
 	Buffer* GetVoxelizeCommandBuffer() { return m_pVoxelizeCommandBuffer; }
 
 private:
@@ -62,6 +67,7 @@ private:
 	RootSignature* m_pCreateCommandsRootSignature;
 	PipelineState* m_pCreateCommandsPipelineState;
 	CommandSignature* m_pCreateCommandsCommandSignature;
+	Buffer* m_pNumCommandsPerMeshTypeBuffer;
 	Buffer* m_pVoxelizeCommandBuffer;
 	std::vector<ResourceBarrier> m_CreateCommandsResourceBarriers;
 	DescriptorHandle m_CreateCommandsSRVHeapStart;

@@ -45,7 +45,7 @@ void FrustumMeshCullingPass::InitResources(InitParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	assert(m_pNumVisibleMeshesBuffer == nullptr);
-	FormattedBufferDesc numVisibleMeshesBufferDesc(1, DXGI_FORMAT_R32_UINT, false, true);
+	FormattedBufferDesc numVisibleMeshesBufferDesc(1, DXGI_FORMAT_R32_UINT, true, true);
 	m_pNumVisibleMeshesBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &numVisibleMeshesBufferDesc,
 		pParams->m_InputResourceStates.m_NumVisibleMeshesBufferState, L"FrustumMeshCullingPass::m_pNumVisibleMeshesBuffer");
 	

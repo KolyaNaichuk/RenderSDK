@@ -33,6 +33,7 @@ class TiledLightCullingPass;
 class TiledShadingPass;
 class CalcShadingRectanglesPass;
 class FrustumLightCullingPass;
+class CreateVoxelizeCommandsPass;
 class Scene;
 
 // Old
@@ -64,8 +65,7 @@ public:
 		SpotLightTiledShadowMap,
 		PointLightTiledShadowMap,
 		VoxelGridDiffuse,
-		VoxelGridNormal,
-		Unspecified
+		Unknown
 	};
 	enum class TileShadingMode
 	{
@@ -140,6 +140,9 @@ private:
 
 	void InitTiledLightCullingPass();
 	CommandList* RecordTiledLightCullingPass();
+
+	void InitCreateVoxelizeCommandsPass();
+	CommandList* RecordCreateVoxelizeCommandsPass();
 		
 	void InitTiledShadingPass();
 	CommandList* RecordTiledShadingPass();
@@ -295,6 +298,7 @@ private:
 	FrustumLightCullingPass* m_pFrustumPointLightCullingPass;
 	FrustumLightCullingPass* m_pFrustumSpotLightCullingPass;
 	TiledLightCullingPass* m_pTiledLightCullingPass;
+	CreateVoxelizeCommandsPass* m_pCreateVoxelizeCommandsPass;
 	TiledShadingPass* m_pTiledShadingPass;
 	VisualizeTexturePass* m_pVisualizeAccumLightPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers];

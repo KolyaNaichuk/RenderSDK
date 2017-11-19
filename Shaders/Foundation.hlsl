@@ -50,6 +50,13 @@ struct DispatchArgs
 	uint threadGroupCountZ;
 };
 
+struct DrawCommand
+{
+	uint instanceOffset;
+	uint materialID;
+	DrawIndexedArgs args;
+};
+
 struct AppData
 {
 	float4x4 viewMatrix;
