@@ -3200,25 +3200,42 @@ void DXApplication::OuputDebugRenderPassResult()
 	static unsigned frameNumber = 0;
 	static unsigned frameNumberForOutput = 5;
 
-	OutputDebugStringA("1.Debug =========================\n");
 	++frameNumber;
 
-	using ElementType = u32;
 	if (frameNumber == frameNumberForOutput)
 	{
+		struct DrawCommand
+		{
+			UINT m_InstanceOffset;
+			UINT m_MaterialIndex;
+			DrawIndexedArguments m_Args;
+		};
+
+		OutputDebugStringA("1.Debug =========================\n");
+		using ElementType = DrawCommand;
+
 		auto elementFormatter = [](const void* pElementData)
 		{
 			const ElementType* pElement = (ElementType*)pElementData;
 
 			std::stringstream stringStream;
+			stringStream << "m_InstanceOffset: " << pElement->m_InstanceOffset << "\n"
+				<< "m_MaterialIndex: " << pElement->m_MaterialIndex << "\n"
+				<< "m_IndexCountPerInstance: " << pElement->m_Args.m_IndexCountPerInstance << "\n"
+				<< "m_InstanceCount: " << pElement->m_Args.m_InstanceCount << "\n"
+				<< "m_StartIndexLocation: " << pElement->m_Args.m_StartIndexLocation << "\n"
+				<< "m_BaseVertexLocation: " << pElement->m_Args.m_BaseVertexLocation << "\n"
+				<< "m_StartInstanceLocation: " << pElement->m_Args.m_StartInstanceLocation << "\n";
+			
 			return stringStream.str();
 		};
 		OutputBufferContent(m_pRenderEnv,
-			m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer(),
-			D3D12_RESOURCE_STATE_COPY_SOURCE,
+			m_pCreateVoxelizeCommandsPass->GetVoxelizeCommandBuffer(),
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 			sizeof(ElementType),
 			elementFormatter);
-	}		
-	OutputDebugStringA("2.Debug =========================\n");
+
+		OutputDebugStringA("2.Debug =========================\n");
+	}
 }
 #endif // DEBUG_RENDER_PASS
