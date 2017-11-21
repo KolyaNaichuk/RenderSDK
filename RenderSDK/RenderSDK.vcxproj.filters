@@ -613,16 +613,16 @@
     <None Include="..\Shaders\FillMeshTypeDepthBufferPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\CreateVoxelGridVS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CreateVoxelGridPS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CreateVoxelGridGS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\CreateVoxelizeCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VoxelizeVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VoxelizePS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VoxelizeGS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

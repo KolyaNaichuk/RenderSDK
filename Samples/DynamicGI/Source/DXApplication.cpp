@@ -48,141 +48,33 @@
 #include "Math/BasisAxes.h"
 
 /*
-Render frame overview
-
-As a prerequisite, vertex and index data for all meshes should be merged into one vertex and index buffers correspondingly.
-
-1.The render frame starts with detecting visible meshes from camera using compute shader.
-Each spawned thread tests mesh AABB against camera frustum.
-As a result of the pass, we populate two buffers: the first one containing number of visible meshes and the second one - visible mesh IDs.
-
-2.After, we detect point lights which affect visible meshes from camera using compute shader.
-Again, each spawned thread tests point light affecting volume (bounding sphere) against camera frustum.
-As a result of the pass, we generate two buffers: the first one containing number of visible point lights and the second one - visible light IDs.
-
-3.We detect spot lights which affect visible meshes from camera using compute shader.
-Each spawned thread tests spot light affecting volume against camera frustum.
-As a spot light volume, bounding sphere around spot light cone is used.
-As a result of the pass, we produce two buffers: the first one containing number of visible spot lights and the second one - visible light IDs.
-
-4.Based on detected visible meshes we generate indirect draw commands to render g-buffer using compute shader.
-The indirect draw argument struct looks the following way:
-
-struct DrawIndexedArgs
-{
-	uint indexCountPerInstance;
-	uint instanceCount;
-	uint startIndexLocation;
-	int  baseVertexLocation;
-	uint startInstanceLocation;
-};
-
-struct DrawMeshCommand
-{
-	uint root32BitConstant;
-	DrawIndexedArgs drawArgs;
-};
-
-root32BitConstant is used to pass material ID associated with a particular mesh.
-The rest of the arguments should be self-explanatory.
-
-5.Based on generated indirect draw commands we render G-buffer using execute indirect.
-
-6.After rendering G-buffer, we proceed to tiled light culling using compute shader.
-Specifically, we split our screen into tiles 16x16 and test each tile overlap against bounding volumes of visible lights.
-As a result, we generate two buffers: the first buffer containing overlapping light IDs and the second one -
-light IDs range associated with each tile from the previous buffer.
-
-7.As soon as we have completed rendering G-Buffer, we start preparing indirect draw commands to render shadow maps for light sources using compute shader.
-In particular, we spawn as many thread groups as we have detected visible meshes.
-Each thread group tests mesh AABB against all visible point and spot light bounds,
-outputting overlapping point and spot light IDs for that shadow caster to the buffer.
-When the list of overlapping lights has been populated, one of the threads from the thread group will create indirect draw command to draw the shadow caster.
-
-The indirect draw argument struct looks the following way:
-
-struct DrawIndexedArgs
-{
-	uint indexCountPerInstance;
-	uint instanceCount;
-	uint startIndexLocation;
-	int  baseVertexLocation;
-	uint startInstanceLocation;
-};
-
-struct DrawMeshCommand
-{
-	uint root32BitConstant;
-	DrawIndexedArgs drawArgs;
-};
-
-root32BitConstant is used to transfer light IDs offset for the shadow caster in the resulting buffer.
-instanceCount is used to specify how many instances of the shadow caster you would like to draw.
-In our case, it will be equal to number of lights affecting that shadow caster.
-
-8.To render shadow maps, Tiled Shadow Map approach from [5] is utilized.
-Tiled Shadow Map technique allows to render shadow maps for light sources in one indirect draw call.
-As the name suggests, the shadow map is split into tiles, where each tile defines shadow map region for one light.
-To render geometry to a particular shadow map tile, additional clip space translation to the vertex position is applied,
-after it has been transformed into clip space. Apart from this, we need to ensure that while rendering geometry to a concrete tile,
-we do not overwrite data of the neighboring tiles by the geometry expanding beyond the light view frustum.
-As proposed in [5], I exploit programmable clipping by specifying custom clipping plane distance (SV_ClipDistance) to clip the geometry outside light view frustum.
-
-*Step 6 mainly involves doing depth test and writing into the depth texture, while step 7 is primarily heavy on arithmetic instructions usage. 
-These two steps are very good candidates to be performed in parallel using async compute queue.
-In my current implementation, they are executed on the same graphics queue but the intention is to move step 7 to compute queue and execute in parallel.
-
-9.After, I apply tiled shading based on detected lights per each screen tile, using Phong shading mode.
-
-10.To calculate indirect lighting, voxel grid of the scene is generated as described in [1] and [4].
-Specifically, we rasterize scene geometry with disabled color writing and depth test.
-In the geometry shader we select view matrix (either along X, Y or Z axis) for which triangle has the biggest area
-to get the highest number of rasterized pixels for the primitive. The rasterized pixels are output to the buffer,
-representing grid cells, from pixel shader. To avoid race conditions between multiple threads writing to the same grid cell,
-I take advantage of rasterized ordered view, which provides atomic and ordered access to the resource.
-Not to lose details of pixels which are only partially covered by the triangle, I enable conservative rasterization,
-which guarantees that pixel shader will be invoked for the pixel even if the primitive does not cover pixel center location.
-After voxel grid construction, the voxels are illuminated by each light and converted into virtual point lights.
-Finally, the virtual point lights are propagated within the grid to generate indirect illumination,
-which is later combined with already computed direct illumination.
-
-Current sample is missing complete shadows and indirect lighting implementation. This work is still ongoing.
-
-Used resources:
-
-[1] OpenGL Insights. Cyril Crassin and Simon Green, Octree-Based Sparse Voxelization Using the GPU Hardware Rasterization
-[2] Section on comulative moving average https://en.wikipedia.org/wiki/Moving_average
-[3] The Basics of GPU Voxelization https://developer.nvidia.com/content/basics-gpu-voxelization
-[4] GPU Pro 4. Hawar Doghramachi, Rasterized Voxel-Based Dynamic Global Illumination
-[5] GPU Pro 6. Hawar Doghramachi, Tile-Based Omnidirectional Shadows
-*/
-
-/*
 To do:
-1.OOB for a set of points mimics AABB. Improve implementation.
+1.Review light view matrix computation for shadow maps in LightRenderResources.
 
-2.When converting plane mesh to unit cube space, world matrix is not optimal for OOB.
+2.OOB for a set of points mimics AABB. Improve implementation.
+
+4.When converting plane mesh to unit cube space, world matrix is not optimal for OOB.
 For an example, plane in original coordinates is passing through point (0, 0, 0).
 OOB will have coordinates expanding from -1 to 1 not merely passing through 0 when world matrix is applied.
 
-3.Add support for mip levels. Search for keyword "KolyaMipLevels"
+4.Add support for mip levels. Search for keyword "KolyaMipLevels"
 
-4.Make camera transform part of Scene object.
+5.Make camera transform part of Scene object.
 Can check format OpenGEX for inspiration - http://opengex.org/
 
-5.MeshRenderResources, LightRenderResources, MaterialRenderResources should not be part of Common folder
-6.Using std::experimental::filesystem::path from OBJFileLoader. Should be consistent with the code.
+6.MeshRenderResources, LightRenderResources, MaterialRenderResources should not be part of Common folder
+7.Using std::experimental::filesystem::path from OBJFileLoader. Should be consistent with the code.
 
-7.Review to-dos
+8.Review to-dos
 
-8.Use output resource states to initialize input resource states from the previous pass.
+9.Use output resource states to initialize input resource states from the previous pass.
 
-9.Use Task graph for resource state transition after each render pass.
+10.Use Task graph for resource state transition after each render pass.
 https://patterns.eecs.berkeley.edu/?page_id=609
 
-10.Fix compilation warnings for x64 build
+11.Fix compilation warnings for x64 build
 
-11.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
+12.Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
 against MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER and MAX_NUM_POINT_LIGHTS_PER_SHADOW_CASTER
 while writing data to the local storage
 */
@@ -218,7 +110,13 @@ namespace
 		Vector4f m_SunLightColor;
 		Vector2u m_ScreenTileSize;
 		Vector2u m_NumScreenTiles;
-		Vector4f m_NotUsed3[14];
+		Vector2f m_NotUsed3;
+		Vector3f m_VoxelGridWorldMinPoint;
+		Vector3f m_VoxelGridWorldMaxPoint;
+		Matrix4f m_VoxelGridViewProjMatrices[3];
+		Vector3f m_VoxelRcpSize;
+
+		f32 m_NotUsed4[61];
 	};
 
 	using BufferElementFormatter = std::function<std::string (const void* pElementData)>;
@@ -318,41 +216,7 @@ enum
 	kNumTilesY = 60,
 	kBackBufferWidth = kNumTilesX * kTileSize,
 	kBackBufferHeight = kNumTilesY * kTileSize,
-
-	kGridSizeX = 640,
-	kGridSizeY = 640,
-	kGridSizeZ = 640,
-	
-	kNumGridCellsX = 16,
-	kNumGridCellsY = 16,
-	kNumGridCellsZ = 16,
-
-	kMinNumPropagationIterations = 0,
-	kMaxNumPropagationIterations = 64,
-
 	kShadowMapTileSize = 512,
-};
-
-struct GridConfig
-{
-	Vector4f m_WorldSpaceOrigin;
-	Vector4f m_Size;
-	Vector4f m_RcpSize;
-	Vector4f m_CellSize;
-	Vector4f m_RcpCellSize;
-	Vector4i m_NumCells;
-	Vector4f m_RcpNumCells;
-	f32 m_FluxWeight;
-	f32 m_BlockerPotentialValue;
-	Vector2f m_NotUsed1;
-	Vector4f m_NotUsed2[8];
-};
-
-struct Voxel
-{
-	f32 m_NumOccluders;
-	Vector3f m_DiffuseColor;
-	Vector3f m_WorldSpaceNormal;
 };
 
 struct ShadowMapData
@@ -370,10 +234,7 @@ struct ShadowMapTile
 DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Global Illumination", 0, 0, kBackBufferWidth, kBackBufferHeight)
 	, m_DisplayResult(DisplayResult::Unknown)
-	, m_ShadingMode(TileShadingMode::DirectAndIndirectLight)
-	, m_IndirectLightIntensity(IndirectLightIntensity_Accumulated)
-	, m_IndirectLightComponent(IndirectLightComponent_Red)
-	, m_NumPropagationIterations(kNumGridCellsX)
+	, m_ShadingMode(TileShadingMode::DirectLight)
 	, m_pDevice(nullptr)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
@@ -645,7 +506,7 @@ void DXApplication::OnInit()
 void DXApplication::OnUpdate()
 {
 	const Vector3f& cameraWorldSpacePos = m_pCamera->GetTransform().GetPosition();
-
+	
 	AppData appData;
 	appData.m_ViewMatrix = m_pCamera->GetViewMatrix();
 	appData.m_ViewInvMatrix = Inverse(appData.m_ViewMatrix);
@@ -673,120 +534,37 @@ void DXApplication::OnUpdate()
 	appData.m_SunLightColor = Color::WHITE;
 	appData.m_ScreenTileSize = Vector2u(kTileSize, kTileSize);
 	appData.m_NumScreenTiles = Vector2u(kNumTilesX, kNumTilesY);
+
+	const AxisAlignedBox cameraWorldAABB(Frustum::NumCorners, cameraWorldFrustum.m_Corners);
+
+	const Vector3f voxelGridWorldCenter = cameraWorldAABB.m_Center;
+	const Vector3f voxelGridWorldRadius(512.0f, 512.0f, 512.0f);
+	const Vector3f numVoxelsInGrid(256.0f, 256.0f, 256.0f);
+	const Vector3f voxelGridWorldSize = 2.0f * voxelGridWorldRadius;
 	
+	appData.m_VoxelGridWorldMinPoint = voxelGridWorldCenter - voxelGridWorldRadius;
+	appData.m_VoxelGridWorldMaxPoint = voxelGridWorldCenter + voxelGridWorldRadius;
+	appData.m_VoxelRcpSize = numVoxelsInGrid / voxelGridWorldSize;
+	
+	Camera voxelGridCameraAlongX(Camera::ProjType_Ortho, 0.0f, voxelGridWorldSize.m_X, voxelGridWorldSize.m_Z / voxelGridWorldSize.m_Y);
+	voxelGridCameraAlongX.SetSizeY(voxelGridWorldSize.m_Y);
+	voxelGridCameraAlongX.GetTransform().SetPosition(voxelGridWorldCenter - voxelGridWorldRadius * Vector3f::RIGHT);
+	voxelGridCameraAlongX.GetTransform().SetRotation(CreateRotationYQuaternion(PI_DIV_2));
+
+	Camera voxelGridCameraAlongY(Camera::ProjType_Ortho, 0.0f, voxelGridWorldSize.m_Y, voxelGridWorldSize.m_X / voxelGridWorldSize.m_Z);
+	voxelGridCameraAlongY.SetSizeY(voxelGridWorldSize.m_Z);
+	voxelGridCameraAlongY.GetTransform().SetPosition(voxelGridWorldCenter - voxelGridWorldRadius * Vector3f::UP);
+	voxelGridCameraAlongY.GetTransform().SetRotation(CreateRotationXQuaternion(-PI_DIV_2));
+	
+	Camera voxelGridCameraAlongZ(Camera::ProjType_Ortho, 0.0f, voxelGridWorldSize.m_Z, voxelGridWorldSize.m_X / voxelGridWorldSize.m_Y);
+	voxelGridCameraAlongZ.SetSizeY(voxelGridWorldSize.m_Y);
+	voxelGridCameraAlongZ.GetTransform().SetPosition(voxelGridWorldCenter - voxelGridWorldRadius * Vector3f::FORWARD);
+
+	appData.m_VoxelGridViewProjMatrices[0] = voxelGridCameraAlongX.GetViewMatrix() * voxelGridCameraAlongX.GetProjMatrix();
+	appData.m_VoxelGridViewProjMatrices[1] = voxelGridCameraAlongY.GetViewMatrix() * voxelGridCameraAlongY.GetProjMatrix();
+	appData.m_VoxelGridViewProjMatrices[2] = voxelGridCameraAlongZ.GetViewMatrix() * voxelGridCameraAlongZ.GetProjMatrix();
+
 	std::memcpy(m_pAppDataPointers[m_BackBufferIndex], &appData, sizeof(appData));
-
-	// Kolya. Fix me
-	/*
-	const BasisAxes mainCameraBasis = ExtractBasisAxes(mainCameraRotation);
-	assert(IsNormalized(mainCameraBasis.m_XAxis));
-	assert(IsNormalized(mainCameraBasis.m_YAxis));
-	assert(IsNormalized(mainCameraBasis.m_ZAxis));
-
-	const Vector3f gridSize(kGridSizeX, kGridSizeY, kGridSizeZ);
-	const Vector3f gridRcpSize(Rcp(gridSize));
-	const Vector3f gridHalfSize(0.5f * gridSize);
-	const Vector3f gridNumCells(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ);
-	const Vector3f gridCellSize(gridSize / gridNumCells);
-	const Vector3f gridRcpCellSize(Rcp(gridCellSize));
-
-	// Kolya: Hard-coding grid center for now
-	//const Vector3f gridCenter(mainCameraWorldPosition + (0.25f * gridSize.m_Z) * mainCameraBasis.m_ZAxis);
-	const Vector3f gridCenter(0.5f * 549.6f, 0.5f * 548.8f, -0.5f * 562.0f);
-	const Vector3f gridMinPoint = gridCenter - gridHalfSize;
-
-	GridConfig gridConfig;
-	gridConfig.m_WorldSpaceOrigin = Vector4f(gridMinPoint.m_X, gridMinPoint.m_Y, gridMinPoint.m_Z, 0.0f);
-	gridConfig.m_Size = Vector4f(gridSize.m_X, gridSize.m_Y, gridSize.m_Z, 0.0f);
-	gridConfig.m_RcpSize = Vector4f(gridRcpSize.m_X, gridRcpSize.m_Y, gridRcpSize.m_Z, 0.0f);
-	gridConfig.m_CellSize = Vector4f(gridCellSize.m_X, gridCellSize.m_Y, gridCellSize.m_Z, 0.0f);
-	gridConfig.m_RcpCellSize = Vector4f(gridRcpCellSize.m_X, gridRcpCellSize.m_Y, gridRcpCellSize.m_Z, 0.0f);
-	gridConfig.m_NumCells = Vector4i(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, 0);
-	gridConfig.m_RcpNumCells = Rcp(Vector4f(kNumGridCellsX, kNumGridCellsY, kNumGridCellsZ, 0));
-	gridConfig.m_FluxWeight = 4.0f * PI / 6.0f;//(4.0f * PI / 6.0f) * Rcp(2.0f * gridConfig.m_NumCells.m_X * gridConfig.m_NumCells.m_X);
-	gridConfig.m_BlockerPotentialValue = gridConfig.m_FluxWeight;
-
-	m_pGridConfigDataBuffer->Write(&gridConfig, sizeof(gridConfig));
-
-	Camera xAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_X, gridSize.m_Z / gridSize.m_Y);
-	xAxisCamera.SetSizeY(gridSize.m_Y);
-	xAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_X * mainCameraBasis.m_XAxis);
-	xAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationYQuaternion(PI_DIV_TWO));
-
-	Camera yAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_Y, gridSize.m_X / gridSize.m_Z);
-	yAxisCamera.SetSizeY(gridSize.m_Z);
-	yAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_Y * mainCameraBasis.m_YAxis);
-	yAxisCamera.GetTransform().SetRotation(mainCameraRotation * CreateRotationXQuaternion(-PI_DIV_TWO));
-
-	Camera zAxisCamera(Camera::ProjType_Ortho, 0.0f, gridSize.m_Z, gridSize.m_X / gridSize.m_Y);
-	zAxisCamera.SetSizeY(gridSize.m_Y);
-	zAxisCamera.GetTransform().SetPosition(gridCenter - gridHalfSize.m_Z * mainCameraBasis.m_ZAxis);
-	zAxisCamera.GetTransform().SetRotation(mainCameraRotation);
-
-	CameraTransform cameraTransform;
-	cameraTransform.m_ViewProjInvMatrix = Inverse(mainViewProjMatrix);
-	cameraTransform.m_ViewProjMatrices[0] = xAxisCamera.GetViewMatrix() * xAxisCamera.GetProjMatrix();
-	cameraTransform.m_ViewProjMatrices[1] = yAxisCamera.GetViewMatrix() * yAxisCamera.GetProjMatrix();
-	cameraTransform.m_ViewProjMatrices[2] = zAxisCamera.GetViewMatrix() * zAxisCamera.GetProjMatrix();
-
-	m_pCameraTransformBuffer->Write(&cameraTransform, sizeof(cameraTransform));
-
-	ViewFrustumCullingData viewFrustumCullingData;
-	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
-	viewFrustumCullingData.m_ViewFrustumPlanes[planeIndex] = mainCameraWorldFrustum.m_Planes[planeIndex];
-
-	viewFrustumCullingData.m_NumObjects = m_pMeshRenderResources->GetNumMeshes();
-	m_pViewFrustumMeshCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
-
-	if (m_pViewFrustumPointLightCullingDataBuffer != nullptr)
-	{
-	viewFrustumCullingData.m_NumObjects = pScene->GetNumPointLights();
-	m_pViewFrustumPointLightCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
-	}
-	if (m_pViewFrustumSpotLightCullingDataBuffer != nullptr)
-	{
-	viewFrustumCullingData.m_NumObjects = pScene->GetNumSpotLights();
-	m_pViewFrustumSpotLightCullingDataBuffer->Write(&viewFrustumCullingData, sizeof(viewFrustumCullingData));
-	}
-
-	TiledLightCullingData tiledLightCullingData;
-	tiledLightCullingData.m_RcpScreenSize = Rcp(Vector2f((f32)backBufferWidth, (f32)backBufferHeight));
-	tiledLightCullingData.m_ViewMatrix = m_pCamera->GetViewMatrix();
-	tiledLightCullingData.m_ProjMatrix = m_pCamera->GetProjMatrix();
-	tiledLightCullingData.m_ProjInvMatrix = Inverse(m_pCamera->GetProjMatrix());
-
-	m_pTiledLightCullingDataBuffer->Write(&tiledLightCullingData, sizeof(tiledLightCullingData));
-
-	TiledShadingData tiledShadingData;
-	tiledShadingData.m_RcpScreenSize = Rcp(Vector2f((f32)backBufferWidth, (f32)backBufferHeight));
-	tiledShadingData.m_WorldSpaceCameraPos = mainCameraWorldPosition;
-	tiledShadingData.m_ViewProjInvMatrix = Inverse(m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix());
-
-	const DirectionalLight* pDirectionalLight = pScene->GetDirectionalLight();
-	if (pDirectionalLight != nullptr)
-	{
-	const BasisAxes lightBasis = ExtractBasisAxes(pDirectionalLight->GetTransform().GetRotation());
-
-	tiledShadingData.m_WorldSpaceLightDir = Normalize(lightBasis.m_ZAxis);
-	tiledShadingData.m_LightColor = pDirectionalLight->GetColor();
-	}
-	m_pTiledShadingDataBuffer->Write(&tiledShadingData, sizeof(tiledShadingData));
-
-	if (m_pPointLightTiledShadowMap != nullptr)
-	{
-	ShadowMapData shadowMapData;
-	shadowMapData.m_TileTexSpaceSize = Vector2f((f32)kShadowMapTileSize, (f32)kShadowMapTileSize) / Vector2f((f32)m_pPointLightTiledShadowMap->GetWidth(), (f32)m_pPointLightTiledShadowMap->GetHeight());
-
-	m_pPointLightShadowMapDataBuffer->Write(&shadowMapData, sizeof(shadowMapData));
-	}
-	if (m_pSpotLightTiledShadowMap != nullptr)
-	{
-	ShadowMapData shadowMapData;
-	shadowMapData.m_TileTexSpaceSize = Vector2f((f32)kShadowMapTileSize, (f32)kShadowMapTileSize) / Vector2f((f32)m_pSpotLightTiledShadowMap->GetWidth(), (f32)m_pSpotLightTiledShadowMap->GetHeight());
-
-	m_pSpotLightShadowMapDataBuffer->Write(&shadowMapData, sizeof(shadowMapData));
-	}
-	*/
 }
 
 void DXApplication::OnRender()
@@ -3105,11 +2883,7 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 	{
 		if (m_ShadingMode == TileShadingMode::DirectAndIndirectLight)
 		{
-			std::wstringstream stream;
-			stream << L"Direct + indirect lighting ";
-			stream << "(" << m_NumPropagationIterations << " iterations)";
-
-			m_pWindow->SetWindowText(stream.str().c_str());
+			assert(false);
 		}
 		else if (m_ShadingMode == TileShadingMode::DirectLight)
 		{
@@ -3117,44 +2891,12 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 		}
 		else if (m_ShadingMode == TileShadingMode::IndirectLight)
 		{
-			std::wstringstream stream;
-			stream << L"Indirect lighting ";
-			stream << "(" << m_NumPropagationIterations << " iterations)";
-
-			m_pWindow->SetWindowText(stream.str().c_str());
+			assert(false);
 		}
 		else
 		{
 			assert(false);
 		}
-	}
-	else if (m_DisplayResult == DisplayResult::IndirectLightIntensityResult)
-	{
-		const wchar_t* pIntensityBufferStr = nullptr;
-		if (m_IndirectLightIntensity == IndirectLightIntensity_Previous)
-			pIntensityBufferStr = L"previous intensity";
-		else if (m_IndirectLightIntensity == IndirectLightIntensity_Current)
-			pIntensityBufferStr = L"current intensity";
-		else if (m_IndirectLightIntensity == IndirectLightIntensity_Accumulated)
-			pIntensityBufferStr = L"accumulated intensity";
-		else
-			assert(false);
-
-		const wchar_t* pIntensityComponentStr = nullptr;
-		if (m_IndirectLightComponent == IndirectLightComponent_Red)
-			pIntensityComponentStr = L"R";
-		else if (m_IndirectLightComponent == IndirectLightComponent_Green)
-			pIntensityComponentStr = L"G";
-		else if (m_IndirectLightComponent == IndirectLightComponent_Blue)
-			pIntensityComponentStr = L"B";
-		else
-			assert(false);
-
-		std::wstringstream stream;
-		stream << pIntensityComponentStr << " " << pIntensityBufferStr << L" ";
-		stream << "(" << m_NumPropagationIterations << " iterations)";
-
-		m_pWindow->SetWindowText(stream.str().c_str());
 	}
 	else if (m_DisplayResult == DisplayResult::TexCoordBuffer)
 	{

@@ -61,7 +61,6 @@ public:
 		NormalBuffer,
 		TexCoordBuffer,
 		DepthBufferWithMeshType,
-		IndirectLightIntensityResult,
 		SpotLightTiledShadowMap,
 		PointLightTiledShadowMap,
 		VoxelGridDiffuse,
@@ -73,19 +72,7 @@ public:
 		IndirectLight,
 		DirectAndIndirectLight
 	};
-	enum IndirectLightIntensity
-	{
-		IndirectLightIntensity_Previous = 0,
-		IndirectLightIntensity_Current,
-		IndirectLightIntensity_Accumulated
-	};
-	enum IndirectLightComponent
-	{
-		IndirectLightComponent_Red = 0,
-		IndirectLightComponent_Green,
-		IndirectLightComponent_Blue
-	};
-
+	
 	DXApplication(HINSTANCE hApp);
 	~DXApplication();
 
@@ -210,10 +197,7 @@ private:
 	
 	DisplayResult m_DisplayResult;
 	TileShadingMode m_ShadingMode;
-	IndirectLightIntensity m_IndirectLightIntensity;
-	IndirectLightComponent m_IndirectLightComponent;
-	UINT m_NumPropagationIterations;
-
+	
 	GraphicsDevice* m_pDevice;
 	SwapChain* m_pSwapChain;
 	CommandQueue* m_pCommandQueue;

@@ -195,14 +195,14 @@ COPY /Y "$(SolutionDir)Shaders\TiledShadingPS.hlsl" "$(SolutionDir)Samples\Bin\$
 COPY /Y "$(SolutionDir)Shaders\CreateVoxelizeCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelizeCommandsCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\CreateVoxelizeCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelizeCommandsCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelGridVS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelGridVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizeVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizeVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizeVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizeVS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelGridGS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelGridGS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizeGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizeGS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizeGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizeGS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelGridPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelGridPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizePS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizePS.hlsl"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -315,14 +315,14 @@ COPY /Y "$(SolutionDir)Shaders\TiledShadingPS.hlsl" "$(SolutionDir)Samples\Bin\$
 COPY /Y "$(SolutionDir)Shaders\CreateVoxelizeCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelizeCommandsCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\CreateVoxelizeCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelizeCommandsCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelGridVS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelGridVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizeVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizeVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizeVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizeVS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelGridGS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelGridGS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizeGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizeGS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizeGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizeGS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelGridPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelGridPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizePS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizePS.hlsl"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
