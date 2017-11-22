@@ -39,7 +39,6 @@ StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t12);
 Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t13);
 
 SamplerState g_AnisoSampler : register(s0);
-SamplerState g_LinearSampler : register(s1);
 
 [earlydepthstencil]
 float4 Main(PSInput input) : SV_Target

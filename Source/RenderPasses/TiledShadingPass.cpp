@@ -241,15 +241,9 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 	SamplerDesc anisoSamplerDesc(SamplerDesc::Anisotropic);
 	Sampler anisoSampler(pRenderEnv, &anisoSamplerDesc);
 
-	SamplerDesc linearSamplerDesc(SamplerDesc::Linear);
-	Sampler linearSampler(pRenderEnv, &linearSamplerDesc);
-
 	m_SamplerHeapStartPS = pRenderEnv->m_pShaderVisibleSamplerHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SamplerHeapStartPS,
 		anisoSampler.GetHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-	
-	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSamplerHeap->Allocate(),
-		linearSampler.GetHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 	
 	m_RTVHeapStart = pParams->m_pAccumLightTexture->GetRTVHandle();
 	m_DSVHeapStart = pParams->m_pMeshTypeDepthTexture->GetDSVHandle();
@@ -279,7 +273,7 @@ void TiledShadingPass::InitRootSignature(InitParams* pParams)
 	srvRangesPS.push_back(SRVDescriptorRange(pParams->m_NumMaterialTextures, 13));
 	rootParams[kRootSRVTableParamPS] = RootDescriptorTableParameter((UINT)srvRangesPS.size(), srvRangesPS.data(), D3D12_SHADER_VISIBILITY_PIXEL);
 
-	std::vector<D3D12_DESCRIPTOR_RANGE> samplerRangesPS = {SamplerRange(2, 0)};
+	std::vector<D3D12_DESCRIPTOR_RANGE> samplerRangesPS = {SamplerRange(1, 0)};
 	rootParams[kRootSamplerTableParamPS] = RootDescriptorTableParameter((UINT)samplerRangesPS.size(), samplerRangesPS.data(), D3D12_SHADER_VISIBILITY_PIXEL);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);

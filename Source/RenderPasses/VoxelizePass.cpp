@@ -1,9 +1,10 @@
-#include "RenderPasses/CreateVoxelGridPass.h"
+#include "RenderPasses/VoxelizePass.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/CommandSignature.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/DescriptorHeap.h"
 #include "D3DWrapper/GraphicsUtils.h"
+#include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "Common/MeshRenderResources.h"
@@ -12,37 +13,38 @@ namespace
 {
 	enum RootParams
 	{
-		kCBVRootParamVS = 0,
-		kCBVRootParamGS,
-		kSRVRootParamPS,
-		kConstant32BitRootParamPS,
 		kNumRootParams
 	};
 }
 
-CreateVoxelGridPass::CreateVoxelGridPass(InitParams* pParams)
+VoxelizePass::VoxelizePass(InitParams* pParams)
 	: m_pRootSignature(nullptr)
 	, m_pPipelineState(nullptr)
 	, m_pCommandSignature(nullptr)
-	, m_pVoxelColorAndOcclusionMaskTexture(nullptr)
-	, m_pVoxelNormalMasksTexture(nullptr)
+	, m_pVoxelReflectanceTexture(nullptr)
 {
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
+	D3D12_FEATURE_DATA_D3D12_OPTIONS supportedOptions;
+	pRenderEnv->m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &supportedOptions, sizeof(supportedOptions));
+	assert(supportedOptions.ConservativeRasterizationTier != D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED);
+	assert(supportedOptions.ROVsSupported == TRUE);
+	
 	InitResources(pParams);
 	InitRootSignature(pParams);
 	InitPipelineState(pParams);
 	InitCommandSignature(pParams);
 }
 
-CreateVoxelGridPass::~CreateVoxelGridPass()
+VoxelizePass::~VoxelizePass()
 {
 	SafeDelete(m_pCommandSignature);
 	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pRootSignature);
-	SafeDelete(m_pVoxelColorAndOcclusionMaskTexture);
-	SafeDelete(m_pVoxelNormalMasksTexture);
+	SafeDelete(m_pVoxelReflectanceTexture);
 }
 
-void CreateVoxelGridPass::Record(RenderParams* pParams)
+void VoxelizePass::Record(RenderParams* pParams)
 {
 	assert(false);
 	/*
@@ -76,11 +78,34 @@ void CreateVoxelGridPass::Record(RenderParams* pParams)
 	*/
 }
 
-void CreateVoxelGridPass::InitResources(InitParams* pParams)
+void VoxelizePass::InitResources(InitParams* pParams)
 {
+	assert(false && "Fix format for voxel reflectance texture");
+	assert(false && "Verify voxel position is compatible with texture coordinates");
+
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
+	const FLOAT optimizedClearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
+	assert(m_pVoxelReflectanceTexture == nullptr);
+	ColorTexture3DDesc voxelReflectanceTextureDesc(DXGI_FORMAT_R16G16B16A16_FLOAT, pParams->m_NumVoxelsX, pParams->m_NumVoxelsY, pParams->m_NumVoxelsZ, false, true, true);
+	m_pVoxelReflectanceTexture = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &voxelReflectanceTextureDesc,
+		pParams->m_InputResourceStates.m_VoxelReflectanceTextureState, optimizedClearColor, L"VoxelizePass::m_pVoxelReflectanceTexture");
+
+	m_OutputResourceStates.m_InstanceIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_VoxelReflectanceTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	m_OutputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_PointLightBoundsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_PointLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_NumPointLightsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_PointLightIndexBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_SpotLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_SpotLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_NumSpotLightsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_SpotLightIndexBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 }
 
-void CreateVoxelGridPass::InitRootSignature(InitParams* pParams)
+void VoxelizePass::InitRootSignature(InitParams* pParams)
 {
 	assert(false);
 	/*
@@ -95,11 +120,11 @@ void CreateVoxelGridPass::InitRootSignature(InitParams* pParams)
 	rootParams[kConstant32BitRootParamPS] = Root32BitConstantsParameter(1, D3D12_SHADER_VISIBILITY_PIXEL, 1);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"CreateVoxelGridPass::m_pRootSignature");
+	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"VoxelizePass::m_pRootSignature");
 	*/
 }
 
-void CreateVoxelGridPass::InitPipelineState(InitParams* pParams)
+void VoxelizePass::InitPipelineState(InitParams* pParams)
 {
 	assert(false);
 	// DepthStencilDesc disabled
@@ -120,25 +145,16 @@ void CreateVoxelGridPass::InitPipelineState(InitParams* pParams)
 	pipelineStateDesc.InputLayout = *pMeshBatch->GetInputLayout(); // Kolya. Fix me
 	pipelineStateDesc.PrimitiveTopologyType = pMeshBatch->GetPrimitiveTopologyType(); // Kolya. Fix me
 
-	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CreateVoxelGridPass::m_pPipelineState");
+	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VoxelizePass::m_pPipelineState");
 	*/
 }
 
-void CreateVoxelGridPass::InitCommandSignature(InitParams* pParams)
+void VoxelizePass::InitCommandSignature(InitParams* pParams)
 {
 	assert(false);
-	/*
-	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] =
-	{
-		Constant32BitArgument(kConstant32BitRootParamPS, 0, 1),
-		DrawIndexedArgument()
-	};
-	CommandSignatureDesc commandSignatureDesc(sizeof(DrawMeshCommand), ARRAYSIZE(argumentDescs), &argumentDescs[0]);
-	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"RenderGBufferPass::m_pCommandSignature");
-	*/
 }
 
-void CreateVoxelGridPass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void VoxelizePass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
 		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);

@@ -34,11 +34,10 @@ class TiledShadingPass;
 class CalcShadingRectanglesPass;
 class FrustumLightCullingPass;
 class CreateVoxelizeCommandsPass;
+class VoxelizePass;
 class Scene;
 
 // Old
-class CreateVoxelGridPass;
-class InjectVirtualPointLightsPass;
 class PropagateLightPass;
 class VisualizeVoxelGridPass;
 class VisualizeTexturePass;
@@ -130,6 +129,9 @@ private:
 
 	void InitCreateVoxelizeCommandsPass();
 	CommandList* RecordCreateVoxelizeCommandsPass();
+
+	void InitVoxelizePass();
+	CommandList* RecordVoxelizePass();
 		
 	void InitTiledShadingPass();
 	CommandList* RecordTiledShadingPass();
@@ -156,8 +158,6 @@ private:
 	CommandList* RecordPostRenderPass();
 	
 	// Old
-	void InitCreateVoxelGridPass();
-	void InitInjectVirtualPointLightsPass();
 	void InitPropagateLightPass();
 	void InitVisualizeVoxelGridDiffusePass();
 	void InitVisualizeVoxelGridNormalPass();
@@ -177,8 +177,6 @@ private:
 	CommandList* RecordSetupPointLightTiledShadowMapPass();
 	CommandList* RecordRenderSpotLightTiledShadowMapPass();
 	CommandList* RecordRenderPointLightTiledShadowMapPass();
-	CommandList* RecordCreateVoxelGridPass();
-	CommandList* RecordInjectVirtualPointLightsPass();
 	CommandList* RecordPropagateLightPass();
 	CommandList* RecordVisualizeVoxelGridDiffusePass();
 	CommandList* RecordVisualizeVoxelGridNormalPass();
@@ -216,17 +214,9 @@ private:
 
 	DepthTexture* m_pSpotLightTiledShadowMap;
 	DepthTexture* m_pPointLightTiledShadowMap;		
-	ColorTexture* m_IntensityRCoeffsTextures[2];
-	ColorTexture* m_IntensityGCoeffsTextures[2];
-	ColorTexture* m_IntensityBCoeffsTextures[2];
-	ColorTexture* m_pAccumIntensityRCoeffsTexture;
-	ColorTexture* m_pAccumIntensityGCoeffsTexture;
-	ColorTexture* m_pAccumIntensityBCoeffsTexture;
 	Viewport* m_pBackBufferViewport;
 	Viewport* m_pSpotLightTiledShadowMapViewport;
 	Viewport* m_pPointLightTiledShadowMapViewport;
-	Buffer* m_pGridBuffer;
-	Buffer* m_pGridConfigDataBuffer;
 	Buffer* m_pShadowCastingPointLightIndexBuffer;
 	Buffer* m_pNumShadowCastingPointLightsBuffer;
 	Buffer* m_pDrawPointLightShadowCasterCommandBuffer;
@@ -247,8 +237,7 @@ private:
 	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers];
 	UINT m_BackBufferIndex;
 
-	CreateVoxelGridPass* m_pCreateVoxelGridPass;
-	InjectVirtualPointLightsPass* m_pInjectVirtualPointLightsPass;
+	VoxelizePass* m_pCreateVoxelGridPass;
 	PropagateLightPass* m_pPropagateLightPass;
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridDiffusePass;
 	VisualizeVoxelGridPass* m_pVisualizeVoxelGridNormalPass;
@@ -283,6 +272,7 @@ private:
 	FrustumLightCullingPass* m_pFrustumSpotLightCullingPass;
 	TiledLightCullingPass* m_pTiledLightCullingPass;
 	CreateVoxelizeCommandsPass* m_pCreateVoxelizeCommandsPass;
+	VoxelizePass* m_pVoxelizePass;
 	TiledShadingPass* m_pTiledShadingPass;
 	VisualizeTexturePass* m_pVisualizeAccumLightPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers];
