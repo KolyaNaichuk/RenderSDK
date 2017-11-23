@@ -103,6 +103,113 @@ void VoxelizePass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_SpotLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_NumSpotLightsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightIndexBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+
+	assert(m_ResourceBarriers.empty());
+	AddResourceBarrierIfRequired(pParams->m_pInstanceIndexBuffer,
+		pParams->m_InputResourceStates.m_InstanceIndexBufferState,
+		m_OutputResourceStates.m_InstanceIndexBufferState);
+	
+	AddResourceBarrierIfRequired(pParams->m_pInstanceWorldMatrixBuffer,
+		pParams->m_InputResourceStates.m_InstanceWorldMatrixBufferState,
+		m_OutputResourceStates.m_InstanceWorldMatrixBufferState);
+
+	AddResourceBarrierIfRequired(m_pVoxelReflectanceTexture,
+		pParams->m_InputResourceStates.m_VoxelReflectanceTextureState,
+		m_OutputResourceStates.m_VoxelReflectanceTextureState);
+
+	AddResourceBarrierIfRequired(pParams->m_pFirstResourceIndexPerMaterialIDBuffer,
+		pParams->m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState,
+		m_OutputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState);
+
+	if (pParams->m_EnablePointLights)
+	{
+		AddResourceBarrierIfRequired(pParams->m_pPointLightBoundsBuffer,
+			pParams->m_InputResourceStates.m_PointLightBoundsBufferState,
+			m_OutputResourceStates.m_PointLightBoundsBufferState);
+
+		AddResourceBarrierIfRequired(pParams->m_pPointLightPropsBuffer,
+			pParams->m_InputResourceStates.m_PointLightPropsBufferState,
+			m_OutputResourceStates.m_PointLightPropsBufferState);
+
+		AddResourceBarrierIfRequired(pParams->m_pNumPointLightsBuffer,
+			pParams->m_InputResourceStates.m_NumPointLightsBufferState,
+			m_OutputResourceStates.m_NumPointLightsBufferState);
+
+		AddResourceBarrierIfRequired(pParams->m_pPointLightIndexBuffer,
+			pParams->m_InputResourceStates.m_PointLightIndexBufferState,
+			m_OutputResourceStates.m_PointLightIndexBufferState);
+	}
+
+	if (pParams->m_EnableSpotLights)
+	{
+		AddResourceBarrierIfRequired(pParams->m_pSpotLightWorldBoundsBuffer,
+			pParams->m_InputResourceStates.m_SpotLightWorldBoundsBufferState,
+			m_OutputResourceStates.m_SpotLightWorldBoundsBufferState);
+
+		AddResourceBarrierIfRequired(pParams->m_pSpotLightPropsBuffer,
+			pParams->m_InputResourceStates.m_SpotLightPropsBufferState,
+			m_OutputResourceStates.m_SpotLightPropsBufferState);
+
+		AddResourceBarrierIfRequired(pParams->m_pNumSpotLightsBuffer,
+			pParams->m_InputResourceStates.m_NumSpotLightsBufferState,
+			m_OutputResourceStates.m_NumSpotLightsBufferState);
+
+		AddResourceBarrierIfRequired(pParams->m_pSpotLightIndexBuffer,
+			pParams->m_InputResourceStates.m_SpotLightIndexBufferState,
+			m_OutputResourceStates.m_SpotLightIndexBufferState);
+	}
+
+	m_SRVHeapStartVS = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
+	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStartVS,
+		pParams->m_pInstanceIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+		pParams->m_pInstanceWorldMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	m_SRVHeapStartPS = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
+	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStartPS,
+		m_pVoxelReflectanceTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	if (pParams->m_EnablePointLights)
+	{
+		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+			pParams->m_pPointLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+			pParams->m_pPointLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+			pParams->m_pNumPointLightsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+			pParams->m_pPointLightIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
+
+	if (pParams->m_EnableSpotLights)
+	{
+		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+			pParams->m_pSpotLightWorldBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+			pParams->m_pSpotLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+			pParams->m_pNumSpotLightsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+			pParams->m_pSpotLightIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
+
+	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+		pParams->m_pFirstResourceIndexPerMaterialIDBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	for (decltype(pParams->m_NumMaterialTextures) index = 0; index < pParams->m_NumMaterialTextures; ++index)
+	{
+		ColorTexture* pMaterialTexture = pParams->m_ppMaterialTextures[index];
+
+		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+			pMaterialTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
 }
 
 void VoxelizePass::InitRootSignature(InitParams* pParams)
@@ -154,7 +261,7 @@ void VoxelizePass::InitCommandSignature(InitParams* pParams)
 	assert(false);
 }
 
-void VoxelizePass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void VoxelizePass::AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
 		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);

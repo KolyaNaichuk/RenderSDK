@@ -40,9 +40,23 @@ public:
 		u16 m_NumMaterialTextures;
 		ColorTexture** m_ppMaterialTextures;
 
+		Buffer* m_pInstanceIndexBuffer;
+		Buffer* m_pInstanceWorldMatrixBuffer;
+		Buffer* m_pFirstResourceIndexPerMaterialIDBuffer;
+		
 		bool m_EnableDirectionalLight;
+		
 		bool m_EnablePointLights;
+		Buffer* m_pPointLightBoundsBuffer;
+		Buffer* m_pPointLightPropsBuffer;
+		Buffer* m_pNumPointLightsBuffer;
+		Buffer* m_pPointLightIndexBuffer;
+
 		bool m_EnableSpotLights;
+		Buffer* m_pSpotLightWorldBoundsBuffer;
+		Buffer* m_pSpotLightPropsBuffer;
+		Buffer* m_pNumSpotLightsBuffer;
+		Buffer* m_pSpotLightIndexBuffer;
 	};
 
 	struct RenderParams
@@ -63,7 +77,7 @@ private:
 	void InitRootSignature(InitParams* pParams);
 	void InitPipelineState(InitParams* pParams);
 	void InitCommandSignature(InitParams* pParams);
-	void CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
+	void AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
 	RootSignature* m_pRootSignature;
