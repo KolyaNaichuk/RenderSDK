@@ -1,5 +1,3 @@
-#include "Foundation.hlsl"
-
 struct VSInput
 {
 	uint   instanceId			: SV_InstanceID;
@@ -15,7 +13,7 @@ struct VSOutput
 	float2 texCoord				: TEXCOORD;
 };
 
-cbuffer InstanceOffsetBuffer : register(b0)
+cbuffer InstanceOffsetBuffer : register(b1)
 {
 	uint g_InstanceOffset;
 }

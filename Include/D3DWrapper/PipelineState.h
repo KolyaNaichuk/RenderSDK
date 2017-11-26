@@ -101,6 +101,8 @@ struct InputLayoutDesc : public D3D12_INPUT_LAYOUT_DESC
 	InputLayoutDesc(UINT numElements = 0, const InputElementDesc* pFirstInputElementDesc = nullptr);
 };
 
+bool HasVertexSemantic(const InputLayoutDesc& inputLayoutDesc, LPCSTR pSemanticName);
+
 struct GraphicsPipelineStateDesc : D3D12_GRAPHICS_PIPELINE_STATE_DESC
 {
 	GraphicsPipelineStateDesc();

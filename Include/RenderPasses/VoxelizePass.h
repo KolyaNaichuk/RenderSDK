@@ -8,6 +8,7 @@ class CommandList;
 class RootSignature;
 class PipelineState;
 class CommandSignature;
+class MeshRenderResources;
 
 class VoxelizePass
 {
@@ -32,6 +33,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
+		MeshRenderResources* m_pMeshRenderResources;
 
 		u16 m_NumVoxelsX;
 		u16 m_NumVoxelsY;

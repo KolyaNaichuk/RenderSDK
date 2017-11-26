@@ -48,6 +48,7 @@
 
 /*
 To do:
+- VoxelizePass and TiledShadingPass make copy of material descriptors. Reuse material descriptors between them
 - Check how spot light bounds are calculated. See TiledShadingPS.hlsl and VoxelizePS.hlsl how spot light position is calculated
 - When injecting reflected radiance into voxel grid add shadow map contribution.
 - Review light view matrix computation for shadow maps in LightRenderResources.

@@ -20,8 +20,6 @@ namespace
 		kRoot32BitConstantParamPS,
 		kNumRootParams
 	};
-
-	bool HasVertexSemantic(const InputLayoutDesc& inputLayoutDesc, LPCSTR pSemanticName);
 }
 
 RenderGBufferPass::RenderGBufferPass(InitParams* pParams)
@@ -237,18 +235,4 @@ void RenderGBufferPass::CreateResourceBarrierIfRequired(GraphicsResource* pResou
 {
 	if (currState != requiredState)
 		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
-}
-
-namespace
-{
-	bool HasVertexSemantic(const InputLayoutDesc& inputLayoutDesc, LPCSTR pSemanticName)
-	{
-		for (UINT index = 0; index < inputLayoutDesc.NumElements; ++index)
-		{
-			const D3D12_INPUT_ELEMENT_DESC& inputElementDesc = inputLayoutDesc.pInputElementDescs[index];
-			if (std::strcmp(inputElementDesc.SemanticName, pSemanticName) == 0)
-				return true;
-		}
-		return false;
-	}
 }

@@ -13,6 +13,12 @@ namespace
 {
 	enum RootParams
 	{
+		kRootCBVParamAll = 0,
+		kRoot32BitConstantsParamVS,
+		kRootSRVTableParamVS,
+		kRoot32BitConstantsParamPS,
+		kRootSRVTableParamPS,
+		kRootSamplerTableParamPS,
 		kNumRootParams
 	};
 }
@@ -81,7 +87,7 @@ void VoxelizePass::Record(RenderParams* pParams)
 void VoxelizePass::InitResources(InitParams* pParams)
 {
 	assert(false && "Fix format for voxel reflectance texture");
-	assert(false && "Verify voxel position is compatible with texture coordinates");
+	assert(false && "Verify voxel texture position is compatible with texture coordinates in VoxelizePS.hlsl");
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
@@ -214,46 +220,80 @@ void VoxelizePass::InitResources(InitParams* pParams)
 
 void VoxelizePass::InitRootSignature(InitParams* pParams)
 {
-	assert(false);
-	/*
-	D3D12_DESCRIPTOR_RANGE descriptorRangesVS[] = { CBVDescriptorRange(1, 0) };
-	D3D12_DESCRIPTOR_RANGE descriptorRangesGS[] = { CBVDescriptorRange(1, 0) };
-	D3D12_DESCRIPTOR_RANGE descriptorRangesPS[] = { CBVDescriptorRange(1, 0), SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0) };
+	assert(m_pRootSignature == nullptr);
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kCBVRootParamVS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesVS), &descriptorRangesVS[0], D3D12_SHADER_VISIBILITY_VERTEX);
-	rootParams[kCBVRootParamGS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesGS), &descriptorRangesGS[0], D3D12_SHADER_VISIBILITY_GEOMETRY);
-	rootParams[kSRVRootParamPS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRangesPS), &descriptorRangesPS[0], D3D12_SHADER_VISIBILITY_PIXEL);
-	rootParams[kConstant32BitRootParamPS] = Root32BitConstantsParameter(1, D3D12_SHADER_VISIBILITY_PIXEL, 1);
+	rootParams[kRootCBVParamAll] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
+	rootParams[kRoot32BitConstantsParamVS] = Root32BitConstantsParameter(1, D3D12_SHADER_VISIBILITY_VERTEX, 1);
+
+	std::vector<D3D12_DESCRIPTOR_RANGE> srvRangesVS = {SRVDescriptorRange(2, 0)};
+	rootParams[kRootSRVTableParamVS] = RootDescriptorTableParameter((UINT)srvRangesVS.size(), srvRangesVS.data(), D3D12_SHADER_VISIBILITY_VERTEX);
+			
+	rootParams[kRoot32BitConstantsParamPS] = Root32BitConstantsParameter(1, D3D12_SHADER_VISIBILITY_PIXEL, 1);
+	
+	std::vector<D3D12_DESCRIPTOR_RANGE> srvRangesPS = {UAVDescriptorRange(1, 0)};
+	if (pParams->m_EnablePointLights)
+		srvRangesPS.push_back(SRVDescriptorRange(4, 0));
+	if (pParams->m_EnableSpotLights)
+		srvRangesPS.push_back(SRVDescriptorRange(4, 4));
+
+	srvRangesPS.push_back(SRVDescriptorRange(1, 8));
+	srvRangesPS.push_back(SRVDescriptorRange(pParams->m_NumMaterialTextures, 9));
+
+	rootParams[kRootSRVTableParamPS] = RootDescriptorTableParameter((UINT)srvRangesPS.size(), srvRangesPS.data(), D3D12_SHADER_VISIBILITY_PIXEL);
+	
+	std::vector<D3D12_DESCRIPTOR_RANGE> samplerRangesPS = {SamplerRange(1, 0)};
+	rootParams[kRootSamplerTableParamPS] = RootDescriptorTableParameter((UINT)samplerRangesPS.size(), samplerRangesPS.data(), D3D12_SHADER_VISIBILITY_PIXEL);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"VoxelizePass::m_pRootSignature");
-	*/
 }
 
 void VoxelizePass::InitPipelineState(InitParams* pParams)
 {
-	assert(false);
-	// DepthStencilDesc disabled
-
-	/*
+	assert(m_pRootSignature != nullptr);
+	assert(m_pPipelineState == nullptr);
+	
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	Shader vertexShader(L"Shaders//CreateVoxelGridVS.hlsl", "Main", "vs_4_0");
-	Shader geometryShader(L"Shaders//CreateVoxelGridGS.hlsl", "Main", "gs_4_0");
-	Shader pixelShader(L"Shaders//CreateVoxelGridPS.hlsl", "Main", "ps_5_1");
+	const MeshRenderResources* pMeshRenderResources = pParams->m_pMeshRenderResources;
+	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
+	const u32 meshType = 0;
+
+	std::string enablePointLightsStr = std::to_string(pParams->m_EnablePointLights ? 1 : 0);
+	std::string enableSpotLightsStr = std::to_string(pParams->m_EnableSpotLights ? 1 : 0);
+	std::string enableDirectionalLightStr = std::to_string(pParams->m_EnableDirectionalLight ? 1 : 0);
+
+	const ShaderMacro shaderDefinesPS[] =
+	{
+		ShaderMacro("ENABLE_POINT_LIGHTS", enablePointLightsStr.c_str()),
+		ShaderMacro("ENABLE_SPOT_LIGHTS", enableSpotLightsStr.c_str()),
+		ShaderMacro("ENABLE_DIRECTIONAL_LIGHT", enableDirectionalLightStr.c_str()),
+		ShaderMacro()
+	};
+
+	Shader vertexShader(L"Shaders//VoxelizeVS.hlsl", "Main", "vs_4_0");
+	Shader geometryShader(L"Shaders//VoxelizeGS.hlsl", "Main", "gs_4_0");
+	Shader pixelShader(L"Shaders//VoxelizePS.hlsl", "Main", "ps_5_1", shaderDefinesPS);
+
+	const InputLayoutDesc& inputLayout = pMeshRenderResources->GetInputLayout(meshType);
+	assert(inputLayout.NumElements == 3);
+	assert(HasVertexSemantic(inputLayout, "POSITION"));
+	assert(HasVertexSemantic(inputLayout, "NORMAL"));
+	assert(HasVertexSemantic(inputLayout, "TEXCOORD"));
 
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetVertexShader(&vertexShader);
 	pipelineStateDesc.SetGeometryShader(&geometryShader);
 	pipelineStateDesc.SetPixelShader(&pixelShader);
+	pipelineStateDesc.DepthStencilState = DepthStencilDesc(DepthStencilDesc::Disabled);
 	pipelineStateDesc.RasterizerState = RasterizerDesc(RasterizerDesc::CullNoneConservative);
-	pipelineStateDesc.InputLayout = *pMeshBatch->GetInputLayout(); // Kolya. Fix me
-	pipelineStateDesc.PrimitiveTopologyType = pMeshBatch->GetPrimitiveTopologyType(); // Kolya. Fix me
+	pipelineStateDesc.InputLayout = inputLayout;
+	pipelineStateDesc.PrimitiveTopologyType = pMeshRenderResources->GetPrimitiveTopologyType(meshType);
 
 	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VoxelizePass::m_pPipelineState");
-	*/
 }
 
 void VoxelizePass::InitCommandSignature(InitParams* pParams)

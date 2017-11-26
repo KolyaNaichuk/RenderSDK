@@ -319,6 +319,17 @@ InputLayoutDesc::InputLayoutDesc(UINT numElements, const InputElementDesc* pFirs
 	NumElements = numElements;
 }
 
+bool HasVertexSemantic(const InputLayoutDesc& inputLayoutDesc, LPCSTR pSemanticName)
+{
+	for (UINT index = 0; index < inputLayoutDesc.NumElements; ++index)
+	{
+		const D3D12_INPUT_ELEMENT_DESC& inputElementDesc = inputLayoutDesc.pInputElementDescs[index];
+		if (std::strcmp(inputElementDesc.SemanticName, pSemanticName) == 0)
+			return true;
+	}
+	return false;
+}
+
 GraphicsPipelineStateDesc::GraphicsPipelineStateDesc()
 {
 	pRootSignature = nullptr;
