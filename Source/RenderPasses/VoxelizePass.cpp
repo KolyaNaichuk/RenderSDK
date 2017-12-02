@@ -1,4 +1,5 @@
 #include "RenderPasses/VoxelizePass.h"
+#include "RenderPasses/Common.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/CommandSignature.h"
 #include "D3DWrapper/CommandList.h"
@@ -18,7 +19,6 @@ namespace
 		kRootSRVTableParamVS,
 		kRoot32BitConstantsParamPS,
 		kRootSRVTableParamPS,
-		kRootSamplerTableParamPS,
 		kNumRootParams
 	};
 }
@@ -28,6 +28,7 @@ VoxelizePass::VoxelizePass(InitParams* pParams)
 	, m_pPipelineState(nullptr)
 	, m_pCommandSignature(nullptr)
 	, m_pVoxelReflectanceTexture(nullptr)
+	, m_pViewport(nullptr)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
@@ -48,47 +49,53 @@ VoxelizePass::~VoxelizePass()
 	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pRootSignature);
 	SafeDelete(m_pVoxelReflectanceTexture);
+	SafeDelete(m_pViewport);
 }
 
 void VoxelizePass::Record(RenderParams* pParams)
 {
-	assert(false);
-	/*
+	assert(m_pPipelineState != nullptr);
+	assert(m_pRootSignature != nullptr);
+
+	MeshRenderResources* pMeshRenderResources = pParams->m_pMeshRenderResources;
+	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
+	const u32 meshType = 0;
+
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
-	ResourceList* pResources = pParams->m_pResources;
-	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
 
 	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
-			
-	pCommandList->OMSetRenderTargets(0, nullptr);
-	
-	pCommandList->SetRequiredResourceStates(&pResources->m_RequiredResourceStates);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
-	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamVS, pResources->m_SRVHeapStart);
-	pCommandList->SetGraphicsRootDescriptorTable(kCBVRootParamGS, DescriptorHandle(pResources->m_SRVHeapStart, 1));
-	pCommandList->SetGraphicsRootDescriptorTable(kSRVRootParamPS, DescriptorHandle(pResources->m_SRVHeapStart, 2));
-	pCommandList->IASetPrimitiveTopology(pMeshBatch->GetPrimitiveTopology());
-	pCommandList->IASetVertexBuffers(0, 1, pMeshBatch->GetVertexBuffer()->GetVBView());
-	pCommandList->IASetIndexBuffer(pMeshBatch->GetIndexBuffer()->GetIBView());
+	if (!m_ResourceBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+
+	pCommandList->OMSetRenderTargets(0, nullptr);
 	
-	pCommandList->RSSetViewports(1, pParams->m_pViewport);
+	const FLOAT clearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
+	pCommandList->ClearUnorderedAccessView(m_SRVHeapStartPS, m_pVoxelReflectanceTexture->GetUAVHandle(), m_pVoxelReflectanceTexture, clearColor);
 	
-	Rect scissorRect(ExtractRect(pParams->m_pViewport));
+	pCommandList->SetGraphicsRootConstantBufferView(kRootCBVParamAll, pParams->m_pAppDataBuffer);
+	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamVS, m_SRVHeapStartVS);
+	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamPS, m_SRVHeapStartPS);
+		
+	pCommandList->IASetPrimitiveTopology(pMeshRenderResources->GetPrimitiveTopology(meshType));
+	pCommandList->IASetVertexBuffers(0, 1, pMeshRenderResources->GetVertexBuffer(meshType)->GetVBView());
+	pCommandList->IASetIndexBuffer(pMeshRenderResources->GetIndexBuffer(meshType)->GetIBView());
+	
+	Rect scissorRect(ExtractRect(m_pViewport));
+	pCommandList->RSSetViewports(1, m_pViewport);
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 	
-	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshBatch->GetNumMeshes(), pParams->m_pDrawMeshCommandBuffer, 0, pParams->m_pNumDrawMeshesBuffer, 0);
+	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshRenderResources->GetTotalNumMeshes(),
+		pParams->m_pVoxelizeCommandBuffer, 0, pParams->m_pNumCommandsPerMeshTypeBuffer, meshType * sizeof(u32));
+	
 	pCommandList->End();
-	*/
 }
 
 void VoxelizePass::InitResources(InitParams* pParams)
 {
-	assert(false && "Fix format for voxel reflectance texture");
-	assert(false && "Verify voxel texture position is compatible with texture coordinates in VoxelizePS.hlsl");
-
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	const FLOAT optimizedClearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -97,11 +104,15 @@ void VoxelizePass::InitResources(InitParams* pParams)
 	m_pVoxelReflectanceTexture = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &voxelReflectanceTextureDesc,
 		pParams->m_InputResourceStates.m_VoxelReflectanceTextureState, optimizedClearColor, L"VoxelizePass::m_pVoxelReflectanceTexture");
 
+	m_pViewport = new Viewport(0.0f, 0.0f, FLOAT(pParams->m_NumVoxelsX), FLOAT(pParams->m_NumVoxelsY));
+
+	m_OutputResourceStates.m_NumCommandsPerMeshTypeBufferState = D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
+	m_OutputResourceStates.m_VoxelizeCommandBufferState = D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
 	m_OutputResourceStates.m_InstanceIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_VoxelReflectanceTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_PointLightBoundsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_PointLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_PointLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_NumPointLightsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_PointLightIndexBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
@@ -111,6 +122,14 @@ void VoxelizePass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_SpotLightIndexBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
 	assert(m_ResourceBarriers.empty());
+	AddResourceBarrierIfRequired(pParams->m_pNumCommandsPerMeshTypeBuffer,
+		pParams->m_InputResourceStates.m_NumCommandsPerMeshTypeBufferState,
+		m_OutputResourceStates.m_NumCommandsPerMeshTypeBufferState);
+
+	AddResourceBarrierIfRequired(pParams->m_pVoxelizeCommandBuffer,
+		pParams->m_InputResourceStates.m_VoxelizeCommandBufferState,
+		m_OutputResourceStates.m_VoxelizeCommandBufferState);
+
 	AddResourceBarrierIfRequired(pParams->m_pInstanceIndexBuffer,
 		pParams->m_InputResourceStates.m_InstanceIndexBufferState,
 		m_OutputResourceStates.m_InstanceIndexBufferState);
@@ -129,9 +148,9 @@ void VoxelizePass::InitResources(InitParams* pParams)
 
 	if (pParams->m_EnablePointLights)
 	{
-		AddResourceBarrierIfRequired(pParams->m_pPointLightBoundsBuffer,
-			pParams->m_InputResourceStates.m_PointLightBoundsBufferState,
-			m_OutputResourceStates.m_PointLightBoundsBufferState);
+		AddResourceBarrierIfRequired(pParams->m_pPointLightWorldBoundsBuffer,
+			pParams->m_InputResourceStates.m_PointLightWorldBoundsBufferState,
+			m_OutputResourceStates.m_PointLightWorldBoundsBufferState);
 
 		AddResourceBarrierIfRequired(pParams->m_pPointLightPropsBuffer,
 			pParams->m_InputResourceStates.m_PointLightPropsBufferState,
@@ -179,7 +198,7 @@ void VoxelizePass::InitResources(InitParams* pParams)
 	if (pParams->m_EnablePointLights)
 	{
 		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pPointLightBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			pParams->m_pPointLightWorldBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 			pParams->m_pPointLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -232,7 +251,9 @@ void VoxelizePass::InitRootSignature(InitParams* pParams)
 			
 	rootParams[kRoot32BitConstantsParamPS] = Root32BitConstantsParameter(1, D3D12_SHADER_VISIBILITY_PIXEL, 1);
 	
-	std::vector<D3D12_DESCRIPTOR_RANGE> srvRangesPS = {UAVDescriptorRange(1, 0)};
+	std::vector<D3D12_DESCRIPTOR_RANGE> srvRangesPS;
+	srvRangesPS.push_back(UAVDescriptorRange(1, 0));
+
 	if (pParams->m_EnablePointLights)
 		srvRangesPS.push_back(SRVDescriptorRange(4, 0));
 	if (pParams->m_EnableSpotLights)
@@ -243,10 +264,8 @@ void VoxelizePass::InitRootSignature(InitParams* pParams)
 
 	rootParams[kRootSRVTableParamPS] = RootDescriptorTableParameter((UINT)srvRangesPS.size(), srvRangesPS.data(), D3D12_SHADER_VISIBILITY_PIXEL);
 	
-	std::vector<D3D12_DESCRIPTOR_RANGE> samplerRangesPS = {SamplerRange(1, 0)};
-	rootParams[kRootSamplerTableParamPS] = RootDescriptorTableParameter((UINT)samplerRangesPS.size(), samplerRangesPS.data(), D3D12_SHADER_VISIBILITY_PIXEL);
-
-	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	StaticSamplerDesc samplerDesc(StaticSamplerDesc::Anisotropic, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, 1, &samplerDesc, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	m_pRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rootSignatureDesc, L"VoxelizePass::m_pRootSignature");
 }
 
@@ -264,12 +283,14 @@ void VoxelizePass::InitPipelineState(InitParams* pParams)
 	std::string enablePointLightsStr = std::to_string(pParams->m_EnablePointLights ? 1 : 0);
 	std::string enableSpotLightsStr = std::to_string(pParams->m_EnableSpotLights ? 1 : 0);
 	std::string enableDirectionalLightStr = std::to_string(pParams->m_EnableDirectionalLight ? 1 : 0);
+	std::string numMaterialsStr = std::to_string(pParams->m_NumMaterialTextures);
 
 	const ShaderMacro shaderDefinesPS[] =
 	{
 		ShaderMacro("ENABLE_POINT_LIGHTS", enablePointLightsStr.c_str()),
 		ShaderMacro("ENABLE_SPOT_LIGHTS", enableSpotLightsStr.c_str()),
 		ShaderMacro("ENABLE_DIRECTIONAL_LIGHT", enableDirectionalLightStr.c_str()),
+		ShaderMacro("NUM_MATERIAL_TEXTURES", numMaterialsStr.c_str()),
 		ShaderMacro()
 	};
 
@@ -298,7 +319,20 @@ void VoxelizePass::InitPipelineState(InitParams* pParams)
 
 void VoxelizePass::InitCommandSignature(InitParams* pParams)
 {
-	assert(false);
+	assert(m_pRootSignature != nullptr);
+	assert(m_pCommandSignature == nullptr);
+
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
+	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] =
+	{
+		Constant32BitArgument(kRoot32BitConstantsParamVS, 0, 1),
+		Constant32BitArgument(kRoot32BitConstantsParamPS, 0, 1),
+		DrawIndexedArgument()
+	};
+
+	CommandSignatureDesc commandSignatureDesc(sizeof(DrawCommand), ARRAYSIZE(argumentDescs), argumentDescs);
+	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"VoxelizePass::m_pCommandSignature");
 }
 
 void VoxelizePass::AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)

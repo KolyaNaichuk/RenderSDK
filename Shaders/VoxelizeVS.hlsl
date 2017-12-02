@@ -27,7 +27,7 @@ VSOutput Main(VSInput input)
 	float4x4 worldMatrix = g_InstanceWorldMatrixBuffer[instanceIndex];
 	
 	VSOutput output;
-	output.clipSpacePos = mul(worldMatrix, float4(input.localSpacePos, 1.0f));
+	output.worldSpacePos = mul(worldMatrix, float4(input.localSpacePos, 1.0f));
 	output.worldSpaceNormal = mul(worldMatrix, float4(input.localSpaceNormal, 0.0f)).xyz;
 	output.texCoord = input.texCoord;
 

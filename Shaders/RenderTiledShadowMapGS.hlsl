@@ -30,7 +30,7 @@ struct Frustum
 
 #if LIGHT_TYPE == LIGHT_TYPE_POINT
 Buffer<uint> g_ShadowCastingPointLightIndexBuffer : register(t0);
-StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t1);
+StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t1);
 StructuredBuffer<float4x4> g_PointLightViewTileProjMatrixBuffer : register(t2);
 StructuredBuffer<Frustum> g_PointLightFrustumBuffer : register(t3);
 
@@ -39,7 +39,7 @@ void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> o
 {
 	uint lightIndex = g_ShadowCastingPointLightIndexBuffer[input[0].lightIndexOffset];
 
-	float3 worldSpaceLightPos = g_PointLightBoundsBuffer[lightIndex].center;
+	float3 worldSpaceLightPos = g_PointLightWorldBoundsBuffer[lightIndex].center;
 	float3 worldSpaceLightDir = input[0].worldSpacePos.xyz - worldSpaceLightPos;
 
 	float3 worldSpaceFaceSide1 = input[1].worldSpacePos.xyz - input[0].worldSpacePos.xyz;

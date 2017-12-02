@@ -218,6 +218,7 @@ void RenderGBufferPass::InitCommandSignature(InitParams* pParams)
 {
 	assert(m_pRootSignature != nullptr);
 	assert(m_pCommandSignature == nullptr);
+	
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] =

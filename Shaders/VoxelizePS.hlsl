@@ -14,15 +14,16 @@ cbuffer AppDataBuffer : register(b0)
 {
 	AppData g_AppData;
 }
+
 cbuffer MaterialIDBuffer : register(b1)
 {
 	uint g_MaterialID;
 }
 
-RasterizerOrderedTexture3D<float4> g_VoxelReflectanceTexture : register(u1);
+RasterizerOrderedTexture3D<float4> g_VoxelReflectanceTexture : register(u0);
 
 #if ENABLE_POINT_LIGHTS == 1
-StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t0);
+StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t0);
 StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t1);
 Buffer<uint> g_NumPointLightsBuffer : register(t2);
 Buffer<uint> g_PointLightIndexBuffer : register(t3);
@@ -56,8 +57,8 @@ float3 ComputeReflectedRadianceFromPointLights(float3 worldSpacePos, float3 worl
 
 		float3 incomingRadiance = g_PointLightPropsBuffer[lightIndex].color;
 		float attenStartRange = g_PointLightPropsBuffer[lightIndex].attenStartRange;
-		float3 lightWorldSpacePos = g_PointLightBoundsBuffer[lightIndex].center;
-		float attenEndRange = g_PointLightBoundsBuffer[lightIndex].radius;
+		float3 lightWorldSpacePos = g_PointLightWorldBoundsBuffer[lightIndex].center;
+		float attenEndRange = g_PointLightWorldBoundsBuffer[lightIndex].radius;
 
 		float3 worldSpaceDirToLight = lightWorldSpacePos - worldSpacePos;
 		float distToLight = length(worldSpaceDirToLight);
@@ -122,30 +123,29 @@ float3 ComputeReflectedRadianceFromDirectionalLight(float3 worldSpaceNormal, flo
 
 void Main(PSInput input)
 {
-	float3 worldSpacePos = input.worldSpacePos;
-	if (any(worldSpacePos < g_AppData.voxelGridWorldMinPoint) || any(worldSpacePos > g_AppData.voxelGridWorldMaxPoint))
+	if (any(input.worldSpacePos < g_AppData.voxelGridWorldMinPoint) || any(input.worldSpacePos > g_AppData.voxelGridWorldMaxPoint))
 		return;
 
 	uint firstTextureIndex = g_FirstResourceIndexPerMaterialIDBuffer[g_MaterialID];
 	Texture2D diffuseTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex)];
-	float3 diffuseAlbedo = diffuseTexture.Sample(g_AnisoSampler, texCoord).rgb;
+	float3 diffuseAlbedo = diffuseTexture.Sample(g_AnisoSampler, input.texCoord).rgb;
 
 	float3 worldSpaceNormal = normalize(input.worldSpaceNormal);
 	
 	float3 reflectedRadiance = float3(0.0f, 0.0f, 0.0f);
 #if ENABLE_POINT_LIGHTS == 1
-	reflectedRadiance += ComputeReflectedRadianceFromPointLights(worldSpacePos, worldSpaceNormal, diffuseAlbedo);
+	reflectedRadiance += ComputeReflectedRadianceFromPointLights(input.worldSpacePos, worldSpaceNormal, diffuseAlbedo);
 #endif // ENABLE_POINT_LIGHTS
 
 #if ENABLE_SPOT_LIGHTS == 1
-	reflectedRadiance += ComputeReflectedRadianceFromSpotLights(worldSpacePos, worldSpaceNormal, diffuseAlbedo);
+	reflectedRadiance += ComputeReflectedRadianceFromSpotLights(input.worldSpacePos, worldSpaceNormal, diffuseAlbedo);
 #endif // ENABLE_SPOT_LIGHTS
 
 #if ENABLE_DIRECTIONAL_LIGHT == 1
 	reflectedRadiance += ComputeReflectedRadianceFromDirectionalLight(worldSpaceNormal, diffuseAlbedo);
 #endif // ENABLE_DIRECTIONAL_LIGHT	
 	
-	float3 gridSpacePos = worldSpacePos - g_AppData.voxelGridWorldMinPoint;
+	float3 gridSpacePos = input.worldSpacePos - g_AppData.voxelGridWorldMinPoint;
 	int3 voxelPos = floor(gridSpacePos * g_AppData.voxelRcpSize);
 	
 	float4 prevReflectedRadiance = g_VoxelReflectanceTexture[voxelPos];

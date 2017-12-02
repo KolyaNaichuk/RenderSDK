@@ -15,11 +15,13 @@ class VoxelizePass
 public:
 	struct ResourceStates
 	{
+		D3D12_RESOURCE_STATES m_NumCommandsPerMeshTypeBufferState;
+		D3D12_RESOURCE_STATES m_VoxelizeCommandBufferState;
 		D3D12_RESOURCE_STATES m_InstanceIndexBufferState;
 		D3D12_RESOURCE_STATES m_InstanceWorldMatrixBufferState;
 		D3D12_RESOURCE_STATES m_VoxelReflectanceTextureState;
 		D3D12_RESOURCE_STATES m_FirstResourceIndexPerMaterialIDBufferState;
-		D3D12_RESOURCE_STATES m_PointLightBoundsBufferState;
+		D3D12_RESOURCE_STATES m_PointLightWorldBoundsBufferState;
 		D3D12_RESOURCE_STATES m_PointLightPropsBufferState;
 		D3D12_RESOURCE_STATES m_NumPointLightsBufferState;
 		D3D12_RESOURCE_STATES m_PointLightIndexBufferState;
@@ -41,15 +43,18 @@ public:
 
 		u16 m_NumMaterialTextures;
 		ColorTexture** m_ppMaterialTextures;
+		Buffer* m_pFirstResourceIndexPerMaterialIDBuffer;
+
+		Buffer* m_pNumCommandsPerMeshTypeBuffer;
+		Buffer* m_pVoxelizeCommandBuffer;
 
 		Buffer* m_pInstanceIndexBuffer;
 		Buffer* m_pInstanceWorldMatrixBuffer;
-		Buffer* m_pFirstResourceIndexPerMaterialIDBuffer;
-		
+				
 		bool m_EnableDirectionalLight;
 		
 		bool m_EnablePointLights;
-		Buffer* m_pPointLightBoundsBuffer;
+		Buffer* m_pPointLightWorldBoundsBuffer;
 		Buffer* m_pPointLightPropsBuffer;
 		Buffer* m_pNumPointLightsBuffer;
 		Buffer* m_pPointLightIndexBuffer;
@@ -65,6 +70,10 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
+		MeshRenderResources* m_pMeshRenderResources;
+		Buffer* m_pNumCommandsPerMeshTypeBuffer;
+		Buffer* m_pVoxelizeCommandBuffer;
+		Buffer* m_pAppDataBuffer;
 	};
 
 	VoxelizePass(InitParams* pParams);
@@ -90,4 +99,5 @@ private:
 	std::vector<ResourceBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
 	ColorTexture* m_pVoxelReflectanceTexture;
+	Viewport* m_pViewport;
 };

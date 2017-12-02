@@ -6,7 +6,7 @@ StructuredBuffer<AABB> g_MeshBoundsBuffer : register(t1);
 StructuredBuffer<MeshDesc> g_MeshDescBuffer : register(t2);
 
 #if ENABLE_POINT_LIGHTS == 1
-StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t3);
+StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t3);
 Buffer<uint> g_NumPointLightsBuffer : register(t4);
 Buffer<uint> g_PointLightIndexBuffer : register(t5);
 
@@ -43,7 +43,7 @@ void FindPointLightsPerShadowCaster(uint localThreadIndex, AABB meshBounds)
 	for (uint index = localThreadIndex; index < g_NumPointLightsBuffer[0]; index += THREAD_GROUP_SIZE)
 	{
 		uint lightIndex = g_PointLightIndexBuffer[index];
-		if (TestSphereAgainstAABB(meshBounds, g_PointLightBoundsBuffer[lightIndex]))
+		if (TestSphereAgainstAABB(meshBounds, g_PointLightWorldBoundsBuffer[lightIndex]))
 		{
 			uint listIndex;
 			InterlockedAdd(g_NumPointLightsPerShadowCaster, 1, listIndex);

@@ -1,3 +1,5 @@
+#include "Foundation.hlsl"
+
 struct GSInput
 {
 	float4 worldSpacePos		: SV_Position;

@@ -48,15 +48,18 @@
 
 /*
 To do:
+- Directional light m_EnableDirectionalLight seems to be disabled on all render passes. Enable
+- Fix format for voxel reflectance texture
+- Verify voxel texture position is compatible with texture coordinates in VoxelizePS.hlsl
 - VoxelizePass and TiledShadingPass make copy of material descriptors. Reuse material descriptors between them
 - Check how spot light bounds are calculated. See TiledShadingPS.hlsl and VoxelizePS.hlsl how spot light position is calculated
 - When injecting reflected radiance into voxel grid add shadow map contribution.
+- Add support for mip levels. Search for keyword "KolyaMipLevels"
 - Review light view matrix computation for shadow maps in LightRenderResources.
 - OOB for a set of points mimics AABB. Improve implementation.
 - When converting plane mesh to unit cube space, world matrix is not optimal for OOB.
 For an example, plane in original coordinates is passing through point (0, 0, 0).
 OOB will have coordinates expanding from -1 to 1 not merely passing through 0 when world matrix is applied.
-- Add support for mip levels. Search for keyword "KolyaMipLevels"
 - Make camera transform part of Scene object.
 Can check format OpenGEX for inspiration - http://opengex.org/
 - MeshRenderResources, LightRenderResources, MaterialRenderResources should not be part of Common folder
@@ -206,6 +209,9 @@ enum
 	kTileSize = 16,
 	kNumTilesX = 90,
 	kNumTilesY = 60,
+	kNumVoxelsInGridX = 256,
+	kNumVoxelsInGridY = 256,
+	kNumVoxelsInGridZ = 256,
 	kBackBufferWidth = kNumTilesX * kTileSize,
 	kBackBufferHeight = kNumTilesY * kTileSize,
 	kShadowMapTileSize = 512,
@@ -509,7 +515,7 @@ void DXApplication::OnUpdate()
 
 	const Vector3f voxelGridWorldCenter = cameraWorldAABB.m_Center;
 	const Vector3f voxelGridWorldRadius(512.0f, 512.0f, 512.0f);
-	const Vector3f numVoxelsInGrid(256.0f, 256.0f, 256.0f);
+	const Vector3f numVoxelsInGrid(kNumVoxelsInGridX, kNumVoxelsInGridY, kNumVoxelsInGridZ);
 	const Vector3f voxelGridWorldSize = 2.0f * voxelGridWorldRadius;
 	
 	appData.m_VoxelGridWorldMinPoint = voxelGridWorldCenter - voxelGridWorldRadius;
@@ -1822,13 +1828,114 @@ CommandList* DXApplication::RecordCreateVoxelizeCommandsPass()
 void DXApplication::InitVoxelizePass()
 {
 	assert(m_pVoxelizePass == nullptr);
-	assert(false);
+	assert(m_pMeshRenderResources != nullptr);
+	assert(m_pMaterialRenderResources != nullptr);
+	assert(m_pCreateVoxelizeCommandsPass != nullptr);
+	assert(m_pFrustumMeshCullingPass != nullptr);
+	assert(m_pCreateMainDrawCommandsPass != nullptr);
+	assert(m_pRenderGBufferFalseNegativePass != nullptr);
+	assert(m_pTiledLightCullingPass != nullptr);
+	
+	const CreateMainDrawCommandsPass::ResourceStates* pCreateMainDrawCommandsPassStates =
+		m_pCreateMainDrawCommandsPass->GetOutputResourceStates();
+
+	const CreateVoxelizeCommandsPass::ResourceStates* pCreateVoxelizeCommandsPassStates =
+		m_pCreateVoxelizeCommandsPass->GetOutputResourceStates();
+
+	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
+		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
+
+	const TiledLightCullingPass::ResourceStates* pTiledLightCullingPassStates =
+		m_pTiledLightCullingPass->GetOutputResourceStates();
+		
+	VoxelizePass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	
+	params.m_InputResourceStates.m_NumCommandsPerMeshTypeBufferState = pCreateVoxelizeCommandsPassStates->m_NumCommandsPerMeshTypeBufferState;
+	params.m_InputResourceStates.m_VoxelizeCommandBufferState = pCreateVoxelizeCommandsPassStates->m_VoxelizeCommandBufferState;
+	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_InstanceIndexBufferState;
+	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = pRenderGBufferFalseNegativePassStates->m_InstanceWorldMatrixBufferState;
+	params.m_InputResourceStates.m_VoxelReflectanceTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		
+	params.m_pMeshRenderResources = m_pMeshRenderResources;
+	params.m_NumVoxelsX = kNumVoxelsInGridX;
+	params.m_NumVoxelsY = kNumVoxelsInGridY;
+	params.m_NumVoxelsZ = kNumVoxelsInGridZ;
+	
+	params.m_NumMaterialTextures = m_pMaterialRenderResources->GetNumTextures();
+	params.m_ppMaterialTextures = m_pMaterialRenderResources->GetTextures();
+	params.m_pFirstResourceIndexPerMaterialIDBuffer = m_pMaterialRenderResources->GetFirstResourceIndexPerMaterialIDBuffer();
+	params.m_pNumCommandsPerMeshTypeBuffer = m_pCreateVoxelizeCommandsPass->GetNumCommandsPerMeshTypeBuffer();
+	params.m_pVoxelizeCommandBuffer = m_pCreateVoxelizeCommandsPass->GetVoxelizeCommandBuffer();
+	params.m_pInstanceIndexBuffer = m_pFrustumMeshCullingPass->GetVisibleInstanceIndexBuffer();
+	params.m_pInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
+	
+	params.m_EnableDirectionalLight = false;
+	if (m_pPointLightRenderResources != nullptr)
+	{
+		assert(m_pFrustumPointLightCullingPass != nullptr);
+		params.m_EnablePointLights = true;
+
+		params.m_InputResourceStates.m_PointLightWorldBoundsBufferState = pTiledLightCullingPassStates->m_PointLightWorldBoundsBufferState;
+		params.m_InputResourceStates.m_PointLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		params.m_InputResourceStates.m_NumPointLightsBufferState = pTiledLightCullingPassStates->m_NumPointLightsBufferState;
+		params.m_InputResourceStates.m_PointLightIndexBufferState = pTiledLightCullingPassStates->m_PointLightIndexBufferState;
+
+		params.m_pPointLightWorldBoundsBuffer = m_pPointLightRenderResources->GetLightWorldBoundsBuffer();
+		params.m_pPointLightPropsBuffer = m_pPointLightRenderResources->GetLightPropsBuffer();
+		params.m_pNumPointLightsBuffer = m_pFrustumPointLightCullingPass->GetNumVisibleLightsBuffer();
+		params.m_pPointLightIndexBuffer = m_pFrustumPointLightCullingPass->GetVisibleLightIndexBuffer();
+	}
+	else
+	{
+		params.m_EnablePointLights = false;
+		params.m_pPointLightWorldBoundsBuffer = nullptr;
+		params.m_pPointLightPropsBuffer = nullptr;
+		params.m_pNumPointLightsBuffer = nullptr;
+		params.m_pPointLightIndexBuffer = nullptr;
+	}	
+	if (m_pSpotLightRenderResources != nullptr)
+	{
+		assert(m_pFrustumSpotLightCullingPass != nullptr);
+		params.m_EnableSpotLights = true;
+
+		params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = pTiledLightCullingPassStates->m_SpotLightWorldBoundsBufferState;
+		params.m_InputResourceStates.m_SpotLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		params.m_InputResourceStates.m_NumSpotLightsBufferState = pTiledLightCullingPassStates->m_NumSpotLightsBufferState;
+		params.m_InputResourceStates.m_SpotLightIndexBufferState = pTiledLightCullingPassStates->m_SpotLightIndexBufferState;
+
+		params.m_pSpotLightWorldBoundsBuffer = m_pSpotLightRenderResources->GetLightWorldBoundsBuffer();
+		params.m_pSpotLightPropsBuffer = m_pSpotLightRenderResources->GetLightPropsBuffer();
+		params.m_pNumSpotLightsBuffer = m_pFrustumSpotLightCullingPass->GetNumVisibleLightsBuffer();
+		params.m_pSpotLightIndexBuffer = m_pFrustumSpotLightCullingPass->GetVisibleLightIndexBuffer();
+	}
+	else
+	{
+		params.m_EnableSpotLights = false;
+		params.m_pSpotLightWorldBoundsBuffer = nullptr;
+		params.m_pSpotLightPropsBuffer = nullptr;
+		params.m_pNumSpotLightsBuffer = nullptr;
+		params.m_pSpotLightIndexBuffer = nullptr;
+	}
+
+	m_pVoxelizePass = new VoxelizePass(&params);
 }
 
 CommandList* DXApplication::RecordVoxelizePass()
 {
 	assert(m_pVoxelizePass != nullptr);
-	return nullptr;
+	
+	VoxelizePass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pVoxelizeCommandList");
+	params.m_pMeshRenderResources = m_pMeshRenderResources;
+	params.m_pNumCommandsPerMeshTypeBuffer = m_pCreateVoxelizeCommandsPass->GetNumCommandsPerMeshTypeBuffer();
+	params.m_pVoxelizeCommandBuffer = m_pCreateVoxelizeCommandsPass->GetVoxelizeCommandBuffer();
+	params.m_pAppDataBuffer = m_pAppDataBuffers[m_BackBufferIndex];;
+
+	m_pVoxelizePass->Record(&params);
+	return params.m_pCommandList;
 }
 
 void DXApplication::InitTiledShadingPass()
@@ -1838,9 +1945,10 @@ void DXApplication::InitTiledShadingPass()
 	assert(m_pCalcShadingRectanglesPass != nullptr);
 	assert(m_pTiledLightCullingPass != nullptr);
 	assert(m_pRenderGBufferFalseNegativePass != nullptr);
+	assert(m_pVoxelizePass != nullptr);
 	assert(m_pGeometryBuffer != nullptr);
 	assert(m_pMaterialRenderResources != nullptr);
-
+	
 	const FillMeshTypeDepthBufferPass::ResourceStates* pFillMeshTypeDepthBufferPassStates =
 		m_pFillMeshTypeDepthBufferPass->GetOutputResourceStates();
 
@@ -1852,6 +1960,9 @@ void DXApplication::InitTiledShadingPass()
 
 	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
+
+	const VoxelizePass::ResourceStates* pVoxelizePassStates =
+		m_pVoxelizePass->GetOutputResourceStates();
 
 	TiledShadingPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
@@ -1878,7 +1989,7 @@ void DXApplication::InitTiledShadingPass()
 	params.m_InputResourceStates.m_TexCoordTextureState = pRenderGBufferFalseNegativePassStates->m_TexCoordTextureState;
 	params.m_InputResourceStates.m_NormalTextureState = pRenderGBufferFalseNegativePassStates->m_NormalTextureState;
 	params.m_InputResourceStates.m_MaterialIDTextureState = pFillMeshTypeDepthBufferPassStates->m_MaterialIDTextureState;
-	params.m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = pVoxelizePassStates->m_FirstResourceIndexPerMaterialIDBufferState;
 	
 	if (m_pPointLightRenderResources != nullptr)
 	{
@@ -1888,8 +1999,8 @@ void DXApplication::InitTiledShadingPass()
 		params.m_pPointLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetPointLightIndexPerTileBuffer();
 		params.m_pPointLightRangePerTileBuffer = m_pTiledLightCullingPass->GetPointLightRangePerTileBuffer();
 
-		params.m_InputResourceStates.m_PointLightWorldBoundsBufferState = pTiledLightCullingPassStates->m_PointLightWorldBoundsBufferState;
-		params.m_InputResourceStates.m_PointLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		params.m_InputResourceStates.m_PointLightWorldBoundsBufferState = pVoxelizePassStates->m_PointLightWorldBoundsBufferState;
+		params.m_InputResourceStates.m_PointLightPropsBufferState = pVoxelizePassStates->m_PointLightPropsBufferState;
 		params.m_InputResourceStates.m_PointLightIndexPerTileBufferState = pTiledLightCullingPassStates->m_PointLightIndexPerTileBufferState;
 		params.m_InputResourceStates.m_PointLightRangePerTileBufferState = pTiledLightCullingPassStates->m_PointLightRangePerTileBufferState;
 	}
@@ -1910,8 +2021,8 @@ void DXApplication::InitTiledShadingPass()
 		params.m_pSpotLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetSpotLightIndexPerTileBuffer();
 		params.m_pSpotLightRangePerTileBuffer = m_pTiledLightCullingPass->GetSpotLightRangePerTileBuffer();
 
-		params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = pTiledLightCullingPassStates->m_SpotLightWorldBoundsBufferState;
-		params.m_InputResourceStates.m_SpotLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = pVoxelizePassStates->m_SpotLightWorldBoundsBufferState;
+		params.m_InputResourceStates.m_SpotLightPropsBufferState = pVoxelizePassStates->m_SpotLightPropsBufferState;
 		params.m_InputResourceStates.m_SpotLightIndexPerTileBufferState = pTiledLightCullingPassStates->m_SpotLightIndexPerTileBufferState;
 		params.m_InputResourceStates.m_SpotLightRangePerTileBufferState = pTiledLightCullingPassStates->m_SpotLightRangePerTileBufferState;
 	}
