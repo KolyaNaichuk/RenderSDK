@@ -123,9 +123,6 @@
     <ClInclude Include="..\Include\RenderPasses\TiledShadingPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\D3DWrapper\GraphicsDevice.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
@@ -195,9 +192,6 @@
     <ClInclude Include="..\Include\Math\Quad.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\VisualizeIntensityPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Common\FileUtilities.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -262,6 +256,9 @@
       <Filter>RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\VoxelizePass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelReflectancePass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -365,9 +362,6 @@
     <ClCompile Include="..\Source\RenderPasses\TiledShadingPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelGridPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\D3DWrapper\GraphicsDevice.cpp">
       <Filter>D3DWrapper</Filter>
     </ClCompile>
@@ -427,9 +421,6 @@
     </ClCompile>
     <ClCompile Include="..\Source\Math\Quad.cpp">
       <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\VisualizeIntensityPass.cpp">
-      <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Common\FileUtilities.cpp">
       <Filter>Common</Filter>
@@ -494,6 +485,9 @@
     <ClCompile Include="..\Source\RenderPasses\VoxelizePass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelReflectancePass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -503,9 +497,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\FullScreenTriangleVS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\VisualizeVoxelGridPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\Reconstruction.hlsl">
@@ -559,12 +550,6 @@
     <None Include="..\Shaders\BoundingVolumes.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\VisualizeIntensityVS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\VisualizeIntensityPS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\DownscaleAndReprojectDepthCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -614,6 +599,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\VoxelizeGS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VisualizeVoxelReflectancePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

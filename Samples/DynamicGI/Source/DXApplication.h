@@ -34,15 +34,13 @@ class TiledShadingPass;
 class CalcShadingRectanglesPass;
 class FrustumLightCullingPass;
 class CreateVoxelizeCommandsPass;
+class VisualizeTexturePass;
+class VisualizeVoxelReflectancePass;
 class VoxelizePass;
 class Scene;
 
 // Old
 class PropagateLightPass;
-class VisualizeVoxelGridPass;
-class VisualizeTexturePass;
-class VisualizeVoxelGridPass;
-class VisualizeIntensityPass;
 class CreateRenderShadowMapCommandsPass;
 class RenderTiledShadowMapPass;
 class SetupTiledShadowMapPass;
@@ -62,7 +60,7 @@ public:
 		DepthBufferWithMeshType,
 		SpotLightTiledShadowMap,
 		PointLightTiledShadowMap,
-		VoxelGridDiffuse,
+		VoxelRelectance,
 		Unknown
 	};
 	enum class TileShadingMode
@@ -154,15 +152,15 @@ private:
 	void InitVisualizeAccumLightPass();
 	CommandList* RecordVisualizeAccumLightPass();
 
+	void InitVisualizeVoxelReflectancePass();
+	CommandList* RecordVisualizeVoxelReflectancePass();
+
 	CommandList* RecordDisplayResultPass();
 	CommandList* RecordPostRenderPass();
 	
 	// Old
 	void InitPropagateLightPass();
-	void InitVisualizeVoxelGridDiffusePass();
-	void InitVisualizeVoxelGridNormalPass();
-	void InitVisualizeIntensityPass();
-
+			
 	void InitSetupSpotLightTiledShadowMapPass();
 	void InitSetupPointLightTiledShadowMapPass();
 	void InitCreateRenderShadowMapCommandsPass();
@@ -178,12 +176,9 @@ private:
 	CommandList* RecordRenderSpotLightTiledShadowMapPass();
 	CommandList* RecordRenderPointLightTiledShadowMapPass();
 	CommandList* RecordPropagateLightPass();
-	CommandList* RecordVisualizeVoxelGridDiffusePass();
-	CommandList* RecordVisualizeVoxelGridNormalPass();
 	CommandList* RecordVisualizeSpotLightTiledShadowMapPass();
 	CommandList* RecordVisualizePointLightTiledShadowMapPass();
-	CommandList* RecordVisualizeIntensityPass();
-		
+			
 	void UpdateDisplayResult(DisplayResult displayResult);
 		
 #ifdef DEBUG_RENDER_PASS
@@ -237,10 +232,8 @@ private:
 	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers];
 	UINT m_BackBufferIndex;
 
-	VoxelizePass* m_pCreateVoxelGridPass;
+	// Old render passes
 	PropagateLightPass* m_pPropagateLightPass;
-	VisualizeVoxelGridPass* m_pVisualizeVoxelGridDiffusePass;
-	VisualizeVoxelGridPass* m_pVisualizeVoxelGridNormalPass;
 	CreateRenderShadowMapCommandsPass* m_pCreateRenderShadowMapCommandsPass;
 	Buffer* m_pCreateRenderShadowMapCommandsArgumentBuffer;
 	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass;
@@ -249,8 +242,7 @@ private:
 	SetupTiledShadowMapPass* m_pSetupPointLightTiledShadowMapPass;
 	VisualizeTexturePass* m_pVisualizeSpotLightTiledShadowMapPass;
 	VisualizeTexturePass* m_pVisualizePointLightTiledShadowMapPass;
-	VisualizeIntensityPass* m_pVisualizeIntensityPass;
-		
+
 	// New render passes
 	Camera* m_pCamera;
 	MeshRenderResources* m_pMeshRenderResources;
@@ -280,6 +272,7 @@ private:
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers];
 	VisualizeTexturePass* m_VisualizeDepthBufferWithMeshTypePasses[kNumBackBuffers];
+	VisualizeVoxelReflectancePass* m_VisualizeVoxelReflectancePasses[kNumBackBuffers];
 	Buffer* m_pAppDataBuffers[kNumBackBuffers];
 	void* m_pAppDataPointers[kNumBackBuffers];
 };

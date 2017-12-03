@@ -1,9 +1,7 @@
 #include "Lighting.hlsl"
 #include "OverlapTest.hlsl"
 #include "Reconstruction.hlsl"
-#include "SphericalHarmonics.hlsl"
 #include "Foundation.hlsl"
-#include "VoxelGrid.hlsl"
 
 struct PSInput
 {
