@@ -85,14 +85,15 @@ struct AppData
 
 	float4 sunLightColor;
 	uint2 screenTileSize;
-	uint2 numScreenTiles;
-	float2 notUsed3;
+	uint2 numScreenTiles;	
 	float3 voxelGridWorldMinPoint;
+	float notUsed3;
 	float3 voxelGridWorldMaxPoint;
+	float notUsed4;
 	float4x4 voxelGridViewProjMatrices[3];
 
 	float3 voxelRcpSize;
-	float notUsed4[61];
+	float notUsed5[61];
 };
 
 #endif // __FOUNDATION__

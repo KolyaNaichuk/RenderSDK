@@ -101,17 +101,18 @@ namespace
 		Vector2u m_ScreenQuarterSize;
 		Vector2f m_RcpScreenQuarterSize;
 		Vector4f m_SunWorldSpaceDir;
-
+		
 		Vector4f m_SunLightColor;
 		Vector2u m_ScreenTileSize;
 		Vector2u m_NumScreenTiles;
-		Vector2f m_NotUsed3;
 		Vector3f m_VoxelGridWorldMinPoint;
+		f32 m_NotUsed3;
 		Vector3f m_VoxelGridWorldMaxPoint;
+		f32 m_NotUsed4;
 		Matrix4f m_VoxelGridViewProjMatrices[3];
 		Vector3f m_VoxelRcpSize;
 
-		f32 m_NotUsed4[61];
+		f32 m_NotUsed5[61];
 	};
 
 	using BufferElementFormatter = std::function<std::string (const void* pElementData)>;
