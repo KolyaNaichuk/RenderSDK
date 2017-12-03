@@ -153,12 +153,6 @@ COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Sampl
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeIntensityVS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeIntensityVS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeIntensityPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeIntensityPS.hlsl"
-
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 
@@ -273,12 +267,6 @@ COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Sampl
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeIntensityVS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeIntensityVS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeIntensityPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeIntensityPS.hlsl"
-
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 
@@ -322,8 +310,7 @@ COPY /Y "$(SolutionDir)Shaders\VoxelizeGS.hlsl" "$(SolutionDir)Samples\$(Project
 COPY /Y "$(SolutionDir)Shaders\VoxelizeGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizeGS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizePS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizePS.hlsl"
-</Command>
+COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizePS.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
