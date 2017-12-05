@@ -1,7 +1,8 @@
+#include "GammaCorrection.hlsl"
+#include "Foundation.hlsl"
 #include "Lighting.hlsl"
 #include "OverlapTest.hlsl"
 #include "Reconstruction.hlsl"
-#include "Foundation.hlsl"
 
 struct PSInput
 {
@@ -116,6 +117,7 @@ float4 Main(PSInput input) : SV_Target
 	
 	float3 directRadiance = pointLightsContrib + spotLightsContrib + directionalLightContrib;
 	float3 indirectRadiance = float3(0.0f, 0.0f, 0.0f);
+	float3 totalRadiance = directRadiance + indirectRadiance;
 
-	return float4(directRadiance + indirectRadiance, 1.0f);
+	return float4(GammaCorrection(totalRadiance), 1.0f);
 }

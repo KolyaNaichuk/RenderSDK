@@ -604,5 +604,8 @@
     <None Include="..\Shaders\VisualizeVoxelReflectancePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\Shaders\GammaCorrection.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

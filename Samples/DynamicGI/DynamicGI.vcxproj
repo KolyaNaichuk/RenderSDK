@@ -197,6 +197,9 @@ COPY /Y "$(SolutionDir)Shaders\VoxelizeGS.hlsl" "$(SolutionDir)Samples\Bin\$(Pro
 
 COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizePS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizePS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\GammaCorrection.hlsl"
+COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -310,7 +313,10 @@ COPY /Y "$(SolutionDir)Shaders\VoxelizeGS.hlsl" "$(SolutionDir)Samples\$(Project
 COPY /Y "$(SolutionDir)Shaders\VoxelizeGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizeGS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizePS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizePS.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizePS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\GammaCorrection.hlsl"
+COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

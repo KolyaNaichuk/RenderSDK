@@ -47,6 +47,7 @@
 
 /*
 To do:
+- Last section of constants in AppData constant buffer is not properly padded.
 - VoxelizePass is using 4th component for calculating how many objects overlap the voxel. Should be set to opacity instead.
 - Fix format for voxel reflectance texture
 - Directional light m_EnableDirectionalLight seems to be disabled on all render passes. Enable

@@ -2,7 +2,7 @@
 #include "D3DWrapper/GraphicsFactory.h"
 
 #ifdef _DEBUG
-#define ENABLE_GRAPHICS_DEBUGGING
+//#define ENABLE_GRAPHICS_DEBUGGING
 #endif
 
 void GetHardwareAdapter(GraphicsFactory* pFactory, D3D_FEATURE_LEVEL minFeatureLevel, IDXGIAdapter1** ppAdapter)
