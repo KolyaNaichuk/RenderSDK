@@ -46,8 +46,8 @@ void CalcShadingRectanglesPass::Record(RenderParams* pParams)
 	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 
-	if (!m_ResourceBarriers.empty())
-		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	if (!m_ResourceTransitionBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
 	
 	const UINT minValue[4] = {0xffffffff, 0, 0, 0};
 	pCommandList->ClearUnorderedAccessView(m_SRVHeapStart, m_pShadingRectangleMinPointBuffer->GetUAVHandle(),
@@ -83,20 +83,20 @@ void CalcShadingRectanglesPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_ShadingRectangleMinPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_ShadingRectangleMaxPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
-	assert(m_ResourceBarriers.empty());
-	CreateResourceBarrierIfRequired(m_pShadingRectangleMinPointBuffer,
+	assert(m_ResourceTransitionBarriers.empty());
+	AddResourceTransitionBarrierIfRequired(m_pShadingRectangleMinPointBuffer,
 		pParams->m_InputResourceStates.m_ShadingRectangleMinPointBufferState,
 		m_OutputResourceStates.m_ShadingRectangleMinPointBufferState);
 
-	CreateResourceBarrierIfRequired(m_pShadingRectangleMaxPointBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pShadingRectangleMaxPointBuffer,
 		pParams->m_InputResourceStates.m_ShadingRectangleMaxPointBufferState,
 		m_OutputResourceStates.m_ShadingRectangleMaxPointBufferState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pMaterialIDTexture,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pMaterialIDTexture,
 		pParams->m_InputResourceStates.m_MaterialIDTextureState,
 		m_OutputResourceStates.m_MaterialIDTextureState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pMeshTypePerMaterialIDBuffer,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pMeshTypePerMaterialIDBuffer,
 		pParams->m_InputResourceStates.m_MeshTypePerMaterialIDBufferState,
 		m_OutputResourceStates.m_MeshTypePerMaterialIDBufferState);
 
@@ -161,8 +161,8 @@ void CalcShadingRectanglesPass::InitPipelineState(InitParams* pParams)
 	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CalcShadingRectanglesPass::m_pPipelineState");
 }
 
-void CalcShadingRectanglesPass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void CalcShadingRectanglesPass::AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
 }

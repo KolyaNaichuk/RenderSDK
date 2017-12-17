@@ -47,9 +47,13 @@
 
 /*
 To do:
-- Last section of constants in AppData constant buffer is not properly padded.
+- Cannot use ROV and 1 render pass for voxelization. ROV is messed up when specifying projection dominant axis from geometry shader.
+  When doing 3 render passes for voxelization should also be careful as the same triangle could be rendered multiple times,
+  meaning that some voxel values will be over-represented. One of possible solutions is to still do 3 render passes,
+  but in geometry shader check if primitive dominant projection axis is equal to the current view projection axis.
+  If it is not, the primitive should not be emitted from the geometry shader.
 - VoxelizePass is using 4th component for calculating how many objects overlap the voxel. Should be set to opacity instead.
-- Fix format for voxel reflectance texture
+- Last section of constants in AppData constant buffer is not properly padded.
 - Directional light m_EnableDirectionalLight seems to be disabled on all render passes. Enable
 - Verify voxel texture position is compatible with texture coordinates in VoxelizePS.hlsl and VisualizeVoxelGridPS.hlsl
 - VoxelizePass and TiledShadingPass make copy of material descriptors. Reuse material descriptors between them
@@ -111,9 +115,13 @@ namespace
 		Vector3f m_VoxelGridWorldMaxPoint;
 		f32 m_NotUsed4;
 		Matrix4f m_VoxelGridViewProjMatrices[3];
+		
 		Vector3f m_VoxelRcpSize;
-
-		f32 m_NotUsed5[61];
+		f32 m_NotUsed5;
+		f32 m_NotUsed6[12];
+		f32 m_NotUsed7[16];
+		f32 m_NotUsed8[16];
+		f32 m_NotUsed9[16];
 	};
 
 	using BufferElementFormatter = std::function<std::string (const void* pElementData)>;
@@ -162,15 +170,15 @@ namespace
 		d3dCommandList->Reset(d3dCommandAllocator.Get(), nullptr);
 		if (bufferState != D3D12_RESOURCE_STATE_COPY_SOURCE)
 		{
-			D3D12_RESOURCE_BARRIER resourceBarrier;
-			resourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-			resourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-			resourceBarrier.Transition.pResource = pD3DResource;
-			resourceBarrier.Transition.StateBefore = bufferState;
-			resourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
-			resourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			D3D12_RESOURCE_BARRIER resourceTransitionBarrier;
+			resourceTransitionBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			resourceTransitionBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+			resourceTransitionBarrier.Transition.pResource = pD3DResource;
+			resourceTransitionBarrier.Transition.StateBefore = bufferState;
+			resourceTransitionBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;
+			resourceTransitionBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
-			d3dCommandList->ResourceBarrier(1, &resourceBarrier);
+			d3dCommandList->ResourceBarrier(1, &resourceTransitionBarrier);
 		}
 		d3dCommandList->CopyResource(d3dResourceCopy.Get(), pD3DResource);
 		d3dCommandList->Close();
@@ -211,9 +219,9 @@ enum
 	kTileSize = 16,
 	kNumTilesX = 90,
 	kNumTilesY = 60,
-	kNumVoxelsInGridX = 256,
-	kNumVoxelsInGridY = 256,
-	kNumVoxelsInGridZ = 256,
+	kNumVoxelsInGridX = 128,
+	kNumVoxelsInGridY = 128,
+	kNumVoxelsInGridZ = 128,
 	kBackBufferWidth = kNumTilesX * kTileSize,
 	kBackBufferHeight = kNumTilesY * kTileSize,
 	kShadowMapTileSize = 512,
@@ -506,7 +514,7 @@ void DXApplication::OnUpdate()
 	const AxisAlignedBox cameraWorldAABB(Frustum::NumCorners, cameraWorldFrustum.m_Corners);
 
 	const Vector3f voxelGridWorldCenter = cameraWorldAABB.m_Center;
-	const Vector3f voxelGridWorldRadius(512.0f, 512.0f, 512.0f);
+	const Vector3f voxelGridWorldRadius(m_pCamera->GetFarClipPlane());
 	const Vector3f numVoxelsInGrid(kNumVoxelsInGridX, kNumVoxelsInGridY, kNumVoxelsInGridZ);
 	const Vector3f voxelGridWorldSize = 2.0f * voxelGridWorldRadius;
 	
@@ -614,7 +622,7 @@ void DXApplication::OnDestroy()
 
 void DXApplication::OnKeyDown(UINT8 key)
 {
-	const f32 cameraMoveSpeed = 1.0f;
+	const f32 cameraMoveSpeed = 3.0f;
 	const f32 rotationInDegrees = 2.0f;
 
 	Transform& cameraTransform = m_pCamera->GetTransform();
@@ -816,11 +824,11 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 		m_pAppDataPointers[index] = m_pAppDataBuffers[index]->Map(0, 0);
 	}
 	
-	ResourceBarrier initResourceBarrier(m_pDepthTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	ResourceTransitionBarrier initResourceTransitionBarrier(m_pDepthTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	CommandList* pInitCommandList = m_pCommandListPool->Create(L"pInitResourcesCommandList");
 	pInitCommandList->Begin();
 	pInitCommandList->ClearDepthView(m_pDepthTexture->GetDSVHandle(), 1.0f);
-	pInitCommandList->ResourceBarrier(1, &initResourceBarrier);
+	pInitCommandList->ResourceBarrier(1, &initResourceTransitionBarrier);
 	pInitCommandList->End();
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
@@ -2559,29 +2567,29 @@ CommandList* DXApplication::RecordPostRenderPass()
 	
 	{
 		ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-		ResourceBarrier resourceBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-		pCommandList->ResourceBarrier(1, &resourceBarrier);
+		ResourceTransitionBarrier resourceTransitionBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		pCommandList->ResourceBarrier(1, &resourceTransitionBarrier);
 	}
 	if (m_DisplayResult == DisplayResult::ShadingResult)
 	{
-		ResourceBarrier resourceBarrier(m_pAccumLightTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		pCommandList->ResourceBarrier(1, &resourceBarrier);
+		ResourceTransitionBarrier resourceTransitionBarrier(m_pAccumLightTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		pCommandList->ResourceBarrier(1, &resourceTransitionBarrier);
 	}
 	else if (m_DisplayResult == DisplayResult::ReprojectedDepthBuffer)
 	{
-		ResourceBarrier resourceBarrier(m_pDownscaleAndReprojectDepthPass->GetReprojectedDepthTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-		pCommandList->ResourceBarrier(1, &resourceBarrier);
+		ResourceTransitionBarrier resourceTransitionBarrier(m_pDownscaleAndReprojectDepthPass->GetReprojectedDepthTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		pCommandList->ResourceBarrier(1, &resourceTransitionBarrier);
 	}
 	else if (m_DisplayResult == DisplayResult::DepthBufferWithMeshType)
 	{
 		const FillMeshTypeDepthBufferPass::ResourceStates* pResourceStates = m_pFillMeshTypeDepthBufferPass->GetOutputResourceStates();
-		ResourceBarrier resourceBarrier(m_pFillMeshTypeDepthBufferPass->GetMeshTypeDepthTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-		pCommandList->ResourceBarrier(1, &resourceBarrier);
+		ResourceTransitionBarrier resourceTransitionBarrier(m_pFillMeshTypeDepthBufferPass->GetMeshTypeDepthTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+		pCommandList->ResourceBarrier(1, &resourceTransitionBarrier);
 	}
 	else if (m_DisplayResult == DisplayResult::VoxelRelectance)
 	{
-		ResourceBarrier resourceBarrier(m_pVoxelizePass->GetVoxelReflectanceTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-		pCommandList->ResourceBarrier(1, &resourceBarrier);
+		ResourceTransitionBarrier resourceTransitionBarrier(m_pVoxelizePass->GetVoxelReflectanceTexture(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		pCommandList->ResourceBarrier(1, &resourceTransitionBarrier);
 	}
 	
 	pCommandList->End();

@@ -53,11 +53,11 @@ void FillVisibilityBufferPass::Record(RenderParams* pParams)
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
-	pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
 	pCommandList->CopyBufferRegion(m_pArgumentBuffer, sizeof(u32), pParams->m_pNumInstancesBuffer, 0, sizeof(u32));
 
-	ResourceBarrier argumentBarrier(m_pArgumentBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-	pCommandList->ResourceBarrier(1, &argumentBarrier);
+	ResourceTransitionBarrier argumentTransitionBarrier(m_pArgumentBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	pCommandList->ResourceBarrier(1, &argumentTransitionBarrier);
 	
 	pCommandList->SetGraphicsRootConstantBufferView(kRootCBVParamVS, pParams->m_pAppDataBuffer);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamVS, m_SRVHeapStartVS);
@@ -112,28 +112,28 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	m_OutputResourceStates.m_VisibilityBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
-	assert(m_ResourceBarriers.empty());
-	CreateResourceBarrierIfRequired(pParams->m_pInstanceIndexBuffer,
+	assert(m_ResourceTransitionBarriers.empty());
+	AddResourceTransitionBarrierIfRequired(pParams->m_pInstanceIndexBuffer,
 		pParams->m_InputResourceStates.m_InstanceIndexBufferState,
 		m_OutputResourceStates.m_InstanceIndexBufferState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pInstanceWorldOBBMatrixBuffer,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pInstanceWorldOBBMatrixBuffer,
 		pParams->m_InputResourceStates.m_InstanceWorldOBBMatrixBufferState,
 		m_OutputResourceStates.m_InstanceWorldOBBMatrixBufferState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pNumInstancesBuffer,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pNumInstancesBuffer,
 		pParams->m_InputResourceStates.m_NumInstancesBufferState,
 		m_OutputResourceStates.m_NumInstancesBufferState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pDepthTexture,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pDepthTexture,
 		pParams->m_InputResourceStates.m_DepthTextureState,
 		m_OutputResourceStates.m_DepthTextureState);
 
-	CreateResourceBarrierIfRequired(m_pVisibilityBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pVisibilityBuffer,
 		pParams->m_InputResourceStates.m_VisibilityBufferState,
 		m_OutputResourceStates.m_VisibilityBufferState);
 
-	CreateResourceBarrierIfRequired(m_pArgumentBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pArgumentBuffer,
 		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
 		D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -209,8 +209,8 @@ void FillVisibilityBufferPass::InitCommandSignature(InitParams* pParams)
 	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, nullptr, &commandSignatureDesc, L"FillVisibilityBufferPass::m_pCommandSignature");
 }
 
-void FillVisibilityBufferPass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void FillVisibilityBufferPass::AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
 }

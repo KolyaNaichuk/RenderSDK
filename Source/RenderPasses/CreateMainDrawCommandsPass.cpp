@@ -57,11 +57,11 @@ void CreateMainDrawCommandsPass::Record(RenderParams* pParams)
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
 
-	pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
 	pCommandList->CopyBufferRegion(m_pArgumentBuffer, 0, pParams->m_pNumMeshesBuffer, 0, sizeof(UINT));
 
-	ResourceBarrier argumentBarrier(m_pArgumentBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-	pCommandList->ResourceBarrier(1, &argumentBarrier);
+	ResourceTransitionBarrier argumentTransitionBarrier(m_pArgumentBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+	pCommandList->ResourceBarrier(1, &argumentTransitionBarrier);
 
 	const UINT clearValues[] = {0, 0, 0, 0};
 	pCommandList->ClearUnorderedAccessView(DescriptorHandle(m_SRVHeapStart, 1),
@@ -121,44 +121,44 @@ void CreateMainDrawCommandsPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_NumOccludedInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_OccludedInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
-	assert(m_ResourceBarriers.empty());
-	CreateResourceBarrierIfRequired(pParams->m_pNumMeshesBuffer,
+	assert(m_ResourceTransitionBarriers.empty());
+	AddResourceTransitionBarrierIfRequired(pParams->m_pNumMeshesBuffer,
 		pParams->m_InputResourceStates.m_NumMeshesBufferState,
 		m_OutputResourceStates.m_NumMeshesBufferState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pVisibilityBuffer,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pVisibilityBuffer,
 		pParams->m_InputResourceStates.m_VisibilityBufferState,
 		m_OutputResourceStates.m_VisibilityBufferState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pInstanceIndexBuffer,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pInstanceIndexBuffer,
 		pParams->m_InputResourceStates.m_InstanceIndexBufferState,
 		m_OutputResourceStates.m_InstanceIndexBufferState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pMeshInfoBuffer,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pMeshInfoBuffer,
 		pParams->m_InputResourceStates.m_MeshInfoBufferState,
 		m_OutputResourceStates.m_MeshInfoBufferState);
 
-	CreateResourceBarrierIfRequired(m_pVisibleInstanceIndexBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pVisibleInstanceIndexBuffer,
 		pParams->m_InputResourceStates.m_VisibleInstanceIndexBufferState,
 		m_OutputResourceStates.m_VisibleInstanceIndexBufferState);
 
-	CreateResourceBarrierIfRequired(m_pNumVisibleMeshesPerTypeBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pNumVisibleMeshesPerTypeBuffer,
 		pParams->m_InputResourceStates.m_NumVisibleMeshesPerTypeBufferState,
 		m_OutputResourceStates.m_NumVisibleMeshesPerTypeBufferState);
 
-	CreateResourceBarrierIfRequired(m_pDrawCommandBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pDrawCommandBuffer,
 		pParams->m_InputResourceStates.m_DrawCommandBufferState,
 		m_OutputResourceStates.m_DrawCommandBufferState);
 
-	CreateResourceBarrierIfRequired(m_pNumOccludedInstancesBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pNumOccludedInstancesBuffer,
 		pParams->m_InputResourceStates.m_NumOccludedInstancesBufferState,
 		m_OutputResourceStates.m_NumOccludedInstancesBufferState);
 
-	CreateResourceBarrierIfRequired(m_pOccludedInstanceIndexBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pOccludedInstanceIndexBuffer,
 		pParams->m_InputResourceStates.m_OccludedInstanceIndexBufferState,
 		m_OutputResourceStates.m_OccludedInstanceIndexBufferState);
 
-	CreateResourceBarrierIfRequired(m_pArgumentBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pArgumentBuffer,
 		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
 		D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -239,8 +239,8 @@ void CreateMainDrawCommandsPass::InitCommandSignature(InitParams* pParams)
 	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, nullptr, &commandSignatureDesc, L"CreateMainDrawCommandsPass::m_pCommandSignature");
 }
 
-void CreateMainDrawCommandsPass::CreateResourceBarrierIfRequired(GraphicsResource * pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void CreateMainDrawCommandsPass::AddResourceTransitionBarrierIfRequired(GraphicsResource * pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
 }

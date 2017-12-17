@@ -21,7 +21,7 @@ namespace
 		CommandList* pUploadCommandList,
 		std::vector<Buffer*>& uploadHeapBuffers,
 		std::vector<ColorTexture*>& defaultHeapTextures,
-		std::vector<ResourceBarrier>& pendingBarriers);
+		std::vector<ResourceTransitionBarrier>& pendingTransitionBarriers);
 }
 
 MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials)
@@ -87,11 +87,11 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 	const u16 maxNumTextures = numMaterials * numTexturesPerMaterial;
 
 	std::vector<Buffer*> uploadBuffers;
-	std::vector<ResourceBarrier> pendingBarriers;
+	std::vector<ResourceTransitionBarrier> pendingTransitionBarriers;
 
 	m_Textures.reserve(maxNumTextures);
 	uploadBuffers.reserve(maxNumTextures);
-	pendingBarriers.reserve(maxNumTextures);
+	pendingTransitionBarriers.reserve(maxNumTextures);
 
 	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"UploadCommandList");
 	pUploadCommandList->Begin();
@@ -118,7 +118,7 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 			{
 				LoadImageDataFromFile(pMaterial->m_DiffuseMapFilePath, image);
 			}
-			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingBarriers);
+			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingTransitionBarriers);
 		}
 		{
 			const std::wstring debugMapName = L"Specular Map: " + pMaterial->m_Name;
@@ -139,7 +139,7 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 			{
 				LoadImageDataFromFile(pMaterial->m_SpecularMapFilePath, image);
 			}
-			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingBarriers);
+			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingTransitionBarriers);
 		}
 		{
 			const std::wstring debugMapName = L"Shininess Map: " + pMaterial->m_Name;
@@ -159,11 +159,11 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 			{
 				LoadImageDataFromFile(pMaterial->m_ShininessMapFilePath, image);
 			}
-			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingBarriers);
+			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingTransitionBarriers);
 		}
 	}
 
-	pUploadCommandList->ResourceBarrier(pendingBarriers.size(), pendingBarriers.data());
+	pUploadCommandList->ResourceBarrier(pendingTransitionBarriers.size(), pendingTransitionBarriers.data());
 	pUploadCommandList->End();
 
 	++pRenderEnv->m_LastSubmissionFenceValue;
@@ -235,7 +235,7 @@ namespace
 		CommandList* pUploadCommandList,
 		std::vector<Buffer*>& uploadHeapBuffers,
 		std::vector<ColorTexture*>& defaultHeapTextures,
-		std::vector<ResourceBarrier>& pendingBarriers)
+		std::vector<ResourceTransitionBarrier>& pendingTransitionBarriers)
 	{
 		static const UINT maxNumSubresources = 64;
 		static D3D12_PLACED_SUBRESOURCE_FOOTPRINT subresourceFootprints[maxNumSubresources];
@@ -264,7 +264,7 @@ namespace
 			D3D12_RESOURCE_STATE_COPY_DEST, nullptr, debugImageName.c_str());
 
 		defaultHeapTextures.emplace_back(pTexture);
-		pendingBarriers.emplace_back(pTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		pendingTransitionBarriers.emplace_back(pTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		const UINT numSubresources = UINT(metaData.mipLevels * metaData.arraySize);
 		assert(numSubresources <= maxNumSubresources);

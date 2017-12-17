@@ -45,14 +45,14 @@ private:
 	void InitResources(InitParams* pParams);
 	void InitRootSignature(InitParams* pParams);
 	void InitPipelineState(InitParams* pParams);
-	void CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
+	void AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
 	RootSignature* m_pRootSignature;
 	PipelineState* m_pPipelineState;
 	DescriptorHandle m_SRVHeapStart;
 	DescriptorHandle m_DSVHeapStart;
-	std::vector<ResourceBarrier> m_ResourceBarriers;
+	std::vector<ResourceTransitionBarrier> m_ResourceTransitionBarriers;
 	ResourceStates m_OutputResourceStates;
 	DepthTexture* m_pMeshTypeDepthTexture;
 };

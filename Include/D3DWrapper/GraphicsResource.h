@@ -13,10 +13,15 @@ DXGI_FORMAT GetDepthStencilViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetShaderResourceViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat);
 
-struct ResourceBarrier : D3D12_RESOURCE_BARRIER
+struct ResourceTransitionBarrier : D3D12_RESOURCE_BARRIER
 {
-	ResourceBarrier(GraphicsResource* pResource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter,
+	ResourceTransitionBarrier(GraphicsResource* pResource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter,
 		UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+};
+
+struct ResourceUAVBarrier : D3D12_RESOURCE_BARRIER
+{
+	ResourceUAVBarrier(GraphicsResource* pResource, D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 };
 
 struct DepthStencilValue : public D3D12_DEPTH_STENCIL_VALUE
@@ -437,12 +442,12 @@ void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, DestBufferDesc destB
 	Buffer* pUploadBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &destBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"UploadData::pUploadBuffer");
 	pUploadBuffer->Write(pUploadData, numUploadBytes);
 
-	ResourceBarrier resourceBarrier(pDestBuffer, D3D12_RESOURCE_STATE_COPY_DEST, destBufferStateAfter);
+	ResourceTransitionBarrier resourceTransitionBarrier(pDestBuffer, D3D12_RESOURCE_STATE_COPY_DEST, destBufferStateAfter);
 
 	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"pUploadCommandList");
 	pUploadCommandList->Begin();
 	pUploadCommandList->CopyResource(pDestBuffer, pUploadBuffer);
-	pUploadCommandList->ResourceBarrier(1, &resourceBarrier);
+	pUploadCommandList->ResourceBarrier(1, &resourceTransitionBarrier);
 	pUploadCommandList->End();
 
 	++pRenderEnv->m_LastSubmissionFenceValue;

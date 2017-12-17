@@ -41,8 +41,8 @@ void FillMeshTypeDepthBufferPass::Record(RenderParams* pParams)
 	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	
-	if (!m_ResourceBarriers.empty())
-		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	if (!m_ResourceTransitionBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetGraphicsRoot32BitConstant(kRoot32BitConstantParam, pParams->m_NumMeshTypes, 0);
@@ -78,16 +78,16 @@ void FillMeshTypeDepthBufferPass::InitResources(InitParams* pParams)
 	m_pMeshTypeDepthTexture = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &depthTextureDesc,
 		pParams->m_InputResourceStates.m_MeshTypeDepthTextureState, &optimizedClearDepth, L"FillMeshTypeDepthBufferPass::m_pMeshTypeDepthTexture");
 
-	assert(m_ResourceBarriers.empty());
-	CreateResourceBarrierIfRequired(pParams->m_pMaterialIDTexture,
+	assert(m_ResourceTransitionBarriers.empty());
+	AddResourceTransitionBarrierIfRequired(pParams->m_pMaterialIDTexture,
 		pParams->m_InputResourceStates.m_MaterialIDTextureState,
 		m_OutputResourceStates.m_MaterialIDTextureState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pMeshTypePerMaterialIDBuffer,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pMeshTypePerMaterialIDBuffer,
 		pParams->m_InputResourceStates.m_MeshTypePerMaterialIDBufferState,
 		m_OutputResourceStates.m_MeshTypePerMaterialIDBufferState);
 
-	CreateResourceBarrierIfRequired(m_pMeshTypeDepthTexture,
+	AddResourceTransitionBarrierIfRequired(m_pMeshTypeDepthTexture,
 		pParams->m_InputResourceStates.m_MeshTypeDepthTextureState,
 		m_OutputResourceStates.m_MeshTypeDepthTextureState);
 
@@ -136,8 +136,8 @@ void FillMeshTypeDepthBufferPass::InitPipelineState(InitParams* pParams)
 	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FillMeshTypeDepthBufferPass::m_pPipelineState");
 }
 
-void FillMeshTypeDepthBufferPass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void FillMeshTypeDepthBufferPass::AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
 }

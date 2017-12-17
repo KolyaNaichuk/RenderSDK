@@ -71,28 +71,28 @@ void FrustumMeshCullingPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_NumVisibleInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_VisibleInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
-	assert(m_ResourceBarriers.empty());
-	CreateResourceBarrierIfRequired(pParams->m_pMeshInfoBuffer,
+	assert(m_ResourceTransitionBarriers.empty());
+	AddResourceTransitionBarrierIfRequired(pParams->m_pMeshInfoBuffer,
 		pParams->m_InputResourceStates.m_MeshInfoBufferState,
 		m_OutputResourceStates.m_MeshInfoBufferState);
 
-	CreateResourceBarrierIfRequired(pParams->m_pInstanceWorldAABBBuffer,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pInstanceWorldAABBBuffer,
 		pParams->m_InputResourceStates.m_InstanceWorldAABBBufferState,
 		m_OutputResourceStates.m_InstanceWorldAABBBufferState);
 
-	CreateResourceBarrierIfRequired(m_pNumVisibleMeshesBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pNumVisibleMeshesBuffer,
 		pParams->m_InputResourceStates.m_NumVisibleMeshesBufferState,
 		m_OutputResourceStates.m_NumVisibleMeshesBufferState);
 
-	CreateResourceBarrierIfRequired(m_pVisibleMeshInfoBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pVisibleMeshInfoBuffer,
 		pParams->m_InputResourceStates.m_VisibleMeshInfoBufferState,
 		m_OutputResourceStates.m_VisibleMeshInfoBufferState);
 
-	CreateResourceBarrierIfRequired(m_pNumVisibleInstancesBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pNumVisibleInstancesBuffer,
 		pParams->m_InputResourceStates.m_NumVisibleInstancesBufferState,
 		m_OutputResourceStates.m_NumVisibleInstancesBufferState);
 
-	CreateResourceBarrierIfRequired(m_pVisibleInstanceIndexBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pVisibleInstanceIndexBuffer,
 		pParams->m_InputResourceStates.m_VisibleInstanceIndexBufferState,
 		m_OutputResourceStates.m_VisibleInstanceIndexBufferState);
 
@@ -156,10 +156,10 @@ void FrustumMeshCullingPass::InitPipelineState(InitParams* pParams)
 	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FrustumMeshCullingPass::m_pPipelineState");
 }
 
-void FrustumMeshCullingPass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void FrustumMeshCullingPass::AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
 }
 
 void FrustumMeshCullingPass::Record(RenderParams* pParams)
@@ -170,8 +170,8 @@ void FrustumMeshCullingPass::Record(RenderParams* pParams)
 	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 
-	if (!m_ResourceBarriers.empty())
-		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	if (!m_ResourceTransitionBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
 		
 	const UINT clearValues[4] = {0, 0, 0, 0};
 	pCommandList->ClearUnorderedAccessView(DescriptorHandle(m_SRVHeapStart, 2),

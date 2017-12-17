@@ -45,8 +45,8 @@ void FrustumLightCullingPass::Record(RenderParams* pParams)
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
-	if (!m_ResourceBarriers.empty())
-		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	if (!m_ResourceTransitionBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
 		
 	pCommandList->SetComputeRootConstantBufferView(kRootCBVParam, pParams->m_pAppDataBuffer);
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
@@ -76,16 +76,16 @@ void FrustumLightCullingPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_NumVisibleLightsBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_VisibleLightIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 		
-	assert(m_ResourceBarriers.empty());
-	CreateResourceBarrierIfRequired(pParams->m_pLightWorldBoundsBuffer,
+	assert(m_ResourceTransitionBarriers.empty());
+	AddResourceTransitionBarrierIfRequired(pParams->m_pLightWorldBoundsBuffer,
 		pParams->m_InputResourceStates.m_LightWorldBoundsBufferState,
 		m_OutputResourceStates.m_LightWorldBoundsBufferState);
 
-	CreateResourceBarrierIfRequired(m_pNumVisibleLightsBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pNumVisibleLightsBuffer,
 		pParams->m_InputResourceStates.m_NumVisibleLightsBufferState,
 		m_OutputResourceStates.m_NumVisibleLightsBufferState);
 
-	CreateResourceBarrierIfRequired(m_pVisibleLightIndexBuffer,
+	AddResourceTransitionBarrierIfRequired(m_pVisibleLightIndexBuffer,
 		pParams->m_InputResourceStates.m_VisibleLightIndexBufferState,
 		m_OutputResourceStates.m_VisibleLightIndexBufferState);
 
@@ -142,8 +142,8 @@ void FrustumLightCullingPass::InitPipelineState(InitParams* pParams)
 	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FrustumLightCullingPass::m_pPipelineState");
 }
 
-void FrustumLightCullingPass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void FrustumLightCullingPass::AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
 }

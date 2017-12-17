@@ -154,7 +154,7 @@ void DXApplication::OnRender()
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 		
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-	ResourceBarrier renderTargetBarrier(pRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	ResourceTransitionBarrier renderTargetBarrier(pRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 	pCommandList->ResourceBarrier(1, &renderTargetBarrier);
 		
 	const FLOAT clearColor[4] = {0.1f, 0.7f, 0.4f, 1.0f};
@@ -169,7 +169,7 @@ void DXApplication::OnRender()
 	pCommandList->RSSetScissorRects(1, m_pScissorRect);
 	pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
-	ResourceBarrier presentStateBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	ResourceTransitionBarrier presentStateBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	pCommandList->ResourceBarrier(1, &presentStateBarrier);
 	pCommandList->End();
 

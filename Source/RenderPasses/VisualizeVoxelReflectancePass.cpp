@@ -42,8 +42,8 @@ void VisualizeVoxelReflectancePass::Record(RenderParams* pParams)
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
-	if (!m_ResourceBarriers.empty())
-		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	if (!m_ResourceTransitionBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
 
 	pCommandList->SetGraphicsRootConstantBufferView(kRootCBVParamPS, pParams->m_pAppDataBuffer);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamPS, m_SRVHeapStartPS);
@@ -71,16 +71,16 @@ void VisualizeVoxelReflectancePass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_VoxelReflectanceTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
-	assert(m_ResourceBarriers.empty());
-	AddResourceBarrierIfRequired(pParams->m_pBackBuffer,
+	assert(m_ResourceTransitionBarriers.empty());
+	AddResourceTransitionBarrierIfRequired(pParams->m_pBackBuffer,
 		pParams->m_InputResourceStates.m_BackBufferState,
 		m_OutputResourceStates.m_BackBufferState);
 
-	AddResourceBarrierIfRequired(pParams->m_pDepthTexture,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pDepthTexture,
 		pParams->m_InputResourceStates.m_DepthTextureState,
 		m_OutputResourceStates.m_DepthTextureState);
 
-	AddResourceBarrierIfRequired(pParams->m_pVoxelReflectanceTexture,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pVoxelReflectanceTexture,
 		pParams->m_InputResourceStates.m_VoxelReflectanceTextureState,
 		m_OutputResourceStates.m_VoxelReflectanceTextureState);
 
@@ -129,8 +129,8 @@ void VisualizeVoxelReflectancePass::InitPipelineState(InitParams* pParams)
 	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeVoxelReflectancePass::m_pPipelineState");
 }
 
-void VisualizeVoxelReflectancePass::AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void VisualizeVoxelReflectancePass::AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
 }

@@ -93,7 +93,11 @@ struct AppData
 	float4x4 voxelGridViewProjMatrices[3];
 
 	float3 voxelRcpSize;
-	float notUsed5[61];
+	float notUsed5;
+	float notUsed6[12];
+	float notUsed7[16];
+	float notUsed8[16];
+	float notUsed9[16];
 };
 
 #endif // __FOUNDATION__

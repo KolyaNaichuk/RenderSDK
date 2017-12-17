@@ -99,7 +99,7 @@ DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat)
 	return resourceFormat;
 }
 
-ResourceBarrier::ResourceBarrier(GraphicsResource* pResource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter, UINT subresource, D3D12_RESOURCE_BARRIER_FLAGS flags)
+ResourceTransitionBarrier::ResourceTransitionBarrier(GraphicsResource* pResource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter, UINT subresource, D3D12_RESOURCE_BARRIER_FLAGS flags)
 {
 	Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	Flags = flags;
@@ -107,6 +107,13 @@ ResourceBarrier::ResourceBarrier(GraphicsResource* pResource, D3D12_RESOURCE_STA
 	Transition.StateBefore = stateBefore;
 	Transition.StateAfter = stateAfter;
 	Transition.Subresource = subresource;
+}
+
+ResourceUAVBarrier::ResourceUAVBarrier(GraphicsResource* pResource, D3D12_RESOURCE_BARRIER_FLAGS flags)
+{
+	Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+	Flags = flags;
+	UAV.pResource = pResource->GetD3DObject();
 }
 
 MemoryRange::MemoryRange(SIZE_T begin, SIZE_T end)

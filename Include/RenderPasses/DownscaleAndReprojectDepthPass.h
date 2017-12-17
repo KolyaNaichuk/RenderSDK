@@ -54,7 +54,7 @@ private:
 	RootSignature* m_pReprojectRootSignature;
 	PipelineState* m_pReprojectPipelineState;
 	DescriptorHandle m_ReprojectSRVHeapStart;
-	std::vector<ResourceBarrier> m_ReprojectResourceBarriers;
+	std::vector<ResourceTransitionBarrier> m_ReprojectResourceBarriers;
 	ColorTexture* m_pReprojectionColorTexture;
 	u32 m_NumThreadGroupsX;
 	u32 m_NumThreadGroupsY;
@@ -63,7 +63,7 @@ private:
 	PipelineState* m_pCopyPipelineState;
 	DescriptorHandle m_CopySRVHeapStart;
 	DescriptorHandle m_CopyDSVHeapStart;
-	std::vector<ResourceBarrier> m_CopyResourceBarriers;
+	std::vector<ResourceTransitionBarrier> m_CopyResourceBarriers;
 	DepthTexture* m_pReprojectionDepthTexture;
 	Viewport* m_pCopyViewport;
 

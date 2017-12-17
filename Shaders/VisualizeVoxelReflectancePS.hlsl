@@ -1,5 +1,6 @@
 #include "Foundation.hlsl"
 #include "Reconstruction.hlsl"
+#include "GammaCorrection.hlsl"
 
 struct PSInput
 {
@@ -27,5 +28,5 @@ float4 Main(PSInput input) : SV_Target
 	int3 voxelPos = floor(gridSpacePos * g_AppData.voxelRcpSize);
 	float4 reflectedRadiance = g_VoxelReflectanceTexture[voxelPos];
 	
-	return float4(reflectedRadiance.rgb, 1.0f);
+	return float4(GammaCorrection(reflectedRadiance.rgb), 1.0f);
 }

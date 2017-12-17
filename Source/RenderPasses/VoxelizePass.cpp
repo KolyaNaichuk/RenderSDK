@@ -68,8 +68,8 @@ void VoxelizePass::Record(RenderParams* pParams)
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
-	if (!m_ResourceBarriers.empty())
-		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	if (!m_ResourceTransitionBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
 
 	pCommandList->OMSetRenderTargets(0, nullptr);
 	
@@ -121,65 +121,65 @@ void VoxelizePass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_NumSpotLightsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightIndexBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
-	assert(m_ResourceBarriers.empty());
-	AddResourceBarrierIfRequired(pParams->m_pNumCommandsPerMeshTypeBuffer,
+	assert(m_ResourceTransitionBarriers.empty());
+	AddResourceTransitionBarrierIfRequired(pParams->m_pNumCommandsPerMeshTypeBuffer,
 		pParams->m_InputResourceStates.m_NumCommandsPerMeshTypeBufferState,
 		m_OutputResourceStates.m_NumCommandsPerMeshTypeBufferState);
 
-	AddResourceBarrierIfRequired(pParams->m_pVoxelizeCommandBuffer,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pVoxelizeCommandBuffer,
 		pParams->m_InputResourceStates.m_VoxelizeCommandBufferState,
 		m_OutputResourceStates.m_VoxelizeCommandBufferState);
 
-	AddResourceBarrierIfRequired(pParams->m_pInstanceIndexBuffer,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pInstanceIndexBuffer,
 		pParams->m_InputResourceStates.m_InstanceIndexBufferState,
 		m_OutputResourceStates.m_InstanceIndexBufferState);
 	
-	AddResourceBarrierIfRequired(pParams->m_pInstanceWorldMatrixBuffer,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pInstanceWorldMatrixBuffer,
 		pParams->m_InputResourceStates.m_InstanceWorldMatrixBufferState,
 		m_OutputResourceStates.m_InstanceWorldMatrixBufferState);
 
-	AddResourceBarrierIfRequired(m_pVoxelReflectanceTexture,
+	AddResourceTransitionBarrierIfRequired(m_pVoxelReflectanceTexture,
 		pParams->m_InputResourceStates.m_VoxelReflectanceTextureState,
 		m_OutputResourceStates.m_VoxelReflectanceTextureState);
 
-	AddResourceBarrierIfRequired(pParams->m_pFirstResourceIndexPerMaterialIDBuffer,
+	AddResourceTransitionBarrierIfRequired(pParams->m_pFirstResourceIndexPerMaterialIDBuffer,
 		pParams->m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState,
 		m_OutputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState);
 
 	if (pParams->m_EnablePointLights)
 	{
-		AddResourceBarrierIfRequired(pParams->m_pPointLightWorldBoundsBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pPointLightWorldBoundsBuffer,
 			pParams->m_InputResourceStates.m_PointLightWorldBoundsBufferState,
 			m_OutputResourceStates.m_PointLightWorldBoundsBufferState);
 
-		AddResourceBarrierIfRequired(pParams->m_pPointLightPropsBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pPointLightPropsBuffer,
 			pParams->m_InputResourceStates.m_PointLightPropsBufferState,
 			m_OutputResourceStates.m_PointLightPropsBufferState);
 
-		AddResourceBarrierIfRequired(pParams->m_pNumPointLightsBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pNumPointLightsBuffer,
 			pParams->m_InputResourceStates.m_NumPointLightsBufferState,
 			m_OutputResourceStates.m_NumPointLightsBufferState);
 
-		AddResourceBarrierIfRequired(pParams->m_pPointLightIndexBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pPointLightIndexBuffer,
 			pParams->m_InputResourceStates.m_PointLightIndexBufferState,
 			m_OutputResourceStates.m_PointLightIndexBufferState);
 	}
 
 	if (pParams->m_EnableSpotLights)
 	{
-		AddResourceBarrierIfRequired(pParams->m_pSpotLightWorldBoundsBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pSpotLightWorldBoundsBuffer,
 			pParams->m_InputResourceStates.m_SpotLightWorldBoundsBufferState,
 			m_OutputResourceStates.m_SpotLightWorldBoundsBufferState);
 
-		AddResourceBarrierIfRequired(pParams->m_pSpotLightPropsBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pSpotLightPropsBuffer,
 			pParams->m_InputResourceStates.m_SpotLightPropsBufferState,
 			m_OutputResourceStates.m_SpotLightPropsBufferState);
 
-		AddResourceBarrierIfRequired(pParams->m_pNumSpotLightsBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pNumSpotLightsBuffer,
 			pParams->m_InputResourceStates.m_NumSpotLightsBufferState,
 			m_OutputResourceStates.m_NumSpotLightsBufferState);
 
-		AddResourceBarrierIfRequired(pParams->m_pSpotLightIndexBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pSpotLightIndexBuffer,
 			pParams->m_InputResourceStates.m_SpotLightIndexBufferState,
 			m_OutputResourceStates.m_SpotLightIndexBufferState);
 	}
@@ -335,8 +335,8 @@ void VoxelizePass::InitCommandSignature(InitParams* pParams)
 	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"VoxelizePass::m_pCommandSignature");
 }
 
-void VoxelizePass::AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void VoxelizePass::AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
 }

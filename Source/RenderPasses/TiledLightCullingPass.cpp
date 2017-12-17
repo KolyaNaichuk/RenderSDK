@@ -58,8 +58,8 @@ void TiledLightCullingPass::Record(RenderParams* pParams)
 	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 
-	if (!m_ResourceBarriers.empty())
-		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	if (!m_ResourceTransitionBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootConstantBufferView(kRootCBVParam, pParams->m_pAppDataBuffer);
@@ -130,53 +130,53 @@ void TiledLightCullingPass::InitResources(InitParams* pParams)
 			pParams->m_InputResourceStates.m_SpotLightRangePerTileBufferState, L"m_pSpotLightRangePerTileBuffer");
 	}
 
-	assert(m_ResourceBarriers.empty());
-	CreateResourceBarrierIfRequired(pParams->m_pDepthTexture,
+	assert(m_ResourceTransitionBarriers.empty());
+	AddResourceTransitionBarrierIfRequired(pParams->m_pDepthTexture,
 		pParams->m_InputResourceStates.m_DepthTextureState,
 		m_OutputResourceStates.m_DepthTextureState);
 
 	if (pParams->m_MaxNumPointLights > 0)
 	{
-		CreateResourceBarrierIfRequired(pParams->m_pNumPointLightsBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pNumPointLightsBuffer,
 			pParams->m_InputResourceStates.m_NumPointLightsBufferState,
 			m_OutputResourceStates.m_NumPointLightsBufferState);
 
-		CreateResourceBarrierIfRequired(pParams->m_pPointLightIndexBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pPointLightIndexBuffer,
 			pParams->m_InputResourceStates.m_PointLightIndexBufferState,
 			m_OutputResourceStates.m_PointLightIndexBufferState);
 
-		CreateResourceBarrierIfRequired(pParams->m_pPointLightWorldBoundsBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pPointLightWorldBoundsBuffer,
 			pParams->m_InputResourceStates.m_PointLightWorldBoundsBufferState,
 			m_OutputResourceStates.m_PointLightWorldBoundsBufferState);
 		
-		CreateResourceBarrierIfRequired(m_pPointLightIndexPerTileBuffer,
+		AddResourceTransitionBarrierIfRequired(m_pPointLightIndexPerTileBuffer,
 			pParams->m_InputResourceStates.m_PointLightIndexPerTileBufferState,
 			m_OutputResourceStates.m_PointLightIndexPerTileBufferState);
 
-		CreateResourceBarrierIfRequired(m_pPointLightRangePerTileBuffer,
+		AddResourceTransitionBarrierIfRequired(m_pPointLightRangePerTileBuffer,
 			pParams->m_InputResourceStates.m_PointLightRangePerTileBufferState,
 			m_OutputResourceStates.m_PointLightRangePerTileBufferState);
 	}
 
 	if (pParams->m_MaxNumSpotLights > 0)
 	{
-		CreateResourceBarrierIfRequired(pParams->m_pNumSpotLightsBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pNumSpotLightsBuffer,
 			pParams->m_InputResourceStates.m_NumSpotLightsBufferState,
 			m_OutputResourceStates.m_NumSpotLightsBufferState);
 
-		CreateResourceBarrierIfRequired(pParams->m_pSpotLightIndexBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pSpotLightIndexBuffer,
 			pParams->m_InputResourceStates.m_SpotLightIndexBufferState,
 			m_OutputResourceStates.m_SpotLightIndexBufferState);
 
-		CreateResourceBarrierIfRequired(pParams->m_pSpotLightWorldBoundsBuffer,
+		AddResourceTransitionBarrierIfRequired(pParams->m_pSpotLightWorldBoundsBuffer,
 			pParams->m_InputResourceStates.m_SpotLightWorldBoundsBufferState,
 			m_OutputResourceStates.m_SpotLightWorldBoundsBufferState);
 		
-		CreateResourceBarrierIfRequired(m_pSpotLightIndexPerTileBuffer,
+		AddResourceTransitionBarrierIfRequired(m_pSpotLightIndexPerTileBuffer,
 			pParams->m_InputResourceStates.m_SpotLightIndexPerTileBufferState,
 			m_OutputResourceStates.m_SpotLightIndexPerTileBufferState);
 
-		CreateResourceBarrierIfRequired(m_pSpotLightRangePerTileBuffer,
+		AddResourceTransitionBarrierIfRequired(m_pSpotLightRangePerTileBuffer,
 			pParams->m_InputResourceStates.m_SpotLightRangePerTileBufferState,
 			m_OutputResourceStates.m_SpotLightRangePerTileBufferState);
 	}
@@ -285,8 +285,8 @@ void TiledLightCullingPass::InitPipelineState(InitParams* pParams)
 	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"TiledLightCullingPass::m_pPipelineState");
 }
 
-void TiledLightCullingPass::CreateResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void TiledLightCullingPass::AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
 }

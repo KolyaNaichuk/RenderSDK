@@ -61,7 +61,7 @@ private:
 	RootSignature* m_pSetArgumentsRootSignature;
 	PipelineState* m_pSetArgumentsPipelineState;
 	Buffer* m_pArgumentBuffer;
-	std::vector<ResourceBarrier> m_SetArgumentsResourceBarriers;
+	std::vector<ResourceTransitionBarrier> m_SetArgumentsResourceBarriers;
 	DescriptorHandle m_SetArgumentsSRVHeapStart;
 
 	RootSignature* m_pCreateCommandsRootSignature;
@@ -69,7 +69,7 @@ private:
 	CommandSignature* m_pCreateCommandsCommandSignature;
 	Buffer* m_pNumCommandsPerMeshTypeBuffer;
 	Buffer* m_pVoxelizeCommandBuffer;
-	std::vector<ResourceBarrier> m_CreateCommandsResourceBarriers;
+	std::vector<ResourceTransitionBarrier> m_CreateCommandsResourceBarriers;
 	DescriptorHandle m_CreateCommandsSRVHeapStart;
 
 	ResourceStates m_OutputResourceStates;
