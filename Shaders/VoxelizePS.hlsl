@@ -123,9 +123,6 @@ float3 ComputeReflectedRadianceFromDirectionalLight(float3 worldSpaceNormal, flo
 
 void Main(PSInput input)
 {
-	if (any(input.worldSpacePos < g_AppData.voxelGridWorldMinPoint) || any(input.worldSpacePos > g_AppData.voxelGridWorldMaxPoint))
-		return;
-
 	uint firstTextureIndex = g_FirstResourceIndexPerMaterialIDBuffer[g_MaterialID];
 	Texture2D diffuseTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex)];
 	float3 diffuseAlbedo = diffuseTexture.Sample(g_AnisoSampler, input.texCoord).rgb;
