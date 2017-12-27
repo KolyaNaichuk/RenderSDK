@@ -10,10 +10,10 @@ namespace
 	enum RootParams
 	{
 		kRootCBVParam = 0,
+		kRoot32BitConstantsParam,
 		kRootSRVTableParam,
 		kNumRootParams
 	};
-
 	struct Range
 	{
 		u32 m_Start;
@@ -58,11 +58,13 @@ void TiledLightCullingPass::Record(RenderParams* pParams)
 	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 
-	if (!m_ResourceTransitionBarriers.empty())
-		pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
+	if (!m_ResourceBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 
+	const UINT constants[] = {pParams->m_NumPointLights, pParams->m_NumSpotLights};
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootConstantBufferView(kRootCBVParam, pParams->m_pAppDataBuffer);
+	pCommandList->SetComputeRoot32BitConstants(kRoot32BitConstantsParam, ARRAYSIZE(constants), constants, 0);
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
 
 	const UINT clearValue[4] = {0, 0, 0, 0};
@@ -83,13 +85,9 @@ void TiledLightCullingPass::InitResources(InitParams* pParams)
 	const u32 numTiles = pParams->m_NumTilesX * pParams->m_NumTilesY;
 
 	m_OutputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_NumPointLightsBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_PointLightIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_PointLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_PointLightIndexPerTileBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_PointLightRangePerTileBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	m_OutputResourceStates.m_NumSpotLightsBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_SpotLightIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightIndexPerTileBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_SpotLightRangePerTileBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -130,53 +128,37 @@ void TiledLightCullingPass::InitResources(InitParams* pParams)
 			pParams->m_InputResourceStates.m_SpotLightRangePerTileBufferState, L"m_pSpotLightRangePerTileBuffer");
 	}
 
-	assert(m_ResourceTransitionBarriers.empty());
-	AddResourceTransitionBarrierIfRequired(pParams->m_pDepthTexture,
+	assert(m_ResourceBarriers.empty());
+	AddResourceBarrierIfRequired(pParams->m_pDepthTexture,
 		pParams->m_InputResourceStates.m_DepthTextureState,
 		m_OutputResourceStates.m_DepthTextureState);
 
 	if (pParams->m_MaxNumPointLights > 0)
 	{
-		AddResourceTransitionBarrierIfRequired(pParams->m_pNumPointLightsBuffer,
-			pParams->m_InputResourceStates.m_NumPointLightsBufferState,
-			m_OutputResourceStates.m_NumPointLightsBufferState);
-
-		AddResourceTransitionBarrierIfRequired(pParams->m_pPointLightIndexBuffer,
-			pParams->m_InputResourceStates.m_PointLightIndexBufferState,
-			m_OutputResourceStates.m_PointLightIndexBufferState);
-
-		AddResourceTransitionBarrierIfRequired(pParams->m_pPointLightWorldBoundsBuffer,
+		AddResourceBarrierIfRequired(pParams->m_pPointLightWorldBoundsBuffer,
 			pParams->m_InputResourceStates.m_PointLightWorldBoundsBufferState,
 			m_OutputResourceStates.m_PointLightWorldBoundsBufferState);
 		
-		AddResourceTransitionBarrierIfRequired(m_pPointLightIndexPerTileBuffer,
+		AddResourceBarrierIfRequired(m_pPointLightIndexPerTileBuffer,
 			pParams->m_InputResourceStates.m_PointLightIndexPerTileBufferState,
 			m_OutputResourceStates.m_PointLightIndexPerTileBufferState);
 
-		AddResourceTransitionBarrierIfRequired(m_pPointLightRangePerTileBuffer,
+		AddResourceBarrierIfRequired(m_pPointLightRangePerTileBuffer,
 			pParams->m_InputResourceStates.m_PointLightRangePerTileBufferState,
 			m_OutputResourceStates.m_PointLightRangePerTileBufferState);
 	}
 
 	if (pParams->m_MaxNumSpotLights > 0)
 	{
-		AddResourceTransitionBarrierIfRequired(pParams->m_pNumSpotLightsBuffer,
-			pParams->m_InputResourceStates.m_NumSpotLightsBufferState,
-			m_OutputResourceStates.m_NumSpotLightsBufferState);
-
-		AddResourceTransitionBarrierIfRequired(pParams->m_pSpotLightIndexBuffer,
-			pParams->m_InputResourceStates.m_SpotLightIndexBufferState,
-			m_OutputResourceStates.m_SpotLightIndexBufferState);
-
-		AddResourceTransitionBarrierIfRequired(pParams->m_pSpotLightWorldBoundsBuffer,
+		AddResourceBarrierIfRequired(pParams->m_pSpotLightWorldBoundsBuffer,
 			pParams->m_InputResourceStates.m_SpotLightWorldBoundsBufferState,
 			m_OutputResourceStates.m_SpotLightWorldBoundsBufferState);
 		
-		AddResourceTransitionBarrierIfRequired(m_pSpotLightIndexPerTileBuffer,
+		AddResourceBarrierIfRequired(m_pSpotLightIndexPerTileBuffer,
 			pParams->m_InputResourceStates.m_SpotLightIndexPerTileBufferState,
 			m_OutputResourceStates.m_SpotLightIndexPerTileBufferState);
 
-		AddResourceTransitionBarrierIfRequired(m_pSpotLightRangePerTileBuffer,
+		AddResourceBarrierIfRequired(m_pSpotLightRangePerTileBuffer,
 			pParams->m_InputResourceStates.m_SpotLightRangePerTileBufferState,
 			m_OutputResourceStates.m_SpotLightRangePerTileBufferState);
 	}
@@ -187,12 +169,6 @@ void TiledLightCullingPass::InitResources(InitParams* pParams)
 
 	if (pParams->m_MaxNumPointLights > 0)
 	{
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pNumPointLightsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pPointLightIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
 		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 			pParams->m_pPointLightWorldBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -209,12 +185,6 @@ void TiledLightCullingPass::InitResources(InitParams* pParams)
 
 	if (pParams->m_MaxNumSpotLights > 0)
 	{
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pNumSpotLightsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pSpotLightIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
 		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 			pParams->m_pSpotLightWorldBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -236,18 +206,19 @@ void TiledLightCullingPass::InitRootSignature(InitParams* pParams)
 
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 	rootParams[kRootCBVParam] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
+	rootParams[kRoot32BitConstantsParam] = Root32BitConstantsParameter(1, D3D12_SHADER_VISIBILITY_ALL, 2);
 
 	std::vector<D3D12_DESCRIPTOR_RANGE> descriptorRanges;
 	descriptorRanges.push_back(SRVDescriptorRange(1, 0));
 
 	if (pParams->m_MaxNumPointLights > 0)
 	{
-		descriptorRanges.push_back(SRVDescriptorRange(3, 1));
+		descriptorRanges.push_back(SRVDescriptorRange(1, 1));
 		descriptorRanges.push_back(UAVDescriptorRange(3, 0));
 	}
 	if (pParams->m_MaxNumSpotLights > 0)
 	{
-		descriptorRanges.push_back(SRVDescriptorRange(3, 4));
+		descriptorRanges.push_back(SRVDescriptorRange(1, 2));
 		descriptorRanges.push_back(UAVDescriptorRange(3, 3));
 	}
 	rootParams[kRootSRVTableParam] = RootDescriptorTableParameter((UINT)descriptorRanges.size(), descriptorRanges.data(), D3D12_SHADER_VISIBILITY_ALL);
@@ -285,8 +256,8 @@ void TiledLightCullingPass::InitPipelineState(InitParams* pParams)
 	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"TiledLightCullingPass::m_pPipelineState");
 }
 
-void TiledLightCullingPass::AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void TiledLightCullingPass::AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
 }

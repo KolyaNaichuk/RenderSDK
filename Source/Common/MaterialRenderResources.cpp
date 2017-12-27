@@ -278,7 +278,8 @@ namespace
 		Buffer* pUploadBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &uploadBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, debugBufferName.c_str());
 		uploadHeapBuffers.emplace_back(pUploadBuffer);
 
-		u8* pUploadMem = (u8*)pUploadBuffer->Map(0, textureSizeInBytes);
+		MemoryRange readRange(0, textureSizeInBytes);
+		u8* pUploadMem = (u8*)pUploadBuffer->Map(0, &readRange);
 		for (decltype(metaData.arraySize) arrayIndex = 0; arrayIndex < metaData.arraySize; ++arrayIndex)
 		{
 			for (decltype(metaData.mipLevels) mipIndex = 0; mipIndex < metaData.mipLevels; ++mipIndex)

@@ -8,13 +8,17 @@ cbuffer AppDataBuffer : register(b0)
 {
 	AppData g_AppData;
 }
+
+cbuffer Constants32BitBuffer : register(b1)
+{
+	uint g_NumPointLights;
+	uint g_NumSpotLights;
+}
+
 Texture2D g_DepthTexture : register(t0);
 
 #if MAX_NUM_POINT_LIGHTS > 0
-Buffer<uint> g_NumPointLightsBuffer : register(t1);
-Buffer<uint> g_PointLightIndexBuffer : register(t2);
-StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t3);
-
+StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t1);
 RWBuffer<uint> g_PointLightIndicesOffsetBuffer : register(u0);
 RWBuffer<uint> g_PointLightIndexPerTileBuffer : register(u1);
 RWStructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(u2);
@@ -25,10 +29,7 @@ groupshared uint g_PointLightIndicesOffset;
 #endif
 
 #if MAX_NUM_SPOT_LIGHTS > 0
-Buffer<uint> g_NumSpotLightsBuffer : register(t4);
-Buffer<uint> g_SpotLightIndexBuffer : register(t5);
-StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t6);
-
+StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t2);
 RWBuffer<uint> g_SpotLightIndicesOffsetBuffer : register(u3);
 RWBuffer<uint> g_SpotLightIndexPerTileBuffer : register(u4);
 RWStructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(u5);
@@ -85,10 +86,8 @@ bool TestSphereAgainstFrustum(float4 frustumSidePlanes[4], float frustumMinZ, fl
 #if MAX_NUM_POINT_LIGHTS > 0
 void CullPointLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth)
 {
-	for (uint index = localThreadIndex; index < g_NumPointLightsBuffer[0]; index += NUM_THREADS_PER_TILE)
+	for (uint lightIndex = localThreadIndex; lightIndex < g_NumPointLights; lightIndex += NUM_THREADS_PER_TILE)
 	{
-		uint lightIndex = g_PointLightIndexBuffer[index];
-
 		Sphere viewSpaceLightBounds = g_PointLightWorldBoundsBuffer[lightIndex];
 		viewSpaceLightBounds.center = mul(g_AppData.viewMatrix, float4(viewSpaceLightBounds.center.xyz, 1.0f)).xyz;
 
@@ -105,10 +104,8 @@ void CullPointLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePl
 #if MAX_NUM_SPOT_LIGHTS > 0
 void CullSpotLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth)
 {
-	for (uint index = localThreadIndex; index < g_NumSpotLightsBuffer[0]; index += NUM_THREADS_PER_TILE)
+	for (uint lightIndex = localThreadIndex; lightIndex < g_NumSpotLights; lightIndex += NUM_THREADS_PER_TILE)
 	{
-		uint lightIndex = g_SpotLightIndexBuffer[index];
-
 		Sphere viewSpaceLightBounds = g_SpotLightWorldBoundsBuffer[lightIndex];
 		viewSpaceLightBounds.center = mul(g_AppData.viewMatrix, float4(viewSpaceLightBounds.center.xyz, 1.0f)).xyz;
 

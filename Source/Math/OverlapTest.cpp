@@ -36,6 +36,14 @@ bool TestAABBAgainstPlane(const Plane& plane, const AxisAlignedBox& box)
 	return !fullyInsideBackHalfSpace;
 }
 
+bool TestSphereAgainstPlane(const Plane& plane, const Sphere& sphere)
+{
+	f32 signedDist = SignedDistanceToPoint(plane, sphere.m_Center);
+
+	bool fullyInsideBackHalfSpace = (signedDist + sphere.m_Radius) < 0.0f;
+	return !fullyInsideBackHalfSpace;
+}
+
 bool TestAABBAgainstFrustum(const Frustum& frustum, const AxisAlignedBox& box)
 {
 	bool insideOrOverlap = TestAABBAgainstPlane(frustum.m_Planes[0], box) &&
@@ -44,6 +52,18 @@ bool TestAABBAgainstFrustum(const Frustum& frustum, const AxisAlignedBox& box)
 		TestAABBAgainstPlane(frustum.m_Planes[3], box) &&
 		TestAABBAgainstPlane(frustum.m_Planes[4], box) &&
 		TestAABBAgainstPlane(frustum.m_Planes[5], box);
+
+	return insideOrOverlap;
+}
+
+bool TestSphereAgainstFrustum(const Frustum& frustum, const Sphere& sphere)
+{
+	bool insideOrOverlap = TestSphereAgainstPlane(frustum.m_Planes[0], sphere) &&
+		TestSphereAgainstPlane(frustum.m_Planes[1], sphere) &&
+		TestSphereAgainstPlane(frustum.m_Planes[2], sphere) &&
+		TestSphereAgainstPlane(frustum.m_Planes[3], sphere) &&
+		TestSphereAgainstPlane(frustum.m_Planes[4], sphere) &&
+		TestSphereAgainstPlane(frustum.m_Planes[5], sphere);
 
 	return insideOrOverlap;
 }

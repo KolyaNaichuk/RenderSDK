@@ -15,13 +15,17 @@ DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat);
 
 struct ResourceTransitionBarrier : D3D12_RESOURCE_BARRIER
 {
-	ResourceTransitionBarrier(GraphicsResource* pResource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter,
-		UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+	ResourceTransitionBarrier(GraphicsResource* pResource = nullptr,
+		D3D12_RESOURCE_STATES stateBefore = D3D12_RESOURCE_STATE_COMMON,
+		D3D12_RESOURCE_STATES stateAfter = D3D12_RESOURCE_STATE_COMMON,
+		UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 };
 
 struct ResourceUAVBarrier : D3D12_RESOURCE_BARRIER
 {
-	ResourceUAVBarrier(GraphicsResource* pResource, D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+	ResourceUAVBarrier(GraphicsResource* pResource = nullptr,
+		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 };
 
 struct DepthStencilValue : public D3D12_DEPTH_STENCIL_VALUE
@@ -282,8 +286,8 @@ public:
 	ID3D12Resource* GetD3DObject() { return m_D3DResource.Get(); }
 	DXGI_FORMAT GetFormat() const { return m_Desc.Format; }
 
-	void* Map(UINT subresource, SIZE_T numBytesToRead);
-	void Unmap(UINT subresource, SIZE_T numBytesWritten);
+	void* Map(UINT subresource, const D3D12_RANGE* pReadRange = nullptr);
+	void Unmap(UINT subresource, const D3D12_RANGE* pWrittenRange = nullptr);
 			
 	void Write(const void* pInputData, SIZE_T numBytes);
 	void Read(void* pOutputData, SIZE_T numBytes);

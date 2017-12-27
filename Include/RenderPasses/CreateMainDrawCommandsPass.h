@@ -62,7 +62,7 @@ private:
 	void InitRootSignature(InitParams* pParams);
 	void InitPipelineState(InitParams* pParams);
 	void InitCommandSignature(InitParams* pParams);
-	void AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
+	void AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
 	RootSignature* m_pRootSignature;
@@ -70,7 +70,7 @@ private:
 	CommandSignature* m_pCommandSignature;
 
 	DescriptorHandle m_SRVHeapStart;
-	std::vector<ResourceTransitionBarrier> m_ResourceTransitionBarriers;
+	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
 
 	Buffer* m_pVisibleInstanceIndexBuffer;

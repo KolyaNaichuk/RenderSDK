@@ -23,12 +23,8 @@ public:
 		D3D12_RESOURCE_STATES m_FirstResourceIndexPerMaterialIDBufferState;
 		D3D12_RESOURCE_STATES m_PointLightWorldBoundsBufferState;
 		D3D12_RESOURCE_STATES m_PointLightPropsBufferState;
-		D3D12_RESOURCE_STATES m_NumPointLightsBufferState;
-		D3D12_RESOURCE_STATES m_PointLightIndexBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightWorldBoundsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightPropsBufferState;
-		D3D12_RESOURCE_STATES m_NumSpotLightsBufferState;
-		D3D12_RESOURCE_STATES m_SpotLightIndexBufferState;
 	};
 
 	struct InitParams
@@ -47,23 +43,16 @@ public:
 
 		Buffer* m_pNumCommandsPerMeshTypeBuffer;
 		Buffer* m_pVoxelizeCommandBuffer;
-
 		Buffer* m_pInstanceIndexBuffer;
 		Buffer* m_pInstanceWorldMatrixBuffer;
 				
 		bool m_EnableDirectionalLight;
-		
 		bool m_EnablePointLights;
 		Buffer* m_pPointLightWorldBoundsBuffer;
 		Buffer* m_pPointLightPropsBuffer;
-		Buffer* m_pNumPointLightsBuffer;
-		Buffer* m_pPointLightIndexBuffer;
-
 		bool m_EnableSpotLights;
 		Buffer* m_pSpotLightWorldBoundsBuffer;
 		Buffer* m_pSpotLightPropsBuffer;
-		Buffer* m_pNumSpotLightsBuffer;
-		Buffer* m_pSpotLightIndexBuffer;
 	};
 
 	struct RenderParams
@@ -74,6 +63,8 @@ public:
 		Buffer* m_pNumCommandsPerMeshTypeBuffer;
 		Buffer* m_pVoxelizeCommandBuffer;
 		Buffer* m_pAppDataBuffer;
+		u32 m_NumPointLights;
+		u32 m_NumSpotLights;
 	};
 
 	VoxelizePass(InitParams* pParams);
@@ -88,7 +79,7 @@ private:
 	void InitRootSignature(InitParams* pParams);
 	void InitPipelineState(InitParams* pParams);
 	void InitCommandSignature(InitParams* pParams);
-	void AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
+	void AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
 	RootSignature* m_pRootSignature;
@@ -96,7 +87,7 @@ private:
 	CommandSignature* m_pCommandSignature;
 	DescriptorHandle m_SRVHeapStartVS;
 	DescriptorHandle m_SRVHeapStartPS;
-	std::vector<ResourceTransitionBarrier> m_ResourceTransitionBarriers;
+	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
 	ColorTexture* m_pVoxelReflectanceTexture;
 	Viewport* m_pViewport;

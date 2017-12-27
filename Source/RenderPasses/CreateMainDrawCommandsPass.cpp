@@ -57,7 +57,7 @@ void CreateMainDrawCommandsPass::Record(RenderParams* pParams)
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
 
-	pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
+	pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 	pCommandList->CopyBufferRegion(m_pArgumentBuffer, 0, pParams->m_pNumMeshesBuffer, 0, sizeof(UINT));
 
 	ResourceTransitionBarrier argumentTransitionBarrier(m_pArgumentBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
@@ -121,44 +121,44 @@ void CreateMainDrawCommandsPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_NumOccludedInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_OccludedInstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
-	assert(m_ResourceTransitionBarriers.empty());
-	AddResourceTransitionBarrierIfRequired(pParams->m_pNumMeshesBuffer,
+	assert(m_ResourceBarriers.empty());
+	AddResourceBarrierIfRequired(pParams->m_pNumMeshesBuffer,
 		pParams->m_InputResourceStates.m_NumMeshesBufferState,
 		m_OutputResourceStates.m_NumMeshesBufferState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pVisibilityBuffer,
+	AddResourceBarrierIfRequired(pParams->m_pVisibilityBuffer,
 		pParams->m_InputResourceStates.m_VisibilityBufferState,
 		m_OutputResourceStates.m_VisibilityBufferState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pInstanceIndexBuffer,
+	AddResourceBarrierIfRequired(pParams->m_pInstanceIndexBuffer,
 		pParams->m_InputResourceStates.m_InstanceIndexBufferState,
 		m_OutputResourceStates.m_InstanceIndexBufferState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pMeshInfoBuffer,
+	AddResourceBarrierIfRequired(pParams->m_pMeshInfoBuffer,
 		pParams->m_InputResourceStates.m_MeshInfoBufferState,
 		m_OutputResourceStates.m_MeshInfoBufferState);
 
-	AddResourceTransitionBarrierIfRequired(m_pVisibleInstanceIndexBuffer,
+	AddResourceBarrierIfRequired(m_pVisibleInstanceIndexBuffer,
 		pParams->m_InputResourceStates.m_VisibleInstanceIndexBufferState,
 		m_OutputResourceStates.m_VisibleInstanceIndexBufferState);
 
-	AddResourceTransitionBarrierIfRequired(m_pNumVisibleMeshesPerTypeBuffer,
+	AddResourceBarrierIfRequired(m_pNumVisibleMeshesPerTypeBuffer,
 		pParams->m_InputResourceStates.m_NumVisibleMeshesPerTypeBufferState,
 		m_OutputResourceStates.m_NumVisibleMeshesPerTypeBufferState);
 
-	AddResourceTransitionBarrierIfRequired(m_pDrawCommandBuffer,
+	AddResourceBarrierIfRequired(m_pDrawCommandBuffer,
 		pParams->m_InputResourceStates.m_DrawCommandBufferState,
 		m_OutputResourceStates.m_DrawCommandBufferState);
 
-	AddResourceTransitionBarrierIfRequired(m_pNumOccludedInstancesBuffer,
+	AddResourceBarrierIfRequired(m_pNumOccludedInstancesBuffer,
 		pParams->m_InputResourceStates.m_NumOccludedInstancesBufferState,
 		m_OutputResourceStates.m_NumOccludedInstancesBufferState);
 
-	AddResourceTransitionBarrierIfRequired(m_pOccludedInstanceIndexBuffer,
+	AddResourceBarrierIfRequired(m_pOccludedInstanceIndexBuffer,
 		pParams->m_InputResourceStates.m_OccludedInstanceIndexBufferState,
 		m_OutputResourceStates.m_OccludedInstanceIndexBufferState);
 
-	AddResourceTransitionBarrierIfRequired(m_pArgumentBuffer,
+	AddResourceBarrierIfRequired(m_pArgumentBuffer,
 		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
 		D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -239,8 +239,8 @@ void CreateMainDrawCommandsPass::InitCommandSignature(InitParams* pParams)
 	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, nullptr, &commandSignatureDesc, L"CreateMainDrawCommandsPass::m_pCommandSignature");
 }
 
-void CreateMainDrawCommandsPass::AddResourceTransitionBarrierIfRequired(GraphicsResource * pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void CreateMainDrawCommandsPass::AddResourceBarrierIfRequired(GraphicsResource * pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
 }

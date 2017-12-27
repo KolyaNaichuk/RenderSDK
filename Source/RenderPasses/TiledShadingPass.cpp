@@ -49,8 +49,8 @@ void TiledShadingPass::Record(RenderParams* pParams)
 	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
-	if (!m_ResourceTransitionBarriers.empty())
-		pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
+	if (!m_ResourceBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap, pRenderEnv->m_pShaderVisibleSamplerHeap);
 
@@ -102,77 +102,77 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_SpotLightIndexPerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightRangePerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	
-	assert(m_ResourceTransitionBarriers.empty());
-	AddResourceTransitionBarrierIfRequired(pParams->m_pAccumLightTexture,
+	assert(m_ResourceBarriers.empty());
+	AddResourceBarrierIfRequired(pParams->m_pAccumLightTexture,
 		pParams->m_InputResourceStates.m_AccumLightTextureState,
 		m_OutputResourceStates.m_AccumLightTextureState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pMeshTypeDepthTexture,
+	AddResourceBarrierIfRequired(pParams->m_pMeshTypeDepthTexture,
 		pParams->m_InputResourceStates.m_MeshTypeDepthTextureState,
 		m_OutputResourceStates.m_MeshTypeDepthTextureState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pShadingRectangleMinPointBuffer,
+	AddResourceBarrierIfRequired(pParams->m_pShadingRectangleMinPointBuffer,
 		pParams->m_InputResourceStates.m_ShadingRectangleMinPointBufferState,
 		m_OutputResourceStates.m_ShadingRectangleMinPointBufferState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pShadingRectangleMaxPointBuffer,
+	AddResourceBarrierIfRequired(pParams->m_pShadingRectangleMaxPointBuffer,
 		pParams->m_InputResourceStates.m_ShadingRectangleMaxPointBufferState,
 		m_OutputResourceStates.m_ShadingRectangleMaxPointBufferState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pDepthTexture,
+	AddResourceBarrierIfRequired(pParams->m_pDepthTexture,
 		pParams->m_InputResourceStates.m_DepthTextureState,
 		m_OutputResourceStates.m_DepthTextureState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pTexCoordTexture,
+	AddResourceBarrierIfRequired(pParams->m_pTexCoordTexture,
 		pParams->m_InputResourceStates.m_TexCoordTextureState,
 		m_OutputResourceStates.m_TexCoordTextureState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pNormalTexture,
+	AddResourceBarrierIfRequired(pParams->m_pNormalTexture,
 		pParams->m_InputResourceStates.m_NormalTextureState,
 		m_OutputResourceStates.m_NormalTextureState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pMaterialIDTexture,
+	AddResourceBarrierIfRequired(pParams->m_pMaterialIDTexture,
 		pParams->m_InputResourceStates.m_MaterialIDTextureState,
 		m_OutputResourceStates.m_MaterialIDTextureState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pFirstResourceIndexPerMaterialIDBuffer,
+	AddResourceBarrierIfRequired(pParams->m_pFirstResourceIndexPerMaterialIDBuffer,
 		pParams->m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState,
 		m_OutputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState);
 
 	if (pParams->m_EnablePointLights)
 	{
-		AddResourceTransitionBarrierIfRequired(pParams->m_pPointLightWorldBoundsBuffer,
+		AddResourceBarrierIfRequired(pParams->m_pPointLightWorldBoundsBuffer,
 			pParams->m_InputResourceStates.m_PointLightWorldBoundsBufferState,
 			m_OutputResourceStates.m_PointLightWorldBoundsBufferState);
 
-		AddResourceTransitionBarrierIfRequired(pParams->m_pPointLightPropsBuffer,
+		AddResourceBarrierIfRequired(pParams->m_pPointLightPropsBuffer,
 			pParams->m_InputResourceStates.m_PointLightPropsBufferState,
 			m_OutputResourceStates.m_PointLightPropsBufferState);
 
-		AddResourceTransitionBarrierIfRequired(pParams->m_pPointLightIndexPerTileBuffer,
+		AddResourceBarrierIfRequired(pParams->m_pPointLightIndexPerTileBuffer,
 			pParams->m_InputResourceStates.m_PointLightIndexPerTileBufferState,
 			m_OutputResourceStates.m_PointLightIndexPerTileBufferState);
 
-		AddResourceTransitionBarrierIfRequired(pParams->m_pPointLightRangePerTileBuffer,
+		AddResourceBarrierIfRequired(pParams->m_pPointLightRangePerTileBuffer,
 			pParams->m_InputResourceStates.m_PointLightRangePerTileBufferState,
 			m_OutputResourceStates.m_PointLightRangePerTileBufferState);
 	}
 	
 	if (pParams->m_EnableSpotLights)
 	{
-		AddResourceTransitionBarrierIfRequired(pParams->m_pSpotLightWorldBoundsBuffer,
+		AddResourceBarrierIfRequired(pParams->m_pSpotLightWorldBoundsBuffer,
 			pParams->m_InputResourceStates.m_SpotLightWorldBoundsBufferState,
 			m_OutputResourceStates.m_SpotLightWorldBoundsBufferState);
 
-		AddResourceTransitionBarrierIfRequired(pParams->m_pSpotLightPropsBuffer,
+		AddResourceBarrierIfRequired(pParams->m_pSpotLightPropsBuffer,
 			pParams->m_InputResourceStates.m_SpotLightPropsBufferState,
 			m_OutputResourceStates.m_SpotLightPropsBufferState);
 
-		AddResourceTransitionBarrierIfRequired(pParams->m_pSpotLightIndexPerTileBuffer,
+		AddResourceBarrierIfRequired(pParams->m_pSpotLightIndexPerTileBuffer,
 			pParams->m_InputResourceStates.m_SpotLightIndexPerTileBufferState,
 			m_OutputResourceStates.m_SpotLightIndexPerTileBufferState);
 
-		AddResourceTransitionBarrierIfRequired(pParams->m_pSpotLightRangePerTileBuffer,
+		AddResourceBarrierIfRequired(pParams->m_pSpotLightRangePerTileBuffer,
 			pParams->m_InputResourceStates.m_SpotLightRangePerTileBufferState,
 			m_OutputResourceStates.m_SpotLightRangePerTileBufferState);
 	}
@@ -320,8 +320,8 @@ void TiledShadingPass::InitPipelineState(InitParams* pParams)
 	m_pPipelineState = new PipelineState(pParams->m_pRenderEnv->m_pDevice, &pipelineStateDesc, L"TiledShadingPass::m_pPipelineState");
 }
 
-void TiledShadingPass::AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void TiledShadingPass::AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
 }

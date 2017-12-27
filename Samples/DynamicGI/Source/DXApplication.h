@@ -5,6 +5,7 @@
 struct HeapProperties;
 struct RenderEnv;
 struct Viewport;
+struct Frustum;
 
 class GraphicsDevice;
 class SwapChain;
@@ -16,11 +17,9 @@ class ColorTexture;
 class DepthTexture;
 class Buffer;
 class Fence;
-
 class Camera;
 class GeometryBuffer;
 class MeshRenderResources;
-class LightRenderResources;
 class MaterialRenderResources;
 class DownscaleAndReprojectDepthPass;
 class FrustumMeshCullingPass;
@@ -32,18 +31,13 @@ class RenderGBufferPass;
 class TiledLightCullingPass;
 class TiledShadingPass;
 class CalcShadingRectanglesPass;
-class FrustumLightCullingPass;
 class CreateVoxelizeCommandsPass;
 class VisualizeTexturePass;
 class VisualizeVoxelReflectancePass;
 class VoxelizePass;
 class Scene;
-
-// Old
-class PropagateLightPass;
-class CreateRenderShadowMapCommandsPass;
-class RenderTiledShadowMapPass;
-class SetupTiledShadowMapPass;
+class PointLight;
+class SpotLight;
 
 //#define DEBUG_RENDER_PASS
 
@@ -58,16 +52,8 @@ public:
 		NormalBuffer,
 		TexCoordBuffer,
 		DepthBufferWithMeshType,
-		SpotLightTiledShadowMap,
-		PointLightTiledShadowMap,
 		VoxelRelectance,
 		Unknown
-	};
-	enum class TileShadingMode
-	{
-		DirectLight,
-		IndirectLight,
-		DirectAndIndirectLight
 	};
 	
 	DXApplication(HINSTANCE hApp);
@@ -82,12 +68,12 @@ private:
 	void OnKeyUp(UINT8 key) override;
 
 	void InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight);
-	void InitScene(Scene* pScene, UINT backBufferWidth, UINT backBufferHeight);
+	void InitScene(UINT backBufferWidth, UINT backBufferHeight);
 
 	void InitDownscaleAndReprojectDepthPass();
 	CommandList* RecordDownscaleAndReprojectDepthPass();
 
-	CommandList* RecordClearResourcesPass();
+	CommandList* RecordPreRenderPass();
 
 	void InitFrustumMeshCullingPass();
 	CommandList* RecordFrustumMeshCullingPass();
@@ -115,12 +101,8 @@ private:
 
 	void InitFillMeshTypeDepthBufferPass();
 	CommandList* RecordFillMeshTypeDepthBufferPass();
-		
-	void InitFrustumPointLightCullingPass();
-	CommandList* RecordFrustumPointLightCullingPass();
 
-	void InitFrustumSpotLightCullingPass();
-	CommandList* RecordFrustumSpotLightCullingPass();
+	CommandList* RecordUploadVisibleLightDataPass();
 
 	void InitTiledLightCullingPass();
 	CommandList* RecordTiledLightCullingPass();
@@ -155,29 +137,11 @@ private:
 	void InitVisualizeVoxelReflectancePass();
 	CommandList* RecordVisualizeVoxelReflectancePass();
 
-	CommandList* RecordDisplayResultPass();
+	CommandList* RecordVisualizeDisplayResultPass();
 	CommandList* RecordPostRenderPass();
-	
-	// Old
-	void InitPropagateLightPass();
-			
-	void InitSetupSpotLightTiledShadowMapPass();
-	void InitSetupPointLightTiledShadowMapPass();
-	void InitCreateRenderShadowMapCommandsPass();
-	void InitRenderSpotLightTiledShadowMapPass();
-	void InitRenderPointLightTiledShadowMapPass();
-	void InitVisualizeSpotLightTiledShadowMapPass();
-	void InitVisualizePointLightTiledShadowMapPass();
 
-	CommandList* RecordUpdateCreateRenderShadowMapCommandsArgumentBufferPass();
-	CommandList* RecordCreateRenderShadowMapCommandsPass();
-	CommandList* RecordSetupSpotLightTiledShadowMapPass();
-	CommandList* RecordSetupPointLightTiledShadowMapPass();
-	CommandList* RecordRenderSpotLightTiledShadowMapPass();
-	CommandList* RecordRenderPointLightTiledShadowMapPass();
-	CommandList* RecordPropagateLightPass();
-	CommandList* RecordVisualizeSpotLightTiledShadowMapPass();
-	CommandList* RecordVisualizePointLightTiledShadowMapPass();
+	void DetectVisiblePointLights(const Frustum& cameraWorldFrustum, u32 numLights, PointLight** ppLights);
+	void DetectVisibleSpotLights(const Frustum& cameraWorldFrustum, u32 numLights, SpotLight** ppLights);
 			
 	void UpdateDisplayResult(DisplayResult displayResult);
 		
@@ -187,92 +151,75 @@ private:
 	
 private:
 	enum { kNumBackBuffers = 3 };
+
+	DisplayResult m_DisplayResult = DisplayResult::Unknown;
 	
-	DisplayResult m_DisplayResult;
-	TileShadingMode m_ShadingMode;
-	
-	GraphicsDevice* m_pDevice;
-	SwapChain* m_pSwapChain;
-	CommandQueue* m_pCommandQueue;
-	CommandListPool* m_pCommandListPool;
-	HeapProperties* m_pUploadHeapProps;
-	HeapProperties* m_pDefaultHeapProps;
-	HeapProperties* m_pReadbackHeapProps;
-	DescriptorHeap* m_pShaderInvisibleRTVHeap;
-	DescriptorHeap* m_pShaderInvisibleDSVHeap;
-	DescriptorHeap* m_pShaderInvisibleSRVHeap;
-	DescriptorHeap* m_pShaderInvisibleSamplerHeap;
-	DescriptorHeap* m_pShaderVisibleSRVHeap;
-	DescriptorHeap* m_pShaderVisibleSamplerHeap;
-	DepthTexture* m_pDepthTexture;
-	ColorTexture* m_pAccumLightTexture;
+	Scene* m_pScene = nullptr;
+	GraphicsDevice* m_pDevice = nullptr;
+	SwapChain* m_pSwapChain = nullptr;
+	CommandQueue* m_pCommandQueue = nullptr;
+	CommandListPool* m_pCommandListPool = nullptr;
+	HeapProperties* m_pUploadHeapProps = nullptr;
+	HeapProperties* m_pDefaultHeapProps = nullptr;
+	HeapProperties* m_pReadbackHeapProps = nullptr;
+	DescriptorHeap* m_pShaderInvisibleRTVHeap = nullptr;
+	DescriptorHeap* m_pShaderInvisibleDSVHeap = nullptr;
+	DescriptorHeap* m_pShaderInvisibleSRVHeap = nullptr;
+	DescriptorHeap* m_pShaderInvisibleSamplerHeap = nullptr;
+	DescriptorHeap* m_pShaderVisibleSRVHeap = nullptr;
+	DescriptorHeap* m_pShaderVisibleSamplerHeap = nullptr;
+	DepthTexture* m_pDepthTexture = nullptr;
+	ColorTexture* m_pAccumLightTexture = nullptr;
+	Viewport* m_pBackBufferViewport = nullptr;
+	RenderEnv* m_pRenderEnv = nullptr;
+	Fence* m_pFence = nullptr;
+	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers] = {0, 0, 0};
+	UINT m_BackBufferIndex = 0;
 
-	DepthTexture* m_pSpotLightTiledShadowMap;
-	DepthTexture* m_pPointLightTiledShadowMap;		
-	Viewport* m_pBackBufferViewport;
-	Viewport* m_pSpotLightTiledShadowMapViewport;
-	Viewport* m_pPointLightTiledShadowMapViewport;
-	Buffer* m_pShadowCastingPointLightIndexBuffer;
-	Buffer* m_pNumShadowCastingPointLightsBuffer;
-	Buffer* m_pDrawPointLightShadowCasterCommandBuffer;
-	Buffer* m_pNumDrawPointLightShadowCastersBuffer;
-	Buffer* m_pShadowCastingSpotLightIndexBuffer;
-	Buffer* m_pNumShadowCastingSpotLightsBuffer;
-	Buffer* m_pDrawSpotLightShadowCasterCommandBuffer;
-	Buffer* m_pNumDrawSpotLightShadowCastersBuffer;
-	Buffer* m_pSpotLightShadowMapDataBuffer;
-	Buffer* m_pSpotLightShadowMapTileBuffer;
-	Buffer* m_pSpotLightViewTileProjMatrixBuffer;
-	Buffer* m_pPointLightShadowMapDataBuffer;
-	Buffer* m_pPointLightShadowMapTileBuffer;
-	Buffer* m_pPointLightViewTileProjMatrixBuffer;
+	Camera* m_pCamera = nullptr;
+	MeshRenderResources* m_pMeshRenderResources = nullptr;
+	MaterialRenderResources* m_pMaterialRenderResources = nullptr;
+	GeometryBuffer* m_pGeometryBuffer = nullptr;
+	DownscaleAndReprojectDepthPass* m_pDownscaleAndReprojectDepthPass = nullptr;
+	FrustumMeshCullingPass* m_pFrustumMeshCullingPass = nullptr;
+	FillVisibilityBufferPass* m_pFillVisibilityBufferMainPass = nullptr;
+	CreateMainDrawCommandsPass* m_pCreateMainDrawCommandsPass = nullptr;
+	RenderGBufferPass* m_pRenderGBufferMainPass = nullptr;
+	FillVisibilityBufferPass* m_pFillVisibilityBufferFalseNegativePass = nullptr;
+	CreateFalseNegativeDrawCommandsPass* m_pCreateFalseNegativeDrawCommandsPass = nullptr;
+	RenderGBufferPass* m_pRenderGBufferFalseNegativePass = nullptr;
+	FillMeshTypeDepthBufferPass* m_pFillMeshTypeDepthBufferPass = nullptr;
+	CalcShadingRectanglesPass* m_pCalcShadingRectanglesPass = nullptr;
+	CreateVoxelizeCommandsPass* m_pCreateVoxelizeCommandsPass = nullptr;
+	VoxelizePass* m_pVoxelizePass = nullptr;
+	TiledLightCullingPass* m_pTiledLightCullingPass = nullptr;
+	TiledShadingPass* m_pTiledShadingPass = nullptr;
+	VisualizeTexturePass* m_pVisualizeAccumLightPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	VisualizeTexturePass* m_VisualizeReprojectedDepthBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	VisualizeTexturePass* m_VisualizeDepthBufferWithMeshTypePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	VisualizeVoxelReflectancePass* m_VisualizeVoxelReflectancePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 
-	RenderEnv* m_pRenderEnv;
-	Fence* m_pFence;
-	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers];
-	UINT m_BackBufferIndex;
+	u32 m_NumVisiblePointLights = 0;
+	Buffer* m_pVisiblePointLightWorldBoundsBuffer = nullptr;
+	Buffer* m_pVisiblePointLightPropsBuffer = nullptr;
 
-	// Old render passes
-	PropagateLightPass* m_pPropagateLightPass;
-	CreateRenderShadowMapCommandsPass* m_pCreateRenderShadowMapCommandsPass;
-	Buffer* m_pCreateRenderShadowMapCommandsArgumentBuffer;
-	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass;
-	RenderTiledShadowMapPass* m_pRenderPointLightTiledShadowMapPass;
-	SetupTiledShadowMapPass* m_pSetupSpotLightTiledShadowMapPass;
-	SetupTiledShadowMapPass* m_pSetupPointLightTiledShadowMapPass;
-	VisualizeTexturePass* m_pVisualizeSpotLightTiledShadowMapPass;
-	VisualizeTexturePass* m_pVisualizePointLightTiledShadowMapPass;
+	u32 m_NumVisibleSpotLights = 0;
+	Buffer* m_pVisibleSpotLightWorldBoundsBuffer = nullptr;
+	Buffer* m_pVisibleSpotLightPropsBuffer = nullptr;
 
-	// New render passes
-	Camera* m_pCamera;
-	MeshRenderResources* m_pMeshRenderResources;
-	LightRenderResources* m_pPointLightRenderResources;
-	LightRenderResources* m_pSpotLightRenderResources;
-	MaterialRenderResources* m_pMaterialRenderResources;
-	GeometryBuffer* m_pGeometryBuffer;
-	DownscaleAndReprojectDepthPass* m_pDownscaleAndReprojectDepthPass;
-	FrustumMeshCullingPass* m_pFrustumMeshCullingPass;
-	FillVisibilityBufferPass* m_pFillVisibilityBufferMainPass;
-	CreateMainDrawCommandsPass* m_pCreateMainDrawCommandsPass;
-	RenderGBufferPass* m_pRenderGBufferMainPass;
-	FillVisibilityBufferPass* m_pFillVisibilityBufferFalseNegativePass;
-	CreateFalseNegativeDrawCommandsPass* m_pCreateFalseNegativeDrawCommandsPass;
-	RenderGBufferPass* m_pRenderGBufferFalseNegativePass;
-	FillMeshTypeDepthBufferPass* m_pFillMeshTypeDepthBufferPass;
-	CalcShadingRectanglesPass* m_pCalcShadingRectanglesPass;
-	FrustumLightCullingPass* m_pFrustumPointLightCullingPass;
-	FrustumLightCullingPass* m_pFrustumSpotLightCullingPass;
-	TiledLightCullingPass* m_pTiledLightCullingPass;
-	CreateVoxelizeCommandsPass* m_pCreateVoxelizeCommandsPass;
-	VoxelizePass* m_pVoxelizePass;
-	TiledShadingPass* m_pTiledShadingPass;
-	VisualizeTexturePass* m_pVisualizeAccumLightPasses[kNumBackBuffers];
-	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers];
-	VisualizeTexturePass* m_VisualizeReprojectedDepthBufferPasses[kNumBackBuffers];
-	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers];
-	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers];
-	VisualizeTexturePass* m_VisualizeDepthBufferWithMeshTypePasses[kNumBackBuffers];
-	VisualizeVoxelReflectancePass* m_VisualizeVoxelReflectancePasses[kNumBackBuffers];
-	Buffer* m_pAppDataBuffers[kNumBackBuffers];
-	void* m_pAppDataPointers[kNumBackBuffers];
+	Buffer* m_pUploadAppDataBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	void* m_pUploadAppData[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+
+	Buffer* m_pUploadVisiblePointLightWorldBoundsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	void* m_pUploadVisiblePointLightWorldBounds[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	Buffer* m_pUploadVisiblePointLightPropsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	void* m_pUploadVisiblePointLightProps[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+
+	Buffer* m_pUploadVisibleSpotLightWorldBoundsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	void* m_pUploadVisibleSpotLightWorldBounds[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	Buffer* m_pUploadVisibleSpotLightPropsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	void* m_pUploadVisibleSpotLightProps[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 };

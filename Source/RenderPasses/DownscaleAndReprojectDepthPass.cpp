@@ -70,11 +70,11 @@ void DownscaleAndReprojectDepthPass::InitReprojectResources(InitParams* pParams,
 	m_OutputResourceStates.m_ReprojectedDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 
 	assert(m_ReprojectResourceBarriers.empty());
-	CreateReprojectResourceBarrierIfRequired(pParams->m_pPrevDepthTexture,
+	AddReprojectResourceBarrierIfRequired(pParams->m_pPrevDepthTexture,
 		pParams->m_InputResourceStates.m_PrevDepthTextureState,
 		m_OutputResourceStates.m_PrevDepthTextureState);
 
-	CreateReprojectResourceBarrierIfRequired(m_pReprojectionColorTexture,
+	AddReprojectResourceBarrierIfRequired(m_pReprojectionColorTexture,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
@@ -178,7 +178,7 @@ void DownscaleAndReprojectDepthPass::InitReprojectPipelineState(InitParams* pPar
 	m_pReprojectPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"DownscaleAndReprojectDepthPass::m_pPipelineState");
 }
 
-void DownscaleAndReprojectDepthPass::CreateReprojectResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void DownscaleAndReprojectDepthPass::AddReprojectResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
 		m_ReprojectResourceBarriers.emplace_back(pResource, currState, requiredState);
@@ -196,11 +196,11 @@ void DownscaleAndReprojectDepthPass::InitCopyResources(InitParams* pParams, UINT
 	m_pReprojectionDepthTexture = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &reprojectionDepthTextureDesc,
 		pParams->m_InputResourceStates.m_ReprojectedDepthTextureState, &optimizedClearDepth, L"DownscaleAndReprojectDepthPass::m_pReprojectionDepthTexture");
 
-	CreateCopyResourceBarrierIfRequired(m_pReprojectionDepthTexture,
+	AddCopyResourceBarrierIfRequired(m_pReprojectionDepthTexture,
 		pParams->m_InputResourceStates.m_ReprojectedDepthTextureState,
 		m_OutputResourceStates.m_ReprojectedDepthTextureState);
 
-	CreateCopyResourceBarrierIfRequired(m_pReprojectionColorTexture,
+	AddCopyResourceBarrierIfRequired(m_pReprojectionColorTexture,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
@@ -245,7 +245,7 @@ void DownscaleAndReprojectDepthPass::InitCopyPipelineState(InitParams* pParams)
 	m_pCopyPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"DownscaleAndReprojectDepthPass::m_pCopyPipelineState");
 }
 
-void DownscaleAndReprojectDepthPass::CreateCopyResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void DownscaleAndReprojectDepthPass::AddCopyResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
 		m_CopyResourceBarriers.emplace_back(pResource, currState, requiredState);

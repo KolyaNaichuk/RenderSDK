@@ -53,8 +53,8 @@ void RenderGBufferPass::Record(RenderParams* pParams)
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
-	if (!m_ResourceTransitionBarriers.empty())
-		pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
+	if (!m_ResourceBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 					
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = m_RTVHeapStart;
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHeapStart = m_DSVHeapStart;
@@ -104,36 +104,36 @@ void RenderGBufferPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_NumVisibleMeshesPerTypeBufferState = D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
 	m_OutputResourceStates.m_DrawCommandBufferState = D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
 
-	assert(m_ResourceTransitionBarriers.empty());
-	AddResourceTransitionBarrierIfRequired(pParams->m_pTexCoordTexture,
+	assert(m_ResourceBarriers.empty());
+	AddResourceBarrierIfRequired(pParams->m_pTexCoordTexture,
 		pParams->m_InputResourceStates.m_TexCoordTextureState,
 		m_OutputResourceStates.m_TexCoordTextureState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pNormalTexture,
+	AddResourceBarrierIfRequired(pParams->m_pNormalTexture,
 		pParams->m_InputResourceStates.m_NormalTextureState,
 		m_OutputResourceStates.m_NormalTextureState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pMaterialIDTexture,
+	AddResourceBarrierIfRequired(pParams->m_pMaterialIDTexture,
 		pParams->m_InputResourceStates.m_MaterialIDTextureState,
 		m_OutputResourceStates.m_MaterialIDTextureState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pDepthTexture,
+	AddResourceBarrierIfRequired(pParams->m_pDepthTexture,
 		pParams->m_InputResourceStates.m_DepthTextureState,
 		m_OutputResourceStates.m_DepthTextureState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pInstanceIndexBuffer,
+	AddResourceBarrierIfRequired(pParams->m_pInstanceIndexBuffer,
 		pParams->m_InputResourceStates.m_InstanceIndexBufferState,
 		m_OutputResourceStates.m_InstanceIndexBufferState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pInstanceWorldMatrixBuffer,
+	AddResourceBarrierIfRequired(pParams->m_pInstanceWorldMatrixBuffer,
 		pParams->m_InputResourceStates.m_InstanceWorldMatrixBufferState,
 		m_OutputResourceStates.m_InstanceWorldMatrixBufferState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_NumVisibleMeshesPerTypeBuffer,
+	AddResourceBarrierIfRequired(pParams->m_NumVisibleMeshesPerTypeBuffer,
 		pParams->m_InputResourceStates.m_NumVisibleMeshesPerTypeBufferState,
 		m_OutputResourceStates.m_NumVisibleMeshesPerTypeBufferState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_DrawCommandBuffer,
+	AddResourceBarrierIfRequired(pParams->m_DrawCommandBuffer,
 		pParams->m_InputResourceStates.m_DrawCommandBufferState,
 		m_OutputResourceStates.m_DrawCommandBufferState);
 	
@@ -232,8 +232,8 @@ void RenderGBufferPass::InitCommandSignature(InitParams* pParams)
 	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"RenderGBufferPass::m_pCommandSignature");
 }
 
-void RenderGBufferPass::AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void RenderGBufferPass::AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
 }

@@ -53,13 +53,13 @@ private:
 	void InitResources(InitParams* pParams);
 	void InitRootSignature(InitParams* pParams);
 	void InitPipelineState(InitParams* pParams);
-	void AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
+	void AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
 	RootSignature* m_pRootSignature;
 	PipelineState* m_pPipelineState;
 	DescriptorHandle m_SRVHeapStart;
 	DescriptorHandle m_RTVHeapStart;
-	std::vector<ResourceTransitionBarrier> m_ResourceTransitionBarriers;
+	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
 };

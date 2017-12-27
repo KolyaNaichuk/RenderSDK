@@ -39,8 +39,8 @@ void VisualizeTexturePass::Record(RenderParams* pParams)
 	pCommandList->Begin(m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
-	if (!m_ResourceTransitionBarriers.empty())
-		pCommandList->ResourceBarrier((UINT)m_ResourceTransitionBarriers.size(), m_ResourceTransitionBarriers.data());
+	if (!m_ResourceBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetGraphicsRootConstantBufferView(kRootCBVParam, pParams->m_pAppDataBuffer);
@@ -68,12 +68,12 @@ void VisualizeTexturePass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_InputTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	
-	assert(m_ResourceTransitionBarriers.empty());
-	AddResourceTransitionBarrierIfRequired(pParams->m_pInputTexture,
+	assert(m_ResourceBarriers.empty());
+	AddResourceBarrierIfRequired(pParams->m_pInputTexture,
 		pParams->m_InputResourceStates.m_InputTextureState,
 		m_OutputResourceStates.m_InputTextureState);
 
-	AddResourceTransitionBarrierIfRequired(pParams->m_pBackBuffer,
+	AddResourceBarrierIfRequired(pParams->m_pBackBuffer,
 		pParams->m_InputResourceStates.m_BackBufferState,
 		m_OutputResourceStates.m_BackBufferState);
 
@@ -125,8 +125,8 @@ void VisualizeTexturePass::InitPipelineState(InitParams* pParams)
 	m_pPipelineState = new PipelineState(pParams->m_pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeTexturePass::m_pPipelineState");
 }
 
-void VisualizeTexturePass::AddResourceTransitionBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void VisualizeTexturePass::AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
-		m_ResourceTransitionBarriers.emplace_back(pResource, currState, requiredState);
+		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
 }
