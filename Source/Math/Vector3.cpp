@@ -110,7 +110,7 @@ const Vector3f Max(const Vector3f& vec1, const Vector3f& vec2)
 
 bool IsNormalized(const Vector3f& vec, f32 epsilon)
 {
-	return (Abs(1.0f - Length(vec)) < epsilon);
+	return AreEqual(1.0f, Length(vec), epsilon);
 }
 
 const Vector3f TransformPoint(const Vector3f& point, const Matrix4f& matrix)

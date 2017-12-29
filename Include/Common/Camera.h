@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Math/Vector4.h"
-#include "Math/Frustum.h"
 #include "Common/SceneObject.h"
 
 class Camera : public SceneObject
@@ -57,5 +56,3 @@ private:
 	mutable Matrix4f m_ProjMatrix;
 	mutable u8 m_DirtyFlags;
 };
-
-const Frustum ExtractWorldFrustum(const Camera& camera);

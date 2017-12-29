@@ -10,8 +10,6 @@
 #include "D3DWrapper/RenderEnv.h"
 #include "Common/MeshRenderResources.h"
 
-//#define ENABLE_VOXELIZATION
-
 namespace
 {
 	enum RootParams

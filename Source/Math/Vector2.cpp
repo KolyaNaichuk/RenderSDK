@@ -97,7 +97,7 @@ const Vector2f Max(const Vector2f& vec1, const Vector2f& vec2)
 
 bool IsNormalized(const Vector2f& vec, f32 epsilon)
 {
-	return (Abs(1.0f - Length(vec)) < epsilon);
+	return AreEqual(1.0f, Length(vec), epsilon);
 }
 
 Vector2f& operator+= (Vector2f& vec1, const Vector2f& vec2)

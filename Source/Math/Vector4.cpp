@@ -94,7 +94,7 @@ const Vector4f Max(const Vector4f& vec1, const Vector4f& vec2)
 
 bool IsNormalized(const Vector4f& vec, f32 epsilon)
 {
-	return (Abs(1.0f - Length(vec)) < epsilon);
+	return AreEqual(1.0f, Length(vec), epsilon);
 }
 
 const Vector4f TransformVector(const Vector4f& vec, const Transform& transform)

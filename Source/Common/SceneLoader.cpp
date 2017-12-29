@@ -51,16 +51,16 @@ Scene* SceneLoader::LoadSponza()
 
 	OBJFileLoader fileLoader;
 	Scene* pScene = fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
-
+		
 	Camera* pCamera = new Camera(Camera::ProjType_Perspective, 0.1f/*nearClipPlane*/, 2500.0f/*farClipPlane*/, 1.0f/*aspectRatio*/);
-	pCamera->GetTransform().SetPosition(Vector3f(-60.5189209f, 651.495361f, 38.6905518f));
-	pCamera->GetTransform().SetRotation(Quaternion(0.0f, 0.0f, 0.0f, -1.0f));
+	pCamera->GetTransform().SetPosition(Vector3f(920.481f, 204.495f, 38.693f));
+	pCamera->GetTransform().SetRotation(Quaternion(0.0f, 0.707107f, 0.0f, -0.707107f));
 	pScene->SetCamera(pCamera);
 
 	PointLight* pPointLight = new PointLight("Point light", 2000.0f);
 	pPointLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight->SetIntensity(1.0f);
-	pPointLight->GetTransform().SetPosition(pCamera->GetTransform().GetPosition());
+	pPointLight->GetTransform().SetPosition(Vector3f(-60.2261f, 1005.49f, 44.3329f));
 	pScene->AddPointLight(pPointLight);
 		
 	return pScene;

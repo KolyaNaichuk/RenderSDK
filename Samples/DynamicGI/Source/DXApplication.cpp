@@ -74,6 +74,7 @@ To do:
 - When converting plane mesh to unit cube space, world matrix is not optimal for OOB.
 For an example, plane in original coordinates is passing through point (0, 0, 0).
 OOB will have coordinates expanding from -1 to 1 not merely passing through 0 when world matrix is applied.
+- Check Torque3D engine for plane object implementation. mPlane.h and mPlane.cpp
 - Make camera transform part of Scene object.
 Can check format OpenGEX for inspiration - http://opengex.org/
 - MeshRenderResources, LightRenderResources, MaterialRenderResources should not be part of Common folder
@@ -104,7 +105,7 @@ namespace
 
 		Matrix4f m_NotUsed1;
 		Vector4f m_CameraWorldSpacePos;
-		Vector4f m_CameraWorldFrustumPlanes[Frustum::NumPlanes];
+		Plane m_CameraWorldFrustumPlanes[Frustum::NumPlanes];
 		f32 m_CameraNearPlane;
 		f32 m_CameraFarPlane;
 		Vector2f m_NotUsed2;
@@ -407,6 +408,9 @@ void DXApplication::OnInit()
 
 void DXApplication::OnUpdate()
 {
+	static Matrix4f prevViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
+	static Matrix4f prevViewProjInvMatrix = Inverse(prevViewProjMatrix);
+
 	const Vector3f& cameraWorldSpacePos = m_pCamera->GetTransform().GetPosition();
 	
 	AppData* pAppData = (AppData*)m_pUploadAppData[m_BackBufferIndex];
@@ -416,16 +420,20 @@ void DXApplication::OnUpdate()
 	pAppData->m_ProjInvMatrix = Inverse(pAppData->m_ProjMatrix);
 	pAppData->m_ViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
 	pAppData->m_ViewProjInvMatrix = Inverse(pAppData->m_ViewProjMatrix);
-	pAppData->m_PrevViewProjMatrix = pAppData->m_ViewProjMatrix;
-	pAppData->m_PrevViewProjInvMatrix = Inverse(pAppData->m_PrevViewProjMatrix);
+	pAppData->m_PrevViewProjMatrix = prevViewProjMatrix;
+	pAppData->m_PrevViewProjInvMatrix = prevViewProjInvMatrix;
+
+	prevViewProjMatrix = pAppData->m_ViewProjMatrix;
+	prevViewProjInvMatrix = pAppData->m_ViewProjInvMatrix;
 
 	pAppData->m_CameraWorldSpacePos = Vector4f(cameraWorldSpacePos.m_X, cameraWorldSpacePos.m_Y, cameraWorldSpacePos.m_Z, 1.0f);
-	const Frustum cameraWorldFrustum = ExtractWorldFrustum(*m_pCamera);
-	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
-		pAppData->m_CameraWorldFrustumPlanes[planeIndex] = ToVector(cameraWorldFrustum.m_Planes[planeIndex]);
-
 	pAppData->m_CameraNearPlane = m_pCamera->GetNearClipPlane();
 	pAppData->m_CameraFarPlane = m_pCamera->GetFarClipPlane();
+
+	const Frustum cameraWorldFrustum(pAppData->m_ViewProjMatrix);
+	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
+		pAppData->m_CameraWorldFrustumPlanes[planeIndex] = cameraWorldFrustum.m_Planes[planeIndex];
+
 	pAppData->m_ScreenSize = Vector2u(kBackBufferWidth, kBackBufferHeight);
 	pAppData->m_RcpScreenSize = Vector2f(1.0f / f32(pAppData->m_ScreenSize.m_X), 1.0f / f32(pAppData->m_ScreenSize.m_Y));
 	pAppData->m_ScreenHalfSize = Vector2u(pAppData->m_ScreenSize.m_X >> 1, pAppData->m_ScreenSize.m_Y >> 1);
@@ -437,6 +445,7 @@ void DXApplication::OnUpdate()
 	pAppData->m_ScreenTileSize = Vector2u(kTileSize, kTileSize);
 	pAppData->m_NumScreenTiles = Vector2u(kNumTilesX, kNumTilesY);
 
+#ifdef ENABLE_VOXELIZATION
 	const AxisAlignedBox cameraWorldAABB(Frustum::NumCorners, cameraWorldFrustum.m_Corners);
 
 	const Vector3f voxelGridWorldCenter = cameraWorldAABB.m_Center;
@@ -465,7 +474,8 @@ void DXApplication::OnUpdate()
 	pAppData->m_VoxelGridViewProjMatrices[0] = voxelGridCameraAlongX.GetViewMatrix() * voxelGridCameraAlongX.GetProjMatrix();
 	pAppData->m_VoxelGridViewProjMatrices[1] = voxelGridCameraAlongY.GetViewMatrix() * voxelGridCameraAlongY.GetProjMatrix();
 	pAppData->m_VoxelGridViewProjMatrices[2] = voxelGridCameraAlongZ.GetViewMatrix() * voxelGridCameraAlongZ.GetProjMatrix();
-	
+#endif
+
 	if (m_pScene->GetNumPointLights() > 0)
 		DetectVisiblePointLights(cameraWorldFrustum, u32(m_pScene->GetNumPointLights()), m_pScene->GetPointLights());
 
@@ -490,10 +500,8 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordCalcShadingRectanglesPass();
 	commandListBatch[commandListBatchSize++] = RecordFillMeshTypeDepthBufferPass();
 	commandListBatch[commandListBatchSize++] = RecordUploadVisibleLightDataPass();
-	
 	commandListBatch[commandListBatchSize++] = RecordCreateVoxelizeCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordVoxelizePass();
-
 	commandListBatch[commandListBatchSize++] = RecordTiledLightCullingPass();
 	commandListBatch[commandListBatchSize++] = RecordTiledShadingPass();
 	commandListBatch[commandListBatchSize++] = RecordVisualizeDisplayResultPass();

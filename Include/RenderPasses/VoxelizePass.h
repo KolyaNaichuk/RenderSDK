@@ -10,6 +10,9 @@ class PipelineState;
 class CommandSignature;
 class MeshRenderResources;
 
+//#define ENABLE_VOXELIZATION
+// Check source code using this define
+
 class VoxelizePass
 {
 public:
