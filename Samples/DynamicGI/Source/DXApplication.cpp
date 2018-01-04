@@ -50,7 +50,9 @@
 /*
 To do:
 
-- Enable VoxelizePass.
+- Rotate the camera for 360 degrees. The app crashes because of invalid resource state when applying resource barrier in reproject depth pass
+- Geometry popping when rotating the camera. See reprojected depth buffer for the result.
+- Enable VoxelizePass. Fix calculation for frustum corners
 - VoxelizationPass does not pass point/spot light count to the shader
 - Move upload visible light data to separate render pass
 - Point light data in the scene object has bad CPU cache coherence when doing frustum culling
