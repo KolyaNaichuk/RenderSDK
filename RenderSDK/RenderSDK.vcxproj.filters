@@ -520,9 +520,6 @@
     <None Include="..\Shaders\RenderGBufferVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\CreateRenderShadowMapCommandsCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\SetupTiledShadowMapCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -590,6 +587,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\GammaCorrection.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateShadowMapCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

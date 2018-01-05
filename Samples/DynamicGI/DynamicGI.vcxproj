@@ -141,8 +141,8 @@ COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\
 COPY /Y "$(SolutionDir)Shaders\FrustumLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FrustumLightCullingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\FrustumLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FrustumLightCullingCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateShadowMapCommandsCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\SetupTiledShadowMapCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\SetupTiledShadowMapCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\SetupTiledShadowMapCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\SetupTiledShadowMapCS.hlsl"
@@ -254,8 +254,8 @@ COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateShadowMapCommandsCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\SetupTiledShadowMapCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\SetupTiledShadowMapCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\SetupTiledShadowMapCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\SetupTiledShadowMapCS.hlsl"

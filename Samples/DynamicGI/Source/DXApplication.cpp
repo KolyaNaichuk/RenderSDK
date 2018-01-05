@@ -86,9 +86,6 @@ Can check format OpenGEX for inspiration - http://opengex.org/
 - Use Task graph for resource state transition after each render pass.
 https://patterns.eecs.berkeley.edu/?page_id=609
 - Fix compilation warnings for x64 build
-- Check that inside CreateRenderShadowMapCommands.hlsl we are checking the bound
-against MAX_NUM_SPOT_LIGHTS_PER_SHADOW_CASTER and MAX_NUM_POINT_LIGHTS_PER_SHADOW_CASTER
-while writing data to the local storage
 */
 
 namespace
