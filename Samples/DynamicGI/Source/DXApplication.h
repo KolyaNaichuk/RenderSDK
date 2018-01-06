@@ -26,6 +26,7 @@ class FrustumMeshCullingPass;
 class FillVisibilityBufferPass;
 class CreateMainDrawCommandsPass;
 class CreateFalseNegativeDrawCommandsPass;
+class CreateShadowMapCommandsPass;
 class FillMeshTypeDepthBufferPass;
 class RenderGBufferPass;
 class TiledLightCullingPass;
@@ -106,6 +107,9 @@ private:
 
 	void InitTiledLightCullingPass();
 	CommandList* RecordTiledLightCullingPass();
+
+	void InitCreateShadowMapCommandsPass();
+	CommandList* RecordCreateShadowMapCommandsPass();
 
 	void InitCreateVoxelizeCommandsPass();
 	CommandList* RecordCreateVoxelizeCommandsPass();
@@ -190,6 +194,7 @@ private:
 	RenderGBufferPass* m_pRenderGBufferFalseNegativePass = nullptr;
 	FillMeshTypeDepthBufferPass* m_pFillMeshTypeDepthBufferPass = nullptr;
 	CalcShadingRectanglesPass* m_pCalcShadingRectanglesPass = nullptr;
+	CreateShadowMapCommandsPass* m_pCreateShadowMapCommandsPass = nullptr;
 	CreateVoxelizeCommandsPass* m_pCreateVoxelizeCommandsPass = nullptr;
 	VoxelizePass* m_pVoxelizePass = nullptr;
 	TiledLightCullingPass* m_pTiledLightCullingPass = nullptr;

@@ -42,6 +42,7 @@ CreateShadowMapCommandsPass::CreateShadowMapCommandsPass(InitParams* pParams)
 	InitResources(pParams);
 	InitRootSignature(pParams);
 	InitPipelineState(pParams);
+	InitCommandSignature(pParams);
 }
 
 CreateShadowMapCommandsPass::~CreateShadowMapCommandsPass()
@@ -195,7 +196,7 @@ void CreateShadowMapCommandsPass::InitResources(InitParams* pParams)
 			pParams->m_InputResourceStates.m_SpotLightCommandBufferState, L"CreateShadowMapCommandsPass::m_pSpotLightCommandBuffer");
 	}
 
-	assert(!m_ResourceBarriers.empty());
+	assert(m_ResourceBarriers.empty());
 	AddResourceBarrierIfRequired(m_pArgumentBuffer,
 		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
 		D3D12_RESOURCE_STATE_COPY_DEST);

@@ -350,6 +350,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pFillMeshTypeDepthBufferPass);
 	SafeDelete(m_pCalcShadingRectanglesPass);
 	SafeDelete(m_pTiledLightCullingPass);
+	SafeDelete(m_pCreateShadowMapCommandsPass);
 	SafeDelete(m_pCreateVoxelizeCommandsPass);
 	SafeDelete(m_pVoxelizePass);
 	SafeDelete(m_pTiledShadingPass);
@@ -389,6 +390,8 @@ void DXApplication::OnInit()
 	InitRenderGBufferFalseNegativePass(kBackBufferWidth, kBackBufferHeight);
 	InitCalcShadingRectanglesPass();
 	InitFillMeshTypeDepthBufferPass();
+
+	InitCreateShadowMapCommandsPass();
 		
 	InitCreateVoxelizeCommandsPass();
 	InitVoxelizePass();
@@ -499,6 +502,7 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordCalcShadingRectanglesPass();
 	commandListBatch[commandListBatchSize++] = RecordFillMeshTypeDepthBufferPass();
 	commandListBatch[commandListBatchSize++] = RecordUploadVisibleLightDataPass();
+	commandListBatch[commandListBatchSize++] = RecordCreateShadowMapCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordCreateVoxelizeCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordVoxelizePass();
 	commandListBatch[commandListBatchSize++] = RecordTiledLightCullingPass();
@@ -1657,21 +1661,89 @@ CommandList* DXApplication::RecordTiledLightCullingPass()
 	return params.m_pCommandList;
 }
 
+void DXApplication::InitCreateShadowMapCommandsPass()
+{
+	assert(m_pCreateShadowMapCommandsPass == nullptr);
+	assert(m_pCreateMainDrawCommandsPass != nullptr);
+	assert(m_pCreateFalseNegativeDrawCommandsPass != nullptr);
+	assert(m_pFrustumMeshCullingPass != nullptr);
+	assert(m_pMeshRenderResources != nullptr);
+
+	const FrustumMeshCullingPass::ResourceStates* pFrustumMeshCullingPassStates =
+		m_pFrustumMeshCullingPass->GetOutputResourceStates();
+
+	const CreateMainDrawCommandsPass::ResourceStates* pCreateMainDrawCommandsPassStates =
+		m_pCreateMainDrawCommandsPass->GetOutputResourceStates();
+
+	const CreateFalseNegativeDrawCommandsPass::ResourceStates* pCreateFalseNegativeDrawCommandsPassStates =
+		m_pCreateFalseNegativeDrawCommandsPass->GetOutputResourceStates();
+
+	CreateShadowMapCommandsPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	
+	params.m_InputResourceStates.m_NumMeshesBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_NumMeshesBufferState;
+	params.m_InputResourceStates.m_MeshInfoBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_MeshInfoBufferState;
+	params.m_InputResourceStates.m_MeshInstanceWorldAABBBufferState = pFrustumMeshCullingPassStates->m_InstanceWorldAABBBufferState;
+	params.m_InputResourceStates.m_MeshInstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_InstanceIndexBufferState;
+	params.m_InputResourceStates.m_PointLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
+	params.m_InputResourceStates.m_NumPointLightMeshInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_PointLightIndexForMeshInstanceBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_MeshInstanceIndexForPointLightBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_NumPointLightCommandsBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_PointLightCommandBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
+	params.m_InputResourceStates.m_NumSpotLightMeshInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_SpotLightIndexForMeshInstanceBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_MeshInstanceIndexForSpotLightBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_NumSpotLightCommandsBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_SpotLightCommandBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+	params.m_MaxNumMeshes = m_pMeshRenderResources->GetTotalNumMeshes();
+	params.m_MaxNumInstances = m_pMeshRenderResources->GetTotalNumInstances();
+	params.m_MaxNumInstancesPerMesh = m_pMeshRenderResources->GetMaxNumInstancesPerMesh();
+	params.m_pNumMeshesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer();
+	params.m_pMeshInfoBuffer = m_pFrustumMeshCullingPass->GetVisibleMeshInfoBuffer();
+	params.m_pMeshInstanceIndexBuffer = m_pFrustumMeshCullingPass->GetVisibleInstanceIndexBuffer();
+	params.m_pMeshInstanceWorldAABBBuffer = m_pMeshRenderResources->GetInstanceWorldAABBBuffer();
+		
+	params.m_MaxNumPointLights = m_pScene->GetNumPointLights();
+	params.m_pPointLightWorldBoundsBuffer = m_pVisiblePointLightWorldBoundsBuffer;
+	params.m_MaxNumSpotLights = m_pScene->GetNumSpotLights();
+	params.m_pSpotLightWorldBoundsBuffer = m_pVisibleSpotLightWorldBoundsBuffer;
+
+	m_pCreateShadowMapCommandsPass = new CreateShadowMapCommandsPass(&params);
+}
+
+CommandList* DXApplication::RecordCreateShadowMapCommandsPass()
+{
+	assert(m_pCreateShadowMapCommandsPass != nullptr);
+
+	CreateShadowMapCommandsPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pCreateShadowMapCommandsCommandList");;
+	params.m_pNumMeshesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer();
+	params.m_NumPointLights = m_NumVisiblePointLights;
+	params.m_NumSpotLights = m_NumVisibleSpotLights;
+
+	m_pCreateShadowMapCommandsPass->Record(&params);
+	return params.m_pCommandList;
+}
+
 void DXApplication::InitCreateVoxelizeCommandsPass()
 {	
 	assert(m_pCreateVoxelizeCommandsPass == nullptr);
 	assert(m_pFrustumMeshCullingPass != nullptr);
-	assert(m_pCreateFalseNegativeDrawCommandsPass != nullptr);
+	assert(m_pCreateShadowMapCommandsPass != nullptr);
 	assert(m_pMeshRenderResources != nullptr);
-
-	const CreateFalseNegativeDrawCommandsPass::ResourceStates* pResourceStates =
-		m_pCreateFalseNegativeDrawCommandsPass->GetOutputResourceStates();
+	
+	const CreateShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
+		m_pCreateShadowMapCommandsPass->GetOutputResourceStates();
 
 	CreateVoxelizeCommandsPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	
-	params.m_InputResourceStates.m_NumMeshesBufferState = pResourceStates->m_NumMeshesBufferState;
-	params.m_InputResourceStates.m_MeshInfoBufferState = pResourceStates->m_MeshInfoBufferState;
+	params.m_InputResourceStates.m_NumMeshesBufferState = pCreateShadowMapCommandsPassStates->m_NumMeshesBufferState;
+	params.m_InputResourceStates.m_MeshInfoBufferState = pCreateShadowMapCommandsPassStates->m_MeshInfoBufferState;
 	params.m_InputResourceStates.m_NumCommandsPerMeshTypeBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_VoxelizeCommandBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
@@ -1700,9 +1772,10 @@ void DXApplication::InitVoxelizePass()
 	assert(m_pVoxelizePass == nullptr);
 	assert(m_pMeshRenderResources != nullptr);
 	assert(m_pMaterialRenderResources != nullptr);
-	assert(m_pCreateVoxelizeCommandsPass != nullptr);
 	assert(m_pFrustumMeshCullingPass != nullptr);
 	assert(m_pCreateMainDrawCommandsPass != nullptr);
+	assert(m_pCreateVoxelizeCommandsPass != nullptr);
+	assert(m_pCreateShadowMapCommandsPass != nullptr);
 	assert(m_pRenderGBufferFalseNegativePass != nullptr);
 	
 	const CreateMainDrawCommandsPass::ResourceStates* pCreateMainDrawCommandsPassStates =
@@ -1714,6 +1787,9 @@ void DXApplication::InitVoxelizePass()
 	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
 		
+	const CreateShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
+		m_pCreateShadowMapCommandsPass->GetOutputResourceStates();
+
 	VoxelizePass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	
@@ -1723,9 +1799,9 @@ void DXApplication::InitVoxelizePass()
 	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = pRenderGBufferFalseNegativePassStates->m_InstanceWorldMatrixBufferState;
 	params.m_InputResourceStates.m_VoxelReflectanceTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_PointLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
+	params.m_InputResourceStates.m_PointLightWorldBoundsBufferState = pCreateShadowMapCommandsPassStates->m_PointLightWorldBoundsBufferState;
 	params.m_InputResourceStates.m_PointLightPropsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
+	params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = pCreateShadowMapCommandsPassStates->m_SpotLightWorldBoundsBufferState;
 	params.m_InputResourceStates.m_SpotLightPropsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
 	
 	params.m_pMeshRenderResources = m_pMeshRenderResources;
