@@ -10,7 +10,7 @@
 #include "D3DWrapper/Fence.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/SwapChain.h"
-#include "RenderPasses/CreateRenderShadowMapCommandsPass.h"
+#include "RenderPasses/CreateShadowMapCommandsPass.h"
 #include "RenderPasses/CreateVoxelizeCommandsPass.h"
 #include "RenderPasses/PropagateLightPass.h"
 #include "RenderPasses/RenderGBufferPass.h"

@@ -165,9 +165,6 @@
     <ClInclude Include="..\Include\D3DWrapper\Common.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\CreateRenderShadowMapCommandsPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\SetupTiledShadowMapPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -253,6 +250,9 @@
       <Filter>RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\FrustumMeshCullingPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateShadowMapCommandsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -392,9 +392,6 @@
     <ClCompile Include="..\Source\D3DWrapper\GraphicsResource.cpp">
       <Filter>D3DWrapper</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\CreateRenderShadowMapCommandsPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\SetupTiledShadowMapPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
@@ -474,6 +471,9 @@
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\FrustumMeshCullingPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateShadowMapCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>

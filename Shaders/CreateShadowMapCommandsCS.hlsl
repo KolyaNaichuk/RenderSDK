@@ -7,7 +7,7 @@ struct ShadowMapCommand
 	DrawIndexedArgs args;
 };
 
-cbuffer Constants32BitBuffer : register(b1)
+cbuffer Constants32BitBuffer : register(b0)
 {
 	uint g_NumPointLights;
 	uint g_NumSpotLights;

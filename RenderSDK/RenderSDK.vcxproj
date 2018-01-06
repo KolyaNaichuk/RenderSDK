@@ -221,7 +221,7 @@
     <ClInclude Include="..\Include\RenderPasses\FillVisibilityBufferPass.h" />
     <ClInclude Include="..\Include\RenderPasses\PropagateLightPass.h" />
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\CreateRenderShadowMapCommandsPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CreateShadowMapCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\RenderTiledShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\ScaleTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\SetupTiledShadowMapPass.h" />
@@ -296,7 +296,7 @@
     <ClCompile Include="..\Source\RenderPasses\FillVisibilityBufferPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\PropagateLightPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CreateRenderShadowMapCommandsPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CreateShadowMapCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\RenderTiledShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ScaleTexturePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\SetupTiledShadowMapPass.cpp" />
