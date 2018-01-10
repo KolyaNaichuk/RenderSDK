@@ -15,7 +15,6 @@
 #include "RenderPasses/PropagateLightPass.h"
 #include "RenderPasses/RenderGBufferPass.h"
 #include "RenderPasses/RenderTiledShadowMapPass.h"
-#include "RenderPasses/SetupTiledShadowMapPass.h"
 #include "RenderPasses/TiledLightCullingPass.h"
 #include "RenderPasses/TiledShadingPass.h"
 #include "RenderPasses/VisualizeTexturePass.h"
@@ -2102,39 +2101,36 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 void DXApplication::OuputDebugRenderPassResult()
 {
 	static unsigned frameNumber = 0;
-	static unsigned frameNumberForOutput = 5;
+	static unsigned frameNumberForOutput = 10;
 
 	++frameNumber;
 
 	if (frameNumber == frameNumberForOutput)
 	{
-		struct DrawCommand
+		struct ShadowMapCommand
 		{
-			UINT m_InstanceOffset;
-			UINT m_MaterialIndex;
+			UINT m_DataOffset;
 			DrawIndexedArguments m_Args;
 		};
 
 		OutputDebugStringA("1.Debug =========================\n");
-		using ElementType = DrawCommand;
-
+		using ElementType = ShadowMapCommand;
+		
 		auto elementFormatter = [](const void* pElementData)
 		{
 			const ElementType* pElement = (ElementType*)pElementData;
 
 			std::stringstream stringStream;
-			stringStream << "m_InstanceOffset: " << pElement->m_InstanceOffset << "\n"
-				<< "m_MaterialIndex: " << pElement->m_MaterialIndex << "\n"
-				<< "m_IndexCountPerInstance: " << pElement->m_Args.m_IndexCountPerInstance << "\n"
-				<< "m_InstanceCount: " << pElement->m_Args.m_InstanceCount << "\n"
-				<< "m_StartIndexLocation: " << pElement->m_Args.m_StartIndexLocation << "\n"
-				<< "m_BaseVertexLocation: " << pElement->m_Args.m_BaseVertexLocation << "\n"
-				<< "m_StartInstanceLocation: " << pElement->m_Args.m_StartInstanceLocation << "\n";
-			
+			stringStream << "m_DataOffset: " << pElement->m_DataOffset
+				<< "\nm_IndexCountPerInstance: " << pElement->m_Args.m_IndexCountPerInstance
+				<< "\nm_InstanceCount: " << pElement->m_Args.m_InstanceCount
+				<< "\nm_StartIndexLocation: " << pElement->m_Args.m_StartIndexLocation
+				<< "\nm_BaseVertexLocation: " << pElement->m_Args.m_BaseVertexLocation
+				<< "\nm_StartInstanceLocation: " << pElement->m_Args.m_StartInstanceLocation;
 			return stringStream.str();
 		};
 		OutputBufferContent(m_pRenderEnv,
-			m_pCreateVoxelizeCommandsPass->GetVoxelizeCommandBuffer(),
+			m_pCreateShadowMapCommandsPass->GetPointLightCommandBuffer(),
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 			sizeof(ElementType),
 			elementFormatter);

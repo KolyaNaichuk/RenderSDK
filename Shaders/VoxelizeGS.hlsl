@@ -1,5 +1,7 @@
 #include "Foundation.hlsl"
 
+#define NUM_VERTICES	3
+
 struct GSInput
 {
 	float4 worldSpacePos		: SV_Position;
@@ -37,8 +39,8 @@ int FindViewDirectionWithLargestProjectedArea(float3 worldSpaceFaceNormal)
 	return 2;
 }
 
-[maxvertexcount(3)]
-void Main(triangle GSInput input[3], inout TriangleStream<GSOutput> outputStream)
+[maxvertexcount(NUM_VERTICES)]
+void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> outputStream)
 {
 	float3 worldSpaceFaceNormal = normalize(input[0].worldSpaceNormal + input[1].worldSpaceNormal + input[2].worldSpaceNormal);
 	
@@ -46,7 +48,7 @@ void Main(triangle GSInput input[3], inout TriangleStream<GSOutput> outputStream
 	float4x4 viewProjMatrix = g_AppData.voxelGridViewProjMatrices[viewIndex];
 
 	[unroll]
-	for (int index = 0; index < 3; ++index)
+	for (int index = 0; index < NUM_VERTICES; ++index)
 	{
 		GSOutput output;
 		output.clipSpacePos = mul(viewProjMatrix, input[index].worldSpacePos);
