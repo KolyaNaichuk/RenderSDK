@@ -1,7 +1,11 @@
 #include "Lighting.hlsl"
 #include "OverlapTest.hlsl"
 
-#define NUM_VERTICES	3
+#define LIGHT_TYPE_POINT		1
+#define LIGHT_TYPE_SPOT			2
+
+#define NUM_VERTICES			3
+#define NUM_CUBE_FACES			6
 
 struct GSInput
 {
@@ -23,10 +27,64 @@ struct Frustum
 	float4 bottomPlane;
 };
 
-#if ENABLE_SPOT_LIGHTS == 1
-StructuredBuffer<Frustum> g_SpotLightWorldFrustumBuffer : register(t0);
-StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t1);
-StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t2);
+#if LIGHT_TYPE == LIGHT_TYPE_POINT
+StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t0);
+StructuredBuffer<Frustum> g_PointLightWorldFrustumBuffer : register(t1);
+StructuredBuffer<float4x4> g_PointLightViewProjMatrixBuffer : register(t2);
+
+[maxvertexcount(NUM_CUBE_FACES * NUM_VERTICES)]
+void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> outputStream)
+{
+	uint lightIndex = input[0].lightIndex;
+
+	float3 faceWorldSpaceEdge1 = input[1].worldSpacePos.xyz - input[0].worldSpacePos.xyz;
+	float3 faceWorldSpaceEdge2 = input[2].worldSpacePos.xyz - input[0].worldSpacePos.xyz;
+	float3 faceWorldSpaceNormal = cross(faceWorldSpaceEdge1, faceWorldSpaceEdge2);
+
+	float3 lightWorldSpacePos = g_PointLightWorldBoundsBuffer[lightIndex].center;
+	float3 lightWorldSpaceDir = input[0].worldSpacePos.xyz - lightWorldSpacePos;
+	bool isFacingAwayFromLight = dot(faceWorldSpaceNormal, lightWorldSpaceDir) > 0.0f;
+	if (isFacingAwayFromLight)
+		return;
+
+	for (uint faceIndex = 0; faceIndex < NUM_CUBE_FACES; ++faceIndex)
+	{
+		uint frustumIndex = NUM_CUBE_FACES * lightIndex + faceIndex;
+		Frustum lightWorldFrustum = g_PointLightWorldFrustumBuffer[frustumIndex];
+
+		float4 signedDistToFrustumPlanes[NUM_VERTICES];
+		for (uint vertexIndex = 0; vertexIndex < NUM_VERTICES; ++vertexIndex)
+		{
+			float4 worldSpacePos = input[vertexIndex].worldSpacePos;
+
+			signedDistToFrustumPlanes[index].x = dot(lightWorldFrustum.leftPlane, worldSpacePos);
+			signedDistToFrustumPlanes[index].y = dot(lightWorldFrustum.rightPlane, worldSpacePos);
+			signedDistToFrustumPlanes[index].z = dot(lightWorldFrustum.topPlane, worldSpacePos);
+			signedDistToFrustumPlanes[index].w = dot(lightWorldFrustum.bottomPlane, worldSpacePos);
+		}
+
+		bool isFaceInFrustum = all(signedDistToFrustumPlanes[0] > 0.0f) || all(signedDistToFrustumPlanes[1] > 0.0f) || all(signedDistToFrustumPlanes[2] > 0.0f);
+		if (isFaceInFrustum)
+		{
+			float4x4 lightViewProjMatrix = g_PointLightViewProjMatrixBuffer[frustumIndex];
+			for (int vertexIndex = 0; vertexIndex < NUM_VERTICES; ++vertexIndex)
+			{
+				GSOutput output;
+				output.clipSpacePos = mul(lightViewProjMatrix, input[vertexIndex].worldSpacePos);
+				output.signedDistToFrustumPlanes = signedDistToFrustumPlanes[vertexIndex];
+
+				outputStream.Append(output);
+			}
+			outputStream.RestartStrip();
+		}
+	}
+}
+#endif // LIGHT_TYPE == LIGHT_TYPE_POINT
+
+#if LIGHT_TYPE == LIGHT_TYPE_SPOT
+StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t3);
+StructuredBuffer<Frustum> g_SpotLightWorldFrustumBuffer : register(t4);
+StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t5);
 
 [maxvertexcount(NUM_VERTICES)]
 void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> outputStream)
@@ -38,45 +96,36 @@ void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> o
 	float3 faceWorldSpaceNormal = cross(faceWorldSpaceEdge1, faceWorldSpaceEdge2);
 	
 	float3 lightWorldSpaceDir = g_SpotLightPropsBuffer[lightIndex].worldSpaceDir;
-	bool isBackFace = (dot(faceWorldSpaceNormal, lightWorldSpaceDir) > 0.0f);
-	if (isBackFace)
+	bool isFacingAwayFromLight = dot(faceWorldSpaceNormal, lightWorldSpaceDir) > 0.0f;
+	if (isFacingAwayFromLight)
 		return;
 
 	Frustum lightWorldFrustum = g_SpotLightWorldFrustumBuffer[lightIndex];
 
-	uint testFaceAgainstFrustumMask = 0;
 	float4 signedDistToFrustumPlanes[NUM_VERTICES];
-
-	for (uint index = 0; index < NUM_VERTICES; ++index)
+	for (uint vertexIndex = 0; vertexIndex < NUM_VERTICES; ++vertexIndex)
 	{
 		float4 worldSpacePos = input[vertexIndex].worldSpacePos;
-		
-		Probably no need to 
-		worldSpacePos /= worldSpacePos.w;
-		
+				
 		signedDistToFrustumPlanes[index].x = dot(lightWorldFrustum.leftPlane, worldSpacePos);
 		signedDistToFrustumPlanes[index].y = dot(lightWorldFrustum.rightPlane, worldSpacePos);
 		signedDistToFrustumPlanes[index].z = dot(lightWorldFrustum.topPlane, worldSpacePos);
 		signedDistToFrustumPlanes[index].w = dot(lightWorldFrustum.bottomPlane, worldSpacePos);
-
-		testFaceAgainstFrustumMask |= (signedDistToFrustumPlanes[vertexIndex].x > 0) ? 1 : 0;
-		testFaceAgainstFrustumMask |= (signedDistToFrustumPlanes[vertexIndex].y > 0) ? 2 : 0;
-		testFaceAgainstFrustumMask |= (signedDistToFrustumPlanes[vertexIndex].z > 0) ? 4 : 0;
-		testFaceAgainstFrustumMask |= (signedDistToFrustumPlanes[vertexIndex].w > 0) ? 8 : 0;
 	}
 
-	if (testFaceAgainstFrustumMask == 15)
+	bool isFaceInFrustum = all(signedDistToFrustumPlanes[0] > 0.0f) || all(signedDistToFrustumPlanes[1] > 0.0f) || all(signedDistToFrustumPlanes[2] > 0.0f);
+	if (isFaceInFrustum)
 	{
 		float4x4 lightViewProjMatrix = g_SpotLightViewProjMatrixBuffer[lightIndex];
-		for (int index = 0; index < NUM_VERTICES; ++index)
+		for (int vertexIndex = 0; vertexIndex < NUM_VERTICES; ++vertexIndex)
 		{
 			GSOutput output;
 			output.clipSpacePos = mul(lightViewProjMatrix, input[vertexIndex].worldSpacePos);
-			output.signedDistToFrustumPlanes = signedDistToFrustumPlanes[index];
+			output.signedDistToFrustumPlanes = signedDistToFrustumPlanes[vertexIndex];
 
 			outputStream.Append(output);
 		}
 		outputStream.RestartStrip();
 	}
 }
-#endif // ENABLE_SPOT_LIGHTS
+#endif // LIGHT_TYPE == LIGHT_TYPE_SPOT
