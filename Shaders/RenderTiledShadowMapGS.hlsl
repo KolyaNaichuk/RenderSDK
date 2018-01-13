@@ -82,9 +82,9 @@ void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> o
 #endif // LIGHT_TYPE == LIGHT_TYPE_POINT
 
 #if LIGHT_TYPE == LIGHT_TYPE_SPOT
-StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t3);
-StructuredBuffer<Frustum> g_SpotLightWorldFrustumBuffer : register(t4);
-StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t5);
+StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t0);
+StructuredBuffer<Frustum> g_SpotLightWorldFrustumBuffer : register(t1);
+StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t2);
 
 [maxvertexcount(NUM_VERTICES)]
 void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> outputStream)

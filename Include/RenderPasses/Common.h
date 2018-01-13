@@ -8,3 +8,9 @@ struct DrawCommand
 	UINT m_MaterialIndex;
 	DrawIndexedArguments m_Args;
 };
+
+struct ShadowMapCommand
+{
+	UINT m_DataOffset;
+	DrawIndexedArguments m_Args;
+};

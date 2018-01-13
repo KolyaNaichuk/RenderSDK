@@ -49,6 +49,7 @@
 /*
 To do:
 
+- Depth and shadow maps are using DXGI_FORMAT_R32_TYPELESS format. Check if 16 bit format would suffice
 - Rotate the camera for 360 degrees. The app crashes because of invalid resource state when applying resource barrier in reproject depth pass
 - Geometry popping when rotating the camera. See reprojected depth buffer for the result.
 - Enable VoxelizePass. Fix calculation for frustum corners
