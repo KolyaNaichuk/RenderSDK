@@ -4,6 +4,7 @@
 
 struct Sphere
 {
+	Sphere();
 	Sphere(const Vector3f& center, f32 radius);
 	Sphere(u32 numPoints, const Vector3f* pFirstPoint);
 	Sphere(const Sphere& sphere1, const Sphere& sphere2);

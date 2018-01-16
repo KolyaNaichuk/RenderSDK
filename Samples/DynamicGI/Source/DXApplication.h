@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Common/Application.h"
+#include "Math/Vector2.h"
+#include "Math/Vector3.h"
+#include "Math/Sphere.h"
 
 struct HeapProperties;
 struct RenderEnv;
@@ -39,6 +42,33 @@ class VoxelizePass;
 class Scene;
 class PointLight;
 class SpotLight;
+
+struct PointLightData
+{
+	Vector3f m_Color;
+	Vector3f m_WorldSpacePos;
+	Sphere m_WorldBounds;
+	f32 m_AttenStartRange;
+	f32 m_AttenEndRange;
+	f32 m_AffectedScreenArea;
+	Vector2f m_ShadowMapTileTopLeftPos;
+	f32 m_ShadowMapTileSize;
+};
+
+struct SpotLightData
+{
+	Vector3f m_Color;
+	Vector3f m_WorldSpacePos;
+	Vector3f m_WorldSpaceDir;
+	Sphere m_WorldBounds;
+	f32 m_AttenStartRange;
+	f32 m_AttenEndRange;
+	f32 m_CosHalfInnerConeAngle;
+	f32 m_CosHalfOuterConeAngle;
+	f32 m_AffectedScreenArea;
+	Vector2f m_ShadowMapTileTopLeftPos;
+	f32 m_ShadowMapTileSize;
+};
 
 //#define DEBUG_RENDER_PASS
 
@@ -103,7 +133,7 @@ private:
 	void InitFillMeshTypeDepthBufferPass();
 	CommandList* RecordFillMeshTypeDepthBufferPass();
 
-	CommandList* RecordUploadVisibleLightDataPass();
+	CommandList* RecordUploadLightDataPass();
 
 	void InitTiledLightCullingPass();
 	CommandList* RecordTiledLightCullingPass();
@@ -144,8 +174,8 @@ private:
 	CommandList* RecordVisualizeDisplayResultPass();
 	CommandList* RecordPostRenderPass();
 
-	void DetectVisiblePointLights(const Frustum& cameraWorldFrustum, u32 numLights, PointLight** ppLights);
-	void DetectVisibleSpotLights(const Frustum& cameraWorldFrustum, u32 numLights, SpotLight** ppLights);
+	void SetupPointLightDataForUpload(const Frustum& cameraWorldFrustum);
+	void SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustum);
 			
 	void UpdateDisplayResult(DisplayResult displayResult);
 		
@@ -155,10 +185,9 @@ private:
 	
 private:
 	enum { kNumBackBuffers = 3 };
-
+		
 	DisplayResult m_DisplayResult = DisplayResult::Unknown;
 	
-	Scene* m_pScene = nullptr;
 	GraphicsDevice* m_pDevice = nullptr;
 	SwapChain* m_pSwapChain = nullptr;
 	CommandQueue* m_pCommandQueue = nullptr;
@@ -207,11 +236,21 @@ private:
 	VisualizeTexturePass* m_VisualizeDepthBufferWithMeshTypePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeVoxelReflectancePass* m_VisualizeVoxelReflectancePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 
+	u32 m_NumPointLights = 0;
+	PointLightData* m_pPointLights = nullptr;
+	
 	u32 m_NumVisiblePointLights = 0;
+	PointLightData** m_ppVisiblePointLights = nullptr;
+
+	u32 m_NumSpotLights = 0;
+	SpotLightData* m_pSpotLights = nullptr;
+
+	u32 m_NumVisibleSpotLights = 0;
+	SpotLightData** m_ppVisibleSpotLights = nullptr;
+
 	Buffer* m_pVisiblePointLightWorldBoundsBuffer = nullptr;
 	Buffer* m_pVisiblePointLightPropsBuffer = nullptr;
 
-	u32 m_NumVisibleSpotLights = 0;
 	Buffer* m_pVisibleSpotLightWorldBoundsBuffer = nullptr;
 	Buffer* m_pVisibleSpotLightPropsBuffer = nullptr;
 
