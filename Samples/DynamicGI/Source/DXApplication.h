@@ -6,6 +6,7 @@
 #include "Math/Vector3.h"
 #include "Math/Sphere.h"
 #include "Math/Plane.h"
+#include "RenderPasses/RenderTiledShadowMapPass.h"
 
 struct HeapProperties;
 struct RenderEnv;
@@ -32,7 +33,6 @@ class FillVisibilityBufferPass;
 class CreateMainDrawCommandsPass;
 class CreateFalseNegativeDrawCommandsPass;
 class CreateShadowMapCommandsPass;
-class RenderTiledShadowMapPass;
 class ShadowMapTileAllocator;
 class FillMeshTypeDepthBufferPass;
 class RenderGBufferPass;
@@ -60,14 +60,12 @@ struct PointLightData
 	Vector3f m_Color;
 	Vector3f m_WorldSpacePos;
 	Sphere m_WorldBounds;
-	Matrix4f m_ProjMatrix;
-	Matrix4f m_ViewMatrices[kNumCubeMapFaces];
+	Matrix4f m_ViewProjMatrices[kNumCubeMapFaces];
+	ShadowMapTile m_ShadowMapTiles[kNumCubeMapFaces];
 	LightFrustum m_WorldFrustums[kNumCubeMapFaces];
 	f32 m_AttenStartRange;
 	f32 m_AttenEndRange;
 	u32 m_AffectedScreenArea;
-	Vector2f m_ShadowMapTileTopLeft;
-	f32 m_ShadowMapTileSize;
 };
 
 struct SpotLightData
@@ -76,16 +74,14 @@ struct SpotLightData
 	Vector3f m_WorldSpacePos;
 	Vector3f m_WorldSpaceDir;
 	Sphere m_WorldBounds;
-	Matrix4f m_ProjMatrix;
-	Matrix4f m_ViewMatrix;
+	Matrix4f m_ViewProjMatrix;
+	ShadowMapTile m_ShadowMapTile;
 	LightFrustum m_WorldFrustum;	
 	f32 m_AttenStartRange;
 	f32 m_AttenEndRange;
 	f32 m_CosHalfInnerConeAngle;
 	f32 m_CosHalfOuterConeAngle;
 	u32 m_AffectedScreenArea;
-	Vector2f m_ShadowMapTileTopLeft;
-	f32 m_ShadowMapTileSize;
 };
 
 //#define DEBUG_RENDER_PASS
@@ -273,6 +269,8 @@ private:
 
 	Buffer* m_pActivePointLightWorldBoundsBuffer = nullptr;
 	Buffer* m_pActivePointLightPropsBuffer = nullptr;
+	Buffer* m_pActivePointLightWorldFrustumBuffer = nullptr;
+	Buffer* m_pActivePointLightViewProjMatrixBuffer = nullptr;
 
 	Buffer* m_pActiveSpotLightWorldBoundsBuffer = nullptr;
 	Buffer* m_pActiveSpotLightPropsBuffer = nullptr;
@@ -284,6 +282,10 @@ private:
 	void* m_pUploadActivePointLightWorldBounds[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	Buffer* m_pUploadActivePointLightPropsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	void* m_pUploadActivePointLightProps[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	Buffer* m_pUploadActivePointLightWorldFrustumBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	void* m_pUploadActivePointLightWorldFrustums[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	Buffer* m_pUploadActivePointLightViewProjMatrixBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	void* m_pUploadActivePointLightViewProjMatrices[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 
 	Buffer* m_pUploadActiveSpotLightWorldBoundsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	void* m_pUploadActiveSpotLightWorldBounds[kNumBackBuffers] = {nullptr, nullptr, nullptr};

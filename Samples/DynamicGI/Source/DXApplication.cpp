@@ -14,7 +14,6 @@
 #include "RenderPasses/CreateVoxelizeCommandsPass.h"
 #include "RenderPasses/PropagateLightPass.h"
 #include "RenderPasses/RenderGBufferPass.h"
-#include "RenderPasses/RenderTiledShadowMapPass.h"
 #include "RenderPasses/TiledLightCullingPass.h"
 #include "RenderPasses/TiledShadingPass.h"
 #include "RenderPasses/VisualizeTexturePass.h"
@@ -288,6 +287,17 @@ namespace
 		
 		return u32(Ceil(Max(screenSpaceWidth, screenSpaceHeight)));
 	}
+	
+	Matrix4f CreateShadowMapTileMatrix(const ShadowMapTile& shadowMapTile)
+	{
+		Vector2f clipSpaceTopLeft(2.0f * shadowMapTile.m_TexSpaceTopLeft.m_X - 1.0f, 1.0f - 2.0f * shadowMapTile.m_TexSpaceTopLeft.m_Y);
+		f32 clipSpaceHalfSize = shadowMapTile.m_TexSpaceSize;
+		
+		return Matrix4f(clipSpaceHalfSize, 0.0f, 0.0f, 0.0f,
+			0.0f, clipSpaceHalfSize, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			clipSpaceTopLeft.m_X + clipSpaceHalfSize, clipSpaceTopLeft.m_Y - clipSpaceHalfSize, 0.0f, 1.0f);
+	}
 }
 
 enum
@@ -346,6 +356,16 @@ DXApplication::~DXApplication()
 			m_pUploadActivePointLightPropsBuffers[index]->Unmap(0, nullptr);
 			SafeDelete(m_pUploadActivePointLightPropsBuffers[index]);
 		}
+		if (m_pUploadActivePointLightWorldFrustumBuffers[index] != nullptr)
+		{
+			m_pUploadActivePointLightWorldFrustumBuffers[index]->Unmap(0, nullptr);
+			SafeDelete(m_pUploadActivePointLightWorldFrustumBuffers[index]);
+		}
+		if (m_pUploadActivePointLightViewProjMatrixBuffers[index] != nullptr)
+		{
+			m_pUploadActivePointLightViewProjMatrixBuffers[index]->Unmap(0, nullptr);
+			SafeDelete(m_pUploadActivePointLightViewProjMatrixBuffers[index]);
+		}
 		if (m_pUploadActiveSpotLightWorldBoundsBuffers[index] != nullptr)
 		{
 			m_pUploadActiveSpotLightWorldBoundsBuffers[index]->Unmap(0, nullptr);
@@ -368,6 +388,8 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pMaterialRenderResources);
 	SafeDelete(m_pActivePointLightWorldBoundsBuffer);
 	SafeDelete(m_pActivePointLightPropsBuffer);
+	SafeDelete(m_pActivePointLightWorldFrustumBuffer);
+	SafeDelete(m_pActivePointLightViewProjMatrixBuffer);
 	SafeDelete(m_pActiveSpotLightWorldBoundsBuffer);
 	SafeDelete(m_pActiveSpotLightPropsBuffer);
 	SafeDelete(m_pDownscaleAndReprojectDepthPass);
@@ -846,11 +868,13 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight)
 			m_pPointLights[lightIndex].m_WorldSpacePos = lightWorldSpacePos;
 			m_pPointLights[lightIndex].m_WorldBounds = Sphere(lightWorldSpacePos, pLight->GetAttenEndRange());
 			
-			m_pPointLights[lightIndex].m_ProjMatrix = CreatePerspectiveFovProjMatrix(PI_DIV_2, 1.0f, 0.1f, pLight->GetAttenEndRange());
+			Matrix4f projMatrix = CreatePerspectiveFovProjMatrix(PI_DIV_2, 1.0f, 0.1f, pLight->GetAttenEndRange());
 			for (u8 faceIndex = 0; faceIndex < kNumCubeMapFaces; ++faceIndex)
 			{
-				m_pPointLights[lightIndex].m_ViewMatrices[faceIndex] = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpacePos + lookAtDir[faceIndex], upDir[faceIndex]);
-				Frustum lightWorldFrustum(m_pPointLights[lightIndex].m_ViewMatrices[faceIndex]);
+				Matrix4f viewMatrix = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpacePos + lookAtDir[faceIndex], upDir[faceIndex]);
+
+				m_pPointLights[lightIndex].m_ViewProjMatrices[faceIndex] = viewMatrix * projMatrix;
+				Frustum lightWorldFrustum(viewMatrix);
 				
 				m_pPointLights[lightIndex].m_WorldFrustums[faceIndex].m_LeftPlane = lightWorldFrustum.m_Planes[Frustum::LeftPlane];
 				m_pPointLights[lightIndex].m_WorldFrustums[faceIndex].m_RightPlane = lightWorldFrustum.m_Planes[Frustum::RightPlane];;
@@ -861,14 +885,14 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight)
 			m_pPointLights[lightIndex].m_AttenStartRange = pLight->GetAttenStartRange();
 			m_pPointLights[lightIndex].m_AttenEndRange = pLight->GetAttenEndRange();
 			m_pPointLights[lightIndex].m_AffectedScreenArea = 0;
-			m_pPointLights[lightIndex].m_ShadowMapTileTopLeft = Vector2f::ZERO;
-			m_pPointLights[lightIndex].m_ShadowMapTileSize = 0.0f;
 
 			m_ppActivePointLights[lightIndex] = nullptr;
 		}
 		
 		StructuredBufferDesc lightWorldBoundsBufferDesc(m_NumPointLights, sizeof(Sphere), true, false);
 		StructuredBufferDesc lightPropsBufferDesc(m_NumPointLights, sizeof(PointLightProps), true, false);
+		StructuredBufferDesc lightWorldFrustumBufferDesc(kNumCubeMapFaces * m_NumPointLights, sizeof(LightFrustum), true, false);
+		StructuredBufferDesc lightViewProjMatrixBufferDesc(kNumCubeMapFaces * m_NumPointLights, sizeof(Matrix4f), true, false);
 
 		for (u8 index = 0; index < kNumBackBuffers; ++index)
 		{
@@ -879,6 +903,14 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight)
 			m_pUploadActivePointLightPropsBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
 				&lightPropsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActivePointLightPropsBuffer");
 			m_pUploadActivePointLightProps[index] = m_pUploadActivePointLightPropsBuffers[index]->Map(0, &readRange);
+
+			m_pUploadActivePointLightWorldFrustumBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
+				&lightWorldFrustumBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActivePointLightWorldFrustumBuffer");
+			m_pUploadActivePointLightWorldFrustums[index] = m_pUploadActivePointLightWorldFrustumBuffers[index]->Map(0, &readRange);
+
+			m_pUploadActivePointLightViewProjMatrixBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
+				&lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActivePointLightViewProjMatrixBuffer");
+			m_pUploadActivePointLightViewProjMatrices[index] = m_pUploadActivePointLightViewProjMatrixBuffers[index]->Map(0, &readRange);
 		}
 
 		m_pActivePointLightWorldBoundsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
@@ -886,7 +918,14 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight)
 
 		m_pActivePointLightPropsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
 			&lightPropsBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActivePointLightPropsBuffer");
+
+		m_pActivePointLightWorldFrustumBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
+			&lightWorldFrustumBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, L"m_pActivePointLightWorldFrustumBuffer");
+		
+		m_pActivePointLightViewProjMatrixBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
+			&lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, L"m_pActivePointLightViewProjMatrixBuffer");
 	}
+
 	if (pScene->GetNumSpotLights() > 0)
 	{
 		SpotLight** ppSpotLights = pScene->GetSpotLights();
@@ -914,10 +953,11 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight)
 			m_pSpotLights[lightIndex].m_WorldSpaceDir = lightWorldSpaceDir;
 			m_pSpotLights[lightIndex].m_WorldBounds = ExtractBoundingSphere(lightWorldCone);
 
-			m_pSpotLights[lightIndex].m_ProjMatrix = CreatePerspectiveFovProjMatrix(pLight->GetOuterConeAngle(), 1.0f, 0.1f, pLight->GetAttenEndRange());
-			m_pSpotLights[lightIndex].m_ViewMatrix = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpacePos + lightWorldSpaceDir, lightWorldSpaceUpDir);
-		    
-			Frustum lightWorldFrustum(m_pSpotLights[lightIndex].m_ViewMatrix);
+			Matrix4f viewMatrix = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpacePos + lightWorldSpaceDir, lightWorldSpaceUpDir);
+			Matrix4f projMatrix = CreatePerspectiveFovProjMatrix(pLight->GetOuterConeAngle(), 1.0f, 0.1f, pLight->GetAttenEndRange());
+			m_pSpotLights[lightIndex].m_ViewProjMatrix = viewMatrix * projMatrix;
+					    
+			Frustum lightWorldFrustum(viewMatrix);
 			m_pSpotLights[lightIndex].m_WorldFrustum.m_LeftPlane = lightWorldFrustum.m_Planes[Frustum::LeftPlane];
 			m_pSpotLights[lightIndex].m_WorldFrustum.m_RightPlane = lightWorldFrustum.m_Planes[Frustum::RightPlane];
 			m_pSpotLights[lightIndex].m_WorldFrustum.m_TopPlane = lightWorldFrustum.m_Planes[Frustum::TopPlane];
@@ -928,10 +968,8 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight)
 			m_pSpotLights[lightIndex].m_CosHalfInnerConeAngle = Cos(0.5f * pLight->GetInnerConeAngle());
 			m_pSpotLights[lightIndex].m_CosHalfOuterConeAngle = Cos(0.5f * pLight->GetOuterConeAngle());
 			m_pSpotLights[lightIndex].m_AffectedScreenArea = 0;
-			m_pSpotLights[lightIndex].m_ShadowMapTileTopLeft = Vector2f::ZERO;
-			m_pSpotLights[lightIndex].m_ShadowMapTileSize = 0.0f;
 
-			m_ppActiveSpotLights[lightIndex] = nullptr; 
+			m_ppActiveSpotLights[lightIndex] = nullptr;
 		}
 
 		StructuredBufferDesc lightWorldBoundsBufferDesc(m_NumSpotLights, sizeof(Sphere), true, false);
@@ -1692,11 +1730,15 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pUploadVisibleLightDataCommandList");
 	pCommandList->Begin();
 
-	static ResourceTransitionBarrier resourceBarriers[4];
+	static ResourceTransitionBarrier resourceBarriers[8];
 	u8 numBarriers = 0;
 
 	if (m_NumPointLights > 0)
 	{
+		assert(m_pRenderPointLightTiledShadowMapPass != nullptr);
+		const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
+			m_pRenderPointLightTiledShadowMapPass->GetOutputResourceStates();
+
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
 			m_pActivePointLightWorldBoundsBuffer,
 			pTiledShadingPassStates->m_PointLightWorldBoundsBufferState,
@@ -1705,6 +1747,16 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
 			m_pActivePointLightPropsBuffer,
 			pTiledShadingPassStates->m_PointLightPropsBufferState,
+			D3D12_RESOURCE_STATE_COPY_DEST);
+
+		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
+			m_pActivePointLightWorldFrustumBuffer,
+			pRenderTiledShadowMapPassStates->m_LightWorldFrustumBufferState,
+			D3D12_RESOURCE_STATE_COPY_DEST);
+
+		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
+			m_pActivePointLightViewProjMatrixBuffer,
+			pRenderTiledShadowMapPassStates->m_LightViewProjMatrixBufferState,
 			D3D12_RESOURCE_STATE_COPY_DEST);
 	}
 	if (m_NumSpotLights > 0)
@@ -1730,6 +1782,14 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 		pCommandList->CopyBufferRegion(m_pActivePointLightPropsBuffer, 0,
 			m_pUploadActivePointLightPropsBuffers[m_BackBufferIndex], 0,
 			m_NumActivePointLights * sizeof(PointLightProps));
+
+		pCommandList->CopyBufferRegion(m_pActivePointLightWorldFrustumBuffer, 0,
+			m_pUploadActivePointLightWorldFrustumBuffers[m_BackBufferIndex], 0,
+			kNumCubeMapFaces * m_NumActivePointLights * sizeof(LightFrustum));
+
+		pCommandList->CopyBufferRegion(m_pActivePointLightViewProjMatrixBuffer, 0,
+			m_pUploadActivePointLightViewProjMatrixBuffers[m_BackBufferIndex], 0,
+			kNumCubeMapFaces * m_NumActivePointLights * sizeof(Matrix4f));
 	}
 	if (m_NumSpotLights > 0)
 	{
@@ -2174,38 +2234,66 @@ void DXApplication::SetupPointLightDataForUpload(const Frustum& cameraWorldFrust
 		if (TestSphereAgainstFrustum(cameraWorldFrustum, lightData.m_WorldBounds))
 			m_ppActivePointLights[numVisiblePointLights++] = &lightData;
 	}
-	
+
 	const Vector2f screenSize(m_pBackBufferViewport->Width, m_pBackBufferViewport->Height);
 	for (decltype(numVisiblePointLights) lightIndex = 0; lightIndex < numVisiblePointLights; ++lightIndex)
 	{
 		PointLightData* pLightData = m_ppActivePointLights[lightIndex];
 		pLightData->m_AffectedScreenArea = CalcScreenAreaAffectedByLight(pLightData->m_WorldBounds, screenSize, *m_pCamera);
 	}
-	
+
 	auto hasLargerSizeOnScreen = [](const PointLightData* pLightData1, const PointLightData* pLightData2)
 	{
 		return (pLightData1->m_AffectedScreenArea > pLightData2->m_AffectedScreenArea);
 	};
 	std::sort(m_ppActivePointLights, m_ppActivePointLights + numVisiblePointLights, hasLargerSizeOnScreen);
-	
+
 	m_NumActivePointLights = 0;
 	assert(m_pPointLightShadowMapTileAllocator != nullptr);
 	m_pPointLightShadowMapTileAllocator->Reset();
 
-	ShadowMapTile shadowMapTile;
 	while (m_NumActivePointLights < numVisiblePointLights)
 	{
 		PointLightData* pLightData = m_ppActivePointLights[m_NumActivePointLights];
-		if (m_pPointLightShadowMapTileAllocator->Allocate(pLightData->m_AffectedScreenArea, &shadowMapTile))
-		{
-			pLightData->m_ShadowMapTileTopLeft = shadowMapTile.m_TexSpaceTopLeft;
-			pLightData->m_ShadowMapTileSize = shadowMapTile.m_TexSpaceSize;
 
-			++m_NumActivePointLights;
-		}
-		else
+		u8 faceIndex = 0;
+		ShadowMapTile shadowMapTile;
+		while (faceIndex < kNumCubeMapFaces)
 		{
+			if (m_pPointLightShadowMapTileAllocator->Allocate(pLightData->m_AffectedScreenArea, &shadowMapTile))
+				pLightData->m_ShadowMapTiles[faceIndex++] = shadowMapTile;
+			else
+				break;
+		}
+
+		if (faceIndex == kNumCubeMapFaces)
+			++m_NumActivePointLights;
+		else
 			break;
+	}
+	
+	Sphere* pUploadActiveLightWorldBounds = (Sphere*)m_pUploadActivePointLightWorldBounds[m_BackBufferIndex];
+	PointLightProps* pUploadActiveLightProps = (PointLightProps*)m_pUploadActivePointLightProps[m_BackBufferIndex];
+	LightFrustum* pUploadActiveLightWorldFrustums = (LightFrustum*)m_pUploadActivePointLightWorldFrustums[m_BackBufferIndex];
+	Matrix4f* pUploadActiveViewProjMatrices = (Matrix4f*)m_pUploadActivePointLightViewProjMatrices[m_BackBufferIndex];
+
+	for (decltype(m_NumActivePointLights) lightIndex = 0; lightIndex < m_NumActivePointLights; ++lightIndex)
+	{
+		const PointLightData* pLightData = m_ppActivePointLights[lightIndex];
+		pUploadActiveLightWorldBounds[lightIndex] = pLightData->m_WorldBounds;
+		
+		pUploadActiveLightProps[lightIndex].m_Color = pLightData->m_Color;
+		pUploadActiveLightProps[lightIndex].m_AttenStartRange = pLightData->m_AttenStartRange;
+
+		decltype(m_NumActivePointLights) faceIndexOffset = kNumCubeMapFaces * lightIndex;
+		for (decltype(m_NumActivePointLights) faceIndex = 0; faceIndex < kNumCubeMapFaces; ++faceIndex)
+		{
+			pUploadActiveLightWorldFrustums[faceIndexOffset + faceIndex] = pLightData->m_WorldFrustums[faceIndex];
+			
+			const Matrix4f& viewProjMatrix = pLightData->m_ViewProjMatrices[faceIndex];
+			Matrix4f shadowMapTileMatrix = CreateShadowMapTileMatrix(pLightData->m_ShadowMapTiles[faceIndex]);
+
+			pUploadActiveViewProjMatrices[faceIndexOffset + faceIndex] = viewProjMatrix * shadowMapTileMatrix;
 		}
 	}
 }
