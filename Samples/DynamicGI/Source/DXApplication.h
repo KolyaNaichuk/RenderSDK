@@ -1,9 +1,11 @@
 #pragma once
 
 #include "Common/Application.h"
+#include "Common/Light.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Sphere.h"
+#include "Math/Plane.h"
 
 struct HeapProperties;
 struct RenderEnv;
@@ -45,11 +47,22 @@ class Scene;
 class PointLight;
 class SpotLight;
 
+struct LightFrustum
+{
+	Plane m_LeftPlane;
+	Plane m_RightPlane;
+	Plane m_TopPlane;
+	Plane m_BottomPlane;
+};
+
 struct PointLightData
 {
 	Vector3f m_Color;
 	Vector3f m_WorldSpacePos;
 	Sphere m_WorldBounds;
+	Matrix4f m_ProjMatrix;
+	Matrix4f m_ViewMatrices[kNumCubeMapFaces];
+	LightFrustum m_WorldFrustums[kNumCubeMapFaces];
 	f32 m_AttenStartRange;
 	f32 m_AttenEndRange;
 	u32 m_AffectedScreenArea;
@@ -63,6 +76,9 @@ struct SpotLightData
 	Vector3f m_WorldSpacePos;
 	Vector3f m_WorldSpaceDir;
 	Sphere m_WorldBounds;
+	Matrix4f m_ProjMatrix;
+	Matrix4f m_ViewMatrix;
+	LightFrustum m_WorldFrustum;	
 	f32 m_AttenStartRange;
 	f32 m_AttenEndRange;
 	f32 m_CosHalfInnerConeAngle;
