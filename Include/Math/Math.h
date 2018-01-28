@@ -65,6 +65,12 @@ T Rcp(T value)
     return T(1) / value;
 }
 
+template <typename T>
+bool IsPowerOf2(T value)
+{
+	return ((value != 0) && !(value & (value - 1)));
+}
+
 f32 ToDegrees(f32 radians);
 f32 ToRadians(f32 degrees);
 
@@ -78,6 +84,9 @@ f32 Tan(f32 angleInRadians);
 f32 ArcTan(f32 tanAngle);
 
 void SinCos(f32& sinAngle, f32& cosAngle, f32 angleInRadians);
+
+f32 Log2(f32 value);
+f64 Log2(f64 value);
 
 f32 Ceil(f32 value);
 f64 Ceil(f64 value);

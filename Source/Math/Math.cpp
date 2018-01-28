@@ -51,6 +51,16 @@ void SinCos(f32& sinAngle, f32& cosAngle, f32 angleInRadians)
 	cosAngle = Cos(angleInRadians);
 }
 
+f32 Log2(f32 value)
+{
+	return std::log2f(value);
+}
+
+f64 Log2(f64 value)
+{
+	return std::log2(value);
+}
+
 f32 Ceil(f32 value)
 {
 	return std::ceilf(value);
