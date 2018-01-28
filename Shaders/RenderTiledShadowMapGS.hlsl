@@ -57,10 +57,10 @@ void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> o
 		{
 			float4 worldSpacePos = input[vertexIndex].worldSpacePos;
 
-			signedDistToFrustumPlanes[index].x = dot(lightWorldFrustum.leftPlane, worldSpacePos);
-			signedDistToFrustumPlanes[index].y = dot(lightWorldFrustum.rightPlane, worldSpacePos);
-			signedDistToFrustumPlanes[index].z = dot(lightWorldFrustum.topPlane, worldSpacePos);
-			signedDistToFrustumPlanes[index].w = dot(lightWorldFrustum.bottomPlane, worldSpacePos);
+			signedDistToFrustumPlanes[vertexIndex].x = dot(lightWorldFrustum.leftPlane, worldSpacePos);
+			signedDistToFrustumPlanes[vertexIndex].y = dot(lightWorldFrustum.rightPlane, worldSpacePos);
+			signedDistToFrustumPlanes[vertexIndex].z = dot(lightWorldFrustum.topPlane, worldSpacePos);
+			signedDistToFrustumPlanes[vertexIndex].w = dot(lightWorldFrustum.bottomPlane, worldSpacePos);
 		}
 
 		bool isFaceInFrustum = all(signedDistToFrustumPlanes[0] > 0.0f) || all(signedDistToFrustumPlanes[1] > 0.0f) || all(signedDistToFrustumPlanes[2] > 0.0f);
@@ -107,10 +107,10 @@ void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> o
 	{
 		float4 worldSpacePos = input[vertexIndex].worldSpacePos;
 				
-		signedDistToFrustumPlanes[index].x = dot(lightWorldFrustum.leftPlane, worldSpacePos);
-		signedDistToFrustumPlanes[index].y = dot(lightWorldFrustum.rightPlane, worldSpacePos);
-		signedDistToFrustumPlanes[index].z = dot(lightWorldFrustum.topPlane, worldSpacePos);
-		signedDistToFrustumPlanes[index].w = dot(lightWorldFrustum.bottomPlane, worldSpacePos);
+		signedDistToFrustumPlanes[vertexIndex].x = dot(lightWorldFrustum.leftPlane, worldSpacePos);
+		signedDistToFrustumPlanes[vertexIndex].y = dot(lightWorldFrustum.rightPlane, worldSpacePos);
+		signedDistToFrustumPlanes[vertexIndex].z = dot(lightWorldFrustum.topPlane, worldSpacePos);
+		signedDistToFrustumPlanes[vertexIndex].w = dot(lightWorldFrustum.bottomPlane, worldSpacePos);
 	}
 
 	bool isFaceInFrustum = all(signedDistToFrustumPlanes[0] > 0.0f) || all(signedDistToFrustumPlanes[1] > 0.0f) || all(signedDistToFrustumPlanes[2] > 0.0f);

@@ -17,13 +17,13 @@ class RenderTiledShadowMapPass
 public:
 	struct ResourceStates
 	{
+		D3D12_RESOURCE_STATES m_TiledShadowMapState;
 		D3D12_RESOURCE_STATES m_MeshInstanceWorldMatrixBufferState;
-		D3D12_RESOURCE_STATES m_LightIndexForMeshInstanceBufferState;
-		D3D12_RESOURCE_STATES m_MeshInstanceIndexForLightBufferState;
 		D3D12_RESOURCE_STATES m_LightWorldBoundsOrPropsBufferState;
 		D3D12_RESOURCE_STATES m_LightWorldFrustumBufferState;
 		D3D12_RESOURCE_STATES m_LightViewProjMatrixBufferState;
-		D3D12_RESOURCE_STATES m_TiledShadowMapState;
+		D3D12_RESOURCE_STATES m_LightIndexForMeshInstanceBufferState;
+		D3D12_RESOURCE_STATES m_MeshInstanceIndexForLightBufferState;
 		D3D12_RESOURCE_STATES m_NumShadowMapCommandsBufferState;
 		D3D12_RESOURCE_STATES m_ShadowMapCommandBufferState;
 	};
@@ -33,15 +33,14 @@ public:
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		LightType m_LightType;
-		u32 m_ShadowMapWidth;
-		u32 m_ShadowMapHeight;
+		u32 m_ShadowMapSize;
 		MeshRenderResources* m_pMeshRenderResources;
 		Buffer* m_pMeshInstanceWorldMatrixBuffer;
-		Buffer* m_pLightIndexForMeshInstanceBuffer;
-		Buffer* m_pMeshInstanceIndexForLightBuffer;
 		Buffer* m_pLightWorldBoundsOrPropsBuffer;
 		Buffer* m_pLightWorldFrustumBuffer;
 		Buffer* m_pLightViewProjMatrixBuffer;
+		Buffer* m_pLightIndexForMeshInstanceBuffer;
+		Buffer* m_pMeshInstanceIndexForLightBuffer;
 		Buffer* m_pNumShadowMapCommandsBuffer;
 		Buffer* m_pShadowMapCommandBuffer;
 	};

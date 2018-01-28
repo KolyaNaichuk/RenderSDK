@@ -47,8 +47,8 @@
 
 /*
 To do:
+- Hard-coded light screen area for now. Fix CalcScreenAreaAffectedByLight.
 - Depth and shadow maps are using DXGI_FORMAT_R32_TYPELESS format. Check if 16 bit format would suffice
-- Run some tests for light screen area calculation
 - Rotate the camera for 360 degrees. The app crashes because of invalid resource state when applying resource barrier in reproject depth pass
 - Geometry popping when rotating the camera. See reprojected depth buffer for the result.
 - Enable VoxelizePass. Fix calculation for frustum corners
@@ -285,7 +285,8 @@ namespace
 		f32 screenSpaceWidth = 0.5f * screenSize.m_X * (postWDivideProjSpaceRight - postWDivideProjSpaceLeft);
 		f32 screenSpaceHeight = 0.5f * screenSize.m_Y * (postWDivideProjSpaceTop - postWDivideProjSpaceBottom);
 		
-		return u32(Ceil(Max(screenSpaceWidth, screenSpaceHeight)));
+		//return u32(Ceil(Max(screenSpaceWidth, screenSpaceHeight)));
+		return 1024;
 	}
 	
 	Matrix4f CreateShadowMapTileMatrix(const ShadowMapTile& shadowMapTile)
@@ -310,7 +311,7 @@ enum
 	kNumVoxelsInGridZ = 128,
 	kBackBufferWidth = kNumTilesX * kTileSize,
 	kBackBufferHeight = kNumTilesY * kTileSize,
-	kShadowMapSize = 512,
+	kShadowMapSize = 8 * 1024,
 	kNumShadowMapLevels = 3
 };
 
@@ -1928,17 +1929,58 @@ CommandList* DXApplication::RecordCreateShadowMapCommandsPass()
 void DXApplication::InitRenderPointLightTiledShadowMapPass()
 {
 	assert(m_pPointLightShadowMapTileAllocator == nullptr);
-	assert(m_pRenderPointLightTiledShadowMapPass == nullptr);
-
 	m_pPointLightShadowMapTileAllocator = new ShadowMapTileAllocator(kShadowMapSize, kNumShadowMapLevels);
-	assert(false);
+
+	assert(m_pRenderPointLightTiledShadowMapPass == nullptr);
+	assert(m_pCreateShadowMapCommandsPass != nullptr);
+	assert(m_pRenderGBufferFalseNegativePass != nullptr);
+	assert(m_pCreateShadowMapCommandsPass != nullptr);
+
+	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
+		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
+
+	const CreateShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
+		m_pCreateShadowMapCommandsPass->GetOutputResourceStates();
+
+	RenderTiledShadowMapPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_LightType = LightType_Point;
+	params.m_ShadowMapSize = kShadowMapSize;
+	params.m_pMeshRenderResources = m_pMeshRenderResources;
+	params.m_pMeshInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
+	params.m_pLightWorldBoundsOrPropsBuffer = m_pActivePointLightWorldBoundsBuffer;
+	params.m_pLightWorldFrustumBuffer = m_pActivePointLightWorldFrustumBuffer;
+	params.m_pLightViewProjMatrixBuffer = m_pActivePointLightViewProjMatrixBuffer;
+	params.m_pLightIndexForMeshInstanceBuffer = m_pCreateShadowMapCommandsPass->GetPointLightIndexForMeshInstanceBuffer();
+	params.m_pMeshInstanceIndexForLightBuffer = m_pCreateShadowMapCommandsPass->GetMeshInstanceIndexForPointLightBuffer();
+	params.m_pNumShadowMapCommandsBuffer = m_pCreateShadowMapCommandsPass->GetNumPointLightCommandsBuffer();
+	params.m_pShadowMapCommandBuffer = m_pCreateShadowMapCommandsPass->GetPointLightCommandBuffer();
+	
+	params.m_InputResourceStates.m_TiledShadowMapState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	params.m_InputResourceStates.m_MeshInstanceWorldMatrixBufferState = pRenderGBufferFalseNegativePassStates->m_InstanceWorldMatrixBufferState;
+	params.m_InputResourceStates.m_LightWorldBoundsOrPropsBufferState = pCreateShadowMapCommandsPassStates->m_PointLightWorldBoundsBufferState;
+	params.m_InputResourceStates.m_LightWorldFrustumBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
+	params.m_InputResourceStates.m_LightViewProjMatrixBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
+	params.m_InputResourceStates.m_LightIndexForMeshInstanceBufferState = pCreateShadowMapCommandsPassStates->m_PointLightIndexForMeshInstanceBufferState;
+	params.m_InputResourceStates.m_MeshInstanceIndexForLightBufferState = pCreateShadowMapCommandsPassStates->m_MeshInstanceIndexForPointLightBufferState;
+	params.m_InputResourceStates.m_NumShadowMapCommandsBufferState = pCreateShadowMapCommandsPassStates->m_NumPointLightCommandsBufferState;
+	params.m_InputResourceStates.m_ShadowMapCommandBufferState = pCreateShadowMapCommandsPassStates->m_PointLightCommandBufferState;
+
+	m_pRenderPointLightTiledShadowMapPass = new RenderTiledShadowMapPass(&params);
 }
 
 CommandList* DXApplication::RecordRenderPointLightTiledShadowMapPass()
 {
 	assert(m_pRenderPointLightTiledShadowMapPass != nullptr);
-	assert(false);
-	return nullptr;
+	RenderTiledShadowMapPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pRenderPointLightTiledShadowMapCommandList");
+	params.m_pMeshRenderResources = m_pMeshRenderResources;
+	params.m_pNumShadowMapCommandsBuffer = m_pCreateShadowMapCommandsPass->GetNumPointLightCommandsBuffer();
+	params.m_pShadowMapCommandBuffer = m_pCreateShadowMapCommandsPass->GetPointLightCommandBuffer();
+
+	m_pRenderPointLightTiledShadowMapPass->Record(&params);
+	return params.m_pCommandList;
 }
 
 void DXApplication::InitCreateVoxelizeCommandsPass()
@@ -1989,6 +2031,7 @@ void DXApplication::InitVoxelizePass()
 	assert(m_pCreateVoxelizeCommandsPass != nullptr);
 	assert(m_pCreateShadowMapCommandsPass != nullptr);
 	assert(m_pRenderGBufferFalseNegativePass != nullptr);
+	assert(m_pRenderPointLightTiledShadowMapPass != nullptr);
 	
 	const CreateMainDrawCommandsPass::ResourceStates* pCreateMainDrawCommandsPassStates =
 		m_pCreateMainDrawCommandsPass->GetOutputResourceStates();
@@ -2002,16 +2045,19 @@ void DXApplication::InitVoxelizePass()
 	const CreateShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
 		m_pCreateShadowMapCommandsPass->GetOutputResourceStates();
 
+	const RenderTiledShadowMapPass::ResourceStates* pRenderPointLightTiledShadowMapStates =
+		m_pRenderPointLightTiledShadowMapPass->GetOutputResourceStates();
+
 	VoxelizePass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_NumCommandsPerMeshTypeBufferState = pCreateVoxelizeCommandsPassStates->m_NumCommandsPerMeshTypeBufferState;
 	params.m_InputResourceStates.m_VoxelizeCommandBufferState = pCreateVoxelizeCommandsPassStates->m_VoxelizeCommandBufferState;
 	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_InstanceIndexBufferState;
-	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = pRenderGBufferFalseNegativePassStates->m_InstanceWorldMatrixBufferState;
+	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = pRenderPointLightTiledShadowMapStates->m_MeshInstanceWorldMatrixBufferState;
 	params.m_InputResourceStates.m_VoxelReflectanceTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_PointLightWorldBoundsBufferState = pCreateShadowMapCommandsPassStates->m_PointLightWorldBoundsBufferState;
+	params.m_InputResourceStates.m_PointLightWorldBoundsBufferState = pRenderPointLightTiledShadowMapStates->m_LightWorldBoundsOrPropsBufferState;
 	params.m_InputResourceStates.m_PointLightPropsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
 	params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = pCreateShadowMapCommandsPassStates->m_SpotLightWorldBoundsBufferState;
 	params.m_InputResourceStates.m_SpotLightPropsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
