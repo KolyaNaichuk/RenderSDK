@@ -312,7 +312,7 @@ enum
 	kBackBufferWidth = kNumTilesX * kTileSize,
 	kBackBufferHeight = kNumTilesY * kTileSize,
 	kShadowMapSize = 8 * 1024,
-	kNumShadowMapLevels = 3
+	kNumShadowMapLevels = 4
 };
 
 DXApplication::DXApplication(HINSTANCE hApp)
@@ -342,6 +342,7 @@ DXApplication::~DXApplication()
 		SafeDelete(m_VisualizeReprojectedDepthBufferPasses[index]);
 		SafeDelete(m_VisualizeTexCoordBufferPasses[index]);
 		SafeDelete(m_VisualizeDepthBufferWithMeshTypePasses[index]);
+		SafeDelete(m_VisualizePointLightTiledShadowMapPasses[index]);
 		SafeDelete(m_VisualizeVoxelReflectancePasses[index]);
 
 		m_pUploadAppDataBuffers[index]->Unmap(0, nullptr);
@@ -463,6 +464,7 @@ void DXApplication::OnInit()
 	InitVisualizeNormalBufferPass();
 	InitVisualizeTexCoordBufferPass();
 	InitVisualizeDepthBufferWithMeshTypePass();
+	InitVisualizePointLightTiledShadowMapPass();
 	InitVisualizeVoxelReflectancePass();
 }
 
@@ -696,6 +698,11 @@ void DXApplication::OnKeyDown(UINT8 key)
 		}
 		case '7':
 		{
+			UpdateDisplayResult(DisplayResult::PointLightTiledShadowMap);
+			break;
+		}
+		case '8':
+		{
 			UpdateDisplayResult(DisplayResult::VoxelRelectance);
 			break;
 		}
@@ -873,10 +880,11 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight)
 			for (u8 faceIndex = 0; faceIndex < kNumCubeMapFaces; ++faceIndex)
 			{
 				Matrix4f viewMatrix = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpacePos + lookAtDir[faceIndex], upDir[faceIndex]);
-
-				m_pPointLights[lightIndex].m_ViewProjMatrices[faceIndex] = viewMatrix * projMatrix;
-				Frustum lightWorldFrustum(viewMatrix);
 				
+				Matrix4f viewProjMatrix = viewMatrix * projMatrix;
+				m_pPointLights[lightIndex].m_ViewProjMatrices[faceIndex] = viewProjMatrix;
+				
+				Frustum lightWorldFrustum(viewProjMatrix);
 				m_pPointLights[lightIndex].m_WorldFrustums[faceIndex].m_LeftPlane = lightWorldFrustum.m_Planes[Frustum::LeftPlane];
 				m_pPointLights[lightIndex].m_WorldFrustums[faceIndex].m_RightPlane = lightWorldFrustum.m_Planes[Frustum::RightPlane];;
 				m_pPointLights[lightIndex].m_WorldFrustums[faceIndex].m_TopPlane = lightWorldFrustum.m_Planes[Frustum::TopPlane];;
@@ -1678,6 +1686,46 @@ CommandList* DXApplication::RecordVisualizeAccumLightPass()
 	return params.m_pCommandList;
 }
 
+void DXApplication::InitVisualizePointLightTiledShadowMapPass()
+{
+	assert(m_pRenderPointLightTiledShadowMapPass != nullptr);
+	
+	const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
+		m_pRenderPointLightTiledShadowMapPass->GetOutputResourceStates();
+	
+	DepthTexture* pTiledShadowMap = m_pRenderPointLightTiledShadowMapPass->GetShadowMap();
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
+		assert(m_VisualizePointLightTiledShadowMapPasses[index] == nullptr);
+
+		VisualizeTexturePass::InitParams params;
+		params.m_pRenderEnv = m_pRenderEnv;
+		params.m_InputResourceStates.m_InputTextureState = pRenderTiledShadowMapPassStates->m_TiledShadowMapState;
+		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
+		params.m_pInputTexture = pTiledShadowMap;
+		params.m_InputTextureSRV = pTiledShadowMap->GetSRVHandle();
+		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
+		params.m_TextureType = VisualizeTexturePass::TextureType_Depth;
+
+		m_VisualizePointLightTiledShadowMapPasses[index] = new VisualizeTexturePass(&params);
+	}
+}
+
+CommandList* DXApplication::RecordVisualizePointLightTiledShadowMapPass()
+{
+	VisualizeTexturePass* pVisualizeTexturePass = m_VisualizePointLightTiledShadowMapPasses[m_BackBufferIndex];
+	assert(pVisualizeTexturePass != nullptr);
+
+	VisualizeTexturePass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizePointLightTiledShadowMapCommandList");
+	params.m_pAppDataBuffer = m_pUploadAppDataBuffers[m_BackBufferIndex];
+	params.m_pViewport = m_pBackBufferViewport;
+
+	pVisualizeTexturePass->Record(&params);
+	return params.m_pCommandList;
+}
+
 void DXApplication::InitVisualizeVoxelReflectancePass()
 {
 	assert(m_pVoxelizePass != nullptr);
@@ -2214,6 +2262,9 @@ CommandList* DXApplication::RecordVisualizeDisplayResultPass()
 	if (m_DisplayResult == DisplayResult::DepthBufferWithMeshType)
 		return RecordVisualizeDepthBufferWithMeshTypePass();
 
+	if (m_DisplayResult == DisplayResult::PointLightTiledShadowMap)
+		return RecordVisualizePointLightTiledShadowMapPass();
+
 	if (m_DisplayResult == DisplayResult::VoxelRelectance)
 		return RecordVisualizeVoxelReflectancePass();
 		
@@ -2254,6 +2305,13 @@ CommandList* DXApplication::RecordPostRenderPass()
 
 		DepthTexture* pMeshTypeDepthTexture = m_pFillMeshTypeDepthBufferPass->GetMeshTypeDepthTexture();
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(pMeshTypeDepthTexture,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	}
+	else if (m_DisplayResult == DisplayResult::PointLightTiledShadowMap)
+	{
+		DepthTexture* pTiledShadowMap = m_pRenderPointLightTiledShadowMapPass->GetShadowMap();
+		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(pTiledShadowMap,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	}
@@ -2370,6 +2428,8 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 		m_pWindow->SetWindowText(L"Depth buffer");
 	else if (m_DisplayResult == DisplayResult::ReprojectedDepthBuffer)
 		m_pWindow->SetWindowText(L"Reprojected depth buffer");
+	else if (m_DisplayResult == DisplayResult::PointLightTiledShadowMap)
+		m_pWindow->SetWindowText(L"Tiled shadow map for point lights");
 	else if (m_DisplayResult == DisplayResult::VoxelRelectance)
 		m_pWindow->SetWindowText(L"Voxel reflectance");
 	else if (m_DisplayResult == DisplayResult::DepthBufferWithMeshType)

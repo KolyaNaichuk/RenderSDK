@@ -97,6 +97,7 @@ public:
 		NormalBuffer,
 		TexCoordBuffer,
 		DepthBufferWithMeshType,
+		PointLightTiledShadowMap,
 		VoxelRelectance,
 		Unknown
 	};
@@ -185,6 +186,9 @@ private:
 	void InitVisualizeAccumLightPass();
 	CommandList* RecordVisualizeAccumLightPass();
 
+	void InitVisualizePointLightTiledShadowMapPass();
+	CommandList* RecordVisualizePointLightTiledShadowMapPass();
+
 	void InitVisualizeVoxelReflectancePass();
 	CommandList* RecordVisualizeVoxelReflectancePass();
 
@@ -253,6 +257,7 @@ private:
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeTexturePass* m_VisualizeDepthBufferWithMeshTypePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	VisualizeTexturePass* m_VisualizePointLightTiledShadowMapPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeVoxelReflectancePass* m_VisualizeVoxelReflectancePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 
 	u32 m_NumPointLights = 0;

@@ -80,7 +80,7 @@ void RenderTiledShadowMapPass::Record(RenderParams* pParams)
 	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshRenderResources->GetTotalNumMeshes(),
 		pParams->m_pShadowMapCommandBuffer, 0,
 		pParams->m_pNumShadowMapCommandsBuffer, 0);
-
+	
 	pCommandList->End();
 }
 
@@ -90,7 +90,7 @@ void RenderTiledShadowMapPass::InitResources(InitParams* pParams)
 
 	assert(m_pShadowMap == nullptr);
 	DepthStencilValue optimizedClearDepth(1.0f);
-	DepthTexture2DDesc shadowMapDesc(DXGI_FORMAT_R16_TYPELESS, pParams->m_ShadowMapSize, pParams->m_ShadowMapSize, true, true);
+	DepthTexture2DDesc shadowMapDesc(DXGI_FORMAT_R32_TYPELESS, pParams->m_ShadowMapSize, pParams->m_ShadowMapSize, true, true);
 	m_pShadowMap = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shadowMapDesc,
 		pParams->m_InputResourceStates.m_TiledShadowMapState, &optimizedClearDepth, L"RenderTiledShadowMapPass::m_pShadowMap");
 
