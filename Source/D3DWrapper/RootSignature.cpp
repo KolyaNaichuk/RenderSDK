@@ -125,7 +125,7 @@ RootSignature::RootSignature(GraphicsDevice* pDevice, const RootSignatureDesc* p
 		d3dRootSignatureBlob->GetBufferSize(),
 		IID_PPV_ARGS(&m_D3DRootSignature)));
 
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DRootSignature->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }

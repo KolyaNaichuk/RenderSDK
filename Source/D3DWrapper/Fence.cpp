@@ -8,9 +8,9 @@ Fence::Fence(GraphicsDevice* pDevice, UINT64 initialValue, LPCWSTR pName)
 	D3D12_FENCE_FLAGS flags = D3D12_FENCE_FLAG_NONE;
 	VerifyD3DResult(pDevice->GetD3DObject()->CreateFence(initialValue, flags, IID_PPV_ARGS(&m_D3DFence)));
 
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DFence->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 	
 	m_hCompletionEvent = ::CreateEventEx(nullptr, FALSE, FALSE, EVENT_ALL_ACCESS);
 	assert(m_hCompletionEvent != INVALID_HANDLE_VALUE);

@@ -7,6 +7,7 @@
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
+#include "D3DWrapper/Profiler.h"
 
 namespace
 {
@@ -18,13 +19,7 @@ namespace
 }
 
 CreateFalseNegativeDrawCommandsPass::CreateFalseNegativeDrawCommandsPass(InitParams* pParams)
-	: m_pRootSignature(nullptr)
-	, m_pPipelineState(nullptr)
-	, m_pCommandSignature(nullptr)
-	, m_pVisibleInstanceIndexBuffer(nullptr)
-	, m_pNumVisibleMeshesPerTypeBuffer(nullptr)
-	, m_pDrawCommandBuffer(nullptr)
-	, m_pArgumentBuffer(nullptr)
+	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -47,8 +42,13 @@ void CreateFalseNegativeDrawCommandsPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
+	Profiler* pProfiler = pRenderEnv->m_pProfiler;
 
 	pCommandList->Begin(m_pPipelineState);
+#ifdef ENABLE_GPU_PROFILING
+	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_GPU_PROFILING
+
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
@@ -64,6 +64,10 @@ void CreateFalseNegativeDrawCommandsPass::Record(RenderParams* pParams)
 		m_pNumVisibleMeshesPerTypeBuffer->GetUAVHandle(), m_pNumVisibleMeshesPerTypeBuffer, clearValues);
 	
 	pCommandList->ExecuteIndirect(m_pCommandSignature, 1, m_pArgumentBuffer, 0, nullptr, 0);
+
+#ifdef ENABLE_GPU_PROFILING
+	pProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_GPU_PROFILING
 	pCommandList->End();
 }
 

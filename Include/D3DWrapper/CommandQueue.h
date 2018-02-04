@@ -23,6 +23,8 @@ public:
 	void ExecuteCommandLists(UINT numCommandLists, CommandList** ppCommandLists, Fence* pCompletionFence, UINT64 completionFenceValue);
 	void Signal(Fence* pFence, UINT64 fenceValue);
 
+	UINT64 GetTimestampFrequency();
+
 private:
 	ComPtr<ID3D12CommandQueue> m_D3DCommandQueue;
 };

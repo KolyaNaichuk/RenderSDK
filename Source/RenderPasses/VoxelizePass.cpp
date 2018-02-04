@@ -1,13 +1,14 @@
 #include "RenderPasses/VoxelizePass.h"
 #include "RenderPasses/Common.h"
-#include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/CommandSignature.h"
 #include "D3DWrapper/CommandList.h"
-#include "D3DWrapper/DescriptorHeap.h"
-#include "D3DWrapper/GraphicsUtils.h"
 #include "D3DWrapper/GraphicsDevice.h"
-#include "D3DWrapper/RootSignature.h"
+#include "D3DWrapper/GraphicsUtils.h"
+#include "D3DWrapper/DescriptorHeap.h"
+#include "D3DWrapper/PipelineState.h"
+#include "D3DWrapper/Profiler.h"
 #include "D3DWrapper/RenderEnv.h"
+#include "D3DWrapper/RootSignature.h"
 #include "Common/MeshRenderResources.h"
 
 namespace
@@ -24,11 +25,7 @@ namespace
 }
 
 VoxelizePass::VoxelizePass(InitParams* pParams)
-	: m_pRootSignature(nullptr)
-	, m_pPipelineState(nullptr)
-	, m_pCommandSignature(nullptr)
-	, m_pVoxelReflectanceTexture(nullptr)
-	, m_pViewport(nullptr)
+	: m_Name(pParams->m_pName)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
@@ -37,7 +34,7 @@ VoxelizePass::VoxelizePass(InitParams* pParams)
 	pRenderEnv->m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &supportedOptions, sizeof(supportedOptions));
 	assert(supportedOptions.ConservativeRasterizationTier != D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED);
 	assert(supportedOptions.ROVsSupported == TRUE);
-#endif
+#endif // ENABLE_VOXELIZATION
 	
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -66,8 +63,13 @@ void VoxelizePass::Record(RenderParams* pParams)
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
+	Profiler* pProfiler = pRenderEnv->m_pProfiler;
 
 	pCommandList->Begin(m_pPipelineState);
+#ifdef ENABLE_GPU_PROFILING
+	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_GPU_PROFILING
+
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
@@ -94,14 +96,26 @@ void VoxelizePass::Record(RenderParams* pParams)
 	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshRenderResources->GetTotalNumMeshes(),
 		pParams->m_pVoxelizeCommandBuffer, 0, pParams->m_pNumCommandsPerMeshTypeBuffer, meshType * sizeof(u32));
 
+#ifdef ENABLE_GPU_PROFILING
+	pProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_GPU_PROFILING
 	pCommandList->End();
 #else
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
+	Profiler* pProfiler = pRenderEnv->m_pProfiler;
 
 	pCommandList->Begin();
+#ifdef ENABLE_GPU_PROFILING
+	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_GPU_PROFILING
+
 	if (!m_ResourceBarriers.empty())
 		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+
+#ifdef ENABLE_GPU_PROFILING
+	pProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_GPU_PROFILING
 	pCommandList->End();
 #endif
 }

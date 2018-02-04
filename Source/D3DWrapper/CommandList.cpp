@@ -5,6 +5,7 @@
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/DescriptorHeap.h"
+#include "D3DWrapper/QueryHeap.h"
 #include "D3DWrapper/Fence.h"
 #include "D3DWrapper/GraphicsUtils.h"
 
@@ -18,9 +19,9 @@ CommandList::CommandList(GraphicsDevice* pDevice, D3D12_COMMAND_LIST_TYPE type, 
 	VerifyD3DResult(pD3DDevice->CreateCommandList(nodeMask, type, m_D3DCommandAllocator.Get(), pD3DPipelineState, IID_PPV_ARGS(&m_D3DCommandList)));
 	VerifyD3DResult(m_D3DCommandList->Close());
 	
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DCommandList->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
 void CommandList::SetName(LPCWSTR pName)
@@ -191,6 +192,21 @@ void CommandList::ExecuteIndirect(CommandSignature* pCommandSignature, UINT maxC
 		(pCountBuffer != nullptr) ? pCountBuffer->GetD3DObject() : 0, countBufferOffset);
 }
 
+void CommandList::BeginQuery(QueryHeap* pQueryHeap, D3D12_QUERY_TYPE type, UINT index)
+{
+	m_D3DCommandList->BeginQuery(pQueryHeap->GetD3DObject(), type, index);
+}
+
+void CommandList::EndQuery(QueryHeap* pQueryHeap, D3D12_QUERY_TYPE type, UINT index)
+{
+	m_D3DCommandList->EndQuery(pQueryHeap->GetD3DObject(), type, index);
+}
+
+void CommandList::ResolveQueryData(QueryHeap* pQueryHeap, D3D12_QUERY_TYPE type, UINT startIndex, UINT numQueries, Buffer* pDestBuffer, UINT64 alignedDestBufferOffset)
+{
+	m_D3DCommandList->ResolveQueryData(pQueryHeap->GetD3DObject(), type, startIndex, numQueries, pDestBuffer->GetD3DObject(), alignedDestBufferOffset);
+}
+
 void CommandList::ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, const FLOAT clearColor[4])
 {
 	m_D3DCommandList->ClearRenderTargetView(cpuHandle, clearColor, 0, nullptr);
@@ -259,9 +275,10 @@ CommandList* CommandListPool::Create(LPCWSTR pName)
 		{
 			m_CommandListQueue.pop();
 			pCommandList = pExistingCommandList;
-#ifdef _DEBUG
+
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 			pCommandList->SetName(pName);
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 		}
 	}
 	if (pCommandList == nullptr)

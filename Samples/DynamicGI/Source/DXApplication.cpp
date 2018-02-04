@@ -10,6 +10,7 @@
 #include "D3DWrapper/Fence.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/SwapChain.h"
+#include "D3DWrapper/Profiler.h"
 #include "RenderPasses/CreateShadowMapCommandsPass.h"
 #include "RenderPasses/CreateVoxelizeCommandsPass.h"
 #include "RenderPasses/PropagateLightPass.h"
@@ -384,6 +385,7 @@ DXApplication::~DXApplication()
 	SafeArrayDelete(m_ppActivePointLights);
 	SafeArrayDelete(m_pSpotLights);
 	SafeArrayDelete(m_ppActiveSpotLights);
+	SafeDelete(m_pProfiler);
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pGeometryBuffer);
 	SafeDelete(m_pMeshRenderResources);
@@ -547,8 +549,11 @@ void DXApplication::OnUpdate()
 
 void DXApplication::OnRender()
 {
+#ifdef ENABLE_GPU_PROFILING
+	m_pProfiler->StartFrame(m_BackBufferIndex);
+#endif // ENABLE_GPU_PROFILING
+
 	static CommandList* commandListBatch[MAX_NUM_COMMAND_LISTS_IN_BATCH];
-	
 	u8 commandListBatchSize = 0;
 	commandListBatch[commandListBatchSize++] = RecordDownscaleAndReprojectDepthPass();
 	commandListBatch[commandListBatchSize++] = RecordPreRenderPass();
@@ -581,6 +586,11 @@ void DXApplication::OnRender()
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_pSwapChain->Present(1, 0);
 	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
+
+#ifdef ENABLE_GPU_PROFILING
+	m_pProfiler->EndFrame(m_pCommandQueue);
+	m_pProfiler->OutputToConsole();
+#endif // #ifdef ENABLE_GPU_PROFILING
 
 #ifdef DEBUG_RENDER_PASS
 	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
@@ -775,6 +785,11 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	m_pRenderEnv->m_pShaderInvisibleSamplerHeap = m_pShaderInvisibleSamplerHeap;
 	m_pRenderEnv->m_pShaderVisibleSRVHeap = m_pShaderVisibleSRVHeap;
 	m_pRenderEnv->m_pShaderVisibleSamplerHeap = m_pShaderVisibleSamplerHeap;
+
+#ifdef ENABLE_GPU_PROFILING
+	m_pProfiler = new Profiler(m_pRenderEnv, 100/*maxNumProfiles*/, kNumBackBuffers);
+#endif // ENABLE_GPU_PROFILING
+	m_pRenderEnv->m_pProfiler = m_pProfiler;
 
 	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), backBufferWidth, backBufferHeight);
 	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
@@ -1010,6 +1025,7 @@ void DXApplication::InitDownscaleAndReprojectDepthPass()
 	assert(m_pDownscaleAndReprojectDepthPass == nullptr);
 
 	DownscaleAndReprojectDepthPass::InitParams params;
+	params.m_pName = "DownscaleAndReprojectDepthPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_InputResourceStates.m_PrevDepthTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_ReprojectedDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
@@ -1037,7 +1053,15 @@ CommandList* DXApplication::RecordPreRenderPass()
 		
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pClearResourcesCommandList");
 	pCommandList->Begin();
+#ifdef ENABLE_GPU_PROFILING
+	u32 profileIndex = m_pProfiler->StartProfile(pCommandList, "PreRenderPass");
+#endif // ENABLE_GPU_PROFILING
+
 	pCommandList->ClearRenderTargetView(m_pAccumLightTexture->GetRTVHandle(), clearColor);
+
+#ifdef ENABLE_GPU_PROFILING
+	m_pProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_GPU_PROFILING
 	pCommandList->End();
 	
 	return pCommandList;
@@ -1049,6 +1073,7 @@ void DXApplication::InitFrustumMeshCullingPass()
 	assert(m_pFrustumMeshCullingPass == nullptr);
 
 	FrustumMeshCullingPass::InitParams params;
+	params.m_pName = "FrustumMeshCullingPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pInstanceWorldAABBBuffer = m_pMeshRenderResources->GetInstanceWorldAABBBuffer();
 	params.m_pMeshInfoBuffer = m_pMeshRenderResources->GetMeshInfoBuffer();
@@ -1087,6 +1112,7 @@ void DXApplication::InitFillVisibilityBufferMainPass()
 	assert(m_pMeshRenderResources);
 		
 	FillVisibilityBufferPass::InitParams params;
+	params.m_pName = "FillVisibilityBufferMainPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 
 	params.m_InputResourceStates.m_InstanceIndexBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -1133,6 +1159,7 @@ void DXApplication::InitCreateMainDrawCommandsPass()
 		m_pFillVisibilityBufferMainPass->GetOutputResourceStates();
 
 	CreateMainDrawCommandsPass::InitParams params;
+	params.m_pName = "CreateMainDrawCommandsPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 
 	params.m_InputResourceStates.m_NumMeshesBufferState = pFrustumMeshCullingPassStates->m_NumVisibleMeshesBufferState;
@@ -1187,6 +1214,7 @@ void DXApplication::InitRenderGBufferMainPass(UINT bufferWidth, UINT bufferHeigh
 		m_pDownscaleAndReprojectDepthPass->GetOutputResourceStates();
 
 	RenderGBufferPass::InitParams params;
+	params.m_pName = "RenderGBufferMainPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_BufferWidth = bufferWidth;
 	params.m_BufferHeight = bufferHeight;
@@ -1240,6 +1268,7 @@ void DXApplication::InitFillVisibilityBufferFalseNegativePass()
 		m_pCreateMainDrawCommandsPass->GetOutputResourceStates();
 
 	FillVisibilityBufferPass::InitParams params;
+	params.m_pName = "FillVisibilityBufferFalseNegativePass";
 	params.m_pRenderEnv = m_pRenderEnv;
 
 	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_OccludedInstanceIndexBufferState;
@@ -1287,6 +1316,7 @@ void DXApplication::InitCreateFalseNegativeDrawCommandsPass()
 		m_pCreateMainDrawCommandsPass->GetOutputResourceStates();
 
 	CreateFalseNegativeDrawCommandsPass::InitParams params;
+	params.m_pName = "CreateFalseNegativeDrawCommandsPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_NumMeshesBufferState = pCreateMainDrawCommandsPassStates->m_NumMeshesBufferState;
@@ -1339,6 +1369,7 @@ void DXApplication::InitRenderGBufferFalseNegativePass(UINT bufferWidth, UINT bu
 		m_pCreateFalseNegativeDrawCommandsPass->GetOutputResourceStates();
 	
 	RenderGBufferPass::InitParams params;
+	params.m_pName = "RenderGBufferFalseNegativePass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_BufferWidth = bufferWidth;
 	params.m_BufferHeight = bufferHeight;
@@ -1393,6 +1424,7 @@ void DXApplication::InitCalcShadingRectanglesPass()
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
 
 	CalcShadingRectanglesPass::InitParams params;
+	params.m_pName = "CalcShadingRectanglesPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_InputResourceStates.m_MaterialIDTextureState = pRenderGBufferFalseNegativePassStates->m_MaterialIDTextureState;
 	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
@@ -1428,6 +1460,7 @@ void DXApplication::InitFillMeshTypeDepthBufferPass()
 		m_pCalcShadingRectanglesPass->GetOutputResourceStates();
 
 	FillMeshTypeDepthBufferPass::InitParams params;
+	params.m_pName = "FillMeshTypeDepthBufferPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_InputResourceStates.m_MaterialIDTextureState = pCalcShadingRectanglesPassStates->m_MaterialIDTextureState;
 	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = pCalcShadingRectanglesPassStates->m_MeshTypePerMaterialIDBufferState;
@@ -1464,6 +1497,7 @@ void DXApplication::InitVisualizeDepthBufferPass()
 		assert(m_VisualizeDepthBufferPasses[index] == nullptr);
 		
 		VisualizeTexturePass::InitParams params;
+		params.m_pName = "VisualizeDepthBufferPass";
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_DepthTextureState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
@@ -1504,6 +1538,7 @@ void DXApplication::InitVisualizeReprojectedDepthBufferPass()
 		assert(m_VisualizeReprojectedDepthBufferPasses[index] == nullptr);
 
 		VisualizeTexturePass::InitParams params;
+		params.m_pName = "VisualizeReprojectedDepthBufferPass";
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_InputTextureState = pResourceStates->m_ReprojectedDepthTextureState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
@@ -1542,6 +1577,7 @@ void DXApplication::InitVisualizeNormalBufferPass()
 		assert(m_VisualizeNormalBufferPasses[index] == nullptr);
 
 		VisualizeTexturePass::InitParams params;
+		params.m_pName = "VisualizeNormalBufferPass";
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_NormalTextureState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
@@ -1580,6 +1616,7 @@ void DXApplication::InitVisualizeTexCoordBufferPass()
 		assert(m_VisualizeTexCoordBufferPasses[index] == nullptr);
 
 		VisualizeTexturePass::InitParams params;
+		params.m_pName = "VisualizeTexCoordBufferPass";
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_TexCoordTextureState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
@@ -1620,6 +1657,7 @@ void DXApplication::InitVisualizeDepthBufferWithMeshTypePass()
 		assert(m_VisualizeDepthBufferWithMeshTypePasses[index] == nullptr);
 
 		VisualizeTexturePass::InitParams params;
+		params.m_pName = "VisualizeDepthBufferWithMeshTypePass";
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_InputTextureState = pFillMeshTypeDepthBufferPassStates->m_MeshTypeDepthTextureState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
@@ -1659,6 +1697,7 @@ void DXApplication::InitVisualizeAccumLightPass()
 		assert(m_pVisualizeAccumLightPasses[index] == nullptr);
 
 		VisualizeTexturePass::InitParams params;
+		params.m_pName = "VisualizeAccumLightPass";
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_AccumLightTextureState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
@@ -1699,6 +1738,7 @@ void DXApplication::InitVisualizePointLightTiledShadowMapPass()
 		assert(m_VisualizePointLightTiledShadowMapPasses[index] == nullptr);
 
 		VisualizeTexturePass::InitParams params;
+		params.m_pName = "VisualizePointLightTiledShadowMapPass";
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_InputTextureState = pRenderTiledShadowMapPassStates->m_TiledShadowMapState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
@@ -1742,6 +1782,7 @@ void DXApplication::InitVisualizeVoxelReflectancePass()
 		assert(m_VisualizeVoxelReflectancePasses[index] == nullptr);
 
 		VisualizeVoxelReflectancePass::InitParams params;
+		params.m_pName = "VisualizeVoxelReflectancePass";
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
 		params.m_InputResourceStates.m_DepthTextureState = pTiledShadingPassStates->m_DepthTextureState;
@@ -1778,6 +1819,9 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 	
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pUploadVisibleLightDataCommandList");
 	pCommandList->Begin();
+#ifdef ENABLE_GPU_PROFILING
+	u32 profileIndex = m_pProfiler->StartProfile(pCommandList, "UploadLightDataPass");
+#endif // ENABLE_GPU_PROFILING
 
 	static ResourceTransitionBarrier resourceBarriers[8];
 	u8 numBarriers = 0;
@@ -1851,7 +1895,11 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 			m_NumActiveSpotLights * sizeof(SpotLightProps));
 	}
 
+#ifdef ENABLE_GPU_PROFILING
+	m_pProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_GPU_PROFILING
 	pCommandList->End();
+
 	return pCommandList;
 }
 
@@ -1868,6 +1916,7 @@ void DXApplication::InitTiledLightCullingPass()
 		m_pVoxelizePass->GetOutputResourceStates();
 
 	TiledLightCullingPass::InitParams params;
+	params.m_pName = "TiledLightCullingPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pDepthTexture = m_pDepthTexture;
 	
@@ -1924,6 +1973,7 @@ void DXApplication::InitCreateShadowMapCommandsPass()
 		m_pCreateFalseNegativeDrawCommandsPass->GetOutputResourceStates();
 
 	CreateShadowMapCommandsPass::InitParams params;
+	params.m_pName = "CreateShadowMapCommandsPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_NumMeshesBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_NumMeshesBufferState;
@@ -1991,6 +2041,7 @@ void DXApplication::InitRenderPointLightTiledShadowMapPass()
 		m_pCreateShadowMapCommandsPass->GetOutputResourceStates();
 
 	RenderTiledShadowMapPass::InitParams params;
+	params.m_pName = "RenderPointLightTiledShadowMapPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_LightType = LightType_Point;
 	params.m_ShadowMapSize = kShadowMapSize;
@@ -2042,6 +2093,7 @@ void DXApplication::InitCreateVoxelizeCommandsPass()
 		m_pCreateShadowMapCommandsPass->GetOutputResourceStates();
 
 	CreateVoxelizeCommandsPass::InitParams params;
+	params.m_pName = "CreateVoxelizeCommandsPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_NumMeshesBufferState = pCreateShadowMapCommandsPassStates->m_NumMeshesBufferState;
@@ -2097,6 +2149,7 @@ void DXApplication::InitVoxelizePass()
 		m_pRenderPointLightTiledShadowMapPass->GetOutputResourceStates();
 
 	VoxelizePass::InitParams params;
+	params.m_pName = "VoxelizePass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_NumCommandsPerMeshTypeBufferState = pCreateVoxelizeCommandsPassStates->m_NumCommandsPerMeshTypeBufferState;
@@ -2179,6 +2232,7 @@ void DXApplication::InitTiledShadingPass()
 		m_pVoxelizePass->GetOutputResourceStates();
 
 	TiledShadingPass::InitParams params;
+	params.m_pName = "TiledShadingPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_ShadingMode = ShadingMode_BlinnPhong;
 
@@ -2279,6 +2333,9 @@ CommandList* DXApplication::RecordPostRenderPass()
 
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pPostRenderCommandList");
 	pCommandList->Begin();
+#ifdef ENABLE_GPU_PROFILING
+	u32 profileIndex = m_pProfiler->StartProfile(pCommandList, "PostRenderPass");
+#endif // ENABLE_GPU_PROFILING
 	
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	resourceBarriers[numBarriers++] = ResourceTransitionBarrier(pRenderTarget,
@@ -2324,6 +2381,10 @@ CommandList* DXApplication::RecordPostRenderPass()
 	}
 
 	pCommandList->ResourceBarrier(numBarriers, resourceBarriers);
+
+#ifdef ENABLE_GPU_PROFILING
+	m_pProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_GPU_PROFILING
 	pCommandList->End();
 
 	return pCommandList;

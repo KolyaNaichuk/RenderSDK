@@ -5,6 +5,7 @@
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/PipelineState.h"
+#include "D3DWrapper/Profiler.h"
 
 namespace
 {
@@ -17,9 +18,7 @@ namespace
 }
 
 FillMeshTypeDepthBufferPass::FillMeshTypeDepthBufferPass(InitParams* pParams)
-	: m_pRootSignature(nullptr)
-	, m_pPipelineState(nullptr)
-	, m_pMeshTypeDepthTexture(nullptr)
+	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -37,8 +36,13 @@ void FillMeshTypeDepthBufferPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
+	Profiler* pProfiler = pRenderEnv->m_pProfiler;
 
 	pCommandList->Begin(m_pPipelineState);
+#ifdef ENABLE_GPU_PROFILING
+	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_GPU_PROFILING
+
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	
 	if (!m_ResourceBarriers.empty())
@@ -60,6 +64,10 @@ void FillMeshTypeDepthBufferPass::Record(RenderParams* pParams)
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	pCommandList->DrawInstanced(3, 1, 0, 0);
+
+#ifdef ENABLE_GPU_PROFILING
+	pProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_GPU_PROFILING
 	pCommandList->End();
 }
 

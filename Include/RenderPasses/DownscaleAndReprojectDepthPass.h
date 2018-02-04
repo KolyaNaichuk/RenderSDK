@@ -19,6 +19,7 @@ public:
 
 	struct InitParams
 	{
+		const char* m_pName;
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		DepthTexture* m_pPrevDepthTexture;
@@ -51,21 +52,23 @@ private:
 	void AddCopyResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
-	RootSignature* m_pReprojectRootSignature;
-	PipelineState* m_pReprojectPipelineState;
+	std::string m_Name;
+
+	RootSignature* m_pReprojectRootSignature = nullptr;
+	PipelineState* m_pReprojectPipelineState = nullptr;
 	DescriptorHandle m_ReprojectSRVHeapStart;
 	std::vector<ResourceTransitionBarrier> m_ReprojectResourceBarriers;
-	ColorTexture* m_pReprojectionColorTexture;
-	u32 m_NumThreadGroupsX;
-	u32 m_NumThreadGroupsY;
+	ColorTexture* m_pReprojectionColorTexture = nullptr;
+	u32 m_NumThreadGroupsX = 0;
+	u32 m_NumThreadGroupsY = 0;
 	
-	RootSignature* m_pCopyRootSignature;
-	PipelineState* m_pCopyPipelineState;
+	RootSignature* m_pCopyRootSignature = nullptr;
+	PipelineState* m_pCopyPipelineState = nullptr;
 	DescriptorHandle m_CopySRVHeapStart;
 	DescriptorHandle m_CopyDSVHeapStart;
 	std::vector<ResourceTransitionBarrier> m_CopyResourceBarriers;
-	DepthTexture* m_pReprojectionDepthTexture;
-	Viewport* m_pCopyViewport;
+	DepthTexture* m_pReprojectionDepthTexture = nullptr;
+	Viewport* m_pCopyViewport = nullptr;
 
 	ResourceStates m_OutputResourceStates;
 };

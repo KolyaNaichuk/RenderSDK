@@ -20,6 +20,7 @@ public:
 
 	struct InitParams
 	{
+		const char* m_pName;
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		ColorTexture* m_pMaterialIDTexture;
@@ -49,13 +50,14 @@ private:
 	void AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
-	RootSignature* m_pRootSignature;
-	PipelineState* m_pPipelineState;
+	std::string m_Name;
+	RootSignature* m_pRootSignature = nullptr;
+	PipelineState* m_pPipelineState = nullptr;
 	DescriptorHandle m_SRVHeapStart;
 	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
-	Buffer* m_pShadingRectangleMinPointBuffer;
-	Buffer* m_pShadingRectangleMaxPointBuffer;
-	u32 m_NumThreadGroupsX;
-	u32 m_NumThreadGroupsY;
+	Buffer* m_pShadingRectangleMinPointBuffer = nullptr;
+	Buffer* m_pShadingRectangleMaxPointBuffer = nullptr;
+	u32 m_NumThreadGroupsX = 0;
+	u32 m_NumThreadGroupsY = 0;
 };

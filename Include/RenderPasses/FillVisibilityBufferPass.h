@@ -23,6 +23,7 @@ public:
 
 	struct InitParams
 	{
+		const char* m_pName;
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		Buffer* m_pInstanceIndexBuffer;
@@ -56,18 +57,20 @@ private:
 	void AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
-	RootSignature* m_pRootSignature;
-	PipelineState* m_pPipelineState;
-	CommandSignature* m_pCommandSignature;
+	std::string m_Name;
+
+	RootSignature* m_pRootSignature = nullptr;
+	PipelineState* m_pPipelineState = nullptr;
+	CommandSignature* m_pCommandSignature = nullptr;
 
 	DescriptorHandle m_SRVHeapStartVS;
 	DescriptorHandle m_SRVHeapStartPS;
 	DescriptorHandle m_DSVHeapStart;
 	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
-	Viewport* m_pViewport;
+	Viewport* m_pViewport = nullptr;
 
-	Buffer* m_pUnitAABBIndexBuffer;
-	Buffer* m_pVisibilityBuffer;
-	Buffer* m_pArgumentBuffer;
+	Buffer* m_pUnitAABBIndexBuffer = nullptr;
+	Buffer* m_pVisibilityBuffer = nullptr;
+	Buffer* m_pArgumentBuffer = nullptr;
 };

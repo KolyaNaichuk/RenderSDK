@@ -22,6 +22,7 @@ public:
 
 	struct InitParams
 	{
+		const char* m_pName;
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		Buffer* m_pNumMeshesBuffer;
@@ -58,17 +59,19 @@ private:
 	void AddCreateCommandsResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 			
 private:
-	RootSignature* m_pSetArgumentsRootSignature;
-	PipelineState* m_pSetArgumentsPipelineState;
-	Buffer* m_pArgumentBuffer;
+	std::string m_Name;
+
+	RootSignature* m_pSetArgumentsRootSignature = nullptr;
+	PipelineState* m_pSetArgumentsPipelineState = nullptr;
+	Buffer* m_pArgumentBuffer = nullptr;
 	std::vector<ResourceTransitionBarrier> m_SetArgumentsResourceBarriers;
 	DescriptorHandle m_SetArgumentsSRVHeapStart;
 
-	RootSignature* m_pCreateCommandsRootSignature;
-	PipelineState* m_pCreateCommandsPipelineState;
-	CommandSignature* m_pCreateCommandsCommandSignature;
-	Buffer* m_pNumCommandsPerMeshTypeBuffer;
-	Buffer* m_pVoxelizeCommandBuffer;
+	RootSignature* m_pCreateCommandsRootSignature = nullptr;
+	PipelineState* m_pCreateCommandsPipelineState = nullptr;
+	CommandSignature* m_pCreateCommandsCommandSignature = nullptr;
+	Buffer* m_pNumCommandsPerMeshTypeBuffer = nullptr;
+	Buffer* m_pVoxelizeCommandBuffer = nullptr;
 	std::vector<ResourceTransitionBarrier> m_CreateCommandsResourceBarriers;
 	DescriptorHandle m_CreateCommandsSRVHeapStart;
 

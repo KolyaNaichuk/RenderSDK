@@ -9,6 +9,7 @@
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/GraphicsUtils.h"
 #include "D3DWrapper/RenderEnv.h"
+#include "D3DWrapper/Profiler.h"
 
 namespace
 {
@@ -23,9 +24,7 @@ namespace
 }
 
 RenderGBufferPass::RenderGBufferPass(InitParams* pParams)
-	: m_pRootSignature(nullptr)
-	, m_pPipelineState(nullptr)
-	, m_pCommandSignature(nullptr)
+	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -48,8 +47,13 @@ void RenderGBufferPass::Record(RenderParams* pParams)
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
+	Profiler* pProfiler = pRenderEnv->m_pProfiler;
 		
 	pCommandList->Begin(m_pPipelineState);
+#ifdef ENABLE_GPU_PROFILING
+	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_GPU_PROFILING
+
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
@@ -85,6 +89,9 @@ void RenderGBufferPass::Record(RenderParams* pParams)
 		pParams->m_pDrawCommandBuffer, pMeshRenderResources->GetMeshTypeOffset(meshType) * sizeof(DrawCommand),
 		pParams->m_pNumVisibleMeshesPerTypeBuffer, meshType * sizeof(u32));
 	
+#ifdef ENABLE_GPU_PROFILING
+	pProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_GPU_PROFILING
 	pCommandList->End();
 }
 

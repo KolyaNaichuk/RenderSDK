@@ -23,6 +23,7 @@ public:
 
 	struct InitParams
 	{
+		const char* m_pName;
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		DepthTexture* m_pDepthTexture;
@@ -66,22 +67,24 @@ private:
 	void AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
-	RootSignature* m_pRootSignature;
-	PipelineState* m_pPipelineState;
+	std::string m_Name;
+
+	RootSignature* m_pRootSignature = nullptr;
+	PipelineState* m_pPipelineState = nullptr;
 	DescriptorHandle m_SRVHeapStart;
 	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
 
 	DescriptorHandle m_PointLightIndicesOffsetBufferUAV;
-	Buffer* m_pPointLightIndicesOffsetBuffer;
-	Buffer* m_pPointLightIndexPerTileBuffer;
-	Buffer* m_pPointLightRangePerTileBuffer;
+	Buffer* m_pPointLightIndicesOffsetBuffer = nullptr;
+	Buffer* m_pPointLightIndexPerTileBuffer = nullptr;
+	Buffer* m_pPointLightRangePerTileBuffer = nullptr;
 
 	DescriptorHandle m_SpotLightIndicesOffsetBufferUAV;
-	Buffer* m_pSpotLightIndicesOffsetBuffer;
-	Buffer* m_pSpotLightIndexPerTileBuffer;
-	Buffer* m_pSpotLightRangePerTileBuffer;
+	Buffer* m_pSpotLightIndicesOffsetBuffer = nullptr;
+	Buffer* m_pSpotLightIndexPerTileBuffer = nullptr;
+	Buffer* m_pSpotLightRangePerTileBuffer = nullptr;
 
-	u16 m_NumThreadGroupsX;
-	u16 m_NumThreadGroupsY;
+	u16 m_NumThreadGroupsX = 0;
+	u16 m_NumThreadGroupsY = 0;
 };

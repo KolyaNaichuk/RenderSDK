@@ -6,6 +6,7 @@
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsUtils.h"
 #include "D3DWrapper/PipelineState.h"
+#include "D3DWrapper/Profiler.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
 
@@ -23,11 +24,7 @@ namespace
 }
 
 RenderTiledShadowMapPass::RenderTiledShadowMapPass(InitParams* pParams)
-	: m_pPipelineState(nullptr)
-	, m_pRootSignature(nullptr)
-	, m_pCommandSignature(nullptr)
-	, m_pShadowMap(nullptr)
-	, m_pViewport(nullptr)
+	: m_Name(pParams->m_pName)
 {
 	assert((pParams->m_LightType == LightType_Point) || (pParams->m_LightType == LightType_Spot));
 	
@@ -54,8 +51,13 @@ void RenderTiledShadowMapPass::Record(RenderParams* pParams)
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
+	Profiler* pProfiler = pRenderEnv->m_pProfiler;
 
 	pCommandList->Begin(m_pPipelineState);
+#ifdef ENABLE_GPU_PROFILING
+	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_GPU_PROFILING
+
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
@@ -81,6 +83,9 @@ void RenderTiledShadowMapPass::Record(RenderParams* pParams)
 		pParams->m_pShadowMapCommandBuffer, 0,
 		pParams->m_pNumShadowMapCommandsBuffer, 0);
 	
+#ifdef ENABLE_GPU_PROFILING
+	pProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_GPU_PROFILING
 	pCommandList->End();
 }
 

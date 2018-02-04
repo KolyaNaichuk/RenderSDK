@@ -30,6 +30,7 @@ public:
 	
 	struct InitParams
 	{
+		const char* m_pName;
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		LightType m_LightType;
@@ -69,16 +70,17 @@ private:
 	void AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
-	PipelineState* m_pPipelineState;
-	RootSignature* m_pRootSignature;
-	CommandSignature* m_pCommandSignature;
+	std::string m_Name;
+	PipelineState* m_pPipelineState = nullptr;
+	RootSignature* m_pRootSignature = nullptr;
+	CommandSignature* m_pCommandSignature = nullptr;
 	ResourceStates m_OutputResourceStates;
 	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	DescriptorHandle m_SRVHeapStartVS;
 	DescriptorHandle m_SRVHeapStartGS;
 	DescriptorHandle m_DSVHeapStart;
-	DepthTexture* m_pShadowMap;
-	Viewport* m_pViewport;
+	DepthTexture* m_pShadowMap = nullptr;
+	Viewport* m_pViewport = nullptr;
 };
 
 struct ShadowMapTile

@@ -5,6 +5,7 @@
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/PipelineState.h"
+#include "D3DWrapper/Profiler.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
 
@@ -25,14 +26,7 @@ namespace
 }
 
 CreateVoxelizeCommandsPass::CreateVoxelizeCommandsPass(InitParams* pParams)
-	: m_pSetArgumentsRootSignature(nullptr)
-	, m_pSetArgumentsPipelineState(nullptr)
-	, m_pArgumentBuffer(nullptr)
-	, m_pCreateCommandsRootSignature(nullptr)
-	, m_pCreateCommandsPipelineState(nullptr)
-	, m_pCreateCommandsCommandSignature(nullptr)
-	, m_pNumCommandsPerMeshTypeBuffer(nullptr)
-	, m_pVoxelizeCommandBuffer(nullptr)
+	: m_Name(pParams->m_pName)
 {
 	InitSetArgumentsResources(pParams);
 	InitSetArgumentsRootSignature(pParams);
@@ -62,10 +56,14 @@ void CreateVoxelizeCommandsPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
+	Profiler* pProfiler = pRenderEnv->m_pProfiler;
 
 	pCommandList->Begin();
-	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
+#ifdef ENABLE_GPU_PROFILING
+	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_GPU_PROFILING
 
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	{
 		pCommandList->SetPipelineState(m_pSetArgumentsPipelineState);
 		pCommandList->SetComputeRootSignature(m_pSetArgumentsRootSignature);
@@ -91,6 +89,9 @@ void CreateVoxelizeCommandsPass::Record(RenderParams* pParams)
 		pCommandList->ExecuteIndirect(m_pCreateCommandsCommandSignature, 1, m_pArgumentBuffer, 0, nullptr, 0);
 	}
 
+#ifdef ENABLE_GPU_PROFILING
+	pProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_GPU_PROFILING
 	pCommandList->End();
 }
 

@@ -25,10 +25,10 @@ Shader::Shader(LPCWSTR pFileName, LPCSTR pEntryPoint, LPCSTR pShaderModel, const
 	UINT compileFlags = 0;
 	compileFlags |= D3DCOMPILE_ENABLE_STRICTNESS;
 
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	compileFlags |= D3DCOMPILE_DEBUG;
 	compileFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 
 	ComPtr<ID3DBlob> d3dErrorBlob;
 	HRESULT result = D3DCompileFromFile(pFileName, pDefines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
@@ -452,15 +452,15 @@ InputElementDesc::InputElementDesc(LPCSTR pSemanticName, UINT semanticIndex, DXG
 PipelineState::PipelineState(GraphicsDevice* pDevice, const GraphicsPipelineStateDesc* pDesc, LPCWSTR pName)
 {
 	VerifyD3DResult(pDevice->GetD3DObject()->CreateGraphicsPipelineState(pDesc, IID_PPV_ARGS(&m_D3DPipelineState)));
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DPipelineState->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
 PipelineState::PipelineState(GraphicsDevice* pDevice, const ComputePipelineStateDesc* pDesc, LPCWSTR pName)
 {
 	VerifyD3DResult(pDevice->GetD3DObject()->CreateComputePipelineState(pDesc, IID_PPV_ARGS(&m_D3DPipelineState)));
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DPipelineState->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }

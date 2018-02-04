@@ -76,9 +76,9 @@ DescriptorHeap::DescriptorHeap(GraphicsDevice* pDevice, const DescriptorHeapDesc
 	m_NumUsedDescriptors = 0;
 	m_NumReservedDescriptors = pDesc->NumDescriptors;
 
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DDescriptorHeap->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
 DescriptorHandle DescriptorHeap::Allocate()

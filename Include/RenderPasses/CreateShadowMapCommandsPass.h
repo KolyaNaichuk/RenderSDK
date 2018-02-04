@@ -35,6 +35,7 @@ public:
 	
 	struct InitParams
 	{
+		const char* m_pName;
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 
@@ -86,28 +87,29 @@ private:
 	void AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
-	RootSignature* m_pRootSignature;
-	PipelineState* m_pPipelineState;
-	CommandSignature* m_pCommandSignature;
+	std::string m_Name;
+	RootSignature* m_pRootSignature = nullptr;
+	PipelineState* m_pPipelineState = nullptr;
+	CommandSignature* m_pCommandSignature = nullptr;
 	DescriptorHandle m_SRVHeapStart;
 	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
 
-	Buffer* m_pNumPointLightMeshInstancesBuffer;
+	Buffer* m_pNumPointLightMeshInstancesBuffer = nullptr;
 	DescriptorHandle m_NumPointLightMeshInstancesBufferUAV;
-	Buffer* m_pPointLightIndexForMeshInstanceBuffer;
-	Buffer* m_pMeshInstanceIndexForPointLightBuffer;
-	Buffer* m_pNumPointLightCommandsBuffer;
+	Buffer* m_pPointLightIndexForMeshInstanceBuffer = nullptr;
+	Buffer* m_pMeshInstanceIndexForPointLightBuffer = nullptr;
+	Buffer* m_pNumPointLightCommandsBuffer = nullptr;
 	DescriptorHandle m_NumPointLightCommandsBufferUAV;
-	Buffer* m_pPointLightCommandBuffer;
+	Buffer* m_pPointLightCommandBuffer = nullptr;
 
-	Buffer* m_pNumSpotLightMeshInstancesBuffer;
+	Buffer* m_pNumSpotLightMeshInstancesBuffer = nullptr;
 	DescriptorHandle m_NumSpotLightMeshInstancesBufferUAV;
-	Buffer* m_pSpotLightIndexForMeshInstanceBuffer;
-	Buffer* m_pMeshInstanceIndexForSpotLightBuffer;
-	Buffer* m_pNumSpotLightCommandsBuffer;
+	Buffer* m_pSpotLightIndexForMeshInstanceBuffer = nullptr;
+	Buffer* m_pMeshInstanceIndexForSpotLightBuffer = nullptr;
+	Buffer* m_pNumSpotLightCommandsBuffer = nullptr;
 	DescriptorHandle m_NumSpotLightCommandsBufferUAV;
-	Buffer* m_pSpotLightCommandBuffer;
+	Buffer* m_pSpotLightCommandBuffer = nullptr;
 
-	Buffer* m_pArgumentBuffer;
+	Buffer* m_pArgumentBuffer = nullptr;
 };

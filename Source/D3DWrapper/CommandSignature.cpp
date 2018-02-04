@@ -74,7 +74,7 @@ CommandSignature::CommandSignature(GraphicsDevice* pDevice, RootSignature* pRoot
 		pDesc, (pRootSignature != nullptr) ? pRootSignature->GetD3DObject() : nullptr,
 		IID_PPV_ARGS(&m_D3DCommandSignature)));
 
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DCommandSignature->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }

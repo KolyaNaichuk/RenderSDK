@@ -176,10 +176,12 @@
     <ClInclude Include="..\Include\D3DWrapper\CommandSignature.h" />
     <ClInclude Include="..\Include\D3DWrapper\Common.h" />
     <ClInclude Include="..\Include\D3DWrapper\DescriptorHeap.h" />
+    <ClInclude Include="..\Include\D3DWrapper\Profiler.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsDevice.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsFactory.h" />
     <ClInclude Include="..\Include\D3DWrapper\Fence.h" />
     <ClInclude Include="..\Include\D3DWrapper\PipelineState.h" />
+    <ClInclude Include="..\Include\D3DWrapper\QueryHeap.h" />
     <ClInclude Include="..\Include\D3DWrapper\RenderEnv.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsResource.h" />
     <ClInclude Include="..\Include\D3DWrapper\RootSignature.h" />
@@ -253,11 +255,13 @@
     <ClCompile Include="..\Source\D3DWrapper\CommandQueue.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\CommandSignature.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\DescriptorHeap.cpp" />
+    <ClCompile Include="..\Source\D3DWrapper\Profiler.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\GraphicsDevice.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\GraphicsFactory.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\Fence.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\PipelineState.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\GraphicsResource.cpp" />
+    <ClCompile Include="..\Source\D3DWrapper\QueryHeap.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\RootSignature.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\SwapChain.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\GraphicsUtils.cpp" />

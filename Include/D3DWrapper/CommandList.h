@@ -2,14 +2,14 @@
 
 #include "D3DWrapper/Common.h"
 
-class GraphicsDevice;
 class Buffer;
+class GraphicsDevice;
+class GraphicsResource;
 class CommandSignature;
 class PipelineState;
 class RootSignature;
-class RootSignature;
-class GraphicsResource;
 class DescriptorHeap;
+class QueryHeap;
 class Fence;
 
 struct Viewport;
@@ -61,6 +61,10 @@ public:
 	void ExecuteIndirect(CommandSignature* pCommandSignature, UINT maxCommandCount,
 		Buffer* pArgumentBuffer, UINT64 argumentBufferOffset,
 		Buffer* pCountBuffer, UINT64 countBufferOffset);
+
+	void BeginQuery(QueryHeap* pQueryHeap, D3D12_QUERY_TYPE type, UINT index);
+	void EndQuery(QueryHeap* pQueryHeap, D3D12_QUERY_TYPE type, UINT index);
+	void ResolveQueryData(QueryHeap* pQueryHeap, D3D12_QUERY_TYPE type, UINT startIndex, UINT numQueries, Buffer* pDestBuffer, UINT64 alignedDestBufferOffset);
 
 	void ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, const FLOAT clearColor[4]);
 	void ClearDepthStencilView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, FLOAT depth = 1.0f, UINT8 stencil = 0);

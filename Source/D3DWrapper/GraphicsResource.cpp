@@ -835,9 +835,10 @@ ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* p
 ColorTexture::ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource, LPCWSTR pName)
 	: GraphicsResource(d3dResource)
 {
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DResource->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
+
 	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
 	{
 		CreateTex1DViews(pRenderEnv, &m_Desc);
@@ -894,9 +895,9 @@ void ColorTexture::CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HE
 			initialState, nullptr, IID_PPV_ARGS(&m_D3DResource)));
 	}
 
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DResource->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
 void ColorTexture::CreateTex1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc)
@@ -1054,9 +1055,9 @@ void DepthTexture::CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HE
 	VerifyD3DResult(pD3DDevice->CreateCommittedResource(pHeapProps, heapFlags, pTexDesc,
 		initialState, &optimizedClearValue, IID_PPV_ARGS(&m_D3DResource)));
 
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DResource->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
 void DepthTexture::CreateTex1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc)
@@ -1202,9 +1203,9 @@ void Buffer::CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HEAP_PRO
 	m_pVBView = nullptr;
 	m_pIBView = nullptr;
 
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DResource->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
 void Buffer::CreateConstantBufferView(RenderEnv* pRenderEnv, const ConstantBufferDesc* pBufferDesc)

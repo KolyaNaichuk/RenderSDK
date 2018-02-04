@@ -4,6 +4,7 @@
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
+#include "D3DWrapper/Profiler.h"
 #include "Common/MeshRenderResources.h"
 
 namespace
@@ -17,12 +18,7 @@ namespace
 }
 
 FrustumMeshCullingPass::FrustumMeshCullingPass(InitParams* pParams)
-	: m_pRootSignature(nullptr)
-	, m_pPipelineState(nullptr)
-	, m_pNumVisibleMeshesBuffer(nullptr)
-	, m_pNumVisibleInstancesBuffer(nullptr)
-	, m_pVisibleMeshInfoBuffer(nullptr)
-	, m_pVisibleInstanceIndexBuffer(nullptr)
+	: m_Name(pParams->m_pName)
 	, m_MaxNumMeshes(pParams->m_MaxNumMeshes)
 {
 	InitResources(pParams);
@@ -166,8 +162,13 @@ void FrustumMeshCullingPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
+	Profiler* pProfiler = pRenderEnv->m_pProfiler;
 
 	pCommandList->Begin(m_pPipelineState);
+#ifdef ENABLE_GPU_PROFILING
+	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_GPU_PROFILING
+
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 
 	if (!m_ResourceBarriers.empty())
@@ -184,5 +185,9 @@ void FrustumMeshCullingPass::Record(RenderParams* pParams)
 	pCommandList->SetComputeRootConstantBufferView(kRootCBVParam, pParams->m_pAppDataBuffer);
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
 	pCommandList->Dispatch(m_MaxNumMeshes, 1, 1);
+
+#ifdef ENABLE_GPU_PROFILING
+	pProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_GPU_PROFILING
 	pCommandList->End();
 }

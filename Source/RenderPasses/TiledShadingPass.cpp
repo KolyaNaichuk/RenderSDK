@@ -3,6 +3,7 @@
 #include "D3DWrapper/GraphicsUtils.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/PipelineState.h"
+#include "D3DWrapper/Profiler.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
 
@@ -23,8 +24,7 @@ namespace
 }
 
 TiledShadingPass::TiledShadingPass(InitParams* pParams)
-	: m_pRootSignature(nullptr)
-	, m_pPipelineState(nullptr)
+	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -45,8 +45,13 @@ void TiledShadingPass::Record(RenderParams* pParams)
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
+	Profiler* pProfiler = pRenderEnv->m_pProfiler;
 
 	pCommandList->Begin(m_pPipelineState);
+#ifdef ENABLE_GPU_PROFILING
+	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_GPU_PROFILING
+
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 
 	if (!m_ResourceBarriers.empty())
@@ -75,6 +80,10 @@ void TiledShadingPass::Record(RenderParams* pParams)
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	pCommandList->DrawInstanced(4, 1, 0, 0);
+
+#ifdef ENABLE_GPU_PROFILING
+	pProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_GPU_PROFILING
 	pCommandList->End();
 }
 

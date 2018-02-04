@@ -2,6 +2,7 @@
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/PipelineState.h"
+#include "D3DWrapper/Profiler.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
 
@@ -22,14 +23,7 @@ namespace
 }
 
 TiledLightCullingPass::TiledLightCullingPass(InitParams* pParams)
-	: m_pRootSignature(nullptr)
-	, m_pPipelineState(nullptr)
-	, m_pPointLightIndicesOffsetBuffer(nullptr)
-	, m_pPointLightIndexPerTileBuffer(nullptr)
-	, m_pPointLightRangePerTileBuffer(nullptr)
-	, m_pSpotLightIndicesOffsetBuffer(nullptr)
-	, m_pSpotLightIndexPerTileBuffer(nullptr)
-	, m_pSpotLightRangePerTileBuffer(nullptr)
+	: m_Name(pParams->m_pName)
 	, m_NumThreadGroupsX(pParams->m_NumTilesX)
 	, m_NumThreadGroupsY(pParams->m_NumTilesY)
 {
@@ -54,8 +48,13 @@ void TiledLightCullingPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
+	Profiler* pProfiler = pRenderEnv->m_pProfiler;
 	
 	pCommandList->Begin(m_pPipelineState);
+#ifdef ENABLE_GPU_PROFILING
+	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_GPU_PROFILING
+
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 
 	if (!m_ResourceBarriers.empty())
@@ -76,6 +75,10 @@ void TiledLightCullingPass::Record(RenderParams* pParams)
 		pCommandList->ClearUnorderedAccessView(m_SpotLightIndicesOffsetBufferUAV, m_pSpotLightIndicesOffsetBuffer->GetUAVHandle(), m_pSpotLightIndicesOffsetBuffer, clearValue);
 		
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
+
+#ifdef ENABLE_GPU_PROFILING
+	pProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_GPU_PROFILING
 	pCommandList->End();
 }
 

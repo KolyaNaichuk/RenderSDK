@@ -46,6 +46,7 @@ class VoxelizePass;
 class Scene;
 class PointLight;
 class SpotLight;
+class Profiler;
 
 struct LightFrustum
 {
@@ -222,6 +223,7 @@ private:
 	DescriptorHeap* m_pShaderInvisibleSamplerHeap = nullptr;
 	DescriptorHeap* m_pShaderVisibleSRVHeap = nullptr;
 	DescriptorHeap* m_pShaderVisibleSamplerHeap = nullptr;
+	Profiler* m_pProfiler = nullptr;
 	DepthTexture* m_pDepthTexture = nullptr;
 	ColorTexture* m_pAccumLightTexture = nullptr;
 	Viewport* m_pBackBufferViewport = nullptr;

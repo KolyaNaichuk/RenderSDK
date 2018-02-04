@@ -16,9 +16,9 @@ CommandQueueDesc::CommandQueueDesc(D3D12_COMMAND_LIST_TYPE type)
 CommandQueue::CommandQueue(GraphicsDevice* pDevice, const CommandQueueDesc* pDesc, LPCWSTR pName)
 {
 	VerifyD3DResult(pDevice->GetD3DObject()->CreateCommandQueue(pDesc, IID_PPV_ARGS(&m_D3DCommandQueue)));
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DCommandQueue->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
 void CommandQueue::ExecuteCommandLists(UINT numCommandLists, CommandList** ppCommandLists, Fence* pCompletionFence, UINT64 completionFenceValue)
@@ -41,4 +41,11 @@ void CommandQueue::ExecuteCommandLists(UINT numCommandLists, CommandList** ppCom
 void CommandQueue::Signal(Fence* pFence, UINT64 fenceValue)
 {
 	VerifyD3DResult(m_D3DCommandQueue->Signal(pFence->GetD3DObject(), fenceValue));
+}
+
+UINT64 CommandQueue::GetTimestampFrequency()
+{
+	UINT64 timestampFrequency = 0;
+	VerifyD3DResult(m_D3DCommandQueue->GetTimestampFrequency(&timestampFrequency));
+	return timestampFrequency;
 }

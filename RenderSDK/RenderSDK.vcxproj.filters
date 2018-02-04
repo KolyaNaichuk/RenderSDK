@@ -252,6 +252,12 @@
     <ClInclude Include="..\Include\RenderPasses\CreateShadowMapCommandsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\Profiler.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\QueryHeap.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -469,6 +475,12 @@
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\CreateShadowMapCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\Profiler.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\QueryHeap.cpp">
+      <Filter>D3DWrapper</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
