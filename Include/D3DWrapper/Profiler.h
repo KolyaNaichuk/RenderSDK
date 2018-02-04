@@ -14,6 +14,8 @@ struct ProfileData
 	enum { kNumTimeSamples = 64 };
 	f64 m_TimeSamples[kNumTimeSamples] = {};
 	u32 m_CurrentSampleIndex = 0;
+	f64 m_MaxTime = 0.0;
+	f64 m_AvgTime = 0.0;
 };
 
 class Profiler
