@@ -6,7 +6,7 @@ class CommandListPool;
 class CommandQueue;
 class GraphicsDevice;
 class DescriptorHeap;
-class Profiler;
+class GPUProfiler;
 class Fence;
 
 struct HeapProperties;
@@ -16,7 +16,7 @@ struct RenderEnv
 	GraphicsDevice* m_pDevice = nullptr;
 	CommandQueue* m_pCommandQueue = nullptr;
 	CommandListPool* m_pCommandListPool = nullptr;
-	Profiler* m_pProfiler = nullptr;
+	GPUProfiler* m_pGPUProfiler = nullptr;
 	Fence* m_pFence = nullptr;
 	UINT64 m_LastSubmissionFenceValue = 0;
 

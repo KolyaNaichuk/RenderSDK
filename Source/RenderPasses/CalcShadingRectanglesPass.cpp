@@ -3,7 +3,7 @@
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/PipelineState.h"
-#include "D3DWrapper/Profiler.h"
+#include "D3DWrapper/GPUProfiler.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
 #include "Math/Vector2.h"
@@ -38,12 +38,12 @@ void CalcShadingRectanglesPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
-	Profiler* pProfiler = pRenderEnv->m_pProfiler;
-	
+	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
+
 	pCommandList->Begin(m_pPipelineState);
-#ifdef ENABLE_GPU_PROFILING
-	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_PROFILING
 
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 
@@ -64,9 +64,9 @@ void CalcShadingRectanglesPass::Record(RenderParams* pParams)
 
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
 
-#ifdef ENABLE_GPU_PROFILING
-	pProfiler->EndProfile(pCommandList, profileIndex);
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	pGPUProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_PROFILING
 	pCommandList->End();
 }
 

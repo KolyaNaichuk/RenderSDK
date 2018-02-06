@@ -1,4 +1,4 @@
-#include "D3DWrapper/Profiler.h"
+#include "D3DWrapper/GPUProfiler.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/CommandQueue.h"
@@ -6,7 +6,7 @@
 #include "D3DWrapper/RenderEnv.h"
 #include "Math/Math.h"
 
-Profiler::Profiler(RenderEnv* pRenderEnv, u32 maxNumProfiles, u32 renderLatency)
+GPUProfiler::GPUProfiler(RenderEnv* pRenderEnv, u32 maxNumProfiles, u32 renderLatency)
 	: m_MaxNumQueries(2 * maxNumProfiles)
 {
 	QueryHeapDesc queryHeapDesc(D3D12_QUERY_HEAP_TYPE_TIMESTAMP, m_MaxNumQueries);
@@ -20,18 +20,18 @@ Profiler::Profiler(RenderEnv* pRenderEnv, u32 maxNumProfiles, u32 renderLatency)
 	m_Profiles.resize(maxNumProfiles);
 }
 
-Profiler::~Profiler()
+GPUProfiler::~GPUProfiler()
 {
 	SafeDelete(m_pQueryHeap);
 	SafeDelete(m_pTimestampBuffer);
 }
 
-void Profiler::StartFrame(u32 currentFrameIndex)
+void GPUProfiler::StartFrame(u32 currentFrameIndex)
 {
 	m_CurrentFrameIndex = currentFrameIndex;
 }
 
-void Profiler::EndFrame(CommandQueue* pCommandQueue)
+void GPUProfiler::EndFrame(CommandQueue* pCommandQueue)
 {
 	const u64 timestampFrequency = pCommandQueue->GetTimestampFrequency();
 
@@ -79,7 +79,7 @@ void Profiler::EndFrame(CommandQueue* pCommandQueue)
 	m_pTimestampBuffer->Unmap(0, &writtenRange);
 }
 
-u32 Profiler::StartProfile(CommandList* pCommandList, const char* pProfileName)
+u32 GPUProfiler::StartProfile(CommandList* pCommandList, const char* pProfileName)
 {
 	assert(pProfileName != nullptr);
 	assert(pCommandList != nullptr);
@@ -105,7 +105,7 @@ u32 Profiler::StartProfile(CommandList* pCommandList, const char* pProfileName)
 	return profileIndex;
 }
 
-void Profiler::EndProfile(CommandList* pCommandList, u32 profileIndex)
+void GPUProfiler::EndProfile(CommandList* pCommandList, u32 profileIndex)
 {
 	assert(pCommandList != nullptr);
 	ProfileData& profileData = m_Profiles[profileIndex];
@@ -118,7 +118,7 @@ void Profiler::EndProfile(CommandList* pCommandList, u32 profileIndex)
 	pCommandList->ResolveQueryData(m_pQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, startQueryIndex, 2, m_pTimestampBuffer, destOffset);
 }
 
-void Profiler::OutputToConsole()
+void GPUProfiler::OutputToConsole()
 {
 	enum class SortOrder
 	{

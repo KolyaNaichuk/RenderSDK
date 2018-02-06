@@ -176,7 +176,7 @@
     <ClInclude Include="..\Include\D3DWrapper\CommandSignature.h" />
     <ClInclude Include="..\Include\D3DWrapper\Common.h" />
     <ClInclude Include="..\Include\D3DWrapper\DescriptorHeap.h" />
-    <ClInclude Include="..\Include\D3DWrapper\Profiler.h" />
+    <ClInclude Include="..\Include\D3DWrapper\GPUProfiler.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsDevice.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsFactory.h" />
     <ClInclude Include="..\Include\D3DWrapper\Fence.h" />
@@ -255,7 +255,7 @@
     <ClCompile Include="..\Source\D3DWrapper\CommandQueue.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\CommandSignature.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\DescriptorHeap.cpp" />
-    <ClCompile Include="..\Source\D3DWrapper\Profiler.cpp" />
+    <ClCompile Include="..\Source\D3DWrapper\GPUProfiler.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\GraphicsDevice.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\GraphicsFactory.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\Fence.cpp" />

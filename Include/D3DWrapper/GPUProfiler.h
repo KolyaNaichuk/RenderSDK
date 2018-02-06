@@ -8,21 +8,11 @@ class CommandQueue;
 class QueryHeap;
 struct RenderEnv;
 
-struct ProfileData
-{
-	std::string m_Name;
-	enum { kNumTimeSamples = 64 };
-	f64 m_TimeSamples[kNumTimeSamples] = {};
-	u32 m_CurrentSampleIndex = 0;
-	f64 m_MaxTime = 0.0;
-	f64 m_AvgTime = 0.0;
-};
-
-class Profiler
+class GPUProfiler
 {
 public:
-	Profiler(RenderEnv* pRenderEnv, u32 maxNumProfiles, u32 renderLatency);
-	~Profiler();
+	GPUProfiler(RenderEnv* pRenderEnv, u32 maxNumProfiles, u32 renderLatency);
+	~GPUProfiler();
 
 	void StartFrame(u32 currentFrameIndex);
 	void EndFrame(CommandQueue* pCommandQueue);
@@ -33,6 +23,16 @@ public:
 	void OutputToConsole();
 
 private:
+	struct ProfileData
+	{
+		std::string m_Name;
+		enum { kNumTimeSamples = 64 };
+		f64 m_TimeSamples[kNumTimeSamples] = {};
+		u32 m_CurrentSampleIndex = 0;
+		f64 m_MaxTime = 0.0;
+		f64 m_AvgTime = 0.0;
+	};
+
 	std::vector<ProfileData> m_Profiles;
 	u32 m_NumUsedProfiles = 0;
 	u32 m_MaxNumQueries = 0;

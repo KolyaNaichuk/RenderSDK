@@ -10,7 +10,7 @@
 #include "D3DWrapper/Fence.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/SwapChain.h"
-#include "D3DWrapper/Profiler.h"
+#include "D3DWrapper/GPUProfiler.h"
 #include "RenderPasses/CreateShadowMapCommandsPass.h"
 #include "RenderPasses/CreateVoxelizeCommandsPass.h"
 #include "RenderPasses/PropagateLightPass.h"
@@ -385,7 +385,7 @@ DXApplication::~DXApplication()
 	SafeArrayDelete(m_ppActivePointLights);
 	SafeArrayDelete(m_pSpotLights);
 	SafeArrayDelete(m_ppActiveSpotLights);
-	SafeDelete(m_pProfiler);
+	SafeDelete(m_pGPUProfiler);
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pGeometryBuffer);
 	SafeDelete(m_pMeshRenderResources);
@@ -549,9 +549,9 @@ void DXApplication::OnUpdate()
 
 void DXApplication::OnRender()
 {
-#ifdef ENABLE_GPU_PROFILING
-	m_pProfiler->StartFrame(m_BackBufferIndex);
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	m_pGPUProfiler->StartFrame(m_BackBufferIndex);
+#endif // ENABLE_PROFILING
 
 	static CommandList* commandListBatch[MAX_NUM_COMMAND_LISTS_IN_BATCH];
 	u8 commandListBatchSize = 0;
@@ -587,10 +587,10 @@ void DXApplication::OnRender()
 	m_pSwapChain->Present(1, 0);
 	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 
-#ifdef ENABLE_GPU_PROFILING
-	m_pProfiler->EndFrame(m_pCommandQueue);
-	m_pProfiler->OutputToConsole();
-#endif // #ifdef ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	m_pGPUProfiler->EndFrame(m_pCommandQueue);
+	m_pGPUProfiler->OutputToConsole();
+#endif // #ifdef ENABLE_PROFILING
 
 #ifdef DEBUG_RENDER_PASS
 	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
@@ -786,10 +786,10 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	m_pRenderEnv->m_pShaderVisibleSRVHeap = m_pShaderVisibleSRVHeap;
 	m_pRenderEnv->m_pShaderVisibleSamplerHeap = m_pShaderVisibleSamplerHeap;
 
-#ifdef ENABLE_GPU_PROFILING
-	m_pProfiler = new Profiler(m_pRenderEnv, 100/*maxNumProfiles*/, kNumBackBuffers);
-#endif // ENABLE_GPU_PROFILING
-	m_pRenderEnv->m_pProfiler = m_pProfiler;
+#ifdef ENABLE_PROFILING
+	m_pGPUProfiler = new GPUProfiler(m_pRenderEnv, 100/*maxNumProfiles*/, kNumBackBuffers);
+#endif // ENABLE_PROFILING
+	m_pRenderEnv->m_pGPUProfiler = m_pGPUProfiler;
 
 	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), backBufferWidth, backBufferHeight);
 	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
@@ -1053,15 +1053,15 @@ CommandList* DXApplication::RecordPreRenderPass()
 		
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pClearResourcesCommandList");
 	pCommandList->Begin();
-#ifdef ENABLE_GPU_PROFILING
-	u32 profileIndex = m_pProfiler->StartProfile(pCommandList, "PreRenderPass");
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = m_pGPUProfiler->StartProfile(pCommandList, "PreRenderPass");
+#endif // ENABLE_PROFILING
 
 	pCommandList->ClearRenderTargetView(m_pAccumLightTexture->GetRTVHandle(), clearColor);
 
-#ifdef ENABLE_GPU_PROFILING
-	m_pProfiler->EndProfile(pCommandList, profileIndex);
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	m_pGPUProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_PROFILING
 	pCommandList->End();
 	
 	return pCommandList;
@@ -1819,9 +1819,9 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 	
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pUploadVisibleLightDataCommandList");
 	pCommandList->Begin();
-#ifdef ENABLE_GPU_PROFILING
-	u32 profileIndex = m_pProfiler->StartProfile(pCommandList, "UploadLightDataPass");
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = m_pGPUProfiler->StartProfile(pCommandList, "UploadLightDataPass");
+#endif // ENABLE_PROFILING
 
 	static ResourceTransitionBarrier resourceBarriers[8];
 	u8 numBarriers = 0;
@@ -1895,9 +1895,9 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 			m_NumActiveSpotLights * sizeof(SpotLightProps));
 	}
 
-#ifdef ENABLE_GPU_PROFILING
-	m_pProfiler->EndProfile(pCommandList, profileIndex);
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	m_pGPUProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_PROFILING
 	pCommandList->End();
 
 	return pCommandList;
@@ -2333,9 +2333,9 @@ CommandList* DXApplication::RecordPostRenderPass()
 
 	CommandList* pCommandList = m_pCommandListPool->Create(L"pPostRenderCommandList");
 	pCommandList->Begin();
-#ifdef ENABLE_GPU_PROFILING
-	u32 profileIndex = m_pProfiler->StartProfile(pCommandList, "PostRenderPass");
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = m_pGPUProfiler->StartProfile(pCommandList, "PostRenderPass");
+#endif // ENABLE_PROFILING
 	
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 	resourceBarriers[numBarriers++] = ResourceTransitionBarrier(pRenderTarget,
@@ -2382,9 +2382,9 @@ CommandList* DXApplication::RecordPostRenderPass()
 
 	pCommandList->ResourceBarrier(numBarriers, resourceBarriers);
 
-#ifdef ENABLE_GPU_PROFILING
-	m_pProfiler->EndProfile(pCommandList, profileIndex);
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	m_pGPUProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_PROFILING
 	pCommandList->End();
 
 	return pCommandList;

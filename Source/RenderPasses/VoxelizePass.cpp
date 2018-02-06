@@ -6,7 +6,7 @@
 #include "D3DWrapper/GraphicsUtils.h"
 #include "D3DWrapper/DescriptorHeap.h"
 #include "D3DWrapper/PipelineState.h"
-#include "D3DWrapper/Profiler.h"
+#include "D3DWrapper/GPUProfiler.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
 #include "Common/MeshRenderResources.h"
@@ -63,12 +63,12 @@ void VoxelizePass::Record(RenderParams* pParams)
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
-	Profiler* pProfiler = pRenderEnv->m_pProfiler;
+	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
 
 	pCommandList->Begin(m_pPipelineState);
-#ifdef ENABLE_GPU_PROFILING
-	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_PROFILING
 
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
@@ -96,26 +96,26 @@ void VoxelizePass::Record(RenderParams* pParams)
 	pCommandList->ExecuteIndirect(m_pCommandSignature, pMeshRenderResources->GetTotalNumMeshes(),
 		pParams->m_pVoxelizeCommandBuffer, 0, pParams->m_pNumCommandsPerMeshTypeBuffer, meshType * sizeof(u32));
 
-#ifdef ENABLE_GPU_PROFILING
-	pProfiler->EndProfile(pCommandList, profileIndex);
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	pGPUProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_PROFILING
 	pCommandList->End();
 #else
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
-	Profiler* pProfiler = pRenderEnv->m_pProfiler;
+	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
 
 	pCommandList->Begin();
-#ifdef ENABLE_GPU_PROFILING
-	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_PROFILING
 
 	if (!m_ResourceBarriers.empty())
 		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 
-#ifdef ENABLE_GPU_PROFILING
-	pProfiler->EndProfile(pCommandList, profileIndex);
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	pGPUProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_PROFILING
 	pCommandList->End();
 #endif
 }

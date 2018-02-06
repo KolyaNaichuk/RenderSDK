@@ -252,10 +252,10 @@
     <ClInclude Include="..\Include\RenderPasses\CreateShadowMapCommandsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\Profiler.h">
+    <ClInclude Include="..\Include\D3DWrapper\QueryHeap.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\QueryHeap.h">
+    <ClInclude Include="..\Include\D3DWrapper\GPUProfiler.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
   </ItemGroup>
@@ -476,10 +476,10 @@
     <ClCompile Include="..\Source\RenderPasses\CreateShadowMapCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\Profiler.cpp">
+    <ClCompile Include="..\Source\D3DWrapper\QueryHeap.cpp">
       <Filter>D3DWrapper</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\D3DWrapper\QueryHeap.cpp">
+    <ClCompile Include="..\Source\D3DWrapper\GPUProfiler.cpp">
       <Filter>D3DWrapper</Filter>
     </ClCompile>
   </ItemGroup>

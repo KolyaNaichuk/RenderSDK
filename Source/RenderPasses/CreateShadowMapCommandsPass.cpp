@@ -3,7 +3,7 @@
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/CommandSignature.h"
 #include "D3DWrapper/PipelineState.h"
-#include "D3DWrapper/Profiler.h"
+#include "D3DWrapper/GPUProfiler.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
 #include "Math/Math.h"
@@ -58,12 +58,12 @@ void CreateShadowMapCommandsPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
-	Profiler* pProfiler = pRenderEnv->m_pProfiler;
+	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
 	
 	pCommandList->Begin(m_pPipelineState);
-#ifdef ENABLE_GPU_PROFILING
-	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_PROFILING
 
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
@@ -100,9 +100,9 @@ void CreateShadowMapCommandsPass::Record(RenderParams* pParams)
 
 	pCommandList->ExecuteIndirect(m_pCommandSignature, 1, m_pArgumentBuffer, 0, nullptr, 0);
 
-#ifdef ENABLE_GPU_PROFILING
-	pProfiler->EndProfile(pCommandList, profileIndex);
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	pGPUProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_PROFILING
 	pCommandList->End();
 }
 

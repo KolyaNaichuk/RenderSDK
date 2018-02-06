@@ -5,7 +5,7 @@
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
-#include "D3DWrapper/Profiler.h"
+#include "D3DWrapper/GPUProfiler.h"
 #include "Math/Math.h"
 
 namespace
@@ -83,12 +83,12 @@ void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
-	Profiler* pProfiler = pRenderEnv->m_pProfiler;
+	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
 	
 	pCommandList->Begin();
-#ifdef ENABLE_GPU_PROFILING
-	u32 profileIndex = pProfiler->StartProfile(pCommandList, m_Name.c_str());
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_PROFILING
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
@@ -130,9 +130,9 @@ void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 		pCommandList->DrawInstanced(3, 1, 0, 0);
 	}
 
-#ifdef ENABLE_GPU_PROFILING
-	pProfiler->EndProfile(pCommandList, profileIndex);
-#endif // ENABLE_GPU_PROFILING
+#ifdef ENABLE_PROFILING
+	pGPUProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_PROFILING
 	pCommandList->End();
 }
 
