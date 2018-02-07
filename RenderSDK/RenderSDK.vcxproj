@@ -155,6 +155,7 @@
     <ClInclude Include="..\Include\Common\Camera.h" />
     <ClInclude Include="..\Include\Common\Color.h" />
     <ClInclude Include="..\Include\Common\Common.h" />
+    <ClInclude Include="..\Include\Common\CPUProfiler.h" />
     <ClInclude Include="..\Include\Common\FileUtilities.h" />
     <ClInclude Include="..\Include\Common\GeometryBuffer.h" />
     <ClInclude Include="..\Include\Common\Material.h" />
@@ -235,6 +236,7 @@
     <ClCompile Include="..\Source\Common\Application.cpp" />
     <ClCompile Include="..\Source\Common\Camera.cpp" />
     <ClCompile Include="..\Source\Common\Common.cpp" />
+    <ClCompile Include="..\Source\Common\CPUProfiler.cpp" />
     <ClCompile Include="..\Source\Common\FileUtilities.cpp" />
     <ClCompile Include="..\Source\Common\GeometryBuffer.cpp" />
     <ClCompile Include="..\Source\Common\Light.cpp" />

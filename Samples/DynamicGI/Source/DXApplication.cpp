@@ -36,6 +36,7 @@
 #include "Common/Camera.h"
 #include "Common/Scene.h"
 #include "Common/SceneLoader.h"
+#include "Common/CPUProfiler.h"
 #include "Math/BasisAxes.h"
 #include "Math/Cone.h"
 #include "Math/Frustum.h"
@@ -385,6 +386,7 @@ DXApplication::~DXApplication()
 	SafeArrayDelete(m_ppActivePointLights);
 	SafeArrayDelete(m_pSpotLights);
 	SafeArrayDelete(m_ppActiveSpotLights);
+	SafeDelete(m_pCPUProfiler);
 	SafeDelete(m_pGPUProfiler);
 	SafeDelete(m_pCamera);
 	SafeDelete(m_pGeometryBuffer);
@@ -550,6 +552,7 @@ void DXApplication::OnUpdate()
 void DXApplication::OnRender()
 {
 #ifdef ENABLE_PROFILING
+	m_pCPUProfiler->StartFrame();
 	m_pGPUProfiler->StartFrame(m_BackBufferIndex);
 #endif // ENABLE_PROFILING
 
@@ -588,7 +591,10 @@ void DXApplication::OnRender()
 	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 
 #ifdef ENABLE_PROFILING
+	m_pCPUProfiler->EndFrame();
 	m_pGPUProfiler->EndFrame(m_pCommandQueue);
+
+	m_pCPUProfiler->OutputToConsole();
 	m_pGPUProfiler->OutputToConsole();
 #endif // #ifdef ENABLE_PROFILING
 
@@ -787,7 +793,8 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	m_pRenderEnv->m_pShaderVisibleSamplerHeap = m_pShaderVisibleSamplerHeap;
 
 #ifdef ENABLE_PROFILING
-	m_pGPUProfiler = new GPUProfiler(m_pRenderEnv, 100/*maxNumProfiles*/, kNumBackBuffers);
+	m_pCPUProfiler = new CPUProfiler(25/*maxNumProfiles*/);
+	m_pGPUProfiler = new GPUProfiler(m_pRenderEnv, 50/*maxNumProfiles*/, kNumBackBuffers);
 #endif // ENABLE_PROFILING
 	m_pRenderEnv->m_pGPUProfiler = m_pGPUProfiler;
 
@@ -2392,6 +2399,10 @@ CommandList* DXApplication::RecordPostRenderPass()
 
 void DXApplication::SetupPointLightDataForUpload(const Frustum& cameraWorldFrustum)
 {
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = m_pCPUProfiler->StartProfile("SetupPointLightDataForUpload");
+#endif // ENABLE_PROFILING
+	
 	decltype(m_NumPointLights) numVisiblePointLights = 0;
 	for (decltype(m_NumPointLights) lightIndex = 0; lightIndex < m_NumPointLights; ++lightIndex)
 	{
@@ -2461,6 +2472,10 @@ void DXApplication::SetupPointLightDataForUpload(const Frustum& cameraWorldFrust
 			pUploadActiveViewProjMatrices[faceIndexOffset + faceIndex] = viewProjMatrix * shadowMapTileMatrix;
 		}
 	}
+
+#ifdef ENABLE_PROFILING
+	m_pCPUProfiler->EndProfile(profileIndex);
+#endif // ENABLE_PROFILING
 }
 
 void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustum)

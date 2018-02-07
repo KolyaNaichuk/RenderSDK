@@ -258,6 +258,9 @@
     <ClInclude Include="..\Include\D3DWrapper\GPUProfiler.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Common\CPUProfiler.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -481,6 +484,9 @@
     </ClCompile>
     <ClCompile Include="..\Source\D3DWrapper\GPUProfiler.cpp">
       <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\CPUProfiler.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

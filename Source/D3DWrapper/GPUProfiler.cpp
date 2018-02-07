@@ -49,8 +49,8 @@ void GPUProfiler::EndFrame(CommandQueue* pCommandQueue)
 		u64 startTime = pTimestampQueryData[startQueryIndex];
 		u64 endTime = pTimestampQueryData[endQueryIndex];
 		
-		f64 timeInMS = (f64(endTime - startTime) / f64(timestampFrequency)) * 1000.0;
-		profileData.m_TimeSamples[profileData.m_CurrentSampleIndex] = timeInMS;
+		f64 timeInMilliseconds = (f64(endTime - startTime) / f64(timestampFrequency)) * 1000.0;
+		profileData.m_TimeSamples[profileData.m_CurrentSampleIndex] = timeInMilliseconds;
 		profileData.m_CurrentSampleIndex = (profileData.m_CurrentSampleIndex + 1) % ProfileData::kNumTimeSamples;
 
 		f64 maxTime = 0.0;
@@ -97,8 +97,7 @@ u32 GPUProfiler::StartProfile(CommandList* pCommandList, const char* pProfileNam
 		profileIndex = m_NumUsedProfiles++;
 		m_Profiles[profileIndex].m_Name = pProfileName;
 	}
-	ProfileData& profileData = m_Profiles[profileIndex];
-		
+
 	const u32 startQueryIndex = 2 * profileIndex;
 	pCommandList->EndQuery(m_pQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, startQueryIndex);
 	
@@ -108,7 +107,6 @@ u32 GPUProfiler::StartProfile(CommandList* pCommandList, const char* pProfileNam
 void GPUProfiler::EndProfile(CommandList* pCommandList, u32 profileIndex)
 {
 	assert(pCommandList != nullptr);
-	ProfileData& profileData = m_Profiles[profileIndex];
 	
 	const u32 startQueryIndex = 2 * profileIndex;
 	const u32 endQueryIndex = startQueryIndex + 1;
