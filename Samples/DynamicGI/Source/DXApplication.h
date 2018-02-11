@@ -100,6 +100,7 @@ public:
 		TexCoordBuffer,
 		DepthBufferWithMeshType,
 		PointLightTiledShadowMap,
+		SpotLightTiledShadowMap,
 		VoxelRelectance,
 		Unknown
 	};
@@ -161,6 +162,9 @@ private:
 	void InitRenderPointLightTiledShadowMapPass();
 	CommandList* RecordRenderPointLightTiledShadowMapPass();
 
+	void InitRenderSpotLightTiledShadowMapPass();
+	CommandList* RecordRenderSpotLightTiledShadowMapPass();
+
 	void InitCreateVoxelizeCommandsPass();
 	CommandList* RecordCreateVoxelizeCommandsPass();
 
@@ -191,11 +195,17 @@ private:
 	void InitVisualizePointLightTiledShadowMapPass();
 	CommandList* RecordVisualizePointLightTiledShadowMapPass();
 
+	void InitVisualizeSpotLightTiledShadowMapPass();
+	CommandList* RecordVisualizeSpotLightTiledShadowMapPass();
+
 	void InitVisualizeVoxelReflectancePass();
 	CommandList* RecordVisualizeVoxelReflectancePass();
 
 	CommandList* RecordVisualizeDisplayResultPass();
 	CommandList* RecordPostRenderPass();
+
+	void InitPointLightRenderResources(Scene* pScene);
+	void InitSpotLightRenderResources(Scene* pScene);
 
 	void SetupPointLightDataForUpload(const Frustum& cameraWorldFrustum);
 	void SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustum);
@@ -251,6 +261,8 @@ private:
 	CreateShadowMapCommandsPass* m_pCreateShadowMapCommandsPass = nullptr;
 	RenderTiledShadowMapPass* m_pRenderPointLightTiledShadowMapPass = nullptr;
 	ShadowMapTileAllocator* m_pPointLightShadowMapTileAllocator = nullptr;
+	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass = nullptr;
+	ShadowMapTileAllocator* m_pSpotLightShadowMapTileAllocator = nullptr;
 	CreateVoxelizeCommandsPass* m_pCreateVoxelizeCommandsPass = nullptr;
 	VoxelizePass* m_pVoxelizePass = nullptr;
 	TiledLightCullingPass* m_pTiledLightCullingPass = nullptr;
@@ -262,6 +274,7 @@ private:
 	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeTexturePass* m_VisualizeDepthBufferWithMeshTypePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeTexturePass* m_VisualizePointLightTiledShadowMapPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	VisualizeTexturePass* m_VisualizeSpotLightTiledShadowMapPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeVoxelReflectancePass* m_VisualizeVoxelReflectancePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 
 	u32 m_NumPointLights = 0;
@@ -283,6 +296,8 @@ private:
 
 	Buffer* m_pActiveSpotLightWorldBoundsBuffer = nullptr;
 	Buffer* m_pActiveSpotLightPropsBuffer = nullptr;
+	Buffer* m_pActiveSpotLightWorldFrustumBuffer = nullptr;
+	Buffer* m_pActiveSpotLightViewProjMatrixBuffer = nullptr;
 
 	Buffer* m_pUploadAppDataBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	void* m_pUploadAppData[kNumBackBuffers] = {nullptr, nullptr, nullptr};
@@ -300,4 +315,8 @@ private:
 	void* m_pUploadActiveSpotLightWorldBounds[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	Buffer* m_pUploadActiveSpotLightPropsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	void* m_pUploadActiveSpotLightProps[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	Buffer* m_pUploadActiveSpotLightWorldFrustumBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	void* m_pUploadActiveSpotLightWorldFrustums[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	Buffer* m_pUploadActiveSpotLightViewProjMatrixBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	void* m_pUploadActiveSpotLightViewProjMatrices[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 };

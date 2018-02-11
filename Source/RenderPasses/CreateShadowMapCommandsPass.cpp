@@ -27,6 +27,8 @@ namespace
 CreateShadowMapCommandsPass::CreateShadowMapCommandsPass(InitParams* pParams)
 	: m_Name(pParams->m_pName)
 {
+	assert((pParams->m_MaxNumPointLights + pParams->m_MaxNumSpotLights > 0));
+
 	InitResources(pParams);
 	InitRootSignature(pParams);
 	InitPipelineState(pParams);
