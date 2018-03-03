@@ -7,25 +7,57 @@ struct ShadowMapTile
 	float texSpaceSize;
 };
 
-float CalcShadowContribution(float3 worldSpacePos, Texture2D tiledVarianceShadowMap, ShadowMapTile shadowMapTile,
-	float4x4 lightViewProjMatrix, float lightViewNearPlane, float lightRcpViewClipRange)
+float ChebyshevUpperBound(float2 moments, float t)
 {
-	float shadowContrib = 0.0f;
+	float probability = (t <= moments.x);
 
+	float variance = moments.y - moments.x * moments.x;	
+	float delta = t - moments.x;
+	float maxProbability = variance / (variance + delta * delta);
+	
+	return max(probability, maxProbability);
+}
+
+float VSM(SamplerState shadowSampler, Texture2D varianceShadowMap, float2 shadowMapCoords, float receiverDepth)
+{
+	float2 moments = varianceShadowMap.Sample(shadowSampler, shadowMapCoords).xy;
+	return ChebyshevUpperBound(moments, receiverDepth);
+}
+
+float CalcPointLightVisibility(SamplerState shadowSampler, Texture2D varianceShadowMap,
+	float4x4 lightViewProjMatrix, float lightViewNearPlane, float lightRcpViewClipRange, float3 worldSpacePos)
+{
 	float4 lightClipSpacePos = mul(lightViewProjMatrix, float4(worldSpacePos, 1.0f));
+	
+	float3 lightPostWDivideProjSpacePos = lightClipSpacePos.xyz / lightClipSpacePos.w;
+	float2 shadowMapCoords = float2(0.5f * (lightPostWDivideProjSpacePos.x + 1.0f), 0.5f * (1.0f - lightPostWDivideProjSpacePos.y));
+		
+	float lightSpaceDepth = lightClipSpacePos.w;
+	float normalizedLightSpaceDepth = (lightSpaceDepth - lightViewNearPlane) * lightRcpViewClipRange;
+
+	return VSM(shadowSampler, varianceShadowMap, shadowMapCoords, normalizedLightSpaceDepth);
+}
+
+float CalcSpotLightVisibility(SamplerState shadowSampler, Texture2D varianceShadowMap, ShadowMapTile shadowMapTile,
+	float4x4 lightViewProjMatrix, float lightViewNearPlane, float lightRcpViewClipRange, float3 worldSpacePos)
+{
+	float4 lightClipSpacePos = mul(lightViewProjMatrix, float4(worldSpacePos, 1.0f));
+
 	float3 lightPostWDivideProjSpacePos = lightClipSpacePos.xyz / lightClipSpacePos.w;
 	float2 shadowMapCoords = float2(0.5f * (lightPostWDivideProjSpacePos.x + 1.0f), 0.5f * (1.0f - lightPostWDivideProjSpacePos.y));
 
 	float2 tileTopLeftCoords = shadowMapTile.texSpaceTopLeft;
 	float2 tileBottomRightCoords = shadowMapTile.texSpaceTopLeft + shadowMapTile.texSpaceSize;
 	
+	float lightVisibility = 0.0f;
 	if (all(tileTopLeftCoords < shadowMapCoords) && all(shadowMapCoords < tileBottomRightCoords))
 	{
 		float lightSpaceDepth = lightClipSpacePos.w;
 		float normalizedLightSpaceDepth = (lightSpaceDepth - lightViewNearPlane) * lightRcpViewClipRange;
-	}
 
-	return shadowContrib;
+		lightVisibility = VSM(shadowSampler, varianceShadowMap, shadowMapCoords, normalizedLightSpaceDepth);
+	}
+	return lightVisibility;
 }
 
 #endif // __SHADOW_UTILS__

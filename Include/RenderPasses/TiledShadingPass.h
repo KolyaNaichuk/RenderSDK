@@ -33,11 +33,16 @@ public:
 		D3D12_RESOURCE_STATES m_PointLightPropsBufferState;
 		D3D12_RESOURCE_STATES m_PointLightIndexPerTileBufferState;
 		D3D12_RESOURCE_STATES m_PointLightRangePerTileBufferState;
+		D3D12_RESOURCE_STATES m_PointLightTiledVarianceShadowMapState;
+		D3D12_RESOURCE_STATES m_PointLightViewProjMatrixBufferState;
 
 		D3D12_RESOURCE_STATES m_SpotLightWorldBoundsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightPropsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightIndexPerTileBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightRangePerTileBufferState;
+		D3D12_RESOURCE_STATES m_SpotLightTiledVarianceShadowMapState;
+		D3D12_RESOURCE_STATES m_SpotLightViewProjMatrixBufferState;
+		D3D12_RESOURCE_STATES m_SpotLightShadowMapTileBufferState;
 	};
 
 	struct InitParams
@@ -66,12 +71,17 @@ public:
 		Buffer* m_pPointLightPropsBuffer;
 		Buffer* m_pPointLightIndexPerTileBuffer;
 		Buffer* m_pPointLightRangePerTileBuffer;
+		ColorTexture* m_pPointLightTiledVarianceShadowMap;
+		Buffer* m_pPointLightViewProjMatrixBuffer;
 
 		bool m_EnableSpotLights;
 		Buffer* m_pSpotLightWorldBoundsBuffer;
 		Buffer* m_pSpotLightPropsBuffer;
 		Buffer* m_pSpotLightIndexPerTileBuffer;
 		Buffer* m_pSpotLightRangePerTileBuffer;
+		ColorTexture* m_pSpotLightTiledVarianceShadowMap;
+		Buffer* m_pSpotLightViewProjMatrixBuffer;
+		Buffer* m_pSpotLightShadowMapTileBuffer;
 	};
 	
 	struct RenderParams

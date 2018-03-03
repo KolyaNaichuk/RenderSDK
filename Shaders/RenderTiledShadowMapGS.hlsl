@@ -1,11 +1,7 @@
-#include "Lighting.hlsl"
+#include "LightUtils.hlsl"
 #include "OverlapTest.hlsl"
 
-#define LIGHT_TYPE_POINT		1
-#define LIGHT_TYPE_SPOT			2
-
 #define NUM_VERTICES			3
-#define NUM_CUBE_FACES			6
 
 struct GSInput
 {
@@ -32,7 +28,7 @@ StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t0);
 StructuredBuffer<Frustum> g_PointLightWorldFrustumBuffer : register(t1);
 StructuredBuffer<float4x4> g_PointLightViewProjMatrixBuffer : register(t2);
 
-[maxvertexcount(NUM_CUBE_FACES * NUM_VERTICES)]
+[maxvertexcount(NUM_CUBE_MAP_FACES * NUM_VERTICES)]
 void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> outputStream)
 {
 	uint lightIndex = input[0].lightIndex;
@@ -47,9 +43,9 @@ void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> o
 	if (isFacingAwayFromLight)
 		return;
 
-	for (uint faceIndex = 0; faceIndex < NUM_CUBE_FACES; ++faceIndex)
+	for (uint faceIndex = 0; faceIndex < NUM_CUBE_MAP_FACES; ++faceIndex)
 	{
-		uint frustumIndex = NUM_CUBE_FACES * lightIndex + faceIndex;
+		uint frustumIndex = NUM_CUBE_MAP_FACES * lightIndex + faceIndex;
 		Frustum lightWorldFrustum = g_PointLightWorldFrustumBuffer[frustumIndex];
 
 		float4 signedDistToFrustumPlanes[NUM_VERTICES];

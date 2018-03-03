@@ -252,6 +252,14 @@ SamplerDesc::SamplerDesc(Id id)
 		MinLOD = 0.0f;
 		MaxLOD = D3D12_FLOAT32_MAX;
 	}
+	else if (id == SamplerDesc::MaxPoint)
+	{
+		assert(false);
+	}
+	else if (id == SamplerDesc::VarianceShadowMapSampler)
+	{
+		assert(false);
+	}
 	else
 	{
 		assert(false);
@@ -303,6 +311,10 @@ StaticSamplerDesc::StaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADER_VI
 		BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 		MinLOD = 0.0f;
 		MaxLOD = D3D12_FLOAT32_MAX;
+	}
+	else if (id == StaticSamplerDesc::VarianceShadowMapSampler)
+	{
+		assert(false);
 	}
 	else
 	{

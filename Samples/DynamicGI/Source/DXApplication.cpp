@@ -1985,7 +1985,7 @@ void DXApplication::InitRenderPointLightTiledShadowMapPass()
 	params.m_pMeshInstanceIndexForLightBuffer = m_pCreateShadowMapCommandsPass->GetMeshInstanceIndexForPointLightBuffer();
 	params.m_pNumShadowMapCommandsBuffer = m_pCreateShadowMapCommandsPass->GetNumPointLightCommandsBuffer();
 	params.m_pShadowMapCommandBuffer = m_pCreateShadowMapCommandsPass->GetPointLightCommandBuffer();
-	
+			
 	params.m_InputResourceStates.m_TiledShadowMapState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	params.m_InputResourceStates.m_MeshInstanceWorldMatrixBufferState = pRenderGBufferFalseNegativePassStates->m_InstanceWorldMatrixBufferState;
 	params.m_InputResourceStates.m_LightWorldBoundsOrPropsBufferState = pCreateShadowMapCommandsPassStates->m_PointLightWorldBoundsBufferState;
@@ -1995,7 +1995,7 @@ void DXApplication::InitRenderPointLightTiledShadowMapPass()
 	params.m_InputResourceStates.m_MeshInstanceIndexForLightBufferState = pCreateShadowMapCommandsPassStates->m_MeshInstanceIndexForPointLightBufferState;
 	params.m_InputResourceStates.m_NumShadowMapCommandsBufferState = pCreateShadowMapCommandsPassStates->m_NumPointLightCommandsBufferState;
 	params.m_InputResourceStates.m_ShadowMapCommandBufferState = pCreateShadowMapCommandsPassStates->m_PointLightCommandBufferState;
-
+		
 	m_pRenderPointLightTiledShadowMapPass = new RenderTiledShadowMapPass(&params);
 }
 
@@ -2265,11 +2265,21 @@ void DXApplication::InitTiledShadingPass()
 	params.m_InputResourceStates.m_PointLightPropsBufferState = pVoxelizePassStates->m_PointLightPropsBufferState;
 	params.m_InputResourceStates.m_PointLightIndexPerTileBufferState = pTiledLightCullingPassStates->m_PointLightIndexPerTileBufferState;
 	params.m_InputResourceStates.m_PointLightRangePerTileBufferState = pTiledLightCullingPassStates->m_PointLightRangePerTileBufferState;
+	
+	assert(false);
+	//params.m_InputResourceStates.m_PointLightTiledVarianceShadowMapState;
+	//params.m_InputResourceStates.m_PointLightViewProjMatrixBufferState;
+
 	params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = pVoxelizePassStates->m_SpotLightWorldBoundsBufferState;
 	params.m_InputResourceStates.m_SpotLightPropsBufferState = pVoxelizePassStates->m_SpotLightPropsBufferState;
 	params.m_InputResourceStates.m_SpotLightIndexPerTileBufferState = pTiledLightCullingPassStates->m_SpotLightIndexPerTileBufferState;
 	params.m_InputResourceStates.m_SpotLightRangePerTileBufferState = pTiledLightCullingPassStates->m_SpotLightRangePerTileBufferState;
 
+	assert(false);
+	//params.m_InputResourceStates.m_SpotLightTiledVarianceShadowMapState;
+	//params.m_InputResourceStates.m_SpotLightViewProjMatrixBufferState;
+	//params.m_InputResourceStates.m_SpotLightShadowMapTileBufferState;
+	
 	params.m_pAccumLightTexture = m_pAccumLightTexture;
 	params.m_pMeshTypeDepthTexture = m_pFillMeshTypeDepthBufferPass->GetMeshTypeDepthTexture();
 	params.m_pShadingRectangleMinPointBuffer = m_pCalcShadingRectanglesPass->GetShadingRectangleMinPointBuffer();
@@ -2289,12 +2299,21 @@ void DXApplication::InitTiledShadingPass()
 	params.m_pPointLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetPointLightIndexPerTileBuffer();
 	params.m_pPointLightRangePerTileBuffer = m_pTiledLightCullingPass->GetPointLightRangePerTileBuffer();
 
+	assert(false);
+	//params.m_pPointLightTiledVarianceShadowMap;
+	//params.m_pPointLightViewProjMatrixBuffer;
+	
 	params.m_EnableSpotLights = m_NumSpotLights > 0;
 	params.m_pSpotLightWorldBoundsBuffer = m_pActiveSpotLightWorldBoundsBuffer;
 	params.m_pSpotLightPropsBuffer = m_pActiveSpotLightPropsBuffer;
 	params.m_pSpotLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetSpotLightIndexPerTileBuffer();
 	params.m_pSpotLightRangePerTileBuffer = m_pTiledLightCullingPass->GetSpotLightRangePerTileBuffer();
 
+	assert(false);
+	//params.m_pSpotLightTiledVarianceShadowMap;
+	//params.m_pSpotLightViewProjMatrixBuffer;
+	//params.m_pSpotLightShadowMapTileBuffer;
+	
 	m_pTiledShadingPass = new TiledShadingPass(&params);
 }
 

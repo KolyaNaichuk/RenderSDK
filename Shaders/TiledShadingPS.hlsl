@@ -26,18 +26,24 @@ StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t5);
 StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t6);
 Buffer<uint> g_PointLightIndexPerTileBuffer : register(t7);
 StructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(t8);
+Texture2D g_PointLightTiledVarianceShadowMap : register(t9);
+StructuredBuffer<float4x4> g_PointLightViewProjMatrixBuffer : register(t10);
 #endif // ENABLE_POINT_LIGHTS
 
 #if ENABLE_SPOT_LIGHTS == 1
-StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t9);
-StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t10);
-Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t11);
-StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t12);
+StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t11);
+StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t12);
+Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t13);
+StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t14);
+Texture2D g_SpotLightTiledVarianceShadowMap : register(t15);
+StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t16);
+StructuredBuffer<ShadowMapTile> g_SpotLightShadowMapTileBuffer : register(t17);
 #endif // ENABLE_SPOT_LIGHTS
 
-Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t13);
+Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t18);
 
 SamplerState g_AnisoSampler : register(s0);
+SamplerState g_VarianceShadowMapSampler : register(s1);
 
 [earlydepthstencil]
 float4 Main(PSInput input) : SV_Target
@@ -69,17 +75,27 @@ float4 Main(PSInput input) : SV_Target
 	uint pointLightIndexPerTileStart = g_PointLightRangePerTileBuffer[tileIndex].start;
 	uint pointLightIndexPerTileEnd = pointLightIndexPerTileStart + g_PointLightRangePerTileBuffer[tileIndex].length;
 
-	float3 lightContrib = float3(0.0f, 0.0f, 0.0f);
 	for (uint lightIndexPerTile = pointLightIndexPerTileStart; lightIndexPerTile < pointLightIndexPerTileEnd; ++lightIndexPerTile)
 	{
 		uint lightIndex = g_PointLightIndexPerTileBuffer[lightIndexPerTile];
 
-		float3 worldSpaceLightPos = g_PointLightWorldBoundsBuffer[lightIndex].center;
+		float3 lightWorldSpacePos = g_PointLightWorldBoundsBuffer[lightIndex].center;
 		float lightRange = g_PointLightWorldBoundsBuffer[lightIndex].radius;
 		float3 lightColor = g_PointLightPropsBuffer[lightIndex].color;
+		float lightViewNearPlane = g_PointLightPropsBuffer[lightIndex].viewNearPlane;
+		float lightRcpViewClipRange = g_PointLightPropsBuffer[lightIndex].rcpViewClipRange;
 
-		pointLightsContrib += CalcPointLightContribution(worldSpaceLightPos, lightColor, lightRange,
+		float3 lightContrib = CalcPointLightContribution(lightWorldSpacePos, lightColor, lightRange,
 			worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal, diffuseAlbedo, specularAlbedo, shininess);
+
+		uint faceIndex = DetectCubeMapFaceIndex(lightWorldSpacePos, worldSpacePos);
+		uint lightFrustumIndex = NUM_CUBE_MAP_FACES * lightIndex + faceIndex;
+		float4x4 lightViewProjMatrix = g_PointLightViewProjMatrixBuffer[lightFrustumIndex];
+		
+		float lightVisibility = CalcPointLightVisibility(g_VarianceShadowMapSampler, g_PointLightTiledVarianceShadowMap,
+			lightViewProjMatrix, lightViewNearPlane, lightRcpViewClipRange, worldSpacePos);
+		
+		pointLightsContrib += lightVisibility * lightContrib;
 	}
 #endif // ENABLE_POINT_LIGHTS
 
@@ -94,15 +110,25 @@ float4 Main(PSInput input) : SV_Target
 
 		Sphere lightBounds = g_SpotLightWorldBoundsBuffer[lightIndex];
 		float3 lightColor = g_SpotLightPropsBuffer[lightIndex].color;
-		float3 worldSpaceLightDir = g_SpotLightPropsBuffer[lightIndex].worldSpaceDir;
-		float3 worldSpaceLightPos = lightBounds.center - lightBounds.radius * worldSpaceLightDir;
+		float3 lightWorldSpaceDir = g_SpotLightPropsBuffer[lightIndex].worldSpaceDir;
+		float3 lightWorldSpacePos = lightBounds.center - lightBounds.radius * lightWorldSpaceDir;
 		float lightRange = g_SpotLightPropsBuffer[lightIndex].lightRange;
 		float cosHalfInnerConeAngle = g_SpotLightPropsBuffer[lightIndex].cosHalfInnerConeAngle;
 		float cosHalfOuterConeAngle = g_SpotLightPropsBuffer[lightIndex].cosHalfOuterConeAngle;
-								
-		spotLightsContrib += CalcSpotLightContribution(worldSpaceLightPos, worldSpaceLightDir, lightColor, lightRange,
+		float lightViewNearPlane = g_SpotLightPropsBuffer[lightIndex].viewNearPlane;
+		float lightRcpViewClipRange = g_SpotLightPropsBuffer[lightIndex].rcpViewClipRange;
+		
+		float3 lightContrib = CalcSpotLightContribution(lightWorldSpacePos, lightWorldSpaceDir, lightColor, lightRange,
 			cosHalfInnerConeAngle, cosHalfOuterConeAngle, worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal,
 			diffuseAlbedo, specularAlbedo, shininess);
+
+		float4x4 lightViewProjMatrix = g_SpotLightViewProjMatrixBuffer[lightIndex];
+		ShadowMapTile shadowMapTile = g_SpotLightShadowMapTileBuffer[lightIndex];
+		
+		float lightVisibility = CalcSpotLightVisibility(g_VarianceShadowMapSampler, g_SpotLightTiledVarianceShadowMap, shadowMapTile,
+			lightViewProjMatrix, lightViewNearPlane, lightRcpViewClipRange, worldSpacePos)
+
+		spotLightsContrib += lightVisibility * lightContrib;
 	}
 #endif // ENABLE_SPOT_LIGHTS
 
