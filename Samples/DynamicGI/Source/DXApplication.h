@@ -60,30 +60,27 @@ struct LightFrustum
 struct PointLightData
 {
 	Vector3f m_Color;
-	Vector3f m_WorldSpacePos;
 	Sphere m_WorldBounds;
+	f32 m_ShadowNearPlane;
+	u32 m_AffectedScreenArea;
 	Matrix4f m_ViewProjMatrices[kNumCubeMapFaces];
 	ShadowMapTile m_ShadowMapTiles[kNumCubeMapFaces];
 	LightFrustum m_WorldFrustums[kNumCubeMapFaces];
-	f32 m_AttenStartRange;
-	f32 m_AttenEndRange;
-	u32 m_AffectedScreenArea;
 };
 
 struct SpotLightData
 {
 	Vector3f m_Color;
-	Vector3f m_WorldSpacePos;
 	Vector3f m_WorldSpaceDir;
 	Sphere m_WorldBounds;
-	Matrix4f m_ViewProjMatrix;
-	ShadowMapTile m_ShadowMapTile;
-	LightFrustum m_WorldFrustum;	
-	f32 m_AttenStartRange;
-	f32 m_AttenEndRange;
+	f32 m_ShadowNearPlane;
+	f32 m_LightRange;
 	f32 m_CosHalfInnerConeAngle;
 	f32 m_CosHalfOuterConeAngle;
 	u32 m_AffectedScreenArea;
+	Matrix4f m_ViewProjMatrix;
+	ShadowMapTile m_ShadowMapTile;
+	LightFrustum m_WorldFrustum;
 };
 
 //#define DEBUG_RENDER_PASS

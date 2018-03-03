@@ -49,9 +49,9 @@
 
 /*
 To do:
+- I am using Sphere as bounding volume for SpotLights. Investigate if there are better alternatives. Check https://bartwronski.com/ implementation for the cone test.
 - Hard-coded light screen area for now. Fix CalcScreenAreaAffectedByLight.
 - Depth and shadow maps are using DXGI_FORMAT_R32_TYPELESS format. Check if 16 bit format would suffice
-- Rotate the camera for 360 degrees. The app crashes because of invalid resource state when applying resource barrier in reproject depth pass
 - Geometry popping when rotating the camera. See reprojected depth buffer for the result.
 - Enable VoxelizePass. Fix calculation for frustum corners
 - VoxelizationPass does not pass point/spot light count to the shader
@@ -68,8 +68,6 @@ To do:
 - Directional light m_EnableDirectionalLight seems to be disabled on all render passes. Enable
 - Verify voxel texture position is compatible with texture coordinates in VoxelizePS.hlsl and VisualizeVoxelGridPS.hlsl
 - VoxelizePass and TiledShadingPass make copy of material descriptors. Reuse material descriptors between them
-- Check how spot light bounds are calculated. See TiledShadingPS.hlsl and VoxelizePS.hlsl how spot light position is calculated.
-  Check https://bartwronski.com/ implementation for the cone test.
 - When injecting reflected radiance into voxel grid, add shadow map contribution.
 - Add support for mip levels. Search for keyword "KolyaMipLevels"
 - Review light view matrix computation for shadow maps in LightRenderResources.
@@ -136,32 +134,18 @@ namespace
 
 	struct PointLightProps
 	{
-		PointLightProps(const Vector3f& color, f32 attenStartRange)
-			: m_Color(color)
-			, m_AttenStartRange(attenStartRange)
-		{}
 		Vector3f m_Color;
-		f32 m_AttenStartRange;
 	};
 
 	struct SpotLightProps
 	{
-		SpotLightProps(const Vector3f& color, const Vector3f& worldSpaceDir, f32 attenStartRange, f32 attenEndRange, f32 cosHalfInnerConeAngle, f32 cosHalfOuterConeAngle)
-			: m_Color(color)
-			, m_WorldSpaceDir(worldSpaceDir)
-			, m_AttenStartRange(attenStartRange)
-			, m_AttenEndRange(attenEndRange)
-			, m_CosHalfInnerConeAngle(cosHalfInnerConeAngle)
-			, m_CosHalfOuterConeAngle(cosHalfOuterConeAngle)
-		{}
 		Vector3f m_Color;
 		Vector3f m_WorldSpaceDir;
-		f32 m_AttenStartRange;
-		f32 m_AttenEndRange;
+		f32 m_LightRange;
 		f32 m_CosHalfInnerConeAngle;
 		f32 m_CosHalfOuterConeAngle;
 	};
-
+			
 	using BufferElementFormatter = std::function<std::string (const void* pElementData)>;
 	
 	void OutputBufferContent(RenderEnv* pRenderEnv, Buffer* pBuffer, D3D12_RESOURCE_STATES bufferState,
@@ -2466,10 +2450,11 @@ void DXApplication::InitPointLightRenderResources(Scene* pScene)
 		const Vector3f& lightWorldSpacePos = lightWorldSpaceTransform.GetPosition();
 
 		m_pPointLights[lightIndex].m_Color = pLight->GetColor();
-		m_pPointLights[lightIndex].m_WorldSpacePos = lightWorldSpacePos;
-		m_pPointLights[lightIndex].m_WorldBounds = Sphere(lightWorldSpacePos, pLight->GetAttenEndRange());
+		m_pPointLights[lightIndex].m_WorldBounds = Sphere(lightWorldSpacePos, pLight->GetRange());
+		m_pPointLights[lightIndex].m_ShadowNearPlane = pLight->GetShadowNearPlane();
+		m_pPointLights[lightIndex].m_AffectedScreenArea = 0;
 
-		Matrix4f projMatrix = CreatePerspectiveFovProjMatrix(PI_DIV_2, 1.0f, 0.1f, pLight->GetAttenEndRange());
+		Matrix4f projMatrix = CreatePerspectiveFovProjMatrix(PI_DIV_2, 1.0f, pLight->GetShadowNearPlane(), pLight->GetRange());
 		for (u8 faceIndex = 0; faceIndex < kNumCubeMapFaces; ++faceIndex)
 		{
 			Matrix4f viewMatrix = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpacePos + lookAtDir[faceIndex], upDir[faceIndex]);
@@ -2482,11 +2467,7 @@ void DXApplication::InitPointLightRenderResources(Scene* pScene)
 			m_pPointLights[lightIndex].m_WorldFrustums[faceIndex].m_RightPlane = lightWorldFrustum.m_Planes[Frustum::RightPlane];;
 			m_pPointLights[lightIndex].m_WorldFrustums[faceIndex].m_TopPlane = lightWorldFrustum.m_Planes[Frustum::TopPlane];;
 			m_pPointLights[lightIndex].m_WorldFrustums[faceIndex].m_BottomPlane = lightWorldFrustum.m_Planes[Frustum::BottomPlane];;
-		}
-
-		m_pPointLights[lightIndex].m_AttenStartRange = pLight->GetAttenStartRange();
-		m_pPointLights[lightIndex].m_AttenEndRange = pLight->GetAttenEndRange();
-		m_pPointLights[lightIndex].m_AffectedScreenArea = 0;
+		}		
 
 		m_ppActivePointLights[lightIndex] = nullptr;
 	}
@@ -2551,14 +2532,18 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		assert(IsNormalized(lightWorldSpaceBasis.m_YAxis));
 		const Vector3f& lightWorldSpaceUpDir = lightWorldSpaceBasis.m_YAxis;
 
-		Cone lightWorldCone(lightWorldSpacePos, pLight->GetOuterConeAngle(), lightWorldSpaceDir, pLight->GetAttenEndRange());
+		Cone lightWorldCone(lightWorldSpacePos, pLight->GetOuterConeAngle(), lightWorldSpaceDir, pLight->GetRange());
 		m_pSpotLights[lightIndex].m_Color = pLight->GetColor();
-		m_pSpotLights[lightIndex].m_WorldSpacePos = lightWorldSpacePos;
 		m_pSpotLights[lightIndex].m_WorldSpaceDir = lightWorldSpaceDir;
 		m_pSpotLights[lightIndex].m_WorldBounds = ExtractBoundingSphere(lightWorldCone);
+		m_pSpotLights[lightIndex].m_ShadowNearPlane = pLight->GetShadowNearPlane();
+		m_pSpotLights[lightIndex].m_LightRange = pLight->GetRange();
+		m_pSpotLights[lightIndex].m_CosHalfInnerConeAngle = Cos(0.5f * pLight->GetInnerConeAngle());
+		m_pSpotLights[lightIndex].m_CosHalfOuterConeAngle = Cos(0.5f * pLight->GetOuterConeAngle());
+		m_pSpotLights[lightIndex].m_AffectedScreenArea = 0;
 
 		Matrix4f viewMatrix = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpacePos + lightWorldSpaceDir, lightWorldSpaceUpDir);
-		Matrix4f projMatrix = CreatePerspectiveFovProjMatrix(pLight->GetOuterConeAngle(), 1.0f, 0.1f, pLight->GetAttenEndRange());
+		Matrix4f projMatrix = CreatePerspectiveFovProjMatrix(pLight->GetOuterConeAngle(), 1.0f, pLight->GetShadowNearPlane(), pLight->GetRange());
 
 		Matrix4f viewProjMatrix = viewMatrix * projMatrix;
 		m_pSpotLights[lightIndex].m_ViewProjMatrix = viewProjMatrix;
@@ -2568,12 +2553,6 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		m_pSpotLights[lightIndex].m_WorldFrustum.m_RightPlane = lightWorldFrustum.m_Planes[Frustum::RightPlane];
 		m_pSpotLights[lightIndex].m_WorldFrustum.m_TopPlane = lightWorldFrustum.m_Planes[Frustum::TopPlane];
 		m_pSpotLights[lightIndex].m_WorldFrustum.m_BottomPlane = lightWorldFrustum.m_Planes[Frustum::BottomPlane];
-
-		m_pSpotLights[lightIndex].m_AttenStartRange = pLight->GetAttenStartRange();
-		m_pSpotLights[lightIndex].m_AttenEndRange = pLight->GetAttenEndRange();
-		m_pSpotLights[lightIndex].m_CosHalfInnerConeAngle = Cos(0.5f * pLight->GetInnerConeAngle());
-		m_pSpotLights[lightIndex].m_CosHalfOuterConeAngle = Cos(0.5f * pLight->GetOuterConeAngle());
-		m_pSpotLights[lightIndex].m_AffectedScreenArea = 0;
 
 		m_ppActiveSpotLights[lightIndex] = nullptr;
 	}
@@ -2675,9 +2654,7 @@ void DXApplication::SetupPointLightDataForUpload(const Frustum& cameraWorldFrust
 	{
 		const PointLightData* pLightData = m_ppActivePointLights[lightIndex];
 		pUploadActiveLightWorldBounds[lightIndex] = pLightData->m_WorldBounds;
-		
 		pUploadActiveLightProps[lightIndex].m_Color = pLightData->m_Color;
-		pUploadActiveLightProps[lightIndex].m_AttenStartRange = pLightData->m_AttenStartRange;
 
 		decltype(m_NumActivePointLights) faceIndexOffset = kNumCubeMapFaces * lightIndex;
 		for (decltype(m_NumActivePointLights) faceIndex = 0; faceIndex < kNumCubeMapFaces; ++faceIndex)
@@ -2755,8 +2732,7 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 
 		pUploadActiveLightProps[lightIndex].m_Color = pLightData->m_Color;
 		pUploadActiveLightProps[lightIndex].m_WorldSpaceDir = pLightData->m_WorldSpaceDir;
-		pUploadActiveLightProps[lightIndex].m_AttenStartRange = pLightData->m_AttenStartRange;
-		pUploadActiveLightProps[lightIndex].m_AttenEndRange = pLightData->m_AttenEndRange;
+		pUploadActiveLightProps[lightIndex].m_LightRange = pLightData->m_LightRange;
 		pUploadActiveLightProps[lightIndex].m_CosHalfInnerConeAngle = pLightData->m_CosHalfInnerConeAngle;
 		pUploadActiveLightProps[lightIndex].m_CosHalfOuterConeAngle = pLightData->m_CosHalfOuterConeAngle;
 

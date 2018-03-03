@@ -1,5 +1,6 @@
 #include "Foundation.hlsl"
-#include "Lighting.hlsl"
+#include "LightUtils.hlsl"
+#include "ShadowUtils.hlsl"
 #include "OverlapTest.hlsl"
 #include "Reconstruction.hlsl"
 
@@ -74,11 +75,10 @@ float4 Main(PSInput input) : SV_Target
 		uint lightIndex = g_PointLightIndexPerTileBuffer[lightIndexPerTile];
 
 		float3 worldSpaceLightPos = g_PointLightWorldBoundsBuffer[lightIndex].center;
-		float attenEndRange = g_PointLightWorldBoundsBuffer[lightIndex].radius;
-		float attenStartRange = g_PointLightPropsBuffer[lightIndex].attenStartRange;
+		float lightRange = g_PointLightWorldBoundsBuffer[lightIndex].radius;
 		float3 lightColor = g_PointLightPropsBuffer[lightIndex].color;
 
-		pointLightsContrib += CalcPointLightContribution(worldSpaceLightPos, lightColor, attenStartRange, attenEndRange,
+		pointLightsContrib += CalcPointLightContribution(worldSpaceLightPos, lightColor, lightRange,
 			worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal, diffuseAlbedo, specularAlbedo, shininess);
 	}
 #endif // ENABLE_POINT_LIGHTS
@@ -93,15 +93,14 @@ float4 Main(PSInput input) : SV_Target
 		uint lightIndex = g_SpotLightIndexPerTileBuffer[lightIndexPerTile];
 
 		Sphere lightBounds = g_SpotLightWorldBoundsBuffer[lightIndex];
+		float3 lightColor = g_SpotLightPropsBuffer[lightIndex].color;
 		float3 worldSpaceLightDir = g_SpotLightPropsBuffer[lightIndex].worldSpaceDir;
 		float3 worldSpaceLightPos = lightBounds.center - lightBounds.radius * worldSpaceLightDir;
-		float attenEndRange = g_SpotLightPropsBuffer[lightIndex].attenEndRange;
-		float attenStartRange = g_SpotLightPropsBuffer[lightIndex].attenStartRange;
-		float3 lightColor = g_SpotLightPropsBuffer[lightIndex].color;
+		float lightRange = g_SpotLightPropsBuffer[lightIndex].lightRange;
 		float cosHalfInnerConeAngle = g_SpotLightPropsBuffer[lightIndex].cosHalfInnerConeAngle;
 		float cosHalfOuterConeAngle = g_SpotLightPropsBuffer[lightIndex].cosHalfOuterConeAngle;
-
-		spotLightsContrib += CalcSpotLightContribution(worldSpaceLightPos, worldSpaceLightDir, lightColor, attenStartRange, attenEndRange,
+								
+		spotLightsContrib += CalcSpotLightContribution(worldSpaceLightPos, worldSpaceLightDir, lightColor, lightRange,
 			cosHalfInnerConeAngle, cosHalfOuterConeAngle, worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal,
 			diffuseAlbedo, specularAlbedo, shininess);
 	}

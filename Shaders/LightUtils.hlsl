@@ -1,5 +1,5 @@
-#ifndef __LIGHTING__
-#define __LIGHTING__
+#ifndef __LIGHT_UTILS__
+#define __LIGHT_UTILS__
 
 #define SHADING_MODE_PHONG			1
 #define SHADING_MODE_BLINN_PHONG	2
@@ -7,15 +7,13 @@
 struct PointLightProps
 {
 	float3 color;
-	float attenStartRange;
 };
 
 struct SpotLightProps
 {
 	float3 color;
 	float3 worldSpaceDir;
-	float attenStartRange;
-	float attenEndRange;
+	float lightRange;
 	float cosHalfInnerConeAngle;
 	float cosHalfOuterConeAngle;
 };
@@ -58,9 +56,9 @@ float3 CalcLighting(float3 dirToViewer, float3 dirToLight, float3 lightColor,
 #endif
 }
 
-float CalcLightDistanceAttenuation(float distToLight, float attenStartRange, float attenEndRange)
+float CalcLightDistanceAttenuation(float distToLight, float lightRange)
 {
-	return saturate((attenEndRange - distToLight) / (attenEndRange - attenStartRange));
+	return max(0.0f, 1.0f - (distToLight / lightRange));
 }
 
 float CalcLightDirectionAttenuation(float cosDirAngle, float cosHalfInnerConeAngle, float cosHalfOuterConeAngle)
@@ -68,20 +66,20 @@ float CalcLightDirectionAttenuation(float cosDirAngle, float cosHalfInnerConeAng
 	return smoothstep(cosHalfOuterConeAngle, cosHalfInnerConeAngle, cosDirAngle);
 }
 
-float3 CalcPointLightContribution(float3 lightPos, float3 lightColor, float attenStartRange, float attenEndRange,
-	float3 dirToViewer, float3 position, float3 normal, float3 diffuseAlbedo, float3 specularAlbedo, float shininess)
+float3 CalcPointLightContribution(float3 lightPos, float3 lightColor, float lightRange, float3 dirToViewer,
+	float3 position, float3 normal, float3 diffuseAlbedo, float3 specularAlbedo, float shininess)
 {
 	float3 dirToLight = lightPos - position;
 	float distToLight = length(dirToLight);
 	dirToLight *= rcp(distToLight);
 
 	float3 lightContrib = CalcLighting(dirToViewer, dirToLight, lightColor, normal, diffuseAlbedo, specularAlbedo, shininess);
-	float distAtten = CalcLightDistanceAttenuation(distToLight, attenStartRange, attenEndRange);
+	float distAtten = CalcLightDistanceAttenuation(distToLight, lightRange);
 
 	return distAtten * lightContrib;
 }
 
-float3 CalcSpotLightContribution(float3 lightPos, float3 lightDir, float3 lightColor, float attenStartRange, float attenEndRange,
+float3 CalcSpotLightContribution(float3 lightPos, float3 lightDir, float3 lightColor, float lightRange,
 	float cosHalfInnerConeAngle, float cosHalfOuterConeAngle, float3 dirToViewer, float3 position, float3 normal,
 	float3 diffuseAlbedo, float3 specularAlbedo, float shininess)
 {
@@ -90,7 +88,7 @@ float3 CalcSpotLightContribution(float3 lightPos, float3 lightDir, float3 lightC
 	dirToLight *= rcp(distToLight);
 
 	float3 lightContrib = CalcLighting(dirToViewer, dirToLight, lightColor, normal, diffuseAlbedo, specularAlbedo, shininess);
-	float distAtten = CalcLightDistanceAttenuation(distToLight, attenStartRange, attenEndRange);
+	float distAtten = CalcLightDistanceAttenuation(distToLight, lightRange);
 	
 	float cosDirAngle = dot(lightDir, -dirToLight);
 	float dirAtten = CalcLightDirectionAttenuation(cosDirAngle, cosHalfInnerConeAngle, cosHalfOuterConeAngle);
@@ -107,4 +105,4 @@ float3 CalcDirectionalLightContribution(float3 lightDir, float3 lightColor, floa
 	return lightContrib;
 }
 
-#endif // __LIGHTING__
+#endif // __LIGHT_UTILS__

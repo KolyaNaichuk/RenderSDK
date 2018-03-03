@@ -17,7 +17,7 @@ Scene* SceneLoader::LoadCube()
 	
 	pScene->SetCamera(pCamera);
 	
-	PointLight* pPointLight = new PointLight("Point light", 10.0f);
+	PointLight* pPointLight = new PointLight("Point light", 10.0f, 0.1f);
 	pPointLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight->SetIntensity(1.0f);
 	pPointLight->GetTransform().SetPosition(Vector3f(1.98481f, 2.67755f, -2.91555f));
@@ -25,7 +25,7 @@ Scene* SceneLoader::LoadCube()
 		
 	pScene->AddPointLight(pPointLight);
 
-	SpotLight* pSpotLight = new SpotLight("Spot light", 5.0f, PI_DIV_4, PI_DIV_2);
+	SpotLight* pSpotLight = new SpotLight("Spot light", 5.0f, PI_DIV_4, PI_DIV_2, 0.1f);
 	pSpotLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight->SetIntensity(1.0f);
 	pSpotLight->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, -1.0f));
@@ -63,7 +63,7 @@ Scene* SceneLoader::LoadSponza()
 	//Vector3f halfSize = 0.5f * size;
 	
 #if 1
-	PointLight* pPointLight = new PointLight("Point light", 1900.0f);
+	PointLight* pPointLight = new PointLight("Point light", 1900.0f, 0.1f);
 	pPointLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight->SetIntensity(1.0f);
 	pPointLight->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));
@@ -71,7 +71,7 @@ Scene* SceneLoader::LoadSponza()
 #endif
 
 #if 1
-	SpotLight* pSpotLight = new SpotLight("Spot Light", 780.0f, ToRadians(45.0f), ToRadians(60.0f));
+	SpotLight* pSpotLight = new SpotLight("Spot Light", 780.0f, ToRadians(45.0f), ToRadians(60.0f), 0.1f);
 	pSpotLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight->SetIntensity(1.0f);
 	pSpotLight->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));

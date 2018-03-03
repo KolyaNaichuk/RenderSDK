@@ -114,8 +114,11 @@ COPY /Y "$(SolutionDir)Shaders\BoundingVolumes.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Reconstruction.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Reconstruction.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Lighting.hlsl"
-COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Lighting.hlsl"
+COPY /Y "$(SolutionDir)Shaders\LightUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\LightUtils.hlsl"
+COPY /Y "$(SolutionDir)Shaders\LightUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\LightUtils.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\ShadowUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ShadowUtils.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ShadowUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ShadowUtils.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\OverlapTest.hlsl"
 COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\OverlapTest.hlsl"
@@ -149,6 +152,9 @@ COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Sampl
 
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\ConvertToTiledVarianceShadowMapCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ConvertToTiledVarianceShadowMapCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ConvertToTiledVarianceShadowMapCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ConvertToTiledVarianceShadowMapCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
@@ -227,8 +233,11 @@ COPY /Y "$(SolutionDir)Shaders\BoundingVolumes.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Reconstruction.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Reconstruction.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Lighting.hlsl"
-COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Lighting.hlsl"
+COPY /Y "$(SolutionDir)Shaders\LightUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\LightUtils.hlsl"
+COPY /Y "$(SolutionDir)Shaders\LightUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\LightUtils.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\ShadowUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ShadowUtils.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ShadowUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ShadowUtils.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\OverlapTest.hlsl"
 COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\OverlapTest.hlsl"
@@ -251,6 +260,9 @@ COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 
+COPY /Y "$(SolutionDir)Shaders\FrustumLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FrustumLightCullingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FrustumLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FrustumLightCullingCS.hlsl"
+
 COPY /Y "$(SolutionDir)Shaders\CreateShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateShadowMapCommandsCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\CreateShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateShadowMapCommandsCS.hlsl"
 
@@ -259,6 +271,9 @@ COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Sampl
 
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\ConvertToTiledVarianceShadowMapCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ConvertToTiledVarianceShadowMapCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ConvertToTiledVarianceShadowMapCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ConvertToTiledVarianceShadowMapCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"

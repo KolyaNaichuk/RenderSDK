@@ -508,9 +508,6 @@
     <None Include="..\Shaders\ScaleTexture.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\Lighting.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\OverlapTest.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -601,5 +598,16 @@
     <None Include="..\Shaders\CreateShadowMapCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\Shaders\ConvertToTiledVarianceShadowMapCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\LightUtils.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Shaders\ShadowUtils.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

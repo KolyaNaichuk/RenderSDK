@@ -1,6 +1,6 @@
 #include "BoundingVolumes.hlsl"
 #include "Foundation.hlsl"
-#include "Lighting.hlsl"
+#include "LightUtils.hlsl"
 
 struct PSInput
 {
