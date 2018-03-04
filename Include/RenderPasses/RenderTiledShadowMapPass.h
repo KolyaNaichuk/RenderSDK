@@ -60,7 +60,7 @@ public:
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
-	DepthTexture* GetShadowMap() { return m_pShadowMap; }
+	DepthTexture* GetTiledShadowMap() { return m_pTiledShadowMap; }
 
 private:
 	void InitResources(InitParams* pParams);
@@ -79,7 +79,7 @@ private:
 	DescriptorHandle m_SRVHeapStartVS;
 	DescriptorHandle m_SRVHeapStartGS;
 	DescriptorHandle m_DSVHeapStart;
-	DepthTexture* m_pShadowMap = nullptr;
+	DepthTexture* m_pTiledShadowMap = nullptr;
 	Viewport* m_pViewport = nullptr;
 };
 

@@ -1601,7 +1601,7 @@ void DXApplication::InitVisualizePointLightTiledShadowMapPass()
 	const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
 		m_pRenderPointLightTiledShadowMapPass->GetOutputResourceStates();
 	
-	DepthTexture* pTiledShadowMap = m_pRenderPointLightTiledShadowMapPass->GetShadowMap();
+	DepthTexture* pTiledShadowMap = m_pRenderPointLightTiledShadowMapPass->GetTiledShadowMap();
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
 		assert(m_VisualizePointLightTiledShadowMapPasses[index] == nullptr);
@@ -1642,7 +1642,7 @@ void DXApplication::InitVisualizeSpotLightTiledShadowMapPass()
 	const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
 		m_pRenderSpotLightTiledShadowMapPass->GetOutputResourceStates();
 
-	DepthTexture* pTiledShadowMap = m_pRenderSpotLightTiledShadowMapPass->GetShadowMap();
+	DepthTexture* pTiledShadowMap = m_pRenderSpotLightTiledShadowMapPass->GetTiledShadowMap();
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
 		assert(m_VisualizeSpotLightTiledShadowMapPasses[index] == nullptr);
@@ -2405,14 +2405,14 @@ CommandList* DXApplication::RecordPostRenderPass()
 	}
 	else if (m_DisplayResult == DisplayResult::PointLightTiledShadowMap)
 	{
-		DepthTexture* pTiledShadowMap = m_pRenderPointLightTiledShadowMapPass->GetShadowMap();
+		DepthTexture* pTiledShadowMap = m_pRenderPointLightTiledShadowMapPass->GetTiledShadowMap();
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(pTiledShadowMap,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	}
 	else if (m_DisplayResult == DisplayResult::SpotLightTiledShadowMap)
 	{
-		DepthTexture* pTiledShadowMap = m_pRenderSpotLightTiledShadowMapPass->GetShadowMap();
+		DepthTexture* pTiledShadowMap = m_pRenderSpotLightTiledShadowMapPass->GetTiledShadowMap();
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(pTiledShadowMap,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_DEPTH_WRITE);

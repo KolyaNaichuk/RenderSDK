@@ -214,6 +214,7 @@
     <ClInclude Include="..\Include\RenderPasses\CalcShadingRectanglesPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
     <ClInclude Include="..\Include\RenderPasses\Common.h" />
+    <ClInclude Include="..\Include\RenderPasses\ConvertTiledShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateFalseNegativeDrawCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateMainDrawCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FrustumMeshCullingPass.h" />
@@ -291,6 +292,7 @@
     <ClCompile Include="..\Source\Math\Vector4.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CalcShadingRectanglesPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\ConvertTiledShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateMainDrawCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FrustumMeshCullingPass.cpp" />
@@ -605,7 +607,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\ConvertToTiledVarianceShadowMapCS.hlsl">
+    <None Include="..\Shaders\ConvertTiledShadowMapPS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
@@ -619,6 +621,11 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\ConvertTiledShadowMapVS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

@@ -261,6 +261,9 @@
     <ClInclude Include="..\Include\Common\CPUProfiler.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\ConvertTiledShadowMapPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -488,6 +491,9 @@
     <ClCompile Include="..\Source\Common\CPUProfiler.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\ConvertTiledShadowMapPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -598,16 +604,15 @@
     <None Include="..\Shaders\CreateShadowMapCommandsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\ConvertToTiledVarianceShadowMapCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\LightUtils.hlsl">
       <Filter>Shaders</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="..\Shaders\ShadowUtils.hlsl">
+    <None Include="..\Shaders\ShadowUtils.hlsl" />
+    <None Include="..\Shaders\ConvertTiledShadowMapVS.hlsl">
       <Filter>Shaders</Filter>
-    </FxCompile>
+    </None>
+    <None Include="..\Shaders\ConvertTiledShadowMapPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

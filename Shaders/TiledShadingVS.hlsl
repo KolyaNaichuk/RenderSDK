@@ -30,10 +30,8 @@ VSOutput Main(VSInput input)
 	float2 minPoint = g_ShadingRectangleMinPointBuffer[g_MeshType];
 	float2 maxPoint = g_ShadingRectangleMaxPointBuffer[g_MeshType];
 	
-	float2 screenSpaceCorner = float2(0.0f, 0.0f);
-	if (input.vertexId == 0)
-		screenSpaceCorner = float2(minPoint.x, maxPoint.y);
-	else if (input.vertexId == 1)
+	float2 screenSpaceCorner = float2(minPoint.x, maxPoint.y);
+	if (input.vertexId == 1)
 		screenSpaceCorner = minPoint;
 	else if (input.vertexId == 2)
 		screenSpaceCorner = maxPoint;

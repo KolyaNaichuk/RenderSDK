@@ -39,7 +39,7 @@ RenderTiledShadowMapPass::~RenderTiledShadowMapPass()
 	SafeDelete(m_pCommandSignature);
 	SafeDelete(m_pRootSignature);
 	SafeDelete(m_pPipelineState);
-	SafeDelete(m_pShadowMap);
+	SafeDelete(m_pTiledShadowMap);
 	SafeDelete(m_pViewport);
 }
 
@@ -93,11 +93,11 @@ void RenderTiledShadowMapPass::InitResources(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	assert(m_pShadowMap == nullptr);
+	assert(m_pTiledShadowMap == nullptr);
 	DepthStencilValue optimizedClearDepth(1.0f);
 	DepthTexture2DDesc shadowMapDesc(DXGI_FORMAT_R32_TYPELESS, pParams->m_ShadowMapSize, pParams->m_ShadowMapSize, true, true);
-	m_pShadowMap = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shadowMapDesc,
-		pParams->m_InputResourceStates.m_TiledShadowMapState, &optimizedClearDepth, L"RenderTiledShadowMapPass::m_pShadowMap");
+	m_pTiledShadowMap = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shadowMapDesc,
+		pParams->m_InputResourceStates.m_TiledShadowMapState, &optimizedClearDepth, L"RenderTiledShadowMapPass::m_pTiledShadowMap");
 
 	m_OutputResourceStates.m_MeshInstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_LightIndexForMeshInstanceBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
@@ -142,7 +142,7 @@ void RenderTiledShadowMapPass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_ShadowMapCommandBufferState,
 		m_OutputResourceStates.m_ShadowMapCommandBufferState);
 
-	AddResourceBarrierIfRequired(m_pShadowMap,
+	AddResourceBarrierIfRequired(m_pTiledShadowMap,
 		pParams->m_InputResourceStates.m_TiledShadowMapState,
 		m_OutputResourceStates.m_TiledShadowMapState);
 
@@ -166,7 +166,7 @@ void RenderTiledShadowMapPass::InitResources(InitParams* pParams)
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		pParams->m_pLightViewProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	m_DSVHeapStart = m_pShadowMap->GetDSVHandle();
+	m_DSVHeapStart = m_pTiledShadowMap->GetDSVHandle();
 }
 
 void RenderTiledShadowMapPass::InitRootSignature(InitParams* pParams)
@@ -194,7 +194,7 @@ void RenderTiledShadowMapPass::InitPipelineState(InitParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	assert(m_pViewport == nullptr);
-	m_pViewport = new Viewport(0.0f, 0.0f, FLOAT(pParams->m_ShadowMapSize), FLOAT(pParams->m_ShadowMapSize));
+	m_pViewport = new Viewport(0.0f, 0.0f, FLOAT(m_pTiledShadowMap->GetWidth()), FLOAT(m_pTiledShadowMap->GetHeight()));
 	
 	const MeshRenderResources* pMeshRenderResources = pParams->m_pMeshRenderResources;
 	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
@@ -223,7 +223,7 @@ void RenderTiledShadowMapPass::InitPipelineState(InitParams* pParams)
 	pipelineStateDesc.InputLayout = inputLayout;
 	pipelineStateDesc.PrimitiveTopologyType = pMeshRenderResources->GetPrimitiveTopologyType(meshType);
 	pipelineStateDesc.DepthStencilState = DepthStencilDesc(DepthStencilDesc::Enabled);
-	pipelineStateDesc.SetRenderTargetFormats(0, nullptr, GetDepthStencilViewFormat(m_pShadowMap->GetFormat()));
+	pipelineStateDesc.SetRenderTargetFormats(0, nullptr, GetDepthStencilViewFormat(m_pTiledShadowMap->GetFormat()));
 
 	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"RenderTiledShadowMapPass::m_pPipelineState");
 }
