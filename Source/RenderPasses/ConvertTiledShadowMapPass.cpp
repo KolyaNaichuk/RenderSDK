@@ -62,8 +62,8 @@ void ConvertTiledShadowMapPass::Record(RenderParams* pParams)
 	pCommandList->IASetVertexBuffers(0, 1, nullptr);
 	pCommandList->IASetIndexBuffer(nullptr);
 
-	Rect scissorRect(ExtractRect(pParams->m_pViewport));
-	pCommandList->RSSetViewports(1, pParams->m_pViewport);
+	Rect scissorRect(ExtractRect(m_pViewport));
+	pCommandList->RSSetViewports(1, m_pViewport);
 	pCommandList->RSSetScissorRects(1, &scissorRect);
 
 	pCommandList->DrawInstanced(4, pParams->m_NumShadowMapTiles, 0, 0);
@@ -103,7 +103,7 @@ void ConvertTiledShadowMapPass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_ConvertShadowMapParamsBufferState,
 		m_OutputResourceStates.m_ConvertShadowMapParamsBufferState);
 
-	AddResourceBarrierIfRequired(pParams->m_pTiledVarianceShadowMap,
+	AddResourceBarrierIfRequired(m_pTiledVarianceShadowMap,
 		pParams->m_InputResourceStates.m_TiledVarianceShadowMapState,
 		m_OutputResourceStates.m_TiledVarianceShadowMapState);
 

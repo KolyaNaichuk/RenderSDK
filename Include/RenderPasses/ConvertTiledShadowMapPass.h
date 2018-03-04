@@ -9,6 +9,14 @@ class RootSignature;
 class PipelineState;
 class CommandList;
 
+struct ConvertShadowMapParams
+{
+	f32 m_LightViewNearPlane;
+	f32 m_LightRcpViewClipRange;
+	f32 m_LightProjMatrix43;
+	f32 m_LightProjMatrix33;
+};
+
 class ConvertTiledShadowMapPass
 {
 public:
@@ -29,16 +37,13 @@ public:
 		DepthTexture* m_pTiledShadowMap;
 		Buffer* m_pShadowMapTileBuffer;
 		Buffer* m_pConvertShadowMapParamsBuffer;
-		ColorTexture* m_pTiledVarianceShadowMap;
 	};
 
 	struct RenderParams
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		Buffer* m_pAppDataBuffer;
 		u32 m_NumShadowMapTiles;
-		Viewport* m_pViewport;
 	};
 
 	ConvertTiledShadowMapPass(InitParams* pParams);
