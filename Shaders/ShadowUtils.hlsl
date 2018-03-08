@@ -20,7 +20,7 @@ float ChebyshevUpperBound(float2 moments, float t)
 
 float VSM(SamplerState shadowSampler, Texture2D<float2> varianceShadowMap, float2 shadowMapCoords, float receiverDepth)
 {
-	float2 moments = varianceShadowMap.Sample(shadowSampler, shadowMapCoords).xy;
+	float2 moments = varianceShadowMap.SampleLevel(shadowSampler, shadowMapCoords, 0.0f).xy;
 	return ChebyshevUpperBound(moments, receiverDepth);
 }
 
