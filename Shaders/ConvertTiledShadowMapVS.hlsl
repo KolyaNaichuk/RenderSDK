@@ -9,7 +9,7 @@ struct VSInput
 struct VSOutput
 {
 	float4 clipSpacePos : SV_Position;
-	float2 texCoord		: TEXCOORD0;
+	uint tileId			: SV_InstanceID;
 };
 
 StructuredBuffer<ShadowMapTile> g_ShadowMapTileBuffer : register(t0);
@@ -30,7 +30,7 @@ VSOutput Main(VSInput input)
 	
 	VSOutput output;
 	output.clipSpacePos = float4(2.0f * texSpaceCorner.x - 1.0f, 1.0f - 2.0f * texSpaceCorner.y, 0.0f, 1.0f);
-	output.texCoord = texSpaceCorner;
+	output.tileId = input.tileId;
 
 	return output;
 }

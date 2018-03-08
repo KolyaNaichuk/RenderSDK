@@ -19,6 +19,8 @@
 struct PointLightProps
 {
 	float3 color;
+	float viewNearPlane;
+	float rcpViewClipRange;
 };
 
 struct SpotLightProps
@@ -28,6 +30,8 @@ struct SpotLightProps
 	float lightRange;
 	float cosHalfInnerConeAngle;
 	float cosHalfOuterConeAngle;
+	float viewNearPlane;
+	float rcpViewClipRange;
 };
 
 float3 CalcPhongLighting(float3 dirToViewer, float3 dirToLight, float3 lightColor,

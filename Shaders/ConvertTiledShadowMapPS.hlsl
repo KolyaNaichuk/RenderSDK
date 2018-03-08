@@ -17,7 +17,7 @@ struct ConvertShadowMapParams
 Texture2D<float> g_TiledShadowMap : register(t0);
 StructuredBuffer<ConvertShadowMapParams> g_ConvertShadowMapParamsBuffer : register(t1);
 
-float2 Main(PSInput input)
+float2 Main(PSInput input) : SV_Target
 {
 #if LIGHT_TYPE == LIGHT_TYPE_POINT
 	uint lightIndex = input.tileId / NUM_CUBE_MAP_FACES;

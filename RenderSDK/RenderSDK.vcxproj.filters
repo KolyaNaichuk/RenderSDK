@@ -607,11 +607,13 @@
     <None Include="..\Shaders\LightUtils.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\ShadowUtils.hlsl" />
     <None Include="..\Shaders\ConvertTiledShadowMapVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\ConvertTiledShadowMapPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\ShadowUtils.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

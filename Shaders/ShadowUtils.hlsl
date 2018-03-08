@@ -18,13 +18,13 @@ float ChebyshevUpperBound(float2 moments, float t)
 	return max(probability, maxProbability);
 }
 
-float VSM(SamplerState shadowSampler, Texture2D varianceShadowMap, float2 shadowMapCoords, float receiverDepth)
+float VSM(SamplerState shadowSampler, Texture2D<float2> varianceShadowMap, float2 shadowMapCoords, float receiverDepth)
 {
 	float2 moments = varianceShadowMap.Sample(shadowSampler, shadowMapCoords).xy;
 	return ChebyshevUpperBound(moments, receiverDepth);
 }
 
-float CalcPointLightVisibility(SamplerState shadowSampler, Texture2D varianceShadowMap,
+float CalcPointLightVisibility(SamplerState shadowSampler, Texture2D<float2> varianceShadowMap,
 	float4x4 lightViewProjMatrix, float lightViewNearPlane, float lightRcpViewClipRange, float3 worldSpacePos)
 {
 	float4 lightClipSpacePos = mul(lightViewProjMatrix, float4(worldSpacePos, 1.0f));
@@ -38,7 +38,7 @@ float CalcPointLightVisibility(SamplerState shadowSampler, Texture2D varianceSha
 	return VSM(shadowSampler, varianceShadowMap, shadowMapCoords, normalizedLightSpaceDepth);
 }
 
-float CalcSpotLightVisibility(SamplerState shadowSampler, Texture2D varianceShadowMap, ShadowMapTile shadowMapTile,
+float CalcSpotLightVisibility(SamplerState shadowSampler, Texture2D<float2> varianceShadowMap, ShadowMapTile shadowMapTile,
 	float4x4 lightViewProjMatrix, float lightViewNearPlane, float lightRcpViewClipRange, float3 worldSpacePos)
 {
 	float4 lightClipSpacePos = mul(lightViewProjMatrix, float4(worldSpacePos, 1.0f));
