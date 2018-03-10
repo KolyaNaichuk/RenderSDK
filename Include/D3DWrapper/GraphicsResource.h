@@ -321,10 +321,11 @@ public:
 	UINT64 GetWidth() const { return m_Desc.Width; }
 	UINT GetHeight() const { return m_Desc.Height; }
 	UINT16 GetDepthOrArraySize() const { return m_Desc.DepthOrArraySize; }
+	UINT GetMipLevels() const { return m_Desc.MipLevels; }
 
-	DescriptorHandle GetRTVHandle();
+	DescriptorHandle GetRTVHandle(UINT mipSlice = 0);
 	DescriptorHandle GetSRVHandle();
-	DescriptorHandle GetUAVHandle();
+	DescriptorHandle GetUAVHandle(UINT mipSlice = 0);
 				
 private:
 	void CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,

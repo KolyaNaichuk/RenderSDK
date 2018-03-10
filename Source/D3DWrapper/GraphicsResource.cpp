@@ -858,10 +858,10 @@ ColorTexture::ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dReso
 	}
 }
 
-DescriptorHandle ColorTexture::GetRTVHandle()
+DescriptorHandle ColorTexture::GetRTVHandle(UINT mipSlice)
 {
 	assert(m_RTVHandle.IsValid());
-	return m_RTVHandle;
+	return DescriptorHandle(m_RTVHandle, mipSlice);
 }
 
 DescriptorHandle ColorTexture::GetSRVHandle()
@@ -870,10 +870,10 @@ DescriptorHandle ColorTexture::GetSRVHandle()
 	return m_SRVHandle;
 }
 
-DescriptorHandle ColorTexture::GetUAVHandle()
+DescriptorHandle ColorTexture::GetUAVHandle(UINT mipSlice)
 {
 	assert(m_UAVHandle.IsValid());
-	return m_UAVHandle;
+	return DescriptorHandle(m_UAVHandle, mipSlice);
 }
 
 void ColorTexture::CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -905,34 +905,44 @@ void ColorTexture::CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HE
 void ColorTexture::CreateTex1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc)
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
-
-	// Kolya: Add missing impl
 	assert(pTexDesc->DepthOrArraySize == 1);
-	assert(pTexDesc->MipLevels == 1);
 
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
 	{
-		assert(pRenderEnv->m_pShaderInvisibleRTVHeap != nullptr);
-		m_RTVHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
+		assert(pRenderEnv->m_pShaderInvisibleRTVHeap != nullptr);		
+		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+		{
+			Tex1DRenderTargetViewDesc viewDesc(mipSlice);
+			DescriptorHandle rtvHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
+			pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, rtvHandle);
 
-		Tex1DRenderTargetViewDesc viewDesc;
-		pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, m_RTVHandle);
+			if (mipSlice == 0)
+				m_RTVHandle = rtvHandle;
+		}
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		
+		UINT mostDetailedMip = 0;
+		Tex1DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format), mostDetailedMip, pTexDesc->MipLevels);
 		m_SRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-
-		Tex1DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format));
 		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_SRVHandle);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
-		m_UAVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
 
-		Tex1DUnorderedAccessViewDesc viewDesc(GetUnorderedAccessViewFormat(pTexDesc->Format));
-		pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, m_UAVHandle);
+		DXGI_FORMAT uavFormat = GetUnorderedAccessViewFormat(pTexDesc->Format);
+		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+		{
+			Tex1DUnorderedAccessViewDesc viewDesc(uavFormat, mipSlice);
+			DescriptorHandle uavHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+			pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, uavHandle);
+
+			if (mipSlice == 0)
+				m_UAVHandle = uavHandle;
+		}
 	}
 }
 
@@ -941,33 +951,45 @@ void ColorTexture::CreateTex2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 
 	assert(pTexDesc->DepthOrArraySize == 1);
-	assert(pTexDesc->MipLevels == 1);
 	assert(pTexDesc->SampleDesc.Count == 1);
 	assert(pTexDesc->SampleDesc.Quality == 0);
 
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleRTVHeap != nullptr);
-		m_RTVHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
+		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+		{
+			Tex2DRenderTargetViewDesc viewDesc(mipSlice);
+			DescriptorHandle rtvHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
+			pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, rtvHandle);
 
-		Tex2DRenderTargetViewDesc viewDesc;
-		pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, m_RTVHandle);
+			if (mipSlice == 0)
+				m_RTVHandle = rtvHandle;
+		}
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
+				
+		UINT mostDetailedMip = 0;
+		Tex2DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format), mostDetailedMip, pTexDesc->MipLevels);
 		m_SRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-
-		Tex2DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format));
 		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_SRVHandle);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
-		m_UAVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+		
+		DXGI_FORMAT uavFormat = GetUnorderedAccessViewFormat(pTexDesc->Format);
+		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+		{
+			Tex2DUnorderedAccessViewDesc viewDesc(uavFormat, mipSlice);
+			DescriptorHandle uavHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+			pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, uavHandle);
 
-		Tex2DUnorderedAccessViewDesc viewDesc(GetUnorderedAccessViewFormat(pTexDesc->Format));
-		pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, m_UAVHandle);
+			if (mipSlice == 0)
+				m_UAVHandle = uavHandle;
+		}
 	}
 }
 
@@ -975,33 +997,45 @@ void ColorTexture::CreateTex3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 
-	assert(pTexDesc->MipLevels == 1);
 	assert(pTexDesc->SampleDesc.Count == 1);
 	assert(pTexDesc->SampleDesc.Quality == 0);
 
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleRTVHeap != nullptr);
-		m_RTVHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
+		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+		{
+			Tex3DRenderTargetViewDesc viewDesc(mipSlice);
+			DescriptorHandle rtvHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
+			pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, rtvHandle);
 
-		Tex3DRenderTargetViewDesc viewDesc;
-		pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, m_RTVHandle);
+			if (mipSlice == 0)
+				m_RTVHandle = rtvHandle;
+		}
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		
+		UINT mostDetailedMip = 0;
+		Tex3DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format), mostDetailedMip, pTexDesc->MipLevels);
 		m_SRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-
-		Tex3DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format));
 		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_SRVHandle);
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
-		m_UAVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
 
-		Tex3DUnorderedAccessViewDesc viewDesc(GetUnorderedAccessViewFormat(pTexDesc->Format));
-		pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, m_UAVHandle);
+		DXGI_FORMAT uavFormat = GetUnorderedAccessViewFormat(pTexDesc->Format);
+		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+		{
+			Tex3DUnorderedAccessViewDesc viewDesc(uavFormat, mipSlice);
+			DescriptorHandle uavHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+			pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, uavHandle);
+
+			if (mipSlice == 0)
+				m_UAVHandle = uavHandle;
+		}
 	}
 }
 
