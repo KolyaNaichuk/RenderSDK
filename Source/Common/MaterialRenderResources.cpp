@@ -24,7 +24,7 @@ namespace
 		std::vector<ResourceTransitionBarrier>& pendingTransitionBarriers);
 }
 
-MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials)
+MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials, bool forceSRGB)
 	: m_pMeshTypePerMaterialIDBuffer(nullptr)
 	, m_pFirstResourceIndexPerMaterialIDBuffer(nullptr)
 {
@@ -32,7 +32,7 @@ MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u16 numM
 
 	InitMeshTypePerMaterialIDBuffer(pRenderEnv, numMaterials);
 	InitFirstResourceIndexPerMaterialIDBuffer(pRenderEnv, numMaterials);
-	InitTextures(pRenderEnv, numMaterials, ppMaterials);
+	InitTextures(pRenderEnv, numMaterials, ppMaterials, forceSRGB);
 }
 
 MaterialRenderResources::~MaterialRenderResources()
@@ -77,13 +77,11 @@ void MaterialRenderResources::InitFirstResourceIndexPerMaterialIDBuffer(RenderEn
 		bufferData.data(), bufferData.size() * sizeof(bufferData[0]));
 }
 
-void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials)
+void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials, bool forceSRGB)
 {
 	assert(m_Textures.empty());
-
-	static const bool forceSRGB = true;
-	static const u8 numTexturesPerMaterial = 3;
 	
+	static const u8 numTexturesPerMaterial = 3;
 	const u16 maxNumTextures = numMaterials * numTexturesPerMaterial;
 
 	std::vector<Buffer*> uploadBuffers;

@@ -50,6 +50,7 @@
 
 /*
 To do:
+- Add support for mip levels. Search for keyword "KolyaMipLevels". When creating MaterialRenderResources and reading materials in shading pass should account for mip when taking resource index.
 - I am using Sphere as bounding volume for SpotLights. Investigate if there are better alternatives. Check https://bartwronski.com/ implementation for the cone test.
 - Hard-coded light screen area for now. Fix CalcScreenAreaAffectedByLight.
 - Depth and shadow maps are using DXGI_FORMAT_R32_TYPELESS format. Check if 16 bit format would suffice
@@ -70,7 +71,6 @@ To do:
 - Verify voxel texture position is compatible with texture coordinates in VoxelizePS.hlsl and VisualizeVoxelGridPS.hlsl
 - VoxelizePass and TiledShadingPass make copy of material descriptors. Reuse material descriptors between them
 - When injecting reflected radiance into voxel grid, add shadow map contribution.
-- Add support for mip levels. Search for keyword "KolyaMipLevels"
 - Review light view matrix computation for shadow maps in LightRenderResources.
 - OOB for a set of points mimics AABB. Improve implementation.
 - When converting plane mesh to unit cube space, world matrix is not optimal for OOB.
@@ -926,7 +926,7 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight)
 		m_pMeshRenderResources = new MeshRenderResources(m_pRenderEnv, pScene->GetNumMeshBatches(), pScene->GetMeshBatches());
 
 	if (pScene->GetNumMaterials() > 0)
-		m_pMaterialRenderResources = new MaterialRenderResources(m_pRenderEnv, pScene->GetNumMaterials(), pScene->GetMaterials());
+		m_pMaterialRenderResources = new MaterialRenderResources(m_pRenderEnv, pScene->GetNumMaterials(), pScene->GetMaterials(), true/*forceSRGB*/);
 
 	if (pScene->GetNumPointLights() > 0)
 		InitPointLightRenderResources(pScene);
