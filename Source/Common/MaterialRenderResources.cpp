@@ -12,7 +12,7 @@
 namespace
 {
 	void GenerateImageData(UINT width, UINT height, DXGI_FORMAT format, u8* pPixelBytes, DirectX::ScratchImage& image);
-	void LoadImageDataFromFile(const std::wstring& filePath, DirectX::ScratchImage& image);
+	void LoadImageDataFromFile(const std::wstring& filePath, DirectX::ScratchImage& image, bool generateMips);
 		
 	void SetupImageDataForUpload(RenderEnv* pRenderEnv,
 		const DirectX::ScratchImage& image,
@@ -24,7 +24,7 @@ namespace
 		std::vector<ResourceTransitionBarrier>& pendingTransitionBarriers);
 }
 
-MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials, bool forceSRGB)
+MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials)
 	: m_pMeshTypePerMaterialIDBuffer(nullptr)
 	, m_pFirstResourceIndexPerMaterialIDBuffer(nullptr)
 {
@@ -32,7 +32,7 @@ MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u16 numM
 
 	InitMeshTypePerMaterialIDBuffer(pRenderEnv, numMaterials);
 	InitFirstResourceIndexPerMaterialIDBuffer(pRenderEnv, numMaterials);
-	InitTextures(pRenderEnv, numMaterials, ppMaterials, forceSRGB);
+	InitTextures(pRenderEnv, numMaterials, ppMaterials);
 }
 
 MaterialRenderResources::~MaterialRenderResources()
@@ -77,11 +77,11 @@ void MaterialRenderResources::InitFirstResourceIndexPerMaterialIDBuffer(RenderEn
 		bufferData.data(), bufferData.size() * sizeof(bufferData[0]));
 }
 
-void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials, bool forceSRGB)
+void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials)
 {
 	assert(m_Textures.empty());
 	
-	static const u8 numTexturesPerMaterial = 3;
+	const u8 numTexturesPerMaterial = 3;
 	const u16 maxNumTextures = numMaterials * numTexturesPerMaterial;
 
 	std::vector<Buffer*> uploadBuffers;
@@ -100,6 +100,9 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 		{
 			const std::wstring debugMapName = L"Diffuse Map: " + pMaterial->m_Name;
 
+			bool generateMips = false;
+			bool forceSRGB = true;
+
 			DirectX::ScratchImage image;
 			if (pMaterial->m_DiffuseMapFilePath.empty())
 			{
@@ -114,12 +117,15 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 			}
 			else
 			{
-				LoadImageDataFromFile(pMaterial->m_DiffuseMapFilePath, image);
+				LoadImageDataFromFile(pMaterial->m_DiffuseMapFilePath, image, generateMips);
 			}
 			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingTransitionBarriers);
 		}
 		{
 			const std::wstring debugMapName = L"Specular Map: " + pMaterial->m_Name;
+
+			bool generateMips = false;
+			bool forceSRGB = false;
 
 			DirectX::ScratchImage image;
 			if (pMaterial->m_SpecularMapFilePath.empty())
@@ -135,12 +141,15 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 			}
 			else
 			{
-				LoadImageDataFromFile(pMaterial->m_SpecularMapFilePath, image);
+				LoadImageDataFromFile(pMaterial->m_SpecularMapFilePath, image, generateMips);
 			}
 			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingTransitionBarriers);
 		}
 		{
 			const std::wstring debugMapName = L"Shininess Map: " + pMaterial->m_Name;
+
+			bool generateMips = false;
+			bool forceSRGB = false;
 
 			DirectX::ScratchImage image;
 			if (pMaterial->m_ShininessMapFilePath.empty())
@@ -155,7 +164,7 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 			}
 			else
 			{
-				LoadImageDataFromFile(pMaterial->m_ShininessMapFilePath, image);
+				LoadImageDataFromFile(pMaterial->m_ShininessMapFilePath, image, generateMips);
 			}
 			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingTransitionBarriers);
 		}
@@ -187,7 +196,7 @@ namespace
 		VerifyD3DResult(image.InitializeFromImage(sourceImage));
 	}
 	
-	void LoadImageDataFromFile(const std::wstring& filePath, DirectX::ScratchImage& image)
+	void LoadImageDataFromFile(const std::wstring& filePath, DirectX::ScratchImage& image, bool generateMips)
 	{
 		const std::wstring fileExtension = ExtractFileExtension(filePath);
 		if ((fileExtension == L"DDS") || (fileExtension == L"dds"))
@@ -196,10 +205,9 @@ namespace
 		}
 		else if ((fileExtension == L"TGA") || (fileExtension == L"tga"))
 		{
-			// KolyaMipLevels
-			bool enableMipLevels = false;
-			if (enableMipLevels)
+			if (generateMips)
 			{
+				assert(false && "Not supported");
 				DirectX::ScratchImage tempImage;
 				VerifyD3DResult(DirectX::LoadFromTGAFile(filePath.c_str(), nullptr, tempImage));
 				VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));
@@ -211,10 +219,9 @@ namespace
 		}
 		else
 		{
-			// KolyaMipLevels
-			bool enableMipLevels = false;
-			if (enableMipLevels)
+			if (generateMips)
 			{
+				assert(false && "Not supported");
 				DirectX::ScratchImage tempImage;
 				VerifyD3DResult(DirectX::LoadFromWICFile(filePath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, tempImage));
 				VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));

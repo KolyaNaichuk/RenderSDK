@@ -24,9 +24,10 @@ public:
 		D3D12_RESOURCE_STATES m_ShadingRectangleMinPointBufferState;
 		D3D12_RESOURCE_STATES m_ShadingRectangleMaxPointBufferState;		
 		D3D12_RESOURCE_STATES m_DepthTextureState;
-		D3D12_RESOURCE_STATES m_TexCoordTextureState;
-		D3D12_RESOURCE_STATES m_NormalTextureState;
-		D3D12_RESOURCE_STATES m_MaterialIDTextureState;
+		D3D12_RESOURCE_STATES m_GBuffer1State;
+		D3D12_RESOURCE_STATES m_GBuffer2State;
+		D3D12_RESOURCE_STATES m_GBuffer3State;
+		D3D12_RESOURCE_STATES m_GBuffer4State;
 		D3D12_RESOURCE_STATES m_FirstResourceIndexPerMaterialIDBufferState;
 		
 		D3D12_RESOURCE_STATES m_PointLightWorldBoundsBufferState;
@@ -57,9 +58,10 @@ public:
 		Buffer* m_pShadingRectangleMinPointBuffer;
 		Buffer* m_pShadingRectangleMaxPointBuffer;
 		DepthTexture* m_pDepthTexture;
-		ColorTexture* m_pTexCoordTexture;
-		ColorTexture* m_pNormalTexture;
-		ColorTexture* m_pMaterialIDTexture;
+		ColorTexture* m_pGBuffer1;
+		ColorTexture* m_pGBuffer2;
+		ColorTexture* m_pGBuffer3;
+		ColorTexture* m_pGBuffer4;
 		Buffer* m_pFirstResourceIndexPerMaterialIDBuffer;
 		u16 m_NumMaterialTextures;
 		ColorTexture** m_ppMaterialTextures;

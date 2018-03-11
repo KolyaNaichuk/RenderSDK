@@ -62,7 +62,7 @@ void RenderGBufferPass::Record(RenderParams* pParams)
 					
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = m_RTVHeapStart;
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHeapStart = m_DSVHeapStart;
-	pCommandList->OMSetRenderTargets(3, &rtvHeapStart, TRUE, &dsvHeapStart);
+	pCommandList->OMSetRenderTargets(4, &rtvHeapStart, TRUE, &dsvHeapStart);
 
 	if (pParams->m_ClearGBufferBeforeRendering)
 	{
@@ -71,6 +71,7 @@ void RenderGBufferPass::Record(RenderParams* pParams)
 		pCommandList->ClearRenderTargetView(m_RTVHeapStart, clearColor);
 		pCommandList->ClearRenderTargetView(DescriptorHandle(m_RTVHeapStart, 1), clearColor);
 		pCommandList->ClearRenderTargetView(DescriptorHandle(m_RTVHeapStart, 2), clearColor);
+		pCommandList->ClearRenderTargetView(DescriptorHandle(m_RTVHeapStart, 3), clearColor);
 		pCommandList->ClearDepthView(m_DSVHeapStart, 1.0f);
 	}
 
@@ -102,9 +103,10 @@ void RenderGBufferPass::InitResources(InitParams* pParams)
 	const MeshRenderResources* pMeshRenderResources = pParams->m_pMeshRenderResources;
 	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
 			
-	m_OutputResourceStates.m_TexCoordTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	m_OutputResourceStates.m_NormalTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	m_OutputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	m_OutputResourceStates.m_GBuffer1State = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	m_OutputResourceStates.m_GBuffer2State = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	m_OutputResourceStates.m_GBuffer3State = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	m_OutputResourceStates.m_GBuffer4State = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	m_OutputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	m_OutputResourceStates.m_InstanceIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
@@ -112,17 +114,21 @@ void RenderGBufferPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_DrawCommandBufferState = D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
 
 	assert(m_ResourceBarriers.empty());
-	AddResourceBarrierIfRequired(pParams->m_pTexCoordTexture,
-		pParams->m_InputResourceStates.m_TexCoordTextureState,
-		m_OutputResourceStates.m_TexCoordTextureState);
+	AddResourceBarrierIfRequired(pParams->m_pGBuffer1,
+		pParams->m_InputResourceStates.m_GBuffer1State,
+		m_OutputResourceStates.m_GBuffer1State);
 
-	AddResourceBarrierIfRequired(pParams->m_pNormalTexture,
-		pParams->m_InputResourceStates.m_NormalTextureState,
-		m_OutputResourceStates.m_NormalTextureState);
+	AddResourceBarrierIfRequired(pParams->m_pGBuffer2,
+		pParams->m_InputResourceStates.m_GBuffer2State,
+		m_OutputResourceStates.m_GBuffer2State);
 
-	AddResourceBarrierIfRequired(pParams->m_pMaterialIDTexture,
-		pParams->m_InputResourceStates.m_MaterialIDTextureState,
-		m_OutputResourceStates.m_MaterialIDTextureState);
+	AddResourceBarrierIfRequired(pParams->m_pGBuffer3,
+		pParams->m_InputResourceStates.m_GBuffer3State,
+		m_OutputResourceStates.m_GBuffer3State);
+
+	AddResourceBarrierIfRequired(pParams->m_pGBuffer4,
+		pParams->m_InputResourceStates.m_GBuffer4State,
+		m_OutputResourceStates.m_GBuffer4State);
 
 	AddResourceBarrierIfRequired(pParams->m_pDepthTexture,
 		pParams->m_InputResourceStates.m_DepthTextureState,
@@ -153,14 +159,17 @@ void RenderGBufferPass::InitResources(InitParams* pParams)
 
 	m_RTVHeapStart = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_RTVHeapStart,
-		pParams->m_pTexCoordTexture->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		pParams->m_pGBuffer1->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate(),
-		pParams->m_pNormalTexture->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		pParams->m_pGBuffer2->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate(),
-		pParams->m_pMaterialIDTexture->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		pParams->m_pGBuffer3->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
+	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate(),
+		pParams->m_pGBuffer4->GetRTVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	
 	m_DSVHeapStart = pParams->m_pDepthTexture->GetDSVHandle();
 }
 
@@ -193,7 +202,7 @@ void RenderGBufferPass::InitPipelineState(InitParams* pParams)
 	const u32 meshType = 0;
 
 	Shader vertexShader(L"Shaders//RenderGBufferVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//RenderGBufferPS.hlsl", "Main", "ps_4_0");
+	Shader pixelShader(L"Shaders//RenderGBufferPS.hlsl", "Main", "ps_5_0");
 
 	const InputLayoutDesc& inputLayout = pMeshRenderResources->GetInputLayout(meshType);
 	assert(inputLayout.NumElements == 3);
@@ -211,9 +220,10 @@ void RenderGBufferPass::InitPipelineState(InitParams* pParams)
 
 	const DXGI_FORMAT rtvFormats[] =
 	{
-		GetRenderTargetViewFormat(pParams->m_pTexCoordTexture->GetFormat()),
-		GetRenderTargetViewFormat(pParams->m_pNormalTexture->GetFormat()),
-		GetRenderTargetViewFormat(pParams->m_pMaterialIDTexture->GetFormat())
+		GetRenderTargetViewFormat(pParams->m_pGBuffer1->GetFormat()),
+		GetRenderTargetViewFormat(pParams->m_pGBuffer2->GetFormat()),
+		GetRenderTargetViewFormat(pParams->m_pGBuffer3->GetFormat()),
+		GetRenderTargetViewFormat(pParams->m_pGBuffer4->GetFormat())
 	};
 	const DXGI_FORMAT dsvFormat = GetDepthStencilViewFormat(pParams->m_pDepthTexture->GetFormat());
 	pipelineStateDesc.SetRenderTargetFormats(ARRAYSIZE(rtvFormats), rtvFormats, dsvFormat);

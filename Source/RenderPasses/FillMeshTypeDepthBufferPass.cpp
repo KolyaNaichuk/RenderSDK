@@ -75,21 +75,21 @@ void FillMeshTypeDepthBufferPass::InitResources(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	m_OutputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_GBuffer3State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_MeshTypeDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 
 	DepthStencilValue optimizedClearDepth(1.0f);
 
 	assert(m_pMeshTypeDepthTexture == nullptr);
-	DepthTexture2DDesc depthTextureDesc(DXGI_FORMAT_R16_TYPELESS, pParams->m_pMaterialIDTexture->GetWidth(), pParams->m_pMaterialIDTexture->GetHeight(), true, true);
+	DepthTexture2DDesc depthTextureDesc(DXGI_FORMAT_R16_TYPELESS, pParams->m_pGBuffer3->GetWidth(), pParams->m_pGBuffer3->GetHeight(), true, true);
 	m_pMeshTypeDepthTexture = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &depthTextureDesc,
 		pParams->m_InputResourceStates.m_MeshTypeDepthTextureState, &optimizedClearDepth, L"FillMeshTypeDepthBufferPass::m_pMeshTypeDepthTexture");
 
 	assert(m_ResourceBarriers.empty());
-	AddResourceBarrierIfRequired(pParams->m_pMaterialIDTexture,
-		pParams->m_InputResourceStates.m_MaterialIDTextureState,
-		m_OutputResourceStates.m_MaterialIDTextureState);
+	AddResourceBarrierIfRequired(pParams->m_pGBuffer3,
+		pParams->m_InputResourceStates.m_GBuffer3State,
+		m_OutputResourceStates.m_GBuffer3State);
 
 	AddResourceBarrierIfRequired(pParams->m_pMeshTypePerMaterialIDBuffer,
 		pParams->m_InputResourceStates.m_MeshTypePerMaterialIDBufferState,
@@ -101,7 +101,7 @@ void FillMeshTypeDepthBufferPass::InitResources(InitParams* pParams)
 
 	m_SRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStart,
-		pParams->m_pMaterialIDTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		pParams->m_pGBuffer3->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		pParams->m_pMeshTypePerMaterialIDBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);

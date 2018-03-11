@@ -10,7 +10,7 @@ cbuffer AppDataBuffer : register(b0)
 	AppData g_AppData;
 }
 
-Texture2D<uint> g_MaterialIDTexture : register(t0);
+Texture2D<uint2> g_GBuffer3 : register(t0);
 Buffer<uint> g_MeshTypePerMaterialIDBuffer : register(t1);
 
 RWStructuredBuffer<uint2> g_ShadingRectangleMinPointBuffer : register(u0);
@@ -31,7 +31,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint localThreadIndex : SV
 
 	if ((globalThreadId.x < g_AppData.screenSize.x) && (globalThreadId.y < g_AppData.screenSize.y))
 	{
-		uint materialID = g_MaterialIDTexture[globalThreadId.xy];
+		uint materialID = g_GBuffer3[globalThreadId.xy].g;
 		if (materialID != EMPTY_MATERIAL_ID)
 		{
 			uint meshType = g_MeshTypePerMaterialIDBuffer[materialID];

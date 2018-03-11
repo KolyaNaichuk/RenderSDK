@@ -8,6 +8,7 @@ class CommandList;
 class CommandSignature;
 class RootSignature;
 class PipelineState;
+class GeometryBuffer;
 class MeshRenderResources;
 
 class RenderGBufferPass
@@ -15,9 +16,10 @@ class RenderGBufferPass
 public:
 	struct ResourceStates
 	{
-		D3D12_RESOURCE_STATES m_TexCoordTextureState;
-		D3D12_RESOURCE_STATES m_NormalTextureState;
-		D3D12_RESOURCE_STATES m_MaterialIDTextureState;
+		D3D12_RESOURCE_STATES m_GBuffer1State;
+		D3D12_RESOURCE_STATES m_GBuffer2State;
+		D3D12_RESOURCE_STATES m_GBuffer3State;
+		D3D12_RESOURCE_STATES m_GBuffer4State;
 		D3D12_RESOURCE_STATES m_DepthTextureState;
 		D3D12_RESOURCE_STATES m_InstanceIndexBufferState;
 		D3D12_RESOURCE_STATES m_InstanceWorldMatrixBufferState;
@@ -33,9 +35,10 @@ public:
 		UINT m_BufferHeight;
 		ResourceStates m_InputResourceStates;
 		MeshRenderResources* m_pMeshRenderResources;
-		ColorTexture* m_pTexCoordTexture;
-		ColorTexture* m_pNormalTexture;
-		ColorTexture* m_pMaterialIDTexture;
+		ColorTexture* m_pGBuffer1;
+		ColorTexture* m_pGBuffer2;
+		ColorTexture* m_pGBuffer3;
+		ColorTexture* m_pGBuffer4;
 		DepthTexture* m_pDepthTexture;
 		Buffer* m_pInstanceIndexBuffer;
 		Buffer* m_pInstanceWorldMatrixBuffer;

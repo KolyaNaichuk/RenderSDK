@@ -12,7 +12,7 @@ class CalcShadingRectanglesPass
 public:
 	struct ResourceStates
 	{
-		D3D12_RESOURCE_STATES m_MaterialIDTextureState;
+		D3D12_RESOURCE_STATES m_GBuffer3State;
 		D3D12_RESOURCE_STATES m_MeshTypePerMaterialIDBufferState;
 		D3D12_RESOURCE_STATES m_ShadingRectangleMinPointBufferState;
 		D3D12_RESOURCE_STATES m_ShadingRectangleMaxPointBufferState;
@@ -23,7 +23,7 @@ public:
 		const char* m_pName;
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
-		ColorTexture* m_pMaterialIDTexture;
+		ColorTexture* m_pGBuffer3;
 		Buffer* m_pMeshTypePerMaterialIDBuffer;
 		u32 m_NumMeshTypes;
 	};

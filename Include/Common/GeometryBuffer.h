@@ -10,9 +10,10 @@ class GeometryBuffer
 public:
 	struct ResourceStates
 	{
-		D3D12_RESOURCE_STATES m_TexCoordTextureState;
-		D3D12_RESOURCE_STATES m_NormalTextureState;
-		D3D12_RESOURCE_STATES m_MaterialIDTextureState;
+		D3D12_RESOURCE_STATES m_GBuffer1State;
+		D3D12_RESOURCE_STATES m_GBuffer2State;
+		D3D12_RESOURCE_STATES m_GBuffer3State;
+		D3D12_RESOURCE_STATES m_GBuffer4State;
 	};
 
 	struct InitParams
@@ -26,15 +27,17 @@ public:
 	GeometryBuffer(InitParams* pParams);
 	~GeometryBuffer();
 
-	ColorTexture* GetTexCoordTexture() { return m_pTexCoordTexture; };
-	ColorTexture* GetNormalTexture() { return m_pNormalTexture; };
-	ColorTexture* GetMaterialIDTexture() { return m_pMaterialIDTexture; };
-
+	ColorTexture* GetGBuffer1() { return m_pGBuffer1; };
+	ColorTexture* GetGBuffer2() { return m_pGBuffer2; }
+	ColorTexture* GetGBuffer3() { return m_pGBuffer3; };
+	ColorTexture* GetGBuffer4() { return m_pGBuffer4; };
+	
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
 		
 private:
-	ColorTexture* m_pTexCoordTexture;
-	ColorTexture* m_pNormalTexture;
-	ColorTexture* m_pMaterialIDTexture;
+	ColorTexture* m_pGBuffer1 = nullptr;
+	ColorTexture* m_pGBuffer2 = nullptr;
+	ColorTexture* m_pGBuffer3 = nullptr;
+	ColorTexture* m_pGBuffer4 = nullptr;
 	ResourceStates m_OutputResourceStates;
 };

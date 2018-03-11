@@ -822,7 +822,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 
 	m_pCommandListPool = new CommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, false);
+	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32, false);
 	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
 	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 512, true);
@@ -871,10 +871,11 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_BufferWidth = backBufferWidth;
 	params.m_BufferHeight = backBufferHeight;
-	params.m_InputResourceStates.m_TexCoordTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_NormalTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-
+	params.m_InputResourceStates.m_GBuffer1State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_GBuffer2State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_GBuffer3State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_GBuffer4State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	
 	m_pGeometryBuffer = new GeometryBuffer(&params);
 
 	DepthStencilValue optimizedClearDepth(1.0f);
@@ -926,7 +927,7 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight)
 		m_pMeshRenderResources = new MeshRenderResources(m_pRenderEnv, pScene->GetNumMeshBatches(), pScene->GetMeshBatches());
 
 	if (pScene->GetNumMaterials() > 0)
-		m_pMaterialRenderResources = new MaterialRenderResources(m_pRenderEnv, pScene->GetNumMaterials(), pScene->GetMaterials(), true/*forceSRGB*/);
+		m_pMaterialRenderResources = new MaterialRenderResources(m_pRenderEnv, pScene->GetNumMaterials(), pScene->GetMaterials());
 
 	if (pScene->GetNumPointLights() > 0)
 		InitPointLightRenderResources(pScene);
@@ -1136,9 +1137,10 @@ void DXApplication::InitRenderGBufferMainPass(UINT bufferWidth, UINT bufferHeigh
 	params.m_BufferWidth = bufferWidth;
 	params.m_BufferHeight = bufferHeight;
 
-	params.m_InputResourceStates.m_TexCoordTextureState = pGeometryBufferStates->m_TexCoordTextureState;
-	params.m_InputResourceStates.m_NormalTextureState = pGeometryBufferStates->m_NormalTextureState;
-	params.m_InputResourceStates.m_MaterialIDTextureState = pGeometryBufferStates->m_MaterialIDTextureState;
+	params.m_InputResourceStates.m_GBuffer1State = pGeometryBufferStates->m_GBuffer1State;
+	params.m_InputResourceStates.m_GBuffer2State = pGeometryBufferStates->m_GBuffer2State;
+	params.m_InputResourceStates.m_GBuffer3State = pGeometryBufferStates->m_GBuffer3State;
+	params.m_InputResourceStates.m_GBuffer4State = pGeometryBufferStates->m_GBuffer4State;
 	params.m_InputResourceStates.m_DepthTextureState = pDownscaleAndReprojectDepthPassStates->m_PrevDepthTextureState;
 	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_VisibleInstanceIndexBufferState;
@@ -1146,9 +1148,10 @@ void DXApplication::InitRenderGBufferMainPass(UINT bufferWidth, UINT bufferHeigh
 	params.m_InputResourceStates.m_DrawCommandBufferState = pCreateMainDrawCommandsPassStates->m_DrawCommandBufferState;
 
 	params.m_pMeshRenderResources = m_pMeshRenderResources;
-	params.m_pTexCoordTexture = m_pGeometryBuffer->GetTexCoordTexture();
-	params.m_pNormalTexture = m_pGeometryBuffer->GetNormalTexture();
-	params.m_pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
+	params.m_pGBuffer1 = m_pGeometryBuffer->GetGBuffer1();
+	params.m_pGBuffer2 = m_pGeometryBuffer->GetGBuffer2();
+	params.m_pGBuffer3 = m_pGeometryBuffer->GetGBuffer3();
+	params.m_pGBuffer4 = m_pGeometryBuffer->GetGBuffer4();
 	params.m_pDepthTexture = m_pDepthTexture;
 	params.m_pInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
 	params.m_pInstanceIndexBuffer = m_pCreateMainDrawCommandsPass->GetVisibleInstanceIndexBuffer();
@@ -1291,9 +1294,10 @@ void DXApplication::InitRenderGBufferFalseNegativePass(UINT bufferWidth, UINT bu
 	params.m_BufferWidth = bufferWidth;
 	params.m_BufferHeight = bufferHeight;
 
-	params.m_InputResourceStates.m_TexCoordTextureState = pRenderGBufferMainPassStates->m_TexCoordTextureState;
-	params.m_InputResourceStates.m_NormalTextureState = pRenderGBufferMainPassStates->m_NormalTextureState;
-	params.m_InputResourceStates.m_MaterialIDTextureState = pRenderGBufferMainPassStates->m_MaterialIDTextureState;
+	params.m_InputResourceStates.m_GBuffer1State = pRenderGBufferMainPassStates->m_GBuffer1State;
+	params.m_InputResourceStates.m_GBuffer2State = pRenderGBufferMainPassStates->m_GBuffer2State;
+	params.m_InputResourceStates.m_GBuffer3State = pRenderGBufferMainPassStates->m_GBuffer3State;
+	params.m_InputResourceStates.m_GBuffer4State = pRenderGBufferMainPassStates->m_GBuffer4State;
 	params.m_InputResourceStates.m_DepthTextureState = pFillVisibilityBufferFalseNegativePassStates->m_DepthTextureState;
 	params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = pRenderGBufferMainPassStates->m_InstanceWorldMatrixBufferState;
 	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_VisibleInstanceIndexBufferState;
@@ -1301,9 +1305,10 @@ void DXApplication::InitRenderGBufferFalseNegativePass(UINT bufferWidth, UINT bu
 	params.m_InputResourceStates.m_DrawCommandBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_DrawCommandBufferState;
 
 	params.m_pMeshRenderResources = m_pMeshRenderResources;
-	params.m_pTexCoordTexture = m_pGeometryBuffer->GetTexCoordTexture();
-	params.m_pNormalTexture = m_pGeometryBuffer->GetNormalTexture();
-	params.m_pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
+	params.m_pGBuffer1 = m_pGeometryBuffer->GetGBuffer1();
+	params.m_pGBuffer2 = m_pGeometryBuffer->GetGBuffer2();
+	params.m_pGBuffer3 = m_pGeometryBuffer->GetGBuffer3();
+	params.m_pGBuffer4 = m_pGeometryBuffer->GetGBuffer4();
 	params.m_pDepthTexture = m_pDepthTexture;
 	params.m_pInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
 	params.m_pInstanceIndexBuffer = m_pCreateFalseNegativeDrawCommandsPass->GetVisibleInstanceIndexBuffer();
@@ -1343,11 +1348,11 @@ void DXApplication::InitCalcShadingRectanglesPass()
 	CalcShadingRectanglesPass::InitParams params;
 	params.m_pName = "CalcShadingRectanglesPass";
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_InputResourceStates.m_MaterialIDTextureState = pRenderGBufferFalseNegativePassStates->m_MaterialIDTextureState;
+	params.m_InputResourceStates.m_GBuffer3State = pRenderGBufferFalseNegativePassStates->m_GBuffer3State;
 	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_ShadingRectangleMinPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_ShadingRectangleMaxPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
+	params.m_pGBuffer3 = m_pGeometryBuffer->GetGBuffer3();
 	params.m_pMeshTypePerMaterialIDBuffer = m_pMaterialRenderResources->GetMeshTypePerMaterialIDBuffer();
 	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
 	
@@ -1379,10 +1384,10 @@ void DXApplication::InitFillMeshTypeDepthBufferPass()
 	FillMeshTypeDepthBufferPass::InitParams params;
 	params.m_pName = "FillMeshTypeDepthBufferPass";
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_InputResourceStates.m_MaterialIDTextureState = pCalcShadingRectanglesPassStates->m_MaterialIDTextureState;
+	params.m_InputResourceStates.m_GBuffer3State = pCalcShadingRectanglesPassStates->m_GBuffer3State;
 	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = pCalcShadingRectanglesPassStates->m_MeshTypePerMaterialIDBufferState;
 	params.m_InputResourceStates.m_MeshTypeDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-	params.m_pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
+	params.m_pGBuffer3 = m_pGeometryBuffer->GetGBuffer3();
 	params.m_pMeshTypePerMaterialIDBuffer = m_pMaterialRenderResources->GetMeshTypePerMaterialIDBuffer();
 
 	m_pFillMeshTypeDepthBufferPass = new FillMeshTypeDepthBufferPass(&params);
@@ -1496,10 +1501,10 @@ void DXApplication::InitVisualizeNormalBufferPass()
 		VisualizeTexturePass::InitParams params;
 		params.m_pName = "VisualizeNormalBufferPass";
 		params.m_pRenderEnv = m_pRenderEnv;
-		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_NormalTextureState;
+		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_GBuffer4State;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
-		params.m_pInputTexture = m_pGeometryBuffer->GetNormalTexture();
-		params.m_InputTextureSRV = m_pGeometryBuffer->GetNormalTexture()->GetSRVHandle();
+		params.m_pInputTexture = m_pGeometryBuffer->GetGBuffer4();
+		params.m_InputTextureSRV = m_pGeometryBuffer->GetGBuffer4()->GetSRVHandle();
 		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
 		params.m_TextureType = VisualizeTexturePass::TextureType_GBufferNormal;
 
@@ -1535,10 +1540,10 @@ void DXApplication::InitVisualizeTexCoordBufferPass()
 		VisualizeTexturePass::InitParams params;
 		params.m_pName = "VisualizeTexCoordBufferPass";
 		params.m_pRenderEnv = m_pRenderEnv;
-		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_TexCoordTextureState;
+		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_GBuffer1State;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
-		params.m_pInputTexture = m_pGeometryBuffer->GetTexCoordTexture();
-		params.m_InputTextureSRV = m_pGeometryBuffer->GetTexCoordTexture()->GetSRVHandle();
+		params.m_pInputTexture = m_pGeometryBuffer->GetGBuffer1();
+		params.m_InputTextureSRV = m_pGeometryBuffer->GetGBuffer1()->GetSRVHandle();
 		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
 		params.m_TextureType = VisualizeTexturePass::TextureType_GBufferTexCoord;
 
@@ -2429,9 +2434,10 @@ void DXApplication::InitTiledShadingPass()
 	params.m_InputResourceStates.m_ShadingRectangleMinPointBufferState = pCalcShadingRectanglesPassStates->m_ShadingRectangleMinPointBufferState;
 	params.m_InputResourceStates.m_ShadingRectangleMaxPointBufferState = pCalcShadingRectanglesPassStates->m_ShadingRectangleMaxPointBufferState;
 	params.m_InputResourceStates.m_DepthTextureState = pTiledLightCullingPassStates->m_DepthTextureState;
-	params.m_InputResourceStates.m_TexCoordTextureState = pRenderGBufferFalseNegativePassStates->m_TexCoordTextureState;
-	params.m_InputResourceStates.m_NormalTextureState = pRenderGBufferFalseNegativePassStates->m_NormalTextureState;
-	params.m_InputResourceStates.m_MaterialIDTextureState = pFillMeshTypeDepthBufferPassStates->m_MaterialIDTextureState;
+	params.m_InputResourceStates.m_GBuffer1State = pRenderGBufferFalseNegativePassStates->m_GBuffer1State;
+	params.m_InputResourceStates.m_GBuffer2State = pRenderGBufferFalseNegativePassStates->m_GBuffer2State;
+	params.m_InputResourceStates.m_GBuffer3State = pFillMeshTypeDepthBufferPassStates->m_GBuffer3State;
+	params.m_InputResourceStates.m_GBuffer4State = pRenderGBufferFalseNegativePassStates->m_GBuffer4State;
 	params.m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = pVoxelizePassStates->m_FirstResourceIndexPerMaterialIDBufferState;
 	
 	params.m_pAccumLightTexture = m_pAccumLightTexture;
@@ -2439,9 +2445,10 @@ void DXApplication::InitTiledShadingPass()
 	params.m_pShadingRectangleMinPointBuffer = m_pCalcShadingRectanglesPass->GetShadingRectangleMinPointBuffer();
 	params.m_pShadingRectangleMaxPointBuffer = m_pCalcShadingRectanglesPass->GetShadingRectangleMaxPointBuffer();
 	params.m_pDepthTexture = m_pDepthTexture;
-	params.m_pTexCoordTexture = m_pGeometryBuffer->GetTexCoordTexture();
-	params.m_pNormalTexture = m_pGeometryBuffer->GetNormalTexture();
-	params.m_pMaterialIDTexture = m_pGeometryBuffer->GetMaterialIDTexture();
+	params.m_pGBuffer1 = m_pGeometryBuffer->GetGBuffer1();
+	params.m_pGBuffer2 = m_pGeometryBuffer->GetGBuffer2();
+	params.m_pGBuffer3 = m_pGeometryBuffer->GetGBuffer3();
+	params.m_pGBuffer4 = m_pGeometryBuffer->GetGBuffer4();
 	params.m_pFirstResourceIndexPerMaterialIDBuffer = m_pMaterialRenderResources->GetFirstResourceIndexPerMaterialIDBuffer();
 	params.m_NumMaterialTextures = m_pMaterialRenderResources->GetNumTextures();
 	params.m_ppMaterialTextures = m_pMaterialRenderResources->GetTextures();

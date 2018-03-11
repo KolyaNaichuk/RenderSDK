@@ -11,7 +11,7 @@ class Buffer;
 class MaterialRenderResources
 {
 public:
-	MaterialRenderResources(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials, bool forceSRGB);
+	MaterialRenderResources(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials);
 	~MaterialRenderResources();
 	
 	u16 GetNumTextures() const { return (u16)m_Textures.size(); }
@@ -23,7 +23,7 @@ public:
 private:
 	void InitMeshTypePerMaterialIDBuffer(RenderEnv* pRenderEnv, u16 numMaterials);
 	void InitFirstResourceIndexPerMaterialIDBuffer(RenderEnv* pRenderEnv, u16 numMaterials);
-	void InitTextures(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials, bool forceSRGB);
+	void InitTextures(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials);
 
 private:
 	Buffer* m_pMeshTypePerMaterialIDBuffer;

@@ -83,7 +83,7 @@ void CalcShadingRectanglesPass::InitResources(InitParams* pParams)
 	m_pShadingRectangleMaxPointBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shadingRectBufferDesc,
 		pParams->m_InputResourceStates.m_ShadingRectangleMaxPointBufferState, L"m_pShadingRectangleMaxPointBuffer");
 
-	m_OutputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_GBuffer3State = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_ShadingRectangleMinPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_ShadingRectangleMaxPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -97,9 +97,9 @@ void CalcShadingRectanglesPass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_ShadingRectangleMaxPointBufferState,
 		m_OutputResourceStates.m_ShadingRectangleMaxPointBufferState);
 
-	AddResourceBarrierIfRequired(pParams->m_pMaterialIDTexture,
-		pParams->m_InputResourceStates.m_MaterialIDTextureState,
-		m_OutputResourceStates.m_MaterialIDTextureState);
+	AddResourceBarrierIfRequired(pParams->m_pGBuffer3,
+		pParams->m_InputResourceStates.m_GBuffer3State,
+		m_OutputResourceStates.m_GBuffer3State);
 
 	AddResourceBarrierIfRequired(pParams->m_pMeshTypePerMaterialIDBuffer,
 		pParams->m_InputResourceStates.m_MeshTypePerMaterialIDBufferState,
@@ -113,7 +113,7 @@ void CalcShadingRectanglesPass::InitResources(InitParams* pParams)
 		m_pShadingRectangleMaxPointBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-		pParams->m_pMaterialIDTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		pParams->m_pGBuffer3->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		pParams->m_pMeshTypePerMaterialIDBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -143,8 +143,8 @@ void CalcShadingRectanglesPass::InitPipelineState(InitParams* pParams)
 	const u8 numThreadsX = 16;
 	const u8 numThreadsY = 16;
 
-	m_NumThreadGroupsX = (u32)Ceil((f32)pParams->m_pMaterialIDTexture->GetWidth() / (f32)numThreadsX);
-	m_NumThreadGroupsY = (u32)Ceil((f32)pParams->m_pMaterialIDTexture->GetHeight() / (f32)numThreadsY);
+	m_NumThreadGroupsX = (u32)Ceil((f32)pParams->m_pGBuffer3->GetWidth() / (f32)numThreadsX);
+	m_NumThreadGroupsY = (u32)Ceil((f32)pParams->m_pGBuffer3->GetHeight() / (f32)numThreadsY);
 
 	std::string numThreadsXStr = std::to_string(numThreadsX);
 	std::string numThreadsYStr = std::to_string(numThreadsY);

@@ -114,6 +114,9 @@ COPY /Y "$(SolutionDir)Shaders\BoundingVolumes.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Reconstruction.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Reconstruction.hlsl"
 
+COPY /Y "$(SolutionDir)Shaders\EncodingUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\EncodingUtils.hlsl"
+COPY /Y "$(SolutionDir)Shaders\EncodingUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\EncodingUtils.hlsl"
+
 COPY /Y "$(SolutionDir)Shaders\LightUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\LightUtils.hlsl"
 COPY /Y "$(SolutionDir)Shaders\LightUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\LightUtils.hlsl"
 
@@ -235,6 +238,9 @@ COPY /Y "$(SolutionDir)Shaders\BoundingVolumes.hlsl" "$(SolutionDir)Samples\Bin\
 
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Reconstruction.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Reconstruction.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\EncodingUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\EncodingUtils.hlsl"
+COPY /Y "$(SolutionDir)Shaders\EncodingUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\EncodingUtils.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\LightUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\LightUtils.hlsl"
 COPY /Y "$(SolutionDir)Shaders\LightUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\LightUtils.hlsl"

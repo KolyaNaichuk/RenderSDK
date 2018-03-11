@@ -1,4 +1,5 @@
 #include "Foundation.hlsl"
+#include "EncodingUtils.hlsl"
 #include "LightUtils.hlsl"
 #include "ShadowUtils.hlsl"
 #include "OverlapTest.hlsl"
@@ -16,31 +17,32 @@ cbuffer AppDataBuffer : register(b0)
 }
 
 Texture2D<float> g_DepthTexture : register(t0);
-Texture2D<float2> g_TexCoordTexture : register(t1);
-Texture2D<float4> g_NormalTexture : register(t2);
-Texture2D<uint> g_MaterialIDTexture : register(t3);
-Buffer<uint> g_FirstResourceIndexPerMaterialIDBuffer : register(t4);
+Texture2D<float2> g_GBuffer1 : register(t1);
+Texture2D<float2> g_GBuffer2 : register(t2);
+Texture2D<uint2> g_GBuffer3 : register(t3);
+Texture2D<float4> g_GBuffer4 : register(t4);
+Buffer<uint> g_FirstResourceIndexPerMaterialIDBuffer : register(t5);
 
 #if ENABLE_POINT_LIGHTS == 1
-StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t5);
-StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t6);
-Buffer<uint> g_PointLightIndexPerTileBuffer : register(t7);
-StructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(t8);
-Texture2D<float2> g_PointLightTiledVarianceShadowMap : register(t9);
-StructuredBuffer<float4x4> g_PointLightViewProjMatrixBuffer : register(t10);
+StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t6);
+StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t7);
+Buffer<uint> g_PointLightIndexPerTileBuffer : register(t8);
+StructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(t9);
+Texture2D<float2> g_PointLightTiledVarianceShadowMap : register(t10);
+StructuredBuffer<float4x4> g_PointLightViewProjMatrixBuffer : register(t11);
 #endif // ENABLE_POINT_LIGHTS
 
 #if ENABLE_SPOT_LIGHTS == 1
-StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t11);
-StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t12);
-Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t13);
-StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t14);
-Texture2D<float2> g_SpotLightTiledVarianceShadowMap : register(t15);
-StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t16);
-StructuredBuffer<ShadowMapTile> g_SpotLightShadowMapTileBuffer : register(t17);
+StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t12);
+StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t13);
+Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t14);
+StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t15);
+Texture2D<float2> g_SpotLightTiledVarianceShadowMap : register(t16);
+StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t17);
+StructuredBuffer<ShadowMapTile> g_SpotLightShadowMapTileBuffer : register(t18);
 #endif // ENABLE_SPOT_LIGHTS
 
-Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t18);
+Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t19);
 
 SamplerState g_AnisoSampler : register(s0);
 SamplerState g_VarianceShadowMapSampler : register(s1);
@@ -48,12 +50,18 @@ SamplerState g_VarianceShadowMapSampler : register(s1);
 [earlydepthstencil]
 float4 Main(PSInput input) : SV_Target
 {
-	uint2 texturePos = uint2(input.screenSpacePos.xy);
+	uint2 pixelPos = uint2(input.screenSpacePos.xy);
 
-	float hardwareDepth = g_DepthTexture[texturePos].x;
-	float2 texCoord = g_TexCoordTexture[texturePos].xy;
-	float3 worldSpaceNormal = g_NormalTexture[texturePos].xyz;
-	uint materialID = g_MaterialIDTexture[texturePos].x;
+	float hardwareDepth = g_DepthTexture[pixelPos].x;
+	float2 texCoord = g_GBuffer1[pixelPos].xy;
+	float2 derivativesLength = g_GBuffer2[pixelPos].xy;
+	uint encodedDerivativesRotation = g_GBuffer3[pixelPos].x;
+	uint materialID = g_GBuffer3[pixelPos].y;
+	float3 worldSpaceNormal = g_GBuffer4[pixelPos].xyz;
+	
+	float2 ddX;
+	float2 ddY;
+	DecodeTextureCoordinateDerivatives(derivativesLength, encodedDerivativesRotation, ddX, ddY);
 	
 	uint firstTextureIndex = g_FirstResourceIndexPerMaterialIDBuffer[materialID];
 	Texture2D diffuseTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex)];
@@ -67,7 +75,7 @@ float4 Main(PSInput input) : SV_Target
 	float3 worldSpacePos = ComputeWorldSpacePosition(input.texCoord, hardwareDepth, g_AppData.viewProjInvMatrix).xyz;
 	float3 worldSpaceDirToViewer = normalize(g_AppData.cameraWorldSpacePos.xyz - worldSpacePos);
 		
-	uint2 tilePos = texturePos / g_AppData.screenTileSize;
+	uint2 tilePos = pixelPos / g_AppData.screenTileSize;
 	uint tileIndex = tilePos.y * g_AppData.numScreenTiles.x + tilePos.x;
 	
 	float3 pointLightsContrib = float3(0.0f, 0.0f, 0.0f);

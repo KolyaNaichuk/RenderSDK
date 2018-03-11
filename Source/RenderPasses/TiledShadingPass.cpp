@@ -96,9 +96,10 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_ShadingRectangleMinPointBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_ShadingRectangleMaxPointBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_DepthTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_TexCoordTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_NormalTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_MaterialIDTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_GBuffer1State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_GBuffer2State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_GBuffer3State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_GBuffer4State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	
 	m_OutputResourceStates.m_PointLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
@@ -137,17 +138,21 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_DepthTextureState,
 		m_OutputResourceStates.m_DepthTextureState);
 
-	AddResourceBarrierIfRequired(pParams->m_pTexCoordTexture,
-		pParams->m_InputResourceStates.m_TexCoordTextureState,
-		m_OutputResourceStates.m_TexCoordTextureState);
+	AddResourceBarrierIfRequired(pParams->m_pGBuffer1,
+		pParams->m_InputResourceStates.m_GBuffer1State,
+		m_OutputResourceStates.m_GBuffer1State);
 
-	AddResourceBarrierIfRequired(pParams->m_pNormalTexture,
-		pParams->m_InputResourceStates.m_NormalTextureState,
-		m_OutputResourceStates.m_NormalTextureState);
+	AddResourceBarrierIfRequired(pParams->m_pGBuffer2,
+		pParams->m_InputResourceStates.m_GBuffer2State,
+		m_OutputResourceStates.m_GBuffer2State);
 
-	AddResourceBarrierIfRequired(pParams->m_pMaterialIDTexture,
-		pParams->m_InputResourceStates.m_MaterialIDTextureState,
-		m_OutputResourceStates.m_MaterialIDTextureState);
+	AddResourceBarrierIfRequired(pParams->m_pGBuffer3,
+		pParams->m_InputResourceStates.m_GBuffer3State,
+		m_OutputResourceStates.m_GBuffer3State);
+
+	AddResourceBarrierIfRequired(pParams->m_pGBuffer4,
+		pParams->m_InputResourceStates.m_GBuffer4State,
+		m_OutputResourceStates.m_GBuffer4State);
 
 	AddResourceBarrierIfRequired(pParams->m_pFirstResourceIndexPerMaterialIDBuffer,
 		pParams->m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState,
@@ -223,13 +228,16 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 		pParams->m_pDepthTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-		pParams->m_pTexCoordTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		pParams->m_pGBuffer1->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-		pParams->m_pNormalTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		pParams->m_pGBuffer2->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-		pParams->m_pMaterialIDTexture->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		pParams->m_pGBuffer3->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+		pParams->m_pGBuffer4->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		pParams->m_pFirstResourceIndexPerMaterialIDBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -318,14 +326,14 @@ void TiledShadingPass::InitRootSignature(InitParams* pParams)
 	
 	rootParams[kRootCBVParamPS] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_PIXEL);
 
-	std::vector<D3D12_DESCRIPTOR_RANGE> srvRangesPS = {SRVDescriptorRange(5, 0)};
+	std::vector<D3D12_DESCRIPTOR_RANGE> srvRangesPS = {SRVDescriptorRange(6, 0)};
 	if (pParams->m_EnablePointLights)
-		srvRangesPS.push_back(SRVDescriptorRange(6, 5));
+		srvRangesPS.push_back(SRVDescriptorRange(6, 6));
 	
 	if (pParams->m_EnableSpotLights)
-		srvRangesPS.push_back(SRVDescriptorRange(7, 11));
+		srvRangesPS.push_back(SRVDescriptorRange(7, 12));
 		
-	srvRangesPS.push_back(SRVDescriptorRange(pParams->m_NumMaterialTextures, 18));
+	srvRangesPS.push_back(SRVDescriptorRange(pParams->m_NumMaterialTextures, 19));
 	rootParams[kRootSRVTableParamPS] = RootDescriptorTableParameter((UINT)srvRangesPS.size(), srvRangesPS.data(), D3D12_SHADER_VISIBILITY_PIXEL);
 
 	std::vector<D3D12_DESCRIPTOR_RANGE> samplerRangesPS = {SamplerRange(2, 0)};

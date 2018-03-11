@@ -571,7 +571,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\Encoding.hlsl">
+    <None Include="..\Shaders\EncodingUtils.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
