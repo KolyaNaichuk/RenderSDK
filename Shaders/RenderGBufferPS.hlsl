@@ -25,12 +25,12 @@ PSOutput Main(PSInput input)
 {
 	float3 worldSpaceNormal = normalize(input.worldSpaceNormal);
 	
-	float2 ddX = ddx_fine(input.texCoord);
-	float2 ddY = ddy_fine(input.texCoord);
+	float2 texCoordDX = ddx_fine(input.texCoord);
+	float2 texCoordDY = ddy_fine(input.texCoord);
 				
 	float2 derivativesLength;
 	uint encodedDerivativesRotation;
-	EncodeTextureCoordinateDerivatives(ddX, ddY, derivativesLength, encodedDerivativesRotation);
+	EncodeTextureCoordinateDerivatives(texCoordDX, texCoordDY, derivativesLength, encodedDerivativesRotation);
 
 	PSOutput output;
 	output.buffer1 = frac(input.texCoord);

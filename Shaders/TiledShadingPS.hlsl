@@ -59,18 +59,18 @@ float4 Main(PSInput input) : SV_Target
 	uint materialID = g_GBuffer3[pixelPos].y;
 	float3 worldSpaceNormal = g_GBuffer4[pixelPos].xyz;
 	
-	float2 ddX;
-	float2 ddY;
-	DecodeTextureCoordinateDerivatives(derivativesLength, encodedDerivativesRotation, ddX, ddY);
+	float2 texCoordDX;
+	float2 texCoordDY;
+	DecodeTextureCoordinateDerivatives(derivativesLength, encodedDerivativesRotation, texCoordDX, texCoordDY);
 	
 	uint firstTextureIndex = g_FirstResourceIndexPerMaterialIDBuffer[materialID];
 	Texture2D diffuseTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex)];
 	Texture2D specularTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex + 1)];
 	Texture2D shininessTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex + 2)];
 	
-	float3 diffuseAlbedo = diffuseTexture.Sample(g_AnisoSampler, texCoord).rgb;
-	float3 specularAlbedo = specularTexture.Sample(g_AnisoSampler, texCoord).rgb;
-	float shininess = shininessTexture.Sample(g_AnisoSampler, texCoord).r;
+	float3 diffuseAlbedo = diffuseTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).rgb;
+	float3 specularAlbedo = specularTexture[uint2(0, 0)].rgb;
+	float shininess = shininessTexture[uint2(0, 0)].r;
 
 	float3 worldSpacePos = ComputeWorldSpacePosition(input.texCoord, hardwareDepth, g_AppData.viewProjInvMatrix).xyz;
 	float3 worldSpaceDirToViewer = normalize(g_AppData.cameraWorldSpacePos.xyz - worldSpacePos);

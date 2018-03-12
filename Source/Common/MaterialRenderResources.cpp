@@ -100,7 +100,7 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 		{
 			const std::wstring debugMapName = L"Diffuse Map: " + pMaterial->m_Name;
 
-			bool generateMips = false;
+			bool generateMips = true;
 			bool forceSRGB = true;
 
 			DirectX::ScratchImage image;
@@ -141,6 +141,7 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 			}
 			else
 			{
+				assert(false && "TileShadingPS.hlsl does not handle specular map");
 				LoadImageDataFromFile(pMaterial->m_SpecularMapFilePath, image, generateMips);
 			}
 			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingTransitionBarriers);
@@ -164,6 +165,7 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 			}
 			else
 			{
+				assert(false && "TileShadingPS.hlsl does not handle shininess map");
 				LoadImageDataFromFile(pMaterial->m_ShininessMapFilePath, image, generateMips);
 			}
 			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingTransitionBarriers);
@@ -201,13 +203,13 @@ namespace
 		const std::wstring fileExtension = ExtractFileExtension(filePath);
 		if ((fileExtension == L"DDS") || (fileExtension == L"dds"))
 		{
+			assert(!generateMips);
 			VerifyD3DResult(DirectX::LoadFromDDSFile(filePath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, image));
 		}
 		else if ((fileExtension == L"TGA") || (fileExtension == L"tga"))
 		{
 			if (generateMips)
 			{
-				assert(false && "Not supported");
 				DirectX::ScratchImage tempImage;
 				VerifyD3DResult(DirectX::LoadFromTGAFile(filePath.c_str(), nullptr, tempImage));
 				VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));
@@ -221,7 +223,6 @@ namespace
 		{
 			if (generateMips)
 			{
-				assert(false && "Not supported");
 				DirectX::ScratchImage tempImage;
 				VerifyD3DResult(DirectX::LoadFromWICFile(filePath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, tempImage));
 				VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));
