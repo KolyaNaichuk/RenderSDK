@@ -99,9 +99,8 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 		const Material* pMaterial = ppMaterials[index];
 		{
 			const std::wstring debugMapName = L"Diffuse Map: " + pMaterial->m_Name;
-
-			bool generateMips = true;
-			bool forceSRGB = true;
+			const bool generateMips = true;
+			const bool forceSRGB = true;
 
 			DirectX::ScratchImage image;
 			if (pMaterial->m_DiffuseMapFilePath.empty())
@@ -123,9 +122,8 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 		}
 		{
 			const std::wstring debugMapName = L"Specular Map: " + pMaterial->m_Name;
-
-			bool generateMips = false;
-			bool forceSRGB = false;
+			const bool generateMips = false;
+			const bool forceSRGB = false;
 
 			DirectX::ScratchImage image;
 			if (pMaterial->m_SpecularMapFilePath.empty())
@@ -148,9 +146,8 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 		}
 		{
 			const std::wstring debugMapName = L"Shininess Map: " + pMaterial->m_Name;
-
-			bool generateMips = false;
-			bool forceSRGB = false;
+			const bool generateMips = false;
+			const bool forceSRGB = false;
 
 			DirectX::ScratchImage image;
 			if (pMaterial->m_ShininessMapFilePath.empty())
