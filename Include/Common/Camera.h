@@ -12,7 +12,7 @@ public:
 		ProjType_Perspective
 	};
 
-	Camera(ProjType projType, f32 nearClipPlane, f32 farClipPlane, f32 aspectRatio);
+	Camera(ProjType projType, f32 nearClipPlane, f32 farClipPlane, f32 aspectRatio, f32 maxMoveSpeed, f32 maxRotationSpeed);
 
 	ProjType GetProjType() const;
 	void SetProjType(ProjType projType);
@@ -35,6 +35,12 @@ public:
 	f32 GetSizeY() const;
 	void SetSizeY(f32 sizeY);
 
+	f32 GetMaxMoveSpeed() const;
+	void SetMaxMoveSpeed(f32 maxMoveSpeed);
+
+	f32 GetMaxRotationSpeed() const;
+	void SetMaxRotationSpeed(f32 maxRotationSpeed);
+	
 	const Matrix4f& GetViewMatrix() const;
 	const Matrix4f& GetProjMatrix() const;
 
@@ -52,6 +58,8 @@ private:
 	f32 m_AspectRatio;
 	f32 m_FovYInRadians;
 	f32 m_SizeY;
+	f32 m_MaxMoveSpeed;
+	f32 m_MaxRotationSpeed;
 
 	mutable Matrix4f m_ProjMatrix;
 	mutable u8 m_DirtyFlags;

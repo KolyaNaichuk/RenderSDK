@@ -11,7 +11,14 @@ Scene* SceneLoader::LoadCube()
 	OBJFileLoader fileLoader;
 	Scene* pScene = fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
 
-	Camera* pCamera = new Camera(Camera::ProjType_Perspective, 0.1f/*nearClipPlane*/, 100.0f/*farClipPlane*/, 1.0f/*aspectRatio*/);
+	Camera* pCamera = new Camera(
+		Camera::ProjType_Perspective,
+		0.1f/*nearClipPlane*/,
+		100.0f/*farClipPlane*/,
+		1.0f/*aspectRatio*/,
+		0.3f/*maxMoveSpeed*/,
+		0.1f/*maxRotationSpeed*/);
+	
 	pCamera->GetTransform().SetPosition(Vector3f(1.98481f, 2.67755f, -2.91555f));
 	pCamera->GetTransform().SetRotation(Quaternion(0.312956f, -0.25733f, 0.0987797f, 0.908892f));
 	
@@ -52,7 +59,13 @@ Scene* SceneLoader::LoadSponza()
 	OBJFileLoader fileLoader;
 	Scene* pScene = fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
 		
-	Camera* pCamera = new Camera(Camera::ProjType_Perspective, 1.5f/*nearClipPlane*/, 3800.0f/*farClipPlane*/, 1.0f/*aspectRatio*/);
+	Camera* pCamera = new Camera(Camera::ProjType_Perspective,
+		1.5f/*nearClipPlane*/,
+		3800.0f/*farClipPlane*/,
+		1.0f/*aspectRatio*/,
+		3.0f/*maxMoveSpeed*/,
+		2.0f/*maxRotationSpeed*/);
+
 	pCamera->GetTransform().SetPosition(Vector3f(1190.48f, 204.495f, 38.693f));
 	pCamera->GetTransform().SetRotation(Quaternion(0.0f, 0.707107f, 0.0f, -0.707107f));
 	pScene->SetCamera(pCamera);

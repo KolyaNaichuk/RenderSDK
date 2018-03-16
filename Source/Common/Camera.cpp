@@ -2,7 +2,7 @@
 #include "Common/Color.h"
 #include "Math/Math.h"
 
-Camera::Camera(ProjType projType, f32 nearClipPlane, f32 farClipPlane, f32 aspectRatio)
+Camera::Camera(ProjType projType, f32 nearClipPlane, f32 farClipPlane, f32 aspectRatio, f32 maxMoveSpeed, f32 maxRotationSpeed)
 	: SceneObject("Camera")
 	, m_ProjType(projType)
 	, m_BackgroundColor(Color::BLUE)
@@ -11,6 +11,8 @@ Camera::Camera(ProjType projType, f32 nearClipPlane, f32 farClipPlane, f32 aspec
 	, m_AspectRatio(aspectRatio)
 	, m_FovYInRadians(PI_DIV_4)
 	, m_SizeY(10.0f)
+	, m_MaxMoveSpeed(maxMoveSpeed)
+	, m_MaxRotationSpeed(maxRotationSpeed)
 	, m_DirtyFlags(DirtyFlag_ProjMatrix)
 {
 }
@@ -50,6 +52,26 @@ void Camera::SetSizeY(f32 sizeY)
 	assert(m_ProjType == ProjType_Ortho);
 	m_SizeY = sizeY;
 	m_DirtyFlags |= DirtyFlag_ProjMatrix;
+}
+
+f32 Camera::GetMaxMoveSpeed() const
+{
+	return m_MaxMoveSpeed;
+}
+
+void Camera::SetMaxMoveSpeed(f32 maxMoveSpeed)
+{
+	m_MaxMoveSpeed = maxMoveSpeed;
+}
+
+f32 Camera::GetMaxRotationSpeed() const
+{
+	return m_MaxRotationSpeed;
+}
+
+void Camera::SetMaxRotationSpeed(f32 maxRotationSpeed)
+{
+	m_MaxRotationSpeed = maxRotationSpeed;
 }
 
 Camera::ProjType Camera::GetProjType() const

@@ -674,8 +674,8 @@ void DXApplication::OnDestroy()
 
 void DXApplication::OnKeyDown(UINT8 key)
 {
-	const f32 cameraMoveSpeed = 3.0f;
-	const f32 rotationInDegrees = 2.0f;
+	const f32 cameraMoveSpeed = m_pCamera->GetMaxMoveSpeed();
+	const f32 rotationInRadians = ToRadians(m_pCamera->GetMaxRotationSpeed());
 
 	Transform& cameraTransform = m_pCamera->GetTransform();
 	BasisAxes cameraBasisAxes = ExtractBasisAxes(cameraTransform.GetRotation());
@@ -684,22 +684,22 @@ void DXApplication::OnKeyDown(UINT8 key)
 	{
 		case VK_UP:
 		{
-			cameraTransform.SetRotation(CreateRotationXQuaternion(ToRadians(-rotationInDegrees)) * cameraTransform.GetRotation());
+			cameraTransform.SetRotation(CreateRotationXQuaternion(-rotationInRadians) * cameraTransform.GetRotation());
 			break;
 		}
 		case VK_DOWN:
 		{
-			cameraTransform.SetRotation(CreateRotationXQuaternion(ToRadians(rotationInDegrees)) * cameraTransform.GetRotation());
+			cameraTransform.SetRotation(CreateRotationXQuaternion(rotationInRadians) * cameraTransform.GetRotation());
 			break;
 		}
 		case VK_LEFT:
 		{
-			cameraTransform.SetRotation(CreateRotationYQuaternion(ToRadians(-rotationInDegrees)) * cameraTransform.GetRotation());
+			cameraTransform.SetRotation(CreateRotationYQuaternion(-rotationInRadians) * cameraTransform.GetRotation());
 			break;
 		}
 		case VK_RIGHT:
 		{
-			cameraTransform.SetRotation(CreateRotationYQuaternion(ToRadians(rotationInDegrees)) * cameraTransform.GetRotation());
+			cameraTransform.SetRotation(CreateRotationYQuaternion(rotationInRadians) * cameraTransform.GetRotation());
 			break;
 		}
 
@@ -909,7 +909,9 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight)
 	m_pCamera = new Camera(Camera::ProjType_Perspective,
 		pScene->GetCamera()->GetNearClipPlane(),
 		pScene->GetCamera()->GetFarClipPlane(),
-		aspectRatio);
+		aspectRatio,
+		pScene->GetCamera()->GetMaxMoveSpeed(),
+		pScene->GetCamera()->GetMaxRotationSpeed());
 	
 	m_pCamera->GetTransform().SetPosition(pScene->GetCamera()->GetTransform().GetPosition());
 	m_pCamera->GetTransform().SetRotation(pScene->GetCamera()->GetTransform().GetRotation());

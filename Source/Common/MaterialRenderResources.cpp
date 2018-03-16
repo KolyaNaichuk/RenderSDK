@@ -200,8 +200,16 @@ namespace
 		const std::wstring fileExtension = ExtractFileExtension(filePath);
 		if ((fileExtension == L"DDS") || (fileExtension == L"dds"))
 		{
-			assert(!generateMips);
-			VerifyD3DResult(DirectX::LoadFromDDSFile(filePath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, image));
+			if (generateMips)
+			{
+				DirectX::ScratchImage tempImage;
+				VerifyD3DResult(DirectX::LoadFromDDSFile(filePath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, tempImage));
+				VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));
+			}
+			else
+			{
+				VerifyD3DResult(DirectX::LoadFromDDSFile(filePath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, image));
+			}
 		}
 		else if ((fileExtension == L"TGA") || (fileExtension == L"tga"))
 		{
