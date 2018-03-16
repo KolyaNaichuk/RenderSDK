@@ -58,6 +58,10 @@ Scene* SceneLoader::LoadSponza()
 
 	OBJFileLoader fileLoader;
 	Scene* pScene = fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
+	
+	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
+	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-1920.94592f, -126.442497f, -1105.42603f}
+	const Vector3f maxPoint = worldBounds.m_Center + worldBounds.m_Radius; // {1799.90808f, 1429.43323f, 1182.80713f}
 		
 	Camera* pCamera = new Camera(Camera::ProjType_Perspective,
 		1.5f/*nearClipPlane*/,
@@ -69,12 +73,7 @@ Scene* SceneLoader::LoadSponza()
 	pCamera->GetTransform().SetPosition(Vector3f(1190.48f, 204.495f, 38.693f));
 	pCamera->GetTransform().SetRotation(Quaternion(0.0f, 0.707107f, 0.0f, -0.707107f));
 	pScene->SetCamera(pCamera);
-	
-	//Vector3f minPoint(-1920.94592f, -126.442497f, -1105.42603f);
-	//Vector3f maxPoint(1799.90808f, 1429.43323f, 1182.80713f);
-	//Vector3f size = maxPoint - minPoint;
-	//Vector3f halfSize = 0.5f * size;
-	
+		
 #if 1
 	PointLight* pPointLight = new PointLight("Point light", 1900.0f, 0.1f);
 	pPointLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
@@ -100,7 +99,13 @@ Scene* SceneLoader::LoadSibenik()
 	const wchar_t* pathToOBJFile = L"..\\..\\Resources\\Sibenik\\sibenik.obj";
 
 	OBJFileLoader fileLoader;
-	return fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
+	Scene* pScene = fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
+
+	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
+	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius;
+	const Vector3f maxPoint = worldBounds.m_Center + worldBounds.m_Radius;
+
+	return pScene;
 }
 
 Scene* SceneLoader::LoadCornellBox()
