@@ -19,3 +19,4 @@ Samples/ToneMapping/Shaders/
 *.user
 ipch/
 .vs/
+Include/External/DirectXTex/Bin/
