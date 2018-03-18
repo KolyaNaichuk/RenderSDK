@@ -98,8 +98,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-3.3.1\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
@@ -208,7 +208,11 @@ COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\$(Project
 COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizePS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\GammaCorrection.hlsl"
-COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"
+
+IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\Win32\assimp-vc140-mt.dll" "$(SolutionDir)Samples\$(ProjectName)\assimp-vc140-mt.dll"
+IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\Win32\assimp-vc140-mt.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll"
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -352,8 +356,8 @@ COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-3.3.1\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

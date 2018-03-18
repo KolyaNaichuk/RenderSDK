@@ -1,513 +1,156 @@
 #include "Common/OBJFileLoader.h"
 #include "Common/FileUtilities.h"
+#include "Common/Material.h"
 #include "Common/Mesh.h"
 #include "Common/MeshBatch.h"
-#include "Common/MeshUtilities.h"
-#include "Common/StringUtilities.h"
 #include "Common/Scene.h"
-#include "Common/Material.h"
-#include "Math/Hash.h"
-#include <cwctype>
-#include <limits>
+#include "Common/StringUtilities.h"
 #include <experimental/filesystem>
+#include "assimp/Importer.hpp"
+#include "assimp/scene.h"
+#include "assimp/postprocess.h"
 
-namespace OBJFile
+namespace
 {
-	std::vector<MeshTriangle> Triangulate(const MeshFace& meshFace)
+	void AddAssimpMeshes(Scene* pScene, const aiScene* pAssimpScene)
 	{
-		assert(meshFace.size() > 2);
+		assert(pAssimpScene->HasMeshes());
 
-		std::vector<MeshTriangle> meshTriangles;
-		for (u32 index = 2; index < meshFace.size(); ++index)
-			meshTriangles.emplace_back(MeshTriangle{meshFace[0], meshFace[index - 1], meshFace[index]});
-		
-		return meshTriangles;
-	}
-}
+		const u8 vertexFormat = VertexData::FormatFlag_Position | VertexData::FormatFlag_Normal | VertexData::FormatFlag_TexCoords;
+		const DXGI_FORMAT indexFormat = DXGI_FORMAT_R16_UINT;
+		const D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		const D3D12_PRIMITIVE_TOPOLOGY primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-Scene* OBJFileLoader::Load(const wchar_t* pOBJFilePath, bool use32BitIndices, u8 convertMeshFlags)
-{
-	Clear();
+		MeshBatch* pMeshBatch = new MeshBatch(vertexFormat, indexFormat, primitiveTopologyType, primitiveTopology);
 
-	bool loadedOBJFile = LoadOBJFile(pOBJFilePath, use32BitIndices, convertMeshFlags);
-	if (!loadedOBJFile)
-		return nullptr;
-
-	std::wstring materialDirectoryPath;
-	if (!m_MaterialFileName.empty())
-	{
-		std::experimental::filesystem::path materialFilePath(pOBJFilePath);
-		materialFilePath.replace_filename(m_MaterialFileName);
-		
-		bool loadedMaterialFile = LoadMaterialFile(materialFilePath.c_str());
-		if (!loadedMaterialFile)
-			return nullptr;
-
-		materialFilePath.remove_filename();
-		materialDirectoryPath = materialFilePath.c_str();
-	}
-	assert(!materialDirectoryPath.empty());
-	return PopulateScene(use32BitIndices, convertMeshFlags, materialDirectoryPath.c_str());
-}
-
-bool OBJFileLoader::LoadOBJFile(const wchar_t* pFilePath, bool use32BitIndices, u8 convertMeshFlags)
-{
-	std::vector<char> byteStringFileData;
-	if (!LoadDataFromFile(pFilePath, FileMode::Text, byteStringFileData))
-		return false;
-
-	std::wstring wideStringFileData = AnsiToWideString(&byteStringFileData[0]);
-
-	wchar_t* pLineContext = nullptr;
-	wchar_t* pLine = wcstok_s(&wideStringFileData[0], L"\n", &pLineContext);
-
-	while (pLine != nullptr)
-	{
-		wchar_t* pTokenContext = nullptr;
-		wchar_t* pToken = wcstok_s(pLine, L" \t\r", &pTokenContext);
-
-		if (pToken != nullptr)
+		for (decltype(pAssimpScene->mNumMeshes) meshIndex = 0; meshIndex < pAssimpScene->mNumMeshes; ++meshIndex)
 		{
-			if (_wcsicmp(pToken, L"v") == 0)
-			{
-				f32 x = ExtractFloat(&pTokenContext);
-				f32 y = ExtractFloat(&pTokenContext);
-				f32 z = ExtractFloat(&pTokenContext);
+			const aiMesh* pAssimpMesh = pAssimpScene->mMeshes[meshIndex];
 
-				m_Positions.emplace_back(x, y, z);
-			}
-			else if (_wcsicmp(pToken, L"vt") == 0)
-			{
-				f32 u = ExtractFloat(&pTokenContext);
-				f32 v = ExtractFloat(&pTokenContext);
+			assert(pAssimpMesh->HasPositions());
+			assert(pAssimpMesh->HasNormals());
+			assert(pAssimpMesh->HasTextureCoords(0));
+			assert(pAssimpMesh->mPrimitiveTypes == aiPrimitiveType_TRIANGLE);
 
-				m_TexCoords.emplace_back(u, v);
-			}
-			else if (_wcsicmp(pToken, L"vn") == 0)
-			{
-				f32 x = ExtractFloat(&pTokenContext);
-				f32 y = ExtractFloat(&pTokenContext);
-				f32 z = ExtractFloat(&pTokenContext);
+			const u32 numVertices = pAssimpMesh->mNumVertices;
 
-				m_Normals.emplace_back(x, y, z);
-			}
-			else if (_wcsicmp(pToken, L"f") == 0)
-			{
-				bool createNewMesh = false;
-				if (m_pCurrentMesh == nullptr)
-				{
-					if (m_pCurrentObject == nullptr)
-					{
-						m_Objects.emplace_back(OBJFile::kDefaultObjectName);
-						m_pCurrentObject = &m_Objects.back();
-					}
-					createNewMesh = true;
-				}
-				else
-					createNewMesh = m_pCurrentMesh->m_MaterialIndex != m_CurrentMaterialIndex;
+			Vector3f* pPositions = new Vector3f[numVertices];
+			Vector3f* pNormals = new Vector3f[numVertices];
+			Vector2f* pTexCoords = new Vector2f[numVertices];
 
-				if (createNewMesh)
-				{
-					u32 currentMeshIndex = m_Meshes.size();
-					m_Meshes.emplace_back(m_CurrentMaterialIndex);
-					m_pCurrentMesh = &m_Meshes.back();
+			for (u32 vertexIndex = 0; vertexIndex < numVertices; ++vertexIndex)
+			{
+				const aiVector3D& position = pAssimpMesh->mVertices[vertexIndex];
+				pPositions[vertexIndex] = Vector3f(position.x, position.y, position.z);
+			}
+			for (u32 vertexIndex = 0; vertexIndex < numVertices; ++vertexIndex)
+			{
+				const aiVector3D& normal = pAssimpMesh->mNormals[vertexIndex];
+				pNormals[vertexIndex] = Vector3f(normal.x, normal.y, normal.z);
+			}
+			for (u32 vertexIndex = 0; vertexIndex < numVertices; ++vertexIndex)
+			{
+				const aiVector3D& texCoords = pAssimpMesh->mTextureCoords[0][vertexIndex];
+				pTexCoords[vertexIndex] = Vector2f(texCoords.x, texCoords.y);
+			}
 
-					m_pCurrentObject->m_MeshIndices.emplace_back(currentMeshIndex);
-				}
+			const u32 numIndices = 3 * pAssimpMesh->mNumFaces;
+			u16* pIndices = new u16[numIndices];
 
-				OBJFile::MeshFace meshFace;
-				meshFace.reserve(3);
+			for (decltype(pAssimpMesh->mNumFaces) faceIndex = 0; faceIndex < pAssimpMesh->mNumFaces; ++faceIndex)
+			{
+				const aiFace& face = pAssimpMesh->mFaces[faceIndex];
+				assert(face.mNumIndices == 3);
 
-				while (wchar_t* pFaceElementToken = wcstok_s(nullptr, L" \t\r", &pTokenContext))
-					meshFace.emplace_back(ExtractFaceElement(pFaceElementToken));
-				
-				auto meshTriangles = Triangulate(meshFace);
-				m_pCurrentMesh->m_Triangles.insert(m_pCurrentMesh->m_Triangles.end(), meshTriangles.cbegin(), meshTriangles.cend());
+				pIndices[3 * faceIndex + 0] = u16(face.mIndices[0]);
+				pIndices[3 * faceIndex + 1] = u16(face.mIndices[1]);
+				pIndices[3 * faceIndex + 2] = u16(face.mIndices[2]);
 			}
-			else if (_wcsicmp(pToken, L"#") == 0)
-			{
-				// Ignore comment
-			}
-			else if (_wcsicmp(pToken, L"s") == 0)
-			{
-				// Ignore smoothing group
-			}
-			else if (_wcsicmp(pToken, L"usemtl") == 0)
-			{
-				std::wstring materialName = ExtractString(&pTokenContext);
-				if (m_Materials[m_CurrentMaterialIndex].m_Name != materialName)
-				{
-					m_CurrentMaterialIndex = FindMaterialIndex(materialName);
-					if (m_CurrentMaterialIndex == OBJFile::kUnknownIndex)
-					{
-						m_CurrentMaterialIndex = m_Materials.size();
-						m_Materials.emplace_back(materialName);
-					}
-				}
-			}
-			else if (_wcsicmp(pToken, L"g") == 0)
-			{
-				std::wstring groupName = ExtractString(&pTokenContext);
-				if (m_CurrentGroupName != groupName)
-				{
-					m_Objects.emplace_back(groupName);
-					m_pCurrentObject = &m_Objects.back();
-					m_pCurrentMesh = nullptr;
 
-					m_CurrentGroupName = groupName;
-				}
-			}
-			else if (_wcsicmp(pToken, L"o") == 0)
-			{
-				std::wstring objectName = ExtractString(&pTokenContext);
-				if ((m_pCurrentObject == nullptr) || (m_pCurrentObject->m_Name != objectName))
-				{
-					m_Objects.emplace_back(objectName);
-					m_pCurrentObject = &m_Objects.back();
-					m_pCurrentMesh = nullptr;
-				}
-			}
-			else if (_wcsicmp(pToken, L"mtllib") == 0)
-			{
-				m_MaterialFileName = ExtractString(&pTokenContext);
-			}
-		}
-		pLine = wcstok_s(nullptr, L"\n", &pLineContext);
-	}
-	return true;
-}
-
-bool OBJFileLoader::LoadMaterialFile(const wchar_t* pFilePath)
-{
-	std::vector<char> byteStringFileData;
-	if (!LoadDataFromFile(pFilePath, FileMode::Text, byteStringFileData))
-		return false;
-
-	std::wstring wideStringFileData = AnsiToWideString(byteStringFileData.data());
-
-	wchar_t* pLineContext = nullptr;
-	wchar_t* pLine = wcstok_s(&wideStringFileData[0], L"\n", &pLineContext);
-
-	while (pLine != nullptr)
-	{
-		wchar_t* pTokenContext = nullptr;
-		wchar_t* pToken = wcstok_s(pLine, L" \t\r", &pTokenContext);
-
-		if (pToken != nullptr)
-		{
-			if (_wcsicmp(pToken, L"#") == 0)
-			{
-				// Ignore comment
-			}
-			else if (_wcsicmp(pToken, L"newmtl") == 0)
-			{
-				std::wstring materialName = ExtractString(&pTokenContext);
-
-				m_CurrentMaterialIndex = FindMaterialIndex(materialName);
-				assert(m_CurrentMaterialIndex != OBJFile::kUnknownIndex);
-			}
-			else if (_wcsicmp(pToken, L"Ka spectral") == 0)
-			{
-				assert(false && "No support for the ambient reflectivity using a spectral curve");
-			}
-			else if (_wcsicmp(pToken, L"Ka xyz") == 0)
-			{
-				assert(false && "No support for the ambient reflectivity using CIEXYZ values");
-			}
-			else if (_wcsicmp(pToken, L"Ka") == 0)
-			{
-				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_X = ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_Y = ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_AmbientColor.m_Z = ExtractFloat(&pTokenContext);
-			}
-			else if (_wcsicmp(pToken, L"map_Ka") == 0)
-			{
-				m_Materials[m_CurrentMaterialIndex].m_AmbientMapFilePath = ExtractString(&pTokenContext);
-			}
-			else if (_wcsicmp(pToken, L"Kd spectral") == 0)
-			{
-				assert(false && "No support for the diffuse reflectivity using a spectral curve");
-			}
-			else if (_wcsicmp(pToken, L"Kd xyz") == 0)
-			{
-				assert(false && "No support for the diffuse reflectivity using CIEXYZ values");
-			}
-			else if (_wcsicmp(pToken, L"Kd") == 0)
-			{
-				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_X = ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_Y = ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_DiffuseColor.m_Z = ExtractFloat(&pTokenContext);
-			}
-			else if (_wcsicmp(pToken, L"map_Kd") == 0)
-			{
-				m_Materials[m_CurrentMaterialIndex].m_DiffuseMapFilePath = ExtractString(&pTokenContext);
-			}
-			else if (_wcsicmp(pToken, L"Ks spectral") == 0)
-			{
-				assert(false && "No support for the specular reflectivity using a spectral curve");
-			}
-			else if (_wcsicmp(pToken, L"Ks xyz") == 0)
-			{
-				assert(false && "No support for the specular reflectivity using CIEXYZ values");
-			}
-			else if (_wcsicmp(pToken, L"Ks") == 0)
-			{
-				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_X = ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_Y = ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_SpecularColor.m_Z = ExtractFloat(&pTokenContext);
-			}
-			else if (_wcsicmp(pToken, L"map_Ks") == 0)
-			{
-				m_Materials[m_CurrentMaterialIndex].m_SpecularMapFilePath = ExtractString(&pTokenContext);
-			}
-			else if (_wcsicmp(pToken, L"Ke spectral") == 0)
-			{
-				assert(false && "No support for the emissive reflectivity using a spectral curve");
-			}
-			else if (_wcsicmp(pToken, L"Ke xyz") == 0)
-			{
-				assert(false && "No support for the emissive reflectivity using CIEXYZ values");
-			}
-			else if (_wcsicmp(pToken, L"Ke") == 0)
-			{
-				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_X = ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_Y = ExtractFloat(&pTokenContext);
-				m_Materials[m_CurrentMaterialIndex].m_EmissiveColor.m_Z = ExtractFloat(&pTokenContext);
-			}
-			else if (_wcsicmp(pToken, L"map_Ke") == 0)
-			{
-				m_Materials[m_CurrentMaterialIndex].m_EmissiveMapFilePath = ExtractString(&pTokenContext);
-			}
-			else if (_wcsicmp(pToken, L"Ns") == 0)
-			{
-				m_Materials[m_CurrentMaterialIndex].m_Shininess = ExtractFloat(&pTokenContext);
-			}
-			else if (_wcsicmp(pToken, L"map_Ns") == 0)
-			{
-				m_Materials[m_CurrentMaterialIndex].m_ShininessMapFilePath = ExtractString(&pTokenContext);
-			}
-			else if (_wcsicmp(pToken, L"d") == 0)
-			{
-				m_Materials[m_CurrentMaterialIndex].m_Opacity = ExtractFloat(&pTokenContext);
-			}
-			else if (_wcsicmp(pToken, L"map_d") == 0)
-			{
-				m_Materials[m_CurrentMaterialIndex].m_OpacityMapFilePath = ExtractString(&pTokenContext);
-			}
-			else if (_wcsicmp(pToken, L"Ni") == 0)
-			{
-				m_Materials[m_CurrentMaterialIndex].m_IndexOfRefraction = ExtractFloat(&pTokenContext);
-			}
-		}
-		pLine = wcstok_s(nullptr, L"\n", &pLineContext);
-	}
-	return true;
-}
-
-u32 OBJFileLoader::FindMaterialIndex(const std::wstring& materialName) const
-{
-	for (u32 index = 0; index < m_Materials.size(); ++index)
-	{
-		if (m_Materials[index].m_Name == materialName)
-			return index;
-	}
-	return OBJFile::kUnknownIndex;
-}
-
-Scene* OBJFileLoader::PopulateScene(bool use32BitIndices, u8 convertMeshFlags, const wchar_t* materialDirectoryPath)
-{
-	u8 vertexFormat = 0;
-	
-	assert(!m_Positions.empty());
-	vertexFormat |= VertexData::FormatFlag_Position;
-	
-	assert(!m_Normals.empty());
-	vertexFormat |= VertexData::FormatFlag_Normal;
-	
-	assert(!m_TexCoords.empty());
-	vertexFormat |= VertexData::FormatFlag_TexCoords;
-
-	const DXGI_FORMAT indexFormat = use32BitIndices ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
-	const D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	const D3D12_PRIMITIVE_TOPOLOGY primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-		
-	Scene* pScene = new Scene();
-	
-	MeshBatch* pMeshBatch = new MeshBatch(vertexFormat, indexFormat, primitiveTopologyType, primitiveTopology);
-	for (const OBJFile::Object& object : m_Objects)
-	{
-		for (u32 meshIndex : object.m_MeshIndices)
-		{
-			const OBJFile::Mesh& objFileMesh = m_Meshes[meshIndex];
-
-			VertexData* pVertexData = nullptr;
-			IndexData* pIndexData = nullptr;
-
-			if (use32BitIndices)
-				GenerateVertexAndIndexData<u32>(objFileMesh, &pVertexData, &pIndexData);
-			else
-				GenerateVertexAndIndexData<u16>(objFileMesh, &pVertexData, &pIndexData);
+			VertexData* pVertexData = new VertexData(numVertices, pPositions, pNormals, pTexCoords);
+			IndexData* pIndexData = new IndexData(numIndices, pIndices);
 
 			const u8 numInstances = 1;
 			Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
 			pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
 
-			ConvertVertexAndIndexData(convertMeshFlags, pVertexData, pIndexData);
 			Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices,
-				objFileMesh.m_MaterialIndex, primitiveTopologyType, primitiveTopology);
+				pAssimpMesh->mMaterialIndex, primitiveTopologyType, primitiveTopology);
 
 			pMeshBatch->AddMesh(&mesh);
 		}
+		pScene->AddMeshBatch(pMeshBatch);
 	}
-	pScene->AddMeshBatch(pMeshBatch);
 
-	std::experimental::filesystem::path materialDirectory(materialDirectoryPath);
-	for (const Material& material : m_Materials)
+	void AddAssimpMaterials(Scene* pScene, const aiScene* pAssimpScene, const std::experimental::filesystem::path& materialDirectoryPath)
 	{
-		Material* pMaterial = new Material(material);
-		
-		if (!pMaterial->m_AmbientMapFilePath.empty())
-			pMaterial->m_AmbientMapFilePath = materialDirectory / std::experimental::filesystem::path(pMaterial->m_AmbientMapFilePath);
+		assert(pAssimpScene->HasMaterials());
 
-		if (!pMaterial->m_DiffuseMapFilePath.empty())
-			pMaterial->m_DiffuseMapFilePath = materialDirectory / std::experimental::filesystem::path(pMaterial->m_DiffuseMapFilePath);
-		
-		if (!pMaterial->m_SpecularMapFilePath.empty())
-			pMaterial->m_SpecularMapFilePath = materialDirectory / std::experimental::filesystem::path(pMaterial->m_SpecularMapFilePath);
+		aiString assimpName;
+		aiString assimpMapPath;
+		aiColor3D assimpColor;
 
-		if (!pMaterial->m_ShininessMapFilePath.empty())
-			pMaterial->m_ShininessMapFilePath = materialDirectory / std::experimental::filesystem::path(pMaterial->m_ShininessMapFilePath);
-
-		if (!pMaterial->m_EmissiveMapFilePath.empty())
-			pMaterial->m_EmissiveMapFilePath = materialDirectory / std::experimental::filesystem::path(pMaterial->m_EmissiveMapFilePath);
-
-		if (!pMaterial->m_OpacityMapFilePath.empty())
-			pMaterial->m_OpacityMapFilePath = materialDirectory / std::experimental::filesystem::path(pMaterial->m_OpacityMapFilePath);
-		
-		pScene->AddMaterial(pMaterial);
-	}
-		
-	return pScene;
-}
-
-template <typename Index>
-void OBJFileLoader::GenerateVertexAndIndexData(const OBJFile::Mesh& mesh, VertexData** ppVertexData, IndexData** ppIndexData)
-{
-	static_assert((sizeof(u16) == sizeof(Index)) || (sizeof(u32) == sizeof(Index)), "Invalid index type");
-
-	struct FaceElementHasher
-	{
-		std::size_t operator()(const OBJFile::FaceElement& faceElement) const
+		for (decltype(pAssimpScene->mNumMaterials) materialIndex = 0; materialIndex < pAssimpScene->mNumMaterials; ++materialIndex)
 		{
-			std::size_t seed = 0;
-			HashCombine(seed, faceElement.m_PositionIndex);
-			HashCombine(seed, faceElement.m_NormalIndex);
-			HashCombine(seed, faceElement.m_TexCoordIndex);
+			aiMaterial* pAssimpMaterial = pAssimpScene->mMaterials[materialIndex];
+			
+			pAssimpMaterial->Get(AI_MATKEY_NAME, assimpName);
+			Material* pMaterial = new Material(AnsiToWideString(assimpName.C_Str()));
 
-			return seed;
-		};
-	};
-
-	struct FaceElementComp
-	{
-		bool operator()(const OBJFile::FaceElement& faceElement1, const OBJFile::FaceElement& faceElement2) const
-		{
-			return (faceElement1.m_PositionIndex == faceElement2.m_PositionIndex) &&
-				(faceElement1.m_NormalIndex == faceElement2.m_NormalIndex) &&
-				(faceElement1.m_TexCoordIndex == faceElement2.m_TexCoordIndex);
-		};
-	};
-		
-	std::vector<Index> indices;
-	std::vector<Vector3f> positions;
-	std::vector<Vector2f> texCoords;
-	std::vector<Vector3f> normals;
-	
-	using FaceElementCache = std::unordered_map<OBJFile::FaceElement, u32, FaceElementHasher, FaceElementComp>;
-	FaceElementCache faceElementCache;
-
-	for (const OBJFile::MeshTriangle& triangle : mesh.m_Triangles)
-	{
-		for (const OBJFile::FaceElement& faceElement : triangle)
-		{
-			u32 newIndex = faceElementCache.size();
-			auto result = faceElementCache.insert({faceElement, newIndex});
-			if (result.second)
-			{
-				positions.emplace_back(m_Positions[faceElement.m_PositionIndex]);
-				texCoords.emplace_back(m_TexCoords[faceElement.m_TexCoordIndex]);
-				normals.emplace_back(m_Normals[faceElement.m_NormalIndex]);
-			}
+			if (pAssimpMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &assimpMapPath) == aiReturn_SUCCESS)
+				pMaterial->m_DiffuseMapFilePath = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
+			else if (pAssimpMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, assimpColor) == aiReturn_SUCCESS)
+				pMaterial->m_DiffuseColor = Vector3f(assimpColor.r, assimpColor.g, assimpColor.b);
 			else
-			{
-				newIndex = result.first->second;
-			}
-			indices.emplace_back((Index)newIndex);
+				assert(false);
+
+			if (pAssimpMaterial->GetTexture(aiTextureType_SPECULAR, 0, &assimpMapPath) == aiReturn_SUCCESS)
+				pMaterial->m_SpecularMapFilePath = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
+			else if (pAssimpMaterial->Get(AI_MATKEY_COLOR_SPECULAR, assimpColor) == aiReturn_SUCCESS)
+				pMaterial->m_SpecularColor = Vector3f(assimpColor.r, assimpColor.g, assimpColor.b);
+			else
+				assert(false);
+
+			if (pAssimpMaterial->GetTexture(aiTextureType_SHININESS, 0, &assimpMapPath) == aiReturn_SUCCESS)
+				pMaterial->m_ShininessMapFilePath = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
+			else if (pAssimpMaterial->Get(AI_MATKEY_SHININESS, assimpColor.r) == aiReturn_SUCCESS)
+				pMaterial->m_Shininess = assimpColor.r;
+			else
+				assert(false);
+			
+			pScene->AddMaterial(pMaterial);
 		}
 	}
-
-	*ppVertexData = new VertexData(positions.size(), positions.data(), normals.data(), texCoords.data());
-	*ppIndexData = new IndexData(indices.size(), indices.data());
 }
 
-void OBJFileLoader::Clear()
+Scene* LoadSceneFromOBJFile(const wchar_t* pFilePath)
 {
-	m_Positions.clear();
-	m_TexCoords.clear();
-	m_Normals.clear();
-
-	m_MaterialFileName.clear();
-	m_Materials.clear();
-	m_Materials.emplace_back(OBJFile::kDefaultMaterialName);
-	m_CurrentMaterialIndex = m_Materials.size() - 1;
-
-	m_Objects.clear();
-	m_pCurrentObject = nullptr;
+	Assimp::Importer importer;
 	
-	m_Meshes.clear();
-	m_pCurrentMesh = nullptr;
+	u32 importFlags = aiProcess_CalcTangentSpace |
+		aiProcess_Triangulate |
+		aiProcess_SortByPType |
+		aiProcess_MakeLeftHanded |
+		aiProcess_FlipUVs |
+		aiProcess_FlipWindingOrder |
+		aiProcess_JoinIdenticalVertices |
+		aiProcess_OptimizeMeshes |
+		aiProcess_RemoveRedundantMaterials;
 
-	m_CurrentGroupName = OBJFile::kDefaultGroupName;
-}
+	const aiScene* pAssimpScene = importer.ReadFile(WideToAnsiString(pFilePath), importFlags);
+	if (pAssimpScene == nullptr)
+	{
+		OutputDebugStringA(importer.GetErrorString());
+		return nullptr;
+	}
 
-OBJFile::FaceElement OBJFileLoader::ExtractFaceElement(const wchar_t* pFaceElementToken)
-{
-	i32 positionIndex, texCoordIndex, normalIndex;
-	int numConvertedValues = swscanf_s(pFaceElementToken, L"%d/%d/%d", &positionIndex, &texCoordIndex, &normalIndex);
-	assert(numConvertedValues == 3);
+	Scene* pScene = new Scene();
+	AddAssimpMeshes(pScene, pAssimpScene);
+			
+	std::experimental::filesystem::path materialDirectoryPath(pFilePath);
+	materialDirectoryPath.remove_filename();
 
-	const i32 numPositions = m_Positions.size();
-	const i32 numTexCoords = m_TexCoords.size();
-	const i32 numNormals = m_Normals.size();
-
-	assert(positionIndex != 0);
-	assert(texCoordIndex != 0);
-	assert(normalIndex != 0);
-
-	positionIndex = (positionIndex > 0) ? (positionIndex - 1) : (numPositions + positionIndex);
-	texCoordIndex = (texCoordIndex > 0) ? (texCoordIndex - 1) : (numTexCoords + texCoordIndex);
-	normalIndex = (normalIndex > 0) ? (normalIndex - 1) : (numNormals + normalIndex);
+	AddAssimpMaterials(pScene, pAssimpScene, materialDirectoryPath);
 	
-	return OBJFile::FaceElement(positionIndex, normalIndex, texCoordIndex);
-}
-
-f32 OBJFileLoader::ExtractFloat(wchar_t** ppTokenContext)
-{
-	return f32(_wtof(wcstok_s(nullptr, L" \t", ppTokenContext)));
-}
-
-std::wstring OBJFileLoader::ExtractString(wchar_t** ppTokenContext)
-{
-	static const u16 MAX_STRING_LENGTH = 256;
-
-	wchar_t* pStringToken = wcstok_s(nullptr, L" \t", ppTokenContext);
-	assert(pStringToken != nullptr);
-
-	wchar_t stringBuffer[MAX_STRING_LENGTH];
-	::ZeroMemory(stringBuffer, sizeof(stringBuffer));
-
-	int numConvertedValues = swscanf_s(pStringToken, L"%s", &stringBuffer[0], MAX_STRING_LENGTH);
-	assert(numConvertedValues == 1);
-
-	return std::wstring(stringBuffer);
+	return pScene;
 }

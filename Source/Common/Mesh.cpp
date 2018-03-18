@@ -7,15 +7,6 @@
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 
-VertexData::~VertexData()
-{
-	SafeArrayDelete(m_pPositions);
-	SafeArrayDelete(m_pNormals);
-	SafeArrayDelete(m_pTexCoords);
-	SafeArrayDelete(m_pColors);
-	SafeArrayDelete(m_pTangents);
-}
-
 VertexData::VertexData(u32 numVertices, const Vector3f* pPositions, const Vector3f* pNormals,
 	const Vector2f* pTexCoords, const Vector4f* pColors, const Vector3f* pTangents)
 	: m_NumVertices(numVertices)
@@ -62,6 +53,15 @@ VertexData::VertexData(u32 numVertices, const Vector3f* pPositions, const Vector
 
 		m_FormatFlags |= FormatFlag_Tangent;
 	}
+}
+
+VertexData::~VertexData()
+{
+	SafeArrayDelete(m_pPositions);
+	SafeArrayDelete(m_pNormals);
+	SafeArrayDelete(m_pTexCoords);
+	SafeArrayDelete(m_pColors);
+	SafeArrayDelete(m_pTangents);
 }
 
 Vector3f* VertexData::GetPositions()

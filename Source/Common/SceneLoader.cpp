@@ -6,10 +6,7 @@
 
 Scene* SceneLoader::LoadCube()
 {
-	const wchar_t* pathToOBJFile = L"..\\..\\Resources\\Cube\\cube.obj";
-
-	OBJFileLoader fileLoader;
-	Scene* pScene = fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
+	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\Cube\\cube.obj");
 
 	Camera* pCamera = new Camera(
 		Camera::ProjType_Perspective,
@@ -44,20 +41,13 @@ Scene* SceneLoader::LoadCube()
 
 Scene* SceneLoader::LoadErato()
 {
-	const wchar_t* pathToOBJFile = L"..\\..\\Resources\\Erato\\erato-1.obj";
-
-	OBJFileLoader fileLoader;
-	Scene* pScene = fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
-
+	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\Erato\\erato-1.obj");
 	return pScene;
 }
 
 Scene* SceneLoader::LoadSponza()
 {
-	const wchar_t* pathToOBJFile = L"..\\..\\Resources\\Sponza\\sponza.obj";
-
-	OBJFileLoader fileLoader;
-	Scene* pScene = fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
+	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\Sponza\\sponza.obj");
 	
 	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
 	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-1920.94592f, -126.442497f, -1105.42603f}
@@ -96,10 +86,7 @@ Scene* SceneLoader::LoadSponza()
 
 Scene* SceneLoader::LoadSibenik()
 {
-	const wchar_t* pathToOBJFile = L"..\\..\\Resources\\Sibenik\\sibenik.obj";
-
-	OBJFileLoader fileLoader;
-	Scene* pScene = fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
+	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\Sibenik\\sibenik.obj");
 
 	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
 	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius;
@@ -110,8 +97,11 @@ Scene* SceneLoader::LoadSibenik()
 
 Scene* SceneLoader::LoadCornellBox()
 {
-	const wchar_t* pathToOBJFile = L"..\\..\\Resources\\CornellBox\\CornellBox-Sphere.obj";
+	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\CornellBox\\CornellBox-Sphere.obj");
 
-	OBJFileLoader fileLoader;
-	return fileLoader.Load(pathToOBJFile, false/*use32BitIndices*/, ConvertionFlag_LeftHandedCoordSystem);
+	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
+	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius;
+	const Vector3f maxPoint = worldBounds.m_Center + worldBounds.m_Radius;
+
+	return pScene;
 }

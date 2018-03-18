@@ -171,9 +171,6 @@
     <ClInclude Include="..\Include\Common\OBJFileLoader.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Math\Hash.h">
-      <Filter>Math</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\PropagateLightPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>

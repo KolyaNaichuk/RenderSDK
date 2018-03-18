@@ -6,7 +6,7 @@
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/GraphicsUtils.h"
 #include "D3DWrapper/RenderEnv.h"
-#include "External/DirectXTex/DirectXTex.h"
+#include "DirectXTex/DirectXTex.h"
 #include "Math/Vector4.h"
 
 namespace

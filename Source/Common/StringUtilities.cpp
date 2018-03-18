@@ -2,13 +2,18 @@
 
 const std::wstring AnsiToWideString(const char* pAnsiString)
 {
-	std::size_t ansiStringLength = std::strlen(pAnsiString);
-	assert(ansiStringLength > 0);
+	const i32 BUFFER_SIZE = 512;
+	wchar_t stringBuffer[BUFFER_SIZE];
 
-	int wideStringLength = MultiByteToWideChar(CP_ACP, 0, pAnsiString, (int)ansiStringLength, nullptr, 0);
-	std::wstring wideString(wideStringLength, L'\0');
-	int numWrittenCharacters = MultiByteToWideChar(CP_ACP, 0, pAnsiString, (int)ansiStringLength, &wideString[0], wideStringLength);
-	assert(numWrittenCharacters == wideStringLength);
+	VerifyWinAPIResult(MultiByteToWideChar(CP_ACP, 0, pAnsiString, -1, stringBuffer, BUFFER_SIZE));
+	return std::wstring(stringBuffer);
+}
 
-	return wideString;
+const std::string WideToAnsiString(const wchar_t* pWideString)
+{
+	const i32 BUFFER_SIZE = 512;
+	char stringBuffer[BUFFER_SIZE];
+
+	VerifyWinAPIResult(WideCharToMultiByte(CP_ACP, 0, pWideString, -1, stringBuffer, BUFFER_SIZE, NULL, NULL));
+	return std::string(stringBuffer);
 }
