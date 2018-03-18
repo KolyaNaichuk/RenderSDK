@@ -45,9 +45,9 @@ Scene* SceneLoader::LoadErato()
 	return pScene;
 }
 
-Scene* SceneLoader::LoadSponza()
+Scene* SceneLoader::LoadCrytekSponza()
 {
-	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\Sponza\\sponza.obj");
+	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\CrytekSponza\\sponza.obj");
 	
 	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
 	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-1920.94592f, -126.442497f, -1105.42603f}
@@ -84,13 +84,62 @@ Scene* SceneLoader::LoadSponza()
 	return pScene;
 }
 
+Scene* SceneLoader::LoadDabrovicSponza()
+{
+	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\DabrovicSponza\\sponza.obj");
+
+	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
+	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-17.4027596, -0.906688690, -7.80148792}
+	const Vector3f maxPoint = worldBounds.m_Center + worldBounds.m_Radius; // {17.4172401, 15.6533108, 7.79851246}
+
+	Camera* pCamera = new Camera(Camera::ProjType_Perspective,
+		0.1f/*nearClipPlane*/,
+		50.0f/*farClipPlane*/,
+		1.0f/*aspectRatio*/,
+		0.1f/*maxMoveSpeed*/,
+		0.4f/*maxRotationSpeed*/);
+
+	pCamera->GetTransform().SetPosition(Vector3f(-10.0f, 7.0f, 0.0f));
+	pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(PI_DIV_2));
+	pScene->SetCamera(pCamera);
+
+#if 1
+	PointLight* pPointLight = new PointLight("Point light", 35.0f, 0.1f);
+	pPointLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
+	pPointLight->SetIntensity(1.0f);
+	pPointLight->GetTransform().SetPosition(Vector3f(0.0f, 7.5f, 0.0f));
+	pScene->AddPointLight(pPointLight);
+#endif
+	
+	return pScene;
+}
+
 Scene* SceneLoader::LoadSibenik()
 {
 	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\Sibenik\\sibenik.obj");
 
 	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
-	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius;
-	const Vector3f maxPoint = worldBounds.m_Center + worldBounds.m_Radius;
+	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-20.1410999, -15.3123074, -8.49680042}
+	const Vector3f maxPoint = worldBounds.m_Center + worldBounds.m_Radius; // {20.1410999, 15.3000011, 8.49680042}
+
+	Camera* pCamera = new Camera(Camera::ProjType_Perspective,
+		1.0f/*nearClipPlane*/,
+		45.0f/*farClipPlane*/,
+		1.0f/*aspectRatio*/,
+		0.5f/*maxMoveSpeed*/,
+		0.4f/*maxRotationSpeed*/);
+
+	pCamera->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
+	pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(PI_DIV_2));
+	pScene->SetCamera(pCamera);
+
+#if 1
+	PointLight* pPointLight = new PointLight("Point light", 50.0f, 0.1f);
+	pPointLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
+	pPointLight->SetIntensity(1.0f);
+	pPointLight->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
+	pScene->AddPointLight(pPointLight);
+#endif
 
 	return pScene;
 }

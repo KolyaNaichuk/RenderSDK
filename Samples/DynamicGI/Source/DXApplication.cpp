@@ -902,7 +902,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 
 void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight)
 {
-	Scene* pScene = SceneLoader::LoadSponza();
+	Scene* pScene = SceneLoader::LoadCrytekSponza();
 
 	assert(m_pCamera == nullptr);
 	f32 aspectRatio = FLOAT(backBufferWidth) / FLOAT(backBufferHeight);

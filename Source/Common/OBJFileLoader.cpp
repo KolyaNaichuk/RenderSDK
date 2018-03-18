@@ -128,6 +128,7 @@ Scene* LoadSceneFromOBJFile(const wchar_t* pFilePath)
 	Assimp::Importer importer;
 	
 	u32 importFlags = aiProcess_CalcTangentSpace |
+		aiProcess_GenNormals |
 		aiProcess_Triangulate |
 		aiProcess_SortByPType |
 		aiProcess_MakeLeftHanded |
@@ -136,7 +137,7 @@ Scene* LoadSceneFromOBJFile(const wchar_t* pFilePath)
 		aiProcess_JoinIdenticalVertices |
 		aiProcess_OptimizeMeshes |
 		aiProcess_RemoveRedundantMaterials;
-
+		
 	const aiScene* pAssimpScene = importer.ReadFile(WideToAnsiString(pFilePath), importFlags);
 	if (pAssimpScene == nullptr)
 	{
