@@ -4,7 +4,7 @@ struct PSInput
 	float2 texCoord			: TEXCOORD0;
 };
 
-cbuffer NumMeshTypesBuffer : register(b0)
+cbuffer Constants32BitBuffer : register(b0)
 {
 	uint g_NumMeshTypes;
 }

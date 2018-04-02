@@ -15,7 +15,7 @@ cbuffer AppDataBuffer : register(b0)
 	AppData g_AppData;
 }
 
-cbuffer MaterialIDBuffer : register(b1)
+cbuffer Constants32BitBuffer : register(b1)
 {
 	uint g_MaterialID;
 }

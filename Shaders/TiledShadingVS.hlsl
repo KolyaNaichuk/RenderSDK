@@ -16,7 +16,7 @@ cbuffer AppDataBuffer : register(b0)
 	AppData g_AppData;
 }
 
-cbuffer MeshTypeDataBuffer : register(b1)
+cbuffer Constants32BitBuffer : register(b1)
 {
 	uint g_MeshType;
 	uint g_NumMeshTypes;

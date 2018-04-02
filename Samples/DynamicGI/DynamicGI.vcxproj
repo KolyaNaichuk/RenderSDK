@@ -144,11 +144,8 @@ COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\FrustumLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FrustumLightCullingCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\FrustumLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FrustumLightCullingCS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\CreateShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateShadowMapCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledShadowMapCommandsCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
@@ -161,6 +158,9 @@ COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapVS.hlsl" "$(SolutionDir)Samp
 
 COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ConvertTiledShadowMapPS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ConvertTiledShadowMapPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapSATCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledShadowMapSATCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapSATCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledShadowMapSATCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
@@ -210,9 +210,8 @@ COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(Pro
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\GammaCorrection.hlsl"
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"
 
-IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\Win32\assimp-vc140-mt.dll" "$(SolutionDir)Samples\$(ProjectName)\assimp-vc140-mt.dll"
-IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\Win32\assimp-vc140-mt.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll"
-</Command>
+IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\assimp.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\$(Platform)\assimp.dll" "$(SolutionDir)Samples\$(ProjectName)\assimp.dll"
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\$(Platform)\assimp.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -227,8 +226,8 @@ IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y 
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-3.3.1\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
@@ -273,11 +272,8 @@ COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\FrustumLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FrustumLightCullingCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\FrustumLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FrustumLightCullingCS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\CreateShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateShadowMapCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledShadowMapCommandsCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
@@ -290,6 +286,9 @@ COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapVS.hlsl" "$(SolutionDir)Samp
 
 COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ConvertTiledShadowMapPS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ConvertTiledShadowMapPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapSATCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledShadowMapSATCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapSATCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledShadowMapSATCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
@@ -337,7 +336,10 @@ COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\$(Project
 COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizePS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\GammaCorrection.hlsl"
-COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"
+
+IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\assimp.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\$(Platform)\assimp.dll" "$(SolutionDir)Samples\$(ProjectName)\assimp.dll"
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\$(Platform)\assimp.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

@@ -11,7 +11,7 @@
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/SwapChain.h"
 #include "D3DWrapper/GPUProfiler.h"
-#include "RenderPasses/CreateShadowMapCommandsPass.h"
+#include "RenderPasses/CreateTiledShadowMapCommandsPass.h"
 #include "RenderPasses/CreateVoxelizeCommandsPass.h"
 #include "RenderPasses/ConvertTiledShadowMapPass.h"
 #include "RenderPasses/PropagateLightPass.h"
@@ -441,7 +441,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pFillMeshTypeDepthBufferPass);
 	SafeDelete(m_pCalcShadingRectanglesPass);
 	SafeDelete(m_pTiledLightCullingPass);
-	SafeDelete(m_pCreateShadowMapCommandsPass);
+	SafeDelete(m_pCreateTiledShadowMapCommandsPass);
 	SafeDelete(m_pRenderPointLightTiledShadowMapPass);
 	SafeDelete(m_pPointLightShadowMapTileAllocator);
 	SafeDelete(m_pConvertPointLightTiledShadowMapPass);
@@ -825,10 +825,10 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32, false);
 	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 512, true);
+	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2048, true);
 	m_pShaderVisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
-	DescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 512, false);
+	DescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1024, false);
 	m_pShaderInvisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
 
 	DescriptorHeapDesc shaderVisibleSamplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 10, true);
@@ -902,7 +902,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 
 void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight)
 {
-	Scene* pScene = SceneLoader::LoadCrytekSponza();
+	Scene* pScene = SceneLoader::LoadSibenik();
 
 	assert(m_pCamera == nullptr);
 	f32 aspectRatio = FLOAT(backBufferWidth) / FLOAT(backBufferHeight);
@@ -1990,7 +1990,7 @@ CommandList* DXApplication::RecordTiledLightCullingPass()
 
 void DXApplication::InitCreateShadowMapCommandsPass()
 {
-	assert(m_pCreateShadowMapCommandsPass == nullptr);
+	assert(m_pCreateTiledShadowMapCommandsPass == nullptr);
 	assert(m_pCreateMainDrawCommandsPass != nullptr);
 	assert(m_pCreateFalseNegativeDrawCommandsPass != nullptr);
 	assert(m_pFrustumMeshCullingPass != nullptr);
@@ -2005,8 +2005,8 @@ void DXApplication::InitCreateShadowMapCommandsPass()
 	const CreateFalseNegativeDrawCommandsPass::ResourceStates* pCreateFalseNegativeDrawCommandsPassStates =
 		m_pCreateFalseNegativeDrawCommandsPass->GetOutputResourceStates();
 
-	CreateShadowMapCommandsPass::InitParams params;
-	params.m_pName = "CreateShadowMapCommandsPass";
+	CreateTiledShadowMapCommandsPass::InitParams params;
+	params.m_pName = "CreateTiledShadowMapCommandsPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_NumMeshesBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_NumMeshesBufferState;
@@ -2039,21 +2039,21 @@ void DXApplication::InitCreateShadowMapCommandsPass()
 	params.m_MaxNumSpotLights = m_NumSpotLights;
 	params.m_pSpotLightWorldBoundsBuffer = m_pActiveSpotLightWorldBoundsBuffer;
 
-	m_pCreateShadowMapCommandsPass = new CreateShadowMapCommandsPass(&params);
+	m_pCreateTiledShadowMapCommandsPass = new CreateTiledShadowMapCommandsPass(&params);
 }
 
 CommandList* DXApplication::RecordCreateShadowMapCommandsPass()
 {
-	assert(m_pCreateShadowMapCommandsPass != nullptr);
+	assert(m_pCreateTiledShadowMapCommandsPass != nullptr);
 
-	CreateShadowMapCommandsPass::RenderParams params;
+	CreateTiledShadowMapCommandsPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pCreateShadowMapCommandsCommandList");;
 	params.m_pNumMeshesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer();
 	params.m_NumPointLights = m_NumActivePointLights;
 	params.m_NumSpotLights = m_NumActiveSpotLights;
 
-	m_pCreateShadowMapCommandsPass->Record(&params);
+	m_pCreateTiledShadowMapCommandsPass->Record(&params);
 	return params.m_pCommandList;
 }
 
@@ -2063,14 +2063,14 @@ void DXApplication::InitRenderPointLightTiledShadowMapPass()
 	m_pPointLightShadowMapTileAllocator = new ShadowMapTileAllocator(kPointLightShadowMapSize, kNumPointLightShadowMapLevels);
 
 	assert(m_pRenderPointLightTiledShadowMapPass == nullptr);
-	assert(m_pCreateShadowMapCommandsPass != nullptr);
+	assert(m_pCreateTiledShadowMapCommandsPass != nullptr);
 	assert(m_pRenderGBufferFalseNegativePass != nullptr);
 	
 	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
 
-	const CreateShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
-		m_pCreateShadowMapCommandsPass->GetOutputResourceStates();
+	const CreateTiledShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
+		m_pCreateTiledShadowMapCommandsPass->GetOutputResourceStates();
 
 	RenderTiledShadowMapPass::InitParams params;
 	params.m_pName = "RenderPointLightTiledShadowMapPass";
@@ -2082,10 +2082,10 @@ void DXApplication::InitRenderPointLightTiledShadowMapPass()
 	params.m_pLightWorldBoundsOrPropsBuffer = m_pActivePointLightWorldBoundsBuffer;
 	params.m_pLightWorldFrustumBuffer = m_pActivePointLightWorldFrustumBuffer;
 	params.m_pLightViewProjMatrixBuffer = m_pActivePointLightViewProjMatrixBuffer;
-	params.m_pLightIndexForMeshInstanceBuffer = m_pCreateShadowMapCommandsPass->GetPointLightIndexForMeshInstanceBuffer();
-	params.m_pMeshInstanceIndexForLightBuffer = m_pCreateShadowMapCommandsPass->GetMeshInstanceIndexForPointLightBuffer();
-	params.m_pNumShadowMapCommandsBuffer = m_pCreateShadowMapCommandsPass->GetNumPointLightCommandsBuffer();
-	params.m_pShadowMapCommandBuffer = m_pCreateShadowMapCommandsPass->GetPointLightCommandBuffer();
+	params.m_pLightIndexForMeshInstanceBuffer = m_pCreateTiledShadowMapCommandsPass->GetPointLightIndexForMeshInstanceBuffer();
+	params.m_pMeshInstanceIndexForLightBuffer = m_pCreateTiledShadowMapCommandsPass->GetMeshInstanceIndexForPointLightBuffer();
+	params.m_pNumShadowMapCommandsBuffer = m_pCreateTiledShadowMapCommandsPass->GetNumPointLightCommandsBuffer();
+	params.m_pShadowMapCommandBuffer = m_pCreateTiledShadowMapCommandsPass->GetPointLightCommandBuffer();
 			
 	params.m_InputResourceStates.m_TiledShadowMapState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_MeshInstanceWorldMatrixBufferState = pRenderGBufferFalseNegativePassStates->m_InstanceWorldMatrixBufferState;
@@ -2107,8 +2107,8 @@ CommandList* DXApplication::RecordRenderPointLightTiledShadowMapPass()
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pRenderPointLightTiledShadowMapCommandList");
 	params.m_pMeshRenderResources = m_pMeshRenderResources;
-	params.m_pNumShadowMapCommandsBuffer = m_pCreateShadowMapCommandsPass->GetNumPointLightCommandsBuffer();
-	params.m_pShadowMapCommandBuffer = m_pCreateShadowMapCommandsPass->GetPointLightCommandBuffer();
+	params.m_pNumShadowMapCommandsBuffer = m_pCreateTiledShadowMapCommandsPass->GetNumPointLightCommandsBuffer();
+	params.m_pShadowMapCommandBuffer = m_pCreateTiledShadowMapCommandsPass->GetPointLightCommandBuffer();
 
 	m_pRenderPointLightTiledShadowMapPass->Record(&params);
 	return params.m_pCommandList;
@@ -2161,10 +2161,10 @@ void DXApplication::InitRenderSpotLightTiledShadowMapPass()
 	m_pSpotLightShadowMapTileAllocator = new ShadowMapTileAllocator(kSpotLightShadowMapSize, kNumSpotLightShadowMapLevels);
 
 	assert(m_pRenderSpotLightTiledShadowMapPass == nullptr);
-	assert(m_pCreateShadowMapCommandsPass != nullptr);
+	assert(m_pCreateTiledShadowMapCommandsPass != nullptr);
 	
-	const CreateShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
-		m_pCreateShadowMapCommandsPass->GetOutputResourceStates();
+	const CreateTiledShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
+		m_pCreateTiledShadowMapCommandsPass->GetOutputResourceStates();
 
 	RenderTiledShadowMapPass::InitParams params;
 	params.m_pName = "RenderSpotLightTiledShadowMapPass";
@@ -2176,10 +2176,10 @@ void DXApplication::InitRenderSpotLightTiledShadowMapPass()
 	params.m_pLightWorldBoundsOrPropsBuffer = m_pActiveSpotLightPropsBuffer;
 	params.m_pLightWorldFrustumBuffer = m_pActiveSpotLightWorldFrustumBuffer;
 	params.m_pLightViewProjMatrixBuffer = m_pActiveSpotLightViewProjMatrixBuffer;
-	params.m_pLightIndexForMeshInstanceBuffer = m_pCreateShadowMapCommandsPass->GetSpotLightIndexForMeshInstanceBuffer();
-	params.m_pMeshInstanceIndexForLightBuffer = m_pCreateShadowMapCommandsPass->GetMeshInstanceIndexForSpotLightBuffer();
-	params.m_pNumShadowMapCommandsBuffer = m_pCreateShadowMapCommandsPass->GetNumSpotLightCommandsBuffer();
-	params.m_pShadowMapCommandBuffer = m_pCreateShadowMapCommandsPass->GetSpotLightCommandBuffer();
+	params.m_pLightIndexForMeshInstanceBuffer = m_pCreateTiledShadowMapCommandsPass->GetSpotLightIndexForMeshInstanceBuffer();
+	params.m_pMeshInstanceIndexForLightBuffer = m_pCreateTiledShadowMapCommandsPass->GetMeshInstanceIndexForSpotLightBuffer();
+	params.m_pNumShadowMapCommandsBuffer = m_pCreateTiledShadowMapCommandsPass->GetNumSpotLightCommandsBuffer();
+	params.m_pShadowMapCommandBuffer = m_pCreateTiledShadowMapCommandsPass->GetSpotLightCommandBuffer();
 
 	params.m_InputResourceStates.m_TiledShadowMapState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
@@ -2218,8 +2218,8 @@ CommandList* DXApplication::RecordRenderSpotLightTiledShadowMapPass()
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pRenderSpotLightTiledShadowMapCommandList");
 	params.m_pMeshRenderResources = m_pMeshRenderResources;
-	params.m_pNumShadowMapCommandsBuffer = m_pCreateShadowMapCommandsPass->GetNumSpotLightCommandsBuffer();
-	params.m_pShadowMapCommandBuffer = m_pCreateShadowMapCommandsPass->GetSpotLightCommandBuffer();
+	params.m_pNumShadowMapCommandsBuffer = m_pCreateTiledShadowMapCommandsPass->GetNumSpotLightCommandsBuffer();
+	params.m_pShadowMapCommandBuffer = m_pCreateTiledShadowMapCommandsPass->GetSpotLightCommandBuffer();
 
 	m_pRenderSpotLightTiledShadowMapPass->Record(&params);
 	return params.m_pCommandList;
@@ -2268,11 +2268,11 @@ void DXApplication::InitCreateVoxelizeCommandsPass()
 {	
 	assert(m_pCreateVoxelizeCommandsPass == nullptr);
 	assert(m_pFrustumMeshCullingPass != nullptr);
-	assert(m_pCreateShadowMapCommandsPass != nullptr);
+	assert(m_pCreateTiledShadowMapCommandsPass != nullptr);
 	assert(m_pMeshRenderResources != nullptr);
 	
-	const CreateShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
-		m_pCreateShadowMapCommandsPass->GetOutputResourceStates();
+	const CreateTiledShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
+		m_pCreateTiledShadowMapCommandsPass->GetOutputResourceStates();
 
 	CreateVoxelizeCommandsPass::InitParams params;
 	params.m_pName = "CreateVoxelizeCommandsPass";
@@ -2311,7 +2311,7 @@ void DXApplication::InitVoxelizePass()
 	assert(m_pFrustumMeshCullingPass != nullptr);
 	assert(m_pCreateMainDrawCommandsPass != nullptr);
 	assert(m_pCreateVoxelizeCommandsPass != nullptr);
-	assert(m_pCreateShadowMapCommandsPass != nullptr);
+	assert(m_pCreateTiledShadowMapCommandsPass != nullptr);
 	assert(m_pRenderGBufferFalseNegativePass != nullptr);
 		
 	const CreateMainDrawCommandsPass::ResourceStates* pCreateMainDrawCommandsPassStates =
@@ -2323,8 +2323,8 @@ void DXApplication::InitVoxelizePass()
 	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
 		
-	const CreateShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
-		m_pCreateShadowMapCommandsPass->GetOutputResourceStates();
+	const CreateTiledShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
+		m_pCreateTiledShadowMapCommandsPass->GetOutputResourceStates();
 		
 	VoxelizePass::InitParams params;
 	params.m_pName = "VoxelizePass";
@@ -3091,7 +3091,7 @@ void DXApplication::OuputDebugRenderPassResult()
 			return stringStream.str();
 		};
 		OutputBufferContent(m_pRenderEnv,
-			m_pCreateShadowMapCommandsPass->GetPointLightCommandBuffer(),
+			m_pCreateTiledShadowMapCommandsPass->GetPointLightCommandBuffer(),
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 			sizeof(ElementType),
 			elementFormatter);

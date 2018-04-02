@@ -11,4 +11,5 @@ public:
 	static Scene* LoadDabrovicSponza();
 	static Scene* LoadSibenik();
 	static Scene* LoadCornellBox();
+	static Scene* LoadSanMiguel();
 };

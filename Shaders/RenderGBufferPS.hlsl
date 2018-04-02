@@ -16,7 +16,7 @@ struct PSOutput
 	float4 buffer4				: SV_Target3;
 };
 
-cbuffer MaterialIDBuffer : register(b0)
+cbuffer Constants32BitBuffer : register(b0)
 {
 	uint g_MaterialID;
 }

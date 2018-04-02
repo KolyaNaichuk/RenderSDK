@@ -15,7 +15,7 @@ struct VSOutput
 	float2 texCoord				: TEXCOORD;
 };
 
-cbuffer InstanceOffsetBuffer : register(b0)
+cbuffer Constants32BitBuffer : register(b0)
 {
 	uint g_InstanceOffset;
 }

@@ -32,7 +32,7 @@ class FrustumMeshCullingPass;
 class FillVisibilityBufferPass;
 class CreateMainDrawCommandsPass;
 class CreateFalseNegativeDrawCommandsPass;
-class CreateShadowMapCommandsPass;
+class CreateTiledShadowMapCommandsPass;
 class ConvertTiledShadowMapPass;
 class ShadowMapTileAllocator;
 class FillMeshTypeDepthBufferPass;
@@ -268,7 +268,7 @@ private:
 	RenderGBufferPass* m_pRenderGBufferFalseNegativePass = nullptr;
 	FillMeshTypeDepthBufferPass* m_pFillMeshTypeDepthBufferPass = nullptr;
 	CalcShadingRectanglesPass* m_pCalcShadingRectanglesPass = nullptr;
-	CreateShadowMapCommandsPass* m_pCreateShadowMapCommandsPass = nullptr;
+	CreateTiledShadowMapCommandsPass* m_pCreateTiledShadowMapCommandsPass = nullptr;
 	RenderTiledShadowMapPass* m_pRenderPointLightTiledShadowMapPass = nullptr;
 	ShadowMapTileAllocator* m_pPointLightShadowMapTileAllocator = nullptr;
 	ConvertTiledShadowMapPass* m_pConvertPointLightTiledShadowMapPass = nullptr;

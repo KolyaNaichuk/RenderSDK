@@ -122,7 +122,7 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 		}
 		{
 			const std::wstring debugMapName = L"Specular Map: " + pMaterial->m_Name;
-			const bool generateMips = false;
+			const bool generateMips = true;
 			const bool forceSRGB = false;
 
 			DirectX::ScratchImage image;
@@ -139,7 +139,6 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 			}
 			else
 			{
-				assert(false && "TileShadingPS.hlsl does not handle specular map");
 				LoadImageDataFromFile(pMaterial->m_SpecularMapFilePath, image, generateMips);
 			}
 			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingTransitionBarriers);

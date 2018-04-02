@@ -246,9 +246,6 @@
     <ClInclude Include="..\Include\RenderPasses\FrustumMeshCullingPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\CreateShadowMapCommandsPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\D3DWrapper\QueryHeap.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
@@ -259,6 +256,12 @@
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\ConvertTiledShadowMapPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateTiledShadowMapSATPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateTiledShadowMapCommandsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -476,9 +479,6 @@
     <ClCompile Include="..\Source\RenderPasses\FrustumMeshCullingPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\CreateShadowMapCommandsPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\D3DWrapper\QueryHeap.cpp">
       <Filter>D3DWrapper</Filter>
     </ClCompile>
@@ -489,6 +489,12 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\ConvertTiledShadowMapPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateTiledShadowMapSATPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateTiledShadowMapCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
@@ -595,9 +601,6 @@
     <None Include="..\Shaders\GammaCorrection.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\CreateShadowMapCommandsCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\LightUtils.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -611,6 +614,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\EncodingUtils.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateTiledShadowMapCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateTiledShadowMapSATCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -116,7 +116,7 @@ Scene* SceneLoader::LoadDabrovicSponza()
 
 Scene* SceneLoader::LoadSibenik()
 {
-	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\Sibenik\\sibenik.obj");
+	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\Sibenik\\sibenik.obj", true/*use32BitIndices*/);
 
 	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
 	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-20.1410999, -15.3123074, -8.49680042}
@@ -126,10 +126,10 @@ Scene* SceneLoader::LoadSibenik()
 		1.0f/*nearClipPlane*/,
 		45.0f/*farClipPlane*/,
 		1.0f/*aspectRatio*/,
-		0.5f/*maxMoveSpeed*/,
-		0.4f/*maxRotationSpeed*/);
+		0.4f/*maxMoveSpeed*/,
+		0.8f/*maxRotationSpeed*/);
 
-	pCamera->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
+	pCamera->GetTransform().SetPosition(Vector3f(-19.7f, -11.0f, 0.0f));
 	pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(PI_DIV_2));
 	pScene->SetCamera(pCamera);
 
@@ -154,3 +154,38 @@ Scene* SceneLoader::LoadCornellBox()
 
 	return pScene;
 }
+
+Scene* SceneLoader::LoadSanMiguel()
+{
+#if 0
+	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\SanMiguel\\san-miguel-low-poly.obj", true/*use32BitIndices*/);
+#else
+	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\SanMiguel\\san-miguel.obj", true/*use32BitIndices*/);
+#endif
+
+	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
+	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-22.2742996, -0.269336700, -14.9373989}
+	const Vector3f maxPoint = worldBounds.m_Center + worldBounds.m_Radius; // {46.7743988, 14.6000004, 12.0422001}
+
+	Camera* pCamera = new Camera(Camera::ProjType_Perspective,
+		0.2f/*nearClipPlane*/,
+		80.0f/*farClipPlane*/,
+		1.0f/*aspectRatio*/,
+		0.2f/*maxMoveSpeed*/,
+		0.4f/*maxRotationSpeed*/);
+
+	pCamera->GetTransform().SetPosition(Vector3f(12.0f, 7.0f, 0.0f));
+	pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(PI_DIV_2));
+	pScene->SetCamera(pCamera);
+
+#if 1
+	PointLight* pPointLight = new PointLight("Point light", 50.0f, 0.1f);
+	pPointLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
+	pPointLight->SetIntensity(1.0f);
+	pPointLight->GetTransform().SetPosition(Vector3f(12.0f, 7.0f, 0.0f));
+	pScene->AddPointLight(pPointLight);
+#endif
+
+	return pScene;
+}
+
