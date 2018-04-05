@@ -6,10 +6,16 @@
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
-#include "Math/Math.h"
+#include "Math/Vector2.h"
 
 namespace
 {
+	struct CreateSATCommand
+	{
+		Vector2u m_TileTopLeftInPixels;
+		DispatchArgument m_Args;
+	};
+
 	enum RootParams
 	{
 		kRoot32BitConstantsParam = 0,
@@ -37,11 +43,57 @@ CreateTiledShadowMapSATPass::~CreateTiledShadowMapSATPass()
 
 	SafeDelete(m_pTiledShadowMapSATRow);
 	SafeDelete(m_pTiledShadowMapSATColumn);
+
+	SafeDelete(m_pArgumentBuffer);
+
+	m_pUploadArgumentBuffer->Unmap(0, nullptr);
+	SafeDelete(m_pUploadArgumentBuffer);
 }
 
 void CreateTiledShadowMapSATPass::Record(RenderParams* pParams)
 {
+	struct ExecuteIndirectParams
+	{
+		UINT m_NumCommands;
+		UINT64 m_FirstCommandOffset;
+		PipelineState* m_pPipelineState;
+	};
+	
+	CreateSATCommand* pCommands = (CreateSATCommand*)m_pUploadArgumentBufferMem;
 	assert(false);
+
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	CommandList* pCommandList = pParams->m_pCommandList;
+	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
+		
+	pCommandList->Begin();
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_PROFILING
+
+	pCommandList->SetComputeRootSignature(m_pRootSignature);
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
+	
+	if (!m_ResourceBarriersRow.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceBarriersRow.size(), m_ResourceBarriersRow.data());
+	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStartRow);
+	
+	assert(false);
+	//pCommandList->SetPipelineState();
+	//pCommandList->ExecuteIndirect();
+	
+	if (!m_ResourceBarriersColumn.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceBarriersColumn.size(), m_ResourceBarriersColumn.data());
+	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStartColumn);
+
+	assert(false);
+	//pCommandList->SetPipelineState();
+	//pCommandList->ExecuteIndirect();
+
+#ifdef ENABLE_PROFILING
+	pGPUProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_PROFILING
+	pCommandList->End();
 }
 
 void CreateTiledShadowMapSATPass::InitResources(InitParams* pParams)
@@ -135,9 +187,9 @@ void CreateTiledShadowMapSATPass::InitPipelineStates(InitParams* pParams)
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	for (u32 tileSize = pParams->m_MinTileSize; tileSize <= pParams->m_MaxTileSize; tileSize *= 2)
+	for (u32 tileSize = pParams->m_MaxTileSize; pParams->m_MinTileSize <= tileSize; tileSize /= 2)
 	{
-		std::string tileSizeStr = std::to_string(tileSize);	
+		std::string tileSizeStr = std::to_string(tileSize);
 		const ShaderMacro shaderDefines[] =
 		{
 			ShaderMacro("SHADOW_MAP_TILE_SIZE", tileSizeStr.c_str()),
@@ -155,4 +207,16 @@ void CreateTiledShadowMapSATPass::InitPipelineStates(InitParams* pParams)
 
 void CreateTiledShadowMapSATPass::InitCommandSignature(InitParams* pParams)
 {
+	assert(m_pCommandSignature == nullptr);
+	assert(m_pRootSignature != nullptr);
+
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
+	D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[] =
+	{
+		Constant32BitArgument(kRoot32BitConstantsParam, 0, 2),
+		DispatchArgument()
+	};
+	CommandSignatureDesc commandSignatureDesc(sizeof(CreateSATCommand), ARRAYSIZE(argumentDescs), argumentDescs);
+	m_pCommandSignature = new CommandSignature(pRenderEnv->m_pDevice, m_pRootSignature, &commandSignatureDesc, L"CreateTiledShadowMapSATPass::m_pCommandSignature");
 }

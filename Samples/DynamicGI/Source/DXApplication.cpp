@@ -13,6 +13,7 @@
 #include "D3DWrapper/GPUProfiler.h"
 #include "RenderPasses/CreateTiledShadowMapCommandsPass.h"
 #include "RenderPasses/CreateVoxelizeCommandsPass.h"
+#include "RenderPasses/CreateTiledShadowMapSATPass.h"
 #include "RenderPasses/ConvertTiledShadowMapPass.h"
 #include "RenderPasses/PropagateLightPass.h"
 #include "RenderPasses/RenderGBufferPass.h"
@@ -303,9 +304,11 @@ enum
 	kBackBufferWidth = kNumTilesX * kTileSize,
 	kBackBufferHeight = kNumTilesY * kTileSize,
 	kPointLightShadowMapSize = 8 * 1024,
-	kNumPointLightShadowMapLevels = 4,
+	kPointLightShadowMapMinTileSize = 64,
+	kPointLightShadowMapMaxTileSize = 1024,
 	kSpotLightShadowMapSize = 1 * 1024,
-	kNumSpotLightShadowMapLevels = 4
+	kSpotLightShadowMapMinTileSize = 64,
+	kSpotLightShadowMapMaxTileSize = 1024
 };
 
 DXApplication::DXApplication(HINSTANCE hApp)
@@ -445,9 +448,11 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pRenderPointLightTiledShadowMapPass);
 	SafeDelete(m_pPointLightShadowMapTileAllocator);
 	SafeDelete(m_pConvertPointLightTiledShadowMapPass);
+	SafeDelete(m_pCreatePointLightTiledShadowMapSATPass);
 	SafeDelete(m_pRenderSpotLightTiledShadowMapPass);
 	SafeDelete(m_pSpotLightShadowMapTileAllocator);
 	SafeDelete(m_pConvertSpotLightTiledShadowMapPass);
+	SafeDelete(m_pCreateSpotLightTiledShadowMapSATPass);
 	SafeDelete(m_pCreateVoxelizeCommandsPass);
 	SafeDelete(m_pVoxelizePass);
 	SafeDelete(m_pTiledShadingPass);
@@ -493,11 +498,13 @@ void DXApplication::OnInit()
 	{
 		InitRenderPointLightTiledShadowMapPass();
 		InitConvertPointLightTiledShadowMapPass();
+		InitCreatePointLightTiledShadowMapSATPass();
 	}
 	if (m_NumSpotLights > 0)
 	{
 		InitRenderSpotLightTiledShadowMapPass();
 		InitConvertSpotLightTiledShadowMapPass();
+		InitCreateSpotLightTiledShadowMapSATPass();
 	}
 		
 	InitCreateVoxelizeCommandsPass();
@@ -626,11 +633,13 @@ void DXApplication::OnRender()
 	{
 		commandListBatch[commandListBatchSize++] = RecordRenderPointLightTiledShadowMapPass();
 		commandListBatch[commandListBatchSize++] = RecordConvertPointLightTiledShadowMapPass();
+		commandListBatch[commandListBatchSize++] = RecordCreatePointLightTiledShadowMapSATPass();
 	}
 	if (m_NumSpotLights > 0)
 	{
 		commandListBatch[commandListBatchSize++] = RecordRenderSpotLightTiledShadowMapPass();
 		commandListBatch[commandListBatchSize++] = RecordConvertSpotLightTiledShadowMapPass();
+		commandListBatch[commandListBatchSize++] = RecordCreateSpotLightTiledShadowMapSATPass();
 	}
 		
 	commandListBatch[commandListBatchSize++] = RecordCreateVoxelizeCommandsPass();
@@ -2060,7 +2069,7 @@ CommandList* DXApplication::RecordCreateShadowMapCommandsPass()
 void DXApplication::InitRenderPointLightTiledShadowMapPass()
 {
 	assert(m_pPointLightShadowMapTileAllocator == nullptr);
-	m_pPointLightShadowMapTileAllocator = new ShadowMapTileAllocator(kPointLightShadowMapSize, kNumPointLightShadowMapLevels);
+	m_pPointLightShadowMapTileAllocator = new ShadowMapTileAllocator(kPointLightShadowMapSize, kPointLightShadowMapMinTileSize);
 
 	assert(m_pRenderPointLightTiledShadowMapPass == nullptr);
 	assert(m_pCreateTiledShadowMapCommandsPass != nullptr);
@@ -2153,12 +2162,39 @@ CommandList* DXApplication::RecordConvertPointLightTiledShadowMapPass()
 	return params.m_pCommandList;
 }
 
+void DXApplication::InitCreatePointLightTiledShadowMapSATPass()
+{
+	assert(m_pCreatePointLightTiledShadowMapSATPass == nullptr);
+	assert(m_pConvertPointLightTiledShadowMapPass != nullptr);
+
+	const ConvertTiledShadowMapPass::ResourceStates* pConvertTiledShadowMapPassStates =
+		m_pConvertPointLightTiledShadowMapPass->GetOutputResourceStates();
+
+	CreateTiledShadowMapSATPass::InitParams params;
+	params.m_pName = "CreatePointLightTiledShadowMapSATPass";
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_InputResourceStates.m_TiledShadowMapState = pConvertTiledShadowMapPassStates->m_TiledVarianceShadowMapState;
+	params.m_InputResourceStates.m_TiledShadowMapSATState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_pTiledShadowMap = m_pConvertPointLightTiledShadowMapPass->GetTiledVarianceShadowMap();
+	params.m_MinTileSize = kPointLightShadowMapMinTileSize;
+	params.m_MaxTileSize = kPointLightShadowMapMaxTileSize;
+
+	m_pCreatePointLightTiledShadowMapSATPass = new CreateTiledShadowMapSATPass(&params);
+}
+
+CommandList* DXApplication::RecordCreatePointLightTiledShadowMapSATPass()
+{
+	assert(m_pCreatePointLightTiledShadowMapSATPass != nullptr);
+	assert(false);
+	return nullptr;
+}
+
 void DXApplication::InitRenderSpotLightTiledShadowMapPass()
 {
 	assert(m_NumSpotLights > 0);
 	
 	assert(m_pSpotLightShadowMapTileAllocator == nullptr);
-	m_pSpotLightShadowMapTileAllocator = new ShadowMapTileAllocator(kSpotLightShadowMapSize, kNumSpotLightShadowMapLevels);
+	m_pSpotLightShadowMapTileAllocator = new ShadowMapTileAllocator(kSpotLightShadowMapSize, kSpotLightShadowMapMinTileSize);
 
 	assert(m_pRenderSpotLightTiledShadowMapPass == nullptr);
 	assert(m_pCreateTiledShadowMapCommandsPass != nullptr);
@@ -2262,6 +2298,32 @@ CommandList* DXApplication::RecordConvertSpotLightTiledShadowMapPass()
 
 	m_pConvertSpotLightTiledShadowMapPass->Record(&params);
 	return params.m_pCommandList;
+}
+
+void DXApplication::InitCreateSpotLightTiledShadowMapSATPass()
+{
+	assert(m_pCreateSpotLightTiledShadowMapSATPass == nullptr);
+	assert(m_pConvertSpotLightTiledShadowMapPass != nullptr);
+
+	const ConvertTiledShadowMapPass::ResourceStates* pConvertTiledShadowMapPassStates =
+		m_pConvertSpotLightTiledShadowMapPass->GetOutputResourceStates();
+
+	CreateTiledShadowMapSATPass::InitParams params;
+	params.m_pName = "CreateSpotLightTiledShadowMapSATPass";
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_InputResourceStates.m_TiledShadowMapState = pConvertTiledShadowMapPassStates->m_TiledVarianceShadowMapState;
+	params.m_InputResourceStates.m_TiledShadowMapSATState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_pTiledShadowMap = m_pConvertSpotLightTiledShadowMapPass->GetTiledVarianceShadowMap();
+	params.m_MinTileSize = kSpotLightShadowMapMinTileSize;
+	params.m_MaxTileSize = kSpotLightShadowMapMaxTileSize;
+
+	m_pCreateSpotLightTiledShadowMapSATPass = new CreateTiledShadowMapSATPass(&params);
+}
+
+CommandList* DXApplication::RecordCreateSpotLightTiledShadowMapSATPass()
+{
+	assert(false);
+	return nullptr;
 }
 
 void DXApplication::InitCreateVoxelizeCommandsPass()

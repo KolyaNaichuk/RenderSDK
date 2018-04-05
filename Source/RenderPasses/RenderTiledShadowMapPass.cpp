@@ -251,18 +251,19 @@ void RenderTiledShadowMapPass::AddResourceBarrierIfRequired(GraphicsResource* pR
 		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);
 }
 
-ShadowMapTileAllocator::ShadowMapTileAllocator(u32 shadowMapSize, u32 numLevels)
+ShadowMapTileAllocator::ShadowMapTileAllocator(u32 shadowMapSize, u32 minTileSize)
 {
 	assert(IsPowerOf2(shadowMapSize));
-	assert(numLevels > 0);
+	assert(IsPowerOf2(minTileSize));
 
 	const f32 shadowMapSizeF = f32(shadowMapSize);
-	
+
 	m_MaxTileSize = shadowMapSize;
 	m_RcpMaxTileSize = Rcp(shadowMapSizeF);
 	m_Log2MaxTileSize = Log2(shadowMapSizeF);
-	m_MinTileSize = m_MaxTileSize >> (numLevels - 1);
-	assert(m_MinTileSize > 0);
+	m_MinTileSize = minTileSize;
+
+	const u32 numLevels = 1 + CalcTreeLevel(minTileSize);
 	m_NumNodes = ((2 << ((numLevels << 1) - 1)) - 1) / 3;
 
 	m_pFreeNodes = new u8[m_NumNodes];

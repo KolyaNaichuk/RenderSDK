@@ -70,4 +70,8 @@ private:
 	DescriptorHandle m_SRVHeapStartColumn;
 	std::vector<ResourceTransitionBarrier> m_ResourceBarriersColumn;
 	ColorTexture* m_pTiledShadowMapSATColumn = nullptr;
+
+	Buffer* m_pArgumentBuffer = nullptr;
+	Buffer* m_pUploadArgumentBuffer = nullptr;
+	void* m_pUploadArgumentBufferMem = nullptr;
 };

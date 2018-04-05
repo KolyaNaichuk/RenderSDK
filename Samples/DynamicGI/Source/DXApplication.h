@@ -9,9 +9,9 @@
 #include "RenderPasses/RenderTiledShadowMapPass.h"
 
 struct HeapProperties;
+struct Frustum;
 struct RenderEnv;
 struct Viewport;
-struct Frustum;
 
 class GraphicsDevice;
 class SwapChain;
@@ -33,6 +33,7 @@ class FillVisibilityBufferPass;
 class CreateMainDrawCommandsPass;
 class CreateFalseNegativeDrawCommandsPass;
 class CreateTiledShadowMapCommandsPass;
+class CreateTiledShadowMapSATPass;
 class ConvertTiledShadowMapPass;
 class ShadowMapTileAllocator;
 class FillMeshTypeDepthBufferPass;
@@ -169,11 +170,17 @@ private:
 	void InitConvertPointLightTiledShadowMapPass();
 	CommandList* RecordConvertPointLightTiledShadowMapPass();
 
+	void InitCreatePointLightTiledShadowMapSATPass();
+	CommandList* RecordCreatePointLightTiledShadowMapSATPass();
+
 	void InitRenderSpotLightTiledShadowMapPass();
 	CommandList* RecordRenderSpotLightTiledShadowMapPass();
 
 	void InitConvertSpotLightTiledShadowMapPass();
 	CommandList* RecordConvertSpotLightTiledShadowMapPass();
+
+	void InitCreateSpotLightTiledShadowMapSATPass();
+	CommandList* RecordCreateSpotLightTiledShadowMapSATPass();
 
 	void InitCreateVoxelizeCommandsPass();
 	CommandList* RecordCreateVoxelizeCommandsPass();
@@ -272,9 +279,11 @@ private:
 	RenderTiledShadowMapPass* m_pRenderPointLightTiledShadowMapPass = nullptr;
 	ShadowMapTileAllocator* m_pPointLightShadowMapTileAllocator = nullptr;
 	ConvertTiledShadowMapPass* m_pConvertPointLightTiledShadowMapPass = nullptr;
+	CreateTiledShadowMapSATPass* m_pCreatePointLightTiledShadowMapSATPass = nullptr;
 	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass = nullptr;
 	ShadowMapTileAllocator* m_pSpotLightShadowMapTileAllocator = nullptr;
 	ConvertTiledShadowMapPass* m_pConvertSpotLightTiledShadowMapPass = nullptr;
+	CreateTiledShadowMapSATPass* m_pCreateSpotLightTiledShadowMapSATPass = nullptr;
 	CreateVoxelizeCommandsPass* m_pCreateVoxelizeCommandsPass = nullptr;
 	VoxelizePass* m_pVoxelizePass = nullptr;
 	TiledLightCullingPass* m_pTiledLightCullingPass = nullptr;

@@ -92,7 +92,7 @@ struct ShadowMapTile
 class ShadowMapTileAllocator
 {
 public:
-	ShadowMapTileAllocator(u32 shadowMapSize, u32 numLevels);
+	ShadowMapTileAllocator(u32 shadowMapSize, u32 minTileSize);
 	~ShadowMapTileAllocator();
 
 	bool Allocate(u32 tileSize, ShadowMapTile* pNewTile);

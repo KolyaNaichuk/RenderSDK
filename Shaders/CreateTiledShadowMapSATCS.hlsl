@@ -13,10 +13,10 @@ groupshared float2 g_SharedData[SHADOW_MAP_TILE_SIZE];
 [numthreads(GROUP_SIZE, 1, 1)]
 void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 {
-	uint2 pixelPos = g_TileTopLeftInPixels + uint2(localThreadId.x, groupId.y);
+	uint2 localPixelPos = uint2(localThreadId.x, groupId.y);
 
-	g_SharedData[2 * localThreadId.x] = g_TiledShadowMap[pixelPos];
-	g_SharedData[2 * localThreadId.x + 1] = g_TiledShadowMap[uint2(pixelPos.x + 1, pixelPos.y)];
+	g_SharedData[2 * localThreadId.x] = g_TiledShadowMap[g_TileTopLeftInPixels + localPixelPos];
+	g_SharedData[2 * localThreadId.x + 1] = g_TiledShadowMap[g_TileTopLeftInPixels + uint2(localPixelPos.x + 1, localPixelPos.y)];
 	GroupMemoryBarrierWithGroupSync();
 
 	[unroll]
@@ -39,6 +39,6 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 		GroupMemoryBarrierWithGroupSync();
 	}
 
-	g_TiledShadowMapSAT[pixelPos.yx] = g_SharedData[2 * localThreadId.x];
-	g_TiledShadowMapSAT[uint2(pixelPos.y, pixelPos.x + 1)] = g_SharedData[2 * localThreadId.x + 1];
+	g_TiledShadowMapSAT[g_TileTopLeftInPixels + localPixelPos.yx] = g_SharedData[2 * localThreadId.x];
+	g_TiledShadowMapSAT[g_TileTopLeftInPixels + uint2(localPixelPos.y, localPixelPos.x + 1)] = g_SharedData[2 * localThreadId.x + 1];
 }
