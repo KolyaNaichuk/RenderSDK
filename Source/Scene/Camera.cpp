@@ -1,4 +1,4 @@
-#include "Common/Camera.h"
+#include "Scene/Camera.h"
 #include "Common/Color.h"
 #include "Math/Math.h"
 

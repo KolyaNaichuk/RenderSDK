@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Math/Vector4.h"
-#include "Common/SceneObject.h"
+#include "Scene/SceneObject.h"
 
 class Camera : public SceneObject
 {

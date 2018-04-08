@@ -1,5 +1,4 @@
-#include "Common/MaterialRenderResources.h"
-#include "Common/Material.h"
+#include "RenderPasses/MaterialRenderResources.h"
 #include "Common/FileUtilities.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/GraphicsDevice.h"
@@ -8,6 +7,7 @@
 #include "D3DWrapper/RenderEnv.h"
 #include "DirectXTex/DirectXTex.h"
 #include "Math/Vector4.h"
+#include "Scene/Material.h"
 
 namespace
 {

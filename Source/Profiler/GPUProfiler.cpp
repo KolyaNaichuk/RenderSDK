@@ -1,4 +1,4 @@
-#include "D3DWrapper/GPUProfiler.h"
+#include "Profiler/GPUProfiler.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/CommandQueue.h"

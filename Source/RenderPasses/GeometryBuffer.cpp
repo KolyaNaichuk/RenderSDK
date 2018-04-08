@@ -1,4 +1,4 @@
-#include "Common/GeometryBuffer.h"
+#include "RenderPasses/GeometryBuffer.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/RenderEnv.h"
 

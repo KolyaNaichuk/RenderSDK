@@ -1,5 +1,5 @@
-#include "Common/MeshUtilities.h"
-#include "Common/Mesh.h"
+#include "Scene/MeshUtilities.h"
+#include "Scene/Mesh.h"
 #include "Math/Vector2.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"

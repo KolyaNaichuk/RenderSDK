@@ -1,5 +1,5 @@
-#include "Common/Mesh.h"
-#include "Common/Material.h"
+#include "Scene/Mesh.h"
+#include "Scene/Material.h"
 #include "Math/AxisAlignedBox.h"
 #include "Math/OrientedBox.h"
 #include "Math/Matrix4.h"

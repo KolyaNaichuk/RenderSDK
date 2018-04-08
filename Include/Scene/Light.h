@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common/SceneObject.h"
+#include "Scene/SceneObject.h"
 #include "Math/Vector4.h"
 
 enum LightType

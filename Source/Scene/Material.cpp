@@ -1,4 +1,4 @@
-#include "Common/Material.h"
+#include "Scene/Material.h"
 
 Material::Material(std::wstring name)
 	: m_Name(std::move(name))

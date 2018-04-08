@@ -1,5 +1,5 @@
-#include "Common/MeshBatch.h"
-#include "Common/Mesh.h"
+#include "Scene/MeshBatch.h"
+#include "Scene/Mesh.h"
 #include "Math/Math.h"
 
 MeshBatch::MeshBatch(u8 vertexFormatFlags, DXGI_FORMAT indexFormat, D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType, D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)

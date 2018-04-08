@@ -1,8 +1,7 @@
-#include "Common/SceneLoader.h"
-#include "Common/MeshUtilities.h"
-#include "Common/OBJFileLoader.h"
-#include "Common/Light.h"
-#include "Common/Scene.h"
+#include "Scene/SceneLoader.h"
+#include "Scene/OBJFileLoader.h"
+#include "Scene/Light.h"
+#include "Scene/Scene.h"
 
 Scene* SceneLoader::LoadCube()
 {

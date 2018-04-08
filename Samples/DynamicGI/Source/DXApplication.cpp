@@ -1,4 +1,7 @@
 #include "DXApplication.h"
+
+#include "Common/Color.h"
+
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsFactory.h"
 #include "D3DWrapper/GraphicsResource.h"
@@ -10,7 +13,10 @@
 #include "D3DWrapper/Fence.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/SwapChain.h"
-#include "D3DWrapper/GPUProfiler.h"
+
+#include "Profiler/GPUProfiler.h"
+#include "Profiler/CPUProfiler.h"
+
 #include "RenderPasses/CreateTiledShadowMapCommandsPass.h"
 #include "RenderPasses/CreateVoxelizeCommandsPass.h"
 #include "RenderPasses/CreateTiledShadowMapSATPass.h"
@@ -29,16 +35,18 @@
 #include "RenderPasses/FillMeshTypeDepthBufferPass.h"
 #include "RenderPasses/CalcShadingRectanglesPass.h"
 #include "RenderPasses/VoxelizePass.h"
-#include "Common/Mesh.h"
-#include "Common/MeshBatch.h"
-#include "Common/GeometryBuffer.h"
-#include "Common/MeshRenderResources.h"
-#include "Common/MaterialRenderResources.h"
-#include "Common/Color.h"
-#include "Common/Camera.h"
-#include "Common/Scene.h"
-#include "Common/SceneLoader.h"
-#include "Common/CPUProfiler.h"
+#include "RenderPasses/GeometryBuffer.h"
+#include "RenderPasses/MeshRenderResources.h"
+#include "RenderPasses/MaterialRenderResources.h"
+#include "RenderPasses/LightRenderData.h"
+#include "RenderPasses/RenderTiledShadowMapPass.h"
+
+#include "Scene/Mesh.h"
+#include "Scene/MeshBatch.h"
+#include "Scene/Camera.h"
+#include "Scene/Scene.h"
+#include "Scene/SceneLoader.h"
+
 #include "Math/BasisAxes.h"
 #include "Math/Cone.h"
 #include "Math/Frustum.h"
@@ -51,6 +59,7 @@
 
 /*
 To do:
+/ Clean RenderPasses/Common.h
 - Add support for mip levels. Search for keyword "KolyaMipLevels". When creating MaterialRenderResources and reading materials in shading pass should account for mip when taking resource index.
 - I am using Sphere as bounding volume for SpotLights. Investigate if there are better alternatives. Check https://bartwronski.com/ implementation for the cone test.
 - Hard-coded light screen area for now. Fix CalcScreenAreaAffectedByLight.
@@ -2686,8 +2695,8 @@ void DXApplication::InitPointLightRenderResources(Scene* pScene)
 	PointLight** ppPointLights = pScene->GetPointLights();
 	m_NumPointLights = u32(pScene->GetNumPointLights());
 
-	m_pPointLights = new PointLightData[m_NumPointLights];
-	m_ppActivePointLights = new PointLightData*[m_NumPointLights];
+	m_pPointLights = new PointLightRenderData[m_NumPointLights];
+	m_ppActivePointLights = new PointLightRenderData*[m_NumPointLights];
 
 	Vector3f lookAtDir[kNumCubeMapFaces];
 	lookAtDir[kCubeMapFacePosX] = Vector3f::RIGHT;
@@ -2813,8 +2822,8 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 	SpotLight** ppSpotLights = pScene->GetSpotLights();
 	m_NumSpotLights = u32(pScene->GetNumSpotLights());
 
-	m_pSpotLights = new SpotLightData[m_NumSpotLights];
-	m_ppActiveSpotLights = new SpotLightData*[m_NumSpotLights];
+	m_pSpotLights = new SpotLightRenderData[m_NumSpotLights];
+	m_ppActiveSpotLights = new SpotLightRenderData*[m_NumSpotLights];
 
 	for (decltype(m_NumSpotLights) lightIndex = 0; lightIndex < m_NumSpotLights; ++lightIndex)
 	{
@@ -2933,7 +2942,7 @@ void DXApplication::SetupPointLightDataForUpload(const Frustum& cameraWorldFrust
 	decltype(m_NumPointLights) numVisiblePointLights = 0;
 	for (decltype(m_NumPointLights) lightIndex = 0; lightIndex < m_NumPointLights; ++lightIndex)
 	{
-		PointLightData& lightData = m_pPointLights[lightIndex];
+		PointLightRenderData& lightData = m_pPointLights[lightIndex];
 		if (TestSphereAgainstFrustum(cameraWorldFrustum, lightData.m_WorldBounds))
 			m_ppActivePointLights[numVisiblePointLights++] = &lightData;
 	}
@@ -2941,11 +2950,11 @@ void DXApplication::SetupPointLightDataForUpload(const Frustum& cameraWorldFrust
 	const Vector2f screenSize(m_pBackBufferViewport->Width, m_pBackBufferViewport->Height);
 	for (decltype(numVisiblePointLights) lightIndex = 0; lightIndex < numVisiblePointLights; ++lightIndex)
 	{
-		PointLightData* pLightData = m_ppActivePointLights[lightIndex];
+		PointLightRenderData* pLightData = m_ppActivePointLights[lightIndex];
 		pLightData->m_AffectedScreenArea = CalcScreenAreaAffectedByLight(pLightData->m_WorldBounds, screenSize, *m_pCamera);
 	}
 
-	auto hasLargerSizeOnScreen = [](const PointLightData* pLightData1, const PointLightData* pLightData2)
+	auto hasLargerSizeOnScreen = [](const PointLightRenderData* pLightData1, const PointLightRenderData* pLightData2)
 	{
 		return (pLightData1->m_AffectedScreenArea > pLightData2->m_AffectedScreenArea);
 	};
@@ -2957,7 +2966,7 @@ void DXApplication::SetupPointLightDataForUpload(const Frustum& cameraWorldFrust
 
 	while (m_NumActivePointLights < numVisiblePointLights)
 	{
-		PointLightData* pLightData = m_ppActivePointLights[m_NumActivePointLights];
+		PointLightRenderData* pLightData = m_ppActivePointLights[m_NumActivePointLights];
 
 		u8 faceIndex = 0;
 		ShadowMapTile shadowMapTile;
@@ -2984,7 +2993,7 @@ void DXApplication::SetupPointLightDataForUpload(const Frustum& cameraWorldFrust
 
 	for (decltype(m_NumActivePointLights) lightIndex = 0; lightIndex < m_NumActivePointLights; ++lightIndex)
 	{
-		const PointLightData* pLightData = m_ppActivePointLights[lightIndex];
+		const PointLightRenderData* pLightData = m_ppActivePointLights[lightIndex];
 
 		pUploadActiveLightWorldBounds[lightIndex] = pLightData->m_WorldBounds;
 		
@@ -3025,7 +3034,7 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 	decltype(m_NumSpotLights) numVisibleSpotLights = 0;
 	for (decltype(m_NumSpotLights) lightIndex = 0; lightIndex < m_NumSpotLights; ++lightIndex)
 	{
-		SpotLightData& lightData = m_pSpotLights[lightIndex];
+		SpotLightRenderData& lightData = m_pSpotLights[lightIndex];
 		if (TestSphereAgainstFrustum(cameraWorldFrustum, lightData.m_WorldBounds))
 			m_ppActiveSpotLights[numVisibleSpotLights++] = &lightData;
 	}
@@ -3033,11 +3042,11 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 	const Vector2f screenSize(m_pBackBufferViewport->Width, m_pBackBufferViewport->Height);
 	for (decltype(numVisibleSpotLights) lightIndex = 0; lightIndex < numVisibleSpotLights; ++lightIndex)
 	{
-		SpotLightData* pLightData = m_ppActiveSpotLights[lightIndex];
+		SpotLightRenderData* pLightData = m_ppActiveSpotLights[lightIndex];
 		pLightData->m_AffectedScreenArea = CalcScreenAreaAffectedByLight(pLightData->m_WorldBounds, screenSize, *m_pCamera);
 	}
 
-	auto hasLargerSizeOnScreen = [](const SpotLightData* pLightData1, const SpotLightData* pLightData2)
+	auto hasLargerSizeOnScreen = [](const SpotLightRenderData* pLightData1, const SpotLightRenderData* pLightData2)
 	{
 		return (pLightData1->m_AffectedScreenArea > pLightData2->m_AffectedScreenArea);
 	};
@@ -3049,7 +3058,7 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 
 	while (m_NumActiveSpotLights < numVisibleSpotLights)
 	{
-		SpotLightData* pLightData = m_ppActiveSpotLights[m_NumActiveSpotLights];
+		SpotLightRenderData* pLightData = m_ppActiveSpotLights[m_NumActiveSpotLights];
 
 		ShadowMapTile shadowMapTile;
 		if (m_pSpotLightShadowMapTileAllocator->Allocate(pLightData->m_AffectedScreenArea, &shadowMapTile))
@@ -3072,7 +3081,7 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 
 	for (decltype(m_NumActiveSpotLights) lightIndex = 0; lightIndex < m_NumActiveSpotLights; ++lightIndex)
 	{
-		const SpotLightData* pLightData = m_ppActiveSpotLights[lightIndex];
+		const SpotLightRenderData* pLightData = m_ppActiveSpotLights[lightIndex];
 		pUploadActiveLightWorldBounds[lightIndex] = pLightData->m_WorldBounds;
 		pUploadActiveLightWorldFrustums[lightIndex] = pLightData->m_WorldFrustum;
 		pUploadActiveLightShadowMapTiles[lightIndex] = pLightData->m_ShadowMapTile;

@@ -1,4 +1,4 @@
-#include "Common/Light.h"
+#include "Scene/Light.h"
 #include "Common/Color.h"
 
 Light::Light(const std::string& name)

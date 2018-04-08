@@ -1,4 +1,4 @@
-#include "Common/CPUProfiler.h"
+#include "Profiler/CPUProfiler.h"
 #include "Math/Math.h"
 
 CPUProfiler::CPUProfiler(u32 maxNumProfiles)

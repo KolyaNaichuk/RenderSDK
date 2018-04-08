@@ -2,11 +2,11 @@
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/CommandSignature.h"
 #include "D3DWrapper/GraphicsDevice.h"
-#include "D3DWrapper/GPUProfiler.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
 #include "Math/Vector2.h"
+#include "Profiler/GPUProfiler.h"
 
 namespace
 {
@@ -27,6 +27,8 @@ namespace
 CreateTiledShadowMapSATPass::CreateTiledShadowMapSATPass(InitParams* pParams)
 	: m_Name(pParams->m_pName)
 {
+	assert((pParams->m_LightType == LightType_Point) || (pParams->m_LightType == LightType_Spot));
+
 	InitResources(pParams);
 	InitRootSignature(pParams);
 	InitPipelineStates(pParams);
@@ -100,9 +102,7 @@ void CreateTiledShadowMapSATPass::InitResources(InitParams* pParams)
 	assert(m_pUploadArgumentBuffer == nullptr);
 	assert(m_pUploadArgumentBufferMem == nullptr);
 	
-	assert((pParams->m_LightType == LightType_Point) || (pParams->m_LightType == LightType_Spot));
-	UINT maxNumTiles = (pParams->m_LightType == LightType_Point) ? kNumCubeMapFaces * pParams->m_MaxNumLights : pParams->m_MaxNumLights;
-	
+	const UINT maxNumTiles = (pParams->m_LightType == LightType_Point) ? kNumCubeMapFaces * pParams->m_MaxNumLights : pParams->m_MaxNumLights;
 	assert(maxNumTiles > 0);
 	StructuredBufferDesc argumentBufferDesc(maxNumTiles, sizeof(CreateSATCommand), false, false);
 	

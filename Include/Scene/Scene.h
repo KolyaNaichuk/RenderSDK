@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Common/Light.h"
-#include "Common/Material.h"
-#include "Common/MeshBatch.h"
-#include "Common/Camera.h"
+#include "Scene/Light.h"
+#include "Scene/Material.h"
+#include "Scene/MeshBatch.h"
+#include "Scene/Camera.h"
 #include "Math/AxisAlignedBox.h"
 
 class Scene

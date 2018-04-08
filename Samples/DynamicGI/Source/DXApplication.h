@@ -1,16 +1,12 @@
 #pragma once
 
 #include "Common/Application.h"
-#include "Common/Light.h"
-#include "Math/Vector2.h"
-#include "Math/Vector3.h"
-#include "Math/Sphere.h"
-#include "Math/Plane.h"
-#include "RenderPasses/RenderTiledShadowMapPass.h"
 
-struct HeapProperties;
 struct Frustum;
+struct HeapProperties;
 struct RenderEnv;
+struct PointLightRenderData;
+struct SpotLightRenderData;
 struct Viewport;
 
 class GraphicsDevice;
@@ -37,6 +33,7 @@ class CreateTiledShadowMapSATPass;
 class ConvertTiledShadowMapPass;
 class ShadowMapTileAllocator;
 class FillMeshTypeDepthBufferPass;
+class RenderTiledShadowMapPass;
 class RenderGBufferPass;
 class TiledLightCullingPass;
 class TiledShadingPass;
@@ -50,46 +47,6 @@ class PointLight;
 class SpotLight;
 class CPUProfiler;
 class GPUProfiler;
-
-struct LightFrustum
-{
-	Plane m_LeftPlane;
-	Plane m_RightPlane;
-	Plane m_TopPlane;
-	Plane m_BottomPlane;
-};
-
-struct PointLightData
-{
-	Vector3f m_Color;
-	Sphere m_WorldBounds;
-	u32 m_AffectedScreenArea;
-	f32 m_LightViewNearPlane;
-	f32 m_LightRcpViewClipRange;
-	f32 m_LightProjMatrix43;
-	f32 m_LightProjMatrix33;
-	Matrix4f m_ViewProjMatrices[kNumCubeMapFaces];
-	ShadowMapTile m_ShadowMapTiles[kNumCubeMapFaces];
-	LightFrustum m_WorldFrustums[kNumCubeMapFaces];
-};
-
-struct SpotLightData
-{
-	Vector3f m_Color;
-	Vector3f m_WorldSpaceDir;
-	Sphere m_WorldBounds;
-	f32 m_LightRange;
-	f32 m_CosHalfInnerConeAngle;
-	f32 m_CosHalfOuterConeAngle;
-	f32 m_LightViewNearPlane;
-	f32 m_LightRcpViewClipRange;
-	f32 m_LightProjMatrix43;
-	f32 m_LightProjMatrix33;
-	u32 m_AffectedScreenArea;
-	Matrix4f m_ViewProjMatrix;
-	ShadowMapTile m_ShadowMapTile;
-	LightFrustum m_WorldFrustum;
-};
 
 //#define DEBUG_RENDER_PASS
 
@@ -299,16 +256,16 @@ private:
 	VisualizeVoxelReflectancePass* m_VisualizeVoxelReflectancePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 
 	u32 m_NumPointLights = 0;
-	PointLightData* m_pPointLights = nullptr;
+	PointLightRenderData* m_pPointLights = nullptr;
 	
 	u32 m_NumActivePointLights = 0;
-	PointLightData** m_ppActivePointLights = nullptr;
+	PointLightRenderData** m_ppActivePointLights = nullptr;
 
 	u32 m_NumSpotLights = 0;
-	SpotLightData* m_pSpotLights = nullptr;
+	SpotLightRenderData* m_pSpotLights = nullptr;
 
 	u32 m_NumActiveSpotLights = 0;
-	SpotLightData** m_ppActiveSpotLights = nullptr;
+	SpotLightRenderData** m_ppActiveSpotLights = nullptr;
 
 	Buffer* m_pActivePointLightWorldBoundsBuffer = nullptr;
 	Buffer* m_pActivePointLightPropsBuffer = nullptr;

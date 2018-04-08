@@ -3,10 +3,10 @@
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/PipelineState.h"
-#include "D3DWrapper/GPUProfiler.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
 #include "Math/Vector2.h"
+#include "Profiler/GPUProfiler.h"
 
 namespace
 {

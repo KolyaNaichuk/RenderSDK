@@ -1,11 +1,11 @@
 #include "RenderPasses/FrustumMeshCullingPass.h"
+#include "RenderPasses/MeshRenderResources.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
-#include "D3DWrapper/GPUProfiler.h"
-#include "Common/MeshRenderResources.h"
+#include "Profiler/GPUProfiler.h"
 
 namespace
 {

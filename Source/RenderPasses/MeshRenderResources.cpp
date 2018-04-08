@@ -1,6 +1,4 @@
-#include "Common/MeshRenderResources.h"
-#include "Common/Mesh.h"
-#include "Common/MeshBatch.h"
+#include "RenderPasses/MeshRenderResources.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/PipelineState.h"
@@ -10,6 +8,8 @@
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 #include "Math/Transform.h"
+#include "Scene/Mesh.h"
+#include "Scene/MeshBatch.h"
 
 namespace
 {

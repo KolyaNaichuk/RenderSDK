@@ -1,7 +1,7 @@
 #pragma once
 
 #include "D3DWrapper/GraphicsResource.h"
-#include "Common/Light.h"
+#include "Scene/Light.h"
 
 struct RenderEnv;
 struct Viewport;

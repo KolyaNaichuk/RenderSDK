@@ -1,4 +1,4 @@
-#include "Common/Scene.h"
+#include "Scene/Scene.h"
 
 Scene::Scene()
 	: m_WorldBounds(Vector3f::ZERO, Vector3f::ZERO)

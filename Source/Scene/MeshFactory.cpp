@@ -1,4 +1,4 @@
-#include "Common/MeshFactory.h"
+#include "Scene/MeshFactory.h"
 #include "Common/Common.h"
 
 Mesh* MeshFactory::CreateSphere(VertexDataFlags dataFlags)

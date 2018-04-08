@@ -1,4 +1,4 @@
-#include "Common/SceneObject.h"
+#include "Scene/SceneObject.h"
 
 SceneObject::SceneObject(const std::string& name)
 	: m_Name(name)
