@@ -5,6 +5,8 @@ struct ShadowMapTile
 {
 	float2 texSpaceTopLeft;
 	float texSpaceSize;
+	uint2 topLeftInPixels;
+	uint sizeInPixels;
 };
 
 float ChebyshevUpperBound(float2 moments, float t)

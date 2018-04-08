@@ -59,7 +59,9 @@
 
 /*
 To do:
-/ Clean RenderPasses/Common.h
+- ShadowMapTile contains data both in texture and pixel spaces which most likely causes cache thrashing as only one of them is used at a time.
+  Consider splitting the structure into two.
+- Clean RenderPasses/Common.h
 - Add support for mip levels. Search for keyword "KolyaMipLevels". When creating MaterialRenderResources and reading materials in shading pass should account for mip when taking resource index.
 - I am using Sphere as bounding volume for SpotLights. Investigate if there are better alternatives. Check https://bartwronski.com/ implementation for the cone test.
 - Hard-coded light screen area for now. Fix CalcScreenAreaAffectedByLight.
@@ -81,15 +83,11 @@ To do:
 - Verify voxel texture position is compatible with texture coordinates in VoxelizePS.hlsl and VisualizeVoxelGridPS.hlsl
 - VoxelizePass and TiledShadingPass make copy of material descriptors. Reuse material descriptors between them
 - When injecting reflected radiance into voxel grid, add shadow map contribution.
-- Review light view matrix computation for shadow maps in LightRenderResources.
 - OOB for a set of points mimics AABB. Improve implementation.
 - When converting plane mesh to unit cube space, world matrix is not optimal for OOB.
 For an example, plane in original coordinates is passing through point (0, 0, 0).
 OOB will have coordinates expanding from -1 to 1 not merely passing through 0 when world matrix is applied.
 - Check Torque3D engine for plane object implementation. mPlane.h and mPlane.cpp
-- Make camera transform part of Scene object.
-Can check format OpenGEX for inspiration - http://opengex.org/
-- MeshRenderResources, LightRenderResources, MaterialRenderResources should not be part of Common folder
 - Using std::experimental::filesystem::path from OBJFileLoader. Should be consistent with the code.
 - Review to-dos
 - Use output resource states to initialize input resource states from the previous pass.

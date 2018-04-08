@@ -22,6 +22,7 @@ public:
 	{
 		const char* m_pName;
 		RenderEnv* m_pRenderEnv;
+		u32 m_RenderLatency;
 		ResourceStates m_InputResourceStates;
 		ColorTexture* m_pTiledShadowMap;
 		u32 m_MinTileSize;
@@ -33,8 +34,10 @@ public:
 	struct RenderParams
 	{
 		RenderEnv* m_pRenderEnv;
+		u32 m_CurrentFrameIndex;
 		CommandList* m_pCommandList;
-		void* m_pLightData;
+		void** m_ppLightsData;
+		u32 m_NumLights;
 	};
 
 	CreateTiledShadowMapSATPass(InitParams* pParams);
@@ -66,17 +69,20 @@ private:
 		UINT64 m_FirstCommandOffset;
 	};
 
-	std::string m_Name;
+	const std::string m_Name;
+	const LightType m_LightType;
+
 	RootSignature* m_pRootSignature = nullptr;
 	std::vector<PipelineStatePermutation> m_PipelineStatePermutations;
+	std::vector<ExecuteIndirectParams> m_ExecuteIndirectParams;
 	CommandSignature* m_pCommandSignature = nullptr;
 	ResourceStates m_OutputResourceStates;
 	
 	std::vector<ResourceTransitionBarrier> m_UploadArgumentsResourceBarriers;
 	Buffer* m_pArgumentBuffer = nullptr;
-	Buffer* m_pUploadArgumentBuffer = nullptr;
-	void* m_pUploadArgumentBufferMem = nullptr;
-
+	std::vector<Buffer*> m_UploadArgumentBuffers;
+	std::vector<void*> m_UploadArgumentBuffersMem;
+	
 	DescriptorHandle m_SRVHeapStartRow;
 	std::vector<ResourceTransitionBarrier> m_ResourceBarriersRow;
 	ColorTexture* m_pTiledShadowMapSATRow = nullptr;

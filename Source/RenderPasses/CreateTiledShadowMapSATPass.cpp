@@ -1,4 +1,5 @@
 #include "RenderPasses/CreateTiledShadowMapSATPass.h"
+#include "RenderPasses/LightRenderData.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/CommandSignature.h"
 #include "D3DWrapper/GraphicsDevice.h"
@@ -13,7 +14,7 @@ namespace
 	struct CreateSATCommand
 	{
 		Vector2u m_TileTopLeftInPixels;
-		DispatchArgument m_Args;
+		DispatchArguments m_Args;
 	};
 
 	enum RootParams
@@ -26,9 +27,8 @@ namespace
 
 CreateTiledShadowMapSATPass::CreateTiledShadowMapSATPass(InitParams* pParams)
 	: m_Name(pParams->m_pName)
+	, m_LightType(pParams->m_LightType)
 {
-	assert((pParams->m_LightType == LightType_Point) || (pParams->m_LightType == LightType_Spot));
-
 	InitResources(pParams);
 	InitRootSignature(pParams);
 	InitPipelineStates(pParams);
@@ -47,15 +47,71 @@ CreateTiledShadowMapSATPass::~CreateTiledShadowMapSATPass()
 	SafeDelete(m_pTiledShadowMapSATColumn);
 
 	SafeDelete(m_pArgumentBuffer);
-
-	m_pUploadArgumentBuffer->Unmap(0, nullptr);
-	SafeDelete(m_pUploadArgumentBuffer);
+	for (u32 index = 0; index < m_UploadArgumentBuffers.size(); ++index)
+	{
+		m_UploadArgumentBuffers[index]->Unmap(0, nullptr);
+		SafeDelete(m_UploadArgumentBuffers[index]);
+	}
 }
 
 void CreateTiledShadowMapSATPass::Record(RenderParams* pParams)
 {	
-	CreateSATCommand* pCommands = (CreateSATCommand*)m_pUploadArgumentBufferMem;
-	assert(false);
+	CreateSATCommand* pCommands = (CreateSATCommand*)m_UploadArgumentBuffersMem[pParams->m_CurrentFrameIndex];
+		
+	u32 numCommands = 0;
+	u32 numPermutations = 0;
+
+	assert((m_LightType == LightType_Point) || (m_LightType == LightType_Spot));
+	if (m_LightType == LightType_Point)
+	{
+		assert(false);
+	}
+	else
+	{
+		const SpotLightRenderData** ppLightsData = (const SpotLightRenderData**)pParams->m_ppLightsData;
+		
+		const SpotLightRenderData* pFirstLightData = ppLightsData[0];
+		const ShadowMapTile& firstShadowMapTile = pFirstLightData->m_ShadowMapTile;
+		
+		PipelineStatePermutation* pPipelineStatePermutation = &m_PipelineStatePermutations[0];
+		while (firstShadowMapTile.m_SizeInPixels != pPipelineStatePermutation->m_TileSize)
+			++pPipelineStatePermutation;
+
+		u32 numCommandsPerPermutation = 0;
+		for (decltype(pParams->m_NumLights) lightIndex = 0; lightIndex < pParams->m_NumLights; ++lightIndex)
+		{
+			const SpotLightRenderData* pLightData = ppLightsData[lightIndex];
+
+			if (pLightData->m_ShadowMapTile.m_SizeInPixels != pPipelineStatePermutation->m_TileSize)
+			{
+				m_ExecuteIndirectParams[numPermutations].m_FirstCommandOffset = numCommands;
+				m_ExecuteIndirectParams[numPermutations].m_NumCommands = numCommandsPerPermutation;
+				m_ExecuteIndirectParams[numPermutations].m_pPipelineState = pPipelineStatePermutation->m_pPipelineState;
+
+				numCommands += numCommandsPerPermutation;
+				numCommandsPerPermutation = 0;
+				++numPermutations;
+
+				while (pLightData->m_ShadowMapTile.m_SizeInPixels != pPipelineStatePermutation->m_TileSize)
+					++pPipelineStatePermutation;
+			}
+
+			pCommands->m_TileTopLeftInPixels = pLightData->m_ShadowMapTile.m_TopLeftInPixels;
+			pCommands->m_Args.m_ThreadGroupCountX = pPipelineStatePermutation->m_NumThreadGroupsX;
+			pCommands->m_Args.m_ThreadGroupCountY = pPipelineStatePermutation->m_NumThreadGroupsY;
+			pCommands->m_Args.m_ThreadGroupCountZ = 1;
+			
+			++pCommands;
+			++numCommandsPerPermutation;
+		}
+		m_ExecuteIndirectParams[numPermutations].m_FirstCommandOffset = numCommands;
+		m_ExecuteIndirectParams[numPermutations].m_NumCommands = numCommandsPerPermutation;
+		m_ExecuteIndirectParams[numPermutations].m_pPipelineState = pPipelineStatePermutation->m_pPipelineState;
+
+		numCommands += numCommandsPerPermutation;
+		numCommandsPerPermutation = 0;
+		++numPermutations;
+	}
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
@@ -68,22 +124,38 @@ void CreateTiledShadowMapSATPass::Record(RenderParams* pParams)
 
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
+
+	assert(!m_UploadArgumentsResourceBarriers.empty());
+	pCommandList->ResourceBarrier((UINT)m_UploadArgumentsResourceBarriers.size(), m_UploadArgumentsResourceBarriers.data());	
 	
-	if (!m_ResourceBarriersRow.empty())
-		pCommandList->ResourceBarrier((UINT)m_ResourceBarriersRow.size(), m_ResourceBarriersRow.data());
+	Buffer* pUploadArgumentBuffer = m_UploadArgumentBuffers[pParams->m_CurrentFrameIndex];
+	pCommandList->CopyBufferRegion(m_pArgumentBuffer, 0, pUploadArgumentBuffer, 0, numCommands * sizeof(CreateSATCommand));
+
+	assert(!m_ResourceBarriersRow.empty());
+	pCommandList->ResourceBarrier((UINT)m_ResourceBarriersRow.size(), m_ResourceBarriersRow.data());
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStartRow);
 	
-	assert(false);
-	//pCommandList->SetPipelineState();
-	//pCommandList->ExecuteIndirect();
-	
-	if (!m_ResourceBarriersColumn.empty())
-		pCommandList->ResourceBarrier((UINT)m_ResourceBarriersColumn.size(), m_ResourceBarriersColumn.data());
+	for (u32 permutationIndex = 0; permutationIndex < numPermutations; ++permutationIndex)
+	{
+		ExecuteIndirectParams& executeParams = m_ExecuteIndirectParams[permutationIndex];
+		
+		pCommandList->SetPipelineState(executeParams.m_pPipelineState);
+		pCommandList->ExecuteIndirect(m_pCommandSignature, executeParams.m_NumCommands, m_pArgumentBuffer,
+			executeParams.m_FirstCommandOffset * sizeof(CreateSATCommand), nullptr, 0);
+	}
+
+	assert(!m_ResourceBarriersColumn.empty());
+	pCommandList->ResourceBarrier((UINT)m_ResourceBarriersColumn.size(), m_ResourceBarriersColumn.data());
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStartColumn);
 
-	assert(false);
-	//pCommandList->SetPipelineState();
-	//pCommandList->ExecuteIndirect();
+	for (u32 permutationIndex = 0; permutationIndex < numPermutations; ++permutationIndex)
+	{
+		ExecuteIndirectParams& executeParams = m_ExecuteIndirectParams[permutationIndex];
+
+		pCommandList->SetPipelineState(executeParams.m_pPipelineState);
+		pCommandList->ExecuteIndirect(m_pCommandSignature, executeParams.m_NumCommands, m_pArgumentBuffer,
+			executeParams.m_FirstCommandOffset * sizeof(CreateSATCommand), nullptr, 0);
+	}
 
 #ifdef ENABLE_PROFILING
 	pGPUProfiler->EndProfile(pCommandList, profileIndex);
@@ -98,22 +170,30 @@ void CreateTiledShadowMapSATPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_TiledVarianceShadowMapState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_TiledVarianceShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
-	assert(m_pArgumentBuffer == nullptr);
-	assert(m_pUploadArgumentBuffer == nullptr);
-	assert(m_pUploadArgumentBufferMem == nullptr);
-	
-	const UINT maxNumTiles = (pParams->m_LightType == LightType_Point) ? kNumCubeMapFaces * pParams->m_MaxNumLights : pParams->m_MaxNumLights;
+	assert((m_LightType == LightType_Point) || (m_LightType == LightType_Spot));
+	const UINT maxNumTiles = (m_LightType == LightType_Point) ? kNumCubeMapFaces * pParams->m_MaxNumLights : pParams->m_MaxNumLights;
 	assert(maxNumTiles > 0);
+	
+	assert(m_pArgumentBuffer == nullptr);
+	assert(m_UploadArgumentBuffers.empty());
+	assert(m_UploadArgumentBuffersMem.empty());
+
 	StructuredBufferDesc argumentBufferDesc(maxNumTiles, sizeof(CreateSATCommand), false, false);
 	
 	m_pArgumentBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &argumentBufferDesc,
 		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, L"CreateTiledShadowMapSATPass::m_pArgumentBuffer");
 
-	m_pUploadArgumentBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &argumentBufferDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ, L"CreateTiledShadowMapSATPass::m_pUploadArgumentBuffer");
-	
+	m_UploadArgumentBuffers.resize(pParams->m_RenderLatency);
+	m_UploadArgumentBuffersMem.resize(pParams->m_RenderLatency);
+
 	const MemoryRange readRange(0, 0);
-	m_pUploadArgumentBufferMem = m_pUploadArgumentBuffer->Map(0, &readRange);
+	for (u32 index = 0; index < pParams->m_RenderLatency; ++index)
+	{
+		m_UploadArgumentBuffers[index] = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &argumentBufferDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ, L"CreateTiledShadowMapSATPass::m_pUploadArgumentBuffer");
+
+		m_UploadArgumentBuffersMem[index] = m_UploadArgumentBuffers[index]->Map(0, &readRange);
+	}
 			
 	assert(m_pTiledShadowMapSATRow == nullptr);
 	assert(m_pTiledShadowMapSATColumn == nullptr);
@@ -237,6 +317,8 @@ void CreateTiledShadowMapSATPass::InitPipelineStates(InitParams* pParams)
 		PipelineState* pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CreateTiledShadowMapSATPass::m_pPipelineState");
 		m_PipelineStatePermutations.push_back({tileSize, pPipelineState, numThreadGroupsX, numThreadGroupsY});
 	}
+
+	m_ExecuteIndirectParams.resize(m_PipelineStatePermutations.size());
 }
 
 void CreateTiledShadowMapSATPass::InitCommandSignature(InitParams* pParams)
