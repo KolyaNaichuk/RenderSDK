@@ -2173,11 +2173,13 @@ void DXApplication::InitCreatePointLightTiledShadowMapSATPass()
 	CreateTiledShadowMapSATPass::InitParams params;
 	params.m_pName = "CreatePointLightTiledShadowMapSATPass";
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_InputResourceStates.m_TiledShadowMapState = pConvertTiledShadowMapPassStates->m_TiledVarianceShadowMapState;
-	params.m_InputResourceStates.m_TiledShadowMapSATState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_TiledVarianceShadowMapState = pConvertTiledShadowMapPassStates->m_TiledVarianceShadowMapState;
+	params.m_InputResourceStates.m_TiledVarianceShadowMapSATState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	params.m_pTiledShadowMap = m_pConvertPointLightTiledShadowMapPass->GetTiledVarianceShadowMap();
 	params.m_MinTileSize = kPointLightShadowMapMinTileSize;
 	params.m_MaxTileSize = kPointLightShadowMapMaxTileSize;
+	params.m_LightType = LightType_Point;
+	params.m_MaxNumLights = m_NumPointLights;
 
 	m_pCreatePointLightTiledShadowMapSATPass = new CreateTiledShadowMapSATPass(&params);
 }
@@ -2311,11 +2313,13 @@ void DXApplication::InitCreateSpotLightTiledShadowMapSATPass()
 	CreateTiledShadowMapSATPass::InitParams params;
 	params.m_pName = "CreateSpotLightTiledShadowMapSATPass";
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_InputResourceStates.m_TiledShadowMapState = pConvertTiledShadowMapPassStates->m_TiledVarianceShadowMapState;
-	params.m_InputResourceStates.m_TiledShadowMapSATState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_TiledVarianceShadowMapState = pConvertTiledShadowMapPassStates->m_TiledVarianceShadowMapState;
+	params.m_InputResourceStates.m_TiledVarianceShadowMapSATState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	params.m_pTiledShadowMap = m_pConvertSpotLightTiledShadowMapPass->GetTiledVarianceShadowMap();
 	params.m_MinTileSize = kSpotLightShadowMapMinTileSize;
 	params.m_MaxTileSize = kSpotLightShadowMapMaxTileSize;
+	params.m_LightType = LightType_Spot;
+	params.m_MaxNumLights = m_NumSpotLights;
 
 	m_pCreateSpotLightTiledShadowMapSATPass = new CreateTiledShadowMapSATPass(&params);
 }

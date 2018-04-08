@@ -51,14 +51,7 @@ CreateTiledShadowMapSATPass::~CreateTiledShadowMapSATPass()
 }
 
 void CreateTiledShadowMapSATPass::Record(RenderParams* pParams)
-{
-	struct ExecuteIndirectParams
-	{
-		UINT m_NumCommands;
-		UINT64 m_FirstCommandOffset;
-		PipelineState* m_pPipelineState;
-	};
-	
+{	
 	CreateSATCommand* pCommands = (CreateSATCommand*)m_pUploadArgumentBufferMem;
 	assert(false);
 
@@ -100,9 +93,28 @@ void CreateTiledShadowMapSATPass::InitResources(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	m_OutputResourceStates.m_TiledShadowMapState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_TiledShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	m_OutputResourceStates.m_TiledVarianceShadowMapState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_TiledVarianceShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
+	assert(m_pArgumentBuffer == nullptr);
+	assert(m_pUploadArgumentBuffer == nullptr);
+	assert(m_pUploadArgumentBufferMem == nullptr);
+	
+	assert((pParams->m_LightType == LightType_Point) || (pParams->m_LightType == LightType_Spot));
+	UINT maxNumTiles = (pParams->m_LightType == LightType_Point) ? kNumCubeMapFaces * pParams->m_MaxNumLights : pParams->m_MaxNumLights;
+	
+	assert(maxNumTiles > 0);
+	StructuredBufferDesc argumentBufferDesc(maxNumTiles, sizeof(CreateSATCommand), false, false);
+	
+	m_pArgumentBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &argumentBufferDesc,
+		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, L"CreateTiledShadowMapSATPass::m_pArgumentBuffer");
+
+	m_pUploadArgumentBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &argumentBufferDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ, L"CreateTiledShadowMapSATPass::m_pUploadArgumentBuffer");
+	
+	const MemoryRange readRange(0, 0);
+	m_pUploadArgumentBufferMem = m_pUploadArgumentBuffer->Map(0, &readRange);
+			
 	assert(m_pTiledShadowMapSATRow == nullptr);
 	assert(m_pTiledShadowMapSATColumn == nullptr);
 	
@@ -115,14 +127,24 @@ void CreateTiledShadowMapSATPass::InitResources(InitParams* pParams)
 		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, optimizedClearColor, L"CreateTiledShadowMapSATPass::m_pTiledShadowMapSATRow");
 
 	m_pTiledShadowMapSATColumn = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &tiledShadowMapSATDesc,
-		pParams->m_InputResourceStates.m_TiledShadowMapSATState, optimizedClearColor, L"CreateTiledShadowMapSATPass::m_pTiledShadowMapSATColumn");
+		pParams->m_InputResourceStates.m_TiledVarianceShadowMapSATState, optimizedClearColor, L"CreateTiledShadowMapSATPass::m_pTiledShadowMapSATColumn");
 	
+	assert(m_UploadArgumentsResourceBarriers.empty());
+
+	m_UploadArgumentsResourceBarriers.emplace_back(m_pArgumentBuffer,
+		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
+		D3D12_RESOURCE_STATE_COPY_DEST);
+
 	assert(m_ResourceBarriersRow.empty());	
 	
-	if (pParams->m_InputResourceStates.m_TiledShadowMapState != m_OutputResourceStates.m_TiledShadowMapState)
+	m_ResourceBarriersRow.emplace_back(m_pArgumentBuffer,
+		D3D12_RESOURCE_STATE_COPY_DEST,
+		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+
+	if (pParams->m_InputResourceStates.m_TiledVarianceShadowMapState != m_OutputResourceStates.m_TiledVarianceShadowMapState)
 		m_ResourceBarriersRow.emplace_back(pParams->m_pTiledShadowMap,
-			pParams->m_InputResourceStates.m_TiledShadowMapState,
-			m_OutputResourceStates.m_TiledShadowMapState);
+			pParams->m_InputResourceStates.m_TiledVarianceShadowMapState,
+			m_OutputResourceStates.m_TiledVarianceShadowMapState);
 	
 	m_ResourceBarriersRow.emplace_back(m_pTiledShadowMapSATRow,
 		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
@@ -130,10 +152,10 @@ void CreateTiledShadowMapSATPass::InitResources(InitParams* pParams)
 
 	assert(m_ResourceBarriersColumn.empty());
 
-	if (pParams->m_InputResourceStates.m_TiledShadowMapSATState != m_OutputResourceStates.m_TiledShadowMapSATState)
+	if (pParams->m_InputResourceStates.m_TiledVarianceShadowMapSATState != m_OutputResourceStates.m_TiledVarianceShadowMapSATState)
 		m_ResourceBarriersColumn.emplace_back(m_pTiledShadowMapSATColumn,
-			pParams->m_InputResourceStates.m_TiledShadowMapSATState,
-			m_OutputResourceStates.m_TiledShadowMapSATState);
+			pParams->m_InputResourceStates.m_TiledVarianceShadowMapSATState,
+			m_OutputResourceStates.m_TiledVarianceShadowMapSATState);
 
 	m_ResourceBarriersColumn.emplace_back(m_pTiledShadowMapSATRow,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
@@ -180,19 +202,30 @@ void CreateTiledShadowMapSATPass::InitPipelineStates(InitParams* pParams)
 {
 	assert(m_pRootSignature != nullptr);
 	assert(m_PipelineStatePermutations.empty());
-
+	
 	assert(IsPowerOf2(pParams->m_MinTileSize));
 	assert(IsPowerOf2(pParams->m_MaxTileSize));
 	assert(pParams->m_MinTileSize <= pParams->m_MaxTileSize);
-
+	assert(64 <= pParams->m_MinTileSize);
+	assert(pParams->m_MaxTileSize <= 1024);
+	
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-
+	
 	for (u32 tileSize = pParams->m_MaxTileSize; pParams->m_MinTileSize <= tileSize; tileSize /= 2)
 	{
-		std::string tileSizeStr = std::to_string(tileSize);
+		const u32 maxNumThreadsPerGroup = 1024;
+		const u32 numThreadsX = tileSize / 2;
+		const u32 numThreadsY = maxNumThreadsPerGroup / numThreadsX;
+		const u32 numThreadGroupsX = 1;
+		const u32 numThreadGroupsY = tileSize / numThreadsY;
+		
+		std::string numThreadsXStr = std::to_string(numThreadsX);
+		std::string numThreadsYStr = std::to_string(numThreadsY);
+
 		const ShaderMacro shaderDefines[] =
 		{
-			ShaderMacro("SHADOW_MAP_TILE_SIZE", tileSizeStr.c_str()),
+			ShaderMacro("NUM_THREADS_X", numThreadsXStr.c_str()),
+			ShaderMacro("NUM_THREADS_Y", numThreadsYStr.c_str()),
 			ShaderMacro()
 		};
 		Shader computeShader(L"Shaders//CreateTiledShadowMapSATCS.hlsl", "Main", "cs_5_0", shaderDefines);
@@ -201,7 +234,8 @@ void CreateTiledShadowMapSATPass::InitPipelineStates(InitParams* pParams)
 		pipelineStateDesc.SetRootSignature(m_pRootSignature);
 		pipelineStateDesc.SetComputeShader(&computeShader);
 
-		m_PipelineStatePermutations.emplace_back(tileSize, new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CreateTiledShadowMapSATPass::m_pPipelineState"));
+		PipelineState* pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CreateTiledShadowMapSATPass::m_pPipelineState");
+		m_PipelineStatePermutations.push_back({tileSize, pPipelineState, numThreadGroupsX, numThreadGroupsY});
 	}
 }
 
