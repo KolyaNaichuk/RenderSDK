@@ -2180,8 +2180,9 @@ void DXApplication::InitCreatePointLightTiledShadowMapSATPass()
 	CreateTiledShadowMapSATPass::InitParams params;
 	params.m_pName = "CreatePointLightTiledShadowMapSATPass";
 	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_RenderLatency = kNumBackBuffers;
 	params.m_InputResourceStates.m_TiledVarianceShadowMapState = pConvertTiledShadowMapPassStates->m_TiledVarianceShadowMapState;
-	params.m_InputResourceStates.m_TiledVarianceShadowMapSATState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_TiledVarianceShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_pTiledShadowMap = m_pConvertPointLightTiledShadowMapPass->GetTiledVarianceShadowMap();
 	params.m_MinTileSize = kPointLightShadowMapMinTileSize;
 	params.m_MaxTileSize = kPointLightShadowMapMaxTileSize;
@@ -2194,8 +2195,16 @@ void DXApplication::InitCreatePointLightTiledShadowMapSATPass()
 CommandList* DXApplication::RecordCreatePointLightTiledShadowMapSATPass()
 {
 	assert(m_pCreatePointLightTiledShadowMapSATPass != nullptr);
-	assert(false);
-	return nullptr;
+	
+	CreateTiledShadowMapSATPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_CurrentFrameIndex = m_BackBufferIndex;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pCreatePointLightTiledShadowMapSATCommandList");
+	params.m_ppLightsData = (void**)m_ppActivePointLights;
+	params.m_NumLights = m_NumActivePointLights;
+
+	m_pCreatePointLightTiledShadowMapSATPass->Record(&params);
+	return params.m_pCommandList;
 }
 
 void DXApplication::InitRenderSpotLightTiledShadowMapPass()
@@ -2320,8 +2329,9 @@ void DXApplication::InitCreateSpotLightTiledShadowMapSATPass()
 	CreateTiledShadowMapSATPass::InitParams params;
 	params.m_pName = "CreateSpotLightTiledShadowMapSATPass";
 	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_RenderLatency = kNumBackBuffers;
 	params.m_InputResourceStates.m_TiledVarianceShadowMapState = pConvertTiledShadowMapPassStates->m_TiledVarianceShadowMapState;
-	params.m_InputResourceStates.m_TiledVarianceShadowMapSATState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_TiledVarianceShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_pTiledShadowMap = m_pConvertSpotLightTiledShadowMapPass->GetTiledVarianceShadowMap();
 	params.m_MinTileSize = kSpotLightShadowMapMinTileSize;
 	params.m_MaxTileSize = kSpotLightShadowMapMaxTileSize;
@@ -2333,8 +2343,17 @@ void DXApplication::InitCreateSpotLightTiledShadowMapSATPass()
 
 CommandList* DXApplication::RecordCreateSpotLightTiledShadowMapSATPass()
 {
-	assert(false);
-	return nullptr;
+	assert(m_pCreateSpotLightTiledShadowMapSATPass != nullptr);
+
+	CreateTiledShadowMapSATPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_CurrentFrameIndex = m_BackBufferIndex;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pCreateSpotLightTiledShadowMapSATCommandList");
+	params.m_ppLightsData = (void**)m_ppActiveSpotLights;
+	params.m_NumLights = m_NumActiveSpotLights;
+
+	m_pCreateSpotLightTiledShadowMapSATPass->Record(&params);
+	return params.m_pCommandList;
 }
 
 void DXApplication::InitCreateVoxelizeCommandsPass()
@@ -2535,14 +2554,14 @@ void DXApplication::InitTiledShadingPass()
 		const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
 			m_pRenderPointLightTiledShadowMapPass->GetOutputResourceStates();
 
-		const ConvertTiledShadowMapPass::ResourceStates* pConvertTiledShadowMapPassStates =
-			m_pConvertPointLightTiledShadowMapPass->GetOutputResourceStates();
+		const CreateTiledShadowMapSATPass::ResourceStates* pCreateTiledShadowMapSATStates =
+			m_pCreatePointLightTiledShadowMapSATPass->GetOutputResourceStates();
 
 		params.m_InputResourceStates.m_PointLightWorldBoundsBufferState = pVoxelizePassStates->m_PointLightWorldBoundsBufferState;
 		params.m_InputResourceStates.m_PointLightPropsBufferState = pVoxelizePassStates->m_PointLightPropsBufferState;
 		params.m_InputResourceStates.m_PointLightIndexPerTileBufferState = pTiledLightCullingPassStates->m_PointLightIndexPerTileBufferState;
 		params.m_InputResourceStates.m_PointLightRangePerTileBufferState = pTiledLightCullingPassStates->m_PointLightRangePerTileBufferState;
-		params.m_InputResourceStates.m_PointLightTiledVarianceShadowMapState = pConvertTiledShadowMapPassStates->m_TiledVarianceShadowMapState;
+		params.m_InputResourceStates.m_PointLightTiledVarianceShadowMapState = pCreateTiledShadowMapSATStates->m_TiledVarianceShadowMapState;
 		params.m_InputResourceStates.m_PointLightViewProjMatrixBufferState = pRenderTiledShadowMapPassStates->m_LightViewProjMatrixBufferState;
 
 		params.m_pPointLightWorldBoundsBuffer = m_pActivePointLightWorldBoundsBuffer;
@@ -2556,17 +2575,20 @@ void DXApplication::InitTiledShadingPass()
 	params.m_EnableSpotLights = m_NumSpotLights > 0;
 	if (params.m_EnableSpotLights)
 	{
+		const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
+			m_pRenderSpotLightTiledShadowMapPass->GetOutputResourceStates();
+
 		const ConvertTiledShadowMapPass::ResourceStates* pConvertTiledShadowMapPassStates =
 			m_pConvertSpotLightTiledShadowMapPass->GetOutputResourceStates();
 
-		const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
-			m_pRenderSpotLightTiledShadowMapPass->GetOutputResourceStates();
+		const CreateTiledShadowMapSATPass::ResourceStates* pCreateTiledShadowMapSATStates =
+			m_pCreateSpotLightTiledShadowMapSATPass->GetOutputResourceStates();
 
 		params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = pVoxelizePassStates->m_SpotLightWorldBoundsBufferState;
 		params.m_InputResourceStates.m_SpotLightPropsBufferState = pVoxelizePassStates->m_SpotLightPropsBufferState;
 		params.m_InputResourceStates.m_SpotLightIndexPerTileBufferState = pTiledLightCullingPassStates->m_SpotLightIndexPerTileBufferState;
 		params.m_InputResourceStates.m_SpotLightRangePerTileBufferState = pTiledLightCullingPassStates->m_SpotLightRangePerTileBufferState;
-		params.m_InputResourceStates.m_SpotLightTiledVarianceShadowMapState = pConvertTiledShadowMapPassStates->m_TiledVarianceShadowMapState;
+		params.m_InputResourceStates.m_SpotLightTiledVarianceShadowMapState = pCreateTiledShadowMapSATStates->m_TiledVarianceShadowMapState;
 		params.m_InputResourceStates.m_SpotLightViewProjMatrixBufferState = pRenderTiledShadowMapPassStates->m_LightViewProjMatrixBufferState;
 		params.m_InputResourceStates.m_SpotLightShadowMapTileBufferState = pConvertTiledShadowMapPassStates->m_ShadowMapTileBufferState;
 		

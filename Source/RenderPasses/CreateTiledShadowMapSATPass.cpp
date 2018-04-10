@@ -64,12 +64,49 @@ void CreateTiledShadowMapSATPass::Record(RenderParams* pParams)
 	assert((m_LightType == LightType_Point) || (m_LightType == LightType_Spot));
 	if (m_LightType == LightType_Point)
 	{
-		assert(false);
+		const PointLightRenderData** ppLightsData = (const PointLightRenderData**)pParams->m_ppLightsData;
+		const PointLightRenderData* pFirstLightData = ppLightsData[0];
+		const ShadowMapTile& firstShadowMapTile = pFirstLightData->m_ShadowMapTiles[0];
+
+		PipelineStatePermutation* pPipelineStatePermutation = &m_PipelineStatePermutations[0];
+		while (firstShadowMapTile.m_SizeInPixels != pPipelineStatePermutation->m_TileSize)
+			++pPipelineStatePermutation;
+
+		u32 numCommandsPerPermutation = 0;
+		for (decltype(pParams->m_NumLights) lightIndex = 0; lightIndex < pParams->m_NumLights; ++lightIndex)
+		{
+			const PointLightRenderData* pLightData = ppLightsData[lightIndex];
+			const ShadowMapTile& shadowMapTile = pLightData->m_ShadowMapTiles[0];
+
+			if (shadowMapTile.m_SizeInPixels != pPipelineStatePermutation->m_TileSize)
+			{
+				m_ExecuteIndirectParams[numPermutations].m_FirstCommandOffset = numCommands;
+				m_ExecuteIndirectParams[numPermutations].m_NumCommands = numCommandsPerPermutation;
+				m_ExecuteIndirectParams[numPermutations].m_pPipelineState = pPipelineStatePermutation->m_pPipelineState;
+
+				numCommands += numCommandsPerPermutation;
+				numCommandsPerPermutation = 0;
+				++numPermutations;
+
+				while (shadowMapTile.m_SizeInPixels != pPipelineStatePermutation->m_TileSize)
+					++pPipelineStatePermutation;
+			}
+
+			for (u8 faceIndex = 0; faceIndex < kNumCubeMapFaces; ++faceIndex)
+			{
+				pCommands->m_TileTopLeftInPixels = pLightData->m_ShadowMapTiles[faceIndex].m_TopLeftInPixels;
+				pCommands->m_Args.m_ThreadGroupCountX = pPipelineStatePermutation->m_NumThreadGroupsX;
+				pCommands->m_Args.m_ThreadGroupCountY = pPipelineStatePermutation->m_NumThreadGroupsY;
+				pCommands->m_Args.m_ThreadGroupCountZ = 1;
+
+				++pCommands;
+			}
+			numCommandsPerPermutation += kNumCubeMapFaces;
+		}
 	}
 	else
 	{
 		const SpotLightRenderData** ppLightsData = (const SpotLightRenderData**)pParams->m_ppLightsData;
-		
 		const SpotLightRenderData* pFirstLightData = ppLightsData[0];
 		const ShadowMapTile& firstShadowMapTile = pFirstLightData->m_ShadowMapTile;
 		
