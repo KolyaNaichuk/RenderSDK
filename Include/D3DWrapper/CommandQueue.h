@@ -12,7 +12,7 @@ struct CommandQueueDesc : public D3D12_COMMAND_QUEUE_DESC
 	CommandQueueDesc(D3D12_COMMAND_LIST_TYPE type);
 };
 
-const UINT MAX_NUM_COMMAND_LISTS_IN_BATCH = 25;
+const UINT MAX_NUM_COMMAND_LISTS_IN_BATCH = 30;
 
 class CommandQueue
 {

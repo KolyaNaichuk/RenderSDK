@@ -254,6 +254,122 @@ const Vector2i Vector2i::operator- () const
 	return Vector2i(-m_X, -m_Y);
 }
 
+Vector2i& operator+= (Vector2i& vec1, const Vector2i& vec2)
+{
+	vec1.m_X += vec2.m_X;
+	vec1.m_Y += vec2.m_Y;
+	return vec1;
+}
+
+Vector2i& operator-= (Vector2i& vec1, const Vector2i& vec2)
+{
+	vec1.m_X -= vec2.m_X;
+	vec1.m_Y -= vec2.m_Y;
+	return vec1;
+}
+
+Vector2i& operator*= (Vector2i& vec1, const Vector2i& vec2)
+{
+	vec1.m_X *= vec2.m_X;
+	vec1.m_Y *= vec2.m_Y;
+	return vec1;
+}
+
+Vector2i& operator/= (Vector2i& vec1, const Vector2i& vec2)
+{
+	vec1.m_X /= vec2.m_X;
+	vec1.m_Y /= vec2.m_Y;
+	return vec1;
+}
+
+Vector2i& operator+= (Vector2i& vec, i32 scalar)
+{
+	vec.m_X += scalar;
+	vec.m_Y += scalar;
+	return vec;
+}
+
+Vector2i& operator-= (Vector2i& vec, i32 scalar)
+{
+	vec.m_X -= scalar;
+	vec.m_Y -= scalar;
+	return vec;
+}
+
+Vector2i& operator*= (Vector2i& vec, i32 scalar)
+{
+	vec.m_X *= scalar;
+	vec.m_Y *= scalar;
+	return vec;
+}
+
+Vector2i& operator/= (Vector2i& vec, i32 scalar)
+{
+	vec.m_X /= scalar;
+	vec.m_Y /= scalar;
+	return vec;
+}
+
+const Vector2i operator+ (const Vector2i& vec1, const Vector2i& vec2)
+{
+	return Vector2i(vec1.m_X + vec2.m_X, vec1.m_Y + vec2.m_Y);
+}
+
+const Vector2i operator- (const Vector2i& vec1, const Vector2i& vec2)
+{
+	return Vector2i(vec1.m_X - vec2.m_X, vec1.m_Y - vec2.m_Y);
+}
+
+const Vector2i operator* (const Vector2i& vec1, const Vector2i& vec2)
+{
+	return Vector2i(vec1.m_X * vec2.m_X, vec1.m_Y * vec2.m_Y);
+}
+
+const Vector2i operator/ (const Vector2i& vec1, const Vector2i& vec2)
+{
+	return Vector2i(vec1.m_X / vec2.m_X, vec1.m_Y / vec2.m_Y);
+}
+
+const Vector2i operator+ (const Vector2i& vec, i32 scalar)
+{
+	return Vector2i(vec.m_X + scalar, vec.m_Y + scalar);
+}
+
+const Vector2i operator+ (i32 scalar, const Vector2i& vec)
+{
+	return Vector2i(vec.m_X + scalar, vec.m_Y + scalar);
+}
+
+const Vector2i operator- (const Vector2i& vec, i32 scalar)
+{
+	return Vector2i(vec.m_X - scalar, vec.m_Y - scalar);
+}
+
+const Vector2i operator- (i32 scalar, const Vector2i& vec)
+{
+	return Vector2i(scalar - vec.m_X, scalar - vec.m_Y);
+}
+
+const Vector2i operator* (const Vector2i& vec, i32 scalar)
+{
+	return Vector2i(vec.m_X * scalar, vec.m_Y * scalar);
+}
+
+const Vector2i operator* (i32 scalar, const Vector2i& vec)
+{
+	return Vector2i(vec.m_X * scalar, vec.m_Y * scalar);
+}
+
+const Vector2i operator/ (const Vector2i& vec, i32 scalar)
+{
+	return Vector2i(vec.m_X / scalar, vec.m_Y / scalar);
+}
+
+const Vector2i operator/ (i32 scalar, const Vector2i& vec)
+{
+	return Vector2i(scalar / vec.m_X, scalar / vec.m_Y);
+}
+
 const Vector2u Vector2u::ONE(1, 1);
 const Vector2u Vector2u::ZERO(0, 0);
 

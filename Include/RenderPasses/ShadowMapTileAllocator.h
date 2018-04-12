@@ -4,10 +4,10 @@
 
 struct ShadowMapTile
 {
-	Vector2f m_TexSpaceTopLeft;
-	f32 m_TexSpaceSize = 0.0f;
 	Vector2u m_TopLeftInPixels;
 	u32 m_SizeInPixels = 0;
+	Vector2f m_TexSpaceTopLeft;
+	f32 m_TexSpaceSize = 0.0f;
 };
 
 class ShadowMapTileAllocator

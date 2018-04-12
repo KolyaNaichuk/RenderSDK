@@ -103,6 +103,13 @@ void CreateTiledShadowMapSATPass::Record(RenderParams* pParams)
 			}
 			numCommandsPerPermutation += kNumCubeMapFaces;
 		}
+		m_ExecuteIndirectParams[numPermutations].m_FirstCommandOffset = numCommands;
+		m_ExecuteIndirectParams[numPermutations].m_NumCommands = numCommandsPerPermutation;
+		m_ExecuteIndirectParams[numPermutations].m_pPipelineState = pPipelineStatePermutation->m_pPipelineState;
+
+		numCommands += numCommandsPerPermutation;
+		numCommandsPerPermutation = 0;
+		++numPermutations;
 	}
 	else
 	{

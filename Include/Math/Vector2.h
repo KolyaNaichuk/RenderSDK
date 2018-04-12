@@ -82,6 +82,33 @@ struct Vector2i
 	static const Vector2i ZERO;
 };
 
+Vector2i& operator+= (Vector2i& vec1, const Vector2i& vec2);
+Vector2i& operator-= (Vector2i& vec1, const Vector2i& vec2);
+Vector2i& operator*= (Vector2i& vec1, const Vector2i& vec2);
+Vector2i& operator/= (Vector2i& vec1, const Vector2i& vec2);
+
+Vector2i& operator+= (Vector2i& vec, i32 scalar);
+Vector2i& operator-= (Vector2i& vec, i32 scalar);
+Vector2i& operator*= (Vector2i& vec, i32 scalar);
+Vector2i& operator/= (Vector2i& vec, i32 scalar);
+
+const Vector2i operator+ (const Vector2i& vec1, const Vector2i& vec2);
+const Vector2i operator- (const Vector2i& vec1, const Vector2i& vec2);
+const Vector2i operator* (const Vector2i& vec1, const Vector2i& vec2);
+const Vector2i operator/ (const Vector2i& vec1, const Vector2i& vec2);
+
+const Vector2i operator+ (const Vector2i& vec, i32 scalar);
+const Vector2i operator+ (i32 scalar, const Vector2i& vec);
+
+const Vector2i operator- (const Vector2i& vec, i32 scalar);
+const Vector2i operator- (i32 scalar, const Vector2i& vec);
+
+const Vector2i operator* (const Vector2i& vec, i32 scalar);
+const Vector2i operator* (i32 scalar, const Vector2i& vec);
+
+const Vector2i operator/ (const Vector2i& vec, i32 scalar);
+const Vector2i operator/ (i32 scalar, const Vector2i& vec);
+
 struct Vector2u
 {
 	explicit Vector2u();
