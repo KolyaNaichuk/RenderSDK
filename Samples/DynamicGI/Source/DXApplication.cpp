@@ -2184,10 +2184,7 @@ void DXApplication::InitCreatePointLightTiledShadowMapSATPass()
 	params.m_InputResourceStates.m_TiledVarianceShadowMapState = pConvertTiledShadowMapPassStates->m_TiledVarianceShadowMapState;
 	params.m_InputResourceStates.m_TiledVarianceShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_pTiledShadowMap = m_pConvertPointLightTiledShadowMapPass->GetTiledVarianceShadowMap();
-	params.m_MinTileSize = kPointLightShadowMapMinTileSize;
-	params.m_MaxTileSize = kPointLightShadowMapMaxTileSize;
 	params.m_LightType = LightType_Point;
-	params.m_MaxNumLights = m_NumPointLights;
 
 	m_pCreatePointLightTiledShadowMapSATPass = new CreateTiledShadowMapSATPass(&params);
 }
@@ -2333,10 +2330,7 @@ void DXApplication::InitCreateSpotLightTiledShadowMapSATPass()
 	params.m_InputResourceStates.m_TiledVarianceShadowMapState = pConvertTiledShadowMapPassStates->m_TiledVarianceShadowMapState;
 	params.m_InputResourceStates.m_TiledVarianceShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_pTiledShadowMap = m_pConvertSpotLightTiledShadowMapPass->GetTiledVarianceShadowMap();
-	params.m_MinTileSize = kSpotLightShadowMapMinTileSize;
-	params.m_MaxTileSize = kSpotLightShadowMapMaxTileSize;
 	params.m_LightType = LightType_Spot;
-	params.m_MaxNumLights = m_NumSpotLights;
 
 	m_pCreateSpotLightTiledShadowMapSATPass = new CreateTiledShadowMapSATPass(&params);
 }

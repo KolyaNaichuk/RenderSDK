@@ -126,6 +126,12 @@ void CommandList::SetGraphicsRootConstantBufferView(UINT rootParamIndex, Buffer*
 	m_D3DCommandList->SetGraphicsRootConstantBufferView(rootParamIndex, pD3DResource->GetGPUVirtualAddress());
 }
 
+void CommandList::SetGraphicsRootShaderResourceView(UINT rootParamIndex, Buffer* pBuffer)
+{
+	ID3D12Resource* pD3DResource = pBuffer->GetD3DObject();
+	m_D3DCommandList->SetGraphicsRootShaderResourceView(rootParamIndex, pD3DResource->GetGPUVirtualAddress());
+}
+
 void CommandList::SetComputeRootSignature(RootSignature* pRootSignature)
 {
 	m_D3DCommandList->SetComputeRootSignature(pRootSignature->GetD3DObject());
@@ -150,6 +156,12 @@ void CommandList::SetComputeRootConstantBufferView(UINT rootParamIndex, Buffer* 
 {
 	ID3D12Resource* pD3DResource = pBuffer->GetD3DObject();
 	m_D3DCommandList->SetComputeRootConstantBufferView(rootParamIndex, pD3DResource->GetGPUVirtualAddress());
+}
+
+void CommandList::SetComputeRootShaderResourceView(UINT rootParamIndex, Buffer* pBuffer)
+{
+	ID3D12Resource* pD3DResource = pBuffer->GetD3DObject();
+	m_D3DCommandList->SetComputeRootShaderResourceView(rootParamIndex, pD3DResource->GetGPUVirtualAddress());
 }
 
 void CommandList::RSSetViewports(UINT numViewports, const Viewport* pViewports)
