@@ -13,11 +13,11 @@ namespace
 {
 	enum RootParams
 	{
-		kRoot32BitConstantsParam = 0,
-		kRootSRVTableParam,
+		kRootSRVTableParam = 0,
 		kRootSRVParam,
 		kNumRootParams
 	};
+	
 	enum
 	{
 		kTileSizeInPixels = 32
@@ -187,8 +187,6 @@ void CreateTiledShadowMapSATPass::InitRootSignature(InitParams* pParams)
 	assert(m_pRootSignature == nullptr);
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 
-	rootParams[kRoot32BitConstantsParam] = Root32BitConstantsParameter(0, D3D12_SHADER_VISIBILITY_ALL, 2);
-	
 	D3D12_DESCRIPTOR_RANGE descriptorRanges[] =
 	{
 		SRVDescriptorRange(1, 0),

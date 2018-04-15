@@ -133,11 +133,51 @@ Scene* SceneLoader::LoadSibenik()
 	pScene->SetCamera(pCamera);
 
 #if 1
-	PointLight* pPointLight = new PointLight("Point light", 50.0f, 0.1f);
-	pPointLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
-	pPointLight->SetIntensity(1.0f);
-	pPointLight->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
-	pScene->AddPointLight(pPointLight);
+	PointLight* pPointLight1 = new PointLight("Point light", 50.0f, 0.1f);
+	pPointLight1->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
+	pPointLight1->SetIntensity(1.0f);
+	pPointLight1->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
+	pScene->AddPointLight(pPointLight1);
+#endif
+
+#if 0
+	PointLight* pPointLight2 = new PointLight("Point light", 50.0f, 0.1f);
+	pPointLight2->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
+	pPointLight2->SetIntensity(1.0f);
+	pPointLight2->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
+	pScene->AddPointLight(pPointLight2);
+#endif
+
+#if 0
+	PointLight* pPointLight3 = new PointLight("Point light", 50.0f, 0.1f);
+	pPointLight3->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
+	pPointLight3->SetIntensity(1.0f);
+	pPointLight3->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
+	pScene->AddPointLight(pPointLight3);
+#endif
+
+#if 0
+	PointLight* pPointLight4 = new PointLight("Point light", 50.0f, 0.1f);
+	pPointLight4->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
+	pPointLight4->SetIntensity(1.0f);
+	pPointLight4->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
+	pScene->AddPointLight(pPointLight4);
+#endif
+
+#if 0
+	PointLight* pPointLight5 = new PointLight("Point light", 50.0f, 0.1f);
+	pPointLight5->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
+	pPointLight5->SetIntensity(1.0f);
+	pPointLight5->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
+	pScene->AddPointLight(pPointLight5);
+#endif
+
+#if 0
+	PointLight* pPointLight6 = new PointLight("Point light", 50.0f, 0.1f);
+	pPointLight6->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
+	pPointLight6->SetIntensity(1.0f);
+	pPointLight6->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
+	pScene->AddPointLight(pPointLight6);
 #endif
 
 	return pScene;

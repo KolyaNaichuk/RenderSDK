@@ -403,6 +403,8 @@ public:
 	DescriptorHandle GetSRVHandle();
 	DescriptorHandle GetUAVHandle();
 	DescriptorHandle GetCBVHandle();
+
+	UINT64 GetWidth() const { return m_Desc.Width; }
 		
 private:
 	void CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
