@@ -1,23 +1,18 @@
-#include "Lighting.hlsl"
+#include "LightUtils.hlsl"
 #include "OverlapTest.hlsl"
 
-#define LIGHT_TYPE_POINT		1
-#define LIGHT_TYPE_SPOT			2
-
 #define NUM_VERTICES			3
-#define NUM_CUBE_MAP_FACES		6
-#define EPSILON					1e-6f
 
 struct GSInput
 {
-	float4 worldSpacePos		: SV_Position;
-	uint lightIndexOffset		: LIGHT_INDEX_OFFSET;
+	float4 worldSpacePos				: SV_Position;
+	uint   lightIndex					: LIGHT_INDEX;
 };
 
 struct GSOutput
 {
-	float4 clipSpacePos			: SV_Position;
-	float4 tileClipDist			: SV_ClipDistance;
+	float4 clipSpacePos					: SV_Position;
+	float4 signedDistToFrustumPlanes	: SV_ClipDistance;
 };
 
 struct Frustum
@@ -29,107 +24,104 @@ struct Frustum
 };
 
 #if LIGHT_TYPE == LIGHT_TYPE_POINT
-Buffer<uint> g_ShadowCastingPointLightIndexBuffer : register(t0);
-StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t1);
-StructuredBuffer<matrix> g_PointLightViewTileProjMatrixBuffer : register(t2);
-StructuredBuffer<Frustum> g_PointLightFrustumBuffer : register(t3);
+StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t0);
+StructuredBuffer<Frustum> g_PointLightWorldFrustumBuffer : register(t1);
+StructuredBuffer<float4x4> g_PointLightViewProjMatrixBuffer : register(t2);
 
 [maxvertexcount(NUM_CUBE_MAP_FACES * NUM_VERTICES)]
 void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> outputStream)
 {
-	uint lightIndex = g_ShadowCastingPointLightIndexBuffer[input[0].lightIndexOffset];
+	uint lightIndex = input[0].lightIndex;
 
-	float3 worldSpaceLightPos = g_PointLightBoundsBuffer[lightIndex].center;
-	float3 worldSpaceLightDir = input[0].worldSpacePos.xyz - worldSpaceLightPos;
+	float3 faceWorldSpaceEdge1 = input[1].worldSpacePos.xyz - input[0].worldSpacePos.xyz;
+	float3 faceWorldSpaceEdge2 = input[2].worldSpacePos.xyz - input[0].worldSpacePos.xyz;
+	float3 faceWorldSpaceNormal = cross(faceWorldSpaceEdge1, faceWorldSpaceEdge2);
 
-	float3 worldSpaceFaceSide1 = input[1].worldSpacePos.xyz - input[0].worldSpacePos.xyz;
-	float3 worldSpaceFaceSide2 = input[2].worldSpacePos.xyz - input[0].worldSpacePos.xyz;
-	float3 worldSpaceFaceNormal = normalize(cross(worldSpaceFaceSide1, worldSpaceFaceSide2));
-
-	bool isBackFace = (dot(worldSpaceFaceNormal, worldSpaceLightDir) > EPSILON);
-	if (isBackFace)
+	float3 lightWorldSpacePos = g_PointLightWorldBoundsBuffer[lightIndex].center;
+	float3 lightWorldSpaceDir = input[0].worldSpacePos.xyz - lightWorldSpacePos;
+	bool isFacingAwayFromLight = dot(faceWorldSpaceNormal, lightWorldSpaceDir) > 0.0f;
+	if (isFacingAwayFromLight)
 		return;
 
 	for (uint faceIndex = 0; faceIndex < NUM_CUBE_MAP_FACES; ++faceIndex)
 	{
-		uint frustumIndex = lightIndex * NUM_CUBE_MAP_FACES + faceIndex;
-		Frustum lightWorldSpaceFrustum = g_PointLightFrustumBuffer[frustumIndex];
+		uint frustumIndex = NUM_CUBE_MAP_FACES * lightIndex + faceIndex;
+		Frustum lightWorldFrustum = g_PointLightWorldFrustumBuffer[frustumIndex];
 
-		float4 tileClipSignedDist[NUM_VERTICES];
+		float4 signedDistToFrustumPlanes[NUM_VERTICES];
 		for (uint vertexIndex = 0; vertexIndex < NUM_VERTICES; ++vertexIndex)
 		{
-			tileClipSignedDist[vertexIndex].x = dot(lightWorldSpaceFrustum.leftPlane, input[vertexIndex].worldSpacePos);
-			tileClipSignedDist[vertexIndex].y = dot(lightWorldSpaceFrustum.rightPlane, input[vertexIndex].worldSpacePos);
-			tileClipSignedDist[vertexIndex].z = dot(lightWorldSpaceFrustum.topPlane, input[vertexIndex].worldSpacePos);
-			tileClipSignedDist[vertexIndex].w = dot(lightWorldSpaceFrustum.bottomPlane, input[vertexIndex].worldSpacePos);
+			float4 worldSpacePos = input[vertexIndex].worldSpacePos;
+
+			signedDistToFrustumPlanes[vertexIndex].x = dot(lightWorldFrustum.leftPlane, worldSpacePos);
+			signedDistToFrustumPlanes[vertexIndex].y = dot(lightWorldFrustum.rightPlane, worldSpacePos);
+			signedDistToFrustumPlanes[vertexIndex].z = dot(lightWorldFrustum.topPlane, worldSpacePos);
+			signedDistToFrustumPlanes[vertexIndex].w = dot(lightWorldFrustum.bottomPlane, worldSpacePos);
 		}
 
-		bool isFaceInvisible = (all(tileClipSignedDist[0] < 0.0f) && all(tileClipSignedDist[1] < 0.0f) && all(tileClipSignedDist[2] < 0.0f));
-		if (isFaceInvisible)
-			continue;
+		bool isFaceInFrustum = all(signedDistToFrustumPlanes[0] > 0.0f) || all(signedDistToFrustumPlanes[1] > 0.0f) || all(signedDistToFrustumPlanes[2] > 0.0f);
+		if (isFaceInFrustum)
+		{
+			float4x4 lightViewProjMatrix = g_PointLightViewProjMatrixBuffer[frustumIndex];
+			for (int vertexIndex = 0; vertexIndex < NUM_VERTICES; ++vertexIndex)
+			{
+				GSOutput output;
+				output.clipSpacePos = mul(lightViewProjMatrix, input[vertexIndex].worldSpacePos);
+				output.signedDistToFrustumPlanes = signedDistToFrustumPlanes[vertexIndex];
 
-		matrix lightViewTileProjMatrix = g_PointLightViewTileProjMatrixBuffer[frustumIndex];
-		for (uint vertexIndex = 0; vertexIndex < NUM_VERTICES; ++vertexIndex)
+				outputStream.Append(output);
+			}
+			outputStream.RestartStrip();
+		}
+	}
+}
+#endif // LIGHT_TYPE == LIGHT_TYPE_POINT
+
+#if LIGHT_TYPE == LIGHT_TYPE_SPOT
+StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t0);
+StructuredBuffer<Frustum> g_SpotLightWorldFrustumBuffer : register(t1);
+StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t2);
+
+[maxvertexcount(NUM_VERTICES)]
+void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> outputStream)
+{
+	uint lightIndex = input[0].lightIndex;
+
+	float3 faceWorldSpaceEdge1 = input[1].worldSpacePos.xyz - input[0].worldSpacePos.xyz;
+	float3 faceWorldSpaceEdge2 = input[2].worldSpacePos.xyz - input[0].worldSpacePos.xyz;
+	float3 faceWorldSpaceNormal = cross(faceWorldSpaceEdge1, faceWorldSpaceEdge2);
+	
+	float3 lightWorldSpaceDir = g_SpotLightPropsBuffer[lightIndex].worldSpaceDir;
+	bool isFacingAwayFromLight = dot(faceWorldSpaceNormal, lightWorldSpaceDir) > 0.0f;
+	if (isFacingAwayFromLight)
+		return;
+
+	Frustum lightWorldFrustum = g_SpotLightWorldFrustumBuffer[lightIndex];
+
+	float4 signedDistToFrustumPlanes[NUM_VERTICES];
+	for (uint vertexIndex = 0; vertexIndex < NUM_VERTICES; ++vertexIndex)
+	{
+		float4 worldSpacePos = input[vertexIndex].worldSpacePos;
+				
+		signedDistToFrustumPlanes[vertexIndex].x = dot(lightWorldFrustum.leftPlane, worldSpacePos);
+		signedDistToFrustumPlanes[vertexIndex].y = dot(lightWorldFrustum.rightPlane, worldSpacePos);
+		signedDistToFrustumPlanes[vertexIndex].z = dot(lightWorldFrustum.topPlane, worldSpacePos);
+		signedDistToFrustumPlanes[vertexIndex].w = dot(lightWorldFrustum.bottomPlane, worldSpacePos);
+	}
+
+	bool isFaceInFrustum = all(signedDistToFrustumPlanes[0] > 0.0f) || all(signedDistToFrustumPlanes[1] > 0.0f) || all(signedDistToFrustumPlanes[2] > 0.0f);
+	if (isFaceInFrustum)
+	{
+		float4x4 lightViewProjMatrix = g_SpotLightViewProjMatrixBuffer[lightIndex];
+		for (int vertexIndex = 0; vertexIndex < NUM_VERTICES; ++vertexIndex)
 		{
 			GSOutput output;
-
-			output.clipSpacePos = mul(input[vertexIndex].worldSpacePos, lightViewTileProjMatrix);
-			output.tileClipDist = tileClipSignedDist[vertexIndex];
+			output.clipSpacePos = mul(lightViewProjMatrix, input[vertexIndex].worldSpacePos);
+			output.signedDistToFrustumPlanes = signedDistToFrustumPlanes[vertexIndex];
 
 			outputStream.Append(output);
 		}
 		outputStream.RestartStrip();
 	}
 }
-
-#endif // #if LIGHT_TYPE == LIGHT_TYPE_POINT
-
-#if LIGHT_TYPE == LIGHT_TYPE_SPOT
-Buffer<uint> g_ShadowCastingSpotLightIndexBuffer : register(t0);
-StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t1);
-StructuredBuffer<matrix> g_SpotLightViewTileProjMatrixBuffer : register(t2);
-StructuredBuffer<Frustum> g_SpotLightFrustumBuffer : register(t3);
-
-[maxvertexcount(NUM_VERTICES)]
-void Main(triangle GSInput input[NUM_VERTICES], inout TriangleStream<GSOutput> outputStream)
-{
-	uint lightIndex = g_ShadowCastingSpotLightIndexBuffer[input[0].lightIndexOffset];
-	float3 worldSpaceLightDir = g_SpotLightPropsBuffer[lightIndex].worldSpaceDir;
-
-	float3 worldSpaceFaceSide1 = input[1].worldSpacePos.xyz - input[0].worldSpacePos.xyz;
-	float3 worldSpaceFaceSide2 = input[2].worldSpacePos.xyz - input[0].worldSpacePos.xyz;
-	float3 worldSpaceFaceNormal = normalize(cross(worldSpaceFaceSide1, worldSpaceFaceSide2));
-	
-	bool isBackFace = (dot(worldSpaceFaceNormal, worldSpaceLightDir) > EPSILON);
-	if (isBackFace)
-		return;
-
-	Frustum lightWorldSpaceFrustum = g_SpotLightFrustumBuffer[lightIndex];
-	
-	float4 tileClipSignedDist[NUM_VERTICES];
-	for (uint vertexIndex = 0; vertexIndex < NUM_VERTICES; ++vertexIndex)
-	{
-		tileClipSignedDist[vertexIndex].x = dot(lightWorldSpaceFrustum.leftPlane, input[vertexIndex].worldSpacePos);
-		tileClipSignedDist[vertexIndex].y = dot(lightWorldSpaceFrustum.rightPlane, input[vertexIndex].worldSpacePos);
-		tileClipSignedDist[vertexIndex].z = dot(lightWorldSpaceFrustum.topPlane, input[vertexIndex].worldSpacePos);
-		tileClipSignedDist[vertexIndex].w = dot(lightWorldSpaceFrustum.bottomPlane, input[vertexIndex].worldSpacePos);
-	}
-	
-	bool isFaceInvisible = (all(tileClipSignedDist[0] < 0.0f) && all(tileClipSignedDist[1] < 0.0f) && all(tileClipSignedDist[2] < 0.0f));
-	if (isFaceInvisible)
-		return;
-
-	matrix lightViewTileProjMatrix = g_SpotLightViewTileProjMatrixBuffer[lightIndex];
-	for (uint vertexIndex = 0; vertexIndex < NUM_VERTICES; ++vertexIndex)
-	{
-		GSOutput output;
-
-		output.clipSpacePos = mul(input[vertexIndex].worldSpacePos, lightViewTileProjMatrix);
-		output.tileClipDist = tileClipSignedDist[vertexIndex];
-
-		outputStream.Append(output);
-	}
-	outputStream.RestartStrip();
-}
-
-#endif // #if LIGHT_TYPE == LIGHT_TYPE_SPOT
+#endif // LIGHT_TYPE == LIGHT_TYPE_SPOT

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -22,33 +22,33 @@
     <ProjectGuid>{81373C17-8965-4747-9818-AA450B2578DC}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>RenderSDK</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -78,13 +78,17 @@
     <OutDir>$(SolutionDir)Library\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>Bin\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)Library\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>Bin\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include;$(SolutionDir)Include\External;$(SolutionDir)Include\External\assimp-3.3.1\include</AdditionalIncludeDirectories>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
@@ -94,6 +98,7 @@
     <Lib>
       <SubSystem>
       </SubSystem>
+      <AdditionalLibraryDirectories>$(SolutionDir)Include\External\assimp-3.3.1\lib\x86\assimp.lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <ProjectReference>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
@@ -101,15 +106,19 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include;$(SolutionDir)Include\External;$(SolutionDir)Include\External\assimp-3.3.1\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)Include\External\assimp-3.3.1\lib\x86\assimp.lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -119,7 +128,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include;$(SolutionDir)Include\External;$(SolutionDir)Include\External\assimp-3.3.1\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -127,6 +136,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)Include\External\assimp-3.3.1\lib\x86\assimp.lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -147,22 +159,10 @@
   <ItemGroup>
     <ClInclude Include="..\Include\Common\Application.h" />
     <ClInclude Include="..\Include\Common\BasicTypes.h" />
-    <ClInclude Include="..\Include\Common\Camera.h" />
     <ClInclude Include="..\Include\Common\Color.h" />
     <ClInclude Include="..\Include\Common\Common.h" />
     <ClInclude Include="..\Include\Common\FileUtilities.h" />
-    <ClInclude Include="..\Include\Common\LightBuffer.h" />
-    <ClInclude Include="..\Include\Common\Material.h" />
-    <ClInclude Include="..\Include\Common\MeshBatch.h" />
-    <ClInclude Include="..\Include\Common\MeshBatchData.h" />
-    <ClInclude Include="..\Include\Common\MeshData.h" />
-    <ClInclude Include="..\Include\Common\MeshDataFactory.h" />
-    <ClInclude Include="..\Include\Common\MeshDataUtilities.h" />
-    <ClInclude Include="..\Include\Common\Light.h" />
-    <ClInclude Include="..\Include\Common\OBJFileLoader.h" />
-    <ClInclude Include="..\Include\Common\Scene.h" />
-    <ClInclude Include="..\Include\Common\SceneLoader.h" />
-    <ClInclude Include="..\Include\Common\SceneObject.h" />
+    <ClInclude Include="..\Include\Common\StringUtilities.h" />
     <ClInclude Include="..\Include\Common\Window.h" />
     <ClInclude Include="..\Include\D3DWrapper\CommandList.h" />
     <ClInclude Include="..\Include\D3DWrapper\CommandQueue.h" />
@@ -173,19 +173,18 @@
     <ClInclude Include="..\Include\D3DWrapper\GraphicsFactory.h" />
     <ClInclude Include="..\Include\D3DWrapper\Fence.h" />
     <ClInclude Include="..\Include\D3DWrapper\PipelineState.h" />
+    <ClInclude Include="..\Include\D3DWrapper\QueryHeap.h" />
     <ClInclude Include="..\Include\D3DWrapper\RenderEnv.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsResource.h" />
-    <ClInclude Include="..\Include\D3DWrapper\BindingResourceList.h" />
     <ClInclude Include="..\Include\D3DWrapper\RootSignature.h" />
     <ClInclude Include="..\Include\D3DWrapper\SwapChain.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsUtils.h" />
-    <ClInclude Include="..\Include\DDSTextureLoader\DDSTextureLoader.h" />
     <ClInclude Include="..\Include\Math\AxisAngle.h" />
     <ClInclude Include="..\Include\Math\BasisAxes.h" />
     <ClInclude Include="..\Include\Math\Cone.h" />
     <ClInclude Include="..\Include\Math\AxisAlignedBox.h" />
     <ClInclude Include="..\Include\Math\Frustum.h" />
-    <ClInclude Include="..\Include\Math\Hash.h" />
+    <ClInclude Include="..\Include\Math\Matrix3.h" />
     <ClInclude Include="..\Include\Math\OrientedBox.h" />
     <ClInclude Include="..\Include\Math\Quad.h" />
     <ClInclude Include="..\Include\Math\Sphere.h" />
@@ -202,41 +201,53 @@
     <ClInclude Include="..\Include\Math\Vector2.h" />
     <ClInclude Include="..\Include\Math\Vector3.h" />
     <ClInclude Include="..\Include\Math\Vector4.h" />
+    <ClInclude Include="..\Include\Profiler\CPUProfiler.h" />
+    <ClInclude Include="..\Include\Profiler\GPUProfiler.h" />
+    <ClInclude Include="..\Include\RenderPasses\CalcShadingRectanglesPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
-    <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\CreateRenderGBufferCommandsPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\InjectVirtualPointLightsPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\Common.h" />
+    <ClInclude Include="..\Include\RenderPasses\ConvertTiledShadowMapPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CreateFalseNegativeDrawCommandsPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CreateMainDrawCommandsPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CreateShadowMapCommandsPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CreateTiledShadowMapSATPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\FrustumMeshCullingPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\GeometryBuffer.h" />
+    <ClInclude Include="..\Include\RenderPasses\LightRenderData.h" />
+    <ClInclude Include="..\Include\RenderPasses\MaterialRenderResources.h" />
+    <ClInclude Include="..\Include\RenderPasses\MeshRenderResources.h" />
+    <ClInclude Include="..\Include\RenderPasses\ShadowMapTileAllocator.h" />
+    <ClInclude Include="..\Include\RenderPasses\VoxelizePass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CreateVoxelizeCommandsPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\DownscaleAndReprojectDepthPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\FillMeshTypeDepthBufferPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\FillVisibilityBufferPass.h" />
     <ClInclude Include="..\Include\RenderPasses\PropagateLightPass.h" />
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\CreateRenderShadowMapCommandsPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CreateTiledShadowMapCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\RenderTiledShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\ScaleTexturePass.h" />
-    <ClInclude Include="..\Include\RenderPasses\SetupTiledShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledLightCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledShadingPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\ViewFrustumCullingPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\VisualizeIntensityPass.h" />
     <ClInclude Include="..\Include\RenderPasses\VisualizeTexturePass.h" />
-    <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelReflectancePass.h" />
+    <ClInclude Include="..\Include\Scene\Camera.h" />
+    <ClInclude Include="..\Include\Scene\Light.h" />
+    <ClInclude Include="..\Include\Scene\Material.h" />
+    <ClInclude Include="..\Include\Scene\Mesh.h" />
+    <ClInclude Include="..\Include\Scene\MeshBatch.h" />
+    <ClInclude Include="..\Include\Scene\MeshFactory.h" />
+    <ClInclude Include="..\Include\Scene\MeshUtilities.h" />
+    <ClInclude Include="..\Include\Scene\OBJFileLoader.h" />
+    <ClInclude Include="..\Include\Scene\Scene.h" />
+    <ClInclude Include="..\Include\Scene\SceneLoader.h" />
+    <ClInclude Include="..\Include\Scene\SceneObject.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp" />
     <ClCompile Include="..\Source\Common\Application.cpp" />
-    <ClCompile Include="..\Source\Common\Camera.cpp" />
     <ClCompile Include="..\Source\Common\Common.cpp" />
     <ClCompile Include="..\Source\Common\FileUtilities.cpp" />
-    <ClCompile Include="..\Source\Common\Light.cpp" />
-    <ClCompile Include="..\Source\Common\LightBuffer.cpp" />
-    <ClCompile Include="..\Source\Common\Material.cpp" />
-    <ClCompile Include="..\Source\Common\MeshBatch.cpp" />
-    <ClCompile Include="..\Source\Common\MeshBatchData.cpp" />
-    <ClCompile Include="..\Source\Common\MeshData.cpp" />
-    <ClCompile Include="..\Source\Common\MeshDataFactory.cpp" />
-    <ClCompile Include="..\Source\Common\OBJFileLoader.cpp" />
-    <ClCompile Include="..\Source\Common\Scene.cpp" />
-    <ClCompile Include="..\Source\Common\SceneLoader.cpp" />
-    <ClCompile Include="..\Source\Common\SceneObject.cpp" />
+    <ClCompile Include="..\Source\Common\StringUtilities.cpp" />
     <ClCompile Include="..\Source\Common\Window.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\CommandList.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\CommandQueue.cpp" />
@@ -247,15 +258,16 @@
     <ClCompile Include="..\Source\D3DWrapper\Fence.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\PipelineState.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\GraphicsResource.cpp" />
+    <ClCompile Include="..\Source\D3DWrapper\QueryHeap.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\RootSignature.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\SwapChain.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\GraphicsUtils.cpp" />
-    <ClCompile Include="..\Source\DDSTextureLoader\DDSTextureLoader.cpp" />
     <ClCompile Include="..\Source\Math\AxisAngle.cpp" />
     <ClCompile Include="..\Source\Math\BasisAxes.cpp" />
     <ClCompile Include="..\Source\Math\AxisAlignedBox.cpp" />
     <ClCompile Include="..\Source\Math\Cone.cpp" />
     <ClCompile Include="..\Source\Math\Frustum.cpp" />
+    <ClCompile Include="..\Source\Math\Matrix3.cpp" />
     <ClCompile Include="..\Source\Math\OrientedBox.cpp" />
     <ClCompile Include="..\Source\Math\Quad.cpp" />
     <ClCompile Include="..\Source\Math\Sphere.cpp" />
@@ -272,23 +284,45 @@
     <ClCompile Include="..\Source\Math\Vector2.cpp" />
     <ClCompile Include="..\Source\Math\Vector3.cpp" />
     <ClCompile Include="..\Source\Math\Vector4.cpp" />
+    <ClCompile Include="..\Source\Profiler\CPUProfiler.cpp" />
+    <ClCompile Include="..\Source\Profiler\GPUProfiler.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CalcShadingRectanglesPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CreateRenderGBufferCommandsPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\InjectVirtualPointLightsPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\ConvertTiledShadowMapPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CreateMainDrawCommandsPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CreateShadowMapCommandsPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CreateTiledShadowMapSATPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\FrustumMeshCullingPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\GeometryBuffer.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\MaterialRenderResources.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\MeshRenderResources.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\ShadowMapTileAllocator.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\VoxelizePass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CreateVoxelizeCommandsPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\DownscaleAndReprojectDepthPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\FillMeshTypeDepthBufferPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\FillVisibilityBufferPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\PropagateLightPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CreateRenderShadowMapCommandsPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CreateTiledShadowMapCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\RenderTiledShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ScaleTexturePass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\SetupTiledShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledLightCullingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledShadingPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\ViewFrustumCullingPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\VisualizeIntensityPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VisualizeTexturePass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelGridPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelReflectancePass.cpp" />
+    <ClCompile Include="..\Source\Scene\Camera.cpp" />
+    <ClCompile Include="..\Source\Scene\Light.cpp" />
+    <ClCompile Include="..\Source\Scene\Material.cpp" />
+    <ClCompile Include="..\Source\Scene\Mesh.cpp" />
+    <ClCompile Include="..\Source\Scene\MeshBatch.cpp" />
+    <ClCompile Include="..\Source\Scene\MeshFactory.cpp" />
+    <ClCompile Include="..\Source\Scene\MeshUtilities.cpp" />
+    <ClCompile Include="..\Source\Scene\OBJFileLoader.cpp" />
+    <ClCompile Include="..\Source\Scene\Scene.cpp" />
+    <ClCompile Include="..\Source\Scene\SceneLoader.cpp" />
+    <ClCompile Include="..\Source\Scene\SceneObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -307,7 +341,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\CreateVoxelGridVS.hlsl">
+    <None Include="..\Shaders\VoxelizeVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
@@ -316,14 +350,14 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\VisualizeVoxelGridPS.hlsl">
+    <None Include="..\Shaders\VisualizeVoxelReflectancePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <FileType>Document</FileType>
     </None>
-    <None Include="..\Shaders\CreateVoxelGridPS.hlsl">
+    <None Include="..\Shaders\VoxelizePS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
@@ -332,18 +366,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\CreateVoxelGridGS.hlsl">
+    <None Include="..\Shaders\VoxelizeGS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\ClearVoxelGridCS.hlsl">
-      <FileType>Document</FileType>
-    </None>
     <None Include="..\Shaders\Reconstruction.hlsl">
-      <FileType>Document</FileType>
-    </None>
-    <None Include="..\Shaders\VoxelGrid.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
@@ -379,11 +407,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\Packing.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Shaders\RenderGBufferVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
@@ -402,7 +425,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\InjectVirtualPointLightsCS.hlsl">
+    <None Include="..\Shaders\LightUtils.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
@@ -415,7 +438,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\Lighting.hlsl">
+    <None Include="..\Shaders\TiledShadingPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
@@ -428,49 +451,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\TiledShadingCS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Shaders\ViewFrustumCullingCS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
-      <FileType>Document</FileType>
-    </None>
     <None Include="..\Shaders\OverlapTest.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\CreateRenderGBufferCommandsCS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Shaders\CreateRenderShadowMapCommandsCS.hlsl">
+    <None Include="..\Shaders\CreateTiledShadowMapCommandsCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
@@ -519,19 +505,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\SetupTiledShadowMapCS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Shaders\SphericalHarmonics.hlsl">
       <FileType>Document</FileType>
     </None>
@@ -563,20 +536,122 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\VisualizeIntensityVS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    <None Include="..\Shaders\DownscaleAndReprojectDepthCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\VisualizeIntensityPS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    <None Include="..\Shaders\FrustumMeshCullingCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\CreateMainDrawCommandsCS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\CopyReprojectedDepthPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\FillVisibilityBufferPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\FillVisibilityBufferVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\FillMeshTypeDepthBufferPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\EncodingUtils.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Include\External\DirectXTex\DirectXTex_Desktop_2017_Win10.vcxproj">
+      <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\CalcShadingRectanglesCS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\TiledShadingVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\CreateVoxelizeCommandsCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\GammaCorrection.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\ConvertTiledShadowMapPS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\ShadowUtils.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\ConvertTiledShadowMapVS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\CreateTiledShadowMapSATCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

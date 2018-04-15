@@ -14,6 +14,9 @@ public:
 	void CheckFeatureSupport(D3D12_FEATURE feature, void* pFeatureSupportData, UINT featureSupportDataSize);
 	void CopyDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE destDescriptor, D3D12_CPU_DESCRIPTOR_HANDLE srcDescriptor, D3D12_DESCRIPTOR_HEAP_TYPE descriptorHeapType);
 
+	void GetCopyableFootprints(const D3D12_RESOURCE_DESC* pResourceDesc, UINT firstSubresource, UINT numSubresources, UINT64 baseOffsetInBytes,
+		D3D12_PLACED_SUBRESOURCE_FOOTPRINT* pFootprints, UINT* pNumRows, UINT64* pRowSizeInBytes, UINT64* pTotalBytes);
+
 private:
 	ComPtr<ID3D12Device> m_D3DDevice;
 };

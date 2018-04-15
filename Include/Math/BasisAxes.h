@@ -11,3 +11,5 @@ struct BasisAxes
 	Vector3f m_YAxis;
 	Vector3f m_ZAxis;
 };
+
+bool IsOrthonormal(const BasisAxes& basis, f32 epsilon = EPSILON);

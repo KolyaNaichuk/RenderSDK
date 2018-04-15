@@ -1,14 +1,12 @@
 #pragma once
 
-#include "D3DWrapper/Common.h"
+#include "D3DWrapper/GraphicsResource.h"
 
+struct RenderEnv;
+struct Viewport;
 class RootSignature;
 class PipelineState;
 class CommandList;
-class ColorTexture;
-
-struct RenderEnv;
-struct BindingResourceList;
 
 enum ShadingMode
 {
@@ -19,36 +17,104 @@ enum ShadingMode
 class TiledShadingPass
 {
 public:
-	struct InitParams
+	struct ResourceStates
 	{
-		RenderEnv* m_pRenderEnv;
-		ShadingMode m_ShadingMode;
-		u16 m_TileSize;
-		u16 m_NumTilesX;
-		u16 m_NumTilesY;
-		bool m_EnablePointLights;
-		bool m_EnableSpotLights;
-		bool m_EnableDirectionalLight;
-		bool m_EnableIndirectLight;
+		D3D12_RESOURCE_STATES m_AccumLightTextureState;
+		D3D12_RESOURCE_STATES m_MeshTypeDepthTextureState;
+		D3D12_RESOURCE_STATES m_ShadingRectangleMinPointBufferState;
+		D3D12_RESOURCE_STATES m_ShadingRectangleMaxPointBufferState;		
+		D3D12_RESOURCE_STATES m_DepthTextureState;
+		D3D12_RESOURCE_STATES m_GBuffer1State;
+		D3D12_RESOURCE_STATES m_GBuffer2State;
+		D3D12_RESOURCE_STATES m_GBuffer3State;
+		D3D12_RESOURCE_STATES m_GBuffer4State;
+		D3D12_RESOURCE_STATES m_FirstResourceIndexPerMaterialIDBufferState;
+		
+		D3D12_RESOURCE_STATES m_PointLightWorldBoundsBufferState;
+		D3D12_RESOURCE_STATES m_PointLightPropsBufferState;
+		D3D12_RESOURCE_STATES m_PointLightIndexPerTileBufferState;
+		D3D12_RESOURCE_STATES m_PointLightRangePerTileBufferState;
+		D3D12_RESOURCE_STATES m_PointLightTiledVarianceShadowMapState;
+		D3D12_RESOURCE_STATES m_PointLightViewProjMatrixBufferState;
+
+		D3D12_RESOURCE_STATES m_SpotLightWorldBoundsBufferState;
+		D3D12_RESOURCE_STATES m_SpotLightPropsBufferState;
+		D3D12_RESOURCE_STATES m_SpotLightIndexPerTileBufferState;
+		D3D12_RESOURCE_STATES m_SpotLightRangePerTileBufferState;
+		D3D12_RESOURCE_STATES m_SpotLightTiledVarianceShadowMapState;
+		D3D12_RESOURCE_STATES m_SpotLightViewProjMatrixBufferState;
+		D3D12_RESOURCE_STATES m_SpotLightShadowMapTileBufferState;
 	};
 
+	struct InitParams
+	{
+		const char* m_pName;
+		RenderEnv* m_pRenderEnv;
+		ShadingMode m_ShadingMode;
+		ResourceStates m_InputResourceStates;
+				
+		ColorTexture* m_pAccumLightTexture;
+		DepthTexture* m_pMeshTypeDepthTexture;
+		Buffer* m_pShadingRectangleMinPointBuffer;
+		Buffer* m_pShadingRectangleMaxPointBuffer;
+		DepthTexture* m_pDepthTexture;
+		ColorTexture* m_pGBuffer1;
+		ColorTexture* m_pGBuffer2;
+		ColorTexture* m_pGBuffer3;
+		ColorTexture* m_pGBuffer4;
+		Buffer* m_pFirstResourceIndexPerMaterialIDBuffer;
+		u16 m_NumMaterialTextures;
+		ColorTexture** m_ppMaterialTextures;
+
+		bool m_EnableDirectionalLight;
+						
+		bool m_EnablePointLights;
+		Buffer* m_pPointLightWorldBoundsBuffer;
+		Buffer* m_pPointLightPropsBuffer;
+		Buffer* m_pPointLightIndexPerTileBuffer;
+		Buffer* m_pPointLightRangePerTileBuffer;
+		ColorTexture* m_pPointLightTiledVarianceShadowMap;
+		Buffer* m_pPointLightViewProjMatrixBuffer;
+
+		bool m_EnableSpotLights;
+		Buffer* m_pSpotLightWorldBoundsBuffer;
+		Buffer* m_pSpotLightPropsBuffer;
+		Buffer* m_pSpotLightIndexPerTileBuffer;
+		Buffer* m_pSpotLightRangePerTileBuffer;
+		ColorTexture* m_pSpotLightTiledVarianceShadowMap;
+		Buffer* m_pSpotLightViewProjMatrixBuffer;
+		Buffer* m_pSpotLightShadowMapTileBuffer;
+	};
+	
 	struct RenderParams
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		BindingResourceList* m_pResources;
-		ColorTexture* m_pAccumLightTexture;
+		Buffer* m_pAppDataBuffer;
+		Viewport* m_pViewport;
 	};
 	
 	TiledShadingPass(InitParams* pParams);
 	~TiledShadingPass();
 
 	void Record(RenderParams* pParams);
+	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
 
 private:
-	RootSignature* m_pRootSignature;
-	PipelineState* m_pPipelineState;
+	void InitResources(InitParams* pParams);
+	void InitRootSignature(InitParams* pParams);
+	void InitPipelineState(InitParams* pParams);
+	void AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
-	u16 m_NumThreadGroupsX;
-	u16 m_NumThreadGroupsY;
+private:
+	std::string m_Name;
+	RootSignature* m_pRootSignature = nullptr;
+	PipelineState* m_pPipelineState = nullptr;
+	DescriptorHandle m_SRVHeapStartVS;
+	DescriptorHandle m_SRVHeapStartPS;
+	DescriptorHandle m_SamplerHeapStartPS;
+	DescriptorHandle m_RTVHeapStart;
+	DescriptorHandle m_DSVHeapStart;
+	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
+	ResourceStates m_OutputResourceStates;
 };

@@ -398,7 +398,7 @@ const Matrix4f Adjoint(const Matrix4f& matrix)
 const Matrix4f Inverse(const Matrix4f& matrix)
 {
 	f32 det = Determinant(matrix);
-	assert(det > EPSILON);
+	assert(!AreEqual(det, 0.0f, EPSILON));
 
     return Rcp(det) * Adjoint(matrix);
 }

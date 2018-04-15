@@ -2,6 +2,23 @@
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/RootSignature.h"
 
+DrawIndexedArguments::DrawIndexedArguments(UINT indexCountPerInstance, UINT instanceCount,
+		UINT startIndexLocation, INT baseVertexLocation, UINT startInstanceLocation)
+	: m_IndexCountPerInstance(indexCountPerInstance)
+	, m_InstanceCount(instanceCount)
+	, m_StartIndexLocation(startIndexLocation)
+	, m_BaseVertexLocation(baseVertexLocation)
+	, m_StartInstanceLocation(startInstanceLocation)
+{
+}
+
+DispatchArguments::DispatchArguments(UINT threadGroupCountX, UINT threadGroupCountY, UINT threadGroupCountZ)
+	: m_ThreadGroupCountX(threadGroupCountX)
+	, m_ThreadGroupCountY(threadGroupCountY)
+	, m_ThreadGroupCountZ(threadGroupCountZ)
+{
+}
+
 DrawArgument::DrawArgument()
 {
 	Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;
@@ -57,7 +74,7 @@ CommandSignature::CommandSignature(GraphicsDevice* pDevice, RootSignature* pRoot
 		pDesc, (pRootSignature != nullptr) ? pRootSignature->GetD3DObject() : nullptr,
 		IID_PPV_ARGS(&m_D3DCommandSignature)));
 
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DCommandSignature->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }

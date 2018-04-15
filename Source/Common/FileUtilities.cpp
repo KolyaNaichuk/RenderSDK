@@ -40,3 +40,18 @@ bool LoadDataFromFile(const wchar_t* pFilePath, FileMode fileMode, std::vector<c
 	}
 	return true;
 }
+
+const std::wstring ExtractFileExtension(const std::wstring& filePath)
+{	
+	auto index = filePath.rfind(L'.');
+	if (index == std::wstring::npos)
+		return std::wstring(L"");
+	
+	return filePath.substr(index + 1); 
+}
+
+const std::wstring ExtractFileNameWithExtension(const std::wstring& filePath)
+{
+	assert(false);
+	return std::wstring();
+}

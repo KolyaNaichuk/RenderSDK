@@ -1,34 +1,44 @@
+#include "Foundation.hlsl"
+
 struct VSInput
 {
+	uint   instanceId			: SV_InstanceID;
 	float3 localSpacePos		: POSITION;
 	float3 localSpaceNormal		: NORMAL;
+	float2 texCoord				: TEXCOORD;
 };
 
 struct VSOutput
 {
 	float4 clipSpacePos			: SV_Position;
 	float3 worldSpaceNormal		: NORMAL;
+	float2 texCoord				: TEXCOORD;
 };
 
-struct ObjectTransform
+cbuffer Constants32BitBuffer : register(b0)
 {
-	matrix worldPositionMatrix;
-	matrix worldNormalMatrix;
-	matrix worldViewProjMatrix;
-	float4 notUsed[4];
-};
-
-cbuffer ObjectTransformBuffer : register(b0)
-{
-	ObjectTransform g_Transform;
+	uint g_InstanceOffset;
 }
+
+cbuffer AppDataBuffer : register(b1)
+{
+	AppData g_AppData;
+}
+
+Buffer<uint> g_InstanceIndexBuffer : register(t0);
+StructuredBuffer<float4x4> g_InstanceWorldMatrixBuffer : register(t1);
 
 VSOutput Main(VSInput input)
 {
-	VSOutput output;
+	uint instanceIndex = g_InstanceIndexBuffer[g_InstanceOffset + input.instanceId];
+	
+	float4x4 worldMatrix = g_InstanceWorldMatrixBuffer[instanceIndex];
+	float4 worldSpacePos = mul(worldMatrix, float4(input.localSpacePos, 1.0f));
 
-	output.clipSpacePos = mul(float4(input.localSpacePos.xyz, 1.0f), g_Transform.worldViewProjMatrix);
-	output.worldSpaceNormal = mul(float4(input.localSpaceNormal.xyz, 0.0f), g_Transform.worldNormalMatrix).xyz;
+	VSOutput output;
+	output.clipSpacePos = mul(g_AppData.viewProjMatrix, worldSpacePos);
+	output.worldSpaceNormal = mul(worldMatrix, float4(input.localSpaceNormal, 0.0f)).xyz;
+	output.texCoord = input.texCoord;
 
 	return output;
 }

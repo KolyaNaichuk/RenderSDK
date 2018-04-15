@@ -1,40 +1,38 @@
 struct VSInput
 {
-	uint instanceId				: SV_InstanceID;
+	uint   instanceId			: SV_InstanceID;
 	float3 localSpacePos		: POSITION;
 	float3 localSpaceNormal		: NORMAL;
+	float2 texCoord				: TEXCOORD;
 };
 
 struct VSOutput
 {
 	float4 worldSpacePos		: SV_Position;
-	uint lightIndexOffset		: LIGHT_INDEX_OFFSET;
+	uint   lightIndex			: LIGHT_INDEX;
 };
 
-struct ObjectTransform
+cbuffer Constants32BitBuffer : register(b0)
 {
-	matrix worldPositionMatrix;
-	matrix worldNormalMatrix;
-	matrix worldViewProjMatrix;
-	float4 notUsed[4];
-};
-
-cbuffer ObjectTransformBuffer : register(b0)
-{
-	ObjectTransform g_Transform;
+	uint g_DataOffset;
 }
 
-cbuffer LightIndexOffsetBuffer : register(b1)
-{
-	uint g_LightIndexOffset;
-}
+StructuredBuffer<float4x4> g_MeshInstanceWorldMatrixBuffer : register(t0);
+Buffer<uint> g_LightIndexForMeshInstanceBuffer : register(t1);
+Buffer<uint> g_MeshInstanceIndexForLightBuffer : register(t2);
 
 VSOutput Main(VSInput input)
 {
-	VSOutput output;
+	uint dataOffset = g_DataOffset + input.instanceId;
 
-	output.worldSpacePos = mul(float4(input.localSpacePos.xyz, 1.0f), g_Transform.worldPositionMatrix);
-	output.lightIndexOffset = g_LightIndexOffset + input.instanceId;
+	uint lightIndex = g_LightIndexForMeshInstanceBuffer[dataOffset];
+	uint meshInstanceIndex = g_MeshInstanceIndexForLightBuffer[dataOffset];
+	 	
+	float4x4 worldMatrix = g_MeshInstanceWorldMatrixBuffer[meshInstanceIndex];
+
+	VSOutput output;
+	output.worldSpacePos = mul(worldMatrix, float4(input.localSpacePos, 1.0f));
+	output.lightIndex = lightIndex;
 
 	return output;
 }

@@ -1,6 +1,11 @@
 #include "Math/AxisAlignedBox.h"
 #include "Math/Math.h"
 
+AxisAlignedBox::AxisAlignedBox()
+	: AxisAlignedBox(Vector3f::ZERO, Vector3f::ZERO)
+{
+}
+
 AxisAlignedBox::AxisAlignedBox(const Vector3f& center, const Vector3f& radius)
     : m_Center(center)
     , m_Radius(radius)
@@ -9,6 +14,8 @@ AxisAlignedBox::AxisAlignedBox(const Vector3f& center, const Vector3f& radius)
 
 AxisAlignedBox::AxisAlignedBox(u32 numPoints, const Vector3f* pFirstPoint)
 {
+	assert(numPoints > 0);
+
 	Vector3f minPoint = *pFirstPoint;
 	Vector3f maxPoint = *pFirstPoint;
 

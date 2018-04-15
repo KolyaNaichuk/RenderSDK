@@ -2,61 +2,45 @@
 #include "OverlapTest.hlsl"
 #include "Reconstruction.hlsl"
 
-struct TiledLightCullingData
-{
-	float2 rcpScreenSize;
-	float2 notUsed1;
-	float4 notUsed2;
-	float4 notUsed3;
-	float4 notUsed4;
-	matrix viewMatrix;
-	matrix projMatrix;
-	matrix projInvMatrix;
-};
-
 #define NUM_THREADS_PER_TILE	(TILE_SIZE * TILE_SIZE)
 
-cbuffer TiledLightCullingDataBuffer : register(b0)
+cbuffer AppDataBuffer : register(b0)
 {
-	TiledLightCullingData g_LightCullingData;
+	AppData g_AppData;
+}
+
+cbuffer Constants32BitBuffer : register(b1)
+{
+	uint g_NumPointLights;
+	uint g_NumSpotLights;
 }
 
 Texture2D g_DepthTexture : register(t0);
 
 #if MAX_NUM_POINT_LIGHTS > 0
-Buffer<uint> g_NumPointLightsBuffer : register(t1);
-Buffer<uint> g_PointLightIndexBuffer : register(t2);
-StructuredBuffer<Sphere> g_PointLightBoundsBuffer : register(t3);
-
-RWBuffer<uint> g_NumPointLightsPerTileBuffer : register(u0);
+StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t1);
+RWBuffer<uint> g_PointLightIndicesOffsetBuffer : register(u0);
 RWBuffer<uint> g_PointLightIndexPerTileBuffer : register(u1);
 RWStructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(u2);
-#endif
 
-#if MAX_NUM_SPOT_LIGHTS > 0
-Buffer<uint> g_NumSpotLightsBuffer : register(t4);
-Buffer<uint> g_SpotLightIndexBuffer : register(t5);
-StructuredBuffer<Sphere> g_SpotLightBoundsBuffer : register(t6);
-
-RWBuffer<uint> g_NumSpotLightsPerTileBuffer : register(u3);
-RWBuffer<uint> g_SpotLightIndexPerTileBuffer : register(u4);
-RWStructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(u5);
-#endif
-
-groupshared uint g_ViewSpaceMinDepthIntPerTile;
-groupshared uint g_ViewSpaceMaxDepthIntPerTile;
-
-#if MAX_NUM_POINT_LIGHTS > 0
 groupshared uint g_NumPointLightsPerTile;
 groupshared uint g_PointLightIndicesPerTile[MAX_NUM_POINT_LIGHTS];
 groupshared uint g_PointLightIndicesOffset;
 #endif
 
 #if MAX_NUM_SPOT_LIGHTS > 0
+StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t2);
+RWBuffer<uint> g_SpotLightIndicesOffsetBuffer : register(u3);
+RWBuffer<uint> g_SpotLightIndexPerTileBuffer : register(u4);
+RWStructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(u5);
+
 groupshared uint g_NumSpotLightsPerTile;
 groupshared uint g_SpotLightIndicesPerTile[MAX_NUM_SPOT_LIGHTS];
 groupshared uint g_SpotLightIndicesOffset;
 #endif
+
+groupshared uint g_ViewSpaceMinDepthIntPerTile;
+groupshared uint g_ViewSpaceMaxDepthIntPerTile;
 
 float4 CreatePlaneThroughOrigin(float3 point1, float3 point2)
 {
@@ -71,15 +55,15 @@ void BuildFrustumSidePlanes(out float4 viewSpaceFrusumSidePlanes[4], uint2 tileI
 	uint2 screenSpaceTileTLCorner = tileId.xy * TILE_SIZE;
 	uint2 screenSpaceTileBRCorner = screenSpaceTileTLCorner.xy + TILE_SIZE;
 
-	float2 texSpaceTileTLCorner = (float2(screenSpaceTileTLCorner.xy) + 0.5f) * g_LightCullingData.rcpScreenSize;
-	float2 texSpaceTileBRCorner = (float2(screenSpaceTileBRCorner.xy) + 0.5f) * g_LightCullingData.rcpScreenSize;
-	float2 texSpaceTileTRCorner = float2(texSpaceTileBRCorner.x, texSpaceTileTLCorner.y);
-	float2 texSpaceTileBLCorner = float2(texSpaceTileTLCorner.x, texSpaceTileBRCorner.y);
+	float2 texSpaceTileTLCorner = (float2(screenSpaceTileTLCorner.xy) + 0.5f) * g_AppData.rcpScreenSize;
+	float2 texSpaceTileBRCorner = (float2(screenSpaceTileBRCorner.xy) + 0.5f) * g_AppData.rcpScreenSize;
+	float2 texSpaceTileTRCorner =  float2(texSpaceTileBRCorner.x, texSpaceTileTLCorner.y);
+	float2 texSpaceTileBLCorner =  float2(texSpaceTileTLCorner.x, texSpaceTileBRCorner.y);
 
-	float3 viewSpaceTileTLCorner = ComputeViewSpacePosition(texSpaceTileTLCorner, 1.0f, g_LightCullingData.projInvMatrix).xyz;
-	float3 viewSpaceTileTRCorner = ComputeViewSpacePosition(texSpaceTileTRCorner, 1.0f, g_LightCullingData.projInvMatrix).xyz;
-	float3 viewSpaceTileBLCorner = ComputeViewSpacePosition(texSpaceTileBLCorner, 1.0f, g_LightCullingData.projInvMatrix).xyz;
-	float3 viewSpaceTileBRCorner = ComputeViewSpacePosition(texSpaceTileBRCorner, 1.0f, g_LightCullingData.projInvMatrix).xyz;
+	float3 viewSpaceTileTLCorner = ComputeViewSpacePosition(texSpaceTileTLCorner, 1.0f, g_AppData.projInvMatrix).xyz;
+	float3 viewSpaceTileTRCorner = ComputeViewSpacePosition(texSpaceTileTRCorner, 1.0f, g_AppData.projInvMatrix).xyz;
+	float3 viewSpaceTileBLCorner = ComputeViewSpacePosition(texSpaceTileBLCorner, 1.0f, g_AppData.projInvMatrix).xyz;
+	float3 viewSpaceTileBRCorner = ComputeViewSpacePosition(texSpaceTileBRCorner, 1.0f, g_AppData.projInvMatrix).xyz;
 
 	viewSpaceFrusumSidePlanes[0] = CreatePlaneThroughOrigin(viewSpaceTileTRCorner, viewSpaceTileTLCorner);
 	viewSpaceFrusumSidePlanes[1] = CreatePlaneThroughOrigin(viewSpaceTileBLCorner, viewSpaceTileBRCorner);
@@ -102,12 +86,10 @@ bool TestSphereAgainstFrustum(float4 frustumSidePlanes[4], float frustumMinZ, fl
 #if MAX_NUM_POINT_LIGHTS > 0
 void CullPointLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth)
 {
-	for (uint index = localThreadIndex; index < g_NumPointLightsBuffer[0]; index += NUM_THREADS_PER_TILE)
+	for (uint lightIndex = localThreadIndex; lightIndex < g_NumPointLights; lightIndex += NUM_THREADS_PER_TILE)
 	{
-		uint lightIndex = g_PointLightIndexBuffer[index];
-
-		Sphere viewSpaceLightBounds = g_PointLightBoundsBuffer[lightIndex];
-		viewSpaceLightBounds.center = mul(float4(viewSpaceLightBounds.center.xyz, 1.0f), g_LightCullingData.viewMatrix).xyz;
+		Sphere viewSpaceLightBounds = g_PointLightWorldBoundsBuffer[lightIndex];
+		viewSpaceLightBounds.center = mul(g_AppData.viewMatrix, float4(viewSpaceLightBounds.center.xyz, 1.0f)).xyz;
 
 		if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceLightBounds))
 		{
@@ -122,12 +104,10 @@ void CullPointLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePl
 #if MAX_NUM_SPOT_LIGHTS > 0
 void CullSpotLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth)
 {
-	for (uint index = localThreadIndex; index < g_NumSpotLightsBuffer[0]; index += NUM_THREADS_PER_TILE)
+	for (uint lightIndex = localThreadIndex; lightIndex < g_NumSpotLights; lightIndex += NUM_THREADS_PER_TILE)
 	{
-		uint lightIndex = g_SpotLightIndexBuffer[index];
-
-		Sphere viewSpaceLightBounds = g_SpotLightBoundsBuffer[lightIndex];
-		viewSpaceLightBounds.center = mul(float4(viewSpaceLightBounds.center.xyz, 1.0f), g_LightCullingData.viewMatrix).xyz;
+		Sphere viewSpaceLightBounds = g_SpotLightWorldBoundsBuffer[lightIndex];
+		viewSpaceLightBounds.center = mul(g_AppData.viewMatrix, float4(viewSpaceLightBounds.center.xyz, 1.0f)).xyz;
 
 		if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceLightBounds))
 		{
@@ -161,7 +141,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 
 	float hardwareDepth = g_DepthTexture[globalThreadId.xy].x;
 	
-	float viewSpaceDepth = ComputeViewSpaceDepth(hardwareDepth, g_LightCullingData.projMatrix);
+	float viewSpaceDepth = ComputeViewSpaceDepth(hardwareDepth, g_AppData.projMatrix);
 	uint viewSpaceDepthInt = asuint(viewSpaceDepth);
 
 	InterlockedMin(g_ViewSpaceMinDepthIntPerTile, viewSpaceDepthInt);
@@ -187,7 +167,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 		uint lightIndicesOffset = 0;
 		if (g_NumPointLightsPerTile > 0)
 		{
-			InterlockedAdd(g_NumPointLightsPerTileBuffer[0], g_NumPointLightsPerTile, lightIndicesOffset);
+			InterlockedAdd(g_PointLightIndicesOffsetBuffer[0], g_NumPointLightsPerTile, lightIndicesOffset);
 			g_PointLightIndicesOffset = lightIndicesOffset;
 		}
 		g_PointLightRangePerTileBuffer[tileIndex].start = lightIndicesOffset;
@@ -208,7 +188,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 		uint lightIndicesOffset = 0;
 		if (g_NumSpotLightsPerTile > 0)
 		{
-			InterlockedAdd(g_NumSpotLightsPerTileBuffer[0], g_NumSpotLightsPerTile, lightIndicesOffset);
+			InterlockedAdd(g_SpotLightIndicesOffsetBuffer[0], g_NumSpotLightsPerTile, lightIndicesOffset);
 			g_SpotLightIndicesOffset = lightIndicesOffset;
 		}
 		g_SpotLightRangePerTileBuffer[tileIndex].start = lightIndicesOffset;

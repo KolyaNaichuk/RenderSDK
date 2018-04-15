@@ -10,8 +10,8 @@ struct DescriptorHandle
 	DescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE CPUHandle, D3D12_GPU_DESCRIPTOR_HANDLE GPUHandle, UINT descriptorSize);
 	DescriptorHandle(DescriptorHandle firstDescriptor, INT offsetInDescriptors);
 	
-	operator D3D12_CPU_DESCRIPTOR_HANDLE () const { return m_CPUHandle; }
-	operator D3D12_GPU_DESCRIPTOR_HANDLE () const { return m_GPUHandle; }
+	operator D3D12_CPU_DESCRIPTOR_HANDLE() const { return m_CPUHandle; }
+	operator D3D12_GPU_DESCRIPTOR_HANDLE() const { return m_GPUHandle; }
 
 	bool IsValid() const;
 	bool IsShaderVisible() const;

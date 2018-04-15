@@ -60,7 +60,10 @@ struct DepthStencilDesc : public D3D12_DEPTH_STENCIL_DESC
 	enum Id
 	{
 		Disabled,
-		Enabled
+		Enabled,
+		EnabledLessNoWrites,
+		EnabledEqualNoWrites,
+		Always
 	};
 	DepthStencilDesc(Id id = Disabled);
 };
@@ -71,7 +74,9 @@ struct SamplerDesc : public D3D12_SAMPLER_DESC
 	{
 		Point,
 		Linear,
-		Anisotropic
+		Anisotropic,
+		MaxPoint,
+		VarianceShadowMapSampler
 	};
 	SamplerDesc(Id id);
 };
@@ -82,7 +87,9 @@ struct StaticSamplerDesc : public D3D12_STATIC_SAMPLER_DESC
 	{
 		Point,
 		Linear,
-		Anisotropic
+		Anisotropic,
+		MaxPoint,
+		VarianceShadowMapSampler
 	};
 	StaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace = 0);
 };
@@ -96,6 +103,8 @@ struct InputLayoutDesc : public D3D12_INPUT_LAYOUT_DESC
 {
 	InputLayoutDesc(UINT numElements = 0, const InputElementDesc* pFirstInputElementDesc = nullptr);
 };
+
+bool HasVertexSemantic(const InputLayoutDesc& inputLayoutDesc, LPCSTR pSemanticName);
 
 struct GraphicsPipelineStateDesc : D3D12_GRAPHICS_PIPELINE_STATE_DESC
 {

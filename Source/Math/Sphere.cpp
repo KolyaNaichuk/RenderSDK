@@ -1,6 +1,12 @@
 #include "Math/Sphere.h"
 #include "Math/Math.h"
 
+Sphere::Sphere()
+	: m_Center(0.0f, 0.0f, 0.0f)
+	, m_Radius(0.0f)
+{
+}
+
 Sphere::Sphere(const Vector3f& center, f32 radius)
     : m_Center(center)
     , m_Radius(radius)

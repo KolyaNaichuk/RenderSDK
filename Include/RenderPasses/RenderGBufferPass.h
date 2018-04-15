@@ -1,48 +1,84 @@
 #pragma once
 
-#include "D3DWrapper/Common.h"
+#include "D3DWrapper/GraphicsResource.h"
 
+struct RenderEnv;
+struct Viewport;
+class CommandList;
+class CommandSignature;
 class RootSignature;
 class PipelineState;
-class CommandSignature;
-class CommandList;
-class Buffer;
-class MeshBatch;
-
-struct Viewport;
-struct RenderEnv;
-struct BindingResourceList;
+class GeometryBuffer;
+class MeshRenderResources;
 
 class RenderGBufferPass
 {
 public:
+	struct ResourceStates
+	{
+		D3D12_RESOURCE_STATES m_GBuffer1State;
+		D3D12_RESOURCE_STATES m_GBuffer2State;
+		D3D12_RESOURCE_STATES m_GBuffer3State;
+		D3D12_RESOURCE_STATES m_GBuffer4State;
+		D3D12_RESOURCE_STATES m_DepthTextureState;
+		D3D12_RESOURCE_STATES m_InstanceIndexBufferState;
+		D3D12_RESOURCE_STATES m_InstanceWorldMatrixBufferState;
+		D3D12_RESOURCE_STATES m_NumVisibleMeshesPerTypeBufferState;
+		D3D12_RESOURCE_STATES m_DrawCommandBufferState;
+	};
+
 	struct InitParams
 	{
+		const char* m_pName;
 		RenderEnv* m_pRenderEnv;
-		DXGI_FORMAT m_NormalRTVFormat;
-		DXGI_FORMAT m_DiffuseRTVFormat;
-		DXGI_FORMAT m_SpecularRTVFormat;
-		DXGI_FORMAT m_DSVFormat;
-		MeshBatch* m_pMeshBatch;
+		UINT m_BufferWidth;
+		UINT m_BufferHeight;
+		ResourceStates m_InputResourceStates;
+		MeshRenderResources* m_pMeshRenderResources;
+		ColorTexture* m_pGBuffer1;
+		ColorTexture* m_pGBuffer2;
+		ColorTexture* m_pGBuffer3;
+		ColorTexture* m_pGBuffer4;
+		DepthTexture* m_pDepthTexture;
+		Buffer* m_pInstanceIndexBuffer;
+		Buffer* m_pInstanceWorldMatrixBuffer;
+		Buffer* m_NumVisibleMeshesPerTypeBuffer;
+		Buffer* m_DrawCommandBuffer;
 	};
+
 	struct RenderParams
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		BindingResourceList* m_pResources;
+		Buffer* m_pAppDataBuffer;
+		MeshRenderResources* m_pMeshRenderResources;
+		Buffer* m_pNumVisibleMeshesPerTypeBuffer;
+		Buffer* m_pDrawCommandBuffer;
 		Viewport* m_pViewport;
-		MeshBatch* m_pMeshBatch;
-		Buffer* m_pDrawMeshCommandBuffer;
-		Buffer* m_pNumDrawMeshesBuffer;
+		bool m_ClearGBufferBeforeRendering;
 	};
 
 	RenderGBufferPass(InitParams* pParams);
 	~RenderGBufferPass();
 
 	void Record(RenderParams* pParams);
+	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
+	
+private:
+	void InitResources(InitParams* pParams);
+	void InitRootSignature(InitParams* pParams);
+	void InitPipelineState(InitParams* pParams);
+	void InitCommandSignature(InitParams* pParams);
+	void AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
-	RootSignature* m_pRootSignature;
-	PipelineState* m_pPipelineState;
-	CommandSignature* m_pCommandSignature;
+	std::string m_Name;
+	RootSignature* m_pRootSignature = nullptr;
+	PipelineState* m_pPipelineState = nullptr;
+	CommandSignature* m_pCommandSignature = nullptr;
+	DescriptorHandle m_SRVHeapStartVS;
+	DescriptorHandle m_RTVHeapStart;
+	DescriptorHandle m_DSVHeapStart;
+	ResourceStates m_OutputResourceStates;
+	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 };

@@ -1,31 +1,42 @@
 #include "Foundation.hlsl"
+#include "EncodingUtils.hlsl"
 
 struct PSInput
 {
 	float4 screenSpacePos		: SV_Position;
 	float3 worldSpaceNormal		: NORMAL;
+	float2 texCoord				: TEXCOORD;
 };
 
 struct PSOutput
 {
-	float4 worldSpaceNormal		: SV_Target0;
-	float4 diffuseColor			: SV_Target1;
-	float4 specularColor		: SV_Target2;
+	float2 buffer1				: SV_Target0;
+	float2 buffer2				: SV_Target1;
+	uint2  buffer3				: SV_Target2;
+	float4 buffer4				: SV_Target3;
 };
 
-cbuffer MaterialIndexBuffer : register(b0)
+cbuffer Constants32BitBuffer : register(b0)
 {
-	uint g_MaterialIndex;
+	uint g_MaterialID;
 }
-StructuredBuffer<Material> g_MaterialBuffer : register(t0);
 
 PSOutput Main(PSInput input)
 {
+	float3 worldSpaceNormal = normalize(input.worldSpaceNormal);
+	
+	float2 texCoordDX = ddx_fine(input.texCoord);
+	float2 texCoordDY = ddy_fine(input.texCoord);
+				
+	float2 derivativesLength;
+	uint encodedDerivativesRotation;
+	EncodeTextureCoordinateDerivatives(texCoordDX, texCoordDY, derivativesLength, encodedDerivativesRotation);
+
 	PSOutput output;
-
-	output.worldSpaceNormal = float4(normalize(input.worldSpaceNormal), 0.0f);
-	output.diffuseColor = float4(g_MaterialBuffer[g_MaterialIndex].diffuseColor.rgb, 1.0f);
-	output.specularColor = float4(g_MaterialBuffer[g_MaterialIndex].specularColor.rgb, g_MaterialBuffer[g_MaterialIndex].specularPower);
-
+	output.buffer1 = frac(input.texCoord);
+	output.buffer2 = derivativesLength;
+	output.buffer3 = uint2(encodedDerivativesRotation, g_MaterialID);
+	output.buffer4 = float4(worldSpaceNormal, 0.0f);
+	
 	return output;
 }

@@ -24,12 +24,11 @@ Shader::Shader(LPCWSTR pFileName, LPCSTR pEntryPoint, LPCSTR pShaderModel, const
 {
 	UINT compileFlags = 0;
 	compileFlags |= D3DCOMPILE_ENABLE_STRICTNESS;
-	compileFlags |= D3DCOMPILE_PACK_MATRIX_ROW_MAJOR;
 
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	compileFlags |= D3DCOMPILE_DEBUG;
 	compileFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 
 	ComPtr<ID3DBlob> d3dErrorBlob;
 	HRESULT result = D3DCompileFromFile(pFileName, pDefines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
@@ -161,6 +160,57 @@ DepthStencilDesc::DepthStencilDesc(Id id)
 		BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
 		BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 	}
+	else if (id == DepthStencilDesc::EnabledLessNoWrites)
+	{
+		DepthEnable = TRUE;
+		DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+		DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+		StencilEnable = FALSE;
+		StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
+		StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+		FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+		FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+		FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+		FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+		BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+		BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+		BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	}
+	else if (id == DepthStencilDesc::EnabledEqualNoWrites)
+	{
+		DepthEnable = TRUE;
+		DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+		DepthFunc = D3D12_COMPARISON_FUNC_EQUAL;
+		StencilEnable = FALSE;
+		StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
+		StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+		FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+		FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+		FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+		FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+		BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+		BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+		BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	}
+	else if (id == DepthStencilDesc::Always)
+	{
+		DepthEnable = TRUE;
+		DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+		DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		StencilEnable = FALSE;
+		StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
+		StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+		FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+		FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+		FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+		FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+		BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+		BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+		BackFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	}
 	else
 	{
 		assert(false);
@@ -177,7 +227,7 @@ SamplerDesc::SamplerDesc(Id id)
 		MaxAnisotropy = 1;
 		ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 		BorderColor[0] = BorderColor[1] = BorderColor[2] = BorderColor[3] = 1.0f;
-		MinLOD = -D3D12_FLOAT32_MAX;
+		MinLOD = 0.0f;
 		MaxLOD = D3D12_FLOAT32_MAX;
 	}
 	else if (id == SamplerDesc::Point)
@@ -188,7 +238,7 @@ SamplerDesc::SamplerDesc(Id id)
 		MaxAnisotropy = 1;
 		ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 		BorderColor[0] = BorderColor[1] = BorderColor[2] = BorderColor[3] = 1.0f;
-		MinLOD = -D3D12_FLOAT32_MAX;
+		MinLOD = 0.0f;
 		MaxLOD = D3D12_FLOAT32_MAX;
 	}
 	else if (id == SamplerDesc::Anisotropic)
@@ -199,6 +249,21 @@ SamplerDesc::SamplerDesc(Id id)
 		MaxAnisotropy = 16;
 		ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 		BorderColor[0] = BorderColor[1] = BorderColor[2] = BorderColor[3] = 1.0f;
+		MinLOD = 0.0f;
+		MaxLOD = D3D12_FLOAT32_MAX;
+	}
+	else if (id == SamplerDesc::MaxPoint)
+	{
+		assert(false);
+	}
+	else if (id == SamplerDesc::VarianceShadowMapSampler)
+	{
+		Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		MipLODBias = 0.0f;
+		MaxAnisotropy = 1;
+		ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		BorderColor[0] = BorderColor[1] = BorderColor[2] = BorderColor[3] = 0.0f;
 		MinLOD = 0.0f;
 		MaxLOD = D3D12_FLOAT32_MAX;
 	}
@@ -218,7 +283,7 @@ StaticSamplerDesc::StaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADER_VI
 		MaxAnisotropy = 1;
 		ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 		BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-		MinLOD = -D3D12_FLOAT32_MAX;
+		MinLOD = 0.0f;
 		MaxLOD = D3D12_FLOAT32_MAX;
 	}
 	else if (id == StaticSamplerDesc::Point)
@@ -229,7 +294,7 @@ StaticSamplerDesc::StaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADER_VI
 		MaxAnisotropy = 1;
 		ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 		BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
-		MinLOD = -D3D12_FLOAT32_MAX;
+		MinLOD = 0.0f;
 		MaxLOD = D3D12_FLOAT32_MAX;
 	}
 	else if (id == StaticSamplerDesc::Anisotropic)
@@ -242,6 +307,21 @@ StaticSamplerDesc::StaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADER_VI
 		BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
 		MinLOD = 0.0f;
 		MaxLOD = D3D12_FLOAT32_MAX;
+	}
+	else if (id == StaticSamplerDesc::MaxPoint)
+	{
+		Filter = D3D12_FILTER_MAXIMUM_MIN_MAG_MIP_POINT;
+		AddressU = AddressV = AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+		MipLODBias = 0.0f;
+		MaxAnisotropy = 16;
+		ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+		BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+		MinLOD = 0.0f;
+		MaxLOD = D3D12_FLOAT32_MAX;
+	}
+	else if (id == StaticSamplerDesc::VarianceShadowMapSampler)
+	{
+		assert(false);
 	}
 	else
 	{
@@ -256,6 +336,17 @@ InputLayoutDesc::InputLayoutDesc(UINT numElements, const InputElementDesc* pFirs
 {
 	pInputElementDescs = pFirstInputElementDesc;
 	NumElements = numElements;
+}
+
+bool HasVertexSemantic(const InputLayoutDesc& inputLayoutDesc, LPCSTR pSemanticName)
+{
+	for (UINT index = 0; index < inputLayoutDesc.NumElements; ++index)
+	{
+		const D3D12_INPUT_ELEMENT_DESC& inputElementDesc = inputLayoutDesc.pInputElementDescs[index];
+		if (std::strcmp(inputElementDesc.SemanticName, pSemanticName) == 0)
+			return true;
+	}
+	return false;
 }
 
 GraphicsPipelineStateDesc::GraphicsPipelineStateDesc()
@@ -380,15 +471,15 @@ InputElementDesc::InputElementDesc(LPCSTR pSemanticName, UINT semanticIndex, DXG
 PipelineState::PipelineState(GraphicsDevice* pDevice, const GraphicsPipelineStateDesc* pDesc, LPCWSTR pName)
 {
 	VerifyD3DResult(pDevice->GetD3DObject()->CreateGraphicsPipelineState(pDesc, IID_PPV_ARGS(&m_D3DPipelineState)));
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DPipelineState->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
 PipelineState::PipelineState(GraphicsDevice* pDevice, const ComputePipelineStateDesc* pDesc, LPCWSTR pName)
 {
 	VerifyD3DResult(pDevice->GetD3DObject()->CreateComputePipelineState(pDesc, IID_PPV_ARGS(&m_D3DPipelineState)));
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DPipelineState->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }

@@ -1,15 +1,15 @@
 #pragma once
 
-#include "D3DWrapper/BindingResourceList.h"
+#include "D3DWrapper/Common.h"
 
-class GraphicsDevice;
 class Buffer;
+class GraphicsDevice;
+class GraphicsResource;
 class CommandSignature;
 class PipelineState;
 class RootSignature;
-class RootSignature;
-class GraphicsResource;
 class DescriptorHeap;
+class QueryHeap;
 class Fence;
 
 struct Viewport;
@@ -37,10 +37,14 @@ public:
 	void SetGraphicsRootSignature(RootSignature* pRootSignature);
 	void SetGraphicsRootDescriptorTable(UINT rootParamIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle);
 	void SetGraphicsRoot32BitConstant(UINT rootParamIndex, UINT srcData, UINT destOffsetIn32BitValues);
+	void SetGraphicsRoot32BitConstants(UINT rootParamIndex, UINT num32BitValues, const void* pSrcData, UINT destOffsetIn32BitValues);
+	void SetGraphicsRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer);
 	
 	void SetComputeRootSignature(RootSignature* pRootSignature);
 	void SetComputeRootDescriptorTable(UINT rootParamIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseHandle);
 	void SetComputeRoot32BitConstant(UINT rootParamIndex, UINT srcData, UINT destOffsetIn32BitValues);
+	void SetComputeRoot32BitConstants(UINT rootParamIndex, UINT num32BitValues, const void* pSrcData, UINT destOffsetIn32BitValues);
+	void SetComputeRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer);
 
 	void SetDescriptorHeaps(DescriptorHeap* pSRVDescriptorHeap, DescriptorHeap* pSamplerDescriptorHeap = nullptr);
 
@@ -58,6 +62,10 @@ public:
 		Buffer* pArgumentBuffer, UINT64 argumentBufferOffset,
 		Buffer* pCountBuffer, UINT64 countBufferOffset);
 
+	void BeginQuery(QueryHeap* pQueryHeap, D3D12_QUERY_TYPE type, UINT index);
+	void EndQuery(QueryHeap* pQueryHeap, D3D12_QUERY_TYPE type, UINT index);
+	void ResolveQueryData(QueryHeap* pQueryHeap, D3D12_QUERY_TYPE type, UINT startIndex, UINT numQueries, Buffer* pDestBuffer, UINT64 alignedDestBufferOffset);
+
 	void ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, const FLOAT clearColor[4]);
 	void ClearDepthStencilView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, FLOAT depth = 1.0f, UINT8 stencil = 0);
 	void ClearDepthView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, FLOAT depth = 1.0f);
@@ -65,22 +73,21 @@ public:
 	void ClearUnorderedAccessView(D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, GraphicsResource* pResource, const UINT clearValue[4]);
 	void ClearUnorderedAccessView(D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, GraphicsResource* pResource, const FLOAT clearValue[4]);
 	
-	void CopyResource(GraphicsResource* pDestResouce, GraphicsResource* pSourceResource);
-	void CopyBufferRegion(Buffer* pDestBuffer, UINT64 destOffset, Buffer* pSourceBuffer, UINT64 sourceOffset, UINT64 numBytes);
+	void CopyResource(GraphicsResource* pDestResource, GraphicsResource* pSourceResource);
+
+	void CopyTextureRegion(const D3D12_TEXTURE_COPY_LOCATION* pDestLocation, UINT destX, UINT destY, UINT destZ,
+		const D3D12_TEXTURE_COPY_LOCATION* pSourceLocation, const D3D12_BOX* pSourceBox);
+
+	void CopyBufferRegion(Buffer* pDestBuffer, UINT64 destOffsetInBytes, Buffer* pSourceBuffer, UINT64 sourceOffsetInBytes, UINT64 numBytesToCopy);
 
 	void ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER* pBarriers);
-
-	RequiredResourceStateList* GetRequiredResourceStates();
-	void SetRequiredResourceStates(RequiredResourceStateList* pRequiredResourceStates);
-	
+		
 	void SetCompletionFence(Fence* pFence, UINT64 fenceValue);
 	bool CompletedExecution();
 
 private:
 	ComPtr<ID3D12GraphicsCommandList> m_D3DCommandList;
-	ComPtr<ID3D12CommandAllocator> m_D3DCommandAllocator;
-	RequiredResourceStateList* m_pRequiredResourceStates;
-	
+	ComPtr<ID3D12CommandAllocator> m_D3DCommandAllocator;	
 	Fence* m_pCompletionFence;
 	UINT64 m_CompletionFenceValue;
 };

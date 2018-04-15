@@ -16,9 +16,11 @@
 #include <cassert>
 #include <memory>
 #include <fstream>
+#include <functional>
 #include <sstream>
+#include <cwchar>
 
-#include "Common/BasicTypes.h"
+#include "BasicTypes.h"
 
 template <typename T>
 static void SafeDelete(T*& pObject)

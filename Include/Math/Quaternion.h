@@ -33,7 +33,7 @@ const Quaternion CreateRotationXQuaternion(f32 angleInRadians);
 const Quaternion CreateRotationYQuaternion(f32 angleInRadians);
 const Quaternion CreateRotationZQuaternion(f32 angleInRadians);
 
-bool IsEqual(const Quaternion& quat1, const Quaternion& quat2, f32 epsilon = EPSILON);
+bool AreEqual(const Quaternion& quat1, const Quaternion& quat2, f32 epsilon = EPSILON);
 const Quaternion Conjugate(const Quaternion& quat);
 const Quaternion Normalize(const Quaternion& quat);
 const Quaternion Inverse(const Quaternion& quat);

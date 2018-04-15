@@ -1,6 +1,8 @@
 #pragma once
 
 #include "D3DWrapper/DescriptorHeap.h"
+#include "D3DWrapper/CommandQueue.h"
+#include "D3DWrapper/Fence.h"
 
 class GraphicsDevice;
 class GraphicsResource;
@@ -13,8 +15,17 @@ DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat);
 
 struct ResourceTransitionBarrier : D3D12_RESOURCE_BARRIER
 {
-	ResourceTransitionBarrier(GraphicsResource* pResource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter,
-		UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+	ResourceTransitionBarrier(GraphicsResource* pResource = nullptr,
+		D3D12_RESOURCE_STATES stateBefore = D3D12_RESOURCE_STATE_COMMON,
+		D3D12_RESOURCE_STATES stateAfter = D3D12_RESOURCE_STATE_COMMON,
+		UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
+};
+
+struct ResourceUAVBarrier : D3D12_RESOURCE_BARRIER
+{
+	ResourceUAVBarrier(GraphicsResource* pResource = nullptr,
+		D3D12_RESOURCE_BARRIER_FLAGS flags = D3D12_RESOURCE_BARRIER_FLAG_NONE);
 };
 
 struct DepthStencilValue : public D3D12_DEPTH_STENCIL_VALUE
@@ -26,21 +37,6 @@ struct ClearValue : D3D12_CLEAR_VALUE
 {
 	ClearValue(DXGI_FORMAT format, const FLOAT color[4]);
 	ClearValue(DXGI_FORMAT format, const DepthStencilValue* pDepthStencilValue);
-};
-
-struct VertexBufferView : public D3D12_VERTEX_BUFFER_VIEW
-{
-	VertexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes);
-};
-
-struct IndexBufferView : public D3D12_INDEX_BUFFER_VIEW
-{
-	IndexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes);
-};
-
-struct ConstantBufferViewDesc : public D3D12_CONSTANT_BUFFER_VIEW_DESC
-{
-	ConstantBufferViewDesc(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes);
 };
 
 struct MemoryRange : public D3D12_RANGE
@@ -59,6 +55,11 @@ struct ConstantBufferDesc : public D3D12_RESOURCE_DESC
 	ConstantBufferDesc(UINT64 sizeInBytes, UINT64 alignment = 0);
 };
 
+struct ConstantBufferViewDesc : public D3D12_CONSTANT_BUFFER_VIEW_DESC
+{
+	ConstantBufferViewDesc(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes);
+};
+
 struct VertexBufferDesc : public D3D12_RESOURCE_DESC
 {
 	VertexBufferDesc(UINT numVertices, UINT strideInBytes, UINT64 alignment = 0);
@@ -67,12 +68,22 @@ struct VertexBufferDesc : public D3D12_RESOURCE_DESC
 	UINT StrideInBytes;
 };
 
+struct VertexBufferView : public D3D12_VERTEX_BUFFER_VIEW
+{
+	VertexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes);
+};
+
 struct IndexBufferDesc : public D3D12_RESOURCE_DESC
 {
 	IndexBufferDesc(UINT numIndices, UINT strideInBytes, UINT64 alignment = 0);
 
 	UINT NumIndices;
 	UINT StrideInBytes;
+};
+
+struct IndexBufferView : public D3D12_INDEX_BUFFER_VIEW
+{
+	IndexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes);
 };
 
 struct StructuredBufferDesc : public D3D12_RESOURCE_DESC
@@ -129,6 +140,16 @@ struct CounterBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 {
 	CounterBufferUAVDesc(UINT64 firstElement, UINT numElements,
 		UINT structureByteStride, UINT64 counterOffsetInBytes);
+};
+
+struct ColorTextureDesc : public D3D12_RESOURCE_DESC
+{
+	ColorTextureDesc(D3D12_RESOURCE_DIMENSION dimension, DXGI_FORMAT format, UINT64 width, UINT height,
+		bool createRTV, bool createSRV, bool createUAV,
+		UINT16 depthOrArraySize = 1, UINT16 mipLevels = 1,
+		UINT sampleCount = 1, UINT sampleQuality = 0,
+		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		UINT64 alignment = 0);
 };
 
 struct ColorTexture1DDesc : public D3D12_RESOURCE_DESC
@@ -258,28 +279,22 @@ struct Tex3DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 class GraphicsResource
 {
 protected:
-	GraphicsResource(ComPtr<ID3D12Resource> d3dResource, D3D12_RESOURCE_STATES initialState);
-	GraphicsResource(const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES initialState);
+	GraphicsResource(ComPtr<ID3D12Resource> d3dResource);
+	GraphicsResource(const D3D12_RESOURCE_DESC* pDesc);
 
 public:
 	ID3D12Resource* GetD3DObject() { return m_D3DResource.Get(); }
 	DXGI_FORMAT GetFormat() const { return m_Desc.Format; }
-	
-	D3D12_RESOURCE_STATES GetState() const { return m_State; }
-	void SetState(D3D12_RESOURCE_STATES state) { m_State = state; }
 
-	D3D12_RESOURCE_STATES GetReadState() const { return m_ReadState; }
-	D3D12_RESOURCE_STATES GetWriteState() const { return m_WriteState; }
-	
+	void* Map(UINT subresource, const D3D12_RANGE* pReadRange = nullptr);
+	void Unmap(UINT subresource, const D3D12_RANGE* pWrittenRange = nullptr);
+			
 	void Write(const void* pInputData, SIZE_T numBytes);
 	void Read(void* pOutputData, SIZE_T numBytes);
 
 protected:
 	ComPtr<ID3D12Resource> m_D3DResource;
 	D3D12_RESOURCE_DESC m_Desc;
-	D3D12_RESOURCE_STATES m_State;
-	D3D12_RESOURCE_STATES m_ReadState;
-	D3D12_RESOURCE_STATES m_WriteState;
 };
 
 class ColorTexture : public GraphicsResource
@@ -297,16 +312,20 @@ public:
 		const ColorTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
-	ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource,
-		D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+	ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const ColorTextureDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+		const FLOAT optimizedClearColor[4], LPCWSTR pName);
+
+	ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource, LPCWSTR pName);
 
 	UINT64 GetWidth() const { return m_Desc.Width; }
 	UINT GetHeight() const { return m_Desc.Height; }
 	UINT16 GetDepthOrArraySize() const { return m_Desc.DepthOrArraySize; }
+	UINT GetMipLevels() const { return m_Desc.MipLevels; }
 
-	DescriptorHandle GetRTVHandle();
+	DescriptorHandle GetRTVHandle(UINT mipSlice = 0);
 	DescriptorHandle GetSRVHandle();
-	DescriptorHandle GetUAVHandle();
+	DescriptorHandle GetUAVHandle(UINT mipSlice = 0);
 				
 private:
 	void CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -316,9 +335,7 @@ private:
 	void CreateTex1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	void CreateTex2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	void CreateTex3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-
-	void DetermineResourceStates(const D3D12_RESOURCE_DESC* pTexDesc);
-
+	
 private:
 	DescriptorHandle m_RTVHandle;
 	DescriptorHandle m_SRVHandle;
@@ -354,9 +371,7 @@ private:
 	void CreateTex1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	void CreateTex2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	void CreateTex3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-
-	void DetermineResourceStates(const D3D12_RESOURCE_DESC* pTexDesc);
-
+	
 private:
 	DescriptorHandle m_DSVHandle;
 	DescriptorHandle m_SRVHandle;
@@ -416,3 +431,33 @@ public:
 private:
 	DescriptorHandle m_Handle;
 };
+
+struct TextureCopyLocation : public D3D12_TEXTURE_COPY_LOCATION
+{
+	TextureCopyLocation(GraphicsResource* pGraphicsResource, UINT subresourceIndex);
+	TextureCopyLocation(GraphicsResource* pGraphicsResource, const D3D12_PLACED_SUBRESOURCE_FOOTPRINT& footprint);
+};
+
+template <typename DestBufferDesc>
+void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, DestBufferDesc destBufferDesc,
+	D3D12_RESOURCE_STATES destBufferStateAfter, const void* pUploadData, SIZE_T numUploadBytes)
+{
+	destBufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+	Buffer* pUploadBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &destBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"UploadData::pUploadBuffer");
+	pUploadBuffer->Write(pUploadData, numUploadBytes);
+
+	ResourceTransitionBarrier resourceTransitionBarrier(pDestBuffer, D3D12_RESOURCE_STATE_COPY_DEST, destBufferStateAfter);
+
+	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"pUploadCommandList");
+	pUploadCommandList->Begin();
+	pUploadCommandList->CopyResource(pDestBuffer, pUploadBuffer);
+	pUploadCommandList->ResourceBarrier(1, &resourceTransitionBarrier);
+	pUploadCommandList->End();
+
+	++pRenderEnv->m_LastSubmissionFenceValue;
+	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pUploadCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
+	pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
+
+	SafeDelete(pUploadBuffer);
+}

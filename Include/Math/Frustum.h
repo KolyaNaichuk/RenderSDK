@@ -1,11 +1,8 @@
 #pragma once
 
-#include "Math/Vector3.h"
 #include "Math/Plane.h"
 
 struct Matrix4f;
-struct Quaternion;
-class Transform;
 
 struct Frustum
 {
@@ -33,10 +30,6 @@ struct Frustum
 		NumPlanes
 	};
 
-	Frustum(const Matrix4f& projMatrix);
-	
-	Vector3f m_Corners[NumCorners];
+	Frustum(const Matrix4f& transformMatrix);
 	Plane m_Planes[NumPlanes];	
 };
-
-const Frustum TransformFrustum(Frustum frustum, const Transform& transform);

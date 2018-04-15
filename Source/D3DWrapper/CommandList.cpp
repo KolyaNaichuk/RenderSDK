@@ -5,11 +5,11 @@
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/DescriptorHeap.h"
+#include "D3DWrapper/QueryHeap.h"
 #include "D3DWrapper/Fence.h"
 #include "D3DWrapper/GraphicsUtils.h"
 
 CommandList::CommandList(GraphicsDevice* pDevice, D3D12_COMMAND_LIST_TYPE type, LPCWSTR pName)
-	: m_pRequiredResourceStates(nullptr)
 {
 	ID3D12Device* pD3DDevice = pDevice->GetD3DObject();
 	VerifyD3DResult(pD3DDevice->CreateCommandAllocator(type, IID_PPV_ARGS(&m_D3DCommandAllocator)));
@@ -19,9 +19,9 @@ CommandList::CommandList(GraphicsDevice* pDevice, D3D12_COMMAND_LIST_TYPE type, 
 	VerifyD3DResult(pD3DDevice->CreateCommandList(nodeMask, type, m_D3DCommandAllocator.Get(), pD3DPipelineState, IID_PPV_ARGS(&m_D3DCommandList)));
 	VerifyD3DResult(m_D3DCommandList->Close());
 	
-#ifdef _DEBUG
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DCommandList->SetName(pName));
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
 void CommandList::SetName(LPCWSTR pName)
@@ -33,8 +33,6 @@ void CommandList::Begin(PipelineState* pPipelineState)
 {
 	VerifyD3DResult(m_D3DCommandAllocator->Reset()); 
 	VerifyD3DResult(m_D3DCommandList->Reset(m_D3DCommandAllocator.Get(), (pPipelineState != nullptr) ? pPipelineState->GetD3DObject() : nullptr));
-
-	SetRequiredResourceStates(nullptr);
 	SetCompletionFence(nullptr, 0);
 }
 
@@ -68,24 +66,20 @@ void CommandList::CopyResource(GraphicsResource* pDestResource, GraphicsResource
 	m_D3DCommandList->CopyResource(pDestResource->GetD3DObject(), pSourceResource->GetD3DObject());
 }
 
-void CommandList::CopyBufferRegion(Buffer* pDestBuffer, UINT64 destOffset, Buffer* pSourceBuffer, UINT64 sourceOffset, UINT64 numBytes)
+void CommandList::CopyTextureRegion(const D3D12_TEXTURE_COPY_LOCATION* pDestLocation, UINT destX, UINT destY, UINT destZ,
+	const D3D12_TEXTURE_COPY_LOCATION* pSourceLocation, const D3D12_BOX* pSourceBox)
 {
-	m_D3DCommandList->CopyBufferRegion(pDestBuffer->GetD3DObject(), destOffset, pSourceBuffer->GetD3DObject(), sourceOffset, numBytes);
+	m_D3DCommandList->CopyTextureRegion(pDestLocation, destX, destY, destZ, pSourceLocation, pSourceBox);
+}
+
+void CommandList::CopyBufferRegion(Buffer* pDestBuffer, UINT64 destOffsetInBytes, Buffer* pSourceBuffer, UINT64 sourceOffsetInBytes, UINT64 numBytesToCopy)
+{
+	m_D3DCommandList->CopyBufferRegion(pDestBuffer->GetD3DObject(), destOffsetInBytes, pSourceBuffer->GetD3DObject(), sourceOffsetInBytes, numBytesToCopy);
 }
 
 void CommandList::ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER* pBarriers)
 {
 	m_D3DCommandList->ResourceBarrier(numBarriers, pBarriers);
-}
-
-RequiredResourceStateList* CommandList::GetRequiredResourceStates()
-{
-	return m_pRequiredResourceStates;
-}
-
-void CommandList::SetRequiredResourceStates(RequiredResourceStateList* pRequiredResourceStates)
-{
-	m_pRequiredResourceStates = pRequiredResourceStates;
 }
 
 void CommandList::SetGraphicsRootSignature(RootSignature* pRootSignature)
@@ -121,6 +115,17 @@ void CommandList::SetGraphicsRoot32BitConstant(UINT rootParamIndex, UINT srcData
 	m_D3DCommandList->SetGraphicsRoot32BitConstant(rootParamIndex, srcData, destOffsetIn32BitValues);
 }
 
+void CommandList::SetGraphicsRoot32BitConstants(UINT rootParamIndex, UINT num32BitValues, const void* pSrcData, UINT destOffsetIn32BitValues)
+{
+	m_D3DCommandList->SetGraphicsRoot32BitConstants(rootParamIndex, num32BitValues, pSrcData, destOffsetIn32BitValues);
+}
+
+void CommandList::SetGraphicsRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer)
+{
+	ID3D12Resource* pD3DResource = pBuffer->GetD3DObject();
+	m_D3DCommandList->SetGraphicsRootConstantBufferView(rootParamIndex, pD3DResource->GetGPUVirtualAddress());
+}
+
 void CommandList::SetComputeRootSignature(RootSignature* pRootSignature)
 {
 	m_D3DCommandList->SetComputeRootSignature(pRootSignature->GetD3DObject());
@@ -134,6 +139,17 @@ void CommandList::SetComputeRootDescriptorTable(UINT rootParamIndex, D3D12_GPU_D
 void CommandList::SetComputeRoot32BitConstant(UINT rootParamIndex, UINT srcData, UINT destOffsetIn32BitValues)
 {
 	m_D3DCommandList->SetComputeRoot32BitConstant(rootParamIndex, srcData, destOffsetIn32BitValues);
+}
+
+void CommandList::SetComputeRoot32BitConstants(UINT rootParamIndex, UINT num32BitValues, const void* pSrcData, UINT destOffsetIn32BitValues)
+{
+	m_D3DCommandList->SetComputeRoot32BitConstants(rootParamIndex, num32BitValues, pSrcData, destOffsetIn32BitValues);
+}
+
+void CommandList::SetComputeRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer)
+{
+	ID3D12Resource* pD3DResource = pBuffer->GetD3DObject();
+	m_D3DCommandList->SetComputeRootConstantBufferView(rootParamIndex, pD3DResource->GetGPUVirtualAddress());
 }
 
 void CommandList::RSSetViewports(UINT numViewports, const Viewport* pViewports)
@@ -174,6 +190,21 @@ void CommandList::ExecuteIndirect(CommandSignature* pCommandSignature, UINT maxC
 	m_D3DCommandList->ExecuteIndirect(pCommandSignature->GetD3DObject(), maxCommandCount,
 		pArgumentBuffer->GetD3DObject(), argumentBufferOffset,
 		(pCountBuffer != nullptr) ? pCountBuffer->GetD3DObject() : 0, countBufferOffset);
+}
+
+void CommandList::BeginQuery(QueryHeap* pQueryHeap, D3D12_QUERY_TYPE type, UINT index)
+{
+	m_D3DCommandList->BeginQuery(pQueryHeap->GetD3DObject(), type, index);
+}
+
+void CommandList::EndQuery(QueryHeap* pQueryHeap, D3D12_QUERY_TYPE type, UINT index)
+{
+	m_D3DCommandList->EndQuery(pQueryHeap->GetD3DObject(), type, index);
+}
+
+void CommandList::ResolveQueryData(QueryHeap* pQueryHeap, D3D12_QUERY_TYPE type, UINT startIndex, UINT numQueries, Buffer* pDestBuffer, UINT64 alignedDestBufferOffset)
+{
+	m_D3DCommandList->ResolveQueryData(pQueryHeap->GetD3DObject(), type, startIndex, numQueries, pDestBuffer->GetD3DObject(), alignedDestBufferOffset);
 }
 
 void CommandList::ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle, const FLOAT clearColor[4])
@@ -244,9 +275,10 @@ CommandList* CommandListPool::Create(LPCWSTR pName)
 		{
 			m_CommandListQueue.pop();
 			pCommandList = pExistingCommandList;
-#ifdef _DEBUG
+
+#ifdef ENABLE_GRAPHICS_DEBUGGING
 			pCommandList->SetName(pName);
-#endif
+#endif // ENABLE_GRAPHICS_DEBUGGING
 		}
 	}
 	if (pCommandList == nullptr)

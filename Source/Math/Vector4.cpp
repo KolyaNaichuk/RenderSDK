@@ -74,12 +74,12 @@ f32 Dot(const Vector4f& vec1, const Vector4f& vec2)
     return (vec1.m_X * vec2.m_X + vec1.m_Y * vec2.m_Y + vec1.m_Z * vec2.m_Z + vec1.m_W * vec2.m_W);
 }
 
-bool IsEqual(const Vector4f& vec1, const Vector4f& vec2, f32 epsilon)
+bool AreEqual(const Vector4f& vec1, const Vector4f& vec2, f32 epsilon)
 {
-    return (::IsEqual(vec1.m_X, vec2.m_X, epsilon) &&
-        ::IsEqual(vec1.m_Y, vec2.m_Y, epsilon) &&
-        ::IsEqual(vec1.m_Z, vec2.m_Z, epsilon) &&
-        ::IsEqual(vec1.m_W, vec2.m_W, epsilon));
+    return (::AreEqual(vec1.m_X, vec2.m_X, epsilon) &&
+        ::AreEqual(vec1.m_Y, vec2.m_Y, epsilon) &&
+        ::AreEqual(vec1.m_Z, vec2.m_Z, epsilon) &&
+        ::AreEqual(vec1.m_W, vec2.m_W, epsilon));
 }
 
 const Vector4f Min(const Vector4f& vec1, const Vector4f& vec2)
@@ -94,7 +94,7 @@ const Vector4f Max(const Vector4f& vec1, const Vector4f& vec2)
 
 bool IsNormalized(const Vector4f& vec, f32 epsilon)
 {
-	return (Abs(1.0f - Length(vec)) < epsilon);
+	return AreEqual(1.0f, Length(vec), epsilon);
 }
 
 const Vector4f TransformVector(const Vector4f& vec, const Transform& transform)
@@ -105,6 +105,16 @@ const Vector4f TransformVector(const Vector4f& vec, const Transform& transform)
 const Vector4f TransformNormal(const Vector4f& vec, const Transform& transform)
 {
 	return transform.GetWorldToLocalMatrix() * vec;
+}
+
+Vector4f ToHomogeneousVector(const Vector3f& cartesianVec)
+{
+	return Vector4f(cartesianVec.m_X, cartesianVec.m_Y, cartesianVec.m_Z, 0.0f);
+}
+
+Vector4f ToHomogeneousPoint(const Vector3f& cartesianPoint, f32 w)
+{
+	return Vector4f(cartesianPoint.m_X * w, cartesianPoint.m_Y * w, cartesianPoint.m_Z * w, w);
 }
 
 Vector4f& operator+= (Vector4f& vec1, const Vector4f& vec2)

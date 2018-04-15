@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -22,32 +22,32 @@
     <ProjectGuid>{FEB52F9E-D717-46D3-ADA9-102908517202}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>DynamicGI</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -76,6 +76,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)Samples\Bin\$(ProjectName)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -97,8 +98,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-3.3.1\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
@@ -113,35 +114,17 @@ COPY /Y "$(SolutionDir)Shaders\BoundingVolumes.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Reconstruction.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Reconstruction.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Lighting.hlsl"
-COPY /Y "$(SolutionDir)Shaders\Lighting.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Lighting.hlsl"
+COPY /Y "$(SolutionDir)Shaders\EncodingUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\EncodingUtils.hlsl"
+COPY /Y "$(SolutionDir)Shaders\EncodingUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\EncodingUtils.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\LightUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\LightUtils.hlsl"
+COPY /Y "$(SolutionDir)Shaders\LightUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\LightUtils.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\ShadowUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ShadowUtils.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ShadowUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ShadowUtils.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\OverlapTest.hlsl"
 COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\OverlapTest.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\SphericalHarmonics.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\SphericalHarmonics.hlsl"
-COPY /Y "$(SolutionDir)Shaders\SphericalHarmonics.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\SphericalHarmonics.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\VoxelGrid.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelGrid.hlsl"
-COPY /Y "$(SolutionDir)Shaders\VoxelGrid.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelGrid.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\ClearVoxelGridCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ClearVoxelGridCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\ClearVoxelGridCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ClearVoxelGridCS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelGridVS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelGridVS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelGridGS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelGridGS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelGridPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateVoxelGridPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelGridPS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\InjectVirtualPointLightsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\InjectVirtualPointLightsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\InjectVirtualPointLightsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\InjectVirtualPointLightsCS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\PropagateLightCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\PropagateLightCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\PropagateLightCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\PropagateLightCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\VisualizeTexturePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeTexturePS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\VisualizeTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeTexturePS.hlsl"
@@ -149,11 +132,8 @@ COPY /Y "$(SolutionDir)Shaders\VisualizeTexturePS.hlsl" "$(SolutionDir)Samples\B
 COPY /Y "$(SolutionDir)Shaders\FullScreenTriangleVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FullScreenTriangleVS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\FullScreenTriangleVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FullScreenTriangleVS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelGridPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeVoxelGridPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelGridPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeVoxelGridPS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\CreateRenderGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateRenderGBufferCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateRenderGBufferCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateRenderGBufferCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelReflectancePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeVoxelReflectancePS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelReflectancePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeVoxelReflectancePS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\RenderGBufferVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderGBufferVS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderGBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderGBufferVS.hlsl"
@@ -164,17 +144,8 @@ COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledShadingCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\TiledShadingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledShadingCS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ViewFrustumCullingCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\ViewFrustumCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ViewFrustumCullingCS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateRenderShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateRenderShadowMapCommandsCS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\SetupTiledShadowMapCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\SetupTiledShadowMapCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\SetupTiledShadowMapCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\SetupTiledShadowMapCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledShadowMapCommandsCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
@@ -182,11 +153,65 @@ COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Sampl
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeIntensityVS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeIntensityVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ConvertTiledShadowMapVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ConvertTiledShadowMapVS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeIntensityPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeIntensityPS.hlsl"</Command>
+COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ConvertTiledShadowMapPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ConvertTiledShadowMapPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapSATCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledShadowMapSATCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapSATCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledShadowMapSATCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FrustumMeshCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FrustumMeshCullingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FrustumMeshCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FrustumMeshCullingCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CopyReprojectedDepthPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CopyReprojectedDepthPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CopyReprojectedDepthPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CopyReprojectedDepthPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillVisibilityBufferVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillVisibilityBufferVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillVisibilityBufferPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillVisibilityBufferPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateMainDrawCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateMainDrawCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateMainDrawCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateMainDrawCommandsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateFalseNegativeDrawCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateFalseNegativeDrawCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FillMeshTypeDepthBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillMeshTypeDepthBufferPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillMeshTypeDepthBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillMeshTypeDepthBufferPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CalcShadingRectanglesCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CalcShadingRectanglesCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CalcShadingRectanglesCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CalcShadingRectanglesCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\TiledShadingVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledShadingVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\TiledShadingVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledShadingVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\TiledShadingPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledShadingPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\TiledShadingPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledShadingPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateVoxelizeCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelizeCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateVoxelizeCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelizeCommandsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\VoxelizeVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizeVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizeVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizeVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\VoxelizeGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizeGS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizeGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizeGS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizePS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizePS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\GammaCorrection.hlsl"
+COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"
+
+IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\assimp.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\$(Platform)\assimp.dll" "$(SolutionDir)Samples\$(ProjectName)\assimp.dll"
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\$(Platform)\assimp.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -196,11 +221,126 @@ COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-3.3.1\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
+MKDIR "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders"
+
+COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Foundation.hlsl"
+COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Foundation.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\BoundingVolumes.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\BoundingVolumes.hlsl"
+COPY /Y "$(SolutionDir)Shaders\BoundingVolumes.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\BoundingVolumes.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Reconstruction.hlsl"
+COPY /Y "$(SolutionDir)Shaders\Reconstruction.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Reconstruction.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\EncodingUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\EncodingUtils.hlsl"
+COPY /Y "$(SolutionDir)Shaders\EncodingUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\EncodingUtils.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\LightUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\LightUtils.hlsl"
+COPY /Y "$(SolutionDir)Shaders\LightUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\LightUtils.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\ShadowUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ShadowUtils.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ShadowUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ShadowUtils.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\OverlapTest.hlsl"
+COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\OverlapTest.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\VisualizeTexturePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeTexturePS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VisualizeTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeTexturePS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FullScreenTriangleVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FullScreenTriangleVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FullScreenTriangleVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FullScreenTriangleVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelReflectancePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeVoxelReflectancePS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VisualizeVoxelReflectancePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeVoxelReflectancePS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\RenderGBufferVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderGBufferVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderGBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderGBufferVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderGBufferPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderGBufferPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledShadowMapCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledShadowMapCommandsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ConvertTiledShadowMapVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ConvertTiledShadowMapVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ConvertTiledShadowMapPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ConvertTiledShadowMapPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapSATCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledShadowMapSATCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapSATCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledShadowMapSATCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FrustumMeshCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FrustumMeshCullingCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FrustumMeshCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FrustumMeshCullingCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CopyReprojectedDepthPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CopyReprojectedDepthPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CopyReprojectedDepthPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CopyReprojectedDepthPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillVisibilityBufferVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillVisibilityBufferVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillVisibilityBufferPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillVisibilityBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillVisibilityBufferPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateMainDrawCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateMainDrawCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateMainDrawCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateMainDrawCommandsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateFalseNegativeDrawCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateFalseNegativeDrawCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\FillMeshTypeDepthBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillMeshTypeDepthBufferPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FillMeshTypeDepthBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillMeshTypeDepthBufferPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CalcShadingRectanglesCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CalcShadingRectanglesCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CalcShadingRectanglesCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CalcShadingRectanglesCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\TiledShadingVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledShadingVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\TiledShadingVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledShadingVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\TiledShadingPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledShadingPS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\TiledShadingPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledShadingPS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CreateVoxelizeCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateVoxelizeCommandsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CreateVoxelizeCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateVoxelizeCommandsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\VoxelizeVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizeVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizeVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizeVS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\VoxelizeGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizeGS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizeGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizeGS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VoxelizePS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VoxelizePS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\GammaCorrection.hlsl"
+COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"
+
+IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\assimp.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\$(Platform)\assimp.dll" "$(SolutionDir)Samples\$(ProjectName)\assimp.dll"
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\$(Platform)\assimp.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -218,8 +358,8 @@ COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-3.3.1\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -251,6 +391,11 @@ COPY /Y "$(SolutionDir)Shaders\VisualizeIntensityPS.hlsl" "$(SolutionDir)Samples
     <ClInclude Include="Source\DXApplication.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Include\External\DirectXTex\DirectXTex_Desktop_2017_Win10.vcxproj">
+      <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -9,7 +9,6 @@
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/Fence.h"
 #include "D3DWrapper/GraphicsUtils.h"
-#include "DDSTextureLoader/DDSTextureLoader.h"
 #include "RenderPasses/CalcTextureLuminancePass.h"
 
 enum SRVDescriptors

@@ -54,7 +54,5 @@ private:
 	Viewport* m_pViewport;
 	Rect* m_pScissorRect;
 	UINT m_BackBufferIndex;
-	
-	UINT64 m_LastSubmissionFenceValue;
 	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers];
 };

@@ -6,9 +6,9 @@
 static const f32 PI = 3.141592654f;
 static const f32 TWO_PI = 6.283185307f;
 static const f32 RCP_PI = 0.318309886f;
-static const f32 RCP_TWO_PI = 0.159154943f;
-static const f32 PI_DIV_TWO = 1.570796327f;
-static const f32 PI_DIV_FOUR = 0.785398163f;
+static const f32 RCP_2_PI = 0.159154943f;
+static const f32 PI_DIV_2 = 1.570796327f;
+static const f32 PI_DIV_4 = 0.785398163f;
 static const f32 EPSILON = 1e-6f;
 
 template <typename T>
@@ -54,7 +54,7 @@ T Saturate(T value)
 }
 
 template <typename T>
-bool IsEqual(T left, T right, T epsilon)
+bool AreEqual(T left, T right, T epsilon)
 {
     return (Abs(left - right) < epsilon);
 }
@@ -63,6 +63,12 @@ template <typename T>
 T Rcp(T value)
 {
     return T(1) / value;
+}
+
+template <typename T>
+bool IsPowerOf2(T value)
+{
+	return ((value != 0) && !(value & (value - 1)));
 }
 
 f32 ToDegrees(f32 radians);
@@ -78,6 +84,9 @@ f32 Tan(f32 angleInRadians);
 f32 ArcTan(f32 tanAngle);
 
 void SinCos(f32& sinAngle, f32& cosAngle, f32 angleInRadians);
+
+f32 Log2(f32 value);
+f64 Log2(f64 value);
 
 f32 Ceil(f32 value);
 f64 Ceil(f64 value);

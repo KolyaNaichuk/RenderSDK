@@ -2,14 +2,12 @@
 
 #include "D3DWrapper/Common.h"
 
+struct RenderEnv;
 class GraphicsDevice;
 class CommandList;
 class RootSignature;
 class PipelineState;
 class GraphicsResource;
-
-struct RenderEnv;
-struct BindingResourceList;
 
 class PropagateLightPass
 {
@@ -26,7 +24,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		BindingResourceList** m_ppResources;
 		u16 m_NumIterations;
 	};
 

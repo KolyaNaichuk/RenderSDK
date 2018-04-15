@@ -1,39 +1,34 @@
 #pragma once
 
-#include "D3DWrapper/DescriptorHeap.h"
+#include "D3DWrapper/Common.h"
 
-class GraphicsDevice;
 class CommandListPool;
+class CommandQueue;
+class GraphicsDevice;
+class DescriptorHeap;
+class GPUProfiler;
+class Fence;
+
 struct HeapProperties;
 
 struct RenderEnv
 {
-	RenderEnv()
-		: m_pDevice(nullptr)
-		, m_pCommandListPool(nullptr)
-		, m_pUploadHeapProps(nullptr)
-		, m_pDefaultHeapProps(nullptr)
-		, m_pReadbackHeapProps(nullptr)
-		, m_pShaderInvisibleRTVHeap(nullptr)
-		, m_pShaderInvisibleDSVHeap(nullptr)
-		, m_pShaderInvisibleSRVHeap(nullptr)
-		, m_pShaderInvisibleSamplerHeap(nullptr)
-		, m_pShaderVisibleSRVHeap(nullptr)
-		, m_pShaderVisibleSamplerHeap(nullptr)
-	{}
+	GraphicsDevice* m_pDevice = nullptr;
+	CommandQueue* m_pCommandQueue = nullptr;
+	CommandListPool* m_pCommandListPool = nullptr;
+	GPUProfiler* m_pGPUProfiler = nullptr;
+	Fence* m_pFence = nullptr;
+	UINT64 m_LastSubmissionFenceValue = 0;
 
-	GraphicsDevice* m_pDevice;
-	CommandListPool* m_pCommandListPool;
+	HeapProperties* m_pUploadHeapProps = nullptr;
+	HeapProperties* m_pDefaultHeapProps = nullptr;
+	HeapProperties* m_pReadbackHeapProps = nullptr;
 
-	HeapProperties* m_pUploadHeapProps;
-	HeapProperties* m_pDefaultHeapProps;
-	HeapProperties* m_pReadbackHeapProps;
+	DescriptorHeap* m_pShaderInvisibleRTVHeap = nullptr;
+	DescriptorHeap* m_pShaderInvisibleDSVHeap = nullptr;
+	DescriptorHeap* m_pShaderInvisibleSRVHeap = nullptr;
+	DescriptorHeap* m_pShaderInvisibleSamplerHeap = nullptr;
 
-	DescriptorHeap* m_pShaderInvisibleRTVHeap;
-	DescriptorHeap* m_pShaderInvisibleDSVHeap;
-	DescriptorHeap* m_pShaderInvisibleSRVHeap;
-	DescriptorHeap* m_pShaderInvisibleSamplerHeap;
-
-	DescriptorHeap* m_pShaderVisibleSRVHeap;
-	DescriptorHeap* m_pShaderVisibleSamplerHeap;
+	DescriptorHeap* m_pShaderVisibleSRVHeap = nullptr;
+	DescriptorHeap* m_pShaderVisibleSamplerHeap = nullptr;
 };

@@ -19,5 +19,5 @@ public:
 private:
 	ComPtr<ID3D12Fence> m_D3DFence;
 	HANDLE m_hCompletionEvent;
-	UINT64 m_CachedCompletedValue;
+	UINT64 m_CompletedValue;
 };

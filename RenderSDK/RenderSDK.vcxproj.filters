@@ -10,11 +10,14 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{cdfc8819-7e01-4a64-ad55-d4d9eee98bb6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="DDSTextureLoader">
-      <UniqueIdentifier>{719216ed-8ae2-47b7-8ce1-405c4d23ebc8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="D3DWrapper">
       <UniqueIdentifier>{df923963-1277-46f8-b455-1351c2a4b4c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scene">
+      <UniqueIdentifier>{f98c28bd-cca2-4c57-a4b8-65c8e1756ab7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Profiler">
+      <UniqueIdentifier>{3336e0bf-4978-4e16-ad21-b693c4acdb46}</UniqueIdentifier>
     </Filter>
     <Filter Include="RenderPasses">
       <UniqueIdentifier>{b02df4a5-0490-4ee5-850e-5486e84ea2c7}</UniqueIdentifier>
@@ -44,30 +47,6 @@
     </ClInclude>
     <ClInclude Include="..\Include\Math\OverlapTest.h">
       <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\DDSTextureLoader\DDSTextureLoader.h">
-      <Filter>DDSTextureLoader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\MeshData.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\MeshDataFactory.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\Material.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\Color.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\MeshDataUtilities.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\Camera.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\SceneObject.h">
-      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\Math\EulerAngles.h">
       <Filter>Math</Filter>
@@ -108,34 +87,10 @@
     <ClInclude Include="..\Include\Math\SphericalHarmonics.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Common\Light.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\MeshBatchData.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\MeshBatch.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\Scene.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\SceneLoader.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\LightBuffer.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Math\Cone.h">
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\ClearVoxelGridPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\CreateVoxelGridPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h">
@@ -151,12 +106,6 @@
       <Filter>RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\TiledShadingPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\ViewFrustumCullingPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelGridPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\D3DWrapper\GraphicsDevice.h">
@@ -189,9 +138,6 @@
     <ClInclude Include="..\Include\D3DWrapper\RootSignature.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\D3DWrapper\BindingResourceList.h">
-      <Filter>D3DWrapper</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\D3DWrapper\CommandQueue.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
@@ -204,25 +150,7 @@
     <ClInclude Include="..\Include\D3DWrapper\Common.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\CreateRenderGBufferCommandsPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\CreateRenderShadowMapCommandsPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\SetupTiledShadowMapPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\VisualizeTexturePass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Common\OBJFileLoader.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Math\Hash.h">
-      <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\InjectVirtualPointLightsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\PropagateLightPass.h">
@@ -237,11 +165,119 @@
     <ClInclude Include="..\Include\Math\Quad.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\VisualizeIntensityPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Common\FileUtilities.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\DownscaleAndReprojectDepthPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\FillVisibilityBufferPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateMainDrawCommandsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Math\Matrix3.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\StringUtilities.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateFalseNegativeDrawCommandsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\Common.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CalcShadingRectanglesPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\FillMeshTypeDepthBufferPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateVoxelizeCommandsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\VoxelizePass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\VisualizeVoxelReflectancePass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\FrustumMeshCullingPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\QueryHeap.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\ConvertTiledShadowMapPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateTiledShadowMapSATPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateTiledShadowMapCommandsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\LightRenderData.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Common\Color.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Profiler\CPUProfiler.h">
+      <Filter>Profiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Profiler\GPUProfiler.h">
+      <Filter>Profiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Scene\Camera.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Scene\Light.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Scene\Material.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Scene\Mesh.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Scene\MeshBatch.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Scene\MeshFactory.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Scene\MeshUtilities.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Scene\OBJFileLoader.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Scene\Scene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Scene\SceneLoader.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Scene\SceneObject.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateShadowMapCommandsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\GeometryBuffer.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\MaterialRenderResources.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\MeshRenderResources.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\ShadowMapTileAllocator.h">
+      <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -265,24 +301,6 @@
     </ClCompile>
     <ClCompile Include="..\Source\Math\OverlapTest.cpp">
       <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\DDSTextureLoader\DDSTextureLoader.cpp">
-      <Filter>DDSTextureLoader</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\MeshDataFactory.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\MeshData.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Include\Common\MeshDataUtilities.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\Camera.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\SceneObject.cpp">
-      <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Math\EulerAngles.cpp">
       <Filter>Math</Filter>
@@ -323,37 +341,10 @@
     <ClCompile Include="..\Source\Math\SphericalHarmonics.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\Common\Light.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\MeshBatchData.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\MeshBatch.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\Material.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\Scene.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\SceneLoader.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\LightBuffer.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\Math\Cone.cpp">
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\ClearVoxelGridPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\CreateVoxelGridPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp">
@@ -369,12 +360,6 @@
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\TiledShadingPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\ViewFrustumCullingPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelGridPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\D3DWrapper\GraphicsDevice.cpp">
@@ -413,22 +398,7 @@
     <ClCompile Include="..\Source\D3DWrapper\GraphicsResource.cpp">
       <Filter>D3DWrapper</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\CreateRenderGBufferCommandsPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\CreateRenderShadowMapCommandsPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\SetupTiledShadowMapPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\VisualizeTexturePass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Common\OBJFileLoader.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\InjectVirtualPointLightsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\PropagateLightPass.cpp">
@@ -443,11 +413,110 @@
     <ClCompile Include="..\Source\Math\Quad.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\VisualizeIntensityPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\Common\FileUtilities.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\DownscaleAndReprojectDepthPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\FillVisibilityBufferPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateMainDrawCommandsPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Math\Matrix3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\StringUtilities.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CalcShadingRectanglesPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\FillMeshTypeDepthBufferPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateVoxelizeCommandsPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\VoxelizePass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelReflectancePass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\FrustumMeshCullingPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\QueryHeap.cpp">
+      <Filter>D3DWrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\ConvertTiledShadowMapPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateTiledShadowMapSATPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateTiledShadowMapCommandsPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Profiler\CPUProfiler.cpp">
+      <Filter>Profiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Profiler\GPUProfiler.cpp">
+      <Filter>Profiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Scene\Camera.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Scene\Light.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Scene\Material.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Scene\Mesh.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Scene\MeshBatch.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Scene\MeshFactory.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Scene\MeshUtilities.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Scene\OBJFileLoader.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Scene\Scene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Scene\SceneLoader.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Scene\SceneObject.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateShadowMapCommandsPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\GeometryBuffer.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\MaterialRenderResources.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\MeshRenderResources.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\ShadowMapTileAllocator.cpp">
+      <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -460,25 +529,7 @@
     <None Include="..\Shaders\FullScreenTriangleVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\CreateVoxelGridVS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CreateVoxelGridPS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CreateVoxelGridGS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\VisualizeVoxelGridPS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\Reconstruction.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\ClearVoxelGridCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\VoxelGrid.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\CalcTextureLuminancePS.hlsl">
@@ -487,19 +538,7 @@
     <None Include="..\Shaders\ScaleTexture.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\Packing.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\Lighting.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\TiledShadingCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\OverlapTest.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\ViewFrustumCullingCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\Foundation.hlsl">
@@ -520,15 +559,6 @@
     <None Include="..\Shaders\RenderGBufferVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\CreateRenderGBufferCommandsCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CreateRenderShadowMapCommandsCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\SetupTiledShadowMapCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\VisualizeTexturePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -538,16 +568,79 @@
     <None Include="..\Shaders\PropagateLightCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\InjectVirtualPointLightsCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\BoundingVolumes.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\VisualizeIntensityVS.hlsl">
+    <None Include="..\Shaders\DownscaleAndReprojectDepthCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\VisualizeIntensityPS.hlsl">
+    <None Include="..\Shaders\FillVisibilityBufferVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CopyReprojectedDepthPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\FillVisibilityBufferPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\FrustumMeshCullingCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateMainDrawCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateFalseNegativeDrawCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\TiledShadingPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\TiledShadingVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CalcShadingRectanglesCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\FillMeshTypeDepthBufferPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateVoxelizeCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VoxelizeVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VoxelizePS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VoxelizeGS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VisualizeVoxelReflectancePS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\GammaCorrection.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\LightUtils.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\ConvertTiledShadowMapVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\ConvertTiledShadowMapPS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\ShadowUtils.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\EncodingUtils.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateTiledShadowMapCommandsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateTiledShadowMapSATCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -3,6 +3,8 @@
 #include "Math/Math.h"
 
 class Transform;
+struct Vector4f;
+struct Matrix4f;
 
 struct Vector3f
 {
@@ -37,11 +39,15 @@ const Vector3f Normalize(const Vector3f& vec);
 const Vector3f Rcp(const Vector3f& vec);
 f32 Dot(const Vector3f& vec1, const Vector3f& vec2);
 const Vector3f Cross(const Vector3f& vec1, const Vector3f& vec2);
-bool IsEqual(const Vector3f& vec1, const Vector3f& vec2, f32 epsilon = EPSILON);
+bool AreEqual(const Vector3f& vec1, const Vector3f& vec2, f32 epsilon = EPSILON);
+bool AreOrthogonal(const Vector3f& vec1, const Vector3f& vec2, f32 epsilon = EPSILON);
 const Vector3f Min(const Vector3f& vec1, const Vector3f& vec2);
 const Vector3f Max(const Vector3f& vec1, const Vector3f& vec2);
 bool IsNormalized(const Vector3f& vec, f32 epsilon = EPSILON);
+const Vector3f TransformPoint(const Vector3f& point, const Matrix4f& matrix);
 const Vector3f TransformPoint(const Vector3f& point, const Transform& transform);
+Vector3f ToCartesianVector(const Vector4f& homogeneousVec);
+Vector3f ToCartesianPoint(const Vector4f& homogeneousPoint);
 
 Vector3f& operator+= (Vector3f& vec1, const Vector3f& vec2);
 Vector3f& operator-= (Vector3f& vec1, const Vector3f& vec2);
