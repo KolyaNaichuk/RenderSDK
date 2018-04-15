@@ -131,7 +131,7 @@ void CreateTiledShadowMapSATPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_TiledVarianceShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 		
 	assert(pParams->m_pTiledShadowMap->GetWidth() == pParams->m_pTiledShadowMap->GetHeight());
-	const UINT maxNumTiles = Sqr(pParams->m_pTiledShadowMap->GetWidth() / kTileSizeInPixels);
+	const UINT64 maxNumTiles = Sqr(pParams->m_pTiledShadowMap->GetWidth() / kTileSizeInPixels);
 	
 	assert(m_UploadTileOffsetBuffers.empty());
 	assert(m_UploadTileOffsetBuffersMem.empty());
