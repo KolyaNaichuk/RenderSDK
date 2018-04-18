@@ -20,7 +20,7 @@ namespace
 	
 	enum
 	{
-		kTileSizeInPixels = 32
+		kTileSizeInPixels = 64
 	};
 }
 

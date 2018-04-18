@@ -661,7 +661,13 @@ void DXApplication::OnRender()
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
-	m_pSwapChain->Present(1, 0);
+	
+#ifdef ENABLE_PROFILING
+	m_pSwapChain->Present(0/*vsync disabled*/, 0);
+#else // ENABLE_PROFILING
+	m_pSwapChain->Present(1/*vsync enabled*/, 0);
+#endif // ENABLE_PROFILING
+
 	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 
 #ifdef ENABLE_PROFILING

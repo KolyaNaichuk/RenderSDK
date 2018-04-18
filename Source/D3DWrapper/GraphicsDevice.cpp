@@ -54,6 +54,10 @@ GraphicsDevice::GraphicsDevice(GraphicsFactory* pFactory, D3D_FEATURE_LEVEL minF
 	VerifyD3DResult(d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE));
 	VerifyD3DResult(d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE));
 #endif // ENABLE_GRAPHICS_DEBUGGING
+
+#ifdef ENABLE_PROFILING
+	VerifyD3DResult(m_D3DDevice->SetStablePowerState(TRUE));
+#endif // ENABLE_PROFILING
 }
 
 void GraphicsDevice::CheckFeatureSupport(D3D12_FEATURE feature, void* pFeatureSupportData, UINT featureSupportDataSize)

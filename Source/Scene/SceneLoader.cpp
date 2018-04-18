@@ -115,7 +115,12 @@ Scene* SceneLoader::LoadDabrovicSponza()
 
 Scene* SceneLoader::LoadSibenik()
 {
-	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\Sibenik\\sibenik.obj", true/*use32BitIndices*/);
+#if 0
+	const wchar_t* pFilePath = L"..\\..\\Resources\\Sibenik\\sibenik.obj";
+#else
+	const wchar_t* pFilePath = L"..\\..\\..\\Resources\\Sibenik\\sibenik.obj";
+#endif
+	Scene* pScene = LoadSceneFromOBJFile(pFilePath, true/*use32BitIndices*/);
 
 	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
 	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-20.1410999, -15.3123074, -8.49680042}
@@ -140,7 +145,7 @@ Scene* SceneLoader::LoadSibenik()
 	pScene->AddPointLight(pPointLight1);
 #endif
 
-#if 0
+#if 1
 	PointLight* pPointLight2 = new PointLight("Point light", 50.0f, 0.1f);
 	pPointLight2->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight2->SetIntensity(1.0f);
@@ -148,7 +153,7 @@ Scene* SceneLoader::LoadSibenik()
 	pScene->AddPointLight(pPointLight2);
 #endif
 
-#if 0
+#if 1
 	PointLight* pPointLight3 = new PointLight("Point light", 50.0f, 0.1f);
 	pPointLight3->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight3->SetIntensity(1.0f);
@@ -156,7 +161,7 @@ Scene* SceneLoader::LoadSibenik()
 	pScene->AddPointLight(pPointLight3);
 #endif
 
-#if 0
+#if 1
 	PointLight* pPointLight4 = new PointLight("Point light", 50.0f, 0.1f);
 	pPointLight4->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight4->SetIntensity(1.0f);
@@ -164,7 +169,7 @@ Scene* SceneLoader::LoadSibenik()
 	pScene->AddPointLight(pPointLight4);
 #endif
 
-#if 0
+#if 1
 	PointLight* pPointLight5 = new PointLight("Point light", 50.0f, 0.1f);
 	pPointLight5->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight5->SetIntensity(1.0f);
@@ -172,7 +177,7 @@ Scene* SceneLoader::LoadSibenik()
 	pScene->AddPointLight(pPointLight5);
 #endif
 
-#if 0
+#if 1
 	PointLight* pPointLight6 = new PointLight("Point light", 50.0f, 0.1f);
 	pPointLight6->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight6->SetIntensity(1.0f);
