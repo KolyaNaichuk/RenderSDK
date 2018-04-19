@@ -115,7 +115,7 @@ Scene* SceneLoader::LoadDabrovicSponza()
 
 Scene* SceneLoader::LoadSibenik()
 {
-#if 0
+#if 1
 	const wchar_t* pFilePath = L"..\\..\\Resources\\Sibenik\\sibenik.obj";
 #else
 	const wchar_t* pFilePath = L"..\\..\\..\\Resources\\Sibenik\\sibenik.obj";
