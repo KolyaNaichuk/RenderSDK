@@ -9,26 +9,8 @@ struct ShadowMapTile
 	float texSpaceSize;
 };
 
-float ChebyshevUpperBound(float2 moments, float t)
-{
-	float probability = (t <= moments.x);
-
-	float variance = moments.y - moments.x * moments.x;	
-	float delta = t - moments.x;
-	float maxProbability = variance / (variance + delta * delta);
-	
-	return max(probability, maxProbability);
-}
-
-float VSM(SamplerState shadowSampler, Texture2D<float2> varianceShadowMap, float2 shadowMapCoords, float receiverDepth)
-{
-	//float2 moments = varianceShadowMap.SampleLevel(shadowSampler, shadowMapCoords, 0.0f).xy;
-	//return ChebyshevUpperBound(moments, receiverDepth);
-	return 1.0f;
-}
-
-float CalcPointLightVisibility(SamplerState shadowSampler, Texture2D<float2> varianceShadowMap,
-	float4x4 lightViewProjMatrix, float lightViewNearPlane, float lightRcpViewClipRange, float3 worldSpacePos)
+float CalcPointLightVisibility(Texture2D<float3> expShadowMap, float4x4 lightViewProjMatrix,
+	float lightViewNearPlane, float lightRcpViewClipRange, float3 worldSpacePos)
 {
 	float4 lightClipSpacePos = mul(lightViewProjMatrix, float4(worldSpacePos, 1.0f));
 	
@@ -38,10 +20,10 @@ float CalcPointLightVisibility(SamplerState shadowSampler, Texture2D<float2> var
 	float lightSpaceDepth = lightClipSpacePos.w;
 	float normalizedLightSpaceDepth = (lightSpaceDepth - lightViewNearPlane) * lightRcpViewClipRange;
 
-	return VSM(shadowSampler, varianceShadowMap, shadowMapCoords, normalizedLightSpaceDepth);
+	return 1.0f;
 }
 
-float CalcSpotLightVisibility(SamplerState shadowSampler, Texture2D<float2> varianceShadowMap, ShadowMapTile shadowMapTile,
+float CalcSpotLightVisibility(Texture2D<float3> expShadowMap, ShadowMapTile shadowMapTile,
 	float4x4 lightViewProjMatrix, float lightViewNearPlane, float lightRcpViewClipRange, float3 worldSpacePos)
 {
 	float4 lightClipSpacePos = mul(lightViewProjMatrix, float4(worldSpacePos, 1.0f));
@@ -58,7 +40,7 @@ float CalcSpotLightVisibility(SamplerState shadowSampler, Texture2D<float2> vari
 		float lightSpaceDepth = lightClipSpacePos.w;
 		float normalizedLightSpaceDepth = (lightSpaceDepth - lightViewNearPlane) * lightRcpViewClipRange;
 
-		lightVisibility = VSM(shadowSampler, varianceShadowMap, shadowMapCoords, normalizedLightSpaceDepth);
+		lightVisibility = 1.0f;
 	}
 	return lightVisibility;
 }

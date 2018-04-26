@@ -1,4 +1,4 @@
-#include "RenderPasses/CreateTiledShadowMapSATPass.h"
+#include "RenderPasses/FilterTiledExpShadowMapPass.h"
 #include "RenderPasses/LightRenderData.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/CommandSignature.h"
@@ -24,7 +24,7 @@ namespace
 	};
 }
 
-CreateTiledShadowMapSATPass::CreateTiledShadowMapSATPass(InitParams* pParams)
+FilterTiledExpShadowMapPass::FilterTiledExpShadowMapPass(InitParams* pParams)
 	: m_Name(pParams->m_pName)
 	, m_LightType(pParams->m_LightType)
 {
@@ -33,7 +33,7 @@ CreateTiledShadowMapSATPass::CreateTiledShadowMapSATPass(InitParams* pParams)
 	InitPipelineStates(pParams);
 }
 
-CreateTiledShadowMapSATPass::~CreateTiledShadowMapSATPass()
+FilterTiledExpShadowMapPass::~FilterTiledExpShadowMapPass()
 {	
 	SafeDelete(m_pRootSignature);
 	SafeDelete(m_pPipelineState);
@@ -46,7 +46,7 @@ CreateTiledShadowMapSATPass::~CreateTiledShadowMapSATPass()
 	}
 }
 
-void CreateTiledShadowMapSATPass::Record(RenderParams* pParams)
+void FilterTiledExpShadowMapPass::Record(RenderParams* pParams)
 {
 	Buffer* pTileOffsetsBuffer = m_UploadTileOffsetBuffers[pParams->m_CurrentFrameIndex];
 	Vector2u* pTileOffsets = (Vector2u*)m_UploadTileOffsetBuffersMem[pParams->m_CurrentFrameIndex];
@@ -123,15 +123,15 @@ void CreateTiledShadowMapSATPass::Record(RenderParams* pParams)
 	pCommandList->End();
 }
 
-void CreateTiledShadowMapSATPass::InitResources(InitParams* pParams)
+void FilterTiledExpShadowMapPass::InitResources(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	m_OutputResourceStates.m_TiledVarianceShadowMapState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_TiledVarianceShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	m_OutputResourceStates.m_TiledExpShadowMapState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_TiledExpShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 		
 	assert(pParams->m_pTiledShadowMap->GetWidth() == pParams->m_pTiledShadowMap->GetHeight());
-	const UINT64 maxNumTiles = Sqr(pParams->m_pTiledShadowMap->GetWidth() / kTileSizeInPixels);
+	const UINT maxNumTiles = Sqr(pParams->m_pTiledShadowMap->GetWidth() / kTileSizeInPixels);
 	
 	assert(m_UploadTileOffsetBuffers.empty());
 	assert(m_UploadTileOffsetBuffersMem.empty());
@@ -145,7 +145,7 @@ void CreateTiledShadowMapSATPass::InitResources(InitParams* pParams)
 	for (u32 index = 0; index < pParams->m_RenderLatency; ++index)
 	{
 		m_UploadTileOffsetBuffers[index] = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &tileOffsetBufferDesc,
-			D3D12_RESOURCE_STATE_GENERIC_READ, L"CreateTiledShadowMapSATPass::m_UploadTileOffsetBuffer");
+			D3D12_RESOURCE_STATE_GENERIC_READ, L"FilterTiledExpShadowMapPass::m_UploadTileOffsetBuffer");
 
 		m_UploadTileOffsetBuffersMem[index] = m_UploadTileOffsetBuffers[index]->Map(0, &readRange);
 	}
@@ -153,23 +153,23 @@ void CreateTiledShadowMapSATPass::InitResources(InitParams* pParams)
 	assert(m_pTiledShadowMapSAT == nullptr);	
 	const FLOAT optimizedClearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
-	ColorTexture2DDesc tiledShadowMapSATDesc(DXGI_FORMAT_R32G32_FLOAT, pParams->m_pTiledShadowMap->GetWidth(),
+	ColorTexture2DDesc tiledShadowMapSATDesc(pParams->m_pTiledShadowMap->GetFormat(), pParams->m_pTiledShadowMap->GetWidth(),
 		pParams->m_pTiledShadowMap->GetHeight(), false, true, true);
 	
 	 m_pTiledShadowMapSAT = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &tiledShadowMapSATDesc,
-		pParams->m_InputResourceStates.m_TiledVarianceShadowMapSATState, optimizedClearColor, L"CreateTiledShadowMapSATPass::m_pTiledShadowMapSAT");
+		pParams->m_InputResourceStates.m_TiledExpShadowMapSATState, optimizedClearColor, L"FilterTiledExpShadowMapPass::m_pTiledShadowMapSAT");
 	
 	assert(m_ResourceBarriers.empty());	
 	
-	if (pParams->m_InputResourceStates.m_TiledVarianceShadowMapState != m_OutputResourceStates.m_TiledVarianceShadowMapState)
+	if (pParams->m_InputResourceStates.m_TiledExpShadowMapState != m_OutputResourceStates.m_TiledExpShadowMapState)
 		m_ResourceBarriers.emplace_back(pParams->m_pTiledShadowMap,
-			pParams->m_InputResourceStates.m_TiledVarianceShadowMapState,
-			m_OutputResourceStates.m_TiledVarianceShadowMapState);
+			pParams->m_InputResourceStates.m_TiledExpShadowMapState,
+			m_OutputResourceStates.m_TiledExpShadowMapState);
 	
-	if (pParams->m_InputResourceStates.m_TiledVarianceShadowMapSATState != m_OutputResourceStates.m_TiledVarianceShadowMapSATState)
+	if (pParams->m_InputResourceStates.m_TiledExpShadowMapSATState != m_OutputResourceStates.m_TiledExpShadowMapSATState)
 		m_ResourceBarriers.emplace_back(m_pTiledShadowMapSAT,
-			pParams->m_InputResourceStates.m_TiledVarianceShadowMapSATState,
-			m_OutputResourceStates.m_TiledVarianceShadowMapSATState);
+			pParams->m_InputResourceStates.m_TiledExpShadowMapSATState,
+			m_OutputResourceStates.m_TiledExpShadowMapSATState);
 
 
 	assert(!m_SRVHeapStart.IsValid());	
@@ -182,7 +182,7 @@ void CreateTiledShadowMapSATPass::InitResources(InitParams* pParams)
 		m_pTiledShadowMapSAT->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void CreateTiledShadowMapSATPass::InitRootSignature(InitParams* pParams)
+void FilterTiledExpShadowMapPass::InitRootSignature(InitParams* pParams)
 {	
 	assert(m_pRootSignature == nullptr);
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
@@ -196,10 +196,10 @@ void CreateTiledShadowMapSATPass::InitRootSignature(InitParams* pParams)
 	rootParams[kRootSRVParam] = RootSRVParameter(1, D3D12_SHADER_VISIBILITY_ALL);
 	
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
-	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"CreateTiledShadowMapSATPass::m_pRootSignature");
+	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"FilterTiledExpShadowMapPass::m_pRootSignature");
 }
 
-void CreateTiledShadowMapSATPass::InitPipelineStates(InitParams* pParams)
+void FilterTiledExpShadowMapPass::InitPipelineStates(InitParams* pParams)
 {
 	assert(m_pRootSignature != nullptr);
 	assert(m_pPipelineState == nullptr);
@@ -218,5 +218,5 @@ void CreateTiledShadowMapSATPass::InitPipelineStates(InitParams* pParams)
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
 	pipelineStateDesc.SetComputeShader(&computeShader);
 
-	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CreateTiledShadowMapSATPass::m_pPipelineState");
+	m_pPipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"FilterTiledExpShadowMapPass::m_pPipelineState");
 }

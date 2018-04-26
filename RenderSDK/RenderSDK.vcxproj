@@ -210,7 +210,7 @@
     <ClInclude Include="..\Include\RenderPasses\CreateFalseNegativeDrawCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateMainDrawCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateShadowMapCommandsPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\CreateTiledShadowMapSATPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\FilterTiledExpShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FrustumMeshCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\GeometryBuffer.h" />
     <ClInclude Include="..\Include\RenderPasses\LightRenderData.h" />
@@ -292,7 +292,7 @@
     <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateMainDrawCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateShadowMapCommandsPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CreateTiledShadowMapSATPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\FilterTiledExpShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FrustumMeshCullingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\GeometryBuffer.cpp" />
     <ClCompile Include="..\Source\RenderPasses\MaterialRenderResources.cpp" />
@@ -643,7 +643,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\CreateTiledShadowMapSATCS.hlsl">
+    <None Include="..\Shaders\FilterTiledExpShadowMapCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>

@@ -16,7 +16,7 @@ public:
 		TextureType_GBufferNormal = 1,
 		TextureType_GBufferTexCoord,
 		TextureType_Depth,
-		TextureType_VarianceShadowMap,
+		TextureType_ExpShadowMap,
 		TextureType_Other
 	};
 

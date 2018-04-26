@@ -9,13 +9,13 @@ class CommandSignature;
 class RootSignature;
 class PipelineState;
 
-class CreateTiledShadowMapSATPass
+class FilterTiledExpShadowMapPass
 {
 public:
 	struct ResourceStates
 	{
-		D3D12_RESOURCE_STATES m_TiledVarianceShadowMapState;
-		D3D12_RESOURCE_STATES m_TiledVarianceShadowMapSATState;
+		D3D12_RESOURCE_STATES m_TiledExpShadowMapState;
+		D3D12_RESOURCE_STATES m_TiledExpShadowMapSATState;
 	};
 
 	struct InitParams
@@ -37,8 +37,8 @@ public:
 		u32 m_NumLights;
 	};
 
-	CreateTiledShadowMapSATPass(InitParams* pParams);
-	~CreateTiledShadowMapSATPass();
+	FilterTiledExpShadowMapPass(InitParams* pParams);
+	~FilterTiledExpShadowMapPass();
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }

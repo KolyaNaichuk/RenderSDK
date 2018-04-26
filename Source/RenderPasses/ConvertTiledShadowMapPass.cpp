@@ -31,7 +31,7 @@ ConvertTiledShadowMapPass::~ConvertTiledShadowMapPass()
 {
 	SafeDelete(m_pRootSignature);
 	SafeDelete(m_pPipelineState);
-	SafeDelete(m_pTiledVarianceShadowMap);
+	SafeDelete(m_pTiledExpShadowMap);
 	SafeDelete(m_pViewport);
 }
 
@@ -81,14 +81,14 @@ void ConvertTiledShadowMapPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_TiledShadowMapState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_ShadowMapTileBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_ConvertShadowMapParamsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_TiledVarianceShadowMapState = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	m_OutputResourceStates.m_TiledExpShadowMapState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
-	assert(m_pTiledVarianceShadowMap == nullptr);
+	assert(m_pTiledExpShadowMap == nullptr);
 	const FLOAT optimizedClearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
-	ColorTexture2DDesc varianceTiledShadowMapDesc(DXGI_FORMAT_R32G32_FLOAT, pParams->m_pTiledShadowMap->GetWidth(),
+	ColorTexture2DDesc tiledExpShadowMapDesc(DXGI_FORMAT_R32G32B32_FLOAT, pParams->m_pTiledShadowMap->GetWidth(),
 		pParams->m_pTiledShadowMap->GetHeight(), true, true, false);
-	m_pTiledVarianceShadowMap = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &varianceTiledShadowMapDesc,
-		pParams->m_InputResourceStates.m_TiledVarianceShadowMapState, optimizedClearColor, L"ConvertTiledShadowMapPass::m_pTiledVarianceShadowMap");
+	m_pTiledExpShadowMap = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &tiledExpShadowMapDesc,
+		pParams->m_InputResourceStates.m_TiledExpShadowMapState, optimizedClearColor, L"ConvertTiledShadowMapPass::m_pTiledExpShadowMap");
 
 	assert(m_ResourceBarriers.empty());
 	AddResourceBarrierIfRequired(pParams->m_pTiledShadowMap,
@@ -103,9 +103,9 @@ void ConvertTiledShadowMapPass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_ConvertShadowMapParamsBufferState,
 		m_OutputResourceStates.m_ConvertShadowMapParamsBufferState);
 
-	AddResourceBarrierIfRequired(m_pTiledVarianceShadowMap,
-		pParams->m_InputResourceStates.m_TiledVarianceShadowMapState,
-		m_OutputResourceStates.m_TiledVarianceShadowMapState);
+	AddResourceBarrierIfRequired(m_pTiledExpShadowMap,
+		pParams->m_InputResourceStates.m_TiledExpShadowMapState,
+		m_OutputResourceStates.m_TiledExpShadowMapState);
 
 	m_SRVHeapStartVS = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStartVS,
@@ -118,7 +118,7 @@ void ConvertTiledShadowMapPass::InitResources(InitParams* pParams)
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		pParams->m_pConvertShadowMapParamsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	m_RTVHeapStart = m_pTiledVarianceShadowMap->GetRTVHandle();
+	m_RTVHeapStart = m_pTiledExpShadowMap->GetRTVHandle();
 }
 
 void ConvertTiledShadowMapPass::InitRootSignature(InitParams* pParams)
@@ -144,7 +144,7 @@ void ConvertTiledShadowMapPass::InitPipelineState(InitParams* pParams)
 	assert(m_pPipelineState == nullptr);
 
 	assert(m_pViewport == nullptr);
-	m_pViewport = new Viewport(0.0f, 0.0f, FLOAT(m_pTiledVarianceShadowMap->GetWidth()), FLOAT(m_pTiledVarianceShadowMap->GetHeight()));
+	m_pViewport = new Viewport(0.0f, 0.0f, FLOAT(m_pTiledExpShadowMap->GetWidth()), FLOAT(m_pTiledExpShadowMap->GetHeight()));
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	std::string lightTypeStr = std::to_string(pParams->m_LightType);
@@ -164,7 +164,7 @@ void ConvertTiledShadowMapPass::InitPipelineState(InitParams* pParams)
 	pipelineStateDesc.SetPixelShader(&pixelShader);
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.DepthStencilState = DepthStencilDesc(DepthStencilDesc::Disabled);
-	pipelineStateDesc.SetRenderTargetFormat(GetRenderTargetViewFormat(m_pTiledVarianceShadowMap->GetFormat()));
+	pipelineStateDesc.SetRenderTargetFormat(GetRenderTargetViewFormat(m_pTiledExpShadowMap->GetFormat()));
 
 	m_pPipelineState = new PipelineState(pParams->m_pRenderEnv->m_pDevice, &pipelineStateDesc, L"ConvertTiledShadowMapPass::m_pPipelineState");
 }

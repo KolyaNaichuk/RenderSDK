@@ -75,8 +75,7 @@ struct SamplerDesc : public D3D12_SAMPLER_DESC
 		Point,
 		Linear,
 		Anisotropic,
-		MaxPoint,
-		VarianceShadowMapSampler
+		MaxPoint
 	};
 	SamplerDesc(Id id);
 };
@@ -88,8 +87,7 @@ struct StaticSamplerDesc : public D3D12_STATIC_SAMPLER_DESC
 		Point,
 		Linear,
 		Anisotropic,
-		MaxPoint,
-		VarianceShadowMapSampler
+		MaxPoint
 	};
 	StaticSamplerDesc(Id id, UINT shaderRegister, D3D12_SHADER_VISIBILITY shaderVisibility, UINT registerSpace = 0);
 };

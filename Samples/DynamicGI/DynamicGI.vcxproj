@@ -159,8 +159,8 @@ COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapVS.hlsl" "$(SolutionDir)Samp
 COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ConvertTiledShadowMapPS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ConvertTiledShadowMapPS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapSATCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledShadowMapSATCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapSATCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledShadowMapSATCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FilterTiledExpShadowMapCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FilterTiledExpShadowMapCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FilterTiledExpShadowMapCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FilterTiledExpShadowMapCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
@@ -287,8 +287,8 @@ COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapVS.hlsl" "$(SolutionDir)Samp
 COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ConvertTiledShadowMapPS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\ConvertTiledShadowMapPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ConvertTiledShadowMapPS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapSATCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledShadowMapSATCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapSATCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledShadowMapSATCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FilterTiledExpShadowMapCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FilterTiledExpShadowMapCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\FilterTiledExpShadowMapCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FilterTiledExpShadowMapCS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"

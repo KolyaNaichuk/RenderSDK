@@ -5,7 +5,7 @@
 #define TEXTURE_TYPE_GBUFFER_NORMAL				1
 #define TEXTURE_TYPE_GBUFFER_TEXCOORD			2
 #define TEXTURE_TYPE_DEPTH						3
-#define TEXTURE_TYPE_VARIANCE_SHADOW_MAP		4
+#define TEXTURE_TYPE_EXP_SHADOW_MAP				4
 #define TEXTURE_TYPE_OTHER						5
 
 struct PSInput
@@ -41,10 +41,10 @@ float4 Main(PSInput input) : SV_Target
 	float4 color = float4(normalizedViewSpaceDepth.rrr, 1.0f);
 #endif // TEXTURE_TYPE_DEPTH
 
-#if (TEXTURE_TYPE == TEXTURE_TYPE_VARIANCE_SHADOW_MAP)
+#if (TEXTURE_TYPE == TEXTURE_TYPE_EXP_SHADOW_MAP)
 	float normalizedLightSpaceDepth = g_Texture.Sample(g_Sampler, input.texCoord).r;
 	float4 color = float4(normalizedLightSpaceDepth.rrr, 1.0f);
-#endif // TEXTURE_TYPE_VARIANCE_SHADOW_MAP
+#endif // TEXTURE_TYPE_EXP_SHADOW_MAP
 
 #if (TEXTURE_TYPE == TEXTURE_TYPE_OTHER)
 	float4 color = g_Texture.Sample(g_Sampler, input.texCoord).rgba;

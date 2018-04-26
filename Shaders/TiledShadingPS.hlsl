@@ -28,7 +28,7 @@ StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t6);
 StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t7);
 Buffer<uint> g_PointLightIndexPerTileBuffer : register(t8);
 StructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(t9);
-Texture2D<float2> g_PointLightTiledVarianceShadowMap : register(t10);
+Texture2D<float3> g_PointLightTiledExpShadowMap : register(t10);
 StructuredBuffer<float4x4> g_PointLightViewProjMatrixBuffer : register(t11);
 #endif // ENABLE_POINT_LIGHTS
 
@@ -37,15 +37,13 @@ StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t12);
 StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t13);
 Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t14);
 StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t15);
-Texture2D<float2> g_SpotLightTiledVarianceShadowMap : register(t16);
+Texture2D<float3> g_SpotLightTiledExpShadowMap : register(t16);
 StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t17);
 StructuredBuffer<ShadowMapTile> g_SpotLightShadowMapTileBuffer : register(t18);
 #endif // ENABLE_SPOT_LIGHTS
 
 Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t19);
-
 SamplerState g_AnisoSampler : register(s0);
-SamplerState g_VarianceShadowMapSampler : register(s1);
 
 [earlydepthstencil]
 float4 Main(PSInput input) : SV_Target
@@ -100,8 +98,8 @@ float4 Main(PSInput input) : SV_Target
 		uint lightFrustumIndex = NUM_CUBE_MAP_FACES * lightIndex + faceIndex;
 		float4x4 lightViewProjMatrix = g_PointLightViewProjMatrixBuffer[lightFrustumIndex];
 		
-		float lightVisibility = CalcPointLightVisibility(g_VarianceShadowMapSampler, g_PointLightTiledVarianceShadowMap,
-			lightViewProjMatrix, lightViewNearPlane, lightRcpViewClipRange, worldSpacePos);
+		float lightVisibility = CalcPointLightVisibility(g_PointLightTiledExpShadowMap, lightViewProjMatrix,
+			lightViewNearPlane, lightRcpViewClipRange, worldSpacePos);
 		
 		pointLightsContrib += lightVisibility * lightContrib;
 	}
@@ -133,7 +131,7 @@ float4 Main(PSInput input) : SV_Target
 		float4x4 lightViewProjMatrix = g_SpotLightViewProjMatrixBuffer[lightIndex];
 		ShadowMapTile shadowMapTile = g_SpotLightShadowMapTileBuffer[lightIndex];
 		
-		float lightVisibility = CalcSpotLightVisibility(g_VarianceShadowMapSampler, g_SpotLightTiledVarianceShadowMap, shadowMapTile,
+		float lightVisibility = CalcSpotLightVisibility(g_SpotLightTiledExpShadowMap, shadowMapTile,
 			lightViewProjMatrix, lightViewNearPlane, lightRcpViewClipRange, worldSpacePos);
 
 		spotLightsContrib += lightVisibility * lightContrib;

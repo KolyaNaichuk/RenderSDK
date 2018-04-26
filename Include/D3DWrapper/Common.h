@@ -11,7 +11,7 @@
 
 using namespace Microsoft::WRL;
 
-//#define ENABLE_GRAPHICS_DEBUGGING
+#define ENABLE_GRAPHICS_DEBUGGING
 #define ENABLE_PROFILING
 
 static void VerifyD3DResult(HRESULT result)

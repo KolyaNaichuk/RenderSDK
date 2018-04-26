@@ -17,7 +17,7 @@ struct ConvertShadowMapParams
 Texture2D<float> g_TiledShadowMap : register(t0);
 StructuredBuffer<ConvertShadowMapParams> g_ConvertShadowMapParamsBuffer : register(t1);
 
-float2 Main(PSInput input) : SV_Target
+float3 Main(PSInput input) : SV_Target
 {
 #if LIGHT_TYPE == LIGHT_TYPE_POINT
 	uint lightIndex = input.tileId / NUM_CUBE_MAP_FACES;
@@ -34,5 +34,5 @@ float2 Main(PSInput input) : SV_Target
 	float lightSpaceDepth = params.lightProjMatrix43 / (hardwareDepth - params.lightProjMatrix33);
 	float normalizedLightSpaceDepth = (lightSpaceDepth - params.lightViewNearPlane) * params.lightRcpViewClipRange;
 
-	return float2(normalizedLightSpaceDepth, normalizedLightSpaceDepth * normalizedLightSpaceDepth);
+	return float3(normalizedLightSpaceDepth, 0.5f, 1.0f);
 }

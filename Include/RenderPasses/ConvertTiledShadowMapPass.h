@@ -25,7 +25,7 @@ public:
 		D3D12_RESOURCE_STATES m_TiledShadowMapState;
 		D3D12_RESOURCE_STATES m_ShadowMapTileBufferState;
 		D3D12_RESOURCE_STATES m_ConvertShadowMapParamsBufferState;
-		D3D12_RESOURCE_STATES m_TiledVarianceShadowMapState;
+		D3D12_RESOURCE_STATES m_TiledExpShadowMapState;
 	};
 
 	struct InitParams
@@ -51,7 +51,7 @@ public:
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
-	ColorTexture* GetTiledVarianceShadowMap() { return m_pTiledVarianceShadowMap; }
+	ColorTexture* GetTiledExpShadowMap() { return m_pTiledExpShadowMap; }
 
 private:
 	void InitResources(InitParams* pParams);
@@ -68,6 +68,6 @@ private:
 	DescriptorHandle m_RTVHeapStart;
 	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
-	ColorTexture* m_pTiledVarianceShadowMap = nullptr;
+	ColorTexture* m_pTiledExpShadowMap = nullptr;
 	Viewport* m_pViewport = nullptr;
 };
