@@ -14,6 +14,8 @@ class FilterTiledExpShadowMapPass
 public:
 	struct ResourceStates
 	{
+		D3D12_RESOURCE_STATES m_TiledShadowMapState;
+		D3D12_RESOURCE_STATES m_TiledShadowMapSATState;
 		D3D12_RESOURCE_STATES m_TiledExpShadowMapState;
 		D3D12_RESOURCE_STATES m_TiledExpShadowMapSATState;
 	};
@@ -24,7 +26,8 @@ public:
 		RenderEnv* m_pRenderEnv;
 		u32 m_RenderLatency;
 		ResourceStates m_InputResourceStates;
-		ColorTexture* m_pTiledShadowMap;
+		DepthTexture* m_pTiledShadowMap;
+		ColorTexture* m_pTiledExpShadowMap;
 		LightType m_LightType;
 	};
 
@@ -42,7 +45,9 @@ public:
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
-	const ColorTexture* GetTiledShadowMapSAT() { return m_pTiledShadowMapSAT; }
+	
+	ColorTexture* GetTiledShadowMapSAT() { return m_pTiledShadowMapSAT;  }
+	ColorTexture* GetTiledExpShadowMapSAT() { return m_pTiledExpShadowMapSAT; }
 
 private:
 	void InitResources(InitParams* pParams);
@@ -54,7 +59,8 @@ private:
 	const LightType m_LightType;
 
 	RootSignature* m_pRootSignature = nullptr;
-	PipelineState* m_pPipelineState = nullptr;
+	PipelineState* m_pTiledShadowMapPipelineState = nullptr;
+	PipelineState* m_pTiledExpShadowMapPipelineState = nullptr;
 	ResourceStates m_OutputResourceStates;
 	
 	std::vector<Buffer*> m_UploadTileOffsetBuffers;
@@ -63,4 +69,5 @@ private:
 	DescriptorHandle m_SRVHeapStart;
 	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	ColorTexture* m_pTiledShadowMapSAT = nullptr;
+	ColorTexture* m_pTiledExpShadowMapSAT = nullptr;
 };

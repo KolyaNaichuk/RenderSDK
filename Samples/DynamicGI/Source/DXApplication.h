@@ -30,7 +30,7 @@ class CreateMainDrawCommandsPass;
 class CreateFalseNegativeDrawCommandsPass;
 class CreateTiledShadowMapCommandsPass;
 class FilterTiledExpShadowMapPass;
-class ConvertTiledShadowMapPass;
+class CreateTiledExpShadowMapPass;
 class ShadowMapTileAllocator;
 class FillMeshTypeDepthBufferPass;
 class RenderTiledShadowMapPass;
@@ -124,20 +124,20 @@ private:
 	void InitRenderPointLightTiledShadowMapPass();
 	CommandList* RecordRenderPointLightTiledShadowMapPass();
 
-	void InitConvertPointLightTiledShadowMapPass();
-	CommandList* RecordConvertPointLightTiledShadowMapPass();
+	void InitCreatePointLightTiledExpShadowMapPass();
+	CommandList* RecordCreatePointLightTiledExpShadowMapPass();
 
-	void InitCreatePointLightTiledShadowMapSATPass();
-	CommandList* RecordCreatePointLightTiledShadowMapSATPass();
+	void InitFilterPointLightTiledExpShadowMapPass();
+	CommandList* RecordFilterPointLightTiledExpShadowMapPass();
 
 	void InitRenderSpotLightTiledShadowMapPass();
 	CommandList* RecordRenderSpotLightTiledShadowMapPass();
 
-	void InitConvertSpotLightTiledShadowMapPass();
-	CommandList* RecordConvertSpotLightTiledShadowMapPass();
+	void InitCreateSpotLightTiledExpShadowMapPass();
+	CommandList* RecordCreateSpotLightTiledExpShadowMapPass();
 
-	void InitCreateSpotLightTiledShadowMapSATPass();
-	CommandList* RecordCreateSpotLightTiledShadowMapSATPass();
+	void InitFilterSpotLightTiledExpShadowMapPass();
+	CommandList* RecordFilterSpotLightTiledExpShadowMapPass();
 
 	void InitCreateVoxelizeCommandsPass();
 	CommandList* RecordCreateVoxelizeCommandsPass();
@@ -235,11 +235,11 @@ private:
 	CreateTiledShadowMapCommandsPass* m_pCreateTiledShadowMapCommandsPass = nullptr;
 	RenderTiledShadowMapPass* m_pRenderPointLightTiledShadowMapPass = nullptr;
 	ShadowMapTileAllocator* m_pPointLightShadowMapTileAllocator = nullptr;
-	ConvertTiledShadowMapPass* m_pConvertPointLightTiledShadowMapPass = nullptr;
+	CreateTiledExpShadowMapPass* m_pCreatePointLightTiledExpShadowMapPass = nullptr;
 	FilterTiledExpShadowMapPass* m_pFilterPointLightTiledExpShadowMapPass = nullptr;
 	RenderTiledShadowMapPass* m_pRenderSpotLightTiledShadowMapPass = nullptr;
 	ShadowMapTileAllocator* m_pSpotLightShadowMapTileAllocator = nullptr;
-	ConvertTiledShadowMapPass* m_pConvertSpotLightTiledShadowMapPass = nullptr;
+	CreateTiledExpShadowMapPass* m_pCreateSpotLightTiledExpShadowMapPass = nullptr;
 	FilterTiledExpShadowMapPass* m_pFilterSpotLightTiledExpShadowMapPass = nullptr;
 	CreateVoxelizeCommandsPass* m_pCreateVoxelizeCommandsPass = nullptr;
 	VoxelizePass* m_pVoxelizePass = nullptr;
@@ -269,14 +269,14 @@ private:
 
 	Buffer* m_pActivePointLightWorldBoundsBuffer = nullptr;
 	Buffer* m_pActivePointLightPropsBuffer = nullptr;
-	Buffer* m_pActivePointLightConvertShadowMapParamsBuffer = nullptr;
+	Buffer* m_pActivePointLightCreateExpShadowMapParamsBuffer = nullptr;
 	Buffer* m_pActivePointLightWorldFrustumBuffer = nullptr;
 	Buffer* m_pActivePointLightViewProjMatrixBuffer = nullptr;
 	Buffer* m_pActivePointLightShadowMapTileBuffer = nullptr;
 	
 	Buffer* m_pActiveSpotLightWorldBoundsBuffer = nullptr;
 	Buffer* m_pActiveSpotLightPropsBuffer = nullptr;
-	Buffer* m_pActiveSpotLightConvertShadowMapParamsBuffer = nullptr;
+	Buffer* m_pActiveSpotLightCreateExpShadowMapParamsBuffer = nullptr;
 	Buffer* m_pActiveSpotLightWorldFrustumBuffer = nullptr;
 	Buffer* m_pActiveSpotLightViewProjMatrixBuffer = nullptr;
 	Buffer* m_pActiveSpotLightShadowMapTileBuffer = nullptr;
@@ -288,8 +288,8 @@ private:
 	void* m_UploadActivePointLightWorldBounds[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	Buffer* m_UploadActivePointLightPropsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	void* m_UploadActivePointLightProps[kNumBackBuffers] = {nullptr, nullptr, nullptr};
-	Buffer* m_UploadActivePointLightConvertShadowMapParamsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
-	void* m_UploadActivePointLightConvertShadowMapParams[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	Buffer* m_UploadActivePointLightCreateExpShadowMapParamsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	void* m_UploadActivePointLightCreateExpShadowMapParams[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	Buffer* m_UploadActivePointLightWorldFrustumBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	void* m_UploadActivePointLightWorldFrustums[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	Buffer* m_UploadActivePointLightViewProjMatrixBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
@@ -301,8 +301,8 @@ private:
 	void* m_UploadActiveSpotLightWorldBounds[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	Buffer* m_UploadActiveSpotLightPropsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	void* m_UploadActiveSpotLightProps[kNumBackBuffers] = {nullptr, nullptr, nullptr};
-	Buffer* m_UploadActiveSpotLightConvertShadowMapParamsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
-	void* m_UploadActiveSpotLightConvertShadowMapParams[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	Buffer* m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	void* m_UploadActiveSpotLightCreateExpShadowMapParams[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	Buffer* m_UploadActiveSpotLightWorldFrustumBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	void* m_UploadActiveSpotLightWorldFrustums[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	Buffer* m_UploadActiveSpotLightViewProjMatrixBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};

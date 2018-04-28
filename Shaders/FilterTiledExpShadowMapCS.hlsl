@@ -1,4 +1,4 @@
-#if FILTER_FLOAT
+#ifdef TILED_SHADOW_MAP
 Texture2D<float> g_TiledShadowMap : register(t0);
 StructuredBuffer<uint2> g_TileOffsetBuffer : register(t1);
 RWTexture2D<float> g_TiledShadowMapSAT : register(u0);
@@ -25,9 +25,9 @@ void Main(uint3 groupId : SV_GroupID, uint threadIndex : SV_GroupIndex)
 		g_TiledShadowMapSAT[globalOffset + uint2(threadIndex, y)] = columnPrefixSum;
 	}
 }
-#endif // FILTER_FLOAT
+#endif // TILED_SHADOW_MAP
 
-#if FILTER_FLOAT2
+#ifdef TILED_EXP_SHADOW_MAP
 Texture2D<float2> g_TiledExpShadowMap : register(t0);
 StructuredBuffer<uint2> g_TileOffsetBuffer : register(t1);
 RWTexture2D<float2> g_TiledExpShadowMapSAT : register(u0);
@@ -54,4 +54,4 @@ void Main(uint3 groupId : SV_GroupID, uint threadIndex : SV_GroupIndex)
 		g_TiledExpShadowMapSAT[globalOffset + uint2(threadIndex, y)] = columnPrefixSum;
 	}
 }
-#endif // FILTER_FLOAT2
+#endif // TILED_EXP_SHADOW_MAP

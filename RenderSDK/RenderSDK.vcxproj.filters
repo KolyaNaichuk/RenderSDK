@@ -210,9 +210,6 @@
     <ClInclude Include="..\Include\D3DWrapper\QueryHeap.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\ConvertTiledShadowMapPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\CreateTiledShadowMapCommandsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -277,6 +274,9 @@
       <Filter>RenderPasses</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\FilterTiledExpShadowMapPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CreateTiledExpShadowMapPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -455,9 +455,6 @@
     <ClCompile Include="..\Source\D3DWrapper\QueryHeap.cpp">
       <Filter>D3DWrapper</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\ConvertTiledShadowMapPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\CreateTiledShadowMapCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
@@ -516,6 +513,9 @@
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\FilterTiledExpShadowMapPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CreateTiledExpShadowMapPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
@@ -625,12 +625,6 @@
     <None Include="..\Shaders\LightUtils.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\ConvertTiledShadowMapVS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\ConvertTiledShadowMapPS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\ShadowUtils.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -641,6 +635,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\FilterTiledExpShadowMapCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateTiledExpShadowMapVS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CreateTiledExpShadowMapPS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

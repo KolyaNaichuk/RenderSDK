@@ -20,7 +20,7 @@
 #include "RenderPasses/CreateTiledShadowMapCommandsPass.h"
 #include "RenderPasses/CreateVoxelizeCommandsPass.h"
 #include "RenderPasses/FilterTiledExpShadowMapPass.h"
-#include "RenderPasses/ConvertTiledShadowMapPass.h"
+#include "RenderPasses/CreateTiledExpShadowMapPass.h"
 #include "RenderPasses/PropagateLightPass.h"
 #include "RenderPasses/RenderGBufferPass.h"
 #include "RenderPasses/TiledLightCullingPass.h"
@@ -377,10 +377,10 @@ DXApplication::~DXApplication()
 			m_UploadActivePointLightShadowMapTileBuffers[index]->Unmap(0, nullptr);
 			SafeDelete(m_UploadActivePointLightShadowMapTileBuffers[index]);
 		}
-		if (m_UploadActivePointLightConvertShadowMapParamsBuffers[index] != nullptr)
+		if (m_UploadActivePointLightCreateExpShadowMapParamsBuffers[index] != nullptr)
 		{
-			m_UploadActivePointLightConvertShadowMapParamsBuffers[index]->Unmap(0, nullptr);
-			SafeDelete(m_UploadActivePointLightConvertShadowMapParamsBuffers[index]);
+			m_UploadActivePointLightCreateExpShadowMapParamsBuffers[index]->Unmap(0, nullptr);
+			SafeDelete(m_UploadActivePointLightCreateExpShadowMapParamsBuffers[index]);
 		}
 
 		if (m_UploadActiveSpotLightWorldBoundsBuffers[index] != nullptr)
@@ -408,10 +408,10 @@ DXApplication::~DXApplication()
 			m_UploadActiveSpotLightShadowMapTileBuffers[index]->Unmap(0, nullptr);
 			SafeDelete(m_UploadActiveSpotLightShadowMapTileBuffers[index]);
 		}
-		if (m_UploadActiveSpotLightConvertShadowMapParamsBuffers[index] != nullptr)
+		if (m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[index] != nullptr)
 		{
-			m_UploadActiveSpotLightConvertShadowMapParamsBuffers[index]->Unmap(0, nullptr);
-			SafeDelete(m_UploadActiveSpotLightConvertShadowMapParamsBuffers[index]);
+			m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[index]->Unmap(0, nullptr);
+			SafeDelete(m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[index]);
 		}
 	}
 
@@ -431,14 +431,14 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pActivePointLightWorldFrustumBuffer);
 	SafeDelete(m_pActivePointLightViewProjMatrixBuffer);
 	SafeDelete(m_pActivePointLightShadowMapTileBuffer);
-	SafeDelete(m_pActivePointLightConvertShadowMapParamsBuffer);
+	SafeDelete(m_pActivePointLightCreateExpShadowMapParamsBuffer);
 	
 	SafeDelete(m_pActiveSpotLightWorldBoundsBuffer);
 	SafeDelete(m_pActiveSpotLightPropsBuffer);
 	SafeDelete(m_pActiveSpotLightWorldFrustumBuffer);
 	SafeDelete(m_pActiveSpotLightViewProjMatrixBuffer);
 	SafeDelete(m_pActiveSpotLightShadowMapTileBuffer);
-	SafeDelete(m_pActiveSpotLightConvertShadowMapParamsBuffer);
+	SafeDelete(m_pActiveSpotLightCreateExpShadowMapParamsBuffer);
 	
 	SafeDelete(m_pDownscaleAndReprojectDepthPass);
 	SafeDelete(m_pFrustumMeshCullingPass);
@@ -454,11 +454,11 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCreateTiledShadowMapCommandsPass);
 	SafeDelete(m_pRenderPointLightTiledShadowMapPass);
 	SafeDelete(m_pPointLightShadowMapTileAllocator);
-	SafeDelete(m_pConvertPointLightTiledShadowMapPass);
+	SafeDelete(m_pCreatePointLightTiledExpShadowMapPass);
 	SafeDelete(m_pFilterPointLightTiledExpShadowMapPass);
 	SafeDelete(m_pRenderSpotLightTiledShadowMapPass);
 	SafeDelete(m_pSpotLightShadowMapTileAllocator);
-	SafeDelete(m_pConvertSpotLightTiledShadowMapPass);
+	SafeDelete(m_pCreateSpotLightTiledExpShadowMapPass);
 	SafeDelete(m_pFilterSpotLightTiledExpShadowMapPass);
 	SafeDelete(m_pCreateVoxelizeCommandsPass);
 	SafeDelete(m_pVoxelizePass);
@@ -504,14 +504,14 @@ void DXApplication::OnInit()
 	if (m_NumPointLights > 0)
 	{
 		InitRenderPointLightTiledShadowMapPass();
-		InitConvertPointLightTiledShadowMapPass();
-		InitCreatePointLightTiledShadowMapSATPass();
+		InitCreatePointLightTiledExpShadowMapPass();
+		InitFilterPointLightTiledExpShadowMapPass();
 	}
 	if (m_NumSpotLights > 0)
 	{
 		InitRenderSpotLightTiledShadowMapPass();
-		InitConvertSpotLightTiledShadowMapPass();
-		InitCreateSpotLightTiledShadowMapSATPass();
+		InitCreateSpotLightTiledExpShadowMapPass();
+		InitFilterSpotLightTiledExpShadowMapPass();
 	}
 		
 	InitCreateVoxelizeCommandsPass();
@@ -639,14 +639,14 @@ void DXApplication::OnRender()
 	if (m_NumPointLights > 0)
 	{
 		commandListBatch[commandListBatchSize++] = RecordRenderPointLightTiledShadowMapPass();
-		commandListBatch[commandListBatchSize++] = RecordConvertPointLightTiledShadowMapPass();
-		commandListBatch[commandListBatchSize++] = RecordCreatePointLightTiledShadowMapSATPass();
+		commandListBatch[commandListBatchSize++] = RecordCreatePointLightTiledExpShadowMapPass();
+		commandListBatch[commandListBatchSize++] = RecordFilterPointLightTiledExpShadowMapPass();
 	}
 	if (m_NumSpotLights > 0)
 	{
 		commandListBatch[commandListBatchSize++] = RecordRenderSpotLightTiledShadowMapPass();
-		commandListBatch[commandListBatchSize++] = RecordConvertSpotLightTiledShadowMapPass();
-		commandListBatch[commandListBatchSize++] = RecordCreateSpotLightTiledShadowMapSATPass();
+		commandListBatch[commandListBatchSize++] = RecordCreateSpotLightTiledExpShadowMapPass();
+		commandListBatch[commandListBatchSize++] = RecordFilterSpotLightTiledExpShadowMapPass();
 	}
 		
 	commandListBatch[commandListBatchSize++] = RecordCreateVoxelizeCommandsPass();
@@ -1673,13 +1673,13 @@ CommandList* DXApplication::RecordVisualizeAccumLightPass()
 
 void DXApplication::InitVisualizePointLightTiledShadowMapPass()
 {
-	assert(m_pConvertPointLightTiledShadowMapPass != nullptr);
+	assert(m_pCreatePointLightTiledExpShadowMapPass != nullptr);
 	assert(m_pTiledShadingPass != nullptr);
 	
 	const TiledShadingPass::ResourceStates* pTiledShadingPassStates =
 		m_pTiledShadingPass->GetOutputResourceStates();
 	
-	ColorTexture* pTiledExpShadowMap = m_pConvertPointLightTiledShadowMapPass->GetTiledExpShadowMap();
+	ColorTexture* pTiledExpShadowMap = m_pCreatePointLightTiledExpShadowMapPass->GetTiledExpShadowMap();
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
 		assert(m_VisualizePointLightTiledShadowMapPasses[index] == nullptr);
@@ -1715,13 +1715,13 @@ CommandList* DXApplication::RecordVisualizePointLightTiledShadowMapPass()
 
 void DXApplication::InitVisualizeSpotLightTiledShadowMapPass()
 {
-	assert(m_pConvertSpotLightTiledShadowMapPass != nullptr);
+	assert(m_pCreateSpotLightTiledExpShadowMapPass != nullptr);
 	assert(m_pTiledShadingPass != nullptr);
 
 	const TiledShadingPass::ResourceStates* pTiledShadingPassStates =
 		m_pTiledShadingPass->GetOutputResourceStates();
 
-	ColorTexture* pTiledExpShadowMap = m_pConvertSpotLightTiledShadowMapPass->GetTiledExpShadowMap();
+	ColorTexture* pTiledExpShadowMap = m_pCreateSpotLightTiledExpShadowMapPass->GetTiledExpShadowMap();
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
 		assert(m_VisualizeSpotLightTiledShadowMapPasses[index] == nullptr);
@@ -1821,9 +1821,9 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 		const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
 			m_pRenderPointLightTiledShadowMapPass->GetOutputResourceStates();
 
-		assert(m_pConvertPointLightTiledShadowMapPass != nullptr);
-		const ConvertTiledShadowMapPass::ResourceStates* pConvertShadowMapPassStates =
-			m_pConvertPointLightTiledShadowMapPass->GetOutputResourceStates();
+		assert(m_pCreatePointLightTiledExpShadowMapPass != nullptr);
+		const CreateTiledExpShadowMapPass::ResourceStates* pCreateExpShadowMapPassStates =
+			m_pCreatePointLightTiledExpShadowMapPass->GetOutputResourceStates();
 
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
 			m_pActivePointLightWorldBoundsBuffer,
@@ -1836,8 +1836,8 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 			D3D12_RESOURCE_STATE_COPY_DEST);
 
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActivePointLightConvertShadowMapParamsBuffer,
-			pConvertShadowMapPassStates->m_ConvertShadowMapParamsBufferState,
+			m_pActivePointLightCreateExpShadowMapParamsBuffer,
+			pCreateExpShadowMapPassStates->m_CreateExpShadowMapParamsBufferState,
 			D3D12_RESOURCE_STATE_COPY_DEST);
 
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
@@ -1852,7 +1852,7 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
 			m_pActivePointLightShadowMapTileBuffer,
-			pConvertShadowMapPassStates->m_ShadowMapTileBufferState,
+			pCreateExpShadowMapPassStates->m_ShadowMapTileBufferState,
 			D3D12_RESOURCE_STATE_COPY_DEST);
 	}
 	if (m_NumSpotLights > 0)
@@ -1861,9 +1861,9 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 		const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
 			m_pRenderSpotLightTiledShadowMapPass->GetOutputResourceStates();
 
-		assert(m_pConvertSpotLightTiledShadowMapPass != nullptr);
-		const ConvertTiledShadowMapPass::ResourceStates* pConvertShadowMapPassStates =
-			m_pConvertSpotLightTiledShadowMapPass->GetOutputResourceStates();
+		assert(m_pCreateSpotLightTiledExpShadowMapPass != nullptr);
+		const CreateTiledExpShadowMapPass::ResourceStates* pCreateExpShadowMapPassStates =
+			m_pCreateSpotLightTiledExpShadowMapPass->GetOutputResourceStates();
 
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
 			m_pActiveSpotLightWorldBoundsBuffer,
@@ -1876,8 +1876,8 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 			D3D12_RESOURCE_STATE_COPY_DEST);
 
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActiveSpotLightConvertShadowMapParamsBuffer,
-			pConvertShadowMapPassStates->m_ConvertShadowMapParamsBufferState,
+			m_pActiveSpotLightCreateExpShadowMapParamsBuffer,
+			pCreateExpShadowMapPassStates->m_CreateExpShadowMapParamsBufferState,
 			D3D12_RESOURCE_STATE_COPY_DEST);
 
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
@@ -1907,9 +1907,9 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 			m_UploadActivePointLightPropsBuffers[m_BackBufferIndex], 0,
 			m_NumActivePointLights * sizeof(PointLightProps));
 
-		pCommandList->CopyBufferRegion(m_pActivePointLightConvertShadowMapParamsBuffer, 0,
-			m_UploadActivePointLightConvertShadowMapParamsBuffers[m_BackBufferIndex], 0,
-			m_NumActivePointLights * sizeof(ConvertShadowMapParams));
+		pCommandList->CopyBufferRegion(m_pActivePointLightCreateExpShadowMapParamsBuffer, 0,
+			m_UploadActivePointLightCreateExpShadowMapParamsBuffers[m_BackBufferIndex], 0,
+			m_NumActivePointLights * sizeof(CreateExpShadowMapParams));
 
 		pCommandList->CopyBufferRegion(m_pActivePointLightWorldFrustumBuffer, 0,
 			m_UploadActivePointLightWorldFrustumBuffers[m_BackBufferIndex], 0,
@@ -1933,9 +1933,9 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 			m_UploadActiveSpotLightPropsBuffers[m_BackBufferIndex], 0,
 			m_NumActiveSpotLights * sizeof(SpotLightProps));
 
-		pCommandList->CopyBufferRegion(m_pActiveSpotLightConvertShadowMapParamsBuffer, 0,
-			m_UploadActiveSpotLightConvertShadowMapParamsBuffers[m_BackBufferIndex], 0,
-			m_NumActiveSpotLights * sizeof(ConvertShadowMapParams));
+		pCommandList->CopyBufferRegion(m_pActiveSpotLightCreateExpShadowMapParamsBuffer, 0,
+			m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[m_BackBufferIndex], 0,
+			m_NumActiveSpotLights * sizeof(CreateExpShadowMapParams));
 
 		pCommandList->CopyBufferRegion(m_pActiveSpotLightWorldFrustumBuffer, 0,
 			m_UploadActiveSpotLightWorldFrustumBuffers[m_BackBufferIndex], 0,
@@ -2109,7 +2109,7 @@ void DXApplication::InitRenderPointLightTiledShadowMapPass()
 	params.m_pNumShadowMapCommandsBuffer = m_pCreateTiledShadowMapCommandsPass->GetNumPointLightCommandsBuffer();
 	params.m_pShadowMapCommandBuffer = m_pCreateTiledShadowMapCommandsPass->GetPointLightCommandBuffer();
 			
-	params.m_InputResourceStates.m_TiledShadowMapState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_TiledShadowMapState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_MeshInstanceWorldMatrixBufferState = pRenderGBufferFalseNegativePassStates->m_InstanceWorldMatrixBufferState;
 	params.m_InputResourceStates.m_LightWorldBoundsOrPropsBufferState = pCreateShadowMapCommandsPassStates->m_PointLightWorldBoundsBufferState;
 	params.m_InputResourceStates.m_LightWorldFrustumBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
@@ -2136,66 +2136,70 @@ CommandList* DXApplication::RecordRenderPointLightTiledShadowMapPass()
 	return params.m_pCommandList;
 }
 
-void DXApplication::InitConvertPointLightTiledShadowMapPass()
+void DXApplication::InitCreatePointLightTiledExpShadowMapPass()
 {
-	assert(m_pConvertPointLightTiledShadowMapPass == nullptr);
+	assert(m_pCreatePointLightTiledExpShadowMapPass == nullptr);
 	assert(m_pRenderPointLightTiledShadowMapPass != nullptr);
 
 	const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
 		m_pRenderPointLightTiledShadowMapPass->GetOutputResourceStates();
 
-	ConvertTiledShadowMapPass::InitParams params;
-	params.m_pName = "ConvertPointLightTiledShadowMapPass";
+	CreateTiledExpShadowMapPass::InitParams params;
+	params.m_pName = "CreatePointLightTiledExpShadowMapPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_TiledShadowMapState = pRenderTiledShadowMapPassStates->m_TiledShadowMapState;
 	params.m_InputResourceStates.m_ShadowMapTileBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_ConvertShadowMapParamsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
+	params.m_InputResourceStates.m_CreateExpShadowMapParamsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
 	params.m_InputResourceStates.m_TiledExpShadowMapState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	
 	params.m_LightType = LightType_Point;
 	params.m_pTiledShadowMap = m_pRenderPointLightTiledShadowMapPass->GetTiledShadowMap();
 	params.m_pShadowMapTileBuffer = m_pActivePointLightShadowMapTileBuffer;
-	params.m_pConvertShadowMapParamsBuffer = m_pActivePointLightConvertShadowMapParamsBuffer;
+	params.m_pCreateExpShadowMapParamsBuffer = m_pActivePointLightCreateExpShadowMapParamsBuffer;
 
-	m_pConvertPointLightTiledShadowMapPass = new ConvertTiledShadowMapPass(&params);
+	m_pCreatePointLightTiledExpShadowMapPass = new CreateTiledExpShadowMapPass(&params);
 }
 
-CommandList* DXApplication::RecordConvertPointLightTiledShadowMapPass()
+CommandList* DXApplication::RecordCreatePointLightTiledExpShadowMapPass()
 {
-	assert(m_pConvertPointLightTiledShadowMapPass != nullptr);
+	assert(m_pCreatePointLightTiledExpShadowMapPass != nullptr);
 	assert(m_NumPointLights > 0);
 
-	ConvertTiledShadowMapPass::RenderParams params;
+	CreateTiledExpShadowMapPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pConvertPointLightTiledShadowMapCommandList");;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pCreatePointLightTiledExpShadowMapCommandList");;
 	params.m_NumShadowMapTiles = kNumCubeMapFaces * m_NumActivePointLights;
 
-	m_pConvertPointLightTiledShadowMapPass->Record(&params);
+	m_pCreatePointLightTiledExpShadowMapPass->Record(&params);
 	return params.m_pCommandList;
 }
 
-void DXApplication::InitCreatePointLightTiledShadowMapSATPass()
+void DXApplication::InitFilterPointLightTiledExpShadowMapPass()
 {
 	assert(m_pFilterPointLightTiledExpShadowMapPass == nullptr);
-	assert(m_pConvertPointLightTiledShadowMapPass != nullptr);
+	assert(m_pRenderPointLightTiledShadowMapPass != nullptr);
+	assert(m_pCreatePointLightTiledExpShadowMapPass != nullptr);
 
-	const ConvertTiledShadowMapPass::ResourceStates* pConvertTiledShadowMapPassStates =
-		m_pConvertPointLightTiledShadowMapPass->GetOutputResourceStates();
+	const CreateTiledExpShadowMapPass::ResourceStates* pCreateTiledExpShadowMapPassStates =
+		m_pCreatePointLightTiledExpShadowMapPass->GetOutputResourceStates();
 
 	FilterTiledExpShadowMapPass::InitParams params;
-	params.m_pName = "CreatePointLightTiledShadowMapSATPass";
+	params.m_pName = "FilterPointLightTiledExpShadowMapPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_RenderLatency = kNumBackBuffers;
-	params.m_InputResourceStates.m_TiledExpShadowMapState = pConvertTiledShadowMapPassStates->m_TiledExpShadowMapState;
+	params.m_InputResourceStates.m_TiledShadowMapState = pCreateTiledExpShadowMapPassStates->m_TiledShadowMapState;
+	params.m_InputResourceStates.m_TiledShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_TiledExpShadowMapState = pCreateTiledExpShadowMapPassStates->m_TiledExpShadowMapState;
 	params.m_InputResourceStates.m_TiledExpShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_pTiledShadowMap = m_pConvertPointLightTiledShadowMapPass->GetTiledExpShadowMap();
+	params.m_pTiledShadowMap = m_pRenderPointLightTiledShadowMapPass->GetTiledShadowMap();
+	params.m_pTiledExpShadowMap = m_pCreatePointLightTiledExpShadowMapPass->GetTiledExpShadowMap();
 	params.m_LightType = LightType_Point;
 
 	m_pFilterPointLightTiledExpShadowMapPass = new FilterTiledExpShadowMapPass(&params);
 }
 
-CommandList* DXApplication::RecordCreatePointLightTiledShadowMapSATPass()
+CommandList* DXApplication::RecordFilterPointLightTiledExpShadowMapPass()
 {
 	assert(m_pFilterPointLightTiledExpShadowMapPass != nullptr);
 	
@@ -2238,7 +2242,7 @@ void DXApplication::InitRenderSpotLightTiledShadowMapPass()
 	params.m_pNumShadowMapCommandsBuffer = m_pCreateTiledShadowMapCommandsPass->GetNumSpotLightCommandsBuffer();
 	params.m_pShadowMapCommandBuffer = m_pCreateTiledShadowMapCommandsPass->GetSpotLightCommandBuffer();
 
-	params.m_InputResourceStates.m_TiledShadowMapState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_TiledShadowMapState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
 	if (m_NumPointLights > 0)
 	{
@@ -2282,66 +2286,70 @@ CommandList* DXApplication::RecordRenderSpotLightTiledShadowMapPass()
 	return params.m_pCommandList;
 }
 
-void DXApplication::InitConvertSpotLightTiledShadowMapPass()
+void DXApplication::InitCreateSpotLightTiledExpShadowMapPass()
 {
-	assert(m_pConvertSpotLightTiledShadowMapPass == nullptr);
+	assert(m_pCreateSpotLightTiledExpShadowMapPass == nullptr);
 	assert(m_pRenderSpotLightTiledShadowMapPass != nullptr);
 
 	const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
 		m_pRenderSpotLightTiledShadowMapPass->GetOutputResourceStates();
 
-	ConvertTiledShadowMapPass::InitParams params;
-	params.m_pName = "ConvertSpotLightTiledShadowMapPass";
+	CreateTiledExpShadowMapPass::InitParams params;
+	params.m_pName = "CreateSpotLightTiledExpShadowMapPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_TiledShadowMapState = pRenderTiledShadowMapPassStates->m_TiledShadowMapState;
 	params.m_InputResourceStates.m_ShadowMapTileBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_ConvertShadowMapParamsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
+	params.m_InputResourceStates.m_CreateExpShadowMapParamsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
 	params.m_InputResourceStates.m_TiledExpShadowMapState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
 	params.m_LightType = LightType_Spot;
 	params.m_pTiledShadowMap = m_pRenderSpotLightTiledShadowMapPass->GetTiledShadowMap();
 	params.m_pShadowMapTileBuffer = m_pActiveSpotLightShadowMapTileBuffer;
-	params.m_pConvertShadowMapParamsBuffer = m_pActiveSpotLightConvertShadowMapParamsBuffer;
+	params.m_pCreateExpShadowMapParamsBuffer = m_pActiveSpotLightCreateExpShadowMapParamsBuffer;
 
-	m_pConvertSpotLightTiledShadowMapPass = new ConvertTiledShadowMapPass(&params);
+	m_pCreateSpotLightTiledExpShadowMapPass = new CreateTiledExpShadowMapPass(&params);
 }
 
-CommandList* DXApplication::RecordConvertSpotLightTiledShadowMapPass()
+CommandList* DXApplication::RecordCreateSpotLightTiledExpShadowMapPass()
 {
-	assert(m_pConvertSpotLightTiledShadowMapPass != nullptr);
+	assert(m_pCreateSpotLightTiledExpShadowMapPass != nullptr);
 	assert(m_NumSpotLights > 0);
 
-	ConvertTiledShadowMapPass::RenderParams params;
+	CreateTiledExpShadowMapPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pConvertSpotLightTiledShadowMapCommandList");
+	params.m_pCommandList = m_pCommandListPool->Create(L"pCreateSpotLightTiledExpShadowMapCommandList");
 	params.m_NumShadowMapTiles = m_NumActiveSpotLights;
 
-	m_pConvertSpotLightTiledShadowMapPass->Record(&params);
+	m_pCreateSpotLightTiledExpShadowMapPass->Record(&params);
 	return params.m_pCommandList;
 }
 
-void DXApplication::InitCreateSpotLightTiledShadowMapSATPass()
+void DXApplication::InitFilterSpotLightTiledExpShadowMapPass()
 {
 	assert(m_pFilterSpotLightTiledExpShadowMapPass == nullptr);
-	assert(m_pConvertSpotLightTiledShadowMapPass != nullptr);
+	assert(m_pRenderSpotLightTiledShadowMapPass != nullptr);
+	assert(m_pCreateSpotLightTiledExpShadowMapPass != nullptr);
 
-	const ConvertTiledShadowMapPass::ResourceStates* pConvertTiledShadowMapPassStates =
-		m_pConvertSpotLightTiledShadowMapPass->GetOutputResourceStates();
+	const CreateTiledExpShadowMapPass::ResourceStates* pCreateTiledExpShadowMapPassStates =
+		m_pCreateSpotLightTiledExpShadowMapPass->GetOutputResourceStates();
 
 	FilterTiledExpShadowMapPass::InitParams params;
-	params.m_pName = "CreateSpotLightTiledShadowMapSATPass";
+	params.m_pName = "FilterSpotLightTiledExpShadowMapPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_RenderLatency = kNumBackBuffers;
-	params.m_InputResourceStates.m_TiledExpShadowMapState = pConvertTiledShadowMapPassStates->m_TiledExpShadowMapState;
+	params.m_InputResourceStates.m_TiledShadowMapState = pCreateTiledExpShadowMapPassStates->m_TiledShadowMapState;
+	params.m_InputResourceStates.m_TiledShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	params.m_InputResourceStates.m_TiledExpShadowMapState = pCreateTiledExpShadowMapPassStates->m_TiledExpShadowMapState;
 	params.m_InputResourceStates.m_TiledExpShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_pTiledShadowMap = m_pConvertSpotLightTiledShadowMapPass->GetTiledExpShadowMap();
+	params.m_pTiledShadowMap = m_pRenderSpotLightTiledShadowMapPass->GetTiledShadowMap();
+	params.m_pTiledExpShadowMap = m_pCreateSpotLightTiledExpShadowMapPass->GetTiledExpShadowMap();
 	params.m_LightType = LightType_Spot;
 
 	m_pFilterSpotLightTiledExpShadowMapPass = new FilterTiledExpShadowMapPass(&params);
 }
 
-CommandList* DXApplication::RecordCreateSpotLightTiledShadowMapSATPass()
+CommandList* DXApplication::RecordFilterSpotLightTiledExpShadowMapPass()
 {
 	assert(m_pFilterSpotLightTiledExpShadowMapPass != nullptr);
 
@@ -2569,7 +2577,7 @@ void DXApplication::InitTiledShadingPass()
 		params.m_pPointLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetPointLightIndexPerTileBuffer();
 		params.m_pPointLightRangePerTileBuffer = m_pTiledLightCullingPass->GetPointLightRangePerTileBuffer();
 		params.m_pPointLightViewProjMatrixBuffer = m_pActivePointLightViewProjMatrixBuffer;
-		params.m_pPointLightTiledExpShadowMap = m_pConvertPointLightTiledShadowMapPass->GetTiledExpShadowMap();
+		params.m_pPointLightTiledExpShadowMap = m_pCreatePointLightTiledExpShadowMapPass->GetTiledExpShadowMap();
 	}
 	
 	params.m_EnableSpotLights = m_NumSpotLights > 0;
@@ -2578,8 +2586,8 @@ void DXApplication::InitTiledShadingPass()
 		const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
 			m_pRenderSpotLightTiledShadowMapPass->GetOutputResourceStates();
 
-		const ConvertTiledShadowMapPass::ResourceStates* pConvertTiledShadowMapPassStates =
-			m_pConvertSpotLightTiledShadowMapPass->GetOutputResourceStates();
+		const CreateTiledExpShadowMapPass::ResourceStates* pCreateTiledExpShadowMapPassStates =
+			m_pCreateSpotLightTiledExpShadowMapPass->GetOutputResourceStates();
 
 		const FilterTiledExpShadowMapPass::ResourceStates* pCreateTiledShadowMapSATStates =
 			m_pFilterSpotLightTiledExpShadowMapPass->GetOutputResourceStates();
@@ -2590,13 +2598,13 @@ void DXApplication::InitTiledShadingPass()
 		params.m_InputResourceStates.m_SpotLightRangePerTileBufferState = pTiledLightCullingPassStates->m_SpotLightRangePerTileBufferState;
 		params.m_InputResourceStates.m_SpotLightTiledExpShadowMapState = pCreateTiledShadowMapSATStates->m_TiledExpShadowMapState;
 		params.m_InputResourceStates.m_SpotLightViewProjMatrixBufferState = pRenderTiledShadowMapPassStates->m_LightViewProjMatrixBufferState;
-		params.m_InputResourceStates.m_SpotLightShadowMapTileBufferState = pConvertTiledShadowMapPassStates->m_ShadowMapTileBufferState;
+		params.m_InputResourceStates.m_SpotLightShadowMapTileBufferState = pCreateTiledExpShadowMapPassStates->m_ShadowMapTileBufferState;
 		
 		params.m_pSpotLightWorldBoundsBuffer = m_pActiveSpotLightWorldBoundsBuffer;
 		params.m_pSpotLightPropsBuffer = m_pActiveSpotLightPropsBuffer;
 		params.m_pSpotLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetSpotLightIndexPerTileBuffer();
 		params.m_pSpotLightRangePerTileBuffer = m_pTiledLightCullingPass->GetSpotLightRangePerTileBuffer();
-		params.m_pSpotLightTiledExpShadowMap = m_pConvertSpotLightTiledShadowMapPass->GetTiledExpShadowMap();
+		params.m_pSpotLightTiledExpShadowMap = m_pCreateSpotLightTiledExpShadowMapPass->GetTiledExpShadowMap();
 		params.m_pSpotLightViewProjMatrixBuffer = m_pActiveSpotLightViewProjMatrixBuffer;
 		params.m_pSpotLightShadowMapTileBuffer = m_pActiveSpotLightShadowMapTileBuffer;
 	}
@@ -2772,7 +2780,7 @@ void DXApplication::InitPointLightRenderResources(Scene* pScene)
 
 	StructuredBufferDesc lightWorldBoundsBufferDesc(m_NumPointLights, sizeof(Sphere), true, false);
 	StructuredBufferDesc lightPropsBufferDesc(m_NumPointLights, sizeof(PointLightProps), true, false);
-	StructuredBufferDesc convertShadowMapParamsBufferDesc(m_NumPointLights, sizeof(ConvertShadowMapParams), true, false);
+	StructuredBufferDesc createExpShadowMapParamsBufferDesc(m_NumPointLights, sizeof(CreateExpShadowMapParams), true, false);
 	StructuredBufferDesc lightWorldFrustumBufferDesc(kNumCubeMapFaces * m_NumPointLights, sizeof(LightFrustum), true, false);
 	StructuredBufferDesc lightViewProjMatrixBufferDesc(kNumCubeMapFaces * m_NumPointLights, sizeof(Matrix4f), true, false);
 	StructuredBufferDesc lightShadowMapTileBufferDesc(kNumCubeMapFaces * m_NumPointLights, sizeof(ShadowMapTile), true, false);
@@ -2804,10 +2812,10 @@ void DXApplication::InitPointLightRenderResources(Scene* pScene)
 			&lightShadowMapTileBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActivePointLightShadowMapTileBuffer");
 		m_UploadActivePointLightShadowMapTiles[index] = m_UploadActivePointLightShadowMapTileBuffers[index]->Map(0, &readRange);
 
-		assert(m_UploadActivePointLightConvertShadowMapParamsBuffers[index] == nullptr);
-		m_UploadActivePointLightConvertShadowMapParamsBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
-			&convertShadowMapParamsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActivePointLightConvertShadowMapParamsBuffer");
-		m_UploadActivePointLightConvertShadowMapParams[index] = m_UploadActivePointLightConvertShadowMapParamsBuffers[index]->Map(0, &readRange);
+		assert(m_UploadActivePointLightCreateExpShadowMapParamsBuffers[index] == nullptr);
+		m_UploadActivePointLightCreateExpShadowMapParamsBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
+			&createExpShadowMapParamsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_UploadActivePointLightCreateExpShadowMapParamsBuffer");
+		m_UploadActivePointLightCreateExpShadowMapParams[index] = m_UploadActivePointLightCreateExpShadowMapParamsBuffers[index]->Map(0, &readRange);
 	}
 
 	assert(m_pActivePointLightWorldBoundsBuffer == nullptr);
@@ -2818,9 +2826,9 @@ void DXApplication::InitPointLightRenderResources(Scene* pScene)
 	m_pActivePointLightPropsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
 		&lightPropsBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActivePointLightPropsBuffer");
 
-	assert(m_pActivePointLightConvertShadowMapParamsBuffer == nullptr);
-	m_pActivePointLightConvertShadowMapParamsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
-		&convertShadowMapParamsBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActivePointLightConvertShadowMapParamsBuffer");
+	assert(m_pActivePointLightCreateExpShadowMapParamsBuffer == nullptr);
+	m_pActivePointLightCreateExpShadowMapParamsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
+		&createExpShadowMapParamsBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActivePointLightCreateExpShadowMapParamsBuffer");
 
 	assert(m_pActivePointLightWorldFrustumBuffer == nullptr);
 	m_pActivePointLightWorldFrustumBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
@@ -2890,7 +2898,7 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 
 	StructuredBufferDesc lightWorldBoundsBufferDesc(m_NumSpotLights, sizeof(Sphere), true, false);
 	StructuredBufferDesc lightPropsBufferDesc(m_NumSpotLights, sizeof(SpotLightProps), true, false);
-	StructuredBufferDesc convertShadowMapParamsBufferDesc(m_NumSpotLights, sizeof(ConvertShadowMapParams), true, false);
+	StructuredBufferDesc createExpShadowMapParamsBufferDesc(m_NumSpotLights, sizeof(CreateExpShadowMapParams), true, false);
 	StructuredBufferDesc lightWorldFrustumBufferDesc(m_NumSpotLights, sizeof(LightFrustum), true, false);
 	StructuredBufferDesc lightViewProjMatrixBufferDesc(m_NumSpotLights, sizeof(Matrix4f), true, false);
 	StructuredBufferDesc lightShadowMapTileBufferDesc(m_NumSpotLights, sizeof(ShadowMapTile), true, false);
@@ -2907,10 +2915,10 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 			&lightPropsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActiveSpotLightPropsBuffer");
 		m_UploadActiveSpotLightProps[index] = m_UploadActiveSpotLightPropsBuffers[index]->Map(0, &readRange);
 
-		assert(m_UploadActiveSpotLightConvertShadowMapParamsBuffers[index] == nullptr);
-		m_UploadActiveSpotLightConvertShadowMapParamsBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
-			&convertShadowMapParamsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActiveSpotLightConvertShadowMapParamsBuffer");
-		m_UploadActiveSpotLightConvertShadowMapParams[index] = m_UploadActiveSpotLightConvertShadowMapParamsBuffers[index]->Map(0, &readRange);
+		assert(m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[index] == nullptr);
+		m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
+			&createExpShadowMapParamsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_UploadActiveSpotLightCreateExpShadowMapParamsBuffer");
+		m_UploadActiveSpotLightCreateExpShadowMapParams[index] = m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[index]->Map(0, &readRange);
 
 		assert(m_UploadActiveSpotLightWorldFrustumBuffers[index] == nullptr);
 		m_UploadActiveSpotLightWorldFrustumBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
@@ -2936,9 +2944,9 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 	m_pActiveSpotLightPropsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
 		&lightPropsBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActiveSpotLightPropsBuffer");
 	
-	assert(m_pActiveSpotLightConvertShadowMapParamsBuffer == nullptr);
-	m_pActiveSpotLightConvertShadowMapParamsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
-		&convertShadowMapParamsBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActiveSpotLightConvertShadowMapParamsBuffer");
+	assert(m_pActiveSpotLightCreateExpShadowMapParamsBuffer == nullptr);
+	m_pActiveSpotLightCreateExpShadowMapParamsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
+		&createExpShadowMapParamsBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActiveSpotLightCreateExpShadowMapParamsBuffer");
 
 	assert(m_pActiveSpotLightWorldFrustumBuffer == nullptr);
 	m_pActiveSpotLightWorldFrustumBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
@@ -3009,7 +3017,7 @@ void DXApplication::SetupPointLightDataForUpload(const Frustum& cameraWorldFrust
 	LightFrustum* pUploadActiveLightWorldFrustums = (LightFrustum*)m_UploadActivePointLightWorldFrustums[m_BackBufferIndex];
 	Matrix4f* pUploadActiveLightViewProjMatrices = (Matrix4f*)m_UploadActivePointLightViewProjMatrices[m_BackBufferIndex];
 	ShadowMapTile* pUploadActiveLightShadowMapTiles = (ShadowMapTile*)m_UploadActivePointLightShadowMapTiles[m_BackBufferIndex];
-	ConvertShadowMapParams* pUploadActiveLightConvertShadowMapParams = (ConvertShadowMapParams*)m_UploadActivePointLightConvertShadowMapParams[m_BackBufferIndex];
+	CreateExpShadowMapParams* pUploadActiveLightCreateExpShadowMapParams = (CreateExpShadowMapParams*)m_UploadActivePointLightCreateExpShadowMapParams[m_BackBufferIndex];
 
 	for (decltype(m_NumActivePointLights) lightIndex = 0; lightIndex < m_NumActivePointLights; ++lightIndex)
 	{
@@ -3021,10 +3029,10 @@ void DXApplication::SetupPointLightDataForUpload(const Frustum& cameraWorldFrust
 		pUploadActiveLightProps[lightIndex].m_ViewNearPlane = pLightData->m_LightViewNearPlane;
 		pUploadActiveLightProps[lightIndex].m_RcpViewClipRange = pLightData->m_LightRcpViewClipRange;
 
-		pUploadActiveLightConvertShadowMapParams[lightIndex].m_LightViewNearPlane = pLightData->m_LightViewNearPlane;
-		pUploadActiveLightConvertShadowMapParams[lightIndex].m_LightRcpViewClipRange = pLightData->m_LightRcpViewClipRange;
-		pUploadActiveLightConvertShadowMapParams[lightIndex].m_LightProjMatrix43 = pLightData->m_LightProjMatrix43;
-		pUploadActiveLightConvertShadowMapParams[lightIndex].m_LightProjMatrix33 = pLightData->m_LightProjMatrix33;
+		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightViewNearPlane = pLightData->m_LightViewNearPlane;
+		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightRcpViewClipRange = pLightData->m_LightRcpViewClipRange;
+		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightProjMatrix43 = pLightData->m_LightProjMatrix43;
+		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightProjMatrix33 = pLightData->m_LightProjMatrix33;
 
 		for (decltype(m_NumActivePointLights) localFaceIndex = 0; localFaceIndex < kNumCubeMapFaces; ++localFaceIndex)
 		{
@@ -3097,7 +3105,7 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 	LightFrustum* pUploadActiveLightWorldFrustums = (LightFrustum*)m_UploadActiveSpotLightWorldFrustums[m_BackBufferIndex];
 	Matrix4f* pUploadActiveLightViewProjMatrices = (Matrix4f*)m_UploadActiveSpotLightViewProjMatrices[m_BackBufferIndex];
 	ShadowMapTile* pUploadActiveLightShadowMapTiles = (ShadowMapTile*)m_UploadActiveSpotLightShadowMapTiles[m_BackBufferIndex];
-	ConvertShadowMapParams* pUploadActiveLightConvertShadowMapParams = (ConvertShadowMapParams*)m_UploadActiveSpotLightConvertShadowMapParams[m_BackBufferIndex];
+	CreateExpShadowMapParams* pUploadActiveLightCreateExpShadowMapParams = (CreateExpShadowMapParams*)m_UploadActiveSpotLightCreateExpShadowMapParams[m_BackBufferIndex];
 
 	for (decltype(m_NumActiveSpotLights) lightIndex = 0; lightIndex < m_NumActiveSpotLights; ++lightIndex)
 	{
@@ -3114,10 +3122,10 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 		pUploadActiveLightProps[lightIndex].m_ViewNearPlane = pLightData->m_LightViewNearPlane;
 		pUploadActiveLightProps[lightIndex].m_RcpViewClipRange = pLightData->m_LightRcpViewClipRange;
 
-		pUploadActiveLightConvertShadowMapParams[lightIndex].m_LightViewNearPlane = pLightData->m_LightViewNearPlane;
-		pUploadActiveLightConvertShadowMapParams[lightIndex].m_LightRcpViewClipRange = pLightData->m_LightRcpViewClipRange;
-		pUploadActiveLightConvertShadowMapParams[lightIndex].m_LightProjMatrix43 = pLightData->m_LightProjMatrix43;
-		pUploadActiveLightConvertShadowMapParams[lightIndex].m_LightProjMatrix33 = pLightData->m_LightProjMatrix33;
+		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightViewNearPlane = pLightData->m_LightViewNearPlane;
+		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightRcpViewClipRange = pLightData->m_LightRcpViewClipRange;
+		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightProjMatrix43 = pLightData->m_LightProjMatrix43;
+		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightProjMatrix33 = pLightData->m_LightProjMatrix33;
 		
 		Matrix4f shadowMapTileMatrix = CreateShadowMapTileMatrix(pLightData->m_ShadowMapTile);
 		pUploadActiveLightViewProjMatrices[lightIndex] = pLightData->m_ViewProjMatrix * shadowMapTileMatrix;

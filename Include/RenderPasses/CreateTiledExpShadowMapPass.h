@@ -9,7 +9,7 @@ class RootSignature;
 class PipelineState;
 class CommandList;
 
-struct ConvertShadowMapParams
+struct CreateExpShadowMapParams
 {
 	f32 m_LightViewNearPlane;
 	f32 m_LightRcpViewClipRange;
@@ -17,14 +17,14 @@ struct ConvertShadowMapParams
 	f32 m_LightProjMatrix33;
 };
 
-class ConvertTiledShadowMapPass
+class CreateTiledExpShadowMapPass
 {
 public:
 	struct ResourceStates
 	{
 		D3D12_RESOURCE_STATES m_TiledShadowMapState;
 		D3D12_RESOURCE_STATES m_ShadowMapTileBufferState;
-		D3D12_RESOURCE_STATES m_ConvertShadowMapParamsBufferState;
+		D3D12_RESOURCE_STATES m_CreateExpShadowMapParamsBufferState;
 		D3D12_RESOURCE_STATES m_TiledExpShadowMapState;
 	};
 
@@ -36,7 +36,7 @@ public:
 		LightType m_LightType;
 		DepthTexture* m_pTiledShadowMap;
 		Buffer* m_pShadowMapTileBuffer;
-		Buffer* m_pConvertShadowMapParamsBuffer;
+		Buffer* m_pCreateExpShadowMapParamsBuffer;
 	};
 
 	struct RenderParams
@@ -46,8 +46,8 @@ public:
 		u32 m_NumShadowMapTiles;
 	};
 
-	ConvertTiledShadowMapPass(InitParams* pParams);
-	~ConvertTiledShadowMapPass();
+	CreateTiledExpShadowMapPass(InitParams* pParams);
+	~CreateTiledExpShadowMapPass();
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
