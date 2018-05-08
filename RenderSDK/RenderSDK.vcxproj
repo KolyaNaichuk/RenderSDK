@@ -217,6 +217,7 @@
     <ClInclude Include="..\Include\RenderPasses\MaterialRenderResources.h" />
     <ClInclude Include="..\Include\RenderPasses\MeshRenderResources.h" />
     <ClInclude Include="..\Include\RenderPasses\ShadowMapTileAllocator.h" />
+    <ClInclude Include="..\Include\RenderPasses\ShadowRenderer.h" />
     <ClInclude Include="..\Include\RenderPasses\VoxelizePass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelizeCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\DownscaleAndReprojectDepthPass.h" />
@@ -298,6 +299,7 @@
     <ClCompile Include="..\Source\RenderPasses\MaterialRenderResources.cpp" />
     <ClCompile Include="..\Source\RenderPasses\MeshRenderResources.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ShadowMapTileAllocator.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\ShadowRenderer.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VoxelizePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelizeCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\DownscaleAndReprojectDepthPass.cpp" />

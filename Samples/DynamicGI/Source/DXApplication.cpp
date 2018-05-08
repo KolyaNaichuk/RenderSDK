@@ -58,11 +58,23 @@
 #include "Math/Vector4.h"
 
 /*
+Optimizations
+- To render shadow maps, I could use a separate vertex buffer which contains only positions.
+- For the point light, I could check which point light frustum intersects view frustum before rendering shadow map for that face.
+
+1.At app start-up, for each light view frustum (6 frustums per point light), run intersection test vs static geometry of the scene.
+2.Based on collected data for each light view frustum, record render commands for static geometry on a separate command list bundle.
+  I guess, I could also pre-sort the geometry to avoid overdraw.
+
+When rendering shadows:
+- Run light frustum test versus view frustum test to identify shadow maps to be rendered. For point light, run the test for each cube map view frustum.
+*/
+
+/*
 To do:
 - ShadowMapTile contains data both in texture and pixel spaces which most likely causes cache thrashing as only one of them is used at a time.
   Consider splitting the structure into two.
 - Clean RenderPasses/Common.h
-- Add support for mip levels. Search for keyword "KolyaMipLevels". When creating MaterialRenderResources and reading materials in shading pass should account for mip when taking resource index.
 - I am using Sphere as bounding volume for SpotLights. Investigate if there are better alternatives. Check https://bartwronski.com/ implementation for the cone test.
 - Hard-coded light screen area for now. Fix CalcScreenAreaAffectedByLight.
 - Depth and shadow maps are using DXGI_FORMAT_R32_TYPELESS format. Check if 16 bit format would suffice

@@ -7,6 +7,7 @@ class RootSignature;
 
 struct DrawIndexedArguments
 {
+	DrawIndexedArguments();
 	DrawIndexedArguments(UINT indexCountPerInstance, UINT instanceCount,
 		UINT startIndexLocation, INT baseVertexLocation, UINT startInstanceLocation);
 
@@ -19,6 +20,7 @@ struct DrawIndexedArguments
 
 struct DispatchArguments
 {
+	DispatchArguments();
 	DispatchArguments(UINT threadGroupCountX, UINT threadGroupCountY, UINT threadGroupCountZ);
 
 	UINT m_ThreadGroupCountX;

@@ -1,4 +1,5 @@
 #include "RenderPasses/CreateShadowMapCommandsPass.h"
+#include "RenderPasses/Common.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/CommandSignature.h"
@@ -10,12 +11,6 @@
 
 namespace
 {
-	struct ShadowMapCommand
-	{
-		UINT m_DataOffset;
-		DrawIndexedArguments m_Args;
-	};
-
 	enum RootParams
 	{
 		kRoot32BitConstantsParam = 0,

@@ -2,6 +2,15 @@
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/RootSignature.h"
 
+DrawIndexedArguments::DrawIndexedArguments()
+	: m_IndexCountPerInstance(0)
+	, m_InstanceCount(0)
+	, m_StartIndexLocation(0)
+	, m_BaseVertexLocation(0)
+	, m_StartInstanceLocation(0)
+{
+}
+
 DrawIndexedArguments::DrawIndexedArguments(UINT indexCountPerInstance, UINT instanceCount,
 		UINT startIndexLocation, INT baseVertexLocation, UINT startInstanceLocation)
 	: m_IndexCountPerInstance(indexCountPerInstance)
@@ -9,6 +18,13 @@ DrawIndexedArguments::DrawIndexedArguments(UINT indexCountPerInstance, UINT inst
 	, m_StartIndexLocation(startIndexLocation)
 	, m_BaseVertexLocation(baseVertexLocation)
 	, m_StartInstanceLocation(startInstanceLocation)
+{
+}
+
+DispatchArguments::DispatchArguments()
+	: m_ThreadGroupCountX(0)
+	, m_ThreadGroupCountY(0)
+	, m_ThreadGroupCountZ(0)
 {
 }
 
