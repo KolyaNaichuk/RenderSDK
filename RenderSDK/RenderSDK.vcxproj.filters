@@ -279,7 +279,7 @@
     <ClInclude Include="..\Include\RenderPasses\CreateTiledExpShadowMapPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\ShadowRenderer.h">
+    <ClInclude Include="..\Include\RenderPasses\SpotLightShadowRenderer.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -521,7 +521,7 @@
     <ClCompile Include="..\Source\RenderPasses\CreateTiledExpShadowMapPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\ShadowRenderer.cpp">
+    <ClCompile Include="..\Source\RenderPasses\SpotLightShadowRenderer.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
