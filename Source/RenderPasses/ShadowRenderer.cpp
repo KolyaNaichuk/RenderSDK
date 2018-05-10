@@ -6,6 +6,27 @@
 #include "Scene/Light.h"
 #include "Scene/MeshBatch.h"
 
+/*
+visibleShadowMaps = DetectVisibleShadowMapsFromCamera();
+
+shadowMapsRequiringUpdate = {};
+for (shadowMap in visibleShadowMaps)
+{
+if (shadowMap is up-to-date in staleCache)
+do not do anything;
+else
+shadowMapRequiringUpdate.add(shadowMap);
+}
+
+sortedShadowMapsByPriority = sortByImportance(shadowMapsRequiringUpdate);
+for (shadowMap in sortedShadowMapsByPriority)
+{
+if (shadowMap is not present in staticCache)
+render static geometry to staticCache
+copy shadowMap from staticCache to activeShadowMap
+}
+*/
+
 namespace
 {
 	struct ShadowMapCommand
@@ -59,17 +80,30 @@ namespace
 ShadowRenderer::ShadowRenderer(InitParams* pParams)
 {
 	InitResources(pParams);
-
-	CreateSpotLightRenderStaticGeometryCommands(pParams->m_NumSpotLights, pParams->m_ppSpotLights, pParams->m_pMeshBatch);
-	CreatePointLightRenderStaticGeometryCommands(pParams->m_NumPointLights, pParams->m_ppPointLights, pParams->m_pMeshBatch);
+	InitStaticMeshCommands(pParams);
 }
 
 ShadowRenderer::~ShadowRenderer()
 {
 	SafeDelete(m_pActiveShadowMaps);
-	SafeDelete(m_pStaticCache);
-	SafeDelete(m_pESMStaleCache);
-	SafeDelete(m_pRenderStaticGeometryCommands);
+	SafeDelete(m_pStaticMeshShadowMaps);
+	SafeDelete(m_pStaticMeshCommandBuffer);
+	SafeDelete(m_pStaticMeshInstanceIndexBuffer);
+	SafeDelete(m_pShadowMaps);
+}
+
+void ShadowRenderer::RenderShadowMaps(const Camera& camera)
+{
+	u32 numActiveShadowMaps = 0;
+	for (u32 shadowMapIndex = 0; shadowMapIndex < m_LightWorldFrustums.size(); ++shadowMapIndex)
+	{
+		if (TestFrustumAgainstFrustum(cameraWorldFrustum, m_LightWorldFrustums[shadowMapIndex]))
+		{
+			m_ActiveShadowMapIndices[numActiveShadowMaps] = shadowMapIndex;
+			++numActiveShadowMaps;
+		}
+	}
+	assert(false);
 }
 
 void ShadowRenderer::InitResources(InitParams* pParams)
@@ -80,25 +114,36 @@ void ShadowRenderer::InitResources(InitParams* pParams)
 	assert(m_pActiveShadowMaps == nullptr);
 	assert(false && "fix format to D16");
 	DepthTexture2DDesc activeShadowMapsDesc(DXGI_FORMAT_UNKNOWN, pParams->m_ShadowMapSize, pParams->m_ShadowMapSize,
-		true/*createDSV*/, true/*createSRV*/, pParams->m_NumActiveShadowMaps);
+		true/*createDSV*/, true/*createSRV*/, pParams->m_MaxNumActiveShadowMaps);
 	m_pActiveShadowMaps = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &activeShadowMapsDesc,
 		D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"ShadowRenderer::m_pActiveShadowMaps");
-
-	assert(m_pStaticCache == nullptr);
+	m_ActiveShadowMapIndices.resize(pParams->m_MaxNumActiveShadowMaps);
+		
+	assert(m_pStaticMeshShadowMaps == nullptr);
 	assert(false && "fix format to D16");
-	DepthTexture2DDesc staticCacheDesc(DXGI_FORMAT_UNKNOWN, pParams->m_ShadowMapSize, pParams->m_ShadowMapSize,
-		true/*createDSV*/, true/*createSRV*/, pParams->m_NumShadowMapsInStaticCache);
-	m_pStaticCache = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &staticCacheDesc,
-		D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"ShadowRenderer::m_pStaticCache");
-
-	const u32 ESMShadowMapSize = pParams->m_ShadowMapSize / 2;
+	DepthTexture2DDesc staticMeshShadowMapsDesc(DXGI_FORMAT_UNKNOWN, pParams->m_ShadowMapSize, pParams->m_ShadowMapSize,
+		true/*createDSV*/, true/*createSRV*/, pParams->m_MaxNumStaticShadowMaps);
+	m_pStaticMeshShadowMaps = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &staticMeshShadowMapsDesc,
+		D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"ShadowRenderer::m_pStaticMeshShadowMaps");
+	m_StaticMeshShadowMapIndices.resize(pParams->m_MaxNumStaticShadowMaps);
 	
-	assert(m_pESMStaleCache == nullptr);
+	const u32 shadowMapSize = pParams->m_ShadowMapSize / 2;
+	const u32 numShadowMaps = 6 * pParams->m_NumPointLights + pParams->m_NumSpotLights;
+
+	assert(m_pShadowMaps == nullptr);
 	assert(false && "fix format to 16 bit UNORM");
-	ColorTexture2DDesc ESMStaleCacheDesc(DXGI_FORMAT_UNKNOWN, ESMShadowMapSize, ESMShadowMapSize,
-		false/*createRTV*/, true/*createSRV*/, true/*createUAV*/, pParams->m_NumShadowMapsInStaleCache);
-	m_pESMStaleCache = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &ESMStaleCacheDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr/*optimizedClearColor*/, L"ShadowRenderer::m_pESMStaleCache");
+	ColorTexture2DDesc shadowMapsDesc(DXGI_FORMAT_UNKNOWN, shadowMapSize, shadowMapSize,
+		false/*createRTV*/, true/*createSRV*/, true/*createUAV*/, numShadowMaps);
+	m_pShadowMaps = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shadowMapsDesc,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr/*optimizedClearColor*/, L"ShadowRenderer::m_pShadowMaps");
+
+	m_ShadowMapStates.resize(numShadowMaps);
+	for (u32 shadowMapIndex = 0; shadowMapIndex < m_ShadowMapStates.size(); ++shadowMapIndex)
+		m_ShadowMapStates[shadowMapIndex] = ShadowMapState::Invalid;
+}
+
+void ShadowRenderer::InitStaticMeshCommands(InitParams* pParams)
+{
 }
 
 void ShadowRenderer::CreateSpotLightRenderStaticGeometryCommands(u32 numSpotLights, SpotLight** ppSpotLights, const MeshBatch* pMeshBatch)

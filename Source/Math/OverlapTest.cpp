@@ -44,6 +44,12 @@ bool TestSphereAgainstPlane(const Plane& plane, const Sphere& sphere)
 	return !fullyInsideBackHalfSpace;
 }
 
+bool TestFrustumAgainstFrustum(const Frustum& frustum1, const Frustum& frustum2)
+{
+	assert(false);
+	return false;
+}
+
 bool TestAABBAgainstFrustum(const Frustum& frustum, const AxisAlignedBox& box)
 {
 	bool insideOrOverlap = TestAABBAgainstPlane(frustum.m_Planes[Frustum::NearPlane], box) &&

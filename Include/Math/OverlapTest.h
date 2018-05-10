@@ -11,5 +11,6 @@ bool Overlap(const Sphere& sphere1, const Sphere& sphere2);
 bool TestAABBAgainstPlane(const Plane& plane, const AxisAlignedBox& box);
 bool TestSphereAgainstPlane(const Plane& plane, const Sphere& sphere);
 
+bool TestFrustumAgainstFrustum(const Frustum& frustum1, const Frustum& frustum2);
 bool TestAABBAgainstFrustum(const Frustum& frustum, const AxisAlignedBox& box);
 bool TestSphereAgainstFrustum(const Frustum& frustum, const Sphere& sphere);
