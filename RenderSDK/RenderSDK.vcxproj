@@ -206,18 +206,15 @@
     <ClInclude Include="..\Include\RenderPasses\CalcShadingRectanglesPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
     <ClInclude Include="..\Include\RenderPasses\Common.h" />
-    <ClInclude Include="..\Include\RenderPasses\CreateTiledExpShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateFalseNegativeDrawCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateMainDrawCommandsPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\CreateShadowMapCommandsPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\FilterTiledExpShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FrustumMeshCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\GeometryBuffer.h" />
     <ClInclude Include="..\Include\RenderPasses\LightRenderData.h" />
     <ClInclude Include="..\Include\RenderPasses\MaterialRenderResources.h" />
     <ClInclude Include="..\Include\RenderPasses\MeshRenderResources.h" />
-    <ClInclude Include="..\Include\RenderPasses\ShadowMapTileAllocator.h" />
     <ClInclude Include="..\Include\RenderPasses\SpotLightShadowRenderer.h" />
+    <ClInclude Include="..\Include\RenderPasses\Utils.h" />
     <ClInclude Include="..\Include\RenderPasses\VoxelizePass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelizeCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\DownscaleAndReprojectDepthPass.h" />
@@ -225,8 +222,6 @@
     <ClInclude Include="..\Include\RenderPasses\FillVisibilityBufferPass.h" />
     <ClInclude Include="..\Include\RenderPasses\PropagateLightPass.h" />
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\CreateTiledShadowMapCommandsPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\RenderTiledShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\ScaleTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledLightCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledShadingPass.h" />
@@ -237,8 +232,6 @@
     <ClInclude Include="..\Include\Scene\Material.h" />
     <ClInclude Include="..\Include\Scene\Mesh.h" />
     <ClInclude Include="..\Include\Scene\MeshBatch.h" />
-    <ClInclude Include="..\Include\Scene\MeshFactory.h" />
-    <ClInclude Include="..\Include\Scene\MeshUtilities.h" />
     <ClInclude Include="..\Include\Scene\OBJFileLoader.h" />
     <ClInclude Include="..\Include\Scene\Scene.h" />
     <ClInclude Include="..\Include\Scene\SceneLoader.h" />
@@ -289,16 +282,13 @@
     <ClCompile Include="..\Source\Profiler\GPUProfiler.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CalcShadingRectanglesPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CreateTiledExpShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateMainDrawCommandsPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CreateShadowMapCommandsPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\FilterTiledExpShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FrustumMeshCullingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\GeometryBuffer.cpp" />
     <ClCompile Include="..\Source\RenderPasses\MaterialRenderResources.cpp" />
     <ClCompile Include="..\Source\RenderPasses\MeshRenderResources.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\ShadowMapTileAllocator.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\Utils.cpp" />
     <ClCompile Include="..\Source\RenderPasses\SpotLightShadowRenderer.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VoxelizePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelizeCommandsPass.cpp" />
@@ -307,8 +297,6 @@
     <ClCompile Include="..\Source\RenderPasses\FillVisibilityBufferPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\PropagateLightPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CreateTiledShadowMapCommandsPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\RenderTiledShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ScaleTexturePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledLightCullingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledShadingPass.cpp" />
@@ -319,8 +307,6 @@
     <ClCompile Include="..\Source\Scene\Material.cpp" />
     <ClCompile Include="..\Source\Scene\Mesh.cpp" />
     <ClCompile Include="..\Source\Scene\MeshBatch.cpp" />
-    <ClCompile Include="..\Source\Scene\MeshFactory.cpp" />
-    <ClCompile Include="..\Source\Scene\MeshUtilities.cpp" />
     <ClCompile Include="..\Source\Scene\OBJFileLoader.cpp" />
     <ClCompile Include="..\Source\Scene\Scene.cpp" />
     <ClCompile Include="..\Source\Scene\SceneLoader.cpp" />
@@ -458,19 +444,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\CreateTiledShadowMapCommandsCS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Shaders\Foundation.hlsl">
       <FileType>Document</FileType>
     </None>
@@ -487,18 +460,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\RenderTiledShadowMapGS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Geometry</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Geometry</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Geometry</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Geometry</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
-      <FileType>Document</FileType>
-    </None>
-    <None Include="..\Shaders\RenderTiledShadowMapVS.hlsl">
+    <None Include="..\Shaders\RenderShadowMapVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
@@ -622,34 +584,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\CreateTiledExpShadowMapPS.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Shaders\ShadowUtils.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Shaders\CreateTiledExpShadowMapVS.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Shaders\FilterTiledExpShadowMapCS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>

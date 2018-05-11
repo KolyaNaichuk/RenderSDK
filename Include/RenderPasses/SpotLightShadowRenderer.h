@@ -30,9 +30,9 @@ private:
 		UpToDate,
 		Outdated
 	};
-	struct CommandsRange
+	struct CommandRange
 	{
-		UINT64 m_CommandOffset;
+		UINT64 m_FirstCommand;
 		UINT m_NumCommands;
 	};
 
@@ -43,7 +43,7 @@ private:
 	DepthTexture* m_pActiveShadowMaps = nullptr;
 	
 	Buffer* m_pStaticMeshCommandBuffer = nullptr;
-	std::vector<CommandsRange> m_StaticMeshCommandsRange;
+	std::vector<CommandRange> m_StaticMeshCommandRanges;
 	Buffer* m_pStaticMeshInstanceIndexBuffer = nullptr;
 	
 	ColorTexture* m_pSpotLightShadowMaps = nullptr;

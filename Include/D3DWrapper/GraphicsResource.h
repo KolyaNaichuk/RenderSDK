@@ -2,6 +2,7 @@
 
 #include "D3DWrapper/DescriptorHeap.h"
 #include "D3DWrapper/CommandQueue.h"
+#include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/Fence.h"
 
 class GraphicsDevice;

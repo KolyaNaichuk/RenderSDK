@@ -4,9 +4,8 @@
 #define SHADING_MODE_PHONG			1
 #define SHADING_MODE_BLINN_PHONG	2
 
-#define LIGHT_TYPE_POINT			1
-#define LIGHT_TYPE_SPOT				2
-#define LIGHT_TYPE_DIRECTIONAL		3
+#define LIGHT_TYPE_SPOT				1
+#define LIGHT_TYPE_DIRECTIONAL		2
 
 #define CUBE_MAP_FACE_POS_X			0
 #define CUBE_MAP_FACE_NEG_X			1
@@ -15,13 +14,6 @@
 #define CUBE_MAP_FACE_POS_Z			4
 #define CUBE_MAP_FACE_NEG_Z			5
 #define NUM_CUBE_MAP_FACES			6
-
-struct PointLightProps
-{
-	float3 color;
-	float viewNearPlane;
-	float rcpViewClipRange;
-};
 
 struct SpotLightProps
 {

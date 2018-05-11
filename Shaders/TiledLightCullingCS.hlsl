@@ -11,33 +11,18 @@ cbuffer AppDataBuffer : register(b0)
 
 cbuffer Constants32BitBuffer : register(b1)
 {
-	uint g_NumPointLights;
 	uint g_NumSpotLights;
 }
 
 Texture2D g_DepthTexture : register(t0);
-
-#if MAX_NUM_POINT_LIGHTS > 0
-StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t1);
-RWBuffer<uint> g_PointLightIndicesOffsetBuffer : register(u0);
-RWBuffer<uint> g_PointLightIndexPerTileBuffer : register(u1);
-RWStructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(u2);
-
-groupshared uint g_NumPointLightsPerTile;
-groupshared uint g_PointLightIndicesPerTile[MAX_NUM_POINT_LIGHTS];
-groupshared uint g_PointLightIndicesOffset;
-#endif
-
-#if MAX_NUM_SPOT_LIGHTS > 0
-StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t2);
-RWBuffer<uint> g_SpotLightIndicesOffsetBuffer : register(u3);
-RWBuffer<uint> g_SpotLightIndexPerTileBuffer : register(u4);
-RWStructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(u5);
+StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t1);
+RWBuffer<uint> g_SpotLightIndicesOffsetBuffer : register(u0);
+RWBuffer<uint> g_SpotLightIndexPerTileBuffer : register(u1);
+RWStructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(u2);
 
 groupshared uint g_NumSpotLightsPerTile;
 groupshared uint g_SpotLightIndicesPerTile[MAX_NUM_SPOT_LIGHTS];
 groupshared uint g_SpotLightIndicesOffset;
-#endif
 
 groupshared uint g_ViewSpaceMinDepthIntPerTile;
 groupshared uint g_ViewSpaceMaxDepthIntPerTile;
@@ -83,25 +68,6 @@ bool TestSphereAgainstFrustum(float4 frustumSidePlanes[4], float frustumMinZ, fl
 	return insideOrOverlap;
 }
 
-#if MAX_NUM_POINT_LIGHTS > 0
-void CullPointLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth)
-{
-	for (uint lightIndex = localThreadIndex; lightIndex < g_NumPointLights; lightIndex += NUM_THREADS_PER_TILE)
-	{
-		Sphere viewSpaceLightBounds = g_PointLightWorldBoundsBuffer[lightIndex];
-		viewSpaceLightBounds.center = mul(g_AppData.viewMatrix, float4(viewSpaceLightBounds.center.xyz, 1.0f)).xyz;
-
-		if (TestSphereAgainstFrustum(viewSpaceFrustumSidePlanes, viewSpaceMinDepth, viewSpaceMaxDepth, viewSpaceLightBounds))
-		{
-			uint listIndex;
-			InterlockedAdd(g_NumPointLightsPerTile, 1, listIndex);
-			g_PointLightIndicesPerTile[listIndex] = lightIndex;
-		}
-	}
-}
-#endif
-
-#if MAX_NUM_SPOT_LIGHTS > 0
 void CullSpotLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePlanes[4], float viewSpaceMinDepth, float viewSpaceMaxDepth)
 {
 	for (uint lightIndex = localThreadIndex; lightIndex < g_NumSpotLights; lightIndex += NUM_THREADS_PER_TILE)
@@ -117,7 +83,6 @@ void CullSpotLightsPerTile(uint localThreadIndex, float4 viewSpaceFrustumSidePla
 		}
 	}
 }
-#endif
 
 [numthreads(TILE_SIZE, TILE_SIZE, 1)]
 void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID, uint localThreadIndex : SV_GroupIndex)
@@ -127,15 +92,8 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 		g_ViewSpaceMinDepthIntPerTile = 0x7F7FFFFF;
 		g_ViewSpaceMaxDepthIntPerTile = 0;
 
-#if MAX_NUM_POINT_LIGHTS > 0
-		g_NumPointLightsPerTile = 0;
-		g_PointLightIndicesOffset = 0;
-#endif
-
-#if MAX_NUM_SPOT_LIGHTS > 0
 		g_NumSpotLightsPerTile = 0;
 		g_SpotLightIndicesOffset = 0;
-#endif
 	}
 	GroupMemoryBarrierWithGroupSync();
 
@@ -151,35 +109,9 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 	float viewSpaceMinDepthPerTile = asfloat(g_ViewSpaceMinDepthIntPerTile);
 	float viewSpaceMaxDepthPerTile = asfloat(g_ViewSpaceMaxDepthIntPerTile);
 
-#if (MAX_NUM_POINT_LIGHTS > 0) || (MAX_NUM_SPOT_LIGHTS > 0)
 	float4 viewSpaceFrusumSidePlanes[4];
 	BuildFrustumSidePlanes(viewSpaceFrusumSidePlanes, tileId.xy);
-#endif
-
-	uint tileIndex = tileId.y * NUM_TILES_X + tileId.x;
-
-#if MAX_NUM_POINT_LIGHTS > 0
-	CullPointLightsPerTile(localThreadIndex, viewSpaceFrusumSidePlanes, viewSpaceMinDepthPerTile, viewSpaceMaxDepthPerTile);
-	GroupMemoryBarrierWithGroupSync();
-
-	if (localThreadIndex == 0)
-	{
-		uint lightIndicesOffset = 0;
-		if (g_NumPointLightsPerTile > 0)
-		{
-			InterlockedAdd(g_PointLightIndicesOffsetBuffer[0], g_NumPointLightsPerTile, lightIndicesOffset);
-			g_PointLightIndicesOffset = lightIndicesOffset;
-		}
-		g_PointLightRangePerTileBuffer[tileIndex].start = lightIndicesOffset;
-		g_PointLightRangePerTileBuffer[tileIndex].length = g_NumPointLightsPerTile;
-	}
-	GroupMemoryBarrierWithGroupSync();
-
-	for (uint index = localThreadIndex; index < g_NumPointLightsPerTile; index += NUM_THREADS_PER_TILE)
-		g_PointLightIndexPerTileBuffer[g_PointLightIndicesOffset + index] = g_PointLightIndicesPerTile[index];
-#endif
 	
-#if MAX_NUM_SPOT_LIGHTS > 0
 	CullSpotLightsPerTile(localThreadIndex, viewSpaceFrusumSidePlanes, viewSpaceMinDepthPerTile, viewSpaceMaxDepthPerTile);
 	GroupMemoryBarrierWithGroupSync();
 
@@ -191,6 +123,8 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 			InterlockedAdd(g_SpotLightIndicesOffsetBuffer[0], g_NumSpotLightsPerTile, lightIndicesOffset);
 			g_SpotLightIndicesOffset = lightIndicesOffset;
 		}
+
+		uint tileIndex = tileId.y * NUM_TILES_X + tileId.x;
 		g_SpotLightRangePerTileBuffer[tileIndex].start = lightIndicesOffset;
 		g_SpotLightRangePerTileBuffer[tileIndex].length = g_NumSpotLightsPerTile;
 	}
@@ -198,5 +132,4 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID, uint3 tileId : SV_GroupID,
 
 	for (uint index = localThreadIndex; index < g_NumSpotLightsPerTile; index += NUM_THREADS_PER_TILE)
 		g_SpotLightIndexPerTileBuffer[g_SpotLightIndicesOffset + index] = g_SpotLightIndicesPerTile[index];
-#endif
 }

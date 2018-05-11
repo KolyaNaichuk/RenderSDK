@@ -1,4 +1,5 @@
 #include "RenderPasses/SpotLightShadowRenderer.h"
+#include "RenderPasses/Utils.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/CommandSignature.h"
 #include "Math/Frustum.h"
@@ -36,6 +37,8 @@ SpotLightShadowRenderer::~SpotLightShadowRenderer()
 
 void SpotLightShadowRenderer::RenderSpotLightShadowMaps(u32 numActiveSpotLights, const u32* pFirstActiveSpotLightIndex)
 {
+	assert(numActiveSpotLights <= m_SpotLightShadowMapStates.size());
+
 	u32 numOutdatedShadowMaps = 0;
 	for (u32 it = 0; it < numActiveSpotLights; ++it)
 	{
@@ -73,9 +76,15 @@ void SpotLightShadowRenderer::InitResources(InitParams* pParams)
 
 void SpotLightShadowRenderer::InitStaticMeshCommands(InitParams* pParams)
 {
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
 	const u32 numMeshes = pParams->m_pStaticMeshBatch->GetNumMeshes();
 	const MeshInfo* meshInfos = pParams->m_pStaticMeshBatch->GetMeshInfos();
 	const AxisAlignedBox* meshInstanceWorldAABBs = pParams->m_pStaticMeshBatch->GetMeshInstanceWorldAABBs();
+
+	std::vector<u32> meshInstanceIndices;
+	std::vector<ShadowMapCommand> staticMeshCommands;
+	assert(m_StaticMeshCommandRanges.empty());
 
 	for (u32 lightIndex = 0; lightIndex < pParams->m_NumSpotLights; ++lightIndex)
 	{
@@ -95,8 +104,10 @@ void SpotLightShadowRenderer::InitStaticMeshCommands(InitParams* pParams)
 		const Matrix4f viewProjMatrix = viewMatrix * projMatrix;
 		const Frustum lightWorldFrustum(viewProjMatrix);
 
-		std::vector<u32> meshInstanceIndices;
-		std::vector<ShadowMapCommand> renderCommands;
+		CommandRange commandRange;
+		commandRange.m_FirstCommand = staticMeshCommands.size();
+		commandRange.m_NumCommands = 0;
+
 		for (u32 meshIndex = 0; meshIndex < numMeshes; ++meshIndex)
 		{
 			u32 numVisibleMeshInstances = 0;
@@ -123,9 +134,27 @@ void SpotLightShadowRenderer::InitStaticMeshCommands(InitParams* pParams)
 				shadowMapCommand.m_Args.m_BaseVertexLocation = meshInfo.m_BaseVertexLocation;
 				shadowMapCommand.m_Args.m_StartInstanceLocation = 0;
 
-				renderCommands.push_back(shadowMapCommand);
+				staticMeshCommands.push_back(shadowMapCommand);
 			}
 		}
+		
+		commandRange.m_NumCommands = staticMeshCommands.size() - commandRange.m_FirstCommand;
+		m_StaticMeshCommandRanges.push_back(commandRange);
 	}
-	assert(false);
+
+	assert(m_pStaticMeshCommandBuffer == nullptr);	
+	StructuredBufferDesc staticMeshCommandBufferDesc(staticMeshCommands.size(), sizeof(ShadowMapCommand), false/*createSRV*/, false/*createUAV*/);
+	m_pStaticMeshCommandBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &staticMeshCommandBufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"SpotLightShadowRenderer::m_pStaticMeshCommandBuffer");
+	
+	UploadData(pRenderEnv, m_pStaticMeshCommandBuffer, staticMeshCommandBufferDesc,
+		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, staticMeshCommands.data(), staticMeshCommands.size() * sizeof(staticMeshCommands[0]));
+
+	assert(m_pStaticMeshInstanceIndexBuffer == nullptr);
+	FormattedBufferDesc staticMeshInstanceIndexBufferDesc(meshInstanceIndices.size(), DXGI_FORMAT_R32_UINT, true/*createSRV*/, false/*createUAV*/);
+	m_pStaticMeshInstanceIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &staticMeshInstanceIndexBufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"SpotLightShadowRenderer::m_pStaticMeshInstanceIndexBuffer");
+
+	UploadData(pRenderEnv, m_pStaticMeshInstanceIndexBuffer, staticMeshInstanceIndexBufferDesc,
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, meshInstanceIndices.data(), meshInstanceIndices.size() * sizeof(meshInstanceIndices[0]));
 }

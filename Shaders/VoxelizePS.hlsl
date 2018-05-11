@@ -22,18 +22,13 @@ cbuffer Constants32BitBuffer : register(b1)
 
 RasterizerOrderedTexture3D<float4> g_VoxelReflectanceTexture : register(u0);
 
-#if ENABLE_POINT_LIGHTS == 1
-StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t0);
-StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t1);
-#endif // ENABLE_POINT_LIGHTS
-
 #if ENABLE_SPOT_LIGHTS == 1
-StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t2);
-StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t3);
+StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t0);
+StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t1);
 #endif // ENABLE_SPOT_LIGHTS
 
-Buffer<uint> g_FirstResourceIndexPerMaterialIDBuffer : register(t4);
-Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t5);
+Buffer<uint> g_FirstResourceIndexPerMaterialIDBuffer : register(t2);
+Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t3);
 
 SamplerState g_AnisoSampler : register(s0);
 

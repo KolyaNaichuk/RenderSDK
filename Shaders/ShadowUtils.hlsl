@@ -1,14 +1,6 @@
 #ifndef __SHADOW_UTILS__
 #define __SHADOW_UTILS__
 
-struct ShadowMapTile
-{
-	uint2 topLeftInPixels;
-	uint sizeInPixels;
-	float2 texSpaceTopLeft;
-	float texSpaceSize;
-};
-
 float CalcPointLightVisibility(Texture2D<float3> expShadowMap, float4x4 lightViewProjMatrix,
 	float lightViewNearPlane, float lightRcpViewClipRange, float3 worldSpacePos)
 {

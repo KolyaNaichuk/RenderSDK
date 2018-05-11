@@ -11,7 +11,6 @@ class CommandSignature;
 class MeshRenderResources;
 
 //#define ENABLE_VOXELIZATION
-// Check source code using this define
 
 class VoxelizePass
 {
@@ -24,8 +23,6 @@ public:
 		D3D12_RESOURCE_STATES m_InstanceWorldMatrixBufferState;
 		D3D12_RESOURCE_STATES m_VoxelReflectanceTextureState;
 		D3D12_RESOURCE_STATES m_FirstResourceIndexPerMaterialIDBufferState;
-		D3D12_RESOURCE_STATES m_PointLightWorldBoundsBufferState;
-		D3D12_RESOURCE_STATES m_PointLightPropsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightWorldBoundsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightPropsBufferState;
 	};
@@ -51,9 +48,6 @@ public:
 		Buffer* m_pInstanceWorldMatrixBuffer;
 				
 		bool m_EnableDirectionalLight;
-		bool m_EnablePointLights;
-		Buffer* m_pPointLightWorldBoundsBuffer;
-		Buffer* m_pPointLightPropsBuffer;
 		bool m_EnableSpotLights;
 		Buffer* m_pSpotLightWorldBoundsBuffer;
 		Buffer* m_pSpotLightPropsBuffer;
@@ -67,7 +61,6 @@ public:
 		Buffer* m_pNumCommandsPerMeshTypeBuffer;
 		Buffer* m_pVoxelizeCommandBuffer;
 		Buffer* m_pAppDataBuffer;
-		u32 m_NumPointLights;
 		u32 m_NumSpotLights;
 	};
 

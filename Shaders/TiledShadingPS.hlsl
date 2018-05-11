@@ -21,28 +21,18 @@ Texture2D<float2> g_GBuffer1 : register(t1);
 Texture2D<float2> g_GBuffer2 : register(t2);
 Texture2D<uint2> g_GBuffer3 : register(t3);
 Texture2D<float4> g_GBuffer4 : register(t4);
-Buffer<uint> g_FirstResourceIndexPerMaterialIDBuffer : register(t5);
-
-#if ENABLE_POINT_LIGHTS == 1
-StructuredBuffer<Sphere> g_PointLightWorldBoundsBuffer : register(t6);
-StructuredBuffer<PointLightProps> g_PointLightPropsBuffer : register(t7);
-Buffer<uint> g_PointLightIndexPerTileBuffer : register(t8);
-StructuredBuffer<Range> g_PointLightRangePerTileBuffer : register(t9);
-Texture2D<float3> g_PointLightTiledExpShadowMap : register(t10);
-StructuredBuffer<float4x4> g_PointLightViewProjMatrixBuffer : register(t11);
-#endif // ENABLE_POINT_LIGHTS
 
 #if ENABLE_SPOT_LIGHTS == 1
-StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t12);
-StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t13);
-Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t14);
-StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t15);
-Texture2D<float3> g_SpotLightTiledExpShadowMap : register(t16);
-StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t17);
-StructuredBuffer<ShadowMapTile> g_SpotLightShadowMapTileBuffer : register(t18);
+StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t5);
+StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t6);
+Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t7);
+StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t8);
+Texture2DArray<float> g_SpotLightShadowMaps : register(t9);
+StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t10);
 #endif // ENABLE_SPOT_LIGHTS
 
-Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t19);
+Buffer<uint> g_FirstResourceIndexPerMaterialIDBuffer : register(t11);
+Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t12);
 SamplerState g_AnisoSampler : register(s0);
 
 [earlydepthstencil]
@@ -76,35 +66,6 @@ float4 Main(PSInput input) : SV_Target
 	uint2 tilePos = pixelPos / g_AppData.screenTileSize;
 	uint tileIndex = tilePos.y * g_AppData.numScreenTiles.x + tilePos.x;
 	
-	float3 pointLightsContrib = float3(0.0f, 0.0f, 0.0f);
-#if ENABLE_POINT_LIGHTS == 1
-	uint pointLightIndexPerTileStart = g_PointLightRangePerTileBuffer[tileIndex].start;
-	uint pointLightIndexPerTileEnd = pointLightIndexPerTileStart + g_PointLightRangePerTileBuffer[tileIndex].length;
-
-	for (uint lightIndexPerTile = pointLightIndexPerTileStart; lightIndexPerTile < pointLightIndexPerTileEnd; ++lightIndexPerTile)
-	{
-		uint lightIndex = g_PointLightIndexPerTileBuffer[lightIndexPerTile];
-
-		float3 lightWorldSpacePos = g_PointLightWorldBoundsBuffer[lightIndex].center;
-		float lightRange = g_PointLightWorldBoundsBuffer[lightIndex].radius;
-		float3 lightColor = g_PointLightPropsBuffer[lightIndex].color;
-		float lightViewNearPlane = g_PointLightPropsBuffer[lightIndex].viewNearPlane;
-		float lightRcpViewClipRange = g_PointLightPropsBuffer[lightIndex].rcpViewClipRange;
-
-		float3 lightContrib = CalcPointLightContribution(lightWorldSpacePos, lightColor, lightRange,
-			worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal, diffuseAlbedo, specularAlbedo, shininess);
-
-		uint faceIndex = DetectCubeMapFaceIndex(lightWorldSpacePos, worldSpacePos);
-		uint lightFrustumIndex = NUM_CUBE_MAP_FACES * lightIndex + faceIndex;
-		float4x4 lightViewProjMatrix = g_PointLightViewProjMatrixBuffer[lightFrustumIndex];
-		
-		float lightVisibility = CalcPointLightVisibility(g_PointLightTiledExpShadowMap, lightViewProjMatrix,
-			lightViewNearPlane, lightRcpViewClipRange, worldSpacePos);
-		
-		pointLightsContrib += lightVisibility * lightContrib;
-	}
-#endif // ENABLE_POINT_LIGHTS
-
 	float3 spotLightsContrib = float3(0.0f, 0.0f, 0.0f);
 #if ENABLE_SPOT_LIGHTS == 1
 	uint spotLightIndexPerTileStart = g_SpotLightRangePerTileBuffer[tileIndex].start;
@@ -145,7 +106,7 @@ float4 Main(PSInput input) : SV_Target
 	float3 directionalLightContrib = float3(0.0f, 0.0f, 0.0f);
 #endif // ENABLE_DIRECTIONAL_LIGHT
 	
-	float3 directRadiance = pointLightsContrib + spotLightsContrib + directionalLightContrib;
+	float3 directRadiance = spotLightsContrib + directionalLightContrib;
 	float3 indirectRadiance = float3(0.0f, 0.0f, 0.0f);
 	
 	return float4(directRadiance + indirectRadiance, 1.0f);

@@ -144,23 +144,8 @@ COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledShadowMapCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledShadowMapCommandsCS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\CreateTiledExpShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledExpShadowMapVS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateTiledExpShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledExpShadowMapVS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\CreateTiledExpShadowMapPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledExpShadowMapPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateTiledExpShadowMapPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledExpShadowMapPS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\FilterTiledExpShadowMapCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FilterTiledExpShadowMapCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\FilterTiledExpShadowMapCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FilterTiledExpShadowMapCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderShadowMapVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderShadowMapVS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
@@ -272,23 +257,8 @@ COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledShadowMapCommandsCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateTiledShadowMapCommandsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledShadowMapCommandsCS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapVS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\RenderTiledShadowMapGS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderTiledShadowMapGS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\CreateTiledExpShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledExpShadowMapVS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateTiledExpShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledExpShadowMapVS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\CreateTiledExpShadowMapPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CreateTiledExpShadowMapPS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CreateTiledExpShadowMapPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CreateTiledExpShadowMapPS.hlsl"
-
-COPY /Y "$(SolutionDir)Shaders\FilterTiledExpShadowMapCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FilterTiledExpShadowMapCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\FilterTiledExpShadowMapCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FilterTiledExpShadowMapCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderShadowMapVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderShadowMapVS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"

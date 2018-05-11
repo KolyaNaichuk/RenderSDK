@@ -138,8 +138,6 @@ void VoxelizePass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_VoxelReflectanceTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	m_OutputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_PointLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_PointLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
@@ -168,17 +166,6 @@ void VoxelizePass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState,
 		m_OutputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState);
 
-	if (pParams->m_EnablePointLights)
-	{
-		AddResourceBarrierIfRequired(pParams->m_pPointLightWorldBoundsBuffer,
-			pParams->m_InputResourceStates.m_PointLightWorldBoundsBufferState,
-			m_OutputResourceStates.m_PointLightWorldBoundsBufferState);
-
-		AddResourceBarrierIfRequired(pParams->m_pPointLightPropsBuffer,
-			pParams->m_InputResourceStates.m_PointLightPropsBufferState,
-			m_OutputResourceStates.m_PointLightPropsBufferState);
-	}
-
 	if (pParams->m_EnableSpotLights)
 	{
 		AddResourceBarrierIfRequired(pParams->m_pSpotLightWorldBoundsBuffer,
@@ -200,15 +187,6 @@ void VoxelizePass::InitResources(InitParams* pParams)
 	m_SRVHeapStartPS = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStartPS,
 		m_pVoxelReflectanceTexture->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	if (pParams->m_EnablePointLights)
-	{
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pPointLightWorldBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pPointLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
 
 	if (pParams->m_EnableSpotLights)
 	{
@@ -249,13 +227,11 @@ void VoxelizePass::InitRootSignature(InitParams* pParams)
 	std::vector<D3D12_DESCRIPTOR_RANGE> srvRangesPS;
 	srvRangesPS.push_back(UAVDescriptorRange(1, 0));
 
-	if (pParams->m_EnablePointLights)
-		srvRangesPS.push_back(SRVDescriptorRange(2, 0));
 	if (pParams->m_EnableSpotLights)
-		srvRangesPS.push_back(SRVDescriptorRange(2, 2));
+		srvRangesPS.push_back(SRVDescriptorRange(2, 0));
 
-	srvRangesPS.push_back(SRVDescriptorRange(1, 4));
-	srvRangesPS.push_back(SRVDescriptorRange(pParams->m_NumMaterialTextures, 5));
+	srvRangesPS.push_back(SRVDescriptorRange(1, 2));
+	srvRangesPS.push_back(SRVDescriptorRange(pParams->m_NumMaterialTextures, 3));
 
 	rootParams[kRootSRVTableParamPS] = RootDescriptorTableParameter((UINT)srvRangesPS.size(), srvRangesPS.data(), D3D12_SHADER_VISIBILITY_PIXEL);
 	
@@ -277,14 +253,12 @@ void VoxelizePass::InitPipelineState(InitParams* pParams)
 	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
 	const u32 meshType = 0;
 
-	std::string enablePointLightsStr = std::to_string(pParams->m_EnablePointLights ? 1 : 0);
 	std::string enableSpotLightsStr = std::to_string(pParams->m_EnableSpotLights ? 1 : 0);
 	std::string enableDirectionalLightStr = std::to_string(pParams->m_EnableDirectionalLight ? 1 : 0);
 	std::string numMaterialsStr = std::to_string(pParams->m_NumMaterialTextures);
 
 	const ShaderMacro shaderDefinesPS[] =
 	{
-		ShaderMacro("ENABLE_POINT_LIGHTS", enablePointLightsStr.c_str()),
 		ShaderMacro("ENABLE_SPOT_LIGHTS", enableSpotLightsStr.c_str()),
 		ShaderMacro("ENABLE_DIRECTIONAL_LIGHT", enableDirectionalLightStr.c_str()),
 		ShaderMacro("NUM_MATERIAL_TEXTURES", numMaterialsStr.c_str()),

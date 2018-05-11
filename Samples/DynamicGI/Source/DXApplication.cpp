@@ -17,10 +17,7 @@
 #include "Profiler/GPUProfiler.h"
 #include "Profiler/CPUProfiler.h"
 
-#include "RenderPasses/CreateTiledShadowMapCommandsPass.h"
 #include "RenderPasses/CreateVoxelizeCommandsPass.h"
-#include "RenderPasses/FilterTiledExpShadowMapPass.h"
-#include "RenderPasses/CreateTiledExpShadowMapPass.h"
 #include "RenderPasses/PropagateLightPass.h"
 #include "RenderPasses/RenderGBufferPass.h"
 #include "RenderPasses/TiledLightCullingPass.h"
@@ -39,7 +36,6 @@
 #include "RenderPasses/MeshRenderResources.h"
 #include "RenderPasses/MaterialRenderResources.h"
 #include "RenderPasses/LightRenderData.h"
-#include "RenderPasses/RenderTiledShadowMapPass.h"
 
 #include "Scene/Mesh.h"
 #include "Scene/MeshBatch.h"
@@ -58,20 +54,13 @@
 #include "Math/Vector4.h"
 
 /*
-Optimizations
-- To render shadow maps, I could use a separate vertex buffer which contains only positions.
-- For the point light, I could check which point light frustum intersects view frustum before rendering shadow map for that face.
-
-1.At app start-up, for each light view frustum (6 frustums per point light), run intersection test vs static geometry of the scene.
-2.Based on collected data for each light view frustum, record render commands for static geometry on a separate command list bundle.
-  I guess, I could also pre-sort the geometry to avoid overdraw.
-
-When rendering shadows:
-- Run light frustum test versus view frustum test to identify shadow maps to be rendered. For point light, run the test for each cube map view frustum.
-*/
-
-/*
 To do:
+- When creating staticMeshInstanceIndexBuffer for SpotLightShadowRenderer use most optimal format
+- For rendering shadows use separate vertex buffer containing only positions
+- Check if it is possible to pre-sort (front to back) commands for rendering shadow maps for static meshes
+- In TiledLightCulling pass use spot light frustum vs view frustum test 
+
+
 - ShadowMapTile contains data both in texture and pixel spaces which most likely causes cache thrashing as only one of them is used at a time.
   Consider splitting the structure into two.
 - Clean RenderPasses/Common.h
@@ -259,57 +248,6 @@ namespace
 		std::string outputString = outputStream.str();
 		OutputDebugStringA(outputString.c_str());
 	}
-	
-	u32 CalcScreenAreaAffectedByLight(const Sphere& lightWorldBounds, const Vector2f& screenSize, const Camera& camera)
-	{
-		// Based on chapter Scissor Test from book "Practical Rendering and Computation with Direct3D 11"
-		// by Jason Zink, Matt Pettineo, Jack Hoxley
-
-		const Matrix4f& viewMatrix = camera.GetViewMatrix();
-		const Matrix4f& projMatrix = camera.GetProjMatrix();
-		const f32 distToNearClipPlane = camera.GetNearClipPlane();
-		const f32 distToFarClipPlane = camera.GetFarClipPlane();
-
-		const Vector3f viewSpaceCenter = TransformPoint(lightWorldBounds.m_Center, viewMatrix);
-		const f32 radius = lightWorldBounds.m_Radius;
-
-		Vector3f viewSpaceLeft = viewSpaceCenter - Vector3f(radius, 0.0f, 0.0f);
-		Vector3f viewSpaceRight = viewSpaceCenter + Vector3f(radius, 0.0f, 0.0f);
-		Vector3f viewSpaceBottom = viewSpaceCenter - Vector3f(0.0f, radius, 0.0f);
-		Vector3f viewSpaceTop = viewSpaceCenter + Vector3f(0.0f, radius, 0.0f);
-
-		viewSpaceLeft.m_Z = (viewSpaceLeft.m_X < 0.0f) ? (viewSpaceLeft.m_Z - radius) : (viewSpaceLeft.m_Z + radius);
-		viewSpaceRight.m_Z = (viewSpaceRight.m_X < 0.0f) ? (viewSpaceRight.m_Z + radius) : (viewSpaceRight.m_Z - radius);
-		viewSpaceBottom.m_Z = (viewSpaceBottom.m_Y < 0.0f) ? (viewSpaceBottom.m_Z - radius) : (viewSpaceBottom.m_Z + radius);
-		viewSpaceTop.m_Z = (viewSpaceTop.m_Y < 0.0f) ? (viewSpaceTop.m_Z + radius) : (viewSpaceTop.m_Z - radius);
-
-		viewSpaceLeft.m_Z = Clamp(distToNearClipPlane, distToFarClipPlane, viewSpaceLeft.m_Z);
-		viewSpaceRight.m_Z = Clamp(distToNearClipPlane, distToFarClipPlane, viewSpaceRight.m_Z);
-		viewSpaceBottom.m_Z = Clamp(distToNearClipPlane, distToFarClipPlane, viewSpaceBottom.m_Z);
-		viewSpaceTop.m_Z = Clamp(distToNearClipPlane, distToFarClipPlane, viewSpaceTop.m_Z);
-
-		f32 postWDivideProjSpaceLeft = viewSpaceLeft.m_X * projMatrix.m_00 / viewSpaceLeft.m_Z;
-		f32 postWDivideProjSpaceRight = viewSpaceRight.m_X * projMatrix.m_00 / viewSpaceRight.m_Z;
-		f32 postWDivideProjSpaceBottom = viewSpaceBottom.m_Y * projMatrix.m_11 / viewSpaceBottom.m_Z;
-		f32 postWDivideProjSpaceTop = viewSpaceTop.m_Y * projMatrix.m_11 / viewSpaceTop.m_Z;
-
-		f32 screenSpaceWidth = 0.5f * screenSize.m_X * (postWDivideProjSpaceRight - postWDivideProjSpaceLeft);
-		f32 screenSpaceHeight = 0.5f * screenSize.m_Y * (postWDivideProjSpaceTop - postWDivideProjSpaceBottom);
-		
-		//return u32(Ceil(Max(screenSpaceWidth, screenSpaceHeight)));
-		return 1024;
-	}
-	
-	Matrix4f CreateShadowMapTileMatrix(const ShadowMapTile& shadowMapTile)
-	{
-		Vector2f clipSpaceTopLeft(2.0f * shadowMapTile.m_TexSpaceTopLeft.m_X - 1.0f, 1.0f - 2.0f * shadowMapTile.m_TexSpaceTopLeft.m_Y);
-		f32 clipSpaceHalfSize = shadowMapTile.m_TexSpaceSize;
-		
-		return Matrix4f(clipSpaceHalfSize, 0.0f, 0.0f, 0.0f,
-			0.0f, clipSpaceHalfSize, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
-			clipSpaceTopLeft.m_X + clipSpaceHalfSize, clipSpaceTopLeft.m_Y - clipSpaceHalfSize, 0.0f, 1.0f);
-	}
 }
 
 enum
@@ -321,13 +259,7 @@ enum
 	kNumVoxelsInGridY = 128,
 	kNumVoxelsInGridZ = 128,
 	kBackBufferWidth = kNumTilesX * kTileSize,
-	kBackBufferHeight = kNumTilesY * kTileSize,
-	kPointLightShadowMapSize = 8 * 1024,
-	kPointLightShadowMapMinTileSize = 64,
-	kPointLightShadowMapMaxTileSize = 1024,
-	kSpotLightShadowMapSize = 1 * 1024,
-	kSpotLightShadowMapMinTileSize = 64,
-	kSpotLightShadowMapMaxTileSize = 1024
+	kBackBufferHeight = kNumTilesY * kTileSize
 };
 
 DXApplication::DXApplication(HINSTANCE hApp)
@@ -357,43 +289,10 @@ DXApplication::~DXApplication()
 		SafeDelete(m_VisualizeReprojectedDepthBufferPasses[index]);
 		SafeDelete(m_VisualizeTexCoordBufferPasses[index]);
 		SafeDelete(m_VisualizeDepthBufferWithMeshTypePasses[index]);
-		SafeDelete(m_VisualizePointLightTiledShadowMapPasses[index]);
-		SafeDelete(m_VisualizeSpotLightTiledShadowMapPasses[index]);
 		SafeDelete(m_VisualizeVoxelReflectancePasses[index]);
 
 		m_UploadAppDataBuffers[index]->Unmap(0, nullptr);
 		SafeDelete(m_UploadAppDataBuffers[index]);
-
-		if (m_UploadActivePointLightWorldBoundsBuffers[index] != nullptr)
-		{
-			m_UploadActivePointLightWorldBoundsBuffers[index]->Unmap(0, nullptr);
-			SafeDelete(m_UploadActivePointLightWorldBoundsBuffers[index]);
-		}
-		if (m_UploadActivePointLightPropsBuffers[index] != nullptr)
-		{
-			m_UploadActivePointLightPropsBuffers[index]->Unmap(0, nullptr);
-			SafeDelete(m_UploadActivePointLightPropsBuffers[index]);
-		}
-		if (m_UploadActivePointLightWorldFrustumBuffers[index] != nullptr)
-		{
-			m_UploadActivePointLightWorldFrustumBuffers[index]->Unmap(0, nullptr);
-			SafeDelete(m_UploadActivePointLightWorldFrustumBuffers[index]);
-		}
-		if (m_UploadActivePointLightViewProjMatrixBuffers[index] != nullptr)
-		{
-			m_UploadActivePointLightViewProjMatrixBuffers[index]->Unmap(0, nullptr);
-			SafeDelete(m_UploadActivePointLightViewProjMatrixBuffers[index]);
-		}
-		if (m_UploadActivePointLightShadowMapTileBuffers[index] != nullptr)
-		{
-			m_UploadActivePointLightShadowMapTileBuffers[index]->Unmap(0, nullptr);
-			SafeDelete(m_UploadActivePointLightShadowMapTileBuffers[index]);
-		}
-		if (m_UploadActivePointLightCreateExpShadowMapParamsBuffers[index] != nullptr)
-		{
-			m_UploadActivePointLightCreateExpShadowMapParamsBuffers[index]->Unmap(0, nullptr);
-			SafeDelete(m_UploadActivePointLightCreateExpShadowMapParamsBuffers[index]);
-		}
 
 		if (m_UploadActiveSpotLightWorldBoundsBuffers[index] != nullptr)
 		{
@@ -405,30 +304,13 @@ DXApplication::~DXApplication()
 			m_UploadActiveSpotLightPropsBuffers[index]->Unmap(0, nullptr);
 			SafeDelete(m_UploadActiveSpotLightPropsBuffers[index]);
 		}
-		if (m_UploadActiveSpotLightWorldFrustumBuffers[index] != nullptr)
-		{
-			m_UploadActiveSpotLightWorldFrustumBuffers[index]->Unmap(0, nullptr);
-			SafeDelete(m_UploadActiveSpotLightWorldFrustumBuffers[index]);
-		}
 		if (m_UploadActiveSpotLightViewProjMatrixBuffers[index] != nullptr)
 		{
 			m_UploadActiveSpotLightViewProjMatrixBuffers[index]->Unmap(0, nullptr);
 			SafeDelete(m_UploadActiveSpotLightViewProjMatrixBuffers[index]);
 		}
-		if (m_UploadActiveSpotLightShadowMapTileBuffers[index] != nullptr)
-		{
-			m_UploadActiveSpotLightShadowMapTileBuffers[index]->Unmap(0, nullptr);
-			SafeDelete(m_UploadActiveSpotLightShadowMapTileBuffers[index]);
-		}
-		if (m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[index] != nullptr)
-		{
-			m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[index]->Unmap(0, nullptr);
-			SafeDelete(m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[index]);
-		}
 	}
 
-	SafeArrayDelete(m_pPointLights);
-	SafeArrayDelete(m_ppActivePointLights);
 	SafeArrayDelete(m_pSpotLights);
 	SafeArrayDelete(m_ppActiveSpotLights);
 	SafeDelete(m_pCPUProfiler);
@@ -437,20 +319,10 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pGeometryBuffer);
 	SafeDelete(m_pMeshRenderResources);
 	SafeDelete(m_pMaterialRenderResources);
-	
-	SafeDelete(m_pActivePointLightWorldBoundsBuffer);
-	SafeDelete(m_pActivePointLightPropsBuffer);
-	SafeDelete(m_pActivePointLightWorldFrustumBuffer);
-	SafeDelete(m_pActivePointLightViewProjMatrixBuffer);
-	SafeDelete(m_pActivePointLightShadowMapTileBuffer);
-	SafeDelete(m_pActivePointLightCreateExpShadowMapParamsBuffer);
-	
+		
 	SafeDelete(m_pActiveSpotLightWorldBoundsBuffer);
 	SafeDelete(m_pActiveSpotLightPropsBuffer);
-	SafeDelete(m_pActiveSpotLightWorldFrustumBuffer);
 	SafeDelete(m_pActiveSpotLightViewProjMatrixBuffer);
-	SafeDelete(m_pActiveSpotLightShadowMapTileBuffer);
-	SafeDelete(m_pActiveSpotLightCreateExpShadowMapParamsBuffer);
 	
 	SafeDelete(m_pDownscaleAndReprojectDepthPass);
 	SafeDelete(m_pFrustumMeshCullingPass);
@@ -463,15 +335,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pFillMeshTypeDepthBufferPass);
 	SafeDelete(m_pCalcShadingRectanglesPass);
 	SafeDelete(m_pTiledLightCullingPass);
-	SafeDelete(m_pCreateTiledShadowMapCommandsPass);
-	SafeDelete(m_pRenderPointLightTiledShadowMapPass);
-	SafeDelete(m_pPointLightShadowMapTileAllocator);
-	SafeDelete(m_pCreatePointLightTiledExpShadowMapPass);
-	SafeDelete(m_pFilterPointLightTiledExpShadowMapPass);
-	SafeDelete(m_pRenderSpotLightTiledShadowMapPass);
-	SafeDelete(m_pSpotLightShadowMapTileAllocator);
-	SafeDelete(m_pCreateSpotLightTiledExpShadowMapPass);
-	SafeDelete(m_pFilterSpotLightTiledExpShadowMapPass);
 	SafeDelete(m_pCreateVoxelizeCommandsPass);
 	SafeDelete(m_pVoxelizePass);
 	SafeDelete(m_pTiledShadingPass);
@@ -511,33 +374,15 @@ void DXApplication::OnInit()
 	InitRenderGBufferFalseNegativePass(kBackBufferWidth, kBackBufferHeight);
 	InitCalcShadingRectanglesPass();
 	InitFillMeshTypeDepthBufferPass();
-
-	InitCreateShadowMapCommandsPass();
-	if (m_NumPointLights > 0)
-	{
-		InitRenderPointLightTiledShadowMapPass();
-		InitCreatePointLightTiledExpShadowMapPass();
-		InitFilterPointLightTiledExpShadowMapPass();
-	}
-	if (m_NumSpotLights > 0)
-	{
-		InitRenderSpotLightTiledShadowMapPass();
-		InitCreateSpotLightTiledExpShadowMapPass();
-		InitFilterSpotLightTiledExpShadowMapPass();
-	}
-		
+			
 	InitCreateVoxelizeCommandsPass();
 	InitVoxelizePass();
 
-	InitTiledLightCullingPass();
-	InitTiledShadingPass();
-
-	if (m_NumPointLights > 0)
-		InitVisualizePointLightTiledShadowMapPass();
-	
 	if (m_NumSpotLights > 0)
-		InitVisualizeSpotLightTiledShadowMapPass();
+		InitTiledLightCullingPass();
 	
+	InitTiledShadingPass();
+		
 	InitVisualizeAccumLightPass();
 	InitVisualizeDepthBufferPass();
 	InitVisualizeReprojectedDepthBufferPass();
@@ -617,9 +462,6 @@ void DXApplication::OnUpdate()
 	pAppData->m_VoxelGridViewProjMatrices[2] = voxelGridCameraAlongZ.GetViewMatrix() * voxelGridCameraAlongZ.GetProjMatrix();
 #endif
 
-	if (m_NumPointLights > 0)
-		SetupPointLightDataForUpload(cameraWorldFrustum);
-
 	if (m_NumSpotLights > 0)
 		SetupSpotLightDataForUpload(cameraWorldFrustum);
 }
@@ -646,21 +488,7 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordCalcShadingRectanglesPass();
 	commandListBatch[commandListBatchSize++] = RecordFillMeshTypeDepthBufferPass();
 	commandListBatch[commandListBatchSize++] = RecordUploadLightDataPass();
-	
-	commandListBatch[commandListBatchSize++] = RecordCreateShadowMapCommandsPass();
-	if (m_NumPointLights > 0)
-	{
-		commandListBatch[commandListBatchSize++] = RecordRenderPointLightTiledShadowMapPass();
-		commandListBatch[commandListBatchSize++] = RecordCreatePointLightTiledExpShadowMapPass();
-		commandListBatch[commandListBatchSize++] = RecordFilterPointLightTiledExpShadowMapPass();
-	}
-	if (m_NumSpotLights > 0)
-	{
-		commandListBatch[commandListBatchSize++] = RecordRenderSpotLightTiledShadowMapPass();
-		commandListBatch[commandListBatchSize++] = RecordCreateSpotLightTiledExpShadowMapPass();
-		commandListBatch[commandListBatchSize++] = RecordFilterSpotLightTiledExpShadowMapPass();
-	}
-		
+			
 	commandListBatch[commandListBatchSize++] = RecordCreateVoxelizeCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordVoxelizePass();
 	commandListBatch[commandListBatchSize++] = RecordTiledLightCullingPass();
@@ -805,18 +633,6 @@ void DXApplication::OnKeyDown(UINT8 key)
 			break;
 		}
 		case '7':
-		{
-			if (m_NumPointLights > 0)
-				UpdateDisplayResult(DisplayResult::PointLightTiledShadowMap);
-			break;
-		}
-		case '8':
-		{
-			if (m_NumSpotLights > 0)
-				UpdateDisplayResult(DisplayResult::SpotLightTiledShadowMap);
-			break;
-		}
-		case '9':
 		{
 			UpdateDisplayResult(DisplayResult::VoxelRelectance);
 			break;
@@ -964,10 +780,7 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight)
 
 	if (pScene->GetNumMaterials() > 0)
 		m_pMaterialRenderResources = new MaterialRenderResources(m_pRenderEnv, pScene->GetNumMaterials(), pScene->GetMaterials());
-
-	if (pScene->GetNumPointLights() > 0)
-		InitPointLightRenderResources(pScene);
-
+	
 	if (pScene->GetNumSpotLights() > 0)
 		InitSpotLightRenderResources(pScene);
 
@@ -1683,90 +1496,6 @@ CommandList* DXApplication::RecordVisualizeAccumLightPass()
 	return params.m_pCommandList;
 }
 
-void DXApplication::InitVisualizePointLightTiledShadowMapPass()
-{
-	assert(m_pCreatePointLightTiledExpShadowMapPass != nullptr);
-	assert(m_pTiledShadingPass != nullptr);
-	
-	const TiledShadingPass::ResourceStates* pTiledShadingPassStates =
-		m_pTiledShadingPass->GetOutputResourceStates();
-	
-	ColorTexture* pTiledExpShadowMap = m_pCreatePointLightTiledExpShadowMapPass->GetTiledExpShadowMap();
-	for (u8 index = 0; index < kNumBackBuffers; ++index)
-	{
-		assert(m_VisualizePointLightTiledShadowMapPasses[index] == nullptr);
-
-		VisualizeTexturePass::InitParams params;
-		params.m_pName = "VisualizePointLightTiledShadowMapPass";
-		params.m_pRenderEnv = m_pRenderEnv;
-		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_PointLightTiledExpShadowMapState;
-		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
-		params.m_pInputTexture = pTiledExpShadowMap;
-		params.m_InputTextureSRV = pTiledExpShadowMap->GetSRVHandle();
-		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
-		params.m_TextureType = VisualizeTexturePass::TextureType_ExpShadowMap;
-
-		m_VisualizePointLightTiledShadowMapPasses[index] = new VisualizeTexturePass(&params);
-	}
-}
-
-CommandList* DXApplication::RecordVisualizePointLightTiledShadowMapPass()
-{
-	VisualizeTexturePass* pVisualizeTexturePass = m_VisualizePointLightTiledShadowMapPasses[m_BackBufferIndex];
-	assert(pVisualizeTexturePass != nullptr);
-
-	VisualizeTexturePass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizePointLightTiledShadowMapCommandList");
-	params.m_pAppDataBuffer = m_UploadAppDataBuffers[m_BackBufferIndex];
-	params.m_pViewport = m_pBackBufferViewport;
-
-	pVisualizeTexturePass->Record(&params);
-	return params.m_pCommandList;
-}
-
-void DXApplication::InitVisualizeSpotLightTiledShadowMapPass()
-{
-	assert(m_pCreateSpotLightTiledExpShadowMapPass != nullptr);
-	assert(m_pTiledShadingPass != nullptr);
-
-	const TiledShadingPass::ResourceStates* pTiledShadingPassStates =
-		m_pTiledShadingPass->GetOutputResourceStates();
-
-	ColorTexture* pTiledExpShadowMap = m_pCreateSpotLightTiledExpShadowMapPass->GetTiledExpShadowMap();
-	for (u8 index = 0; index < kNumBackBuffers; ++index)
-	{
-		assert(m_VisualizeSpotLightTiledShadowMapPasses[index] == nullptr);
-
-		VisualizeTexturePass::InitParams params;
-		params.m_pName = "VisualizeSpotLightTiledShadowMapPass";
-		params.m_pRenderEnv = m_pRenderEnv;
-		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_SpotLightTiledExpShadowMapState;
-		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
-		params.m_pInputTexture = pTiledExpShadowMap;
-		params.m_InputTextureSRV = pTiledExpShadowMap->GetSRVHandle();
-		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
-		params.m_TextureType = VisualizeTexturePass::TextureType_ExpShadowMap;
-
-		m_VisualizeSpotLightTiledShadowMapPasses[index] = new VisualizeTexturePass(&params);
-	}
-}
-
-CommandList* DXApplication::RecordVisualizeSpotLightTiledShadowMapPass()
-{
-	VisualizeTexturePass* pVisualizeTexturePass = m_VisualizeSpotLightTiledShadowMapPasses[m_BackBufferIndex];
-	assert(pVisualizeTexturePass != nullptr);
-
-	VisualizeTexturePass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeSpotLightTiledShadowMapCommandList");
-	params.m_pAppDataBuffer = m_UploadAppDataBuffers[m_BackBufferIndex];
-	params.m_pViewport = m_pBackBufferViewport;
-
-	pVisualizeTexturePass->Record(&params);
-	return params.m_pCommandList;
-}
-
 void DXApplication::InitVisualizeVoxelReflectancePass()
 {
 	assert(m_pVoxelizePass != nullptr);
@@ -1827,55 +1556,12 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 	static ResourceTransitionBarrier resourceBarriers[12];
 	u8 numBarriers = 0;
 
-	if (m_NumPointLights > 0)
-	{
-		assert(m_pRenderPointLightTiledShadowMapPass != nullptr);
-		const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
-			m_pRenderPointLightTiledShadowMapPass->GetOutputResourceStates();
-
-		assert(m_pCreatePointLightTiledExpShadowMapPass != nullptr);
-		const CreateTiledExpShadowMapPass::ResourceStates* pCreateExpShadowMapPassStates =
-			m_pCreatePointLightTiledExpShadowMapPass->GetOutputResourceStates();
-
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActivePointLightWorldBoundsBuffer,
-			pTiledShadingPassStates->m_PointLightWorldBoundsBufferState,
-			D3D12_RESOURCE_STATE_COPY_DEST);
-
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActivePointLightPropsBuffer,
-			pTiledShadingPassStates->m_PointLightPropsBufferState,
-			D3D12_RESOURCE_STATE_COPY_DEST);
-
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActivePointLightCreateExpShadowMapParamsBuffer,
-			pCreateExpShadowMapPassStates->m_CreateExpShadowMapParamsBufferState,
-			D3D12_RESOURCE_STATE_COPY_DEST);
-
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActivePointLightWorldFrustumBuffer,
-			pRenderTiledShadowMapPassStates->m_LightWorldFrustumBufferState,
-			D3D12_RESOURCE_STATE_COPY_DEST);
-
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActivePointLightViewProjMatrixBuffer,
-			pRenderTiledShadowMapPassStates->m_LightViewProjMatrixBufferState,
-			D3D12_RESOURCE_STATE_COPY_DEST);
-
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActivePointLightShadowMapTileBuffer,
-			pCreateExpShadowMapPassStates->m_ShadowMapTileBufferState,
-			D3D12_RESOURCE_STATE_COPY_DEST);
-	}
 	if (m_NumSpotLights > 0)
 	{
-		assert(m_pRenderSpotLightTiledShadowMapPass != nullptr);
-		const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
-			m_pRenderSpotLightTiledShadowMapPass->GetOutputResourceStates();
-
-		assert(m_pCreateSpotLightTiledExpShadowMapPass != nullptr);
-		const CreateTiledExpShadowMapPass::ResourceStates* pCreateExpShadowMapPassStates =
-			m_pCreateSpotLightTiledExpShadowMapPass->GetOutputResourceStates();
+		assert(false);
+		//assert(m_pCreateSpotLightTiledExpShadowMapPass != nullptr);
+		//const CreateTiledExpShadowMapPass::ResourceStates* pCreateExpShadowMapPassStates =
+		//	m_pCreateSpotLightTiledExpShadowMapPass->GetOutputResourceStates();
 
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
 			m_pActiveSpotLightWorldBoundsBuffer,
@@ -1887,56 +1573,32 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 			pTiledShadingPassStates->m_SpotLightPropsBufferState,
 			D3D12_RESOURCE_STATE_COPY_DEST);
 
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActiveSpotLightCreateExpShadowMapParamsBuffer,
-			pCreateExpShadowMapPassStates->m_CreateExpShadowMapParamsBufferState,
-			D3D12_RESOURCE_STATE_COPY_DEST);
+		assert(false);
+		//resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
+		//	m_pActiveSpotLightCreateExpShadowMapParamsBuffer,
+		//	pCreateExpShadowMapPassStates->m_CreateExpShadowMapParamsBufferState,
+		//	D3D12_RESOURCE_STATE_COPY_DEST);
 
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActiveSpotLightWorldFrustumBuffer,
-			pRenderTiledShadowMapPassStates->m_LightWorldFrustumBufferState,
-			D3D12_RESOURCE_STATE_COPY_DEST);
+		assert(false);
+		//resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
+		//	m_pActiveSpotLightWorldFrustumBuffer,
+		//	pRenderTiledShadowMapPassStates->m_LightWorldFrustumBufferState,
+		//	D3D12_RESOURCE_STATE_COPY_DEST);
+		
+		assert(false);
+		//resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
+		//	m_pActiveSpotLightViewProjMatrixBuffer,
+		//	pRenderTiledShadowMapPassStates->m_LightViewProjMatrixBufferState,
+		//	D3D12_RESOURCE_STATE_COPY_DEST);
 
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActiveSpotLightViewProjMatrixBuffer,
-			pRenderTiledShadowMapPassStates->m_LightViewProjMatrixBufferState,
-			D3D12_RESOURCE_STATE_COPY_DEST);
+		assert(false);
+		//resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
+		//	m_pActiveSpotLightShadowMapTileBuffer,
+		//	pTiledShadingPassStates->m_SpotLightShadowMapTileBufferState,
+		//	D3D12_RESOURCE_STATE_COPY_DEST);
 
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActiveSpotLightShadowMapTileBuffer,
-			pTiledShadingPassStates->m_SpotLightShadowMapTileBufferState,
-			D3D12_RESOURCE_STATE_COPY_DEST);
-	}
-	pCommandList->ResourceBarrier(numBarriers, resourceBarriers);
-	
-	if (m_NumPointLights > 0)
-	{
-		pCommandList->CopyBufferRegion(m_pActivePointLightWorldBoundsBuffer, 0,
-			m_UploadActivePointLightWorldBoundsBuffers[m_BackBufferIndex], 0,
-			m_NumActivePointLights * sizeof(Sphere));
+		pCommandList->ResourceBarrier(numBarriers, resourceBarriers);
 
-		pCommandList->CopyBufferRegion(m_pActivePointLightPropsBuffer, 0,
-			m_UploadActivePointLightPropsBuffers[m_BackBufferIndex], 0,
-			m_NumActivePointLights * sizeof(PointLightProps));
-
-		pCommandList->CopyBufferRegion(m_pActivePointLightCreateExpShadowMapParamsBuffer, 0,
-			m_UploadActivePointLightCreateExpShadowMapParamsBuffers[m_BackBufferIndex], 0,
-			m_NumActivePointLights * sizeof(CreateExpShadowMapParams));
-
-		pCommandList->CopyBufferRegion(m_pActivePointLightWorldFrustumBuffer, 0,
-			m_UploadActivePointLightWorldFrustumBuffers[m_BackBufferIndex], 0,
-			kNumCubeMapFaces * m_NumActivePointLights * sizeof(LightFrustum));
-
-		pCommandList->CopyBufferRegion(m_pActivePointLightViewProjMatrixBuffer, 0,
-			m_UploadActivePointLightViewProjMatrixBuffers[m_BackBufferIndex], 0,
-			kNumCubeMapFaces * m_NumActivePointLights * sizeof(Matrix4f));
-
-		pCommandList->CopyBufferRegion(m_pActivePointLightShadowMapTileBuffer, 0,
-			m_UploadActivePointLightShadowMapTileBuffers[m_BackBufferIndex], 0,
-			kNumCubeMapFaces * m_NumActivePointLights * sizeof(ShadowMapTile));
-	}
-	if (m_NumSpotLights > 0)
-	{
 		pCommandList->CopyBufferRegion(m_pActiveSpotLightWorldBoundsBuffer, 0,
 			m_UploadActiveSpotLightWorldBoundsBuffers[m_BackBufferIndex], 0,
 			m_NumActiveSpotLights * sizeof(Sphere));
@@ -1945,23 +1607,26 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 			m_UploadActiveSpotLightPropsBuffers[m_BackBufferIndex], 0,
 			m_NumActiveSpotLights * sizeof(SpotLightProps));
 
-		pCommandList->CopyBufferRegion(m_pActiveSpotLightCreateExpShadowMapParamsBuffer, 0,
-			m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[m_BackBufferIndex], 0,
-			m_NumActiveSpotLights * sizeof(CreateExpShadowMapParams));
+		assert(false);
+		//pCommandList->CopyBufferRegion(m_pActiveSpotLightCreateExpShadowMapParamsBuffer, 0,
+		//	m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[m_BackBufferIndex], 0,
+		//	m_NumActiveSpotLights * sizeof(CreateExpShadowMapParams));
 
-		pCommandList->CopyBufferRegion(m_pActiveSpotLightWorldFrustumBuffer, 0,
-			m_UploadActiveSpotLightWorldFrustumBuffers[m_BackBufferIndex], 0,
-			m_NumActiveSpotLights * sizeof(LightFrustum));
+		assert(false);
+		//pCommandList->CopyBufferRegion(m_pActiveSpotLightWorldFrustumBuffer, 0,
+		//	m_UploadActiveSpotLightWorldFrustumBuffers[m_BackBufferIndex], 0,
+		//	m_NumActiveSpotLights * sizeof(LightFrustum));
 
 		pCommandList->CopyBufferRegion(m_pActiveSpotLightViewProjMatrixBuffer, 0,
 			m_UploadActiveSpotLightViewProjMatrixBuffers[m_BackBufferIndex], 0,
 			m_NumActiveSpotLights * sizeof(Matrix4f));
 
-		pCommandList->CopyBufferRegion(m_pActiveSpotLightShadowMapTileBuffer, 0,
-			m_UploadActiveSpotLightShadowMapTileBuffers[m_BackBufferIndex], 0,
-			m_NumActiveSpotLights * sizeof(ShadowMapTile));
+		assert(false);
+		//pCommandList->CopyBufferRegion(m_pActiveSpotLightShadowMapTileBuffer, 0,
+		//	m_UploadActiveSpotLightShadowMapTileBuffers[m_BackBufferIndex], 0,
+		//	m_NumActiveSpotLights * sizeof(ShadowMapTile));
 	}
-
+	
 #ifdef ENABLE_PROFILING
 	m_pGPUProfiler->EndProfile(pCommandList, profileIndex);
 #endif // ENABLE_PROFILING
@@ -1988,15 +1653,10 @@ void DXApplication::InitTiledLightCullingPass()
 	params.m_pDepthTexture = m_pDepthTexture;
 	
 	params.m_InputResourceStates.m_DepthTextureState = pRenderGBufferFalseNegativePassStates->m_DepthTextureState;
-	params.m_InputResourceStates.m_PointLightWorldBoundsBufferState = pVoxelizePassStates->m_PointLightWorldBoundsBufferState;
-	params.m_InputResourceStates.m_PointLightIndexPerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_PointLightRangePerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = pVoxelizePassStates->m_SpotLightWorldBoundsBufferState;
 	params.m_InputResourceStates.m_SpotLightIndexPerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_SpotLightRangePerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
-	params.m_MaxNumPointLights = m_NumPointLights;
-	params.m_pPointLightWorldBoundsBuffer = m_pActivePointLightWorldBoundsBuffer;
 	params.m_MaxNumSpotLights = m_NumSpotLights;
 	params.m_pSpotLightWorldBoundsBuffer = m_pActiveSpotLightWorldBoundsBuffer;
 	
@@ -2015,364 +1675,9 @@ CommandList* DXApplication::RecordTiledLightCullingPass()
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pTiledLightCullingCommandList");
 	params.m_pAppDataBuffer = m_UploadAppDataBuffers[m_BackBufferIndex];
-	params.m_NumPointLights = m_NumActivePointLights;
 	params.m_NumSpotLights = m_NumActiveSpotLights;
 		
 	m_pTiledLightCullingPass->Record(&params);
-	return params.m_pCommandList;
-}
-
-void DXApplication::InitCreateShadowMapCommandsPass()
-{
-	assert(m_pCreateTiledShadowMapCommandsPass == nullptr);
-	assert(m_pCreateMainDrawCommandsPass != nullptr);
-	assert(m_pCreateFalseNegativeDrawCommandsPass != nullptr);
-	assert(m_pFrustumMeshCullingPass != nullptr);
-	assert(m_pMeshRenderResources != nullptr);
-
-	const FrustumMeshCullingPass::ResourceStates* pFrustumMeshCullingPassStates =
-		m_pFrustumMeshCullingPass->GetOutputResourceStates();
-
-	const CreateMainDrawCommandsPass::ResourceStates* pCreateMainDrawCommandsPassStates =
-		m_pCreateMainDrawCommandsPass->GetOutputResourceStates();
-
-	const CreateFalseNegativeDrawCommandsPass::ResourceStates* pCreateFalseNegativeDrawCommandsPassStates =
-		m_pCreateFalseNegativeDrawCommandsPass->GetOutputResourceStates();
-
-	CreateTiledShadowMapCommandsPass::InitParams params;
-	params.m_pName = "CreateTiledShadowMapCommandsPass";
-	params.m_pRenderEnv = m_pRenderEnv;
-	
-	params.m_InputResourceStates.m_NumMeshesBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_NumMeshesBufferState;
-	params.m_InputResourceStates.m_MeshInfoBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_MeshInfoBufferState;
-	params.m_InputResourceStates.m_MeshInstanceWorldAABBBufferState = pFrustumMeshCullingPassStates->m_InstanceWorldAABBBufferState;
-	params.m_InputResourceStates.m_MeshInstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_InstanceIndexBufferState;
-	params.m_InputResourceStates.m_PointLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_NumPointLightMeshInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_PointLightIndexForMeshInstanceBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_MeshInstanceIndexForPointLightBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_NumPointLightCommandsBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_PointLightCommandBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_NumSpotLightMeshInstancesBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_SpotLightIndexForMeshInstanceBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_MeshInstanceIndexForSpotLightBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_NumSpotLightCommandsBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_SpotLightCommandBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-
-	params.m_MaxNumMeshes = m_pMeshRenderResources->GetTotalNumMeshes();
-	params.m_MaxNumInstances = m_pMeshRenderResources->GetTotalNumInstances();
-	params.m_MaxNumInstancesPerMesh = m_pMeshRenderResources->GetMaxNumInstancesPerMesh();
-	params.m_pNumMeshesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer();
-	params.m_pMeshInfoBuffer = m_pFrustumMeshCullingPass->GetVisibleMeshInfoBuffer();
-	params.m_pMeshInstanceIndexBuffer = m_pFrustumMeshCullingPass->GetVisibleInstanceIndexBuffer();
-	params.m_pMeshInstanceWorldAABBBuffer = m_pMeshRenderResources->GetInstanceWorldAABBBuffer();
-		
-	params.m_MaxNumPointLights = m_NumPointLights;
-	params.m_pPointLightWorldBoundsBuffer = m_pActivePointLightWorldBoundsBuffer;
-	params.m_MaxNumSpotLights = m_NumSpotLights;
-	params.m_pSpotLightWorldBoundsBuffer = m_pActiveSpotLightWorldBoundsBuffer;
-
-	m_pCreateTiledShadowMapCommandsPass = new CreateTiledShadowMapCommandsPass(&params);
-}
-
-CommandList* DXApplication::RecordCreateShadowMapCommandsPass()
-{
-	assert(m_pCreateTiledShadowMapCommandsPass != nullptr);
-
-	CreateTiledShadowMapCommandsPass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pCreateShadowMapCommandsCommandList");;
-	params.m_pNumMeshesBuffer = m_pFrustumMeshCullingPass->GetNumVisibleMeshesBuffer();
-	params.m_NumPointLights = m_NumActivePointLights;
-	params.m_NumSpotLights = m_NumActiveSpotLights;
-
-	m_pCreateTiledShadowMapCommandsPass->Record(&params);
-	return params.m_pCommandList;
-}
-
-void DXApplication::InitRenderPointLightTiledShadowMapPass()
-{
-	assert(m_pPointLightShadowMapTileAllocator == nullptr);
-	m_pPointLightShadowMapTileAllocator = new ShadowMapTileAllocator(kPointLightShadowMapSize, kPointLightShadowMapMinTileSize);
-
-	assert(m_pRenderPointLightTiledShadowMapPass == nullptr);
-	assert(m_pCreateTiledShadowMapCommandsPass != nullptr);
-	assert(m_pRenderGBufferFalseNegativePass != nullptr);
-	
-	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
-		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
-
-	const CreateTiledShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
-		m_pCreateTiledShadowMapCommandsPass->GetOutputResourceStates();
-
-	RenderTiledShadowMapPass::InitParams params;
-	params.m_pName = "RenderPointLightTiledShadowMapPass";
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_LightType = LightType_Point;
-	params.m_ShadowMapSize = kPointLightShadowMapSize;
-	params.m_pMeshRenderResources = m_pMeshRenderResources;
-	params.m_pMeshInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
-	params.m_pLightWorldBoundsOrPropsBuffer = m_pActivePointLightWorldBoundsBuffer;
-	params.m_pLightWorldFrustumBuffer = m_pActivePointLightWorldFrustumBuffer;
-	params.m_pLightViewProjMatrixBuffer = m_pActivePointLightViewProjMatrixBuffer;
-	params.m_pLightIndexForMeshInstanceBuffer = m_pCreateTiledShadowMapCommandsPass->GetPointLightIndexForMeshInstanceBuffer();
-	params.m_pMeshInstanceIndexForLightBuffer = m_pCreateTiledShadowMapCommandsPass->GetMeshInstanceIndexForPointLightBuffer();
-	params.m_pNumShadowMapCommandsBuffer = m_pCreateTiledShadowMapCommandsPass->GetNumPointLightCommandsBuffer();
-	params.m_pShadowMapCommandBuffer = m_pCreateTiledShadowMapCommandsPass->GetPointLightCommandBuffer();
-			
-	params.m_InputResourceStates.m_TiledShadowMapState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_MeshInstanceWorldMatrixBufferState = pRenderGBufferFalseNegativePassStates->m_InstanceWorldMatrixBufferState;
-	params.m_InputResourceStates.m_LightWorldBoundsOrPropsBufferState = pCreateShadowMapCommandsPassStates->m_PointLightWorldBoundsBufferState;
-	params.m_InputResourceStates.m_LightWorldFrustumBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_LightViewProjMatrixBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_LightIndexForMeshInstanceBufferState = pCreateShadowMapCommandsPassStates->m_PointLightIndexForMeshInstanceBufferState;
-	params.m_InputResourceStates.m_MeshInstanceIndexForLightBufferState = pCreateShadowMapCommandsPassStates->m_MeshInstanceIndexForPointLightBufferState;
-	params.m_InputResourceStates.m_NumShadowMapCommandsBufferState = pCreateShadowMapCommandsPassStates->m_NumPointLightCommandsBufferState;
-	params.m_InputResourceStates.m_ShadowMapCommandBufferState = pCreateShadowMapCommandsPassStates->m_PointLightCommandBufferState;
-		
-	m_pRenderPointLightTiledShadowMapPass = new RenderTiledShadowMapPass(&params);
-}
-
-CommandList* DXApplication::RecordRenderPointLightTiledShadowMapPass()
-{
-	assert(m_pRenderPointLightTiledShadowMapPass != nullptr);
-	RenderTiledShadowMapPass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pRenderPointLightTiledShadowMapCommandList");
-	params.m_pMeshRenderResources = m_pMeshRenderResources;
-	params.m_pNumShadowMapCommandsBuffer = m_pCreateTiledShadowMapCommandsPass->GetNumPointLightCommandsBuffer();
-	params.m_pShadowMapCommandBuffer = m_pCreateTiledShadowMapCommandsPass->GetPointLightCommandBuffer();
-
-	m_pRenderPointLightTiledShadowMapPass->Record(&params);
-	return params.m_pCommandList;
-}
-
-void DXApplication::InitCreatePointLightTiledExpShadowMapPass()
-{
-	assert(m_pCreatePointLightTiledExpShadowMapPass == nullptr);
-	assert(m_pRenderPointLightTiledShadowMapPass != nullptr);
-
-	const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
-		m_pRenderPointLightTiledShadowMapPass->GetOutputResourceStates();
-
-	CreateTiledExpShadowMapPass::InitParams params;
-	params.m_pName = "CreatePointLightTiledExpShadowMapPass";
-	params.m_pRenderEnv = m_pRenderEnv;
-	
-	params.m_InputResourceStates.m_TiledShadowMapState = pRenderTiledShadowMapPassStates->m_TiledShadowMapState;
-	params.m_InputResourceStates.m_ShadowMapTileBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_CreateExpShadowMapParamsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_TiledExpShadowMapState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	
-	params.m_LightType = LightType_Point;
-	params.m_pTiledShadowMap = m_pRenderPointLightTiledShadowMapPass->GetTiledShadowMap();
-	params.m_pShadowMapTileBuffer = m_pActivePointLightShadowMapTileBuffer;
-	params.m_pCreateExpShadowMapParamsBuffer = m_pActivePointLightCreateExpShadowMapParamsBuffer;
-
-	m_pCreatePointLightTiledExpShadowMapPass = new CreateTiledExpShadowMapPass(&params);
-}
-
-CommandList* DXApplication::RecordCreatePointLightTiledExpShadowMapPass()
-{
-	assert(m_pCreatePointLightTiledExpShadowMapPass != nullptr);
-	assert(m_NumPointLights > 0);
-
-	CreateTiledExpShadowMapPass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pCreatePointLightTiledExpShadowMapCommandList");;
-	params.m_NumShadowMapTiles = kNumCubeMapFaces * m_NumActivePointLights;
-
-	m_pCreatePointLightTiledExpShadowMapPass->Record(&params);
-	return params.m_pCommandList;
-}
-
-void DXApplication::InitFilterPointLightTiledExpShadowMapPass()
-{
-	assert(m_pFilterPointLightTiledExpShadowMapPass == nullptr);
-	assert(m_pRenderPointLightTiledShadowMapPass != nullptr);
-	assert(m_pCreatePointLightTiledExpShadowMapPass != nullptr);
-
-	const CreateTiledExpShadowMapPass::ResourceStates* pCreateTiledExpShadowMapPassStates =
-		m_pCreatePointLightTiledExpShadowMapPass->GetOutputResourceStates();
-
-	FilterTiledExpShadowMapPass::InitParams params;
-	params.m_pName = "FilterPointLightTiledExpShadowMapPass";
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_RenderLatency = kNumBackBuffers;
-	params.m_InputResourceStates.m_TiledShadowMapState = pCreateTiledExpShadowMapPassStates->m_TiledShadowMapState;
-	params.m_InputResourceStates.m_TiledShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_TiledExpShadowMapState = pCreateTiledExpShadowMapPassStates->m_TiledExpShadowMapState;
-	params.m_InputResourceStates.m_TiledExpShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_pTiledShadowMap = m_pRenderPointLightTiledShadowMapPass->GetTiledShadowMap();
-	params.m_pTiledExpShadowMap = m_pCreatePointLightTiledExpShadowMapPass->GetTiledExpShadowMap();
-	params.m_LightType = LightType_Point;
-
-	m_pFilterPointLightTiledExpShadowMapPass = new FilterTiledExpShadowMapPass(&params);
-}
-
-CommandList* DXApplication::RecordFilterPointLightTiledExpShadowMapPass()
-{
-	assert(m_pFilterPointLightTiledExpShadowMapPass != nullptr);
-	
-	FilterTiledExpShadowMapPass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_CurrentFrameIndex = m_BackBufferIndex;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pCreatePointLightTiledShadowMapSATCommandList");
-	params.m_ppLightsData = (void**)m_ppActivePointLights;
-	params.m_NumLights = m_NumActivePointLights;
-
-	m_pFilterPointLightTiledExpShadowMapPass->Record(&params);
-	return params.m_pCommandList;
-}
-
-void DXApplication::InitRenderSpotLightTiledShadowMapPass()
-{
-	assert(m_NumSpotLights > 0);
-	
-	assert(m_pSpotLightShadowMapTileAllocator == nullptr);
-	m_pSpotLightShadowMapTileAllocator = new ShadowMapTileAllocator(kSpotLightShadowMapSize, kSpotLightShadowMapMinTileSize);
-
-	assert(m_pRenderSpotLightTiledShadowMapPass == nullptr);
-	assert(m_pCreateTiledShadowMapCommandsPass != nullptr);
-	
-	const CreateTiledShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
-		m_pCreateTiledShadowMapCommandsPass->GetOutputResourceStates();
-
-	RenderTiledShadowMapPass::InitParams params;
-	params.m_pName = "RenderSpotLightTiledShadowMapPass";
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_LightType = LightType_Spot;
-	params.m_ShadowMapSize = kSpotLightShadowMapSize;
-	params.m_pMeshRenderResources = m_pMeshRenderResources;
-	params.m_pMeshInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
-	params.m_pLightWorldBoundsOrPropsBuffer = m_pActiveSpotLightPropsBuffer;
-	params.m_pLightWorldFrustumBuffer = m_pActiveSpotLightWorldFrustumBuffer;
-	params.m_pLightViewProjMatrixBuffer = m_pActiveSpotLightViewProjMatrixBuffer;
-	params.m_pLightIndexForMeshInstanceBuffer = m_pCreateTiledShadowMapCommandsPass->GetSpotLightIndexForMeshInstanceBuffer();
-	params.m_pMeshInstanceIndexForLightBuffer = m_pCreateTiledShadowMapCommandsPass->GetMeshInstanceIndexForSpotLightBuffer();
-	params.m_pNumShadowMapCommandsBuffer = m_pCreateTiledShadowMapCommandsPass->GetNumSpotLightCommandsBuffer();
-	params.m_pShadowMapCommandBuffer = m_pCreateTiledShadowMapCommandsPass->GetSpotLightCommandBuffer();
-
-	params.m_InputResourceStates.m_TiledShadowMapState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-
-	if (m_NumPointLights > 0)
-	{
-		assert(m_pRenderPointLightTiledShadowMapPass != nullptr);
-		const RenderTiledShadowMapPass::ResourceStates* pRenderPointLightTiledShadowMapStates =
-			m_pRenderPointLightTiledShadowMapPass->GetOutputResourceStates();
-
-		params.m_InputResourceStates.m_MeshInstanceWorldMatrixBufferState = pRenderPointLightTiledShadowMapStates->m_MeshInstanceWorldMatrixBufferState;
-	}
-	else
-	{
-		assert(m_pRenderGBufferFalseNegativePass != nullptr);
-		const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
-			m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
-
-		params.m_InputResourceStates.m_MeshInstanceWorldMatrixBufferState = pRenderGBufferFalseNegativePassStates->m_InstanceWorldMatrixBufferState;
-	}
-
-	params.m_InputResourceStates.m_LightWorldBoundsOrPropsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_LightWorldFrustumBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_LightViewProjMatrixBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_LightIndexForMeshInstanceBufferState = pCreateShadowMapCommandsPassStates->m_SpotLightIndexForMeshInstanceBufferState;
-	params.m_InputResourceStates.m_MeshInstanceIndexForLightBufferState = pCreateShadowMapCommandsPassStates->m_MeshInstanceIndexForSpotLightBufferState;
-	params.m_InputResourceStates.m_NumShadowMapCommandsBufferState = pCreateShadowMapCommandsPassStates->m_NumSpotLightCommandsBufferState;
-	params.m_InputResourceStates.m_ShadowMapCommandBufferState = pCreateShadowMapCommandsPassStates->m_SpotLightCommandBufferState;
-
-	m_pRenderSpotLightTiledShadowMapPass = new RenderTiledShadowMapPass(&params);
-}
-
-CommandList* DXApplication::RecordRenderSpotLightTiledShadowMapPass()
-{
-	assert(m_pRenderSpotLightTiledShadowMapPass != nullptr);
-	RenderTiledShadowMapPass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pRenderSpotLightTiledShadowMapCommandList");
-	params.m_pMeshRenderResources = m_pMeshRenderResources;
-	params.m_pNumShadowMapCommandsBuffer = m_pCreateTiledShadowMapCommandsPass->GetNumSpotLightCommandsBuffer();
-	params.m_pShadowMapCommandBuffer = m_pCreateTiledShadowMapCommandsPass->GetSpotLightCommandBuffer();
-
-	m_pRenderSpotLightTiledShadowMapPass->Record(&params);
-	return params.m_pCommandList;
-}
-
-void DXApplication::InitCreateSpotLightTiledExpShadowMapPass()
-{
-	assert(m_pCreateSpotLightTiledExpShadowMapPass == nullptr);
-	assert(m_pRenderSpotLightTiledShadowMapPass != nullptr);
-
-	const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
-		m_pRenderSpotLightTiledShadowMapPass->GetOutputResourceStates();
-
-	CreateTiledExpShadowMapPass::InitParams params;
-	params.m_pName = "CreateSpotLightTiledExpShadowMapPass";
-	params.m_pRenderEnv = m_pRenderEnv;
-	
-	params.m_InputResourceStates.m_TiledShadowMapState = pRenderTiledShadowMapPassStates->m_TiledShadowMapState;
-	params.m_InputResourceStates.m_ShadowMapTileBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_CreateExpShadowMapParamsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	params.m_InputResourceStates.m_TiledExpShadowMapState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-
-	params.m_LightType = LightType_Spot;
-	params.m_pTiledShadowMap = m_pRenderSpotLightTiledShadowMapPass->GetTiledShadowMap();
-	params.m_pShadowMapTileBuffer = m_pActiveSpotLightShadowMapTileBuffer;
-	params.m_pCreateExpShadowMapParamsBuffer = m_pActiveSpotLightCreateExpShadowMapParamsBuffer;
-
-	m_pCreateSpotLightTiledExpShadowMapPass = new CreateTiledExpShadowMapPass(&params);
-}
-
-CommandList* DXApplication::RecordCreateSpotLightTiledExpShadowMapPass()
-{
-	assert(m_pCreateSpotLightTiledExpShadowMapPass != nullptr);
-	assert(m_NumSpotLights > 0);
-
-	CreateTiledExpShadowMapPass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pCreateSpotLightTiledExpShadowMapCommandList");
-	params.m_NumShadowMapTiles = m_NumActiveSpotLights;
-
-	m_pCreateSpotLightTiledExpShadowMapPass->Record(&params);
-	return params.m_pCommandList;
-}
-
-void DXApplication::InitFilterSpotLightTiledExpShadowMapPass()
-{
-	assert(m_pFilterSpotLightTiledExpShadowMapPass == nullptr);
-	assert(m_pRenderSpotLightTiledShadowMapPass != nullptr);
-	assert(m_pCreateSpotLightTiledExpShadowMapPass != nullptr);
-
-	const CreateTiledExpShadowMapPass::ResourceStates* pCreateTiledExpShadowMapPassStates =
-		m_pCreateSpotLightTiledExpShadowMapPass->GetOutputResourceStates();
-
-	FilterTiledExpShadowMapPass::InitParams params;
-	params.m_pName = "FilterSpotLightTiledExpShadowMapPass";
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_RenderLatency = kNumBackBuffers;
-	params.m_InputResourceStates.m_TiledShadowMapState = pCreateTiledExpShadowMapPassStates->m_TiledShadowMapState;
-	params.m_InputResourceStates.m_TiledShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_TiledExpShadowMapState = pCreateTiledExpShadowMapPassStates->m_TiledExpShadowMapState;
-	params.m_InputResourceStates.m_TiledExpShadowMapSATState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_pTiledShadowMap = m_pRenderSpotLightTiledShadowMapPass->GetTiledShadowMap();
-	params.m_pTiledExpShadowMap = m_pCreateSpotLightTiledExpShadowMapPass->GetTiledExpShadowMap();
-	params.m_LightType = LightType_Spot;
-
-	m_pFilterSpotLightTiledExpShadowMapPass = new FilterTiledExpShadowMapPass(&params);
-}
-
-CommandList* DXApplication::RecordFilterSpotLightTiledExpShadowMapPass()
-{
-	assert(m_pFilterSpotLightTiledExpShadowMapPass != nullptr);
-
-	FilterTiledExpShadowMapPass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_CurrentFrameIndex = m_BackBufferIndex;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pCreateSpotLightTiledShadowMapSATCommandList");
-	params.m_ppLightsData = (void**)m_ppActiveSpotLights;
-	params.m_NumLights = m_NumActiveSpotLights;
-
-	m_pFilterSpotLightTiledExpShadowMapPass->Record(&params);
 	return params.m_pCommandList;
 }
 
@@ -2380,18 +1685,18 @@ void DXApplication::InitCreateVoxelizeCommandsPass()
 {	
 	assert(m_pCreateVoxelizeCommandsPass == nullptr);
 	assert(m_pFrustumMeshCullingPass != nullptr);
-	assert(m_pCreateTiledShadowMapCommandsPass != nullptr);
 	assert(m_pMeshRenderResources != nullptr);
-	
-	const CreateTiledShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
-		m_pCreateTiledShadowMapCommandsPass->GetOutputResourceStates();
+	assert(m_pCreateFalseNegativeDrawCommandsPass != nullptr);
 
+	const CreateFalseNegativeDrawCommandsPass::ResourceStates* pCreateFalseNegativeDrawCommandsPassStates =
+		m_pCreateFalseNegativeDrawCommandsPass->GetOutputResourceStates();
+	
 	CreateVoxelizeCommandsPass::InitParams params;
 	params.m_pName = "CreateVoxelizeCommandsPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	
-	params.m_InputResourceStates.m_NumMeshesBufferState = pCreateShadowMapCommandsPassStates->m_NumMeshesBufferState;
-	params.m_InputResourceStates.m_MeshInfoBufferState = pCreateShadowMapCommandsPassStates->m_MeshInfoBufferState;
+	params.m_InputResourceStates.m_NumMeshesBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_NumMeshesBufferState;
+	params.m_InputResourceStates.m_MeshInfoBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_MeshInfoBufferState;
 	params.m_InputResourceStates.m_NumCommandsPerMeshTypeBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	params.m_InputResourceStates.m_VoxelizeCommandBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 
@@ -2423,7 +1728,6 @@ void DXApplication::InitVoxelizePass()
 	assert(m_pFrustumMeshCullingPass != nullptr);
 	assert(m_pCreateMainDrawCommandsPass != nullptr);
 	assert(m_pCreateVoxelizeCommandsPass != nullptr);
-	assert(m_pCreateTiledShadowMapCommandsPass != nullptr);
 	assert(m_pRenderGBufferFalseNegativePass != nullptr);
 		
 	const CreateMainDrawCommandsPass::ResourceStates* pCreateMainDrawCommandsPassStates =
@@ -2435,9 +1739,6 @@ void DXApplication::InitVoxelizePass()
 	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
 		
-	const CreateTiledShadowMapCommandsPass::ResourceStates* pCreateShadowMapCommandsPassStates =
-		m_pCreateTiledShadowMapCommandsPass->GetOutputResourceStates();
-		
 	VoxelizePass::InitParams params;
 	params.m_pName = "VoxelizePass";
 	params.m_pRenderEnv = m_pRenderEnv;
@@ -2445,26 +1746,12 @@ void DXApplication::InitVoxelizePass()
 	params.m_InputResourceStates.m_NumCommandsPerMeshTypeBufferState = pCreateVoxelizeCommandsPassStates->m_NumCommandsPerMeshTypeBufferState;
 	params.m_InputResourceStates.m_VoxelizeCommandBufferState = pCreateVoxelizeCommandsPassStates->m_VoxelizeCommandBufferState;
 	params.m_InputResourceStates.m_InstanceIndexBufferState = pCreateMainDrawCommandsPassStates->m_InstanceIndexBufferState;
-		
-	if (m_NumPointLights > 0)
-	{
-		assert(m_pRenderPointLightTiledShadowMapPass != nullptr);
-		const RenderTiledShadowMapPass::ResourceStates* pRenderPointLightTiledShadowMapStates =
-			m_pRenderPointLightTiledShadowMapPass->GetOutputResourceStates();
-
-		params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = pRenderPointLightTiledShadowMapStates->m_MeshInstanceWorldMatrixBufferState;
-		params.m_InputResourceStates.m_PointLightWorldBoundsBufferState = pRenderPointLightTiledShadowMapStates->m_LightWorldBoundsOrPropsBufferState;
-		params.m_InputResourceStates.m_PointLightPropsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
-	}
+	
 	if (m_NumSpotLights > 0)
 	{
-		assert(m_pRenderSpotLightTiledShadowMapPass != nullptr);
-		const RenderTiledShadowMapPass::ResourceStates* pRenderSpotLightTiledShadowMapStates =
-			m_pRenderSpotLightTiledShadowMapPass->GetOutputResourceStates();
-
-		params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = pRenderSpotLightTiledShadowMapStates->m_MeshInstanceWorldMatrixBufferState;
-		params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = pCreateShadowMapCommandsPassStates->m_SpotLightWorldBoundsBufferState;
-		params.m_InputResourceStates.m_SpotLightPropsBufferState = pRenderSpotLightTiledShadowMapStates->m_LightWorldBoundsOrPropsBufferState;
+		params.m_InputResourceStates.m_InstanceWorldMatrixBufferState = pRenderGBufferFalseNegativePassStates->m_InstanceWorldMatrixBufferState;
+		params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
+		params.m_InputResourceStates.m_SpotLightPropsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
 	}
 	
 	params.m_InputResourceStates.m_VoxelReflectanceTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -2484,9 +1771,6 @@ void DXApplication::InitVoxelizePass()
 	params.m_pInstanceWorldMatrixBuffer = m_pMeshRenderResources->GetInstanceWorldMatrixBuffer();
 	
 	params.m_EnableDirectionalLight = false;
-	params.m_EnablePointLights = m_NumPointLights > 0;
-	params.m_pPointLightWorldBoundsBuffer = m_pActivePointLightWorldBoundsBuffer;
-	params.m_pPointLightPropsBuffer = m_pActivePointLightPropsBuffer;
 	params.m_EnableSpotLights = m_NumSpotLights > 0;
 	params.m_pSpotLightWorldBoundsBuffer = m_pActiveSpotLightWorldBoundsBuffer;
 	params.m_pSpotLightPropsBuffer = m_pActiveSpotLightPropsBuffer;
@@ -2505,7 +1789,6 @@ CommandList* DXApplication::RecordVoxelizePass()
 	params.m_pNumCommandsPerMeshTypeBuffer = m_pCreateVoxelizeCommandsPass->GetNumCommandsPerMeshTypeBuffer();
 	params.m_pVoxelizeCommandBuffer = m_pCreateVoxelizeCommandsPass->GetVoxelizeCommandBuffer();
 	params.m_pAppDataBuffer = m_UploadAppDataBuffers[m_BackBufferIndex];
-	params.m_NumPointLights = m_NumActivePointLights;
 	params.m_NumSpotLights = m_NumActiveSpotLights;
 
 	m_pVoxelizePass->Record(&params);
@@ -2517,7 +1800,6 @@ void DXApplication::InitTiledShadingPass()
 	assert(m_pTiledShadingPass == nullptr);
 	assert(m_pFillMeshTypeDepthBufferPass != nullptr);
 	assert(m_pCalcShadingRectanglesPass != nullptr);
-	assert(m_pTiledLightCullingPass != nullptr);
 	assert(m_pRenderGBufferFalseNegativePass != nullptr);
 	assert(m_pVoxelizePass != nullptr);
 	assert(m_pGeometryBuffer != nullptr);
@@ -2528,9 +1810,6 @@ void DXApplication::InitTiledShadingPass()
 
 	const CalcShadingRectanglesPass::ResourceStates* pCalcShadingRectanglesPassStates =
 		m_pCalcShadingRectanglesPass->GetOutputResourceStates();
-
-	const TiledLightCullingPass::ResourceStates* pTiledLightCullingPassStates =
-		m_pTiledLightCullingPass->GetOutputResourceStates();
 
 	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
@@ -2547,7 +1826,7 @@ void DXApplication::InitTiledShadingPass()
 	params.m_InputResourceStates.m_MeshTypeDepthTextureState = pFillMeshTypeDepthBufferPassStates->m_MeshTypeDepthTextureState;
 	params.m_InputResourceStates.m_ShadingRectangleMinPointBufferState = pCalcShadingRectanglesPassStates->m_ShadingRectangleMinPointBufferState;
 	params.m_InputResourceStates.m_ShadingRectangleMaxPointBufferState = pCalcShadingRectanglesPassStates->m_ShadingRectangleMaxPointBufferState;
-	params.m_InputResourceStates.m_DepthTextureState = pTiledLightCullingPassStates->m_DepthTextureState;
+	params.m_InputResourceStates.m_DepthTextureState = pRenderGBufferFalseNegativePassStates->m_DepthTextureState;		
 	params.m_InputResourceStates.m_GBuffer1State = pRenderGBufferFalseNegativePassStates->m_GBuffer1State;
 	params.m_InputResourceStates.m_GBuffer2State = pRenderGBufferFalseNegativePassStates->m_GBuffer2State;
 	params.m_InputResourceStates.m_GBuffer3State = pFillMeshTypeDepthBufferPassStates->m_GBuffer3State;
@@ -2567,60 +1846,28 @@ void DXApplication::InitTiledShadingPass()
 	params.m_NumMaterialTextures = m_pMaterialRenderResources->GetNumTextures();
 	params.m_ppMaterialTextures = m_pMaterialRenderResources->GetTextures();
 	params.m_EnableDirectionalLight = false;
-
-	params.m_EnablePointLights = m_NumPointLights > 0;
-	if (params.m_EnablePointLights)
-	{
-		const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
-			m_pRenderPointLightTiledShadowMapPass->GetOutputResourceStates();
-
-		const FilterTiledExpShadowMapPass::ResourceStates* pCreateTiledShadowMapSATStates =
-			m_pFilterPointLightTiledExpShadowMapPass->GetOutputResourceStates();
-
-		params.m_InputResourceStates.m_PointLightWorldBoundsBufferState = pVoxelizePassStates->m_PointLightWorldBoundsBufferState;
-		params.m_InputResourceStates.m_PointLightPropsBufferState = pVoxelizePassStates->m_PointLightPropsBufferState;
-		params.m_InputResourceStates.m_PointLightIndexPerTileBufferState = pTiledLightCullingPassStates->m_PointLightIndexPerTileBufferState;
-		params.m_InputResourceStates.m_PointLightRangePerTileBufferState = pTiledLightCullingPassStates->m_PointLightRangePerTileBufferState;
-		params.m_InputResourceStates.m_PointLightTiledExpShadowMapState = pCreateTiledShadowMapSATStates->m_TiledExpShadowMapState;
-		params.m_InputResourceStates.m_PointLightViewProjMatrixBufferState = pRenderTiledShadowMapPassStates->m_LightViewProjMatrixBufferState;
-
-		params.m_pPointLightWorldBoundsBuffer = m_pActivePointLightWorldBoundsBuffer;
-		params.m_pPointLightPropsBuffer = m_pActivePointLightPropsBuffer;
-		params.m_pPointLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetPointLightIndexPerTileBuffer();
-		params.m_pPointLightRangePerTileBuffer = m_pTiledLightCullingPass->GetPointLightRangePerTileBuffer();
-		params.m_pPointLightViewProjMatrixBuffer = m_pActivePointLightViewProjMatrixBuffer;
-		params.m_pPointLightTiledExpShadowMap = m_pCreatePointLightTiledExpShadowMapPass->GetTiledExpShadowMap();
-	}
-	
+			
 	params.m_EnableSpotLights = m_NumSpotLights > 0;
 	if (params.m_EnableSpotLights)
 	{
-		const RenderTiledShadowMapPass::ResourceStates* pRenderTiledShadowMapPassStates =
-			m_pRenderSpotLightTiledShadowMapPass->GetOutputResourceStates();
-
-		const CreateTiledExpShadowMapPass::ResourceStates* pCreateTiledExpShadowMapPassStates =
-			m_pCreateSpotLightTiledExpShadowMapPass->GetOutputResourceStates();
-
-		const FilterTiledExpShadowMapPass::ResourceStates* pCreateTiledShadowMapSATStates =
-			m_pFilterSpotLightTiledExpShadowMapPass->GetOutputResourceStates();
-
+		const TiledLightCullingPass::ResourceStates* pTiledLightCullingPassStates =
+			m_pTiledLightCullingPass->GetOutputResourceStates();
+				
+		params.m_InputResourceStates.m_DepthTextureState = pTiledLightCullingPassStates->m_DepthTextureState;
 		params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = pVoxelizePassStates->m_SpotLightWorldBoundsBufferState;
 		params.m_InputResourceStates.m_SpotLightPropsBufferState = pVoxelizePassStates->m_SpotLightPropsBufferState;
 		params.m_InputResourceStates.m_SpotLightIndexPerTileBufferState = pTiledLightCullingPassStates->m_SpotLightIndexPerTileBufferState;
 		params.m_InputResourceStates.m_SpotLightRangePerTileBufferState = pTiledLightCullingPassStates->m_SpotLightRangePerTileBufferState;
-		params.m_InputResourceStates.m_SpotLightTiledExpShadowMapState = pCreateTiledShadowMapSATStates->m_TiledExpShadowMapState;
+		params.m_InputResourceStates.m_SpotLightShadowMapsState = pCreateTiledShadowMapSATStates->m_TiledExpShadowMapState;
 		params.m_InputResourceStates.m_SpotLightViewProjMatrixBufferState = pRenderTiledShadowMapPassStates->m_LightViewProjMatrixBufferState;
-		params.m_InputResourceStates.m_SpotLightShadowMapTileBufferState = pCreateTiledExpShadowMapPassStates->m_ShadowMapTileBufferState;
-		
+
 		params.m_pSpotLightWorldBoundsBuffer = m_pActiveSpotLightWorldBoundsBuffer;
 		params.m_pSpotLightPropsBuffer = m_pActiveSpotLightPropsBuffer;
 		params.m_pSpotLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetSpotLightIndexPerTileBuffer();
 		params.m_pSpotLightRangePerTileBuffer = m_pTiledLightCullingPass->GetSpotLightRangePerTileBuffer();
-		params.m_pSpotLightTiledExpShadowMap = m_pCreateSpotLightTiledExpShadowMapPass->GetTiledExpShadowMap();
+		params.m_pSpotLightShadowMaps = m_pCreateSpotLightTiledExpShadowMapPass->GetTiledExpShadowMap();
 		params.m_pSpotLightViewProjMatrixBuffer = m_pActiveSpotLightViewProjMatrixBuffer;
-		params.m_pSpotLightShadowMapTileBuffer = m_pActiveSpotLightShadowMapTileBuffer;
-	}
-		
+	}		
 	m_pTiledShadingPass = new TiledShadingPass(&params);
 }
 
@@ -2657,13 +1904,7 @@ CommandList* DXApplication::RecordVisualizeDisplayResultPass()
 
 	if (m_DisplayResult == DisplayResult::DepthBufferWithMeshType)
 		return RecordVisualizeDepthBufferWithMeshTypePass();
-
-	if (m_DisplayResult == DisplayResult::PointLightTiledShadowMap)
-		return RecordVisualizePointLightTiledShadowMapPass();
-
-	if (m_DisplayResult == DisplayResult::SpotLightTiledShadowMap)
-		return RecordVisualizeSpotLightTiledShadowMapPass();
-
+	
 	if (m_DisplayResult == DisplayResult::VoxelRelectance)
 		return RecordVisualizeVoxelReflectancePass();
 		
@@ -2728,133 +1969,6 @@ CommandList* DXApplication::RecordPostRenderPass()
 	return pCommandList;
 }
 
-void DXApplication::InitPointLightRenderResources(Scene* pScene)
-{
-	const MemoryRange readRange(0, 0);
-
-	PointLight** ppPointLights = pScene->GetPointLights();
-	m_NumPointLights = u32(pScene->GetNumPointLights());
-
-	m_pPointLights = new PointLightRenderData[m_NumPointLights];
-	m_ppActivePointLights = new PointLightRenderData*[m_NumPointLights];
-
-	Vector3f lookAtDir[kNumCubeMapFaces];
-	lookAtDir[kCubeMapFacePosX] = Vector3f::RIGHT;
-	lookAtDir[kCubeMapFaceNegX] = Vector3f::LEFT;
-	lookAtDir[kCubeMapFacePosY] = Vector3f::UP;
-	lookAtDir[kCubeMapFaceNegY] = Vector3f::DOWN;
-	lookAtDir[kCubeMapFacePosZ] = Vector3f::FORWARD;
-	lookAtDir[kCubeMapFaceNegZ] = Vector3f::BACK;
-
-	Vector3f upDir[kNumCubeMapFaces];
-	upDir[kCubeMapFacePosX] = Vector3f::UP;
-	upDir[kCubeMapFaceNegX] = Vector3f::UP;
-	upDir[kCubeMapFacePosY] = Vector3f::FORWARD;
-	upDir[kCubeMapFaceNegY] = Vector3f::BACK;
-	upDir[kCubeMapFacePosZ] = Vector3f::UP;
-	upDir[kCubeMapFaceNegZ] = Vector3f::UP;
-
-	for (decltype(m_NumPointLights) lightIndex = 0; lightIndex < m_NumPointLights; ++lightIndex)
-	{
-		const PointLight* pLight = ppPointLights[lightIndex];
-
-		const Transform& lightWorldSpaceTransform = pLight->GetTransform();
-		const Vector3f& lightWorldSpacePos = lightWorldSpaceTransform.GetPosition();
-
-		Matrix4f projMatrix = CreatePerspectiveFovProjMatrix(PI_DIV_2, 1.0f, pLight->GetShadowNearPlane(), pLight->GetRange());
-
-		m_pPointLights[lightIndex].m_Color = pLight->GetColor();
-		m_pPointLights[lightIndex].m_WorldBounds = Sphere(lightWorldSpacePos, pLight->GetRange());
-		
-		m_pPointLights[lightIndex].m_LightViewNearPlane = pLight->GetShadowNearPlane();
-		m_pPointLights[lightIndex].m_LightRcpViewClipRange = Rcp(pLight->GetRange() - pLight->GetShadowNearPlane());
-		m_pPointLights[lightIndex].m_LightProjMatrix43 = projMatrix.m_32;
-		m_pPointLights[lightIndex].m_LightProjMatrix33 = projMatrix.m_22;
-
-		m_pPointLights[lightIndex].m_AffectedScreenArea = 0;
-
-		for (u8 faceIndex = 0; faceIndex < kNumCubeMapFaces; ++faceIndex)
-		{
-			Matrix4f viewMatrix = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpacePos + lookAtDir[faceIndex], upDir[faceIndex]);
-
-			Matrix4f viewProjMatrix = viewMatrix * projMatrix;
-			m_pPointLights[lightIndex].m_ViewProjMatrices[faceIndex] = viewProjMatrix;
-
-			Frustum lightWorldFrustum(viewProjMatrix);
-			m_pPointLights[lightIndex].m_WorldFrustums[faceIndex].m_LeftPlane = lightWorldFrustum.m_Planes[Frustum::LeftPlane];
-			m_pPointLights[lightIndex].m_WorldFrustums[faceIndex].m_RightPlane = lightWorldFrustum.m_Planes[Frustum::RightPlane];;
-			m_pPointLights[lightIndex].m_WorldFrustums[faceIndex].m_TopPlane = lightWorldFrustum.m_Planes[Frustum::TopPlane];;
-			m_pPointLights[lightIndex].m_WorldFrustums[faceIndex].m_BottomPlane = lightWorldFrustum.m_Planes[Frustum::BottomPlane];;
-		}		
-
-		m_ppActivePointLights[lightIndex] = nullptr;
-	}
-
-	StructuredBufferDesc lightWorldBoundsBufferDesc(m_NumPointLights, sizeof(Sphere), true, false);
-	StructuredBufferDesc lightPropsBufferDesc(m_NumPointLights, sizeof(PointLightProps), true, false);
-	StructuredBufferDesc createExpShadowMapParamsBufferDesc(m_NumPointLights, sizeof(CreateExpShadowMapParams), true, false);
-	StructuredBufferDesc lightWorldFrustumBufferDesc(kNumCubeMapFaces * m_NumPointLights, sizeof(LightFrustum), true, false);
-	StructuredBufferDesc lightViewProjMatrixBufferDesc(kNumCubeMapFaces * m_NumPointLights, sizeof(Matrix4f), true, false);
-	StructuredBufferDesc lightShadowMapTileBufferDesc(kNumCubeMapFaces * m_NumPointLights, sizeof(ShadowMapTile), true, false);
-	
-	for (u8 index = 0; index < kNumBackBuffers; ++index)
-	{
-		assert(m_UploadActivePointLightWorldBoundsBuffers[index] == nullptr);
-		m_UploadActivePointLightWorldBoundsBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
-			&lightWorldBoundsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActivePointLightWorldBoundsBuffer");
-		m_UploadActivePointLightWorldBounds[index] = m_UploadActivePointLightWorldBoundsBuffers[index]->Map(0, &readRange);
-
-		assert(m_UploadActivePointLightPropsBuffers[index] == nullptr);
-		m_UploadActivePointLightPropsBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
-			&lightPropsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActivePointLightPropsBuffer");
-		m_UploadActivePointLightProps[index] = m_UploadActivePointLightPropsBuffers[index]->Map(0, &readRange);
-
-		assert(m_UploadActivePointLightWorldFrustumBuffers[index] == nullptr);
-		m_UploadActivePointLightWorldFrustumBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
-			&lightWorldFrustumBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActivePointLightWorldFrustumBuffer");
-		m_UploadActivePointLightWorldFrustums[index] = m_UploadActivePointLightWorldFrustumBuffers[index]->Map(0, &readRange);
-
-		assert(m_UploadActivePointLightViewProjMatrixBuffers[index] == nullptr);
-		m_UploadActivePointLightViewProjMatrixBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
-			&lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActivePointLightViewProjMatrixBuffer");
-		m_UploadActivePointLightViewProjMatrices[index] = m_UploadActivePointLightViewProjMatrixBuffers[index]->Map(0, &readRange);
-
-		assert(m_UploadActivePointLightShadowMapTileBuffers[index] == nullptr);
-		m_UploadActivePointLightShadowMapTileBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
-			&lightShadowMapTileBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActivePointLightShadowMapTileBuffer");
-		m_UploadActivePointLightShadowMapTiles[index] = m_UploadActivePointLightShadowMapTileBuffers[index]->Map(0, &readRange);
-
-		assert(m_UploadActivePointLightCreateExpShadowMapParamsBuffers[index] == nullptr);
-		m_UploadActivePointLightCreateExpShadowMapParamsBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
-			&createExpShadowMapParamsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_UploadActivePointLightCreateExpShadowMapParamsBuffer");
-		m_UploadActivePointLightCreateExpShadowMapParams[index] = m_UploadActivePointLightCreateExpShadowMapParamsBuffers[index]->Map(0, &readRange);
-	}
-
-	assert(m_pActivePointLightWorldBoundsBuffer == nullptr);
-	m_pActivePointLightWorldBoundsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
-		&lightWorldBoundsBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActivePointLightWorldBoundsBuffer");
-
-	assert(m_pActivePointLightPropsBuffer == nullptr);
-	m_pActivePointLightPropsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
-		&lightPropsBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActivePointLightPropsBuffer");
-
-	assert(m_pActivePointLightCreateExpShadowMapParamsBuffer == nullptr);
-	m_pActivePointLightCreateExpShadowMapParamsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
-		&createExpShadowMapParamsBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActivePointLightCreateExpShadowMapParamsBuffer");
-
-	assert(m_pActivePointLightWorldFrustumBuffer == nullptr);
-	m_pActivePointLightWorldFrustumBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
-		&lightWorldFrustumBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, L"m_pActivePointLightWorldFrustumBuffer");
-
-	assert(m_pActivePointLightViewProjMatrixBuffer == nullptr);
-	m_pActivePointLightViewProjMatrixBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
-		&lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, L"m_pActivePointLightViewProjMatrixBuffer");
-	
-	assert(m_pActivePointLightShadowMapTileBuffer == nullptr);
-	m_pActivePointLightShadowMapTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
-		&lightShadowMapTileBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, L"m_pActivePointLightShadowMapTileBuffer");
-}
-
 void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 {
 	const MemoryRange readRange(0, 0);
@@ -2893,28 +2007,28 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		m_pSpotLights[lightIndex].m_LightRange = pLight->GetRange();
 		m_pSpotLights[lightIndex].m_CosHalfInnerConeAngle = Cos(0.5f * pLight->GetInnerConeAngle());
 		m_pSpotLights[lightIndex].m_CosHalfOuterConeAngle = Cos(0.5f * pLight->GetOuterConeAngle());
-		m_pSpotLights[lightIndex].m_AffectedScreenArea = 0;
-
+		
 		Matrix4f viewMatrix = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpacePos + lightWorldSpaceDir, lightWorldSpaceUpDir);
 		Matrix4f viewProjMatrix = viewMatrix * projMatrix;
 		m_pSpotLights[lightIndex].m_ViewProjMatrix = viewProjMatrix;
 
 		Frustum lightWorldFrustum(viewProjMatrix);
-		m_pSpotLights[lightIndex].m_WorldFrustum.m_LeftPlane = lightWorldFrustum.m_Planes[Frustum::LeftPlane];
-		m_pSpotLights[lightIndex].m_WorldFrustum.m_RightPlane = lightWorldFrustum.m_Planes[Frustum::RightPlane];
-		m_pSpotLights[lightIndex].m_WorldFrustum.m_TopPlane = lightWorldFrustum.m_Planes[Frustum::TopPlane];
-		m_pSpotLights[lightIndex].m_WorldFrustum.m_BottomPlane = lightWorldFrustum.m_Planes[Frustum::BottomPlane];
+		assert(false);
+		//m_pSpotLights[lightIndex].m_WorldFrustum.m_LeftPlane = lightWorldFrustum.m_Planes[Frustum::LeftPlane];
+		//m_pSpotLights[lightIndex].m_WorldFrustum.m_RightPlane = lightWorldFrustum.m_Planes[Frustum::RightPlane];
+		//m_pSpotLights[lightIndex].m_WorldFrustum.m_TopPlane = lightWorldFrustum.m_Planes[Frustum::TopPlane];
+		//m_pSpotLights[lightIndex].m_WorldFrustum.m_BottomPlane = lightWorldFrustum.m_Planes[Frustum::BottomPlane];
 
 		m_ppActiveSpotLights[lightIndex] = nullptr;
 	}
-
+	
+	/*
 	StructuredBufferDesc lightWorldBoundsBufferDesc(m_NumSpotLights, sizeof(Sphere), true, false);
 	StructuredBufferDesc lightPropsBufferDesc(m_NumSpotLights, sizeof(SpotLightProps), true, false);
 	StructuredBufferDesc createExpShadowMapParamsBufferDesc(m_NumSpotLights, sizeof(CreateExpShadowMapParams), true, false);
 	StructuredBufferDesc lightWorldFrustumBufferDesc(m_NumSpotLights, sizeof(LightFrustum), true, false);
 	StructuredBufferDesc lightViewProjMatrixBufferDesc(m_NumSpotLights, sizeof(Matrix4f), true, false);
-	StructuredBufferDesc lightShadowMapTileBufferDesc(m_NumSpotLights, sizeof(ShadowMapTile), true, false);
-	
+		
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
 		assert(m_UploadActiveSpotLightWorldBoundsBuffers[index] == nullptr);
@@ -2941,11 +2055,6 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		m_UploadActiveSpotLightViewProjMatrixBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
 			&lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActiveSpotLightViewProjMatrixBuffer");
 		m_UploadActiveSpotLightViewProjMatrices[index] = m_UploadActiveSpotLightViewProjMatrixBuffers[index]->Map(0, &readRange);
-
-		assert(m_UploadActiveSpotLightShadowMapTileBuffers[index] == nullptr);
-		m_UploadActiveSpotLightShadowMapTileBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
-			&lightShadowMapTileBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActiveSpotLightShadowMapTileBuffer");
-		m_UploadActiveSpotLightShadowMapTiles[index] = m_UploadActiveSpotLightShadowMapTileBuffers[index]->Map(0, &readRange);
 	}
 
 	assert(m_pActiveSpotLightWorldBoundsBuffer == nullptr);
@@ -2967,106 +2076,13 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 	assert(m_pActiveSpotLightViewProjMatrixBuffer == nullptr);
 	m_pActiveSpotLightViewProjMatrixBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
 		&lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, L"m_pActiveSpotLightViewProjMatrixBuffer");
-
-	assert(m_pActiveSpotLightShadowMapTileBuffer == nullptr);
-	m_pActiveSpotLightShadowMapTileBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
-		&lightShadowMapTileBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActiveSpotLightShadowMapTileBuffer");
-}
-
-void DXApplication::SetupPointLightDataForUpload(const Frustum& cameraWorldFrustum)
-{
-#ifdef ENABLE_PROFILING
-	u32 profileIndex = m_pCPUProfiler->StartProfile("SetupPointLightDataForUpload");
-#endif // ENABLE_PROFILING
-	
-	decltype(m_NumPointLights) numVisiblePointLights = 0;
-	for (decltype(m_NumPointLights) lightIndex = 0; lightIndex < m_NumPointLights; ++lightIndex)
-	{
-		PointLightRenderData& lightData = m_pPointLights[lightIndex];
-		if (TestSphereAgainstFrustum(cameraWorldFrustum, lightData.m_WorldBounds))
-			m_ppActivePointLights[numVisiblePointLights++] = &lightData;
-	}
-
-	const Vector2f screenSize(m_pBackBufferViewport->Width, m_pBackBufferViewport->Height);
-	for (decltype(numVisiblePointLights) lightIndex = 0; lightIndex < numVisiblePointLights; ++lightIndex)
-	{
-		PointLightRenderData* pLightData = m_ppActivePointLights[lightIndex];
-		pLightData->m_AffectedScreenArea = CalcScreenAreaAffectedByLight(pLightData->m_WorldBounds, screenSize, *m_pCamera);
-	}
-
-	auto hasLargerSizeOnScreen = [](const PointLightRenderData* pLightData1, const PointLightRenderData* pLightData2)
-	{
-		return (pLightData1->m_AffectedScreenArea > pLightData2->m_AffectedScreenArea);
-	};
-	std::sort(m_ppActivePointLights, m_ppActivePointLights + numVisiblePointLights, hasLargerSizeOnScreen);
-
-	m_NumActivePointLights = 0;
-	assert(m_pPointLightShadowMapTileAllocator != nullptr);
-	m_pPointLightShadowMapTileAllocator->Reset();
-
-	while (m_NumActivePointLights < numVisiblePointLights)
-	{
-		PointLightRenderData* pLightData = m_ppActivePointLights[m_NumActivePointLights];
-
-		u8 faceIndex = 0;
-		ShadowMapTile shadowMapTile;
-		while (faceIndex < kNumCubeMapFaces)
-		{
-			if (m_pPointLightShadowMapTileAllocator->Allocate(pLightData->m_AffectedScreenArea, &shadowMapTile))
-				pLightData->m_ShadowMapTiles[faceIndex++] = shadowMapTile;
-			else
-				break;
-		}
-
-		if (faceIndex == kNumCubeMapFaces)
-			++m_NumActivePointLights;
-		else
-			break;
-	}
-	
-	Sphere* pUploadActiveLightWorldBounds = (Sphere*)m_UploadActivePointLightWorldBounds[m_BackBufferIndex];
-	PointLightProps* pUploadActiveLightProps = (PointLightProps*)m_UploadActivePointLightProps[m_BackBufferIndex];
-	LightFrustum* pUploadActiveLightWorldFrustums = (LightFrustum*)m_UploadActivePointLightWorldFrustums[m_BackBufferIndex];
-	Matrix4f* pUploadActiveLightViewProjMatrices = (Matrix4f*)m_UploadActivePointLightViewProjMatrices[m_BackBufferIndex];
-	ShadowMapTile* pUploadActiveLightShadowMapTiles = (ShadowMapTile*)m_UploadActivePointLightShadowMapTiles[m_BackBufferIndex];
-	CreateExpShadowMapParams* pUploadActiveLightCreateExpShadowMapParams = (CreateExpShadowMapParams*)m_UploadActivePointLightCreateExpShadowMapParams[m_BackBufferIndex];
-
-	for (decltype(m_NumActivePointLights) lightIndex = 0; lightIndex < m_NumActivePointLights; ++lightIndex)
-	{
-		const PointLightRenderData* pLightData = m_ppActivePointLights[lightIndex];
-
-		pUploadActiveLightWorldBounds[lightIndex] = pLightData->m_WorldBounds;
-		
-		pUploadActiveLightProps[lightIndex].m_Color = pLightData->m_Color;
-		pUploadActiveLightProps[lightIndex].m_ViewNearPlane = pLightData->m_LightViewNearPlane;
-		pUploadActiveLightProps[lightIndex].m_RcpViewClipRange = pLightData->m_LightRcpViewClipRange;
-
-		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightViewNearPlane = pLightData->m_LightViewNearPlane;
-		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightRcpViewClipRange = pLightData->m_LightRcpViewClipRange;
-		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightProjMatrix43 = pLightData->m_LightProjMatrix43;
-		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightProjMatrix33 = pLightData->m_LightProjMatrix33;
-
-		for (decltype(m_NumActivePointLights) localFaceIndex = 0; localFaceIndex < kNumCubeMapFaces; ++localFaceIndex)
-		{
-			decltype(localFaceIndex) globalFaceIndex = kNumCubeMapFaces * lightIndex + localFaceIndex;
-
-			pUploadActiveLightWorldFrustums[globalFaceIndex] = pLightData->m_WorldFrustums[localFaceIndex];
-			pUploadActiveLightShadowMapTiles[globalFaceIndex] = pLightData->m_ShadowMapTiles[localFaceIndex];
-			
-			const Matrix4f& viewProjMatrix = pLightData->m_ViewProjMatrices[localFaceIndex];
-			Matrix4f shadowMapTileMatrix = CreateShadowMapTileMatrix(pLightData->m_ShadowMapTiles[localFaceIndex]);
-
-			pUploadActiveLightViewProjMatrices[globalFaceIndex] = viewProjMatrix * shadowMapTileMatrix;
-		}
-	}
-
-#ifdef ENABLE_PROFILING
-	m_pCPUProfiler->EndProfile(profileIndex);
-#endif // ENABLE_PROFILING
+	*/
 }
 
 void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustum)
 {
+	assert(false);
+	/*
 #ifdef ENABLE_PROFILING
 	u32 profileIndex = m_pCPUProfiler->StartProfile("SetupSpotLightDataForUpload");
 #endif // ENABLE_PROFILING
@@ -3146,6 +2162,7 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 #ifdef ENABLE_PROFILING
 	m_pCPUProfiler->EndProfile(profileIndex);
 #endif // ENABLE_PROFILING
+	*/
 }
 
 void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
@@ -3161,10 +2178,6 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 		m_pWindow->SetWindowText(L"Depth buffer");
 	else if (m_DisplayResult == DisplayResult::ReprojectedDepthBuffer)
 		m_pWindow->SetWindowText(L"Reprojected depth buffer");
-	else if (m_DisplayResult == DisplayResult::PointLightTiledShadowMap)
-		m_pWindow->SetWindowText(L"Tiled shadow map for point lights");
-	else if (m_DisplayResult == DisplayResult::SpotLightTiledShadowMap)
-		m_pWindow->SetWindowText(L"Tiled shadow map for spot lights");
 	else if (m_DisplayResult == DisplayResult::VoxelRelectance)
 		m_pWindow->SetWindowText(L"Voxel reflectance");
 	else if (m_DisplayResult == DisplayResult::DepthBufferWithMeshType)

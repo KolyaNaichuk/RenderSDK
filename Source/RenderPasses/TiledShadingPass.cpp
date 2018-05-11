@@ -11,14 +11,11 @@ namespace
 {
 	enum RootParams
 	{
-		kRootCBVParamVS = 0,
+		kRootCBVParamAll = 0,
 		kRoot32BitConstantsParamVS,
 		kRootSRVTableParamVS,
-
-		kRootCBVParamPS,
 		kRootSRVTableParamPS,
 		kRootSamplerTableParamPS,
-		
 		kNumRootParams
 	};
 }
@@ -59,11 +56,10 @@ void TiledShadingPass::Record(RenderParams* pParams)
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap, pRenderEnv->m_pShaderVisibleSamplerHeap);
 
-	const UINT constantsVS[] = {meshType, numMeshTypes};
-	pCommandList->SetGraphicsRootConstantBufferView(kRootCBVParamVS, pParams->m_pAppDataBuffer);
-	pCommandList->SetGraphicsRoot32BitConstants(kRoot32BitConstantsParamVS, ARRAYSIZE(constantsVS), constantsVS, 0);
+	const UINT constants32BitVS[] = {meshType, numMeshTypes};
+	pCommandList->SetGraphicsRootConstantBufferView(kRootCBVParamAll, pParams->m_pAppDataBuffer);
+	pCommandList->SetGraphicsRoot32BitConstants(kRoot32BitConstantsParamVS, ARRAYSIZE(constants32BitVS), constants32BitVS, 0);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamVS, m_SRVHeapStartVS);
-	pCommandList->SetGraphicsRootConstantBufferView(kRootCBVParamPS, pParams->m_pAppDataBuffer);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamPS, m_SRVHeapStartPS);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSamplerTableParamPS, m_SamplerHeapStartPS);
 		
@@ -101,21 +97,12 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_GBuffer3State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_GBuffer4State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	
-	m_OutputResourceStates.m_PointLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_PointLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_PointLightIndexPerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_PointLightRangePerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_PointLightTiledExpShadowMapState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_PointLightViewProjMatrixBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	
 	m_OutputResourceStates.m_SpotLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightIndexPerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightRangePerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_SpotLightTiledExpShadowMapState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_SpotLightShadowMapsState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightViewProjMatrixBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_SpotLightShadowMapTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	
 	assert(m_ResourceBarriers.empty());
 	AddResourceBarrierIfRequired(pParams->m_pAccumLightTexture,
@@ -158,33 +145,6 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState,
 		m_OutputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState);
 
-	if (pParams->m_EnablePointLights)
-	{
-		AddResourceBarrierIfRequired(pParams->m_pPointLightWorldBoundsBuffer,
-			pParams->m_InputResourceStates.m_PointLightWorldBoundsBufferState,
-			m_OutputResourceStates.m_PointLightWorldBoundsBufferState);
-
-		AddResourceBarrierIfRequired(pParams->m_pPointLightPropsBuffer,
-			pParams->m_InputResourceStates.m_PointLightPropsBufferState,
-			m_OutputResourceStates.m_PointLightPropsBufferState);
-
-		AddResourceBarrierIfRequired(pParams->m_pPointLightIndexPerTileBuffer,
-			pParams->m_InputResourceStates.m_PointLightIndexPerTileBufferState,
-			m_OutputResourceStates.m_PointLightIndexPerTileBufferState);
-
-		AddResourceBarrierIfRequired(pParams->m_pPointLightRangePerTileBuffer,
-			pParams->m_InputResourceStates.m_PointLightRangePerTileBufferState,
-			m_OutputResourceStates.m_PointLightRangePerTileBufferState);
-
-		AddResourceBarrierIfRequired(pParams->m_pPointLightTiledExpShadowMap,
-			pParams->m_InputResourceStates.m_PointLightTiledExpShadowMapState,
-			m_OutputResourceStates.m_PointLightTiledExpShadowMapState);
-
-		AddResourceBarrierIfRequired(pParams->m_pPointLightViewProjMatrixBuffer,
-			pParams->m_InputResourceStates.m_PointLightViewProjMatrixBufferState,
-			m_OutputResourceStates.m_PointLightViewProjMatrixBufferState);
-	}
-	
 	if (pParams->m_EnableSpotLights)
 	{
 		AddResourceBarrierIfRequired(pParams->m_pSpotLightWorldBoundsBuffer,
@@ -203,17 +163,14 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 			pParams->m_InputResourceStates.m_SpotLightRangePerTileBufferState,
 			m_OutputResourceStates.m_SpotLightRangePerTileBufferState);
 
-		AddResourceBarrierIfRequired(pParams->m_pSpotLightTiledExpShadowMap,
-			pParams->m_InputResourceStates.m_SpotLightTiledExpShadowMapState,
-			m_OutputResourceStates.m_SpotLightTiledExpShadowMapState);
+		assert(false && "Think how better to do transition");
+		AddResourceBarrierIfRequired(pParams->m_pSpotLightShadowMaps,
+			pParams->m_InputResourceStates.m_SpotLightShadowMapsState,
+			m_OutputResourceStates.m_SpotLightShadowMapsState);
 
 		AddResourceBarrierIfRequired(pParams->m_pSpotLightViewProjMatrixBuffer,
 			pParams->m_InputResourceStates.m_SpotLightViewProjMatrixBufferState,
 			m_OutputResourceStates.m_SpotLightViewProjMatrixBufferState);
-
-		AddResourceBarrierIfRequired(pParams->m_pSpotLightShadowMapTileBuffer,
-			pParams->m_InputResourceStates.m_SpotLightShadowMapTileBufferState,
-			m_OutputResourceStates.m_SpotLightShadowMapTileBufferState);
 	}
 
 	m_SRVHeapStartVS = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
@@ -239,30 +196,6 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		pParams->m_pGBuffer4->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-		pParams->m_pFirstResourceIndexPerMaterialIDBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	
-	if (pParams->m_EnablePointLights)
-	{
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pPointLightWorldBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pPointLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pPointLightIndexPerTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pPointLightRangePerTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pPointLightTiledExpShadowMap->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pPointLightViewProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
-
 	if (pParams->m_EnableSpotLights)
 	{
 		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
@@ -278,15 +211,15 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 			pParams->m_pSpotLightRangePerTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pSpotLightTiledExpShadowMap->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			pParams->m_pSpotLightShadowMaps->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 			pParams->m_pSpotLightViewProjMatrixBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pSpotLightShadowMapTileBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	}
 	
+	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+		pParams->m_pFirstResourceIndexPerMaterialIDBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
 	for (decltype(pParams->m_NumMaterialTextures) index = 0; index < pParams->m_NumMaterialTextures; ++index)
 	{
 		ColorTexture* pMaterialTexture = pParams->m_ppMaterialTextures[index];
@@ -312,22 +245,18 @@ void TiledShadingPass::InitRootSignature(InitParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 		
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kRootCBVParamVS] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParams[kRootCBVParamAll] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
 	rootParams[kRoot32BitConstantsParamVS] = Root32BitConstantsParameter(1, D3D12_SHADER_VISIBILITY_VERTEX, 2);
 	
 	std::vector<D3D12_DESCRIPTOR_RANGE> srvRangesVS = {SRVDescriptorRange(2, 0)};
 	rootParams[kRootSRVTableParamVS] = RootDescriptorTableParameter((UINT)srvRangesVS.size(), srvRangesVS.data(), D3D12_SHADER_VISIBILITY_VERTEX);
 	
-	rootParams[kRootCBVParamPS] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_PIXEL);
-
-	std::vector<D3D12_DESCRIPTOR_RANGE> srvRangesPS = {SRVDescriptorRange(6, 0)};
-	if (pParams->m_EnablePointLights)
-		srvRangesPS.push_back(SRVDescriptorRange(6, 6));
-	
+	std::vector<D3D12_DESCRIPTOR_RANGE> srvRangesPS = {SRVDescriptorRange(5, 0)};
 	if (pParams->m_EnableSpotLights)
-		srvRangesPS.push_back(SRVDescriptorRange(7, 12));
+		srvRangesPS.push_back(SRVDescriptorRange(6, 5));
 		
-	srvRangesPS.push_back(SRVDescriptorRange(pParams->m_NumMaterialTextures, 19));
+	srvRangesPS.push_back(SRVDescriptorRange(1, 11));
+	srvRangesPS.push_back(SRVDescriptorRange(pParams->m_NumMaterialTextures, 12));
 	rootParams[kRootSRVTableParamPS] = RootDescriptorTableParameter((UINT)srvRangesPS.size(), srvRangesPS.data(), D3D12_SHADER_VISIBILITY_PIXEL);
 
 	std::vector<D3D12_DESCRIPTOR_RANGE> samplerRangesPS = {SamplerRange(1, 0)};
@@ -346,7 +275,6 @@ void TiledShadingPass::InitPipelineState(InitParams* pParams)
 
 	std::string shadingModeStr = std::to_string(pParams->m_ShadingMode);
 	std::string numMaterialTexturesStr = std::to_string(pParams->m_NumMaterialTextures);
-	std::string enablePointLightsStr = std::to_string(pParams->m_EnablePointLights ? 1 : 0);
 	std::string enableSpotLightsStr = std::to_string(pParams->m_EnableSpotLights ? 1 : 0);
 	std::string enableDirectionalLightStr = std::to_string(pParams->m_EnableDirectionalLight ? 1 : 0);
 
@@ -354,7 +282,6 @@ void TiledShadingPass::InitPipelineState(InitParams* pParams)
 	{
 		ShaderMacro("SHADING_MODE", shadingModeStr.c_str()),
 		ShaderMacro("NUM_MATERIAL_TEXTURES", numMaterialTexturesStr.c_str()),
-		ShaderMacro("ENABLE_POINT_LIGHTS", enablePointLightsStr.c_str()),
 		ShaderMacro("ENABLE_SPOT_LIGHTS", enableSpotLightsStr.c_str()),
 		ShaderMacro("ENABLE_DIRECTIONAL_LIGHT", enableDirectionalLightStr.c_str()),
 		ShaderMacro()

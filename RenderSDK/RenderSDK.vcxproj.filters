@@ -96,9 +96,6 @@
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\RenderTiledShadowMapPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\ScaleTexturePass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -210,9 +207,6 @@
     <ClInclude Include="..\Include\D3DWrapper\QueryHeap.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\CreateTiledShadowMapCommandsPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\LightRenderData.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -240,12 +234,6 @@
     <ClInclude Include="..\Include\Scene\MeshBatch.h">
       <Filter>Scene</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Scene\MeshFactory.h">
-      <Filter>Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Scene\MeshUtilities.h">
-      <Filter>Scene</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Scene\OBJFileLoader.h">
       <Filter>Scene</Filter>
     </ClInclude>
@@ -258,9 +246,6 @@
     <ClInclude Include="..\Include\Scene\SceneObject.h">
       <Filter>Scene</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\CreateShadowMapCommandsPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\GeometryBuffer.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -270,16 +255,10 @@
     <ClInclude Include="..\Include\RenderPasses\MeshRenderResources.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\ShadowMapTileAllocator.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\FilterTiledExpShadowMapPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\CreateTiledExpShadowMapPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\SpotLightShadowRenderer.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\Utils.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -351,9 +330,6 @@
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\RenderTiledShadowMapPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\ScaleTexturePass.cpp">
@@ -458,9 +434,6 @@
     <ClCompile Include="..\Source\D3DWrapper\QueryHeap.cpp">
       <Filter>D3DWrapper</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\CreateTiledShadowMapCommandsPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\Profiler\CPUProfiler.cpp">
       <Filter>Profiler</Filter>
     </ClCompile>
@@ -482,12 +455,6 @@
     <ClCompile Include="..\Source\Scene\MeshBatch.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\Scene\MeshFactory.cpp">
-      <Filter>Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Scene\MeshUtilities.cpp">
-      <Filter>Scene</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\Scene\OBJFileLoader.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
@@ -500,9 +467,6 @@
     <ClCompile Include="..\Source\Scene\SceneObject.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\CreateShadowMapCommandsPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\GeometryBuffer.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
@@ -512,16 +476,10 @@
     <ClCompile Include="..\Source\RenderPasses\MeshRenderResources.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\ShadowMapTileAllocator.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\FilterTiledExpShadowMapPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\CreateTiledExpShadowMapPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\SpotLightShadowRenderer.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\Utils.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
@@ -551,12 +509,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\TiledLightCullingCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\RenderTiledShadowMapVS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\RenderTiledShadowMapGS.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\RenderGBufferPS.hlsl">
@@ -637,16 +589,7 @@
     <None Include="..\Shaders\EncodingUtils.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\CreateTiledShadowMapCommandsCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\FilterTiledExpShadowMapCS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CreateTiledExpShadowMapVS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CreateTiledExpShadowMapPS.hlsl">
+    <None Include="..\Shaders\RenderShadowMapVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

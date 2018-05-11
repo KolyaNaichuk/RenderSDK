@@ -13,9 +13,6 @@ public:
 	struct ResourceStates
 	{
 		D3D12_RESOURCE_STATES m_DepthTextureState;
-		D3D12_RESOURCE_STATES m_PointLightWorldBoundsBufferState;
-		D3D12_RESOURCE_STATES m_PointLightIndexPerTileBufferState;
-		D3D12_RESOURCE_STATES m_PointLightRangePerTileBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightWorldBoundsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightIndexPerTileBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightRangePerTileBufferState;
@@ -27,10 +24,7 @@ public:
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		DepthTexture* m_pDepthTexture;
-		
-		u32 m_MaxNumPointLights;
-		Buffer* m_pPointLightWorldBoundsBuffer;
-		
+				
 		u32 m_MaxNumSpotLights;
 		Buffer* m_pSpotLightWorldBoundsBuffer;
 
@@ -44,7 +38,6 @@ public:
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
 		Buffer* m_pAppDataBuffer;
-		u32 m_NumPointLights;
 		u32 m_NumSpotLights;
 	};
 
@@ -53,10 +46,7 @@ public:
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
-		
-	Buffer* GetPointLightIndexPerTileBuffer() { return m_pPointLightIndexPerTileBuffer; }
-	Buffer* GetPointLightRangePerTileBuffer() {	return m_pPointLightRangePerTileBuffer; }
-
+	
 	Buffer* GetSpotLightIndexPerTileBuffer() { return m_pSpotLightIndexPerTileBuffer; }
 	Buffer* GetSpotLightRangePerTileBuffer() { return m_pSpotLightRangePerTileBuffer; }
 
@@ -75,12 +65,6 @@ private:
 	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
 
-	DescriptorHandle m_PointLightIndicesOffsetBufferUAV;
-	Buffer* m_pPointLightIndicesOffsetBuffer = nullptr;
-	Buffer* m_pPointLightIndexPerTileBuffer = nullptr;
-	Buffer* m_pPointLightRangePerTileBuffer = nullptr;
-
-	DescriptorHandle m_SpotLightIndicesOffsetBufferUAV;
 	Buffer* m_pSpotLightIndicesOffsetBuffer = nullptr;
 	Buffer* m_pSpotLightIndexPerTileBuffer = nullptr;
 	Buffer* m_pSpotLightRangePerTileBuffer = nullptr;

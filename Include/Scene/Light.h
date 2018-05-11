@@ -5,9 +5,9 @@
 
 enum LightType
 {
-	LightType_Point = 1,
-	LightType_Spot = 2,
-	LightType_Directional = 3
+	LightType_Spot = 1,
+	LightType_Directional = 2,
+	LightType_Point = 3
 };
 
 enum CubeMapFaces

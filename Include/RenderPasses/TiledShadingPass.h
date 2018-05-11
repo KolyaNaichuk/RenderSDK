@@ -29,21 +29,12 @@ public:
 		D3D12_RESOURCE_STATES m_GBuffer3State;
 		D3D12_RESOURCE_STATES m_GBuffer4State;
 		D3D12_RESOURCE_STATES m_FirstResourceIndexPerMaterialIDBufferState;
-		
-		D3D12_RESOURCE_STATES m_PointLightWorldBoundsBufferState;
-		D3D12_RESOURCE_STATES m_PointLightPropsBufferState;
-		D3D12_RESOURCE_STATES m_PointLightIndexPerTileBufferState;
-		D3D12_RESOURCE_STATES m_PointLightRangePerTileBufferState;
-		D3D12_RESOURCE_STATES m_PointLightTiledExpShadowMapState;
-		D3D12_RESOURCE_STATES m_PointLightViewProjMatrixBufferState;
-
 		D3D12_RESOURCE_STATES m_SpotLightWorldBoundsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightPropsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightIndexPerTileBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightRangePerTileBufferState;
-		D3D12_RESOURCE_STATES m_SpotLightTiledExpShadowMapState;
+		D3D12_RESOURCE_STATES m_SpotLightShadowMapsState;
 		D3D12_RESOURCE_STATES m_SpotLightViewProjMatrixBufferState;
-		D3D12_RESOURCE_STATES m_SpotLightShadowMapTileBufferState;
 	};
 
 	struct InitParams
@@ -67,23 +58,13 @@ public:
 		ColorTexture** m_ppMaterialTextures;
 
 		bool m_EnableDirectionalLight;
-						
-		bool m_EnablePointLights;
-		Buffer* m_pPointLightWorldBoundsBuffer;
-		Buffer* m_pPointLightPropsBuffer;
-		Buffer* m_pPointLightIndexPerTileBuffer;
-		Buffer* m_pPointLightRangePerTileBuffer;
-		ColorTexture* m_pPointLightTiledExpShadowMap;
-		Buffer* m_pPointLightViewProjMatrixBuffer;
-
 		bool m_EnableSpotLights;
 		Buffer* m_pSpotLightWorldBoundsBuffer;
 		Buffer* m_pSpotLightPropsBuffer;
 		Buffer* m_pSpotLightIndexPerTileBuffer;
 		Buffer* m_pSpotLightRangePerTileBuffer;
-		ColorTexture* m_pSpotLightTiledExpShadowMap;
+		ColorTexture* m_pSpotLightShadowMaps;
 		Buffer* m_pSpotLightViewProjMatrixBuffer;
-		Buffer* m_pSpotLightShadowMapTileBuffer;
 	};
 	
 	struct RenderParams
