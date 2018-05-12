@@ -486,55 +486,53 @@ DepthTexture3DDesc::DepthTexture3DDesc(DXGI_FORMAT format, UINT64 width, UINT he
 		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 }
 
-Tex1DRenderTargetViewDesc::Tex1DRenderTargetViewDesc(UINT mipSlice, UINT arraySize, DXGI_FORMAT format)
+Tex1DRenderTargetViewDesc::Tex1DRenderTargetViewDesc(UINT mipSlice, DXGI_FORMAT format)
 {
 	Format = format;
-	if (arraySize > 1)
+	ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1D;
+	Texture1D.MipSlice = mipSlice;
+}
+
+Tex1DArrayRenderTargetViewDesc::Tex1DArrayRenderTargetViewDesc(UINT mipSlice, UINT firstArraySlice, UINT arraySize, DXGI_FORMAT format)
+{
+	Format = format;
+	ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
+	Texture1DArray.MipSlice = mipSlice;
+	Texture1DArray.FirstArraySlice = firstArraySlice;
+	Texture1DArray.ArraySize = arraySize;
+}
+
+Tex2DRenderTargetViewDesc::Tex2DRenderTargetViewDesc(UINT mipSlice, bool multisampled, DXGI_FORMAT format, UINT planeSlice)
+{
+	Format = format;
+	if (multisampled)
 	{
-		ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
-		Texture1DArray.MipSlice = mipSlice;
-		Texture1DArray.FirstArraySlice = 0;
-		Texture1DArray.ArraySize = arraySize;
+		ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
 	}
 	else
 	{
-		ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1D;
-		Texture1D.MipSlice = mipSlice;
+		ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+		Texture2D.MipSlice = mipSlice;
+		Texture2D.PlaneSlice = planeSlice;
 	}
 }
 
-Tex2DRenderTargetViewDesc::Tex2DRenderTargetViewDesc(UINT mipSlice, UINT arraySize, bool multisampled, DXGI_FORMAT format, UINT planeSlice)
+Tex2DArrayRenderTargetViewDesc::Tex2DArrayRenderTargetViewDesc(UINT mipSlice, UINT firstArraySlice, UINT arraySize, bool multisampled, DXGI_FORMAT format, UINT planeSlice)
 {
 	Format = format;
-	if (arraySize > 1)
+	if (multisampled)
 	{
-		if (multisampled)
-		{
-			ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-			Texture2DMSArray.FirstArraySlice = 0;
-			Texture2DMSArray.ArraySize = arraySize;
-		}
-		else
-		{
-			ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-			Texture2DArray.MipSlice = mipSlice;
-			Texture2DArray.FirstArraySlice = 0;
-			Texture2DArray.ArraySize = arraySize;
-			Texture2DArray.PlaneSlice = planeSlice;
-		}
+		ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+		Texture2DMSArray.FirstArraySlice = firstArraySlice;
+		Texture2DMSArray.ArraySize = arraySize;
 	}
 	else
 	{
-		if (multisampled)
-		{
-			ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
-		}
-		else
-		{
-			ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-			Texture2D.MipSlice = mipSlice;
-			Texture2D.PlaneSlice = planeSlice;
-		}
+		ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+		Texture2DArray.MipSlice = mipSlice;
+		Texture2DArray.FirstArraySlice = firstArraySlice;
+		Texture2DArray.ArraySize = arraySize;
+		Texture2DArray.PlaneSlice = planeSlice;
 	}
 }
 
@@ -547,123 +545,125 @@ Tex3DRenderTargetViewDesc::Tex3DRenderTargetViewDesc(UINT mipSlice, UINT firstDe
 	Texture3D.WSize = depthSliceCount;
 }
 
-Tex1DDepthStencilViewDesc::Tex1DDepthStencilViewDesc(UINT mipSlice, UINT arraySize, DXGI_FORMAT format, D3D12_DSV_FLAGS flags)
+Tex1DDepthStencilViewDesc::Tex1DDepthStencilViewDesc(UINT mipSlice, DXGI_FORMAT format, D3D12_DSV_FLAGS flags)
+{
+	Format = format;
+	Flags = flags;
+	ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1D;
+	Texture1D.MipSlice = mipSlice;
+}
+
+Tex1DArrayDepthStencilViewDesc::Tex1DArrayDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize,  D3D12_DSV_FLAGS flags)
+{
+	Format = format;
+	Flags = flags;
+	ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
+	Texture1DArray.MipSlice = mipSlice;
+	Texture1DArray.FirstArraySlice = firstArraySlice;
+	Texture1DArray.ArraySize = arraySize;
+}
+
+Tex2DDepthStencilViewDesc::Tex2DDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice, bool multisampled, D3D12_DSV_FLAGS flags)
 {
 	Format = format;
 	Flags = flags;
 
-	if (arraySize > 1)
+	if (multisampled)
 	{
-		ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
-		Texture1DArray.MipSlice = mipSlice;
-		Texture1DArray.FirstArraySlice = 0;
-		Texture1DArray.ArraySize = arraySize;
+		ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
 	}
 	else
 	{
-		ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1D;
-		Texture1D.MipSlice = mipSlice;
+		ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+		Texture2D.MipSlice = mipSlice;
 	}
 }
 
-Tex2DDepthStencilViewDesc::Tex2DDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT arraySize, bool multisampled, D3D12_DSV_FLAGS flags)
+Tex2DArrayDepthStencilViewDesc::Tex2DArrayDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize, bool multisampled, D3D12_DSV_FLAGS flags)
 {
 	Format = format;
 	Flags = flags;
 
-	if (arraySize > 1)
+	if (multisampled)
 	{
-		if (multisampled)
-		{
-			ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
-			Texture2DMSArray.FirstArraySlice = 0;
-			Texture2DMSArray.ArraySize = arraySize;
-		}
-		else
-		{
-			ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-			Texture2DArray.MipSlice = mipSlice;
-			Texture2DArray.FirstArraySlice = 0;
-			Texture2DArray.ArraySize = arraySize;
-		}
+		ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
+		Texture2DMSArray.FirstArraySlice = firstArraySlice;
+		Texture2DMSArray.ArraySize = arraySize;
 	}
 	else
 	{
-		if (multisampled)
-		{
-			ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
-		}
-		else
-		{
-			ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-			Texture2D.MipSlice = mipSlice;
-		}
+		ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+		Texture2DArray.MipSlice = mipSlice;
+		Texture2DArray.FirstArraySlice = firstArraySlice;
+		Texture2DArray.ArraySize = arraySize;
 	}
 }
 
-Tex1DShaderResourceViewDesc::Tex1DShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels, UINT arraySize,
-	FLOAT minLODClamp, UINT shader4ComponentMapping)
+Tex1DShaderResourceViewDesc::Tex1DShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip,
+	UINT mipLevels, FLOAT minLODClamp, UINT shader4ComponentMapping)
 {
 	Format = format;
 	Shader4ComponentMapping = shader4ComponentMapping;
-
-	if (arraySize > 1)
-	{
-		ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
-		Texture1DArray.MostDetailedMip = mostDetailedMip;
-		Texture1DArray.MipLevels = mipLevels;
-		Texture1DArray.FirstArraySlice = 0;
-		Texture1DArray.ArraySize = arraySize;
-		Texture1DArray.ResourceMinLODClamp = minLODClamp;
-	}
-	else
-	{
-		ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
-		Texture1D.MostDetailedMip = mostDetailedMip;
-		Texture1D.MipLevels = mipLevels;
-		Texture1D.ResourceMinLODClamp = minLODClamp;
-	}
+	ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
+	Texture1D.MostDetailedMip = mostDetailedMip;
+	Texture1D.MipLevels = mipLevels;
+	Texture1D.ResourceMinLODClamp = minLODClamp;
 }
 
-Tex2DShaderResourceViewDesc::Tex2DShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels, UINT arraySize, bool multisampled,
+Tex1DArrayShaderResourceViewDesc::Tex1DArrayShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels,
+	UINT firstArraySlice, UINT arraySize, FLOAT minLODClamp, UINT shader4ComponentMapping)
+{
+	Format = format;
+	Shader4ComponentMapping = shader4ComponentMapping;
+	ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+	Texture1DArray.MostDetailedMip = mostDetailedMip;
+	Texture1DArray.MipLevels = mipLevels;
+	Texture1DArray.FirstArraySlice = firstArraySlice;
+	Texture1DArray.ArraySize = arraySize;
+	Texture1DArray.ResourceMinLODClamp = minLODClamp;
+}
+
+Tex2DShaderResourceViewDesc::Tex2DShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels, bool multisampled,
 	FLOAT minLODClamp, UINT shader4ComponentMapping, UINT planeSlice)
 {
 	Format = format;
 	Shader4ComponentMapping = shader4ComponentMapping;
 
-	if (arraySize > 1)
+	if (multisampled)
 	{
-		if (multisampled)
-		{
-			ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-			Texture2DMSArray.FirstArraySlice = 0;
-			Texture2DMSArray.ArraySize = arraySize;
-		}
-		else
-		{
-			ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-			Texture2DArray.MostDetailedMip = mostDetailedMip;
-			Texture2DArray.MipLevels = mipLevels;
-			Texture2DArray.FirstArraySlice = 0;
-			Texture2DArray.ArraySize = arraySize;
-			Texture2DArray.PlaneSlice = planeSlice;
-			Texture2DArray.ResourceMinLODClamp = minLODClamp;
-		}
+		ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
 	}
 	else
 	{
-		if (multisampled)
-		{
-			ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
-		}
-		else
-		{
-			ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-			Texture2D.MostDetailedMip = mostDetailedMip;
-			Texture2D.MipLevels = mipLevels;
-			Texture2D.PlaneSlice = planeSlice;
-			Texture2D.ResourceMinLODClamp = minLODClamp;
-		}
+		ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		Texture2D.MostDetailedMip = mostDetailedMip;
+		Texture2D.MipLevels = mipLevels;
+		Texture2D.PlaneSlice = planeSlice;
+		Texture2D.ResourceMinLODClamp = minLODClamp;
+	}
+}
+
+Tex2DArrayShaderResourceViewDesc::Tex2DArrayShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels,
+	UINT firstArraySlice, UINT arraySize, bool multisampled, FLOAT minLODClamp, UINT shader4ComponentMapping, UINT planeSlice)
+{
+	Format = format;
+	Shader4ComponentMapping = shader4ComponentMapping;
+
+	if (multisampled)
+	{
+		ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+		Texture2DMSArray.FirstArraySlice = firstArraySlice;
+		Texture2DMSArray.ArraySize = arraySize;
+	}
+	else
+	{
+		ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+		Texture2DArray.MostDetailedMip = mostDetailedMip;
+		Texture2DArray.MipLevels = mipLevels;
+		Texture2DArray.FirstArraySlice = firstArraySlice;
+		Texture2DArray.ArraySize = arraySize;
+		Texture2DArray.PlaneSlice = planeSlice;
+		Texture2DArray.ResourceMinLODClamp = minLODClamp;
 	}
 }
 
@@ -677,28 +677,28 @@ Tex3DShaderResourceViewDesc::Tex3DShaderResourceViewDesc(DXGI_FORMAT format, UIN
 	Texture3D.ResourceMinLODClamp = minLODClamp;
 }
 
-TexCubeShaderResourceViewDesc::TexCubeShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels, UINT numCubes,
-	FLOAT minLODClamp, UINT shader4ComponentMapping)
+TexCubeShaderResourceViewDesc::TexCubeShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip,
+	UINT mipLevels, FLOAT minLODClamp, UINT shader4ComponentMapping)
 {
 	Format = format;
 	Shader4ComponentMapping = shader4ComponentMapping;
+	ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+	TextureCube.MostDetailedMip = mostDetailedMip;
+	TextureCube.MipLevels = mipLevels;
+	TextureCube.ResourceMinLODClamp = minLODClamp;
+}
 
-	if (numCubes > 1)
-	{
-		ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-		TextureCubeArray.MostDetailedMip = mostDetailedMip;
-		TextureCubeArray.MipLevels = mipLevels;
-		TextureCubeArray.First2DArrayFace = 0;
-		TextureCubeArray.NumCubes = numCubes;
-		TextureCubeArray.ResourceMinLODClamp = minLODClamp;
-	}
-	else
-	{
-		ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-		TextureCube.MostDetailedMip = mostDetailedMip;
-		TextureCube.MipLevels = mipLevels;
-		TextureCube.ResourceMinLODClamp = minLODClamp;
-	}
+TexCubeArrayShaderResourceViewDesc::TexCubeArrayShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip,
+	UINT mipLevels, UINT first2DArrayFace, UINT numCubes, FLOAT minLODClamp, UINT shader4ComponentMapping)
+{
+	Format = format;
+	Shader4ComponentMapping = shader4ComponentMapping;
+	ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+	TextureCubeArray.MostDetailedMip = mostDetailedMip;
+	TextureCubeArray.MipLevels = mipLevels;
+	TextureCubeArray.First2DArrayFace = first2DArrayFace;
+	TextureCubeArray.NumCubes = numCubes;
+	TextureCubeArray.ResourceMinLODClamp = minLODClamp;
 }
 
 Tex1DUnorderedAccessViewDesc::Tex1DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice)
@@ -708,12 +708,31 @@ Tex1DUnorderedAccessViewDesc::Tex1DUnorderedAccessViewDesc(DXGI_FORMAT format, U
 	Texture1D.MipSlice = mipSlice;
 }
 
+Tex1DArrayUnorderedAccessViewDesc::Tex1DArrayUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize)
+{
+	Format = format;
+	ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
+	Texture1DArray.MipSlice = mipSlice;
+	Texture1DArray.FirstArraySlice = firstArraySlice;
+	Texture1DArray.ArraySize = arraySize;
+}
+
 Tex2DUnorderedAccessViewDesc::Tex2DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT planeSlice)
 {
 	Format = format;
 	ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 	Texture2D.MipSlice = mipSlice;
 	Texture2D.PlaneSlice = planeSlice;
+}
+
+Tex2DArrayUnorderedAccessViewDesc::Tex2DArrayUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize, UINT planeSlice)
+{
+	Format = format;
+	ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+	Texture2DArray.MipSlice = mipSlice;
+	Texture2DArray.FirstArraySlice = firstArraySlice;
+	Texture2DArray.ArraySize = arraySize;
+	Texture2DArray.PlaneSlice = planeSlice;
 }
 
 Tex3DUnorderedAccessViewDesc::Tex3DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstDepthSlice, UINT depthSliceCount)

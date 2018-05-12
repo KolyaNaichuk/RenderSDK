@@ -29,6 +29,7 @@ class CreateMainDrawCommandsPass;
 class CreateFalseNegativeDrawCommandsPass;
 class FillMeshTypeDepthBufferPass;
 class RenderGBufferPass;
+class RenderSpotLightShadowMapsPass;
 class TiledLightCullingPass;
 class TiledShadingPass;
 class CalcShadingRectanglesPass;
@@ -37,7 +38,6 @@ class VisualizeTexturePass;
 class VisualizeVoxelReflectancePass;
 class VoxelizePass;
 class Scene;
-class PointLight;
 class SpotLight;
 class CPUProfiler;
 class GPUProfiler;
@@ -71,8 +71,8 @@ private:
 	void OnKeyUp(UINT8 key) override;
 
 	void InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight);
-	void InitScene(UINT backBufferWidth, UINT backBufferHeight);
-
+	void InitScene(UINT backBufferWidth, UINT backBufferHeight, Scene* pScene);
+	
 	void InitDownscaleAndReprojectDepthPass();
 	CommandList* RecordDownscaleAndReprojectDepthPass();
 
@@ -106,6 +106,8 @@ private:
 	CommandList* RecordFillMeshTypeDepthBufferPass();
 
 	CommandList* RecordUploadLightDataPass();
+
+	void InitRenderSpotLightShadowMapsPass(Scene* pScene);
 
 	void InitTiledLightCullingPass();
 	CommandList* RecordTiledLightCullingPass();
@@ -194,6 +196,7 @@ private:
 	RenderGBufferPass* m_pRenderGBufferFalseNegativePass = nullptr;
 	FillMeshTypeDepthBufferPass* m_pFillMeshTypeDepthBufferPass = nullptr;
 	CalcShadingRectanglesPass* m_pCalcShadingRectanglesPass = nullptr;
+	RenderSpotLightShadowMapsPass* m_pRenderSpotLightShadowMapsPass = nullptr;
 	CreateVoxelizeCommandsPass* m_pCreateVoxelizeCommandsPass = nullptr;
 	VoxelizePass* m_pVoxelizePass = nullptr;
 	TiledLightCullingPass* m_pTiledLightCullingPass = nullptr;

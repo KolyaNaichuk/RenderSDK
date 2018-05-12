@@ -211,70 +211,118 @@ struct DepthTexture3DDesc : public D3D12_RESOURCE_DESC
 
 struct Tex1DRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
 {
-	Tex1DRenderTargetViewDesc(UINT mipSlice = 0, UINT arraySize = 1, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
+	Tex1DRenderTargetViewDesc(UINT mipSlice, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
+};
+
+struct Tex1DArrayRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
+{
+	Tex1DArrayRenderTargetViewDesc(UINT mipSlice, UINT firstArraySlice, 
+		UINT arraySize, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
 };
 
 struct Tex2DRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
 {
-	Tex2DRenderTargetViewDesc(UINT mipSlice = 0, UINT arraySize = 1, bool multisampled = false,
+	Tex2DRenderTargetViewDesc(UINT mipSlice, bool multisampled,
 		DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN, UINT planeSlice = 0);
+};
+
+struct Tex2DArrayRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
+{
+	Tex2DArrayRenderTargetViewDesc(UINT mipSlice, UINT firstArraySlice, UINT arraySize,
+		bool multisampled, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN, UINT planeSlice = 0);
 };
 
 struct Tex3DRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
 {
-	Tex3DRenderTargetViewDesc(UINT mipSlice = 0, UINT firstDepthSlice = 0,
-		UINT depthSliceCount = -1, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
+	Tex3DRenderTargetViewDesc(UINT mipSlice, UINT firstDepthSlice,
+		UINT depthSliceCount, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
 };
 
 struct Tex1DDepthStencilViewDesc : public D3D12_DEPTH_STENCIL_VIEW_DESC
 {
-	Tex1DDepthStencilViewDesc(UINT mipSlice = 0, UINT arraySize = 1,
-		DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
+	Tex1DDepthStencilViewDesc(UINT mipSlice, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
+};
+
+struct Tex1DArrayDepthStencilViewDesc : public D3D12_DEPTH_STENCIL_VIEW_DESC
+{
+	Tex1DArrayDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
 };
 
 struct Tex2DDepthStencilViewDesc : public D3D12_DEPTH_STENCIL_VIEW_DESC
 {
-	Tex2DDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice = 0, UINT arraySize = 1,
-		bool multisampled = false, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
+	Tex2DDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice, bool multisampled, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
+};
+
+struct Tex2DArrayDepthStencilViewDesc : public D3D12_DEPTH_STENCIL_VIEW_DESC
+{
+	Tex2DArrayDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize, bool multisampled, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
 };
 
 struct Tex1DShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 {
-	Tex1DShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip = 0, UINT mipLevels = -1, UINT arraySize = 1,
+	Tex1DShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels,
+		FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
+};
+
+struct Tex1DArrayShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
+{
+	Tex1DArrayShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels, UINT firstArraySlice, UINT arraySize,
 		FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
 };
 
 struct Tex2DShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 {
-	Tex2DShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip = 0, UINT mipLevels = -1, UINT arraySize = 1, bool multisampled = false,
+	Tex2DShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels, bool multisampled,
 		FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING, UINT planeSlice = 0);
+};
+
+struct Tex2DArrayShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
+{
+	Tex2DArrayShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels, UINT firstArraySlice, UINT arraySize,
+		bool multisampled, FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING, UINT planeSlice = 0);
 };
 
 struct Tex3DShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 {
-	Tex3DShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip = 0, UINT mipLevels = -1,
+	Tex3DShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels,
 		FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
 };
 
 struct TexCubeShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 {
-	TexCubeShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip = 0, UINT mipLevels = -1, UINT numCubes = 1,
+	TexCubeShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels,
+		FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
+};
+
+struct TexCubeArrayShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
+{
+	TexCubeArrayShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels, UINT first2DArrayFace, UINT numCubes,
 		FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
 };
 
 struct Tex1DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 {
-	Tex1DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice = 0);
+	Tex1DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice);
+};
+
+struct Tex1DArrayUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	Tex1DArrayUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize);
 };
 
 struct Tex2DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 {
-	Tex2DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice = 0, UINT planeSlice = 0);
+	Tex2DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT planeSlice = 0);
+};
+
+struct Tex2DArrayUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	Tex2DArrayUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize, UINT planeSlice = 0);
 };
 
 struct Tex3DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 {
-	Tex3DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice = 0, UINT firstDepthSlice = 0, UINT depthSliceCount = -1);
+	Tex3DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstDepthSlice, UINT depthSliceCount);
 };
 
 class GraphicsResource

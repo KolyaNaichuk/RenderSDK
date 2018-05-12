@@ -138,6 +138,16 @@ Scene* SceneLoader::LoadSibenik()
 	pScene->SetCamera(pCamera);
 
 #if 1
+	SpotLight* pSpotLight1 = new SpotLight("Spot Light 1", 50.0f/*range*/, ToRadians(45.0f)/*innerConeAngleInRadians*/,
+		ToRadians(70.0f)/*outerConeAngleInRadians*/, 0.1f/*shadowNearPlane*/);
+	pSpotLight1->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
+	pSpotLight1->SetIntensity(1.0f);
+	pSpotLight1->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, 0.0f));
+
+	pScene->AddSpotLight(pSpotLight1);
+#endif
+
+#if 0
 	PointLight* pPointLight1 = new PointLight("Point light", 50.0f, 0.1f);
 	pPointLight1->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight1->SetIntensity(1.0f);
@@ -145,7 +155,7 @@ Scene* SceneLoader::LoadSibenik()
 	pScene->AddPointLight(pPointLight1);
 #endif
 
-#if 1
+#if 0
 	PointLight* pPointLight2 = new PointLight("Point light", 50.0f, 0.1f);
 	pPointLight2->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight2->SetIntensity(1.0f);
@@ -153,7 +163,7 @@ Scene* SceneLoader::LoadSibenik()
 	pScene->AddPointLight(pPointLight2);
 #endif
 
-#if 1
+#if 0
 	PointLight* pPointLight3 = new PointLight("Point light", 50.0f, 0.1f);
 	pPointLight3->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight3->SetIntensity(1.0f);
@@ -161,7 +171,7 @@ Scene* SceneLoader::LoadSibenik()
 	pScene->AddPointLight(pPointLight3);
 #endif
 
-#if 1
+#if 0
 	PointLight* pPointLight4 = new PointLight("Point light", 50.0f, 0.1f);
 	pPointLight4->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight4->SetIntensity(1.0f);
@@ -169,7 +179,7 @@ Scene* SceneLoader::LoadSibenik()
 	pScene->AddPointLight(pPointLight4);
 #endif
 
-#if 1
+#if 0
 	PointLight* pPointLight5 = new PointLight("Point light", 50.0f, 0.1f);
 	pPointLight5->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight5->SetIntensity(1.0f);
@@ -177,7 +187,7 @@ Scene* SceneLoader::LoadSibenik()
 	pScene->AddPointLight(pPointLight5);
 #endif
 
-#if 1
+#if 0
 	PointLight* pPointLight6 = new PointLight("Point light", 50.0f, 0.1f);
 	pPointLight6->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pPointLight6->SetIntensity(1.0f);

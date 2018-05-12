@@ -1,4 +1,4 @@
-#include "RenderPasses/SpotLightShadowRenderer.h"
+#include "RenderPasses/RenderSpotLightShadowMapsPass.h"
 #include "RenderPasses/Utils.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/CommandSignature.h"
@@ -21,13 +21,13 @@ namespace
 	};
 }
 
-SpotLightShadowRenderer::SpotLightShadowRenderer(InitParams* pParams)
+RenderSpotLightShadowMapsPass::RenderSpotLightShadowMapsPass(InitParams* pParams)
 {
 	InitResources(pParams);
 	InitStaticMeshCommands(pParams);
 }
 
-SpotLightShadowRenderer::~SpotLightShadowRenderer()
+RenderSpotLightShadowMapsPass::~RenderSpotLightShadowMapsPass()
 {
 	SafeDelete(m_pActiveShadowMaps);
 	SafeDelete(m_pStaticMeshCommandBuffer);
@@ -35,37 +35,38 @@ SpotLightShadowRenderer::~SpotLightShadowRenderer()
 	SafeDelete(m_pSpotLightShadowMaps);
 }
 
-void SpotLightShadowRenderer::RenderSpotLightShadowMaps(u32 numActiveSpotLights, const u32* pFirstActiveSpotLightIndex)
+void RenderSpotLightShadowMapsPass::Record(RenderParams* pParams)
 {
-	assert(numActiveSpotLights <= m_SpotLightShadowMapStates.size());
+	assert(pParams->m_NumActiveSpotLights <= m_SpotLightShadowMapStates.size());
 
 	u32 numOutdatedShadowMaps = 0;
-	for (u32 it = 0; it < numActiveSpotLights; ++it)
+	for (u32 it = 0; it < pParams->m_NumActiveSpotLights; ++it)
 	{
-		u32 activeLightIndex = *pFirstActiveSpotLightIndex++;
+		u32 activeLightIndex = pParams->m_ActiveSpotLightIndices[it];
 		if (m_SpotLightShadowMapStates[activeLightIndex] == ShadowMapState::Outdated)
 			m_OutdatedSpotLightShadowMapIndices[numOutdatedShadowMaps++] = activeLightIndex;
 	}
 }
 
-void SpotLightShadowRenderer::InitResources(InitParams* pParams)
+void RenderSpotLightShadowMapsPass::InitResources(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-			
+
+	m_OutputResourceStates.m_SpotLightShadowMapsState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_SpotLightViewProjMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+
 	assert(m_pActiveShadowMaps == nullptr);
-	assert(false && "fix format to D16");
 	const DepthStencilValue optimizedClearDepth(1.0f);
-	DepthTexture2DDesc activeShadowMapsDesc(DXGI_FORMAT_UNKNOWN, kStandardShadowMapSize, kStandardShadowMapSize,
+	DepthTexture2DDesc activeShadowMapsDesc(DXGI_FORMAT_R32_TYPELESS, kStandardShadowMapSize, kStandardShadowMapSize,
 		true/*createDSV*/, true/*createSRV*/, pParams->m_MaxNumActiveSpotLights);
 	m_pActiveShadowMaps = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &activeShadowMapsDesc,
-		D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"SpotLightShadowRenderer::m_pActiveShadowMaps");
+		D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"RenderSpotLightShadowMapsPass::m_pActiveShadowMaps");
 		
 	assert(m_pSpotLightShadowMaps == nullptr);
-	assert(false && "fix format to 16 bit UNORM");
-	ColorTexture2DDesc shadowMapsDesc(DXGI_FORMAT_UNKNOWN, kExpShadowMapSize, kExpShadowMapSize,
+	ColorTexture2DDesc shadowMapsDesc(DXGI_FORMAT_R32_FLOAT, kExpShadowMapSize, kExpShadowMapSize,
 		false/*createRTV*/, true/*createSRV*/, true/*createUAV*/, pParams->m_NumSpotLights);
 	m_pSpotLightShadowMaps = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shadowMapsDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr/*optimizedClearColor*/, L"SpotLightShadowRenderer::m_pShadowMaps");
+		pParams->m_InputResourceStates.m_SpotLightShadowMapsState, nullptr/*optimizedClearColor*/, L"RenderSpotLightShadowMapsPass::m_pShadowMaps");
 
 	m_SpotLightShadowMapStates.resize(pParams->m_NumSpotLights);
 	for (u32 lightIndex = 0; lightIndex < pParams->m_NumSpotLights; ++lightIndex)
@@ -74,13 +75,17 @@ void SpotLightShadowRenderer::InitResources(InitParams* pParams)
 	m_OutdatedSpotLightShadowMapIndices.resize(pParams->m_MaxNumActiveSpotLights);
 }
 
-void SpotLightShadowRenderer::InitStaticMeshCommands(InitParams* pParams)
+void RenderSpotLightShadowMapsPass::InitStaticMeshCommands(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-
-	const u32 numMeshes = pParams->m_pStaticMeshBatch->GetNumMeshes();
-	const MeshInfo* meshInfos = pParams->m_pStaticMeshBatch->GetMeshInfos();
-	const AxisAlignedBox* meshInstanceWorldAABBs = pParams->m_pStaticMeshBatch->GetMeshInstanceWorldAABBs();
+	
+	assert(pParams->m_NumStaticMeshTypes == 1);
+	u32 staticMeshType = 0;
+	MeshBatch* pStaticMeshBatch = pParams->m_ppStaticMeshBatches[staticMeshType];
+		
+	const u32 numMeshes = pStaticMeshBatch->GetNumMeshes();
+	const MeshInfo* meshInfos = pStaticMeshBatch->GetMeshInfos();
+	const AxisAlignedBox* meshInstanceWorldAABBs = pStaticMeshBatch->GetMeshInstanceWorldAABBs();
 
 	std::vector<u32> meshInstanceIndices;
 	std::vector<ShadowMapCommand> staticMeshCommands;
@@ -145,7 +150,7 @@ void SpotLightShadowRenderer::InitStaticMeshCommands(InitParams* pParams)
 	assert(m_pStaticMeshCommandBuffer == nullptr);	
 	StructuredBufferDesc staticMeshCommandBufferDesc(staticMeshCommands.size(), sizeof(ShadowMapCommand), false/*createSRV*/, false/*createUAV*/);
 	m_pStaticMeshCommandBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &staticMeshCommandBufferDesc,
-		D3D12_RESOURCE_STATE_COPY_DEST, L"SpotLightShadowRenderer::m_pStaticMeshCommandBuffer");
+		D3D12_RESOURCE_STATE_COPY_DEST, L"RenderSpotLightShadowMapsPass::m_pStaticMeshCommandBuffer");
 	
 	UploadData(pRenderEnv, m_pStaticMeshCommandBuffer, staticMeshCommandBufferDesc,
 		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, staticMeshCommands.data(), staticMeshCommands.size() * sizeof(staticMeshCommands[0]));
@@ -153,7 +158,7 @@ void SpotLightShadowRenderer::InitStaticMeshCommands(InitParams* pParams)
 	assert(m_pStaticMeshInstanceIndexBuffer == nullptr);
 	FormattedBufferDesc staticMeshInstanceIndexBufferDesc(meshInstanceIndices.size(), DXGI_FORMAT_R32_UINT, true/*createSRV*/, false/*createUAV*/);
 	m_pStaticMeshInstanceIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &staticMeshInstanceIndexBufferDesc,
-		D3D12_RESOURCE_STATE_COPY_DEST, L"SpotLightShadowRenderer::m_pStaticMeshInstanceIndexBuffer");
+		D3D12_RESOURCE_STATE_COPY_DEST, L"RenderSpotLightShadowMapsPass::m_pStaticMeshInstanceIndexBuffer");
 
 	UploadData(pRenderEnv, m_pStaticMeshInstanceIndexBuffer, staticMeshInstanceIndexBufferDesc,
 		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, meshInstanceIndices.data(), meshInstanceIndices.size() * sizeof(meshInstanceIndices[0]));

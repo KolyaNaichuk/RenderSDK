@@ -144,8 +144,8 @@ COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\RenderShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderShadowMapVS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\RenderShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderShadowMapVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderSpotLightShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderSpotLightShadowMapVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderSpotLightShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderSpotLightShadowMapVS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
@@ -257,8 +257,8 @@ COPY /Y "$(SolutionDir)Shaders\RenderGBufferPS.hlsl" "$(SolutionDir)Samples\Bin\
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\TiledLightCullingCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledLightCullingCS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\RenderShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderShadowMapVS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\RenderShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderShadowMapVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderSpotLightShadowMapVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RenderSpotLightShadowMapVS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RenderSpotLightShadowMapVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RenderSpotLightShadowMapVS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\DownscaleAndReprojectDepthCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\DownscaleAndReprojectDepthCS.hlsl"

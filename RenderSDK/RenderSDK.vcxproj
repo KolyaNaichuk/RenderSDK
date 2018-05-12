@@ -213,14 +213,13 @@
     <ClInclude Include="..\Include\RenderPasses\LightRenderData.h" />
     <ClInclude Include="..\Include\RenderPasses\MaterialRenderResources.h" />
     <ClInclude Include="..\Include\RenderPasses\MeshRenderResources.h" />
-    <ClInclude Include="..\Include\RenderPasses\SpotLightShadowRenderer.h" />
+    <ClInclude Include="..\Include\RenderPasses\RenderSpotLightShadowMapsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\Utils.h" />
     <ClInclude Include="..\Include\RenderPasses\VoxelizePass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelizeCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\DownscaleAndReprojectDepthPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FillMeshTypeDepthBufferPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FillVisibilityBufferPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\PropagateLightPass.h" />
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h" />
     <ClInclude Include="..\Include\RenderPasses\ScaleTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledLightCullingPass.h" />
@@ -289,13 +288,12 @@
     <ClCompile Include="..\Source\RenderPasses\MaterialRenderResources.cpp" />
     <ClCompile Include="..\Source\RenderPasses\MeshRenderResources.cpp" />
     <ClCompile Include="..\Source\RenderPasses\Utils.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\SpotLightShadowRenderer.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\RenderSpotLightShadowMapsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VoxelizePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelizeCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\DownscaleAndReprojectDepthPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FillMeshTypeDepthBufferPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FillVisibilityBufferPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\PropagateLightPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\ScaleTexturePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledLightCullingPass.cpp" />
@@ -460,7 +458,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\RenderShadowMapVS.hlsl">
+    <None Include="..\Shaders\RenderSpotLightShadowMapVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
@@ -470,19 +468,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\SphericalHarmonics.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Shaders\PropagateLightCS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

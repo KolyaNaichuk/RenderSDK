@@ -90,10 +90,10 @@ float4 Main(PSInput input) : SV_Target
 			diffuseAlbedo, specularAlbedo, shininess);
 
 		float4x4 lightViewProjMatrix = g_SpotLightViewProjMatrixBuffer[lightIndex];
-		ShadowMapTile shadowMapTile = g_SpotLightShadowMapTileBuffer[lightIndex];
-		
-		float lightVisibility = CalcSpotLightVisibility(g_SpotLightTiledExpShadowMap, shadowMapTile,
-			lightViewProjMatrix, lightViewNearPlane, lightRcpViewClipRange, worldSpacePos);
+				
+		//float lightVisibility = CalcSpotLightVisibility(g_SpotLightTiledExpShadowMap, shadowMapTile,
+		//	lightViewProjMatrix, lightViewNearPlane, lightRcpViewClipRange, worldSpacePos);
+		float lightVisibility = 1.0f;
 
 		spotLightsContrib += lightVisibility * lightContrib;
 	}
