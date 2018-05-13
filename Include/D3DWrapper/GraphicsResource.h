@@ -14,6 +14,8 @@ DXGI_FORMAT GetDepthStencilViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetShaderResourceViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat);
 
+UINT CalcSubresource(UINT mipSlice, UINT arraySlice, UINT mipLevels);
+
 struct ResourceTransitionBarrier : D3D12_RESOURCE_BARRIER
 {
 	ResourceTransitionBarrier(GraphicsResource* pResource = nullptr,
@@ -372,9 +374,15 @@ public:
 	UINT16 GetDepthOrArraySize() const { return m_Desc.DepthOrArraySize; }
 	UINT GetMipLevels() const { return m_Desc.MipLevels; }
 
-	DescriptorHandle GetRTVHandle(UINT mipSlice = 0);
+	DescriptorHandle GetRTVHandle(UINT mipSlice);
+	DescriptorHandle GetRTVHandle(UINT arraySlice, UINT mipSlice);
+
 	DescriptorHandle GetSRVHandle();
-	DescriptorHandle GetUAVHandle(UINT mipSlice = 0);
+	DescriptorHandle GetSRVHandle(UINT mipSlice);
+	DescriptorHandle GetSRVHandle(UINT arraySlice, UINT mipSlice);
+
+	DescriptorHandle GetUAVHandle(UINT mipSlice);
+	DescriptorHandle GetUAVHandle(UINT arraySlice, UINT mipSlice);
 				
 private:
 	void CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -386,9 +394,9 @@ private:
 	void CreateTex3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	
 private:
-	DescriptorHandle m_RTVHandle;
-	DescriptorHandle m_SRVHandle;
-	DescriptorHandle m_UAVHandle;
+	DescriptorHandle m_FirstRTVHandle;
+	DescriptorHandle m_FirstSRVHandle;
+	DescriptorHandle m_FirstUAVHandle;
 };
 
 class DepthTexture : public GraphicsResource
