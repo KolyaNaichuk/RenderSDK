@@ -159,7 +159,16 @@ struct ColorTexture1DDesc : public D3D12_RESOURCE_DESC
 {
 	ColorTexture1DDesc(DXGI_FORMAT format, UINT64 width,
 		bool createRTV, bool createSRV, bool createUAV,
-		UINT16 arraySize = 1, UINT16 mipLevels = 1,
+		UINT16 mipLevels = 1,
+		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		UINT64 alignment = 0);
+};
+
+struct ColorTexture1DArrayDesc : public D3D12_RESOURCE_DESC
+{
+	ColorTexture1DArrayDesc(DXGI_FORMAT format, UINT64 width,
+		bool createRTV, bool createSRV, bool createUAV,
+		UINT16 arraySize, UINT16 mipLevels = 1,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
 };
@@ -168,7 +177,16 @@ struct ColorTexture2DDesc : public D3D12_RESOURCE_DESC
 {
 	ColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height,
 		bool createRTV, bool createSRV, bool createUAV,
-		UINT16 arraySize = 1, UINT16 mipLevels = 1,
+		UINT16 mipLevels = 1, UINT sampleCount = 1, UINT sampleQuality = 0,
+		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		UINT64 alignment = 0);
+};
+
+struct ColorTexture2DArrayDesc : public D3D12_RESOURCE_DESC
+{
+	ColorTexture2DArrayDesc(DXGI_FORMAT format, UINT64 width, UINT height,
+		bool createRTV, bool createSRV, bool createUAV,
+		UINT16 arraySize, UINT16 mipLevels = 1,
 		UINT sampleCount = 1, UINT sampleQuality = 0,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
@@ -216,48 +234,9 @@ struct Tex1DRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
 	Tex1DRenderTargetViewDesc(UINT mipSlice, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
 };
 
-struct Tex1DArrayRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
-{
-	Tex1DArrayRenderTargetViewDesc(UINT mipSlice, UINT firstArraySlice, 
-		UINT arraySize, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
-};
-
-struct Tex2DRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
-{
-	Tex2DRenderTargetViewDesc(UINT mipSlice, bool multisampled,
-		DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN, UINT planeSlice = 0);
-};
-
-struct Tex2DArrayRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
-{
-	Tex2DArrayRenderTargetViewDesc(UINT mipSlice, UINT firstArraySlice, UINT arraySize,
-		bool multisampled, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN, UINT planeSlice = 0);
-};
-
-struct Tex3DRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
-{
-	Tex3DRenderTargetViewDesc(UINT mipSlice, UINT firstDepthSlice,
-		UINT depthSliceCount, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
-};
-
 struct Tex1DDepthStencilViewDesc : public D3D12_DEPTH_STENCIL_VIEW_DESC
 {
 	Tex1DDepthStencilViewDesc(UINT mipSlice, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
-};
-
-struct Tex1DArrayDepthStencilViewDesc : public D3D12_DEPTH_STENCIL_VIEW_DESC
-{
-	Tex1DArrayDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
-};
-
-struct Tex2DDepthStencilViewDesc : public D3D12_DEPTH_STENCIL_VIEW_DESC
-{
-	Tex2DDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice, bool multisampled, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
-};
-
-struct Tex2DArrayDepthStencilViewDesc : public D3D12_DEPTH_STENCIL_VIEW_DESC
-{
-	Tex2DArrayDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize, bool multisampled, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
 };
 
 struct Tex1DShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
@@ -266,10 +245,44 @@ struct Tex1DShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 		FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
 };
 
+struct Tex1DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	Tex1DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice);
+};
+
+struct Tex1DArrayRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
+{
+	Tex1DArrayRenderTargetViewDesc(UINT mipSlice, UINT firstArraySlice, 
+		UINT arraySize, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
+};
+
+struct Tex1DArrayDepthStencilViewDesc : public D3D12_DEPTH_STENCIL_VIEW_DESC
+{
+	Tex1DArrayDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice,
+		UINT arraySize, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
+};
+
 struct Tex1DArrayShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 {
 	Tex1DArrayShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels, UINT firstArraySlice, UINT arraySize,
 		FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
+};
+
+struct Tex1DArrayUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	Tex1DArrayUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize);
+};
+
+struct Tex2DRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
+{
+	Tex2DRenderTargetViewDesc(UINT mipSlice, bool multisampled,
+		DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN, UINT planeSlice = 0);
+};
+
+struct Tex2DDepthStencilViewDesc : public D3D12_DEPTH_STENCIL_VIEW_DESC
+{
+	Tex2DDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice,
+		bool multisampled, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
 };
 
 struct Tex2DShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
@@ -278,48 +291,44 @@ struct Tex2DShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 		FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING, UINT planeSlice = 0);
 };
 
+struct Tex2DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	Tex2DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT planeSlice = 0);
+};
+
+struct Tex2DArrayRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
+{
+	Tex2DArrayRenderTargetViewDesc(UINT mipSlice, UINT firstArraySlice, UINT arraySize,
+		bool multisampled, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN, UINT planeSlice = 0);
+};
+
+struct Tex2DArrayDepthStencilViewDesc : public D3D12_DEPTH_STENCIL_VIEW_DESC
+{
+	Tex2DArrayDepthStencilViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize,
+		bool multisampled, D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
+};
+
 struct Tex2DArrayShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 {
 	Tex2DArrayShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels, UINT firstArraySlice, UINT arraySize,
 		bool multisampled, FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING, UINT planeSlice = 0);
 };
 
+struct Tex2DArrayUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
+{
+	Tex2DArrayUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize, UINT planeSlice = 0);
+};
+
+struct Tex3DRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
+{
+	Tex3DRenderTargetViewDesc(UINT mipSlice, UINT firstDepthSlice,
+		UINT depthSliceCount, DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN);
+};
+
 struct Tex3DShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 {
 	Tex3DShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels,
 		FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
-};
-
-struct TexCubeShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
-{
-	TexCubeShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels,
-		FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
-};
-
-struct TexCubeArrayShaderResourceViewDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
-{
-	TexCubeArrayShaderResourceViewDesc(DXGI_FORMAT format, UINT mostDetailedMip, UINT mipLevels, UINT first2DArrayFace, UINT numCubes,
-		FLOAT minLODClamp = 0.0f, UINT shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING);
-};
-
-struct Tex1DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
-{
-	Tex1DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice);
-};
-
-struct Tex1DArrayUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
-{
-	Tex1DArrayUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize);
-};
-
-struct Tex2DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
-{
-	Tex2DUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT planeSlice = 0);
-};
-
-struct Tex2DArrayUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
-{
-	Tex2DArrayUnorderedAccessViewDesc(DXGI_FORMAT format, UINT mipSlice, UINT firstArraySlice, UINT arraySize, UINT planeSlice = 0);
 };
 
 struct Tex3DUnorderedAccessViewDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
@@ -351,19 +360,27 @@ protected:
 class ColorTexture : public GraphicsResource
 {
 public:
-	ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
 		const ColorTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
-	ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
+		const ColorTexture1DArrayDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+		const FLOAT optimizedClearColor[4], LPCWSTR pName);
+
+	ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
 		const ColorTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
-	ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
+		const ColorTexture2DArrayDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+		const FLOAT optimizedClearColor[4], LPCWSTR pName);
+
+	ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
 		const ColorTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
-	ColorTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
 		const ColorTextureDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
@@ -378,8 +395,6 @@ public:
 	DescriptorHandle GetRTVHandle(UINT arraySlice, UINT mipSlice);
 
 	DescriptorHandle GetSRVHandle();
-	DescriptorHandle GetSRVHandle(UINT mipSlice);
-	DescriptorHandle GetSRVHandle(UINT arraySlice, UINT mipSlice);
 
 	DescriptorHandle GetUAVHandle(UINT mipSlice);
 	DescriptorHandle GetUAVHandle(UINT arraySlice, UINT mipSlice);
@@ -389,9 +404,11 @@ private:
 		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
-	void CreateTex1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-	void CreateTex2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-	void CreateTex3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture1DDesc* pTexDesc);
+	void CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture1DArrayDesc* pTexDesc);
+	void CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture2DDesc* pTexDesc);
+	void CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture2DArrayDesc* pTexDesc);
+	void CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture3DDesc* pTexDesc);
 	
 private:
 	DescriptorHandle m_FirstRTVHandle;
@@ -402,15 +419,15 @@ private:
 class DepthTexture : public GraphicsResource
 {
 public:
-	DepthTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
 		const DepthTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
-	DepthTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
 		const DepthTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
-	DepthTexture(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
 		const DepthTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
@@ -425,9 +442,9 @@ private:
 		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
-	void CreateTex1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateTexture1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	void CreateTex2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
-	void CreateTex3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
+	void CreateTextureViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	
 private:
 	DescriptorHandle m_DSVHandle;
