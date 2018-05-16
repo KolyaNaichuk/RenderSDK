@@ -475,13 +475,13 @@ ColorTexture3DDesc::ColorTexture3DDesc(DXGI_FORMAT format, UINT64 width, UINT he
 }
 
 DepthTexture1DDesc::DepthTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool createDSV, bool createSRV,
-	UINT16 arraySize, UINT16 mipLevels, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
+	UINT16 mipLevels, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
 {
 	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
 	Alignment = alignment;
 	Width = width;
 	Height = 1;
-	DepthOrArraySize = arraySize;
+	DepthOrArraySize = 1;
 	MipLevels = mipLevels;
 	Format = format;
 	SampleDesc.Count = 1;
@@ -495,7 +495,49 @@ DepthTexture1DDesc::DepthTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool cr
 		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 }
 
+DepthTexture1DArrayDesc::DepthTexture1DArrayDesc(DXGI_FORMAT format, UINT64 width, bool createDSV, bool createSRV,
+	UINT16 arraySize, UINT16 mipLevels, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
+{
+	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+	Alignment = alignment;
+	Width = width;
+	Height = 1;
+	DepthOrArraySize = arraySize;
+	MipLevels = mipLevels;
+	Format = format;
+	SampleDesc.Count = 1;
+	SampleDesc.Quality = 0;
+	Layout = layout;
+
+	Flags = D3D12_RESOURCE_FLAG_NONE;
+	if (createDSV)
+		Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+	if (!createSRV)
+		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+}
+
 DepthTexture2DDesc::DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height, bool createDSV, bool createSRV,
+	UINT16 mipLevels, UINT sampleCount, UINT sampleQuality, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
+{
+	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	Alignment = alignment;
+	Width = width;
+	Height = height;
+	DepthOrArraySize = 1;
+	MipLevels = mipLevels;
+	Format = format;
+	SampleDesc.Count = sampleCount;
+	SampleDesc.Quality = sampleQuality;
+	Layout = layout;
+	
+	Flags = D3D12_RESOURCE_FLAG_NONE;
+	if (createDSV)
+		Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+	if (!createSRV)
+		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+}
+
+DepthTexture2DArrayDesc::DepthTexture2DArrayDesc(DXGI_FORMAT format, UINT64 width, UINT height, bool createDSV, bool createSRV,
 	UINT16 arraySize, UINT16 mipLevels, UINT sampleCount, UINT sampleQuality, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
 {
 	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -508,7 +550,7 @@ DepthTexture2DDesc::DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT he
 	SampleDesc.Count = sampleCount;
 	SampleDesc.Quality = sampleQuality;
 	Layout = layout;
-	
+
 	Flags = D3D12_RESOURCE_FLAG_NONE;
 	if (createDSV)
 		Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
@@ -1242,7 +1284,16 @@ DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapPro
 	: GraphicsResource(pTexDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
-	CreateTexture1DViews(pRenderEnv, pTexDesc);
+	CreateTextureViews(pRenderEnv, pTexDesc);
+}
+
+DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
+	const DepthTexture1DArrayDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName)
+	: GraphicsResource(pTexDesc)
+{
+	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
+	CreateTextureViews(pRenderEnv, pTexDesc);
 }
 
 DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
@@ -1251,11 +1302,11 @@ DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapPro
 	: GraphicsResource(pTexDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
-	CreateTex2DViews(pRenderEnv, pTexDesc);
+	CreateTextureViews(pRenderEnv, pTexDesc);
 }
 
 DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
-	const DepthTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
+	const DepthTexture2DArrayDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 	const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName)
 	: GraphicsResource(pTexDesc)
 {
@@ -1263,16 +1314,22 @@ DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapPro
 	CreateTextureViews(pRenderEnv, pTexDesc);
 }
 
-DescriptorHandle DepthTexture::GetDSVHandle()
+DescriptorHandle DepthTexture::GetDSVHandle(UINT mipSlice)
 {
-	assert(m_DSVHandle.IsValid());
-	return m_DSVHandle;
+	assert(m_FirstDSVHandle.IsValid());
+	return DescriptorHandle(m_FirstDSVHandle, mipSlice);
+}
+
+DescriptorHandle DepthTexture::GetDSVHandle(UINT arraySlice, UINT mipSlice)
+{
+	assert(m_FirstDSVHandle.IsValid());
+	return DescriptorHandle(m_FirstDSVHandle, m_Desc.MipLevels + CalcSubresource(mipSlice, arraySlice, m_Desc.MipLevels));
 }
 
 DescriptorHandle DepthTexture::GetSRVHandle()
 {
-	assert(m_SRVHandle.IsValid());
-	return m_SRVHandle;
+	assert(m_FirstSRVHandle.IsValid());
+	return m_FirstSRVHandle;
 }
 
 void DepthTexture::CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -1293,56 +1350,143 @@ void DepthTexture::CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HE
 #endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
-void DepthTexture::CreateTexture1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc)
+void DepthTexture::CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture1DDesc* pTexDesc)
 {
-	assert(false && "Kolya: Needs impl");
+	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
+	
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleDSVHeap != nullptr);
+		const DXGI_FORMAT viewFormat = GetDepthStencilViewFormat(pTexDesc->Format);
+		
+		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+		{
+			Tex1DDepthStencilViewDesc viewDesc(mipSlice, viewFormat);
+			DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
+			pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, m_FirstDSVHandle);
+
+			if (mipSlice == 0)
+				m_FirstDSVHandle = dsvHandle;
+		}
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		const DXGI_FORMAT viewFormat = GetShaderResourceViewFormat(pTexDesc->Format);
+		
+		Tex1DShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels);
+		m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
 	}
 }
 
-void DepthTexture::CreateTex2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc)
+void DepthTexture::CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture1DArrayDesc* pTexDesc)
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 
-	assert(pTexDesc->DepthOrArraySize == 1);
-	assert(pTexDesc->MipLevels == 1);
-	assert(pTexDesc->SampleDesc.Count == 1);
-	assert(pTexDesc->SampleDesc.Quality == 0);
-
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleDSVHeap != nullptr);
-		m_DSVHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
+		const DXGI_FORMAT viewFormat = GetDepthStencilViewFormat(pTexDesc->Format);
 
-		Tex2DDepthStencilViewDesc viewDesc(GetDepthStencilViewFormat(pTexDesc->Format));
-		pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, m_DSVHandle);
+		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+		{
+			Tex1DArrayDepthStencilViewDesc viewDesc(viewFormat, mipSlice, 0, pTexDesc->DepthOrArraySize);
+			DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
+			pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, dsvHandle);
+
+			if (mipSlice == 0)
+				m_FirstDSVHandle = dsvHandle;
+		}
+		for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+		{
+			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+			{
+				Tex1DArrayDepthStencilViewDesc viewDesc(viewFormat, mipSlice, arraySlice, 1);
+				DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
+				pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, dsvHandle);
+			}
+		}
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
-		m_SRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+		const DXGI_FORMAT viewFormat = GetShaderResourceViewFormat(pTexDesc->Format);
 
-		Tex2DShaderResourceViewDesc viewDesc(GetShaderResourceViewFormat(pTexDesc->Format));
-		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_SRVHandle);
+		Tex1DArrayShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, 0, pTexDesc->DepthOrArraySize);
+		m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
 	}
 }
 
-void DepthTexture::CreateTextureViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc)
+void DepthTexture::CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture2DDesc* pTexDesc)
 {
-	assert(false && "Kolya: Needs impl");
+	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
+	const bool multisampled = pTexDesc->SampleDesc.Count > 1;
+	
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleDSVHeap != nullptr);
+		const DXGI_FORMAT viewFormat = GetDepthStencilViewFormat(pTexDesc->Format);
+
+		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+		{
+			Tex2DDepthStencilViewDesc viewDesc(viewFormat, mipSlice, multisampled);
+			DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
+			pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, dsvHandle);
+
+			if (mipSlice == 0)
+				m_FirstDSVHandle = dsvHandle;
+		}	
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		const DXGI_FORMAT viewFormat = GetShaderResourceViewFormat(pTexDesc->Format);
+
+		Tex2DShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, multisampled);
+		m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
+	}
+}
+
+void DepthTexture::CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture2DArrayDesc* pTexDesc)
+{
+	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
+	const bool multisampled = pTexDesc->SampleDesc.Count > 1;
+
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
+	{
+		assert(pRenderEnv->m_pShaderInvisibleDSVHeap != nullptr);
+		const DXGI_FORMAT viewFormat = GetDepthStencilViewFormat(pTexDesc->Format);
+
+		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+		{
+			Tex2DArrayDepthStencilViewDesc viewDesc(viewFormat, mipSlice, 0, pTexDesc->DepthOrArraySize, multisampled);
+			DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
+			pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, dsvHandle);
+
+			if (mipSlice == 0)
+				m_FirstDSVHandle = dsvHandle;
+		}
+		for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+		{
+			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+			{
+				Tex2DArrayDepthStencilViewDesc viewDesc(viewFormat, mipSlice, arraySlice, 1, multisampled);
+				DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
+				pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, dsvHandle);
+			}
+		}
+	}
+	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		const DXGI_FORMAT viewFormat = GetShaderResourceViewFormat(pTexDesc->Format);
+
+		Tex2DArrayShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, 0, pTexDesc->DepthOrArraySize, multisampled);
+		m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
 	}
 }
 
