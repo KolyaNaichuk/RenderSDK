@@ -1495,7 +1495,7 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	: GraphicsResource(pBufferDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
-	CreateConstantBufferView(pRenderEnv, pBufferDesc);
+	CreateBufferView(pRenderEnv, pBufferDesc);
 }
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -1503,7 +1503,7 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	: GraphicsResource(pBufferDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
-	CreateVertexBufferView(pRenderEnv, pBufferDesc);
+	CreateBufferView(pRenderEnv, pBufferDesc);
 }
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -1511,7 +1511,7 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	: GraphicsResource(pBufferDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
-	CreateIndexBufferView(pRenderEnv, pBufferDesc);
+	CreateBufferView(pRenderEnv, pBufferDesc);
 }
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -1519,7 +1519,7 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	: GraphicsResource(pBufferDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
-	CreateStructuredBufferViews(pRenderEnv, pBufferDesc);
+	CreateBufferViews(pRenderEnv, pBufferDesc);
 }
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
@@ -1527,7 +1527,7 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	: GraphicsResource(pBufferDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
-	CreateFormattedBufferViews(pRenderEnv, pBufferDesc);
+	CreateBufferViews(pRenderEnv, pBufferDesc);
 }
 
 Buffer::~Buffer()
@@ -1585,7 +1585,7 @@ void Buffer::CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HEAP_PRO
 #endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
-void Buffer::CreateConstantBufferView(RenderEnv* pRenderEnv, const ConstantBufferDesc* pBufferDesc)
+void Buffer::CreateBufferView(RenderEnv* pRenderEnv, const ConstantBufferDesc* pBufferDesc)
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 	m_CBVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
@@ -1594,7 +1594,7 @@ void Buffer::CreateConstantBufferView(RenderEnv* pRenderEnv, const ConstantBuffe
 	pD3DDevice->CreateConstantBufferView(&viewDesc, m_CBVHandle);
 }
 
-void Buffer::CreateVertexBufferView(RenderEnv* pRenderEnv, const VertexBufferDesc* pBufferDesc)
+void Buffer::CreateBufferView(RenderEnv* pRenderEnv, const VertexBufferDesc* pBufferDesc)
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 	D3D12_GPU_VIRTUAL_ADDRESS gpuVirtualAddress = GetD3DObject()->GetGPUVirtualAddress();
@@ -1602,7 +1602,7 @@ void Buffer::CreateVertexBufferView(RenderEnv* pRenderEnv, const VertexBufferDes
 	m_pVBView = new VertexBufferView(gpuVirtualAddress, (UINT)pBufferDesc->Width, pBufferDesc->StrideInBytes);
 }
 
-void Buffer::CreateIndexBufferView(RenderEnv* pRenderEnv, const IndexBufferDesc* pBufferDesc)
+void Buffer::CreateBufferView(RenderEnv* pRenderEnv, const IndexBufferDesc* pBufferDesc)
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 	D3D12_GPU_VIRTUAL_ADDRESS gpuVirtualAddress = GetD3DObject()->GetGPUVirtualAddress();
@@ -1610,7 +1610,7 @@ void Buffer::CreateIndexBufferView(RenderEnv* pRenderEnv, const IndexBufferDesc*
 	m_pIBView = new IndexBufferView(gpuVirtualAddress, (UINT)pBufferDesc->Width, pBufferDesc->StrideInBytes);
 }
 
-void Buffer::CreateStructuredBufferViews(RenderEnv* pRenderEnv, const StructuredBufferDesc* pBufferDesc)
+void Buffer::CreateBufferViews(RenderEnv* pRenderEnv, const StructuredBufferDesc* pBufferDesc)
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 
@@ -1632,7 +1632,7 @@ void Buffer::CreateStructuredBufferViews(RenderEnv* pRenderEnv, const Structured
 	}
 }
 
-void Buffer::CreateFormattedBufferViews(RenderEnv* pRenderEnv, const FormattedBufferDesc* pBufferDesc)
+void Buffer::CreateBufferViews(RenderEnv* pRenderEnv, const FormattedBufferDesc* pBufferDesc)
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 

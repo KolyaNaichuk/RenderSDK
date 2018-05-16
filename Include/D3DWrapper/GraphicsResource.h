@@ -501,12 +501,12 @@ private:
 	void CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
-	void CreateConstantBufferView(RenderEnv* pRenderEnv, const ConstantBufferDesc* pBufferDesc);
-	void CreateVertexBufferView(RenderEnv* pRenderEnv, const VertexBufferDesc* pBufferDesc);
-	void CreateIndexBufferView(RenderEnv* pRenderEnv, const IndexBufferDesc* pBufferDesc);
-	void CreateStructuredBufferViews(RenderEnv* pRenderEnv, const StructuredBufferDesc* pBufferDesc);
-	void CreateFormattedBufferViews(RenderEnv* pRenderEnv, const FormattedBufferDesc* pBufferDesc);
-		
+	void CreateBufferView(RenderEnv* pRenderEnv, const ConstantBufferDesc* pBufferDesc);
+	void CreateBufferView(RenderEnv* pRenderEnv, const VertexBufferDesc* pBufferDesc);
+	void CreateBufferView(RenderEnv* pRenderEnv, const IndexBufferDesc* pBufferDesc);
+	void CreateBufferViews(RenderEnv* pRenderEnv, const StructuredBufferDesc* pBufferDesc);
+	void CreateBufferViews(RenderEnv* pRenderEnv, const FormattedBufferDesc* pBufferDesc);
+
 private:
 	DescriptorHandle m_SRVHandle;
 	DescriptorHandle m_UAVHandle;
