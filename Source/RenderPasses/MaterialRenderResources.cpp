@@ -254,34 +254,25 @@ namespace
 
 		const DirectX::TexMetadata& metaData = image.GetMetadata();
 		const DXGI_FORMAT format = forceSRGB ? DirectX::MakeSRGB(metaData.format) : metaData.format;
+		
+		assert(metaData.dimension == DirectX::TEX_DIMENSION_TEXTURE2D);
+		assert(metaData.arraySize == 1);
 
-		D3D12_RESOURCE_DIMENSION dimension = D3D12_RESOURCE_DIMENSION_UNKNOWN;
-		if (metaData.dimension == DirectX::TEX_DIMENSION_TEXTURE1D)
-			dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
-		else if (metaData.dimension == DirectX::TEX_DIMENSION_TEXTURE2D)
-			dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-		else if (metaData.dimension == DirectX::TEX_DIMENSION_TEXTURE3D)
-			dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+		ColorTexture2DDesc texDesc(format, UINT64(metaData.width), UINT(metaData.height),
+			false/*createRTV*/, true/*createSRV*/, false/*createUAV*/, UINT16(metaData.mipLevels));
 
-		assert(dimension != D3D12_RESOURCE_DIMENSION_UNKNOWN);
-		assert(!metaData.IsCubemap());
-
-		const UINT16 depthOrArraySize = (dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D) ? UINT16(metaData.depth) : UINT16(metaData.arraySize);
-
-		ColorTextureDesc textureDesc(dimension, format, UINT64(metaData.width), UINT(metaData.height),
-			false, true, false, depthOrArraySize, UINT16(metaData.mipLevels));
-		ColorTexture* pTexture = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &textureDesc,
+		ColorTexture* pTexture = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &texDesc,
 			D3D12_RESOURCE_STATE_COPY_DEST, nullptr, debugImageName.c_str());
-
+						
 		defaultHeapTextures.emplace_back(pTexture);
 		pendingTransitionBarriers.emplace_back(pTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-		const UINT numSubresources = UINT(metaData.mipLevels * metaData.arraySize);
+		const UINT numSubresources = UINT(metaData.arraySize * metaData.mipLevels);
 		assert(numSubresources <= maxNumSubresources);
 
 		UINT64 uploadOffsetInBytes = 0;
 		UINT64 textureSizeInBytes = 0;
-		pRenderEnv->m_pDevice->GetCopyableFootprints(&textureDesc, 0, numSubresources, uploadOffsetInBytes, subresourceFootprints, numRows, rowSizeInBytes, &textureSizeInBytes);
+		pRenderEnv->m_pDevice->GetCopyableFootprints(&texDesc, 0, numSubresources, uploadOffsetInBytes, subresourceFootprints, numRows, rowSizeInBytes, &textureSizeInBytes);
 
 		std::wstring debugBufferName = L"UploadBuffer: " + debugImageName;
 		StructuredBufferDesc uploadBufferDesc(1, textureSizeInBytes, false, false);

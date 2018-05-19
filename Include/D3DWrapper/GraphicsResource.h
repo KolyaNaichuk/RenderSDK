@@ -145,16 +145,6 @@ struct CounterBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 		UINT structureByteStride, UINT64 counterOffsetInBytes);
 };
 
-struct ColorTextureDesc : public D3D12_RESOURCE_DESC
-{
-	ColorTextureDesc(D3D12_RESOURCE_DIMENSION dimension, DXGI_FORMAT format, UINT64 width, UINT height,
-		bool createRTV, bool createSRV, bool createUAV,
-		UINT16 depthOrArraySize = 1, UINT16 mipLevels = 1,
-		UINT sampleCount = 1, UINT sampleQuality = 0,
-		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
-		UINT64 alignment = 0);
-};
-
 struct ColorTexture1DDesc : public D3D12_RESOURCE_DESC
 {
 	ColorTexture1DDesc(DXGI_FORMAT format, UINT64 width,
@@ -162,15 +152,14 @@ struct ColorTexture1DDesc : public D3D12_RESOURCE_DESC
 		UINT16 mipLevels = 1,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
-};
 
-struct ColorTexture1DArrayDesc : public D3D12_RESOURCE_DESC
-{
-	ColorTexture1DArrayDesc(DXGI_FORMAT format, UINT64 width,
+	ColorTexture1DDesc(DXGI_FORMAT format, UINT64 width,
 		bool createRTV, bool createSRV, bool createUAV,
-		UINT16 arraySize, UINT16 mipLevels = 1,
+		UINT16 mipLevels, UINT16 arraySize,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
+
+	bool IsTextureArray;
 };
 
 struct ColorTexture2DDesc : public D3D12_RESOURCE_DESC
@@ -180,16 +169,15 @@ struct ColorTexture2DDesc : public D3D12_RESOURCE_DESC
 		UINT16 mipLevels = 1, UINT sampleCount = 1, UINT sampleQuality = 0,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
-};
 
-struct ColorTexture2DArrayDesc : public D3D12_RESOURCE_DESC
-{
-	ColorTexture2DArrayDesc(DXGI_FORMAT format, UINT64 width, UINT height,
+	ColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height,
 		bool createRTV, bool createSRV, bool createUAV,
-		UINT16 arraySize, UINT16 mipLevels = 1,
+		UINT16 mipLevels, UINT16 arraySize,
 		UINT sampleCount = 1, UINT sampleQuality = 0,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
+
+	bool IsTextureArray;
 };
 
 struct ColorTexture3DDesc : public D3D12_RESOURCE_DESC
@@ -208,15 +196,14 @@ struct DepthTexture1DDesc : public D3D12_RESOURCE_DESC
 		UINT16 mipLevels = 1,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
-};
 
-struct DepthTexture1DArrayDesc : public D3D12_RESOURCE_DESC
-{
-	DepthTexture1DArrayDesc(DXGI_FORMAT format, UINT64 width,
+	DepthTexture1DDesc(DXGI_FORMAT format, UINT64 width,
 		bool createDSV, bool createSRV,
-		UINT16 arraySize, UINT16 mipLevels = 1,
+		UINT16 mipLevels, UINT16 arraySize,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
+
+	bool IsTextureArray;
 };
 
 struct DepthTexture2DDesc : public D3D12_RESOURCE_DESC
@@ -227,16 +214,15 @@ struct DepthTexture2DDesc : public D3D12_RESOURCE_DESC
 		UINT sampleCount = 1, UINT sampleQuality = 0,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
-};
 
-struct DepthTexture2DArrayDesc : public D3D12_RESOURCE_DESC
-{
-	DepthTexture2DArrayDesc(DXGI_FORMAT format, UINT64 width, UINT height,
+	DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height,
 		bool createDSV, bool createSRV,
-		UINT16 arraySize, UINT16 mipLevels = 1,
+		UINT16 mipLevels, UINT16 arraySize,
 		UINT sampleCount = 1, UINT sampleQuality = 0,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
+
+	bool IsTextureArray;
 };
 
 struct Tex1DRenderTargetViewDesc : public D3D12_RENDER_TARGET_VIEW_DESC
@@ -373,52 +359,39 @@ public:
 	ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
 		const ColorTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
-
-	ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
-		const ColorTexture1DArrayDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-		const FLOAT optimizedClearColor[4], LPCWSTR pName);
-
+	
 	ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
 		const ColorTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
-
-	ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
-		const ColorTexture2DArrayDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-		const FLOAT optimizedClearColor[4], LPCWSTR pName);
-
+	
 	ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
 		const ColorTexture3DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
-	ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
-		const ColorTextureDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-		const FLOAT optimizedClearColor[4], LPCWSTR pName);
-
-	ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource, LPCWSTR pName);
+	ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource,
+		bool isTextureArray, LPCWSTR pName);
 
 	UINT64 GetWidth() const { return m_Desc.Width; }
 	UINT GetHeight() const { return m_Desc.Height; }
 	UINT16 GetDepthOrArraySize() const { return m_Desc.DepthOrArraySize; }
 	UINT GetMipLevels() const { return m_Desc.MipLevels; }
 
-	DescriptorHandle GetRTVHandle(UINT mipSlice);
-	DescriptorHandle GetRTVHandle(UINT arraySlice, UINT mipSlice);
+	DescriptorHandle GetRTVHandle(UINT mipSlice = 0);
+	DescriptorHandle GetRTVHandle(UINT mipSlice, UINT arraySlice);
 
 	DescriptorHandle GetSRVHandle();
 
-	DescriptorHandle GetUAVHandle(UINT mipSlice);
-	DescriptorHandle GetUAVHandle(UINT arraySlice, UINT mipSlice);
+	DescriptorHandle GetUAVHandle(UINT mipSlice = 0);
+	DescriptorHandle GetUAVHandle(UINT mipSlice, UINT arraySlice);
 				
 private:
 	void CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const FLOAT optimizedClearColor[4], LPCWSTR pName);
 
-	void CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture1DDesc* pTexDesc);
-	void CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture1DArrayDesc* pTexDesc);
-	void CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture2DDesc* pTexDesc);
-	void CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture2DArrayDesc* pTexDesc);
-	void CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture3DDesc* pTexDesc);
+	void CreateTexture1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc, bool isTextureArray);
+	void CreateTexture2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc, bool isTextureArray);
+	void CreateTexture3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc);
 	
 private:
 	DescriptorHandle m_FirstRTVHandle;
@@ -432,24 +405,16 @@ public:
 	DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
 		const DepthTexture1DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
-
-	DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
-		const DepthTexture1DArrayDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-		const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
-
+	
 	DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
 		const DepthTexture2DDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
-	DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
-		const DepthTexture2DArrayDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-		const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
-	
 	UINT64 GetWidth() const { return m_Desc.Width; }
 	UINT GetHeight() const { return m_Desc.Height; }
 
-	DescriptorHandle GetDSVHandle(UINT mipSlice);
-	DescriptorHandle GetDSVHandle(UINT arraySlice, UINT mipSlice);
+	DescriptorHandle GetDSVHandle(UINT mipSlice = 0);
+	DescriptorHandle GetDSVHandle(UINT mipSlice, UINT arraySlice);
 
 	DescriptorHandle GetSRVHandle();
 
@@ -458,10 +423,8 @@ private:
 		const D3D12_RESOURCE_DESC* pTexDesc, D3D12_RESOURCE_STATES initialState,
 		const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName);
 
-	void CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture1DDesc* pTexDesc);
-	void CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture1DArrayDesc* pTexDesc);
-	void CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture2DDesc* pTexDesc);
-	void CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture2DArrayDesc* pTexDesc);
+	void CreateTexture1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc, bool isTextureArray);
+	void CreateTexture2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc, bool isTextureArray);
 	
 private:
 	DescriptorHandle m_FirstDSVHandle;

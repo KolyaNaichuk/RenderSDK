@@ -335,30 +335,6 @@ CounterBufferUAVDesc::CounterBufferUAVDesc(UINT64 firstElement, UINT numElements
 	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 }
 
-ColorTextureDesc::ColorTextureDesc(D3D12_RESOURCE_DIMENSION dimension, DXGI_FORMAT format, UINT64 width, UINT height,
-	bool createRTV, bool createSRV, bool createUAV, UINT16 depthOrArraySize, UINT16 mipLevels,
-	UINT sampleCount, UINT sampleQuality, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
-{
-	Dimension = dimension;
-	Alignment = alignment;
-	Width = width;
-	Height = height;
-	DepthOrArraySize = depthOrArraySize;
-	MipLevels = mipLevels;
-	Format = format;
-	SampleDesc.Count = sampleCount;
-	SampleDesc.Quality = sampleQuality;
-	Layout = layout;
-
-	Flags = D3D12_RESOURCE_FLAG_NONE;
-	if (createRTV)
-		Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-	if (!createSRV)
-		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-	if (createUAV)
-		Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-}
-
 ColorTexture1DDesc::ColorTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool createRTV, bool createSRV, bool createUAV,
 	UINT16 mipLevels, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
 {
@@ -372,6 +348,7 @@ ColorTexture1DDesc::ColorTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool cr
 	SampleDesc.Count = 1;
 	SampleDesc.Quality = 0;
 	Layout = layout;
+	IsTextureArray = false;
 
 	Flags = D3D12_RESOURCE_FLAG_NONE;
 	if (createRTV)
@@ -382,8 +359,8 @@ ColorTexture1DDesc::ColorTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool cr
 		Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 }
 
-ColorTexture1DArrayDesc::ColorTexture1DArrayDesc(DXGI_FORMAT format, UINT64 width, bool createRTV, bool createSRV, bool createUAV,
-	UINT16 arraySize, UINT16 mipLevels, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
+ColorTexture1DDesc::ColorTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool createRTV, bool createSRV, bool createUAV,
+	UINT16 mipLevels, UINT16 arraySize, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
 {
 	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
 	Alignment = alignment;
@@ -395,6 +372,7 @@ ColorTexture1DArrayDesc::ColorTexture1DArrayDesc(DXGI_FORMAT format, UINT64 widt
 	SampleDesc.Count = 1;
 	SampleDesc.Quality = 0;
 	Layout = layout;
+	IsTextureArray = true;
 
 	Flags = D3D12_RESOURCE_FLAG_NONE;
 	if (createRTV)
@@ -418,6 +396,7 @@ ColorTexture2DDesc::ColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT he
 	SampleDesc.Count = sampleCount;
 	SampleDesc.Quality = sampleQuality;
 	Layout = layout;
+	IsTextureArray = false;
 	
 	Flags = D3D12_RESOURCE_FLAG_NONE;
 	if (createRTV)
@@ -428,8 +407,8 @@ ColorTexture2DDesc::ColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT he
 		Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 }
 
-ColorTexture2DArrayDesc::ColorTexture2DArrayDesc(DXGI_FORMAT format, UINT64 width, UINT height, bool createRTV, bool createSRV, bool createUAV,
-	UINT16 arraySize, UINT16 mipLevels, UINT sampleCount, UINT sampleQuality, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
+ColorTexture2DDesc::ColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height, bool createRTV, bool createSRV, bool createUAV,
+	UINT16 mipLevels, UINT16 arraySize, UINT sampleCount, UINT sampleQuality, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
 {
 	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	Alignment = alignment;
@@ -441,6 +420,7 @@ ColorTexture2DArrayDesc::ColorTexture2DArrayDesc(DXGI_FORMAT format, UINT64 widt
 	SampleDesc.Count = sampleCount;
 	SampleDesc.Quality = sampleQuality;
 	Layout = layout;
+	IsTextureArray = true;
 
 	Flags = D3D12_RESOURCE_FLAG_NONE;
 	if (createRTV)
@@ -487,6 +467,7 @@ DepthTexture1DDesc::DepthTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool cr
 	SampleDesc.Count = 1;
 	SampleDesc.Quality = 0;
 	Layout = layout;
+	IsTextureArray = false;
 	
 	Flags = D3D12_RESOURCE_FLAG_NONE;
 	if (createDSV)
@@ -495,8 +476,8 @@ DepthTexture1DDesc::DepthTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool cr
 		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 }
 
-DepthTexture1DArrayDesc::DepthTexture1DArrayDesc(DXGI_FORMAT format, UINT64 width, bool createDSV, bool createSRV,
-	UINT16 arraySize, UINT16 mipLevels, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
+DepthTexture1DDesc::DepthTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool createDSV, bool createSRV,
+	UINT16 mipLevels, UINT16 arraySize, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
 {
 	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
 	Alignment = alignment;
@@ -508,6 +489,7 @@ DepthTexture1DArrayDesc::DepthTexture1DArrayDesc(DXGI_FORMAT format, UINT64 widt
 	SampleDesc.Count = 1;
 	SampleDesc.Quality = 0;
 	Layout = layout;
+	IsTextureArray = true;
 
 	Flags = D3D12_RESOURCE_FLAG_NONE;
 	if (createDSV)
@@ -529,6 +511,7 @@ DepthTexture2DDesc::DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT he
 	SampleDesc.Count = sampleCount;
 	SampleDesc.Quality = sampleQuality;
 	Layout = layout;
+	IsTextureArray = false;
 	
 	Flags = D3D12_RESOURCE_FLAG_NONE;
 	if (createDSV)
@@ -537,8 +520,8 @@ DepthTexture2DDesc::DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT he
 		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 }
 
-DepthTexture2DArrayDesc::DepthTexture2DArrayDesc(DXGI_FORMAT format, UINT64 width, UINT height, bool createDSV, bool createSRV,
-	UINT16 arraySize, UINT16 mipLevels, UINT sampleCount, UINT sampleQuality, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
+DepthTexture2DDesc::DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height, bool createDSV, bool createSRV,
+	UINT16 mipLevels, UINT16 arraySize, UINT sampleCount, UINT sampleQuality, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
 {
 	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	Alignment = alignment;
@@ -550,28 +533,8 @@ DepthTexture2DArrayDesc::DepthTexture2DArrayDesc(DXGI_FORMAT format, UINT64 widt
 	SampleDesc.Count = sampleCount;
 	SampleDesc.Quality = sampleQuality;
 	Layout = layout;
+	IsTextureArray = true;
 
-	Flags = D3D12_RESOURCE_FLAG_NONE;
-	if (createDSV)
-		Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-	if (!createSRV)
-		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-}
-
-DepthTexture3DDesc::DepthTexture3DDesc(DXGI_FORMAT format, UINT64 width, UINT height, UINT16 depth,
-	bool createDSV, bool createSRV, UINT16 mipLevels, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
-{
-	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-	Alignment = alignment;
-	Width = width;
-	Height = height;
-	DepthOrArraySize = depth;
-	MipLevels = mipLevels;
-	Format = format;
-	SampleDesc.Count = 1;
-	SampleDesc.Quality = 0;
-	Layout = layout;
-	
 	Flags = D3D12_RESOURCE_FLAG_NONE;
 	if (createDSV)
 		Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
@@ -886,16 +849,7 @@ ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapPro
 	: GraphicsResource(pTexDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
-	CreateTextureViews(pRenderEnv, pTexDesc);
-}
-
-ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
-	const ColorTexture1DArrayDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-	const FLOAT optimizedClearColor[4], LPCWSTR pName)
-	: GraphicsResource(pTexDesc)
-{
-	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
-	CreateTextureViews(pRenderEnv, pTexDesc);
+	CreateTexture1DViews(pRenderEnv, pTexDesc, pTexDesc->IsTextureArray);
 }
 
 ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
@@ -904,16 +858,7 @@ ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapPro
 	: GraphicsResource(pTexDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
-	CreateTextureViews(pRenderEnv, pTexDesc);
-}
-
-ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
-	const ColorTexture2DArrayDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-	const FLOAT optimizedClearColor[4], LPCWSTR pName)
-	: GraphicsResource(pTexDesc)
-{
-	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
-	CreateTextureViews(pRenderEnv, pTexDesc);
+	CreateTexture2DViews(pRenderEnv, pTexDesc, pTexDesc->IsTextureArray);
 }
 
 ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
@@ -922,53 +867,37 @@ ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapPro
 	: GraphicsResource(pTexDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
-	CreateTextureViews(pRenderEnv, pTexDesc);
+	CreateTexture3DViews(pRenderEnv, pTexDesc);
 }
 
-ColorTexture::ColorTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
-	const ColorTextureDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-	const FLOAT optimizedClearColor[4], LPCWSTR pName)
-	: GraphicsResource(pTexDesc)
-{
-	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, optimizedClearColor, pName);
-	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
-	{
-		CreateTexture1DViews(pRenderEnv, &m_Desc);
-		return;
-	}
-	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
-	{
-		CreateTex2DViews(pRenderEnv, &m_Desc);
-		return;
-	}
-	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
-	{
-		CreateTextureViews(pRenderEnv, &m_Desc);
-		return;
-	}
-}
-
-ColorTexture::ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource, LPCWSTR pName)
+ColorTexture::ColorTexture(RenderEnv* pRenderEnv, ComPtr<ID3D12Resource> d3dResource, bool isTextureArray, LPCWSTR pName)
 	: GraphicsResource(d3dResource)
 {
 #ifdef ENABLE_GRAPHICS_DEBUGGING
 	VerifyD3DResult(m_D3DResource->SetName(pName));
 #endif // ENABLE_GRAPHICS_DEBUGGING
 
-	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D)
+	switch (m_Desc.Dimension)
 	{
-		CreateTexture1DViews(pRenderEnv, &m_Desc);
-		return;
-	}
-	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
-	{
-		CreateTex2DViews(pRenderEnv, &m_Desc);
-		return;
-	}
-	if (m_Desc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D)
-	{
-		CreateTextureViews(pRenderEnv, &m_Desc);
-		return;
+		case D3D12_RESOURCE_DIMENSION_TEXTURE1D:
+		{
+			CreateTexture1DViews(pRenderEnv, &m_Desc, isTextureArray);
+			break;
+		}
+		case D3D12_RESOURCE_DIMENSION_TEXTURE2D:
+		{
+			CreateTexture2DViews(pRenderEnv, &m_Desc, isTextureArray);
+			break;
+		}
+		case D3D12_RESOURCE_DIMENSION_TEXTURE3D:
+		{
+			CreateTexture3DViews(pRenderEnv, &m_Desc);
+			break;
+		}
+		default:
+		{
+			assert(false);
+		}
 	}
 }
 
@@ -978,7 +907,7 @@ DescriptorHandle ColorTexture::GetRTVHandle(UINT mipSlice)
 	return DescriptorHandle(m_FirstRTVHandle, mipSlice);
 }
 
-DescriptorHandle ColorTexture::GetRTVHandle(UINT arraySlice, UINT mipSlice)
+DescriptorHandle ColorTexture::GetRTVHandle(UINT mipSlice, UINT arraySlice)
 {
 	assert(m_FirstRTVHandle.IsValid());
 	return DescriptorHandle(m_FirstRTVHandle, m_Desc.MipLevels + CalcSubresource(mipSlice, arraySlice, m_Desc.MipLevels));
@@ -996,7 +925,7 @@ DescriptorHandle ColorTexture::GetUAVHandle(UINT mipSlice)
 	return DescriptorHandle(m_FirstUAVHandle, mipSlice);
 }
 
-DescriptorHandle ColorTexture::GetUAVHandle(UINT arraySlice, UINT mipSlice)
+DescriptorHandle ColorTexture::GetUAVHandle(UINT mipSlice, UINT arraySlice)
 {
 	assert(m_FirstUAVHandle.IsValid());
 	return DescriptorHandle(m_FirstUAVHandle, m_Desc.MipLevels + CalcSubresource(mipSlice, arraySlice, m_Desc.MipLevels));
@@ -1028,69 +957,43 @@ void ColorTexture::CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HE
 #endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
-void ColorTexture::CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture1DDesc* pTexDesc)
-{
-	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
-	{
-		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
-		{
-			Tex1DRenderTargetViewDesc viewDesc(mipSlice);
-			DescriptorHandle rtvHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
-			pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, rtvHandle);
-
-			if (mipSlice == 0)
-				m_FirstRTVHandle = rtvHandle;
-		}
-	}
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
-	{
-		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
-		const DXGI_FORMAT viewFormat = GetShaderResourceViewFormat(pTexDesc->Format);
-
-		Tex1DShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels);
-		m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
-	}
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
-	{
-		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
-		const DXGI_FORMAT viewFormat = GetUnorderedAccessViewFormat(pTexDesc->Format);
-
-		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
-		{
-			Tex1DUnorderedAccessViewDesc viewDesc(viewFormat, mipSlice);
-			DescriptorHandle uavHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-			pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, uavHandle);
-
-			if (mipSlice == 0)
-				m_FirstUAVHandle = uavHandle;
-		}
-	}
-}
-
-void ColorTexture::CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture1DArrayDesc* pTexDesc)
+void ColorTexture::CreateTexture1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc, bool isTextureArray)
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleRTVHeap != nullptr);
-		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
-		{
-			Tex1DArrayRenderTargetViewDesc viewDesc(mipSlice, 0, pTexDesc->DepthOrArraySize);
-			DescriptorHandle rtvHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
-			pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, rtvHandle);
-
-			if (mipSlice == 0)
-				m_FirstRTVHandle = rtvHandle;
-		}
-		for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+		if (isTextureArray)
 		{
 			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
 			{
-				Tex1DArrayRenderTargetViewDesc viewDesc(mipSlice, arraySlice, 1);
+				Tex1DArrayRenderTargetViewDesc viewDesc(mipSlice, 0, pTexDesc->DepthOrArraySize);
 				DescriptorHandle rtvHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
 				pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, rtvHandle);
+
+				if (mipSlice == 0)
+					m_FirstRTVHandle = rtvHandle;
+			}
+			for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+			{
+				for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+				{
+					Tex1DArrayRenderTargetViewDesc viewDesc(mipSlice, arraySlice, 1);
+					DescriptorHandle rtvHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
+					pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, rtvHandle);
+				}
+			}
+		}
+		else
+		{
+			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+			{
+				Tex1DRenderTargetViewDesc viewDesc(mipSlice);
+				DescriptorHandle rtvHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
+				pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, rtvHandle);
+
+				if (mipSlice == 0)
+					m_FirstRTVHandle = rtvHandle;
 			}
 		}
 	}
@@ -1098,38 +1001,62 @@ void ColorTexture::CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture1
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
 		const DXGI_FORMAT viewFormat = GetShaderResourceViewFormat(pTexDesc->Format);
-		
-		Tex1DArrayShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, 0, pTexDesc->DepthOrArraySize);
-		m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
+
+		if (isTextureArray)
+		{
+			Tex1DArrayShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, 0, pTexDesc->DepthOrArraySize);
+			m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+			pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
+		}
+		else
+		{
+			Tex1DShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels);
+			m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+			pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
+		}
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
 		const DXGI_FORMAT viewFormat = GetUnorderedAccessViewFormat(pTexDesc->Format);
-		
-		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
-		{
-			Tex1DArrayUnorderedAccessViewDesc viewDesc(viewFormat, mipSlice, 0, pTexDesc->DepthOrArraySize);
-			DescriptorHandle uavHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-			pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, uavHandle);
 
-			if (mipSlice == 0)
-				m_FirstUAVHandle = uavHandle;
-		}
-		for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+		if (isTextureArray)
 		{
 			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
 			{
-				Tex1DArrayUnorderedAccessViewDesc viewDesc(viewFormat, mipSlice, arraySlice, 1);
+				Tex1DArrayUnorderedAccessViewDesc viewDesc(viewFormat, mipSlice, 0, pTexDesc->DepthOrArraySize);
 				DescriptorHandle uavHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
 				pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, uavHandle);
+
+				if (mipSlice == 0)
+					m_FirstUAVHandle = uavHandle;
+			}
+			for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+			{
+				for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+				{
+					Tex1DArrayUnorderedAccessViewDesc viewDesc(viewFormat, mipSlice, arraySlice, 1);
+					DescriptorHandle uavHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+					pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, uavHandle);
+				}
+			}
+		}
+		else
+		{
+			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+			{
+				Tex1DUnorderedAccessViewDesc viewDesc(viewFormat, mipSlice);
+				DescriptorHandle uavHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+				pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, uavHandle);
+
+				if (mipSlice == 0)
+					m_FirstUAVHandle = uavHandle;
 			}
 		}
 	}
 }
 
-void ColorTexture::CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture2DDesc* pTexDesc)
+void ColorTexture::CreateTexture2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc, bool isTextureArray)
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 	const bool multisampled = pTexDesc->SampleDesc.Count > 1;
@@ -1137,66 +1064,37 @@ void ColorTexture::CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture2
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleRTVHeap != nullptr);
-		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
-		{
-			Tex2DRenderTargetViewDesc viewDesc(mipSlice, multisampled);
-			DescriptorHandle rtvHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
-			pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, rtvHandle);
-
-			if (mipSlice == 0)
-				m_FirstRTVHandle = rtvHandle;
-		}
-	}
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
-	{
-		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
-		const DXGI_FORMAT viewFormat = GetShaderResourceViewFormat(pTexDesc->Format);
-
-		Tex2DShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, multisampled);
-		m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
-	}
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
-	{
-		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
-		const DXGI_FORMAT viewFormat = GetUnorderedAccessViewFormat(pTexDesc->Format);
-
-		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
-		{
-			Tex2DUnorderedAccessViewDesc viewDesc(viewFormat, mipSlice);
-			DescriptorHandle uavHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-			pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, uavHandle);
-
-			if (mipSlice == 0)
-				m_FirstUAVHandle = uavHandle;
-		}
-	}
-}
-
-void ColorTexture::CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture2DArrayDesc* pTexDesc)
-{
-	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
-	const bool multisampled = pTexDesc->SampleDesc.Count > 1;
-
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
-	{
-		assert(pRenderEnv->m_pShaderInvisibleRTVHeap != nullptr);
-		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
-		{
-			Tex2DArrayRenderTargetViewDesc viewDesc(mipSlice, 0, pTexDesc->DepthOrArraySize, multisampled);
-			DescriptorHandle rtvHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
-			pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, rtvHandle);
-
-			if (mipSlice == 0)
-				m_FirstRTVHandle = rtvHandle;
-		}
-		for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+		if (isTextureArray)
 		{
 			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
 			{
-				Tex2DArrayRenderTargetViewDesc viewDesc(mipSlice, arraySlice, 1, multisampled);
+				Tex2DArrayRenderTargetViewDesc viewDesc(mipSlice, 0, pTexDesc->DepthOrArraySize, multisampled);
 				DescriptorHandle rtvHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
 				pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, rtvHandle);
+
+				if (mipSlice == 0)
+					m_FirstRTVHandle = rtvHandle;
+			}
+			for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+			{
+				for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+				{
+					Tex2DArrayRenderTargetViewDesc viewDesc(mipSlice, arraySlice, 1, multisampled);
+					DescriptorHandle rtvHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
+					pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, rtvHandle);
+				}
+			}
+		}
+		else
+		{
+			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+			{
+				Tex2DRenderTargetViewDesc viewDesc(mipSlice, multisampled);
+				DescriptorHandle rtvHandle = pRenderEnv->m_pShaderInvisibleRTVHeap->Allocate();
+				pD3DDevice->CreateRenderTargetView(GetD3DObject(), &viewDesc, rtvHandle);
+
+				if (mipSlice == 0)
+					m_FirstRTVHandle = rtvHandle;
 			}
 		}
 	}
@@ -1205,40 +1103,64 @@ void ColorTexture::CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture2
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
 		const DXGI_FORMAT viewFormat = GetShaderResourceViewFormat(pTexDesc->Format);
 
-		Tex2DArrayShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, 0, pTexDesc->DepthOrArraySize, multisampled);
-		m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
+		if (isTextureArray)
+		{
+			Tex2DArrayShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, 0, pTexDesc->DepthOrArraySize, multisampled);
+			m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+			pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
+		}
+		else
+		{
+			Tex2DShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, multisampled);
+			m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+			pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
+		}
 	}
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
 		const DXGI_FORMAT viewFormat = GetUnorderedAccessViewFormat(pTexDesc->Format);
 
-		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
-		{
-			Tex2DArrayUnorderedAccessViewDesc viewDesc(viewFormat, mipSlice, 0, pTexDesc->DepthOrArraySize);
-			DescriptorHandle uavHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-			pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, uavHandle);
-
-			if (mipSlice == 0)
-				m_FirstUAVHandle = uavHandle;
-		}
-		for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+		if (isTextureArray)
 		{
 			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
 			{
-				Tex2DArrayUnorderedAccessViewDesc viewDesc(viewFormat, mipSlice, arraySlice, 1);
+				Tex2DArrayUnorderedAccessViewDesc viewDesc(viewFormat, mipSlice, 0, pTexDesc->DepthOrArraySize);
 				DescriptorHandle uavHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
 				pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, uavHandle);
+
+				if (mipSlice == 0)
+					m_FirstUAVHandle = uavHandle;
+			}
+			for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+			{
+				for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+				{
+					Tex2DArrayUnorderedAccessViewDesc viewDesc(viewFormat, mipSlice, arraySlice, 1);
+					DescriptorHandle uavHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+					pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, uavHandle);
+				}
+			}
+		}
+		else
+		{
+			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+			{
+				Tex2DUnorderedAccessViewDesc viewDesc(viewFormat, mipSlice);
+				DescriptorHandle uavHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+				pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, uavHandle);
+
+				if (mipSlice == 0)
+					m_FirstUAVHandle = uavHandle;
 			}
 		}
 	}
 }
 
-void ColorTexture::CreateTextureViews(RenderEnv* pRenderEnv, const ColorTexture3DDesc* pTexDesc)
+void ColorTexture::CreateTexture3DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc)
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
-	
+
 	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0)
 	{
 		assert(pRenderEnv->m_pShaderInvisibleRTVHeap != nullptr);
@@ -1284,16 +1206,7 @@ DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapPro
 	: GraphicsResource(pTexDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
-	CreateTextureViews(pRenderEnv, pTexDesc);
-}
-
-DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
-	const DepthTexture1DArrayDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-	const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName)
-	: GraphicsResource(pTexDesc)
-{
-	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
-	CreateTextureViews(pRenderEnv, pTexDesc);
+	CreateTexture1DViews(pRenderEnv, pTexDesc, pTexDesc->IsTextureArray);
 }
 
 DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
@@ -1302,16 +1215,7 @@ DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapPro
 	: GraphicsResource(pTexDesc)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
-	CreateTextureViews(pRenderEnv, pTexDesc);
-}
-
-DepthTexture::DepthTexture(RenderEnv* pRenderEnv, const HeapProperties* pHeapProps,
-	const DepthTexture2DArrayDesc* pTexDesc, D3D12_RESOURCE_STATES initialState,
-	const DepthStencilValue* pOptimizedClearDepth, LPCWSTR pName)
-	: GraphicsResource(pTexDesc)
-{
-	CreateCommittedResource(pRenderEnv, pHeapProps, pTexDesc, initialState, pOptimizedClearDepth, pName);
-	CreateTextureViews(pRenderEnv, pTexDesc);
+	CreateTexture2DViews(pRenderEnv, pTexDesc, pTexDesc->IsTextureArray);
 }
 
 DescriptorHandle DepthTexture::GetDSVHandle(UINT mipSlice)
@@ -1320,7 +1224,7 @@ DescriptorHandle DepthTexture::GetDSVHandle(UINT mipSlice)
 	return DescriptorHandle(m_FirstDSVHandle, mipSlice);
 }
 
-DescriptorHandle DepthTexture::GetDSVHandle(UINT arraySlice, UINT mipSlice)
+DescriptorHandle DepthTexture::GetDSVHandle(UINT mipSlice, UINT arraySlice)
 {
 	assert(m_FirstDSVHandle.IsValid());
 	return DescriptorHandle(m_FirstDSVHandle, m_Desc.MipLevels + CalcSubresource(mipSlice, arraySlice, m_Desc.MipLevels));
@@ -1350,7 +1254,7 @@ void DepthTexture::CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HE
 #endif // ENABLE_GRAPHICS_DEBUGGING
 }
 
-void DepthTexture::CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture1DDesc* pTexDesc)
+void DepthTexture::CreateTexture1DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc, bool isTextureArray)
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 	
@@ -1358,53 +1262,38 @@ void DepthTexture::CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture1
 	{
 		assert(pRenderEnv->m_pShaderInvisibleDSVHeap != nullptr);
 		const DXGI_FORMAT viewFormat = GetDepthStencilViewFormat(pTexDesc->Format);
-		
-		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
-		{
-			Tex1DDepthStencilViewDesc viewDesc(mipSlice, viewFormat);
-			DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
-			pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, m_FirstDSVHandle);
 
-			if (mipSlice == 0)
-				m_FirstDSVHandle = dsvHandle;
-		}
-	}
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
-	{
-		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
-		const DXGI_FORMAT viewFormat = GetShaderResourceViewFormat(pTexDesc->Format);
-		
-		Tex1DShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels);
-		m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
-	}
-}
-
-void DepthTexture::CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture1DArrayDesc* pTexDesc)
-{
-	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
-
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
-	{
-		assert(pRenderEnv->m_pShaderInvisibleDSVHeap != nullptr);
-		const DXGI_FORMAT viewFormat = GetDepthStencilViewFormat(pTexDesc->Format);
-
-		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
-		{
-			Tex1DArrayDepthStencilViewDesc viewDesc(viewFormat, mipSlice, 0, pTexDesc->DepthOrArraySize);
-			DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
-			pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, dsvHandle);
-
-			if (mipSlice == 0)
-				m_FirstDSVHandle = dsvHandle;
-		}
-		for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+		if (isTextureArray)
 		{
 			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
 			{
-				Tex1DArrayDepthStencilViewDesc viewDesc(viewFormat, mipSlice, arraySlice, 1);
+				Tex1DArrayDepthStencilViewDesc viewDesc(viewFormat, mipSlice, 0, pTexDesc->DepthOrArraySize);
 				DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
 				pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, dsvHandle);
+
+				if (mipSlice == 0)
+					m_FirstDSVHandle = dsvHandle;
+			}
+			for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+			{
+				for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+				{
+					Tex1DArrayDepthStencilViewDesc viewDesc(viewFormat, mipSlice, arraySlice, 1);
+					DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
+					pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, dsvHandle);
+				}
+			}
+		}
+		else
+		{
+			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+			{
+				Tex1DDepthStencilViewDesc viewDesc(mipSlice, viewFormat);
+				DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
+				pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, m_FirstDSVHandle);
+
+				if (mipSlice == 0)
+					m_FirstDSVHandle = dsvHandle;
 			}
 		}
 	}
@@ -1412,14 +1301,23 @@ void DepthTexture::CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture1
 	{
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
 		const DXGI_FORMAT viewFormat = GetShaderResourceViewFormat(pTexDesc->Format);
-
-		Tex1DArrayShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, 0, pTexDesc->DepthOrArraySize);
-		m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
+		
+		if (isTextureArray)
+		{
+			Tex1DArrayShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, 0, pTexDesc->DepthOrArraySize);
+			m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+			pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
+		}
+		else
+		{
+			Tex1DShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels);
+			m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+			pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
+		}
 	}
 }
 
-void DepthTexture::CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture2DDesc* pTexDesc)
+void DepthTexture::CreateTexture2DViews(RenderEnv* pRenderEnv, const D3D12_RESOURCE_DESC* pTexDesc, bool isTextureArray)
 {
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 	const bool multisampled = pTexDesc->SampleDesc.Count > 1;
@@ -1429,53 +1327,37 @@ void DepthTexture::CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture2
 		assert(pRenderEnv->m_pShaderInvisibleDSVHeap != nullptr);
 		const DXGI_FORMAT viewFormat = GetDepthStencilViewFormat(pTexDesc->Format);
 
-		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
-		{
-			Tex2DDepthStencilViewDesc viewDesc(viewFormat, mipSlice, multisampled);
-			DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
-			pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, dsvHandle);
-
-			if (mipSlice == 0)
-				m_FirstDSVHandle = dsvHandle;
-		}	
-	}
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
-	{
-		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
-		const DXGI_FORMAT viewFormat = GetShaderResourceViewFormat(pTexDesc->Format);
-
-		Tex2DShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, multisampled);
-		m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
-	}
-}
-
-void DepthTexture::CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture2DArrayDesc* pTexDesc)
-{
-	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
-	const bool multisampled = pTexDesc->SampleDesc.Count > 1;
-
-	if ((pTexDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0)
-	{
-		assert(pRenderEnv->m_pShaderInvisibleDSVHeap != nullptr);
-		const DXGI_FORMAT viewFormat = GetDepthStencilViewFormat(pTexDesc->Format);
-
-		for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
-		{
-			Tex2DArrayDepthStencilViewDesc viewDesc(viewFormat, mipSlice, 0, pTexDesc->DepthOrArraySize, multisampled);
-			DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
-			pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, dsvHandle);
-
-			if (mipSlice == 0)
-				m_FirstDSVHandle = dsvHandle;
-		}
-		for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+		if (isTextureArray)
 		{
 			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
 			{
-				Tex2DArrayDepthStencilViewDesc viewDesc(viewFormat, mipSlice, arraySlice, 1, multisampled);
+				Tex2DArrayDepthStencilViewDesc viewDesc(viewFormat, mipSlice, 0, pTexDesc->DepthOrArraySize, multisampled);
 				DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
 				pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, dsvHandle);
+
+				if (mipSlice == 0)
+					m_FirstDSVHandle = dsvHandle;
+			}
+			for (UINT arraySlice = 0; arraySlice < pTexDesc->DepthOrArraySize; ++arraySlice)
+			{
+				for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+				{
+					Tex2DArrayDepthStencilViewDesc viewDesc(viewFormat, mipSlice, arraySlice, 1, multisampled);
+					DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
+					pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, dsvHandle);
+				}
+			}
+		}
+		else
+		{
+			for (UINT mipSlice = 0; mipSlice < pTexDesc->MipLevels; ++mipSlice)
+			{
+				Tex2DDepthStencilViewDesc viewDesc(viewFormat, mipSlice, multisampled);
+				DescriptorHandle dsvHandle = pRenderEnv->m_pShaderInvisibleDSVHeap->Allocate();
+				pD3DDevice->CreateDepthStencilView(GetD3DObject(), &viewDesc, dsvHandle);
+
+				if (mipSlice == 0)
+					m_FirstDSVHandle = dsvHandle;
 			}
 		}
 	}
@@ -1484,9 +1366,18 @@ void DepthTexture::CreateTextureViews(RenderEnv* pRenderEnv, const DepthTexture2
 		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
 		const DXGI_FORMAT viewFormat = GetShaderResourceViewFormat(pTexDesc->Format);
 
-		Tex2DArrayShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, 0, pTexDesc->DepthOrArraySize, multisampled);
-		m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
-		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
+		if (isTextureArray)
+		{
+			Tex2DArrayShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, 0, pTexDesc->DepthOrArraySize, multisampled);
+			m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+			pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
+		}
+		else
+		{
+			Tex2DShaderResourceViewDesc viewDesc(viewFormat, 0, pTexDesc->MipLevels, multisampled);
+			m_FirstSRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+			pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_FirstSRVHandle);
+		}
 	}
 }
 

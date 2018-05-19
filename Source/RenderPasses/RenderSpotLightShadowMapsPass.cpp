@@ -46,6 +46,7 @@ void RenderSpotLightShadowMapsPass::Record(RenderParams* pParams)
 		if (m_SpotLightShadowMapStates[activeLightIndex] == ShadowMapState::Outdated)
 			m_OutdatedSpotLightShadowMapIndices[numOutdatedShadowMaps++] = activeLightIndex;
 	}
+	assert(false);
 }
 
 void RenderSpotLightShadowMapsPass::InitResources(InitParams* pParams)
@@ -57,14 +58,15 @@ void RenderSpotLightShadowMapsPass::InitResources(InitParams* pParams)
 
 	assert(m_pActiveShadowMaps == nullptr);
 	const DepthStencilValue optimizedClearDepth(1.0f);
+	
 	DepthTexture2DDesc activeShadowMapsDesc(DXGI_FORMAT_R32_TYPELESS, kStandardShadowMapSize, kStandardShadowMapSize,
-		true/*createDSV*/, true/*createSRV*/, pParams->m_MaxNumActiveSpotLights);
+		true/*createDSV*/, true/*createSRV*/, 1/*mipLevels*/, pParams->m_MaxNumActiveSpotLights/*arraySize*/);
 	m_pActiveShadowMaps = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &activeShadowMapsDesc,
 		D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"RenderSpotLightShadowMapsPass::m_pActiveShadowMaps");
-		
+	
 	assert(m_pSpotLightShadowMaps == nullptr);
 	ColorTexture2DDesc shadowMapsDesc(DXGI_FORMAT_R32_FLOAT, kExpShadowMapSize, kExpShadowMapSize,
-		false/*createRTV*/, true/*createSRV*/, true/*createUAV*/, pParams->m_NumSpotLights);
+		false/*createRTV*/, true/*createSRV*/, true/*createUAV*/, 1/*mipLevels*/, pParams->m_NumSpotLights/*arraySize*/);
 	m_pSpotLightShadowMaps = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shadowMapsDesc,
 		pParams->m_InputResourceStates.m_SpotLightShadowMapsState, nullptr/*optimizedClearColor*/, L"RenderSpotLightShadowMapsPass::m_pShadowMaps");
 
