@@ -57,8 +57,7 @@ void RenderSpotLightShadowMapsPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_SpotLightViewProjMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
 	assert(m_pActiveShadowMaps == nullptr);
-	const DepthStencilValue optimizedClearDepth(1.0f);
-	
+	const DepthStencilValue optimizedClearDepth(1.0f);	
 	DepthTexture2DDesc activeShadowMapsDesc(DXGI_FORMAT_R32_TYPELESS, kStandardShadowMapSize, kStandardShadowMapSize,
 		true/*createDSV*/, true/*createSRV*/, 1/*mipLevels*/, pParams->m_MaxNumActiveSpotLights/*arraySize*/);
 	m_pActiveShadowMaps = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &activeShadowMapsDesc,

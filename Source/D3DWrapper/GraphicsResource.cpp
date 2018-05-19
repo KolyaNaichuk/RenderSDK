@@ -384,6 +384,30 @@ ColorTexture1DDesc::ColorTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool cr
 }
 
 ColorTexture2DDesc::ColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height, bool createRTV, bool createSRV, bool createUAV,
+	UINT16 mipLevels, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
+{
+	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	Alignment = alignment;
+	Width = width;
+	Height = height;
+	DepthOrArraySize = 1;
+	MipLevels = mipLevels;
+	Format = format;
+	SampleDesc.Count = 1;
+	SampleDesc.Quality = 0;
+	Layout = layout;
+	IsTextureArray = false;
+
+	Flags = D3D12_RESOURCE_FLAG_NONE;
+	if (createRTV)
+		Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+	if (!createSRV)
+		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+	if (createUAV)
+		Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+}
+
+ColorTexture2DDesc::ColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height, bool createRTV, bool createSRV, bool createUAV,
 	UINT16 mipLevels, UINT sampleCount, UINT sampleQuality, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
 {
 	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -398,6 +422,30 @@ ColorTexture2DDesc::ColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT he
 	Layout = layout;
 	IsTextureArray = false;
 	
+	Flags = D3D12_RESOURCE_FLAG_NONE;
+	if (createRTV)
+		Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+	if (!createSRV)
+		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+	if (createUAV)
+		Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+}
+
+ColorTexture2DDesc::ColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height, bool createRTV, bool createSRV, bool createUAV,
+	UINT16 mipLevels, UINT16 arraySize, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
+{
+	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	Alignment = alignment;
+	Width = width;
+	Height = height;
+	DepthOrArraySize = arraySize;
+	MipLevels = mipLevels;
+	Format = format;
+	SampleDesc.Count = 1;
+	SampleDesc.Quality = 0;
+	Layout = layout;
+	IsTextureArray = true;
+
 	Flags = D3D12_RESOURCE_FLAG_NONE;
 	if (createRTV)
 		Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
@@ -499,6 +547,28 @@ DepthTexture1DDesc::DepthTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool cr
 }
 
 DepthTexture2DDesc::DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height, bool createDSV, bool createSRV,
+	UINT16 mipLevels, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
+{
+	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	Alignment = alignment;
+	Width = width;
+	Height = height;
+	DepthOrArraySize = 1;
+	MipLevels = mipLevels;
+	Format = format;
+	SampleDesc.Count = 1;
+	SampleDesc.Quality = 0;
+	Layout = layout;
+	IsTextureArray = false;
+
+	Flags = D3D12_RESOURCE_FLAG_NONE;
+	if (createDSV)
+		Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+	if (!createSRV)
+		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+}
+
+DepthTexture2DDesc::DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height, bool createDSV, bool createSRV,
 	UINT16 mipLevels, UINT sampleCount, UINT sampleQuality, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
 {
 	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -513,6 +583,28 @@ DepthTexture2DDesc::DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT he
 	Layout = layout;
 	IsTextureArray = false;
 	
+	Flags = D3D12_RESOURCE_FLAG_NONE;
+	if (createDSV)
+		Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+	if (!createSRV)
+		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+}
+
+DepthTexture2DDesc::DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height, bool createDSV, bool createSRV,
+	UINT16 mipLevels, UINT16 arraySize, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
+{
+	Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	Alignment = alignment;
+	Width = width;
+	Height = height;
+	DepthOrArraySize = arraySize;
+	MipLevels = mipLevels;
+	Format = format;
+	SampleDesc.Count = 1;
+	SampleDesc.Quality = 0;
+	Layout = layout;
+	IsTextureArray = true;
+
 	Flags = D3D12_RESOURCE_FLAG_NONE;
 	if (createDSV)
 		Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;

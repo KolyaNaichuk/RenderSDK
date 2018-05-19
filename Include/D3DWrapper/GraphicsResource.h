@@ -166,14 +166,26 @@ struct ColorTexture2DDesc : public D3D12_RESOURCE_DESC
 {
 	ColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height,
 		bool createRTV, bool createSRV, bool createUAV,
-		UINT16 mipLevels = 1, UINT sampleCount = 1, UINT sampleQuality = 0,
+		UINT16 mipLevels = 1,
+		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		UINT64 alignment = 0);
+
+	ColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height,
+		bool createRTV, bool createSRV, bool createUAV,
+		UINT16 mipLevels, UINT sampleCount, UINT sampleQuality,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
 
 	ColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height,
 		bool createRTV, bool createSRV, bool createUAV,
 		UINT16 mipLevels, UINT16 arraySize,
-		UINT sampleCount = 1, UINT sampleQuality = 0,
+		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		UINT64 alignment = 0);
+
+	ColorTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height,
+		bool createRTV, bool createSRV, bool createUAV,
+		UINT16 mipLevels, UINT16 arraySize,
+		UINT sampleCount, UINT sampleQuality,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
 
@@ -211,14 +223,26 @@ struct DepthTexture2DDesc : public D3D12_RESOURCE_DESC
 	DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height,
 		bool createDSV, bool createSRV,
 		UINT16 mipLevels = 1,
-		UINT sampleCount = 1, UINT sampleQuality = 0,
+		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		UINT64 alignment = 0);
+
+	DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height,
+		bool createDSV, bool createSRV,
+		UINT16 mipLevels,
+		UINT sampleCount, UINT sampleQuality,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
 
 	DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height,
 		bool createDSV, bool createSRV,
 		UINT16 mipLevels, UINT16 arraySize,
-		UINT sampleCount = 1, UINT sampleQuality = 0,
+		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		UINT64 alignment = 0);
+
+	DepthTexture2DDesc(DXGI_FORMAT format, UINT64 width, UINT height,
+		bool createDSV, bool createSRV,
+		UINT16 mipLevels, UINT16 arraySize,
+		UINT sampleCount, UINT sampleQuality,
 		D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 		UINT64 alignment = 0);
 
