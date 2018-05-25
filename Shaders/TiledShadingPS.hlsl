@@ -23,16 +23,15 @@ Texture2D<uint2> g_GBuffer3 : register(t3);
 Texture2D<float4> g_GBuffer4 : register(t4);
 
 #if ENABLE_SPOT_LIGHTS == 1
-StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t5);
-StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t6);
-Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t7);
-StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t8);
-Texture2DArray<float> g_SpotLightShadowMaps : register(t9);
-StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t10);
+StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t5);
+Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t6);
+StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t7);
+Texture2DArray<float> g_SpotLightShadowMaps : register(t8);
+StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t9);
 #endif // ENABLE_SPOT_LIGHTS
 
-Buffer<uint> g_FirstResourceIndexPerMaterialIDBuffer : register(t11);
-Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t12);
+Buffer<uint> g_FirstResourceIndexPerMaterialIDBuffer : register(t10);
+Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t11);
 SamplerState g_AnisoSampler : register(s0);
 
 [earlydepthstencil]
@@ -75,10 +74,9 @@ float4 Main(PSInput input) : SV_Target
 	{
 		uint lightIndex = g_SpotLightIndexPerTileBuffer[lightIndexPerTile];
 
-		Sphere lightBounds = g_SpotLightWorldBoundsBuffer[lightIndex];
 		float3 lightColor = g_SpotLightPropsBuffer[lightIndex].color;
+		float3 lightWorldSpacePos = g_SpotLightPropsBuffer[lightIndex].worldSpacePos;
 		float3 lightWorldSpaceDir = g_SpotLightPropsBuffer[lightIndex].worldSpaceDir;
-		float3 lightWorldSpacePos = lightBounds.center - lightBounds.radius * lightWorldSpaceDir;
 		float lightRange = g_SpotLightPropsBuffer[lightIndex].lightRange;
 		float cosHalfInnerConeAngle = g_SpotLightPropsBuffer[lightIndex].cosHalfInnerConeAngle;
 		float cosHalfOuterConeAngle = g_SpotLightPropsBuffer[lightIndex].cosHalfOuterConeAngle;

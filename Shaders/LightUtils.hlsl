@@ -18,9 +18,10 @@
 struct SpotLightProps
 {
 	float3 color;
-	float3 worldSpaceDir;
 	float lightRange;
+	float3 worldSpacePos;
 	float cosHalfInnerConeAngle;
+	float3 worldSpaceDir;
 	float cosHalfOuterConeAngle;
 	float viewNearPlane;
 	float rcpViewClipRange;

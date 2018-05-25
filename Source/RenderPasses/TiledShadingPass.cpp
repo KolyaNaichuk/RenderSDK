@@ -97,7 +97,6 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_GBuffer3State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_GBuffer4State = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_SpotLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightIndexPerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightRangePerTileBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
@@ -147,10 +146,6 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 
 	if (pParams->m_EnableSpotLights)
 	{
-		AddResourceBarrierIfRequired(pParams->m_pSpotLightWorldBoundsBuffer,
-			pParams->m_InputResourceStates.m_SpotLightWorldBoundsBufferState,
-			m_OutputResourceStates.m_SpotLightWorldBoundsBufferState);
-
 		AddResourceBarrierIfRequired(pParams->m_pSpotLightPropsBuffer,
 			pParams->m_InputResourceStates.m_SpotLightPropsBufferState,
 			m_OutputResourceStates.m_SpotLightPropsBufferState);
@@ -163,7 +158,6 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 			pParams->m_InputResourceStates.m_SpotLightRangePerTileBufferState,
 			m_OutputResourceStates.m_SpotLightRangePerTileBufferState);
 
-		assert(false && "Think how better to do transition");
 		AddResourceBarrierIfRequired(pParams->m_pSpotLightShadowMaps,
 			pParams->m_InputResourceStates.m_SpotLightShadowMapsState,
 			m_OutputResourceStates.m_SpotLightShadowMapsState);
@@ -198,9 +192,6 @@ void TiledShadingPass::InitResources(InitParams* pParams)
 
 	if (pParams->m_EnableSpotLights)
 	{
-		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-			pParams->m_pSpotLightWorldBoundsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
 		pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 			pParams->m_pSpotLightPropsBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -253,10 +244,10 @@ void TiledShadingPass::InitRootSignature(InitParams* pParams)
 	
 	std::vector<D3D12_DESCRIPTOR_RANGE> srvRangesPS = {SRVDescriptorRange(5, 0)};
 	if (pParams->m_EnableSpotLights)
-		srvRangesPS.push_back(SRVDescriptorRange(6, 5));
+		srvRangesPS.push_back(SRVDescriptorRange(5, 5));
 		
-	srvRangesPS.push_back(SRVDescriptorRange(1, 11));
-	srvRangesPS.push_back(SRVDescriptorRange(pParams->m_NumMaterialTextures, 12));
+	srvRangesPS.push_back(SRVDescriptorRange(1, 10));
+	srvRangesPS.push_back(SRVDescriptorRange(pParams->m_NumMaterialTextures, 11));
 	rootParams[kRootSRVTableParamPS] = RootDescriptorTableParameter((UINT)srvRangesPS.size(), srvRangesPS.data(), D3D12_SHADER_VISIBILITY_PIXEL);
 
 	std::vector<D3D12_DESCRIPTOR_RANGE> samplerRangesPS = {SamplerRange(1, 0)};

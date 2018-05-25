@@ -4,6 +4,7 @@
 #include "Math/Sphere.h"
 #include "Math/Plane.h"
 #include "Math/Math.h"
+#include "Math/SAT.h"
 
 bool Overlap(const AxisAlignedBox& box1, const AxisAlignedBox& box2)
 {
@@ -44,10 +45,26 @@ bool TestSphereAgainstPlane(const Plane& plane, const Sphere& sphere)
 	return !fullyInsideBackHalfSpace;
 }
 
+bool TestPointAgainstPlane(const Plane& plane, const Vector3f& point)
+{
+	float signedDist = SignedDistanceToPoint(plane, point);
+
+	bool fullyInsideBackHalfSpace = signedDist < 0.0f;
+	return !fullyInsideBackHalfSpace;
+}
+
 bool TestFrustumAgainstFrustum(const Frustum& frustum1, const Frustum& frustum2)
 {
-	assert(false);
-	return false;
+	return SAT::OverlapOnAxis(frustum1.m_Planes[Frustum::FarPlane].m_Normal, Frustum::NumCorners, frustum1.m_Corners, Frustum::NumCorners, frustum2.m_Corners) && 
+		SAT::OverlapOnAxis(frustum1.m_Planes[Frustum::LeftPlane].m_Normal, Frustum::NumCorners, frustum1.m_Corners, Frustum::NumCorners, frustum2.m_Corners) &&
+		SAT::OverlapOnAxis(frustum1.m_Planes[Frustum::RightPlane].m_Normal, Frustum::NumCorners, frustum1.m_Corners, Frustum::NumCorners, frustum2.m_Corners) &&
+		SAT::OverlapOnAxis(frustum1.m_Planes[Frustum::TopPlane].m_Normal, Frustum::NumCorners, frustum1.m_Corners, Frustum::NumCorners, frustum2.m_Corners) &&
+		SAT::OverlapOnAxis(frustum1.m_Planes[Frustum::BottomPlane].m_Normal, Frustum::NumCorners, frustum1.m_Corners, Frustum::NumCorners, frustum2.m_Corners) &&
+		SAT::OverlapOnAxis(frustum2.m_Planes[Frustum::FarPlane].m_Normal, Frustum::NumCorners, frustum1.m_Corners, Frustum::NumCorners, frustum2.m_Corners) &&
+		SAT::OverlapOnAxis(frustum2.m_Planes[Frustum::LeftPlane].m_Normal, Frustum::NumCorners, frustum1.m_Corners, Frustum::NumCorners, frustum2.m_Corners) &&
+		SAT::OverlapOnAxis(frustum2.m_Planes[Frustum::RightPlane].m_Normal, Frustum::NumCorners, frustum1.m_Corners, Frustum::NumCorners, frustum2.m_Corners) &&
+		SAT::OverlapOnAxis(frustum2.m_Planes[Frustum::TopPlane].m_Normal, Frustum::NumCorners, frustum1.m_Corners, Frustum::NumCorners, frustum2.m_Corners) &&
+		SAT::OverlapOnAxis(frustum2.m_Planes[Frustum::BottomPlane].m_Normal, Frustum::NumCorners, frustum1.m_Corners, Frustum::NumCorners, frustum2.m_Corners);
 }
 
 bool TestAABBAgainstFrustum(const Frustum& frustum, const AxisAlignedBox& box)
@@ -73,3 +90,4 @@ bool TestSphereAgainstFrustum(const Frustum& frustum, const Sphere& sphere)
 
 	return insideOrOverlap;
 }
+

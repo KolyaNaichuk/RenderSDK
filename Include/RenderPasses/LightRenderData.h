@@ -3,12 +3,14 @@
 #include "Math/Matrix4.h"
 #include "Math/Sphere.h"
 #include "Math/Vector3.h"
+#include "Math/Frustum.h"
 
 struct SpotLightRenderData
 {
 	Vector3f m_Color;
+	Vector3f m_WorldSpacePos;
 	Vector3f m_WorldSpaceDir;
-	Sphere m_WorldBounds;
+	Frustum m_WorldFrustum;
 	f32 m_LightRange;
 	f32 m_CosHalfInnerConeAngle;
 	f32 m_CosHalfOuterConeAngle;

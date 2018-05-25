@@ -144,14 +144,15 @@ namespace
 	struct SpotLightProps
 	{
 		Vector3f m_Color;
-		Vector3f m_WorldSpaceDir;
 		f32 m_LightRange;
+		Vector3f m_WorldSpacePos;
 		f32 m_CosHalfInnerConeAngle;
+		Vector3f m_WorldSpaceDir;
 		f32 m_CosHalfOuterConeAngle;
 		f32 m_ViewNearPlane;
 		f32 m_RcpViewClipRange;
 	};
-			
+				
 	using BufferElementFormatter = std::function<std::string (const void* pElementData)>;
 	
 	void OutputBufferContent(RenderEnv* pRenderEnv, Buffer* pBuffer, D3D12_RESOURCE_STATES bufferState,
@@ -375,7 +376,6 @@ void DXApplication::OnInit()
 		InitRenderSpotLightShadowMapsPass(pScene);
 		InitTiledLightCullingPass();
 	}
-	
 	InitTiledShadingPass();
 		
 	InitVisualizeAccumLightPass();
@@ -668,7 +668,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 
 	m_pCommandListPool = new CommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32, false);
+	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 64, false);
 	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
 	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2048, true);
@@ -683,7 +683,7 @@ void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
 	DescriptorHeapDesc shaderInvisibleSamplerHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 10, false);
 	m_pShaderInvisibleSamplerHeap = new DescriptorHeap(m_pDevice, &shaderInvisibleSamplerHeapDesc, L"m_pShaderInvisibleSamplerHeap");
 
-	DescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 8, false);
+	DescriptorHeapDesc dsvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 32, false);
 	m_pShaderInvisibleDSVHeap = new DescriptorHeap(m_pDevice, &dsvHeapDesc, L"m_pShaderInvisibleDSVHeap");
 
 	m_pBackBufferViewport = new Viewport(0.0f, 0.0f, (FLOAT)backBufferWidth, (FLOAT)backBufferHeight);
@@ -1535,8 +1535,11 @@ CommandList* DXApplication::RecordVisualizeVoxelReflectancePass()
 
 CommandList* DXApplication::RecordUploadLightDataPass()
 {
-	assert(m_pTiledShadingPass != nullptr);
+	assert(m_pTiledLightCullingPass != nullptr);
+	const TiledLightCullingPass::ResourceStates* pTiledLightCullingPassStates =
+		m_pTiledLightCullingPass->GetOutputResourceStates();
 
+	assert(m_pTiledShadingPass != nullptr);
 	const TiledShadingPass::ResourceStates* pTiledShadingPassStates =
 		m_pTiledShadingPass->GetOutputResourceStates();
 	
@@ -1546,50 +1549,21 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 	u32 profileIndex = m_pGPUProfiler->StartProfile(pCommandList, "UploadLightDataPass");
 #endif // ENABLE_PROFILING
 
-	static ResourceTransitionBarrier resourceBarriers[12];
+	static ResourceTransitionBarrier resourceBarriers[5];
 	u8 numBarriers = 0;
 
 	if (m_NumSpotLights > 0)
 	{
-		assert(false);
-		//assert(m_pCreateSpotLightTiledExpShadowMapPass != nullptr);
-		//const CreateTiledExpShadowMapPass::ResourceStates* pCreateExpShadowMapPassStates =
-		//	m_pCreateSpotLightTiledExpShadowMapPass->GetOutputResourceStates();
-
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
 			m_pActiveSpotLightWorldBoundsBuffer,
-			pTiledShadingPassStates->m_SpotLightWorldBoundsBufferState,
+			pTiledLightCullingPassStates->m_SpotLightWorldBoundsBufferState,
 			D3D12_RESOURCE_STATE_COPY_DEST);
 
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
 			m_pActiveSpotLightPropsBuffer,
 			pTiledShadingPassStates->m_SpotLightPropsBufferState,
 			D3D12_RESOURCE_STATE_COPY_DEST);
-
-		assert(false);
-		//resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-		//	m_pActiveSpotLightCreateExpShadowMapParamsBuffer,
-		//	pCreateExpShadowMapPassStates->m_CreateExpShadowMapParamsBufferState,
-		//	D3D12_RESOURCE_STATE_COPY_DEST);
-
-		assert(false);
-		//resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-		//	m_pActiveSpotLightWorldFrustumBuffer,
-		//	pRenderTiledShadowMapPassStates->m_LightWorldFrustumBufferState,
-		//	D3D12_RESOURCE_STATE_COPY_DEST);
 		
-		assert(false);
-		//resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-		//	m_pActiveSpotLightViewProjMatrixBuffer,
-		//	pRenderTiledShadowMapPassStates->m_LightViewProjMatrixBufferState,
-		//	D3D12_RESOURCE_STATE_COPY_DEST);
-
-		assert(false);
-		//resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-		//	m_pActiveSpotLightShadowMapTileBuffer,
-		//	pTiledShadingPassStates->m_SpotLightShadowMapTileBufferState,
-		//	D3D12_RESOURCE_STATE_COPY_DEST);
-
 		pCommandList->ResourceBarrier(numBarriers, resourceBarriers);
 
 		pCommandList->CopyBufferRegion(m_pActiveSpotLightWorldBoundsBuffer, 0,
@@ -1600,24 +1574,9 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 			m_UploadActiveSpotLightPropsBuffers[m_BackBufferIndex], 0,
 			m_NumActiveSpotLights * sizeof(SpotLightProps));
 
-		assert(false);
-		//pCommandList->CopyBufferRegion(m_pActiveSpotLightCreateExpShadowMapParamsBuffer, 0,
-		//	m_UploadActiveSpotLightCreateExpShadowMapParamsBuffers[m_BackBufferIndex], 0,
-		//	m_NumActiveSpotLights * sizeof(CreateExpShadowMapParams));
-
-		assert(false);
-		//pCommandList->CopyBufferRegion(m_pActiveSpotLightWorldFrustumBuffer, 0,
-		//	m_UploadActiveSpotLightWorldFrustumBuffers[m_BackBufferIndex], 0,
-		//	m_NumActiveSpotLights * sizeof(LightFrustum));
-
 		pCommandList->CopyBufferRegion(m_pActiveSpotLightViewProjMatrixBuffer, 0,
 			m_UploadActiveSpotLightViewProjMatrixBuffers[m_BackBufferIndex], 0,
 			m_NumActiveSpotLights * sizeof(Matrix4f));
-
-		assert(false);
-		//pCommandList->CopyBufferRegion(m_pActiveSpotLightShadowMapTileBuffer, 0,
-		//	m_UploadActiveSpotLightShadowMapTileBuffers[m_BackBufferIndex], 0,
-		//	m_NumActiveSpotLights * sizeof(ShadowMapTile));
 	}
 	
 #ifdef ENABLE_PROFILING
@@ -1863,14 +1822,12 @@ void DXApplication::InitTiledShadingPass()
 			m_pRenderSpotLightShadowMapsPass->GetOutputResourceStates();
 				
 		params.m_InputResourceStates.m_DepthTextureState = pTiledLightCullingPassStates->m_DepthTextureState;
-		params.m_InputResourceStates.m_SpotLightWorldBoundsBufferState = pTiledLightCullingPassStates->m_SpotLightWorldBoundsBufferState;
 		params.m_InputResourceStates.m_SpotLightPropsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
 		params.m_InputResourceStates.m_SpotLightIndexPerTileBufferState = pTiledLightCullingPassStates->m_SpotLightIndexPerTileBufferState;
 		params.m_InputResourceStates.m_SpotLightRangePerTileBufferState = pTiledLightCullingPassStates->m_SpotLightRangePerTileBufferState;
 		params.m_InputResourceStates.m_SpotLightShadowMapsState = pRenderSpotLightShadowMapsPassStates->m_SpotLightShadowMapsState;
 		params.m_InputResourceStates.m_SpotLightViewProjMatrixBufferState = pRenderSpotLightShadowMapsPassStates->m_SpotLightViewProjMatrixBufferState;
 
-		params.m_pSpotLightWorldBoundsBuffer = m_pActiveSpotLightWorldBoundsBuffer;
 		params.m_pSpotLightPropsBuffer = m_pActiveSpotLightPropsBuffer;
 		params.m_pSpotLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetSpotLightIndexPerTileBuffer();
 		params.m_pSpotLightRangePerTileBuffer = m_pTiledLightCullingPass->GetSpotLightRangePerTileBuffer();
@@ -1994,31 +1951,27 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		
 		const Transform& lightWorldSpaceTransform = pLight->GetTransform();
 		const Vector3f& lightWorldSpacePos = lightWorldSpaceTransform.GetPosition();
+		
 		const BasisAxes lightWorldSpaceBasis = ExtractBasisAxes(lightWorldSpaceTransform.GetRotation());
-
-		Matrix4f projMatrix = CreatePerspectiveFovProjMatrix(pLight->GetOuterConeAngle(), 1.0f, pLight->GetShadowNearPlane(), pLight->GetRange());
-
 		assert(IsNormalized(lightWorldSpaceBasis.m_ZAxis));
 		const Vector3f& lightWorldSpaceDir = lightWorldSpaceBasis.m_ZAxis;
-		assert(IsNormalized(lightWorldSpaceBasis.m_YAxis));
-		const Vector3f& lightWorldSpaceUpDir = lightWorldSpaceBasis.m_YAxis;
-
-		Cone lightWorldCone(lightWorldSpacePos, pLight->GetOuterConeAngle(), lightWorldSpaceDir, pLight->GetRange());
-		m_pSpotLights[lightIndex].m_Color = pLight->GetColor();
-		m_pSpotLights[lightIndex].m_WorldSpaceDir = lightWorldSpaceDir;
-		m_pSpotLights[lightIndex].m_WorldBounds = ExtractBoundingSphere(lightWorldCone);
 		
+		const Matrix4f projMatrix = CreatePerspectiveFovProjMatrix(pLight->GetOuterConeAngle(), 1.0f, pLight->GetShadowNearPlane(), pLight->GetRange());
+		const Matrix4f viewMatrix = lightWorldSpaceTransform.GetWorldToLocalMatrix();
+		const Matrix4f viewProjMatrix = viewMatrix * projMatrix;
+		
+		m_pSpotLights[lightIndex].m_Color = pLight->GetColor();
+		m_pSpotLights[lightIndex].m_WorldSpacePos = lightWorldSpacePos;
+		m_pSpotLights[lightIndex].m_WorldSpaceDir = lightWorldSpaceDir;
+		m_pSpotLights[lightIndex].m_WorldFrustum = Frustum(viewProjMatrix);
 		m_pSpotLights[lightIndex].m_LightViewNearPlane = pLight->GetShadowNearPlane();
 		m_pSpotLights[lightIndex].m_LightRcpViewClipRange = Rcp(pLight->GetRange() - pLight->GetShadowNearPlane());
 		m_pSpotLights[lightIndex].m_LightProjMatrix43 = projMatrix.m_32;
 		m_pSpotLights[lightIndex].m_LightProjMatrix33 = projMatrix.m_22;
-
 		m_pSpotLights[lightIndex].m_LightRange = pLight->GetRange();
 		m_pSpotLights[lightIndex].m_CosHalfInnerConeAngle = Cos(0.5f * pLight->GetInnerConeAngle());
 		m_pSpotLights[lightIndex].m_CosHalfOuterConeAngle = Cos(0.5f * pLight->GetOuterConeAngle());
-		
-		Matrix4f viewMatrix = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpacePos + lightWorldSpaceDir, lightWorldSpaceUpDir);
-		m_pSpotLights[lightIndex].m_ViewProjMatrix = viewMatrix * projMatrix;
+		m_pSpotLights[lightIndex].m_ViewProjMatrix = viewProjMatrix;
 				
 		m_ppActiveSpotLights[lightIndex] = nullptr;
 	}
@@ -2060,88 +2013,42 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 
 void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustum)
 {
-	assert(false);
-	/*
 #ifdef ENABLE_PROFILING
 	u32 profileIndex = m_pCPUProfiler->StartProfile("SetupSpotLightDataForUpload");
 #endif // ENABLE_PROFILING
-
-	decltype(m_NumSpotLights) numVisibleSpotLights = 0;
+			
+	m_NumActiveSpotLights = 0;
 	for (decltype(m_NumSpotLights) lightIndex = 0; lightIndex < m_NumSpotLights; ++lightIndex)
 	{
 		SpotLightRenderData& lightData = m_pSpotLights[lightIndex];
-		if (TestSphereAgainstFrustum(cameraWorldFrustum, lightData.m_WorldBounds))
-			m_ppActiveSpotLights[numVisibleSpotLights++] = &lightData;
+		if (TestFrustumAgainstFrustum(cameraWorldFrustum, lightData.m_WorldFrustum))
+			m_ppActiveSpotLights[m_NumActiveSpotLights++] = &lightData;
 	}
-
-	const Vector2f screenSize(m_pBackBufferViewport->Width, m_pBackBufferViewport->Height);
-	for (decltype(numVisibleSpotLights) lightIndex = 0; lightIndex < numVisibleSpotLights; ++lightIndex)
-	{
-		SpotLightRenderData* pLightData = m_ppActiveSpotLights[lightIndex];
-		pLightData->m_AffectedScreenArea = CalcScreenAreaAffectedByLight(pLightData->m_WorldBounds, screenSize, *m_pCamera);
-	}
-
-	auto hasLargerSizeOnScreen = [](const SpotLightRenderData* pLightData1, const SpotLightRenderData* pLightData2)
-	{
-		return (pLightData1->m_AffectedScreenArea > pLightData2->m_AffectedScreenArea);
-	};
-	std::sort(m_ppActiveSpotLights, m_ppActiveSpotLights + numVisibleSpotLights, hasLargerSizeOnScreen);
-	
-	m_NumActiveSpotLights = 0;
-	assert(m_pSpotLightShadowMapTileAllocator != nullptr);
-	m_pSpotLightShadowMapTileAllocator->Reset();
-
-	while (m_NumActiveSpotLights < numVisibleSpotLights)
-	{
-		SpotLightRenderData* pLightData = m_ppActiveSpotLights[m_NumActiveSpotLights];
-
-		ShadowMapTile shadowMapTile;
-		if (m_pSpotLightShadowMapTileAllocator->Allocate(pLightData->m_AffectedScreenArea, &shadowMapTile))
-		{
-			pLightData->m_ShadowMapTile = shadowMapTile;
-			++m_NumActiveSpotLights;
-		}
-		else
-		{
-			break;
-		}
-	}
-
+		
 	Sphere* pUploadActiveLightWorldBounds = (Sphere*)m_UploadActiveSpotLightWorldBounds[m_BackBufferIndex];
 	SpotLightProps* pUploadActiveLightProps = (SpotLightProps*)m_UploadActiveSpotLightProps[m_BackBufferIndex];
-	LightFrustum* pUploadActiveLightWorldFrustums = (LightFrustum*)m_UploadActiveSpotLightWorldFrustums[m_BackBufferIndex];
 	Matrix4f* pUploadActiveLightViewProjMatrices = (Matrix4f*)m_UploadActiveSpotLightViewProjMatrices[m_BackBufferIndex];
-	ShadowMapTile* pUploadActiveLightShadowMapTiles = (ShadowMapTile*)m_UploadActiveSpotLightShadowMapTiles[m_BackBufferIndex];
-	CreateExpShadowMapParams* pUploadActiveLightCreateExpShadowMapParams = (CreateExpShadowMapParams*)m_UploadActiveSpotLightCreateExpShadowMapParams[m_BackBufferIndex];
-
+	
 	for (decltype(m_NumActiveSpotLights) lightIndex = 0; lightIndex < m_NumActiveSpotLights; ++lightIndex)
 	{
 		const SpotLightRenderData* pLightData = m_ppActiveSpotLights[lightIndex];
 		pUploadActiveLightWorldBounds[lightIndex] = pLightData->m_WorldBounds;
-		pUploadActiveLightWorldFrustums[lightIndex] = pLightData->m_WorldFrustum;
-		pUploadActiveLightShadowMapTiles[lightIndex] = pLightData->m_ShadowMapTile;
 		
 		pUploadActiveLightProps[lightIndex].m_Color = pLightData->m_Color;
+		pUploadActiveLightProps[lightIndex].m_WorldSpacePos = pLightData->m_WorldSpacePos;
 		pUploadActiveLightProps[lightIndex].m_WorldSpaceDir = pLightData->m_WorldSpaceDir;
 		pUploadActiveLightProps[lightIndex].m_LightRange = pLightData->m_LightRange;
 		pUploadActiveLightProps[lightIndex].m_CosHalfInnerConeAngle = pLightData->m_CosHalfInnerConeAngle;
 		pUploadActiveLightProps[lightIndex].m_CosHalfOuterConeAngle = pLightData->m_CosHalfOuterConeAngle;
 		pUploadActiveLightProps[lightIndex].m_ViewNearPlane = pLightData->m_LightViewNearPlane;
 		pUploadActiveLightProps[lightIndex].m_RcpViewClipRange = pLightData->m_LightRcpViewClipRange;
-
-		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightViewNearPlane = pLightData->m_LightViewNearPlane;
-		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightRcpViewClipRange = pLightData->m_LightRcpViewClipRange;
-		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightProjMatrix43 = pLightData->m_LightProjMatrix43;
-		pUploadActiveLightCreateExpShadowMapParams[lightIndex].m_LightProjMatrix33 = pLightData->m_LightProjMatrix33;
 		
-		Matrix4f shadowMapTileMatrix = CreateShadowMapTileMatrix(pLightData->m_ShadowMapTile);
-		pUploadActiveLightViewProjMatrices[lightIndex] = pLightData->m_ViewProjMatrix * shadowMapTileMatrix;
+		pUploadActiveLightViewProjMatrices[lightIndex] = pLightData->m_ViewProjMatrix;
 	}
 
 #ifdef ENABLE_PROFILING
 	m_pCPUProfiler->EndProfile(profileIndex);
 #endif // ENABLE_PROFILING
-	*/
 }
 
 void DXApplication::UpdateDisplayResult(DisplayResult displayResult)

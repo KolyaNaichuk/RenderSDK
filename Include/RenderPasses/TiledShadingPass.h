@@ -29,7 +29,6 @@ public:
 		D3D12_RESOURCE_STATES m_GBuffer3State;
 		D3D12_RESOURCE_STATES m_GBuffer4State;
 		D3D12_RESOURCE_STATES m_FirstResourceIndexPerMaterialIDBufferState;
-		D3D12_RESOURCE_STATES m_SpotLightWorldBoundsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightPropsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightIndexPerTileBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightRangePerTileBufferState;
@@ -59,7 +58,6 @@ public:
 
 		bool m_EnableDirectionalLight;
 		bool m_EnableSpotLights;
-		Buffer* m_pSpotLightWorldBoundsBuffer;
 		Buffer* m_pSpotLightPropsBuffer;
 		Buffer* m_pSpotLightIndexPerTileBuffer;
 		Buffer* m_pSpotLightRangePerTileBuffer;

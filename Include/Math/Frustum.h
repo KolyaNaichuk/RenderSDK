@@ -30,6 +30,9 @@ struct Frustum
 		NumPlanes
 	};
 
+	Frustum();
 	Frustum(const Matrix4f& transformMatrix);
+
 	Plane m_Planes[NumPlanes];	
+	Vector3f m_Corners[NumCorners];
 };

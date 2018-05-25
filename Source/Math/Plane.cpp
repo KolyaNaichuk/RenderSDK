@@ -63,3 +63,21 @@ Plane::HalfSpace ClassifySphere(const Plane& plane, const Sphere& sphere)
 		return Plane::Back;
 	return Plane::On;
 }
+
+bool CalcIntersectionPoint(Vector3f* pOutPoint, const Plane& plane1, const Plane& plane2, const Plane& plane3)
+{
+	// Based on chapter 5.4.5 Intersection of Three Planes from Real-Time Collision Detection book
+
+	assert(pOutPoint != nullptr);
+	Vector3f u = Cross(plane2.m_Normal, plane3.m_Normal);
+	
+	f32 denom = Dot(plane1.m_Normal, u);
+	if (Abs(denom) < EPSILON)
+		return false;
+		
+	*pOutPoint = Cross(plane1.m_Normal, plane2.m_SignedDistFromOrigin * plane3.m_Normal - plane3.m_SignedDistFromOrigin * plane2.m_Normal);
+	*pOutPoint -= plane1.m_SignedDistFromOrigin * u;
+	*pOutPoint /= denom;
+
+	return true;
+}
