@@ -14,11 +14,6 @@ namespace
 		UINT m_InstanceOffset;
 		DrawIndexedArguments m_Args;
 	};
-	enum
-	{
-		kStandardShadowMapSize = 1024,
-		kExpShadowMapSize = 512
-	};
 }
 
 RenderSpotLightShadowMapsPass::RenderSpotLightShadowMapsPass(InitParams* pParams)
@@ -33,6 +28,8 @@ RenderSpotLightShadowMapsPass::~RenderSpotLightShadowMapsPass()
 	SafeDelete(m_pStaticMeshCommandBuffer);
 	SafeDelete(m_pStaticMeshInstanceIndexBuffer);
 	SafeDelete(m_pSpotLightShadowMaps);
+	SafeDelete(m_pSpotLightViewProjMatrixBuffer);
+	SafeDelete(m_pCreateExpShadowMapParamsBuffer);
 }
 
 void RenderSpotLightShadowMapsPass::Record(RenderParams* pParams)
@@ -57,14 +54,15 @@ void RenderSpotLightShadowMapsPass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_SpotLightViewProjMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 
 	assert(m_pActiveShadowMaps == nullptr);
-	const DepthStencilValue optimizedClearDepth(1.0f);	
-	DepthTexture2DDesc activeShadowMapsDesc(DXGI_FORMAT_R32_TYPELESS, kStandardShadowMapSize, kStandardShadowMapSize,
+	const DepthStencilValue optimizedClearDepth(1.0f);
+	DepthTexture2DDesc activeShadowMapsDesc(DXGI_FORMAT_R32_TYPELESS, pParams->m_StandardShadowMapSize, pParams->m_StandardShadowMapSize,
 		true/*createDSV*/, true/*createSRV*/, 1/*mipLevels*/, pParams->m_MaxNumActiveSpotLights/*arraySize*/);
 	m_pActiveShadowMaps = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &activeShadowMapsDesc,
 		D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"RenderSpotLightShadowMapsPass::m_pActiveShadowMaps");
 	
 	assert(m_pSpotLightShadowMaps == nullptr);
-	ColorTexture2DDesc shadowMapsDesc(DXGI_FORMAT_R32_FLOAT, kExpShadowMapSize, kExpShadowMapSize,
+	u32 expShadowMapSize = pParams->m_Downscale2XExpShadowMap ? (pParams->m_StandardShadowMapSize / 2) : pParams->m_StandardShadowMapSize;
+	ColorTexture2DDesc shadowMapsDesc(DXGI_FORMAT_R32_FLOAT, expShadowMapSize, expShadowMapSize,
 		false/*createRTV*/, true/*createSRV*/, true/*createUAV*/, 1/*mipLevels*/, pParams->m_NumSpotLights/*arraySize*/);
 	m_pSpotLightShadowMaps = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shadowMapsDesc,
 		pParams->m_InputResourceStates.m_SpotLightShadowMapsState, nullptr/*optimizedClearColor*/, L"RenderSpotLightShadowMapsPass::m_pShadowMaps");

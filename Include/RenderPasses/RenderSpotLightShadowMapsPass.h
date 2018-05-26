@@ -24,7 +24,8 @@ public:
 		u32 m_MaxNumActiveSpotLights;
 		u32 m_NumStaticMeshTypes;
 		MeshBatch** m_ppStaticMeshBatches;
-		Buffer* m_pSpotLightViewProjMatrixBuffer;
+		u32 m_StandardShadowMapSize;
+		bool m_Downscale2XExpShadowMap;
 	};
 
 	struct RenderParams
@@ -69,4 +70,7 @@ private:
 	std::vector<u32> m_OutdatedSpotLightShadowMapIndices;
 
 	ResourceStates m_OutputResourceStates;
+
+	Buffer* m_pSpotLightViewProjMatrixBuffer = nullptr;
+	Buffer* m_pCreateExpShadowMapParamsBuffer = nullptr;
 };

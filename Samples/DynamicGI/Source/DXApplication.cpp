@@ -55,8 +55,11 @@
 
 /*
 To do:
+- Sort lights by importance
+- Go through overlap test involving plane in the test to ensure the proper equation format is used for the plane
 - When creating staticMeshInstanceIndexBuffer for RenderSpotLightShadowMapsPass use most optimal format
 - For rendering shadows use separate vertex buffer containing only positions
+- When generating visible static geometry for lights I could also run back-face culling
 - Check if it is possible to pre-sort (front to back) commands for rendering shadow maps for static meshes
 - In TiledLightCulling pass use spot light frustum vs view frustum test
 - Rewrite CalcShadingRectanglesCS using Gather to process 4 values at a time
@@ -65,7 +68,6 @@ To do:
 - Enable InitCreateVoxelizeCommandsPass(), InitVoxelizePass(), InitVisualizeVoxelReflectancePass()
 - Clean up RenderPasses/Common.h
 - I am using Sphere as bounding volume for SpotLights. Investigate if there are better alternatives. Check https://bartwronski.com/ implementation for the cone test.
-- Hard-coded light screen area for now. Fix CalcScreenAreaAffectedByLight.
 - Geometry popping when rotating the camera. See reprojected depth buffer for the result.
 - Enable VoxelizePass. Fix calculation for frustum corners
 - VoxelizationPass does not pass point/spot light count to the shader
@@ -90,7 +92,6 @@ OOB will have coordinates expanding from -1 to 1 not merely passing through 0 wh
 - Check Torque3D engine for plane object implementation. mPlane.h and mPlane.cpp
 - Using std::experimental::filesystem::path from OBJFileLoader. Should be consistent with the code.
 - Review to-dos
-- Use output resource states to initialize input resource states from the previous pass.
 - Use Task graph for resource state transition after each render pass.
 https://patterns.eecs.berkeley.edu/?page_id=609
 - Fix compilation warnings for x64 build
@@ -355,7 +356,7 @@ DXApplication::~DXApplication()
 
 void DXApplication::OnInit()
 {
-	Scene* pScene = SceneLoader::LoadSibenik();
+	Scene* pScene = SceneLoader::LoadCrytekSponza();
 
 	InitRenderEnv(kBackBufferWidth, kBackBufferHeight);
 	InitScene(kBackBufferWidth, kBackBufferHeight, pScene);		
@@ -1563,6 +1564,11 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 			m_pActiveSpotLightPropsBuffer,
 			pTiledShadingPassStates->m_SpotLightPropsBufferState,
 			D3D12_RESOURCE_STATE_COPY_DEST);
+
+		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
+			m_pActiveSpotLightViewProjMatrixBuffer,
+			pTiledShadingPassStates->m_SpotLightViewProjMatrixBufferState,
+			D3D12_RESOURCE_STATE_COPY_DEST);
 		
 		pCommandList->ResourceBarrier(numBarriers, resourceBarriers);
 
@@ -1630,7 +1636,8 @@ void DXApplication::InitRenderSpotLightShadowMapsPass(Scene* pScene)
 	params.m_MaxNumActiveSpotLights = kMaxNumActiveSpotLights;
 	params.m_NumStaticMeshTypes = pScene->GetNumMeshBatches();
 	params.m_ppStaticMeshBatches = pScene->GetMeshBatches();
-	params.m_pSpotLightViewProjMatrixBuffer = m_pActiveSpotLightViewProjMatrixBuffer;
+	params.m_StandardShadowMapSize = 1024;
+	params.m_Downscale2XExpShadowMap = false;
 
 	m_pRenderSpotLightShadowMapsPass = new RenderSpotLightShadowMapsPass(&params);
 }
@@ -1826,7 +1833,7 @@ void DXApplication::InitTiledShadingPass()
 		params.m_InputResourceStates.m_SpotLightIndexPerTileBufferState = pTiledLightCullingPassStates->m_SpotLightIndexPerTileBufferState;
 		params.m_InputResourceStates.m_SpotLightRangePerTileBufferState = pTiledLightCullingPassStates->m_SpotLightRangePerTileBufferState;
 		params.m_InputResourceStates.m_SpotLightShadowMapsState = pRenderSpotLightShadowMapsPassStates->m_SpotLightShadowMapsState;
-		params.m_InputResourceStates.m_SpotLightViewProjMatrixBufferState = pRenderSpotLightShadowMapsPassStates->m_SpotLightViewProjMatrixBufferState;
+		params.m_InputResourceStates.m_SpotLightViewProjMatrixBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
 
 		params.m_pSpotLightPropsBuffer = m_pActiveSpotLightPropsBuffer;
 		params.m_pSpotLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetSpotLightIndexPerTileBuffer();
@@ -1960,10 +1967,13 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		const Matrix4f viewMatrix = lightWorldSpaceTransform.GetWorldToLocalMatrix();
 		const Matrix4f viewProjMatrix = viewMatrix * projMatrix;
 		
+		Cone lightWorldCone(lightWorldSpacePos, pLight->GetOuterConeAngle(), lightWorldSpaceDir, pLight->GetRange());
+
 		m_pSpotLights[lightIndex].m_Color = pLight->GetColor();
 		m_pSpotLights[lightIndex].m_WorldSpacePos = lightWorldSpacePos;
 		m_pSpotLights[lightIndex].m_WorldSpaceDir = lightWorldSpaceDir;
 		m_pSpotLights[lightIndex].m_WorldFrustum = Frustum(viewProjMatrix);
+		m_pSpotLights[lightIndex].m_WorldBounds = ExtractBoundingSphere(lightWorldCone);
 		m_pSpotLights[lightIndex].m_LightViewNearPlane = pLight->GetShadowNearPlane();
 		m_pSpotLights[lightIndex].m_LightRcpViewClipRange = Rcp(pLight->GetRange() - pLight->GetShadowNearPlane());
 		m_pSpotLights[lightIndex].m_LightProjMatrix43 = projMatrix.m_32;
@@ -2000,7 +2010,7 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 
 	assert(m_pActiveSpotLightWorldBoundsBuffer == nullptr);
 	m_pActiveSpotLightWorldBoundsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
-		&lightWorldBoundsBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActiveSpotLightWorldBoundsBuffer");
+		&lightWorldBoundsBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, L"m_pActiveSpotLightWorldBoundsBuffer");
 
 	assert(m_pActiveSpotLightPropsBuffer == nullptr);
 	m_pActiveSpotLightPropsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
@@ -2008,7 +2018,7 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 	
 	assert(m_pActiveSpotLightViewProjMatrixBuffer == nullptr);
 	m_pActiveSpotLightViewProjMatrixBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
-		&lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, L"m_pActiveSpotLightViewProjMatrixBuffer");
+		&lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActiveSpotLightViewProjMatrixBuffer");
 }
 
 void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustum)

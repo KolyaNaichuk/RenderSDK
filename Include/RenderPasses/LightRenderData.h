@@ -11,6 +11,7 @@ struct SpotLightRenderData
 	Vector3f m_WorldSpacePos;
 	Vector3f m_WorldSpaceDir;
 	Frustum m_WorldFrustum;
+	Sphere m_WorldBounds;
 	f32 m_LightRange;
 	f32 m_CosHalfInnerConeAngle;
 	f32 m_CosHalfOuterConeAngle;
