@@ -27,7 +27,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID)
 #error How do I handle reading shadow map outside it bounds?
 	uint2 pixelPos = globalThreadId.xy << 1;
 	float2 texCoord = (float2(pixelPos) + 0.5f) * params.rcpShadowMapSize;
-	float4 depthValues = g_StandardShadowMap.Gather(g_PointSampler, texCoord);
+	float4 depthValues = g_StandardShadowMap.GatherRed(g_PointSampler, texCoord);
 	
 	float4 lightSpaceDepthValues;
 	lightSpaceDepthValues.x = params.lightProjMatrix43 / (depthValues.x - params.lightProjMatrix33);
@@ -41,6 +41,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID)
 	linearDepthValues.z = (lightSpaceDepthValues.z - params.lightViewNearPlane) * params.lightRcpViewClipRange;
 	linearDepthValues.w = (lightSpaceDepthValues.w - params.lightViewNearPlane) * params.lightRcpViewClipRange;
 	
+#error expDepthValues might exceed 1
 	float4 expDepthValues = exp(params.expShadowMapConstant * linearDepthValues);
 #if CREATE_DOWNSCALED_2X
 	float averageExpDepth = dot(0.25f, expDepthValues);

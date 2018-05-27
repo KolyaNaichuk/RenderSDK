@@ -6,13 +6,12 @@ struct RenderEnv;
 class SpotLight;
 class MeshBatch;
 
-class RenderSpotLightShadowMapsPass
+class SpotLightShadowMapRenderer
 {
 public:
 	struct ResourceStates
 	{
 		D3D12_RESOURCE_STATES m_SpotLightShadowMapsState;
-		D3D12_RESOURCE_STATES m_SpotLightViewProjMatrixBufferState;
 	};
 	
 	struct InitParams
@@ -35,8 +34,8 @@ public:
 		const u32* m_ActiveSpotLightIndices;
 	};
 
-	RenderSpotLightShadowMapsPass(InitParams* pParams);
-	~RenderSpotLightShadowMapsPass();
+	SpotLightShadowMapRenderer(InitParams* pParams);
+	~SpotLightShadowMapRenderer();
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }

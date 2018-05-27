@@ -30,7 +30,7 @@
 #include "RenderPasses/CreateFalseNegativeDrawCommandsPass.h"
 #include "RenderPasses/FillMeshTypeDepthBufferPass.h"
 #include "RenderPasses/CalcShadingRectanglesPass.h"
-#include "RenderPasses/RenderSpotLightShadowMapsPass.h"
+#include "RenderPasses/SpotLightShadowMapRenderer.h"
 #include "RenderPasses/VoxelizePass.h"
 #include "RenderPasses/GeometryBuffer.h"
 #include "RenderPasses/MeshRenderResources.h"
@@ -57,7 +57,7 @@
 To do:
 - Sort lights by importance
 - Go through overlap test involving plane in the test to ensure the proper equation format is used for the plane
-- When creating staticMeshInstanceIndexBuffer for RenderSpotLightShadowMapsPass use most optimal format
+- When creating staticMeshInstanceIndexBuffer for SpotLightShadowMapRenderer use most optimal format
 - For rendering shadows use separate vertex buffer containing only positions
 - When generating visible static geometry for lights I could also run back-face culling
 - Check if it is possible to pre-sort (front to back) commands for rendering shadow maps for static meshes
@@ -329,7 +329,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pRenderGBufferFalseNegativePass);
 	SafeDelete(m_pFillMeshTypeDepthBufferPass);
 	SafeDelete(m_pCalcShadingRectanglesPass);
-	SafeDelete(m_pRenderSpotLightShadowMapsPass);
+	SafeDelete(m_pSpotLightShadowMapRenderer);
 	SafeDelete(m_pTiledLightCullingPass);
 	SafeDelete(m_pCreateVoxelizeCommandsPass);
 	SafeDelete(m_pVoxelizePass);
@@ -1623,13 +1623,12 @@ void DXApplication::InitTiledLightCullingPass()
 
 void DXApplication::InitRenderSpotLightShadowMapsPass(Scene* pScene)
 {
-	assert(m_pRenderSpotLightShadowMapsPass == nullptr);
+	assert(m_pSpotLightShadowMapRenderer == nullptr);
 
-	RenderSpotLightShadowMapsPass::InitParams params;
+	SpotLightShadowMapRenderer::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_SpotLightShadowMapsState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_SpotLightViewProjMatrixBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
 		
 	params.m_NumSpotLights = pScene->GetNumSpotLights();
 	params.m_ppSpotLights = pScene->GetSpotLights();
@@ -1639,7 +1638,7 @@ void DXApplication::InitRenderSpotLightShadowMapsPass(Scene* pScene)
 	params.m_StandardShadowMapSize = 1024;
 	params.m_Downscale2XExpShadowMap = false;
 
-	m_pRenderSpotLightShadowMapsPass = new RenderSpotLightShadowMapsPass(&params);
+	m_pSpotLightShadowMapRenderer = new SpotLightShadowMapRenderer(&params);
 }
 
 CommandList* DXApplication::RecordTiledLightCullingPass()
@@ -1825,8 +1824,8 @@ void DXApplication::InitTiledShadingPass()
 		const TiledLightCullingPass::ResourceStates* pTiledLightCullingPassStates =
 			m_pTiledLightCullingPass->GetOutputResourceStates();
 
-		const RenderSpotLightShadowMapsPass::ResourceStates* pRenderSpotLightShadowMapsPassStates =
-			m_pRenderSpotLightShadowMapsPass->GetOutputResourceStates();
+		const SpotLightShadowMapRenderer::ResourceStates* pRenderSpotLightShadowMapsPassStates =
+			m_pSpotLightShadowMapRenderer->GetOutputResourceStates();
 				
 		params.m_InputResourceStates.m_DepthTextureState = pTiledLightCullingPassStates->m_DepthTextureState;
 		params.m_InputResourceStates.m_SpotLightPropsBufferState = D3D12_RESOURCE_STATE_COPY_DEST;
@@ -1838,7 +1837,7 @@ void DXApplication::InitTiledShadingPass()
 		params.m_pSpotLightPropsBuffer = m_pActiveSpotLightPropsBuffer;
 		params.m_pSpotLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetSpotLightIndexPerTileBuffer();
 		params.m_pSpotLightRangePerTileBuffer = m_pTiledLightCullingPass->GetSpotLightRangePerTileBuffer();
-		params.m_pSpotLightShadowMaps = m_pRenderSpotLightShadowMapsPass->GetSpotLightShadowMaps();
+		params.m_pSpotLightShadowMaps = m_pSpotLightShadowMapRenderer->GetSpotLightShadowMaps();
 		params.m_pSpotLightViewProjMatrixBuffer = m_pActiveSpotLightViewProjMatrixBuffer;
 	}		
 	m_pTiledShadingPass = new TiledShadingPass(&params);

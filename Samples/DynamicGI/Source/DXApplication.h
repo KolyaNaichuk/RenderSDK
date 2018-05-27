@@ -29,7 +29,7 @@ class CreateMainDrawCommandsPass;
 class CreateFalseNegativeDrawCommandsPass;
 class FillMeshTypeDepthBufferPass;
 class RenderGBufferPass;
-class RenderSpotLightShadowMapsPass;
+class SpotLightShadowMapRenderer;
 class TiledLightCullingPass;
 class TiledShadingPass;
 class CalcShadingRectanglesPass;
@@ -196,7 +196,7 @@ private:
 	RenderGBufferPass* m_pRenderGBufferFalseNegativePass = nullptr;
 	FillMeshTypeDepthBufferPass* m_pFillMeshTypeDepthBufferPass = nullptr;
 	CalcShadingRectanglesPass* m_pCalcShadingRectanglesPass = nullptr;
-	RenderSpotLightShadowMapsPass* m_pRenderSpotLightShadowMapsPass = nullptr;
+	SpotLightShadowMapRenderer* m_pSpotLightShadowMapRenderer = nullptr;
 	CreateVoxelizeCommandsPass* m_pCreateVoxelizeCommandsPass = nullptr;
 	VoxelizePass* m_pVoxelizePass = nullptr;
 	TiledLightCullingPass* m_pTiledLightCullingPass = nullptr;
