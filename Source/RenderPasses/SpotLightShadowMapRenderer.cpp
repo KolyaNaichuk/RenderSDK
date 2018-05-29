@@ -1,4 +1,7 @@
 #include "RenderPasses/SpotLightShadowMapRenderer.h"
+#include "RenderPasses/RenderSpotLightShadowMapPass.h"
+#include "RenderPasses/CreateExpShadowMapPass.h"
+#include "RenderPasses/FilterExpShadowMapPass.h"
 #include "RenderPasses/Utils.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/CommandSignature.h"
@@ -6,15 +9,6 @@
 #include "Math/OverlapTest.h"
 #include "Scene/Light.h"
 #include "Scene/MeshBatch.h"
-
-namespace
-{
-	struct ShadowMapCommand
-	{
-		UINT m_InstanceOffset;
-		DrawIndexedArguments m_Args;
-	};
-}
 
 SpotLightShadowMapRenderer::SpotLightShadowMapRenderer(InitParams* pParams)
 {
@@ -85,7 +79,7 @@ void SpotLightShadowMapRenderer::InitStaticMeshCommands(InitParams* pParams)
 	const MeshInfo* meshInfos = pStaticMeshBatch->GetMeshInfos();
 	const AxisAlignedBox* meshInstanceWorldAABBs = pStaticMeshBatch->GetMeshInstanceWorldAABBs();
 
-	std::vector<u32> meshInstanceIndices;
+	std::vector<u32> visibleMeshInstanceIndices;
 	std::vector<ShadowMapCommand> staticMeshCommands;
 	assert(m_StaticMeshCommandRanges.empty());
 
@@ -124,13 +118,13 @@ void SpotLightShadowMapRenderer::InitStaticMeshCommands(InitParams* pParams)
 				if (TestAABBAgainstFrustum(lightWorldFrustum, meshInstanceWorldAABB))
 				{
 					++numVisibleMeshInstances;
-					meshInstanceIndices.push_back(meshInstanceIndex);
+					visibleMeshInstanceIndices.push_back(meshInstanceIndex);
 				}
 			}
 			if (numVisibleMeshInstances > 0)
 			{
 				ShadowMapCommand shadowMapCommand;
-				shadowMapCommand.m_InstanceOffset = meshInstanceIndices.size() - numVisibleMeshInstances;
+				shadowMapCommand.m_InstanceOffset = visibleMeshInstanceIndices.size() - numVisibleMeshInstances;
 				shadowMapCommand.m_Args.m_IndexCountPerInstance = meshInfo.m_IndexCountPerInstance;
 				shadowMapCommand.m_Args.m_InstanceCount = numVisibleMeshInstances;
 				shadowMapCommand.m_Args.m_StartIndexLocation = meshInfo.m_StartIndexLocation;
@@ -154,10 +148,10 @@ void SpotLightShadowMapRenderer::InitStaticMeshCommands(InitParams* pParams)
 		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, staticMeshCommands.data(), staticMeshCommands.size() * sizeof(staticMeshCommands[0]));
 
 	assert(m_pStaticMeshInstanceIndexBuffer == nullptr);
-	FormattedBufferDesc staticMeshInstanceIndexBufferDesc(meshInstanceIndices.size(), DXGI_FORMAT_R32_UINT, true/*createSRV*/, false/*createUAV*/);
+	FormattedBufferDesc staticMeshInstanceIndexBufferDesc(visibleMeshInstanceIndices.size(), DXGI_FORMAT_R32_UINT, true/*createSRV*/, false/*createUAV*/);
 	m_pStaticMeshInstanceIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &staticMeshInstanceIndexBufferDesc,
 		D3D12_RESOURCE_STATE_COPY_DEST, L"SpotLightShadowMapRenderer::m_pStaticMeshInstanceIndexBuffer");
 
 	UploadData(pRenderEnv, m_pStaticMeshInstanceIndexBuffer, staticMeshInstanceIndexBufferDesc,
-		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, meshInstanceIndices.data(), meshInstanceIndices.size() * sizeof(meshInstanceIndices[0]));
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, visibleMeshInstanceIndices.data(), visibleMeshInstanceIndices.size() * sizeof(visibleMeshInstanceIndices[0]));
 }

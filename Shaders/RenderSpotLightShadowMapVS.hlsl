@@ -8,8 +8,8 @@ struct VSInput
 
 cbuffer Constants32BitBuffer : register(b0)
 {
+	uint g_SpotLightIndex;
 	uint g_InstanceOffset;
-	uint g_ShadowMapIndex;
 }
 
 Buffer<uint> g_MeshInstanceIndexBuffer : register(t0);
@@ -21,7 +21,7 @@ float4 Main(VSInput input) : SV_Position
 	uint instanceIndex = g_MeshInstanceIndexBuffer[g_InstanceOffset + input.instanceId];
 
 	float4x4 worldMatrix = g_MeshInstanceWorldMatrixBuffer[instanceIndex];
-	float4x4 viewProjMatrix = g_SpotLightViewProjMatrixBuffer[g_ShadowMapIndex];
+	float4x4 viewProjMatrix = g_SpotLightViewProjMatrixBuffer[g_SpotLightIndex];
 
 	float4 worldSpacePos = mul(worldMatrix, float4(input.localSpacePos, 1.0f));
 	float4 clipSpacePos = mul(viewProjMatrix, worldSpacePos);
