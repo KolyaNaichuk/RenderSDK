@@ -55,6 +55,8 @@
 
 /*
 To do:
+- I am doing pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap) on shared command list for 
+RenderSpotLightShadowMap, CreateExpShadowMap and FilterExpShadowMap. Since command list is shared I could do this once.
 - Sort lights by importance
 - Go through overlap test involving plane in the test to ensure the proper equation format is used for the plane
 - When creating staticMeshInstanceIndexBuffer for SpotLightShadowMapRenderer use most optimal format

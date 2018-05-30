@@ -9,6 +9,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID)
 {
 	float2 texCoord = (float2(globalThreadId.xy) + 0.5f) * rcpShadowMapSize;
 
+#error Should use GatherRed instead
 	float4 depthValues1 = g_ExpShadowMap.SampleLevel(g_PointSampler, texCoord, 0.0f, int2(-2, 0));
 	float4 depthValues2 = g_ExpShadowMap.SampleLevel(g_PointSampler, texCoord, 0.0f, int2( 0, 0));
 	float4 depthValues3 = g_ExpShadowMap.SampleLevel(g_PointSampler, texCoord, 0.0f, int2( 2, 0));
@@ -33,6 +34,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID)
 {
 	float2 texCoord = (float2(globalThreadId.xy) + 0.5f) * rcpShadowMapSize;
 
+#error Should use GatherRed instead
 	float4 depthValues1 = g_ExpShadowMap.SampleLevel(g_PointSampler, texCoord, 0.0f, int2(0, -2));
 	float4 depthValues2 = g_ExpShadowMap.SampleLevel(g_PointSampler, texCoord, 0.0f, int2(0,  0));
 	float4 depthValues3 = g_ExpShadowMap.SampleLevel(g_PointSampler, texCoord, 0.0f, int2(0,  2));

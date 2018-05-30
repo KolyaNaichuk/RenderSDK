@@ -7,11 +7,24 @@ class CommandList;
 class RootSignature;
 class PipelineState;
 
+struct CreateExpShadowMapParams
+{
+	f32 m_RcpShadowMapSize;
+	f32 m_LightProjMatrix43;
+	f32 m_LightProjMatrix33;
+	f32 m_LightViewNearPlane;
+	f32 m_LightRcpViewClipRange;
+	f32 m_ExpShadowMapConstant;
+};
+
 class CreateExpShadowMapPass
 {
 public:
 	struct ResourceStates
 	{
+		D3D12_RESOURCE_STATES m_StandardShadowMapsState;
+		D3D12_RESOURCE_STATES m_CreateExpShadowMapParamsBufferState;
+		D3D12_RESOURCE_STATES m_ExpShadowMapsState;
 	};
 
 	struct InitParams
@@ -19,12 +32,20 @@ public:
 		const char* m_pName = nullptr;
 		RenderEnv* m_pRenderEnv = nullptr;
 		ResourceStates m_InputResourceStates;
+		DepthTexture* m_pStandardShadowMaps = nullptr;
+		Buffer* m_pCreateExpShadowMapParamsBuffer = nullptr;
+		ColorTexture* m_pExpShadowMaps = nullptr;
+		bool m_ExpShadowMapDownscaled2X;
 	};
 
 	struct RenderParams
 	{
 		RenderEnv* m_pRenderEnv = nullptr;
 		CommandList* m_pCommandList = nullptr;
+		DepthTexture* m_pStandardShadowMaps = nullptr;
+		ColorTexture* m_pExpShadowMaps = nullptr;
+		u32 m_StandardShadowMapIndex = -1;
+		u32 m_ExpShadowMapIndex = -1;
 	};
 
 	CreateExpShadowMapPass(InitParams* pParams);
@@ -37,7 +58,6 @@ private:
 	void InitResources(InitParams* pParams);
 	void InitRootSignature(InitParams* pParams);
 	void InitPipelineState(InitParams* pParams);
-	void AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
 	std::string m_Name;
@@ -45,6 +65,8 @@ private:
 	RootSignature* m_pRootSignature = nullptr;
 	PipelineState* m_pPipelineState = nullptr;
 	DescriptorHandle m_SRVHeapStart;
-	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
+
+	u32 m_NumThreadGroupsX = 0;
+	u32 m_NumThreadGroupsY = 0;
 };
