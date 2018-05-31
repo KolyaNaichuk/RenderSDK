@@ -56,7 +56,8 @@
 /*
 To do:
 - I am doing pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap) on shared command list for 
-RenderSpotLightShadowMap, CreateExpShadowMap and FilterExpShadowMap. Since command list is shared I could do this once.
+CreateExpShadowMap and FilterExpShadowMap. Since command list is shared I could do this once.
+- Check if there is point in using downsampled exponential shadow map
 - Sort lights by importance
 - Go through overlap test involving plane in the test to ensure the proper equation format is used for the plane
 - When creating staticMeshInstanceIndexBuffer for SpotLightShadowMapRenderer use most optimal format
@@ -256,7 +257,8 @@ enum
 	kNumVoxelsInGridZ = 128,
 	kBackBufferWidth = kNumTilesX * kTileSize,
 	kBackBufferHeight = kNumTilesY * kTileSize,
-	kMaxNumActiveSpotLights = 6
+	kMaxNumActiveSpotLights = 6,
+	kShadowMapSize = 1024
 };
 
 DXApplication::DXApplication(HINSTANCE hApp)
@@ -1637,9 +1639,8 @@ void DXApplication::InitRenderSpotLightShadowMapsPass(Scene* pScene)
 	params.m_MaxNumActiveSpotLights = kMaxNumActiveSpotLights;
 	params.m_NumStaticMeshTypes = pScene->GetNumMeshBatches();
 	params.m_ppStaticMeshBatches = pScene->GetMeshBatches();
-	params.m_StandardShadowMapSize = 1024;
-	params.m_Downscale2XExpShadowMap = false;
-
+	params.m_ShadowMapSize = kShadowMapSize;
+	
 	m_pSpotLightShadowMapRenderer = new SpotLightShadowMapRenderer(&params);
 }
 

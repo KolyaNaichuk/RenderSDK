@@ -9,7 +9,6 @@ class PipelineState;
 
 struct CreateExpShadowMapParams
 {
-	f32 m_RcpShadowMapSize;
 	f32 m_LightProjMatrix43;
 	f32 m_LightProjMatrix33;
 	f32 m_LightViewNearPlane;
@@ -35,7 +34,6 @@ public:
 		DepthTexture* m_pStandardShadowMaps = nullptr;
 		Buffer* m_pCreateExpShadowMapParamsBuffer = nullptr;
 		ColorTexture* m_pExpShadowMaps = nullptr;
-		bool m_ExpShadowMapDownscaled2X;
 	};
 
 	struct RenderParams

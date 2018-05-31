@@ -48,14 +48,13 @@ void SpotLightShadowMapRenderer::InitResources(InitParams* pParams)
 
 	assert(m_pActiveShadowMaps == nullptr);
 	const DepthStencilValue optimizedClearDepth(1.0f);
-	DepthTexture2DDesc activeShadowMapsDesc(DXGI_FORMAT_R32_TYPELESS, pParams->m_StandardShadowMapSize, pParams->m_StandardShadowMapSize,
+	DepthTexture2DDesc activeShadowMapsDesc(DXGI_FORMAT_R32_TYPELESS, pParams->m_ShadowMapSize, pParams->m_ShadowMapSize,
 		true/*createDSV*/, true/*createSRV*/, 1/*mipLevels*/, pParams->m_MaxNumActiveSpotLights/*arraySize*/);
 	m_pActiveShadowMaps = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &activeShadowMapsDesc,
 		D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"SpotLightShadowMapRenderer::m_pActiveShadowMaps");
 	
 	assert(m_pSpotLightShadowMaps == nullptr);
-	u32 expShadowMapSize = pParams->m_Downscale2XExpShadowMap ? (pParams->m_StandardShadowMapSize / 2) : pParams->m_StandardShadowMapSize;
-	ColorTexture2DDesc shadowMapsDesc(DXGI_FORMAT_R32_FLOAT, expShadowMapSize, expShadowMapSize,
+	ColorTexture2DDesc shadowMapsDesc(DXGI_FORMAT_R32_FLOAT, pParams->m_ShadowMapSize, pParams->m_ShadowMapSize,
 		false/*createRTV*/, true/*createSRV*/, true/*createUAV*/, 1/*mipLevels*/, pParams->m_NumSpotLights/*arraySize*/);
 	m_pSpotLightShadowMaps = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shadowMapsDesc,
 		pParams->m_InputResourceStates.m_SpotLightShadowMapsState, nullptr/*optimizedClearColor*/, L"SpotLightShadowMapRenderer::m_pShadowMaps");

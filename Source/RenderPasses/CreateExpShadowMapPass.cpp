@@ -4,6 +4,7 @@
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/RenderEnv.h"
+#include "Math/Math.h"
 
 namespace
 {
@@ -104,10 +105,8 @@ void CreateExpShadowMapPass::InitRootSignature(InitParams* pParams)
 		UAVDescriptorRange(1, 0)
 	};
 	rootParams[kRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), descriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
-
-	StaticSamplerDesc staticSamplerDesc(StaticSamplerDesc::Point, 0, D3D12_SHADER_VISIBILITY_ALL);
-
-	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, 1, &staticSamplerDesc);
+	
+	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
 	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"CreateExpShadowMapPass::m_pRootSignature");
 }
 
@@ -116,30 +115,23 @@ void CreateExpShadowMapPass::InitPipelineState(InitParams* pParams)
 	assert(m_pPipelineState == nullptr);
 	assert(m_pRootSignature != nullptr);
 
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
 	DepthTexture* pStandardShadowMaps = pParams->m_pStandardShadowMaps;
 	ColorTexture* pExpShadowMaps = pParams->m_pExpShadowMaps;
 
 	assert(pStandardShadowMaps->GetWidth() == pStandardShadowMaps->GetHeight());
 	assert(pExpShadowMaps->GetWidth() == pExpShadowMaps->GetHeight());
-
-	if (pParams->m_ExpShadowMapDownscaled2X)
-		assert(pStandardShadowMaps->GetWidth() == 2 * pExpShadowMaps->GetWidth());
-	else
-		assert(pStandardShadowMaps->GetWidth() == pExpShadowMaps->GetWidth());
-	
-	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-
+	assert(pStandardShadowMaps->GetWidth() == pExpShadowMaps->GetWidth());
+		
 	const u32 numThreads = 8;
-	m_NumThreadGroupsX = (u32)Ceil((f32)reprojectedDepthTextureWidth / (f32)numThreads);
+	m_NumThreadGroupsX = (u32)Ceil((f32)pExpShadowMaps->GetWidth() / (f32)numThreads);
 	m_NumThreadGroupsY = m_NumThreadGroupsX;
 
 	std::string numThreadsStr = std::to_string(numThreads);
-	std::string createDownscaled2XStr = std::to_string(pParams->m_ExpShadowMapDownscaled2X ? 1 : 0);
-
 	const ShaderMacro shaderDefines[] =
 	{
 		ShaderMacro("NUM_THREADS", numThreadsStr.c_str()),
-		ShaderMacro("CREATE_DOWNSCALED_2X", createDownscaled2XStr.c_str()),
 		ShaderMacro()
 	};
 	Shader computeShader(L"Shaders//CreateExpShadowMapCS.hlsl", "Main", "cs_5_0", shaderDefines);

@@ -23,8 +23,7 @@ public:
 		u32 m_MaxNumActiveSpotLights;
 		u32 m_NumStaticMeshTypes;
 		MeshBatch** m_ppStaticMeshBatches;
-		u32 m_StandardShadowMapSize;
-		bool m_Downscale2XExpShadowMap;
+		u32 m_ShadowMapSize;
 	};
 
 	struct RenderParams
