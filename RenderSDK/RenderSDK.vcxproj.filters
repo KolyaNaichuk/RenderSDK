@@ -607,8 +607,10 @@
     <None Include="..\Shaders\RenderSpotLightShadowMapVS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\FilterExpShadowMapCS.hlsl" />
     <None Include="..\Shaders\CreateExpShadowMapCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\FilterExpShadowMapCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

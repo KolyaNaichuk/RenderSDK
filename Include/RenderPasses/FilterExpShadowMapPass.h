@@ -12,6 +12,7 @@ class FilterExpShadowMapPass
 public:
 	struct ResourceStates
 	{
+		D3D12_RESOURCE_STATES m_ExpShadowMapsState;
 	};
 
 	struct InitParams
@@ -19,12 +20,15 @@ public:
 		const char* m_pName = nullptr;
 		RenderEnv* m_pRenderEnv = nullptr;
 		ResourceStates m_InputResourceStates;
+		u32 m_MaxNumActiveExpShadowMaps = 0;
+		ColorTexture* m_pExpShadowMaps = nullptr;
 	};
 
 	struct RenderParams
 	{
 		RenderEnv* m_pRenderEnv = nullptr;
 		CommandList* m_pCommandList = nullptr;
+		u32 g_ExpShadowMapIndex = -1;
 	};
 
 	FilterExpShadowMapPass(InitParams* pParams);
@@ -35,15 +39,20 @@ public:
 
 private:
 	void InitResources(InitParams* pParams);
-	void InitRootSignatures(InitParams* pParams);
-	void InitPipelineStates(InitParams* pParams);
+	void InitRootSignature(InitParams* pParams);
+	void InitPipelineState(InitParams* pParams);
 
 private:
 	std::string m_Name;
 
 	RootSignature* m_pRootSignature = nullptr;
-	PipelineState* m_pPipelineState = nullptr;
-	DescriptorHandle m_SRVHeapStart;
-	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
+	PipelineState* m_pPipelineStateX = nullptr;
+	DescriptorHandle m_SRVHeapStartX;
+	PipelineState* m_pPipelineStateY = nullptr;
+	DescriptorHandle m_SRVHeapStartY;
+	u32 m_NumThreadGroupsX = 0;
+	u32 m_NumThreadGroupsY = 0;
+
+	ColorTexture* m_pIntermediateResults = nullptr;
 	ResourceStates m_OutputResourceStates;
 };

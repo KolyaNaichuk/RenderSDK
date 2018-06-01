@@ -13,7 +13,7 @@ cbuffer Constants32BitBuffer : register(b0)
 	uint g_ExpShadowMapIndex;
 }
 
-RWTexture2DArray<float> g_StandardShadowMaps : register(t0);
+Texture2DArray<float> g_StandardShadowMaps : register(t0);
 StructuredBuffer<CreateExpShadowMapParams> g_CreateExpShadowMapParamsBuffer : register(t1);
 RWTexture2DArray<float> g_ExpShadowMaps : register(u0);
 
