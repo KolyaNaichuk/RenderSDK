@@ -73,11 +73,11 @@ void CreateExpShadowMapPass::InitResources(InitParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	assert(pParams->m_InputResourceStates.m_StandardShadowMapsState == D3D12_RESOURCE_STATE_DEPTH_WRITE);
-	assert(pParams->m_InputResourceStates.m_CreateExpShadowMapParamsBufferState == D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	assert(pParams->m_InputResourceStates.m_CreateExpShadowMapParamsBufferState == D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	assert(pParams->m_InputResourceStates.m_ExpShadowMapsState == D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	
 	m_OutputResourceStates.m_StandardShadowMapsState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-	m_OutputResourceStates.m_CreateExpShadowMapParamsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_CreateExpShadowMapParamsBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_ExpShadowMapsState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
 	
 	assert(!m_SRVHeapStart.IsValid());

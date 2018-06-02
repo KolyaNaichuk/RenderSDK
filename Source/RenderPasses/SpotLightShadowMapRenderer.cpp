@@ -3,6 +3,7 @@
 #include "RenderPasses/CreateExpShadowMapPass.h"
 #include "RenderPasses/FilterExpShadowMapPass.h"
 #include "RenderPasses/Utils.h"
+#include "RenderPasses/MeshRenderResources.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/CommandSignature.h"
 #include "Math/Frustum.h"
@@ -12,12 +13,17 @@
 
 SpotLightShadowMapRenderer::SpotLightShadowMapRenderer(InitParams* pParams)
 {
-	InitResources(pParams);
-	InitStaticMeshCommands(pParams);
+	InitResources(pParams);	
+	InitRenderSpotLightShadowMapPass(pParams);
+	InitCreateExpShadowMapPass(pParams);
+	InitFilterExpShadowMapPass(pParams);
 }
 
 SpotLightShadowMapRenderer::~SpotLightShadowMapRenderer()
 {
+	SafeDelete(m_pRenderSpotLightShadowMapPass);
+	SafeDelete(m_pCreateExpShadowMapPass);
+	SafeDelete(m_pFilterExpShadowMapPass);
 	SafeDelete(m_pActiveShadowMaps);
 	SafeDelete(m_pStaticMeshCommandBuffer);
 	SafeDelete(m_pStaticMeshInstanceIndexBuffer);
@@ -43,7 +49,6 @@ void SpotLightShadowMapRenderer::Record(RenderParams* pParams)
 void SpotLightShadowMapRenderer::InitResources(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-	
 	m_OutputResourceStates.m_SpotLightShadowMapsState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
 	assert(m_pActiveShadowMaps == nullptr);
@@ -51,7 +56,7 @@ void SpotLightShadowMapRenderer::InitResources(InitParams* pParams)
 	DepthTexture2DDesc activeShadowMapsDesc(DXGI_FORMAT_R32_TYPELESS, pParams->m_ShadowMapSize, pParams->m_ShadowMapSize,
 		true/*createDSV*/, true/*createSRV*/, 1/*mipLevels*/, pParams->m_MaxNumActiveSpotLights/*arraySize*/);
 	m_pActiveShadowMaps = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &activeShadowMapsDesc,
-		D3D12_RESOURCE_STATE_DEPTH_WRITE, &optimizedClearDepth, L"SpotLightShadowMapRenderer::m_pActiveShadowMaps");
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, &optimizedClearDepth, L"SpotLightShadowMapRenderer::m_pActiveShadowMaps");
 	
 	assert(m_pSpotLightShadowMaps == nullptr);
 	ColorTexture2DDesc shadowMapsDesc(DXGI_FORMAT_R32_FLOAT, pParams->m_ShadowMapSize, pParams->m_ShadowMapSize,
@@ -62,18 +67,12 @@ void SpotLightShadowMapRenderer::InitResources(InitParams* pParams)
 	m_SpotLightShadowMapStates.resize(pParams->m_NumSpotLights);
 	for (u32 lightIndex = 0; lightIndex < pParams->m_NumSpotLights; ++lightIndex)
 		m_SpotLightShadowMapStates[lightIndex] = ShadowMapState::Outdated;
-
 	m_OutdatedSpotLightShadowMapIndices.resize(pParams->m_MaxNumActiveSpotLights);
-}
 
-void SpotLightShadowMapRenderer::InitStaticMeshCommands(InitParams* pParams)
-{
-	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-	
 	assert(pParams->m_NumStaticMeshTypes == 1);
 	u32 staticMeshType = 0;
 	MeshBatch* pStaticMeshBatch = pParams->m_ppStaticMeshBatches[staticMeshType];
-		
+
 	const u32 numMeshes = pStaticMeshBatch->GetNumMeshes();
 	const MeshInfo* meshInfos = pStaticMeshBatch->GetMeshInfos();
 	const AxisAlignedBox* meshInstanceWorldAABBs = pStaticMeshBatch->GetMeshInstanceWorldAABBs();
@@ -82,6 +81,9 @@ void SpotLightShadowMapRenderer::InitStaticMeshCommands(InitParams* pParams)
 	std::vector<ShadowMapCommand> staticMeshCommands;
 	assert(m_StaticMeshCommandRanges.empty());
 
+	std::vector<Matrix4f> spotLightViewProjMatrices(pParams->m_NumSpotLights);
+	std::vector<CreateExpShadowMapParams> createExpShadowMapParams(pParams->m_NumSpotLights);
+	
 	for (u32 lightIndex = 0; lightIndex < pParams->m_NumSpotLights; ++lightIndex)
 	{
 		const SpotLight* pLight = pParams->m_ppSpotLights[lightIndex];
@@ -97,7 +99,16 @@ void SpotLightShadowMapRenderer::InitStaticMeshCommands(InitParams* pParams)
 
 		const Matrix4f viewMatrix = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpacePos + lightWorldSpaceDir, lightWorldSpaceUpDir);
 		const Matrix4f projMatrix = CreatePerspectiveFovProjMatrix(pLight->GetOuterConeAngle(), 1.0f, pLight->GetShadowNearPlane(), pLight->GetRange());
+
 		const Matrix4f viewProjMatrix = viewMatrix * projMatrix;
+		spotLightViewProjMatrices[lightIndex] = viewProjMatrix;
+
+		createExpShadowMapParams[lightIndex].m_LightProjMatrix43 = projMatrix.m_32;
+		createExpShadowMapParams[lightIndex].m_LightProjMatrix33 = projMatrix.m_22;
+		createExpShadowMapParams[lightIndex].m_LightViewNearPlane = pLight->GetShadowNearPlane();
+		createExpShadowMapParams[lightIndex].m_LightRcpViewClipRange = Rcp(pLight->GetRange() - pLight->GetShadowNearPlane());
+		createExpShadowMapParams[lightIndex].m_ExpShadowMapConstant = 80.0f;
+
 		const Frustum lightWorldFrustum(viewProjMatrix);
 
 		CommandRange commandRange;
@@ -133,16 +144,32 @@ void SpotLightShadowMapRenderer::InitStaticMeshCommands(InitParams* pParams)
 				staticMeshCommands.push_back(shadowMapCommand);
 			}
 		}
-		
+
 		commandRange.m_NumCommands = staticMeshCommands.size() - commandRange.m_FirstCommand;
 		m_StaticMeshCommandRanges.push_back(commandRange);
 	}
 
-	assert(m_pStaticMeshCommandBuffer == nullptr);	
-	StructuredBufferDesc staticMeshCommandBufferDesc(staticMeshCommands.size(), sizeof(ShadowMapCommand), false/*createSRV*/, false/*createUAV*/);
+	assert(m_pSpotLightViewProjMatrixBuffer == nullptr);
+	StructuredBufferDesc spotLightViewProjMatrixBufferDesc(spotLightViewProjMatrices.size(), sizeof(spotLightViewProjMatrices[0]), true/*createSRV*/, false/*createUAV*/);
+	m_pSpotLightViewProjMatrixBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &spotLightViewProjMatrixBufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"SpotLightShadowMapRenderer::m_pSpotLightViewProjMatrixBuffer");
+		
+	UploadData(pRenderEnv, m_pSpotLightViewProjMatrixBuffer, spotLightViewProjMatrixBufferDesc,
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, spotLightViewProjMatrices.data(), spotLightViewProjMatrices.size() * sizeof(spotLightViewProjMatrices[0]));
+
+	assert(m_pCreateExpShadowMapParamsBuffer == nullptr);
+	StructuredBufferDesc createExpShadowMapParamsBufferDesc(createExpShadowMapParams.size(), sizeof(createExpShadowMapParams[0]), true/*createSRV*/, false/*createUAV*/);
+	m_pCreateExpShadowMapParamsBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &createExpShadowMapParamsBufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"SpotLightShadowMapRenderer::m_pCreateExpShadowMapParamsBuffer");
+
+	UploadData(pRenderEnv, m_pCreateExpShadowMapParamsBuffer, createExpShadowMapParamsBufferDesc,
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, createExpShadowMapParams.data(), createExpShadowMapParams.size() * sizeof(createExpShadowMapParams[0]));
+
+	assert(m_pStaticMeshCommandBuffer == nullptr);
+	StructuredBufferDesc staticMeshCommandBufferDesc(staticMeshCommands.size(), sizeof(staticMeshCommands[0]), false/*createSRV*/, false/*createUAV*/);
 	m_pStaticMeshCommandBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &staticMeshCommandBufferDesc,
 		D3D12_RESOURCE_STATE_COPY_DEST, L"SpotLightShadowMapRenderer::m_pStaticMeshCommandBuffer");
-	
+
 	UploadData(pRenderEnv, m_pStaticMeshCommandBuffer, staticMeshCommandBufferDesc,
 		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT, staticMeshCommands.data(), staticMeshCommands.size() * sizeof(staticMeshCommands[0]));
 
@@ -153,4 +180,69 @@ void SpotLightShadowMapRenderer::InitStaticMeshCommands(InitParams* pParams)
 
 	UploadData(pRenderEnv, m_pStaticMeshInstanceIndexBuffer, staticMeshInstanceIndexBufferDesc,
 		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, visibleMeshInstanceIndices.data(), visibleMeshInstanceIndices.size() * sizeof(visibleMeshInstanceIndices[0]));
+}
+
+void SpotLightShadowMapRenderer::InitRenderSpotLightShadowMapPass(InitParams* pParams)
+{
+	assert(m_pRenderSpotLightShadowMapPass == nullptr);
+	
+	RenderSpotLightShadowMapPass::InitParams params;
+	params.m_pName = "RenderSpotLightShadowMapPass";
+	params.m_pRenderEnv = pParams->m_pRenderEnv;
+	
+	params.m_InputResourceStates.m_RenderCommandBufferState = D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
+	params.m_InputResourceStates.m_MeshInstanceIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_MeshInstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_SpotLightViewProjMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_SpotLightShadowMapsState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+		
+	params.m_pMeshRenderResources = pParams->m_pStaticMeshRenderResources;
+	params.m_pRenderCommandBuffer = m_pStaticMeshCommandBuffer;
+	params.m_pMeshInstanceIndexBuffer = m_pStaticMeshInstanceIndexBuffer;
+	params.m_pMeshInstanceWorldMatrixBuffer = pParams->m_pStaticMeshRenderResources->GetInstanceWorldMatrixBuffer();
+	params.m_pSpotLightViewProjMatrixBuffer = m_pSpotLightViewProjMatrixBuffer;
+	params.m_pSpotLightShadowMaps = m_pActiveShadowMaps;
+
+	m_pRenderSpotLightShadowMapPass = new RenderSpotLightShadowMapPass(&params);
+}
+
+void SpotLightShadowMapRenderer::InitCreateExpShadowMapPass(InitParams* pParams)
+{
+	assert(m_pCreateExpShadowMapPass == nullptr);
+	assert(m_pRenderSpotLightShadowMapPass != nullptr);
+
+	const RenderSpotLightShadowMapPass::ResourceStates* pRenderSpotLightShadowMapPassStates =
+		m_pRenderSpotLightShadowMapPass->GetOutputResourceStates();
+	
+	CreateExpShadowMapPass::InitParams params;
+	params.m_pName = "CreateExpShadowMapPass";
+	params.m_pRenderEnv = pParams->m_pRenderEnv;
+	
+	params.m_InputResourceStates.m_StandardShadowMapsState = pRenderSpotLightShadowMapPassStates->m_SpotLightShadowMapsState;
+	params.m_InputResourceStates.m_CreateExpShadowMapParamsBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_ExpShadowMapsState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	
+	params.m_pStandardShadowMaps = m_pActiveShadowMaps;
+	params.m_pCreateExpShadowMapParamsBuffer = m_pCreateExpShadowMapParamsBuffer;
+	params.m_pExpShadowMaps = m_pSpotLightShadowMaps;
+
+	m_pCreateExpShadowMapPass = new CreateExpShadowMapPass(&params);
+}
+
+void SpotLightShadowMapRenderer::InitFilterExpShadowMapPass(InitParams* pParams)
+{
+	assert(m_pFilterExpShadowMapPass == nullptr);
+	assert(m_pCreateExpShadowMapPass != nullptr);
+
+	const CreateExpShadowMapPass::ResourceStates* pCreateExpShadowMapPassStates =
+		m_pCreateExpShadowMapPass->GetOutputResourceStates();
+
+	FilterExpShadowMapPass::InitParams params;
+	params.m_pName = "FilterExpShadowMapPass";
+	params.m_pRenderEnv = pParams->m_pRenderEnv;
+	params.m_InputResourceStates.m_ExpShadowMapsState = pCreateExpShadowMapPassStates->m_ExpShadowMapsState;
+	params.m_MaxNumActiveExpShadowMaps = pParams->m_MaxNumActiveSpotLights;
+	params.m_pExpShadowMaps = m_pSpotLightShadowMaps;
+
+	m_pFilterExpShadowMapPass = new FilterExpShadowMapPass(&params);
 }

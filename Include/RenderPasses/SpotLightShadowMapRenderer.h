@@ -5,6 +5,11 @@
 struct RenderEnv;
 class SpotLight;
 class MeshBatch;
+class MeshRenderResources;
+
+class RenderSpotLightShadowMapPass;
+class CreateExpShadowMapPass;
+class FilterExpShadowMapPass;
 
 class SpotLightShadowMapRenderer
 {
@@ -23,6 +28,7 @@ public:
 		u32 m_MaxNumActiveSpotLights;
 		u32 m_NumStaticMeshTypes;
 		MeshBatch** m_ppStaticMeshBatches;
+		MeshRenderResources* m_pStaticMeshRenderResources;
 		u32 m_ShadowMapSize;
 	};
 
@@ -54,8 +60,10 @@ private:
 	};
 
 	void InitResources(InitParams* pParams);
-	void InitStaticMeshCommands(InitParams* pParams);
-	
+	void InitRenderSpotLightShadowMapPass(InitParams* pParams);
+	void InitCreateExpShadowMapPass(InitParams* pParams);
+	void InitFilterExpShadowMapPass(InitParams* pParams);
+
 private:
 	DepthTexture* m_pActiveShadowMaps = nullptr;
 		
@@ -71,4 +79,8 @@ private:
 
 	Buffer* m_pSpotLightViewProjMatrixBuffer = nullptr;
 	Buffer* m_pCreateExpShadowMapParamsBuffer = nullptr;
+
+	RenderSpotLightShadowMapPass* m_pRenderSpotLightShadowMapPass = nullptr;
+	CreateExpShadowMapPass* m_pCreateExpShadowMapPass = nullptr;
+	FilterExpShadowMapPass* m_pFilterExpShadowMapPass = nullptr;
 };

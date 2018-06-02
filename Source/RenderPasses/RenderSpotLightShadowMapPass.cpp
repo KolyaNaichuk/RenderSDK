@@ -48,9 +48,18 @@ void RenderSpotLightShadowMapPass::Record(RenderParams* pParams)
 	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
 #endif // ENABLE_PROFILING
 
+	const ResourceTransitionBarrier resourceBarriers[] =
+	{
+		ResourceTransitionBarrier(pParams->m_pSpotLightShadowMaps,
+			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_DEPTH_WRITE,
+			pParams->m_ShadowMapIndex)
+	};
+
 	pCommandList->SetPipelineState(m_pPipelineState);
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
+	pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
 	
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = pSpotLightShadowMaps->GetDSVHandle(0/*mipSlice*/, pParams->m_ShadowMapIndex);
 	pCommandList->OMSetRenderTargets(0, nullptr, TRUE, &dsvHandle);
@@ -86,9 +95,13 @@ void RenderSpotLightShadowMapPass::InitResources(InitParams* pParams)
 	assert(pParams->m_InputResourceStates.m_MeshInstanceIndexBufferState == D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	assert(pParams->m_InputResourceStates.m_MeshInstanceWorldMatrixBufferState == D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	assert(pParams->m_InputResourceStates.m_SpotLightViewProjMatrixBufferState == D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-	assert(pParams->m_InputResourceStates.m_SpotLightShadowMapsState == D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	assert(pParams->m_InputResourceStates.m_SpotLightShadowMapsState == D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 	
-	m_OutputResourceStates = pParams->m_InputResourceStates;
+	m_OutputResourceStates.m_RenderCommandBufferState = D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
+	m_OutputResourceStates.m_MeshInstanceIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_MeshInstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_SpotLightViewProjMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_SpotLightShadowMapsState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	
 	assert(!m_SRVHeapStartVS.IsValid());
 	m_SRVHeapStartVS = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();

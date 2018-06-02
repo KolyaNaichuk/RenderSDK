@@ -1639,6 +1639,7 @@ void DXApplication::InitRenderSpotLightShadowMapsPass(Scene* pScene)
 	params.m_MaxNumActiveSpotLights = kMaxNumActiveSpotLights;
 	params.m_NumStaticMeshTypes = pScene->GetNumMeshBatches();
 	params.m_ppStaticMeshBatches = pScene->GetMeshBatches();
+	params.m_pStaticMeshRenderResources = m_pMeshRenderResources;
 	params.m_ShadowMapSize = kShadowMapSize;
 	
 	m_pSpotLightShadowMapRenderer = new SpotLightShadowMapRenderer(&params);
