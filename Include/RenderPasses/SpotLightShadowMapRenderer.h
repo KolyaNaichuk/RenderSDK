@@ -6,6 +6,7 @@ struct RenderEnv;
 class SpotLight;
 class MeshBatch;
 class MeshRenderResources;
+class CommandList;
 
 class RenderSpotLightShadowMapPass;
 class CreateExpShadowMapPass;
@@ -35,8 +36,10 @@ public:
 	struct RenderParams
 	{
 		RenderEnv* m_pRenderEnv;
+		CommandList* m_pCommandList;
 		u32 m_NumActiveSpotLights;
 		const u32* m_ActiveSpotLightIndices;
+		MeshRenderResources* m_pStaticMeshRenderResources;
 	};
 
 	SpotLightShadowMapRenderer(InitParams* pParams);
@@ -66,7 +69,7 @@ private:
 
 private:
 	DepthTexture* m_pActiveShadowMaps = nullptr;
-		
+			
 	Buffer* m_pStaticMeshCommandBuffer = nullptr;
 	std::vector<CommandRange> m_StaticMeshCommandRanges;
 	Buffer* m_pStaticMeshInstanceIndexBuffer = nullptr;

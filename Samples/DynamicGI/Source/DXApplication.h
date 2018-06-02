@@ -107,7 +107,8 @@ private:
 
 	CommandList* RecordUploadLightDataPass();
 
-	void InitRenderSpotLightShadowMapsPass(Scene* pScene);
+	void InitRenderSpotLightShadowMaps(Scene* pScene);
+	CommandList* RecordRenderSpotLightShadowMaps();
 
 	void InitTiledLightCullingPass();
 	CommandList* RecordTiledLightCullingPass();
@@ -214,6 +215,7 @@ private:
 
 	u32 m_NumActiveSpotLights = 0;
 	SpotLightRenderData** m_ppActiveSpotLights = nullptr;
+	u32* m_pActiveSpotLightIndices = nullptr;
 		
 	Buffer* m_pActiveSpotLightWorldBoundsBuffer = nullptr;
 	Buffer* m_pActiveSpotLightPropsBuffer = nullptr;

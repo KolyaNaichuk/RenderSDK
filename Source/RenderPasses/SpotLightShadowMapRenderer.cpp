@@ -34,7 +34,7 @@ SpotLightShadowMapRenderer::~SpotLightShadowMapRenderer()
 
 void SpotLightShadowMapRenderer::Record(RenderParams* pParams)
 {
-	assert(pParams->m_NumActiveSpotLights <= m_SpotLightShadowMapStates.size());
+	assert(pParams->m_NumActiveSpotLights <= m_OutdatedSpotLightShadowMapIndices.size());
 
 	u32 numOutdatedShadowMaps = 0;
 	for (u32 it = 0; it < pParams->m_NumActiveSpotLights; ++it)
@@ -43,7 +43,55 @@ void SpotLightShadowMapRenderer::Record(RenderParams* pParams)
 		if (m_SpotLightShadowMapStates[activeLightIndex] == ShadowMapState::Outdated)
 			m_OutdatedSpotLightShadowMapIndices[numOutdatedShadowMaps++] = activeLightIndex;
 	}
-	assert(false);
+	
+	CommandList* pCommandList = pParams->m_pCommandList;
+	pCommandList->Begin();
+
+	for (u32 it = 0; it < numOutdatedShadowMaps; ++it)
+	{
+		const u32 shadowMapIndex = m_OutdatedSpotLightShadowMapIndices[it];
+		const CommandRange& commandRange = m_StaticMeshCommandRanges[shadowMapIndex];
+
+		{
+			RenderSpotLightShadowMapPass::RenderParams params;
+			params.m_pRenderEnv = pParams->m_pRenderEnv;
+			params.m_pCommandList = pCommandList;
+			params.m_pMeshRenderResources = pParams->m_pStaticMeshRenderResources;
+			params.m_pSpotLightShadowMaps = m_pActiveShadowMaps;
+			params.m_pRenderCommandBuffer = m_pStaticMeshCommandBuffer;
+			params.m_FirstRenderCommand = commandRange.m_FirstCommand;
+			params.m_NumRenderCommands = commandRange.m_NumCommands;
+			params.m_SpotLightIndex = shadowMapIndex;
+			params.m_ShadowMapIndex = it;
+
+			m_pRenderSpotLightShadowMapPass->Record(&params);
+		}
+		{
+			CreateExpShadowMapPass::RenderParams params;
+			params.m_pRenderEnv = pParams->m_pRenderEnv;
+			params.m_pCommandList = pCommandList;
+			params.m_pStandardShadowMaps = m_pActiveShadowMaps;
+			params.m_pExpShadowMaps = m_pSpotLightShadowMaps;
+			params.m_StandardShadowMapIndex = it;
+			params.m_ExpShadowMapIndex = shadowMapIndex;
+
+			m_pCreateExpShadowMapPass->Record(&params);
+		}
+		{
+			FilterExpShadowMapPass::RenderParams params;
+			params.m_pRenderEnv = pParams->m_pRenderEnv;
+			params.m_pCommandList = pCommandList;
+			params.m_pExpShadowMaps = m_pSpotLightShadowMaps;
+			params.m_ExpShadowMapIndex = shadowMapIndex;
+			params.m_IntermediateResultIndex = it;
+
+			m_pFilterExpShadowMapPass->Record(&params);
+		}
+				
+		m_SpotLightShadowMapStates[shadowMapIndex] = ShadowMapState::UpToDate;
+	}
+
+	pCommandList->End();
 }
 
 void SpotLightShadowMapRenderer::InitResources(InitParams* pParams)

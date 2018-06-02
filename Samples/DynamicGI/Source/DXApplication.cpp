@@ -312,6 +312,8 @@ DXApplication::~DXApplication()
 
 	SafeArrayDelete(m_pSpotLights);
 	SafeArrayDelete(m_ppActiveSpotLights);
+	SafeArrayDelete(m_pActiveSpotLightIndices);
+
 	SafeDelete(m_pCPUProfiler);
 	SafeDelete(m_pGPUProfiler);
 	SafeDelete(m_pCamera);
@@ -378,8 +380,8 @@ void DXApplication::OnInit()
 
 	if (pScene->GetNumSpotLights() > 0)
 	{
-		InitRenderSpotLightShadowMapsPass(pScene);
 		InitTiledLightCullingPass();
+		InitRenderSpotLightShadowMaps(pScene);
 	}
 	InitTiledShadingPass();
 		
@@ -491,7 +493,10 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordUploadLightDataPass();
 
 	if (m_NumActiveSpotLights > 0)
+	{
 		commandListBatch[commandListBatchSize++] = RecordTiledLightCullingPass();
+		commandListBatch[commandListBatchSize++] = RecordRenderSpotLightShadowMaps();
+	}
 	
 	commandListBatch[commandListBatchSize++] = RecordTiledShadingPass();
 	commandListBatch[commandListBatchSize++] = RecordVisualizeDisplayResultPass();
@@ -1625,7 +1630,7 @@ void DXApplication::InitTiledLightCullingPass()
 	m_pTiledLightCullingPass = new TiledLightCullingPass(&params);
 }
 
-void DXApplication::InitRenderSpotLightShadowMapsPass(Scene* pScene)
+void DXApplication::InitRenderSpotLightShadowMaps(Scene* pScene)
 {
 	assert(m_pSpotLightShadowMapRenderer == nullptr);
 
@@ -1643,6 +1648,22 @@ void DXApplication::InitRenderSpotLightShadowMapsPass(Scene* pScene)
 	params.m_ShadowMapSize = kShadowMapSize;
 	
 	m_pSpotLightShadowMapRenderer = new SpotLightShadowMapRenderer(&params);
+}
+
+CommandList* DXApplication::RecordRenderSpotLightShadowMaps()
+{
+	assert(m_pSpotLightShadowMapRenderer != nullptr);
+	assert(m_NumActiveSpotLights > 0);
+
+	SpotLightShadowMapRenderer::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pRenderSpotLightShadowMapsCommandList");
+	params.m_NumActiveSpotLights = m_NumActiveSpotLights;
+	params.m_ActiveSpotLightIndices = m_pActiveSpotLightIndices;
+	params.m_pStaticMeshRenderResources = m_pMeshRenderResources;
+
+	m_pSpotLightShadowMapRenderer->Record(&params);
+	return params.m_pCommandList;
 }
 
 CommandList* DXApplication::RecordTiledLightCullingPass()
@@ -1954,6 +1975,7 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 
 	m_pSpotLights = new SpotLightRenderData[m_NumSpotLights];
 	m_ppActiveSpotLights = new SpotLightRenderData*[m_NumSpotLights];
+	m_pActiveSpotLightIndices = new u32[m_NumSpotLights];
 
 	for (decltype(m_NumSpotLights) lightIndex = 0; lightIndex < m_NumSpotLights; ++lightIndex)
 	{
@@ -2035,7 +2057,12 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 	{
 		SpotLightRenderData& lightData = m_pSpotLights[lightIndex];
 		if (TestFrustumAgainstFrustum(cameraWorldFrustum, lightData.m_WorldFrustum))
-			m_ppActiveSpotLights[m_NumActiveSpotLights++] = &lightData;
+		{
+			m_pActiveSpotLightIndices[m_NumActiveSpotLights] = lightIndex;
+			m_ppActiveSpotLights[m_NumActiveSpotLights] = &lightData;
+
+			++m_NumActiveSpotLights;
+		}
 	}
 		
 	Sphere* pUploadActiveLightWorldBounds = (Sphere*)m_UploadActiveSpotLightWorldBounds[m_BackBufferIndex];
