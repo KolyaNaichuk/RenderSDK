@@ -28,7 +28,9 @@ public:
 	{
 		RenderEnv* m_pRenderEnv = nullptr;
 		CommandList* m_pCommandList = nullptr;
-		u32 g_ExpShadowMapIndex = -1;
+		ColorTexture* m_pExpShadowMaps = nullptr;
+		u32 m_ExpShadowMapIndex = -1;
+		u32 m_IntermediateResultIndex = -1;
 	};
 
 	FilterExpShadowMapPass(InitParams* pParams);

@@ -32,17 +32,18 @@ CreateExpShadowMapPass::~CreateExpShadowMapPass()
 
 void CreateExpShadowMapPass::Record(RenderParams* pParams)
 {
-	static ResourceTransitionBarrier resourceBarriers[2];
-	
-	resourceBarriers[0] = ResourceTransitionBarrier(pParams->m_pStandardShadowMaps,
-		D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		m_OutputResourceStates.m_StandardShadowMapsState,
-		pParams->m_StandardShadowMapIndex);
+	const ResourceTransitionBarrier resourceBarriers[] =
+	{
+		ResourceTransitionBarrier(pParams->m_pStandardShadowMaps,
+			D3D12_RESOURCE_STATE_DEPTH_WRITE,
+			m_OutputResourceStates.m_StandardShadowMapsState,
+			pParams->m_StandardShadowMapIndex),
 
-	resourceBarriers[1] = ResourceTransitionBarrier(pParams->m_pStandardShadowMaps,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		m_OutputResourceStates.m_ExpShadowMapsState,
-		pParams->m_ExpShadowMapIndex);
+		ResourceTransitionBarrier(pParams->m_pExpShadowMaps,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			m_OutputResourceStates.m_ExpShadowMapsState,
+			pParams->m_ExpShadowMapIndex)
+	};
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
