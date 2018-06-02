@@ -4,6 +4,7 @@
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/RenderEnv.h"
+#include "Profiler/GPUProfiler.h"
 #include "Math/Math.h"
 
 namespace

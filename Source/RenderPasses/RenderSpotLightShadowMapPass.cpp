@@ -6,6 +6,7 @@
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/RenderEnv.h"
+#include "Profiler/GPUProfiler.h"
 
 namespace
 {
@@ -126,7 +127,7 @@ void RenderSpotLightShadowMapPass::InitRootSignature(InitParams* pParams)
 	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = {SRVDescriptorRange(3, 0)};
 	rootParams[kRootSRVTableParamVS] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), descriptorRanges, D3D12_SHADER_VISIBILITY_VERTEX);
 
-	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams);
+	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"RenderSpotLightShadowMapPass::m_pRootSignature");
 }
 

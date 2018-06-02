@@ -4,6 +4,7 @@
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/RenderEnv.h"
+#include "Profiler/GPUProfiler.h"
 #include "Math/Math.h"
 
 namespace
@@ -149,6 +150,7 @@ void FilterExpShadowMapPass::InitPipelineState(InitParams* pParams)
 
 	const u32 numThreads = 8;
 	const std::string numThreadsStr = std::to_string(numThreads);
+	const std::string shadowMapSizeStr = std::to_string(pExpShadowMaps->GetWidth());
 
 	m_NumThreadGroupsX = (u32)Ceil((f32)pExpShadowMaps->GetWidth() / (f32)numThreads);
 	m_NumThreadGroupsY = m_NumThreadGroupsX;
@@ -157,6 +159,7 @@ void FilterExpShadowMapPass::InitPipelineState(InitParams* pParams)
 		assert(m_pPipelineStateX == nullptr);
 		const ShaderMacro shaderDefines[] =
 		{
+			ShaderMacro("SHADOW_MAP_SIZE", shadowMapSizeStr.c_str()),
 			ShaderMacro("FILTER_X", "1"),
 			ShaderMacro("NUM_THREADS", numThreadsStr.c_str()),
 			ShaderMacro()
@@ -173,6 +176,7 @@ void FilterExpShadowMapPass::InitPipelineState(InitParams* pParams)
 		assert(m_pPipelineStateY == nullptr);
 		const ShaderMacro shaderDefines[] =
 		{
+			ShaderMacro("SHADOW_MAP_SIZE", shadowMapSizeStr.c_str()),
 			ShaderMacro("FILTER_Y", "1"),
 			ShaderMacro("NUM_THREADS", numThreadsStr.c_str()),
 			ShaderMacro()
