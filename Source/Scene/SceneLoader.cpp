@@ -2,11 +2,17 @@
 #include "Scene/OBJFileLoader.h"
 #include "Scene/Light.h"
 #include "Scene/Scene.h"
+#include "D3DWrapper/Common.h"
 
 Scene* SceneLoader::LoadCube()
 {
-	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\Cube\\cube.obj");
-
+#ifdef ENABLE_EXTERNAL_TOOL_DEBUGGING
+	const wchar_t* pFilePath = L"..\\..\\..\\Resources\\Cube\\cube.obj";
+#else
+	const wchar_t* pFilePath = L"..\\..\\Resources\\Cube\\cube.obj";
+#endif
+	Scene* pScene = LoadSceneFromOBJFile(pFilePath);
+	
 	Camera* pCamera = new Camera(
 		Camera::ProjType_Perspective,
 		0.1f/*nearClipPlane*/,
@@ -28,7 +34,7 @@ Scene* SceneLoader::LoadCube()
 		
 	pScene->AddPointLight(pPointLight);
 
-	SpotLight* pSpotLight = new SpotLight("Spot light", 5.0f, PI_DIV_4, PI_DIV_2, 0.1f);
+	SpotLight* pSpotLight = new SpotLight("Spot light", 5.0f, PI_DIV_4, PI_DIV_2, 0.1f, 80.0f);
 	pSpotLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight->SetIntensity(1.0f);
 	pSpotLight->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, -1.0f));
@@ -40,13 +46,23 @@ Scene* SceneLoader::LoadCube()
 
 Scene* SceneLoader::LoadErato()
 {
-	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\Erato\\erato-1.obj");
+#ifdef ENABLE_EXTERNAL_TOOL_DEBUGGING
+	const wchar_t* pFilePath = L"..\\..\\..\\Resources\\Erato\\erato-1.obj";
+#else
+	const wchar_t* pFilePath = L"..\\..\\Resources\\Erato\\erato-1.obj";
+#endif
+	Scene* pScene = LoadSceneFromOBJFile(pFilePath);
 	return pScene;
 }
 
 Scene* SceneLoader::LoadCrytekSponza()
 {
-	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\CrytekSponza\\sponza.obj");
+#ifdef ENABLE_EXTERNAL_TOOL_DEBUGGING
+	const wchar_t* pFilePath = L"..\\..\\..\\Resources\\CrytekSponza\\sponza.obj";
+#else
+	const wchar_t* pFilePath = L"..\\..\\Resources\\CrytekSponza\\sponza.obj";
+#endif
+	Scene* pScene = LoadSceneFromOBJFile(pFilePath);
 	
 	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
 	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-1920.94592f, -126.442497f, -1105.42603f}
@@ -64,7 +80,7 @@ Scene* SceneLoader::LoadCrytekSponza()
 	pScene->SetCamera(pCamera);
 
 #if 1
-	SpotLight* pSpotLight1 = new SpotLight("Spot Light 1", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f);
+	SpotLight* pSpotLight1 = new SpotLight("Spot Light 1", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f, 80.0f);
 	pSpotLight1->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight1->SetIntensity(1.0f);
 	pSpotLight1->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));
@@ -72,7 +88,7 @@ Scene* SceneLoader::LoadCrytekSponza()
 #endif
 
 #if 1
-	SpotLight* pSpotLight2 = new SpotLight("Spot Light 2", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f);
+	SpotLight* pSpotLight2 = new SpotLight("Spot Light 2", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f, 80.0f);
 	pSpotLight2->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight2->SetIntensity(1.0f);
 	pSpotLight2->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));
@@ -81,7 +97,7 @@ Scene* SceneLoader::LoadCrytekSponza()
 #endif
 
 #if 1
-	SpotLight* pSpotLight3 = new SpotLight("Spot Light 3", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f);
+	SpotLight* pSpotLight3 = new SpotLight("Spot Light 3", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f, 80.0f);
 	pSpotLight3->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight3->SetIntensity(1.0f);
 	pSpotLight3->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));
@@ -90,7 +106,7 @@ Scene* SceneLoader::LoadCrytekSponza()
 #endif
 
 #if 1
-	SpotLight* pSpotLight4 = new SpotLight("Spot Light 4", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f);
+	SpotLight* pSpotLight4 = new SpotLight("Spot Light 4", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f, 80.0f);
 	pSpotLight4->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight4->SetIntensity(1.0f);
 	pSpotLight4->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));
@@ -99,7 +115,7 @@ Scene* SceneLoader::LoadCrytekSponza()
 #endif
 
 #if 1
-	SpotLight* pSpotLight5 = new SpotLight("Spot Light 5", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f);
+	SpotLight* pSpotLight5 = new SpotLight("Spot Light 5", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f, 80.0f);
 	pSpotLight5->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight5->SetIntensity(1.0f);
 	pSpotLight5->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));
@@ -108,7 +124,7 @@ Scene* SceneLoader::LoadCrytekSponza()
 #endif
 
 #if 1
-	SpotLight* pSpotLight6 = new SpotLight("Spot Light 6", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f);
+	SpotLight* pSpotLight6 = new SpotLight("Spot Light 6", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f, 80.0f);
 	pSpotLight6->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight6->SetIntensity(1.0f);
 	pSpotLight6->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));
@@ -121,7 +137,12 @@ Scene* SceneLoader::LoadCrytekSponza()
 
 Scene* SceneLoader::LoadDabrovicSponza()
 {
-	Scene* pScene = LoadSceneFromOBJFile(L"..\\..\\Resources\\DabrovicSponza\\sponza.obj");
+#ifdef ENABLE_EXTERNAL_TOOL_DEBUGGING
+	const wchar_t* pFilePath = L"..\\..\\..\\Resources\\DabrovicSponza\\sponza.obj";
+#else
+	const wchar_t* pFilePath = L"..\\..\\Resources\\DabrovicSponza\\sponza.obj";
+#endif
+	Scene* pScene = LoadSceneFromOBJFile(pFilePath);
 
 	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
 	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-17.4027596, -0.906688690, -7.80148792}
@@ -151,10 +172,10 @@ Scene* SceneLoader::LoadDabrovicSponza()
 
 Scene* SceneLoader::LoadSibenik()
 {
-#if 1
-	const wchar_t* pFilePath = L"..\\..\\Resources\\Sibenik\\sibenik.obj";
+#ifdef ENABLE_EXTERNAL_TOOL_DEBUGGING
+	const wchar_t* pFilePath = L"..\..\\..\\Resources\\Sibenik\\sibenik.obj";
 #else
-	const wchar_t* pFilePath = L"..\\..\\..\\Resources\\Sibenik\\sibenik.obj";
+	const wchar_t* pFilePath = L"..\\..\\Resources\\Sibenik\\sibenik.obj";
 #endif
 	Scene* pScene = LoadSceneFromOBJFile(pFilePath, true/*use32BitIndices*/);
 
@@ -175,7 +196,7 @@ Scene* SceneLoader::LoadSibenik()
 
 #if 1
 	SpotLight* pSpotLight1 = new SpotLight("Spot Light 1", 50.0f/*range*/, ToRadians(45.0f)/*innerConeAngleInRadians*/,
-		ToRadians(70.0f)/*outerConeAngleInRadians*/, 0.1f/*shadowNearPlane*/);
+		ToRadians(70.0f)/*outerConeAngleInRadians*/, 0.1f/*shadowNearPlane*/, 80.0f/*expShadowMapConstant*/);
 	pSpotLight1->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight1->SetIntensity(1.0f);
 	pSpotLight1->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, 0.0f));

@@ -75,7 +75,8 @@ struct SamplerDesc : public D3D12_SAMPLER_DESC
 		Point,
 		Linear,
 		Anisotropic,
-		MaxPoint
+		MaxPoint,
+		ShadowMapSampler
 	};
 	SamplerDesc(Id id);
 };

@@ -219,7 +219,6 @@ private:
 		
 	Buffer* m_pActiveSpotLightWorldBoundsBuffer = nullptr;
 	Buffer* m_pActiveSpotLightPropsBuffer = nullptr;
-	Buffer* m_pActiveSpotLightViewProjMatrixBuffer = nullptr;
 	
 	Buffer* m_UploadAppDataBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	void* m_UploadAppData[kNumBackBuffers] = {nullptr, nullptr, nullptr};
@@ -228,6 +227,4 @@ private:
 	void* m_UploadActiveSpotLightWorldBounds[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	Buffer* m_UploadActiveSpotLightPropsBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	void* m_UploadActiveSpotLightProps[kNumBackBuffers] = {nullptr, nullptr, nullptr};
-	Buffer* m_UploadActiveSpotLightViewProjMatrixBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
-	void* m_UploadActiveSpotLightViewProjMatrices[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 };

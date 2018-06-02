@@ -155,7 +155,7 @@ void SpotLightShadowMapRenderer::InitResources(InitParams* pParams)
 		createExpShadowMapParams[lightIndex].m_LightProjMatrix33 = projMatrix.m_22;
 		createExpShadowMapParams[lightIndex].m_LightViewNearPlane = pLight->GetShadowNearPlane();
 		createExpShadowMapParams[lightIndex].m_LightRcpViewClipRange = Rcp(pLight->GetRange() - pLight->GetShadowNearPlane());
-		createExpShadowMapParams[lightIndex].m_ExpShadowMapConstant = 80.0f;
+		createExpShadowMapParams[lightIndex].m_ExpShadowMapConstant = pLight->GetExpShadowMapConstant();
 
 		const Frustum lightWorldFrustum(viewProjMatrix);
 

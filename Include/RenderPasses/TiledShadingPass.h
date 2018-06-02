@@ -1,6 +1,8 @@
 #pragma once
 
 #include "D3DWrapper/GraphicsResource.h"
+#include "Math/Vector3.h"
+#include "Math/Matrix4.h"
 
 struct RenderEnv;
 struct Viewport;
@@ -12,6 +14,21 @@ enum ShadingMode
 {
 	ShadingMode_Phong = 1,
 	ShadingMode_BlinnPhong = 2
+};
+
+struct SpotLightProps
+{
+	Matrix4f m_LightViewProjMatrix;
+	Vector3f m_Color;
+	f32 m_LightRange;
+	Vector3f m_WorldSpacePos;
+	f32 m_CosHalfInnerConeAngle;
+	Vector3f m_WorldSpaceDir;
+	f32 m_CosHalfOuterConeAngle;
+	f32 m_ViewNearPlane;
+	f32 m_RcpViewClipRange;
+	f32 m_NegativeExpShadowMapConstant;
+	u32 m_LightID;
 };
 
 class TiledShadingPass
@@ -62,7 +79,6 @@ public:
 		Buffer* m_pSpotLightIndexPerTileBuffer;
 		Buffer* m_pSpotLightRangePerTileBuffer;
 		ColorTexture* m_pSpotLightShadowMaps;
-		Buffer* m_pSpotLightViewProjMatrixBuffer;
 	};
 	
 	struct RenderParams

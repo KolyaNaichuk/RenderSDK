@@ -55,12 +55,13 @@ void PointLight::SetShadowNearPlane(f32 shadowNearPlane)
 	m_ShadowNearPlane = shadowNearPlane;
 }
 
-SpotLight::SpotLight(const std::string& name, f32 range, f32 innerConeAngleInRadians, f32 outerConeAngleInRadians, f32 shadowNearPlane)
+SpotLight::SpotLight(const std::string& name, f32 range, f32 innerConeAngleInRadians, f32 outerConeAngleInRadians, f32 shadowNearPlane, f32 expShadowMapConstant)
 	: Light(name)
 	, m_Range(range)
 	, m_InnerConeAngleInRadians(innerConeAngleInRadians)
 	, m_OuterConeAngleInRadians(outerConeAngleInRadians)
 	, m_ShadowNearPlane(shadowNearPlane)
+	, m_ExpShadowMapConstant(expShadowMapConstant)
 {
 }
 
@@ -102,6 +103,16 @@ f32 SpotLight::GetShadowNearPlane() const
 void SpotLight::SetShadowNearPlane(f32 shadowNearPlane)
 {
 	m_ShadowNearPlane = shadowNearPlane;
+}
+
+f32 SpotLight::GetExpShadowMapConstant() const
+{
+	return m_ExpShadowMapConstant;
+}
+
+void SpotLight::SetExpShadowMapConstant(f32 expShadowMapConstant)
+{
+	m_ExpShadowMapConstant = expShadowMapConstant;
 }
 
 DirectionalLight::DirectionalLight(const std::string& name)

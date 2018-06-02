@@ -27,12 +27,13 @@ StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t5);
 Buffer<uint> g_SpotLightIndexPerTileBuffer : register(t6);
 StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t7);
 Texture2DArray<float> g_SpotLightShadowMaps : register(t8);
-StructuredBuffer<float4x4> g_SpotLightViewProjMatrixBuffer : register(t9);
 #endif // ENABLE_SPOT_LIGHTS
 
-Buffer<uint> g_FirstResourceIndexPerMaterialIDBuffer : register(t10);
-Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t11);
+Buffer<uint> g_FirstResourceIndexPerMaterialIDBuffer : register(t9);
+Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t10);
+
 SamplerState g_AnisoSampler : register(s0);
+SamplerState g_ShadowMapSampler : register(s1);
 
 [earlydepthstencil]
 float4 Main(PSInput input) : SV_Target
@@ -74,6 +75,7 @@ float4 Main(PSInput input) : SV_Target
 	{
 		uint lightIndex = g_SpotLightIndexPerTileBuffer[lightIndexPerTile];
 
+		float4x4 lightViewProjMatrix = g_SpotLightPropsBuffer[lightIndex].lightViewProjMatrix;
 		float3 lightColor = g_SpotLightPropsBuffer[lightIndex].color;
 		float3 lightWorldSpacePos = g_SpotLightPropsBuffer[lightIndex].worldSpacePos;
 		float3 lightWorldSpaceDir = g_SpotLightPropsBuffer[lightIndex].worldSpaceDir;
@@ -82,16 +84,15 @@ float4 Main(PSInput input) : SV_Target
 		float cosHalfOuterConeAngle = g_SpotLightPropsBuffer[lightIndex].cosHalfOuterConeAngle;
 		float lightViewNearPlane = g_SpotLightPropsBuffer[lightIndex].viewNearPlane;
 		float lightRcpViewClipRange = g_SpotLightPropsBuffer[lightIndex].rcpViewClipRange;
-		
+		float negativeExpShadowMapConstant = g_SpotLightPropsBuffer[lightIndex].negativeExpShadowMapConstant;
+		uint lightID = g_SpotLightPropsBuffer[lightIndex].lightID;
+
 		float3 lightContrib = CalcSpotLightContribution(lightWorldSpacePos, lightWorldSpaceDir, lightColor, lightRange,
 			cosHalfInnerConeAngle, cosHalfOuterConeAngle, worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal,
 			diffuseAlbedo, specularAlbedo, shininess);
-
-		float4x4 lightViewProjMatrix = g_SpotLightViewProjMatrixBuffer[lightIndex];
 				
-		//float lightVisibility = CalcSpotLightVisibility(g_SpotLightTiledExpShadowMap, shadowMapTile,
-		//	lightViewProjMatrix, lightViewNearPlane, lightRcpViewClipRange, worldSpacePos);
-		float lightVisibility = 1.0f;
+		float lightVisibility = CalcSpotLightVisibility(g_SpotLightShadowMaps, lightID, g_ShadowMapSampler,
+			lightViewProjMatrix, lightViewNearPlane, lightRcpViewClipRange, negativeExpShadowMapConstant, worldSpacePos);
 
 		spotLightsContrib += lightVisibility * lightContrib;
 	}

@@ -57,7 +57,7 @@ private:
 class SpotLight : public Light
 {
 public:
-	SpotLight(const std::string& name, f32 range, f32 innerConeAngleInRadians, f32 outerConeAngleInRadians, f32 shadowNearPlane);
+	SpotLight(const std::string& name, f32 range, f32 innerConeAngleInRadians, f32 outerConeAngleInRadians, f32 shadowNearPlane, f32 expShadowMapConstant);
 
 	f32 GetRange() const;
 	void SetRange(f32 range);
@@ -71,11 +71,15 @@ public:
 	f32 GetShadowNearPlane() const;
 	void SetShadowNearPlane(f32 shadowNearPlane);
 
+	f32 GetExpShadowMapConstant() const;
+	void SetExpShadowMapConstant(f32 expShadowMapConstant);
+
 private:
 	f32 m_Range;
 	f32 m_InnerConeAngleInRadians;
 	f32 m_OuterConeAngleInRadians;
 	f32 m_ShadowNearPlane;
+	f32 m_ExpShadowMapConstant;
 };
 
 class DirectionalLight : public Light

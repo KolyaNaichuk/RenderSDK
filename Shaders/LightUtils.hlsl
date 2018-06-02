@@ -17,6 +17,7 @@
 
 struct SpotLightProps
 {
+	float4x4 lightViewProjMatrix;
 	float3 color;
 	float lightRange;
 	float3 worldSpacePos;
@@ -25,6 +26,8 @@ struct SpotLightProps
 	float cosHalfOuterConeAngle;
 	float viewNearPlane;
 	float rcpViewClipRange;
+	float negativeExpShadowMapConstant;
+	uint lightID;
 };
 
 float3 CalcPhongLighting(float3 dirToViewer, float3 dirToLight, float3 lightColor,

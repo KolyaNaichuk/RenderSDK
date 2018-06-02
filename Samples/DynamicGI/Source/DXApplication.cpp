@@ -144,18 +144,6 @@ namespace
 		f32 m_NotUsed8[16];
 		f32 m_NotUsed9[16];
 	};
-	
-	struct SpotLightProps
-	{
-		Vector3f m_Color;
-		f32 m_LightRange;
-		Vector3f m_WorldSpacePos;
-		f32 m_CosHalfInnerConeAngle;
-		Vector3f m_WorldSpaceDir;
-		f32 m_CosHalfOuterConeAngle;
-		f32 m_ViewNearPlane;
-		f32 m_RcpViewClipRange;
-	};
 				
 	using BufferElementFormatter = std::function<std::string (const void* pElementData)>;
 	
@@ -303,11 +291,6 @@ DXApplication::~DXApplication()
 			m_UploadActiveSpotLightPropsBuffers[index]->Unmap(0, nullptr);
 			SafeDelete(m_UploadActiveSpotLightPropsBuffers[index]);
 		}
-		if (m_UploadActiveSpotLightViewProjMatrixBuffers[index] != nullptr)
-		{
-			m_UploadActiveSpotLightViewProjMatrixBuffers[index]->Unmap(0, nullptr);
-			SafeDelete(m_UploadActiveSpotLightViewProjMatrixBuffers[index]);
-		}
 	}
 
 	SafeArrayDelete(m_pSpotLights);
@@ -323,7 +306,6 @@ DXApplication::~DXApplication()
 		
 	SafeDelete(m_pActiveSpotLightWorldBoundsBuffer);
 	SafeDelete(m_pActiveSpotLightPropsBuffer);
-	SafeDelete(m_pActiveSpotLightViewProjMatrixBuffer);
 	
 	SafeDelete(m_pDownscaleAndReprojectDepthPass);
 	SafeDelete(m_pFrustumMeshCullingPass);
@@ -1558,28 +1540,21 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 #ifdef ENABLE_PROFILING
 	u32 profileIndex = m_pGPUProfiler->StartProfile(pCommandList, "UploadLightDataPass");
 #endif // ENABLE_PROFILING
-
-	static ResourceTransitionBarrier resourceBarriers[5];
-	u8 numBarriers = 0;
-
+	
 	if (m_NumSpotLights > 0)
 	{
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActiveSpotLightWorldBoundsBuffer,
-			pTiledLightCullingPassStates->m_SpotLightWorldBoundsBufferState,
-			D3D12_RESOURCE_STATE_COPY_DEST);
+		const ResourceTransitionBarrier resourceBarriers[] =
+		{
+			ResourceTransitionBarrier(m_pActiveSpotLightWorldBoundsBuffer,
+				pTiledLightCullingPassStates->m_SpotLightWorldBoundsBufferState,
+				D3D12_RESOURCE_STATE_COPY_DEST),
 
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActiveSpotLightPropsBuffer,
-			pTiledShadingPassStates->m_SpotLightPropsBufferState,
-			D3D12_RESOURCE_STATE_COPY_DEST);
-
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pActiveSpotLightViewProjMatrixBuffer,
-			pTiledShadingPassStates->m_SpotLightViewProjMatrixBufferState,
-			D3D12_RESOURCE_STATE_COPY_DEST);
+			ResourceTransitionBarrier(m_pActiveSpotLightPropsBuffer,
+				pTiledShadingPassStates->m_SpotLightPropsBufferState,
+				D3D12_RESOURCE_STATE_COPY_DEST)
+		};
 		
-		pCommandList->ResourceBarrier(numBarriers, resourceBarriers);
+		pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
 
 		pCommandList->CopyBufferRegion(m_pActiveSpotLightWorldBoundsBuffer, 0,
 			m_UploadActiveSpotLightWorldBoundsBuffers[m_BackBufferIndex], 0,
@@ -1588,10 +1563,6 @@ CommandList* DXApplication::RecordUploadLightDataPass()
 		pCommandList->CopyBufferRegion(m_pActiveSpotLightPropsBuffer, 0,
 			m_UploadActiveSpotLightPropsBuffers[m_BackBufferIndex], 0,
 			m_NumActiveSpotLights * sizeof(SpotLightProps));
-
-		pCommandList->CopyBufferRegion(m_pActiveSpotLightViewProjMatrixBuffer, 0,
-			m_UploadActiveSpotLightViewProjMatrixBuffers[m_BackBufferIndex], 0,
-			m_NumActiveSpotLights * sizeof(Matrix4f));
 	}
 	
 #ifdef ENABLE_PROFILING
@@ -1863,7 +1834,6 @@ void DXApplication::InitTiledShadingPass()
 		params.m_pSpotLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetSpotLightIndexPerTileBuffer();
 		params.m_pSpotLightRangePerTileBuffer = m_pTiledLightCullingPass->GetSpotLightRangePerTileBuffer();
 		params.m_pSpotLightShadowMaps = m_pSpotLightShadowMapRenderer->GetSpotLightShadowMaps();
-		params.m_pSpotLightViewProjMatrixBuffer = m_pActiveSpotLightViewProjMatrixBuffer;
 	}		
 	m_pTiledShadingPass = new TiledShadingPass(&params);
 }
@@ -2006,8 +1976,10 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		m_pSpotLights[lightIndex].m_LightRange = pLight->GetRange();
 		m_pSpotLights[lightIndex].m_CosHalfInnerConeAngle = Cos(0.5f * pLight->GetInnerConeAngle());
 		m_pSpotLights[lightIndex].m_CosHalfOuterConeAngle = Cos(0.5f * pLight->GetOuterConeAngle());
-		m_pSpotLights[lightIndex].m_ViewProjMatrix = viewProjMatrix;
-				
+		m_pSpotLights[lightIndex].m_LightViewProjMatrix = viewProjMatrix;
+		m_pSpotLights[lightIndex].m_NegativeExpShadowMapConstant = -1.0f * pLight->GetExpShadowMapConstant();
+		m_pSpotLights[lightIndex].m_LightID = lightIndex;
+
 		m_ppActiveSpotLights[lightIndex] = nullptr;
 	}
 	
@@ -2026,11 +1998,6 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		m_UploadActiveSpotLightPropsBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
 			&lightPropsBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActiveSpotLightPropsBuffer");
 		m_UploadActiveSpotLightProps[index] = m_UploadActiveSpotLightPropsBuffers[index]->Map(0, &readRange);
-
-		assert(m_UploadActiveSpotLightViewProjMatrixBuffers[index] == nullptr);
-		m_UploadActiveSpotLightViewProjMatrixBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps,
-			&lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pUploadActiveSpotLightViewProjMatrixBuffer");
-		m_UploadActiveSpotLightViewProjMatrices[index] = m_UploadActiveSpotLightViewProjMatrixBuffers[index]->Map(0, &readRange);
 	}
 
 	assert(m_pActiveSpotLightWorldBoundsBuffer == nullptr);
@@ -2040,10 +2007,6 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 	assert(m_pActiveSpotLightPropsBuffer == nullptr);
 	m_pActiveSpotLightPropsBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
 		&lightPropsBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActiveSpotLightPropsBuffer");
-	
-	assert(m_pActiveSpotLightViewProjMatrixBuffer == nullptr);
-	m_pActiveSpotLightViewProjMatrixBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps,
-		&lightViewProjMatrixBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, L"m_pActiveSpotLightViewProjMatrixBuffer");
 }
 
 void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustum)
@@ -2067,13 +2030,13 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 		
 	Sphere* pUploadActiveLightWorldBounds = (Sphere*)m_UploadActiveSpotLightWorldBounds[m_BackBufferIndex];
 	SpotLightProps* pUploadActiveLightProps = (SpotLightProps*)m_UploadActiveSpotLightProps[m_BackBufferIndex];
-	Matrix4f* pUploadActiveLightViewProjMatrices = (Matrix4f*)m_UploadActiveSpotLightViewProjMatrices[m_BackBufferIndex];
 	
 	for (decltype(m_NumActiveSpotLights) lightIndex = 0; lightIndex < m_NumActiveSpotLights; ++lightIndex)
 	{
 		const SpotLightRenderData* pLightData = m_ppActiveSpotLights[lightIndex];
 		pUploadActiveLightWorldBounds[lightIndex] = pLightData->m_WorldBounds;
 		
+		pUploadActiveLightProps[lightIndex].m_LightViewProjMatrix = pLightData->m_LightViewProjMatrix;
 		pUploadActiveLightProps[lightIndex].m_Color = pLightData->m_Color;
 		pUploadActiveLightProps[lightIndex].m_WorldSpacePos = pLightData->m_WorldSpacePos;
 		pUploadActiveLightProps[lightIndex].m_WorldSpaceDir = pLightData->m_WorldSpaceDir;
@@ -2082,8 +2045,8 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 		pUploadActiveLightProps[lightIndex].m_CosHalfOuterConeAngle = pLightData->m_CosHalfOuterConeAngle;
 		pUploadActiveLightProps[lightIndex].m_ViewNearPlane = pLightData->m_LightViewNearPlane;
 		pUploadActiveLightProps[lightIndex].m_RcpViewClipRange = pLightData->m_LightRcpViewClipRange;
-		
-		pUploadActiveLightViewProjMatrices[lightIndex] = pLightData->m_ViewProjMatrix;
+		pUploadActiveLightProps[lightIndex].m_NegativeExpShadowMapConstant = pLightData->m_NegativeExpShadowMapConstant;
+		pUploadActiveLightProps[lightIndex].m_LightID = pLightData->m_LightID;
 	}
 
 #ifdef ENABLE_PROFILING
