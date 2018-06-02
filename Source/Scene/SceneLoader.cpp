@@ -79,59 +79,47 @@ Scene* SceneLoader::LoadCrytekSponza()
 	pCamera->GetTransform().SetRotation(Quaternion(0.0f, 0.707107f, 0.0f, -0.707107f));
 	pScene->SetCamera(pCamera);
 
-#if 1
-	SpotLight* pSpotLight1 = new SpotLight("Spot Light 1", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f, 80.0f);
+	SpotLight* pSpotLight1 = new SpotLight("Spot Light 1", 600.0f, ToRadians(45.0f), ToRadians(90.0f), 0.1f, 80.0f);
 	pSpotLight1->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight1->SetIntensity(1.0f);
-	pSpotLight1->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));
+	pSpotLight1->GetTransform().SetPosition(Vector3f(-894, 400.0f, 39.0f));
+	pSpotLight1->GetTransform().SetRotation(CreateRotationXQuaternion(PI_DIV_2));
 	pScene->AddSpotLight(pSpotLight1);
-#endif
 
-#if 1
-	SpotLight* pSpotLight2 = new SpotLight("Spot Light 2", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f, 80.0f);
+	SpotLight* pSpotLight2 = new SpotLight("Spot Light 2", 600.0f, ToRadians(45.0f), ToRadians(90.0f), 0.1f, 80.0f);
 	pSpotLight2->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight2->SetIntensity(1.0f);
-	pSpotLight2->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));
-	pSpotLight2->GetTransform().SetRotation(CreateRotationYQuaternion(PI_DIV_2));
+	pSpotLight2->GetTransform().SetPosition(Vector3f(-93.0f, 400.0f, 39.0f));
+	pSpotLight2->GetTransform().SetRotation(CreateRotationXQuaternion(PI_DIV_2));
 	pScene->AddSpotLight(pSpotLight2);
-#endif
 
-#if 1
-	SpotLight* pSpotLight3 = new SpotLight("Spot Light 3", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f, 80.0f);
+	SpotLight* pSpotLight3 = new SpotLight("Spot Light 3", 600.0f, ToRadians(45.0f), ToRadians(90.0f), 0.1f, 80.0f);
 	pSpotLight3->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight3->SetIntensity(1.0f);
-	pSpotLight3->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));
-	pSpotLight3->GetTransform().SetRotation(CreateRotationYQuaternion(-PI_DIV_2));
+	pSpotLight3->GetTransform().SetPosition(Vector3f(708.0f, 400.0f, 39.0f));
+	pSpotLight3->GetTransform().SetRotation(CreateRotationXQuaternion(PI_DIV_2));
 	pScene->AddSpotLight(pSpotLight3);
-#endif
-
-#if 1
-	SpotLight* pSpotLight4 = new SpotLight("Spot Light 4", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f, 80.0f);
+	
+	SpotLight* pSpotLight4 = new SpotLight("Spot Light 4", 700.0f, ToRadians(90.0f), ToRadians(120.0f), 0.1f, 80.0f);
 	pSpotLight4->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight4->SetIntensity(1.0f);
-	pSpotLight4->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));
-	pSpotLight4->GetTransform().SetRotation(CreateRotationYQuaternion(PI));
+	pSpotLight4->GetTransform().SetPosition(Vector3f(-800.0f, 600.0f, 39.0f));
+	pSpotLight4->GetTransform().SetRotation(CreateRotationYQuaternion(-PI_DIV_2));
 	pScene->AddSpotLight(pSpotLight4);
-#endif
 
-#if 1
-	SpotLight* pSpotLight5 = new SpotLight("Spot Light 5", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f, 80.0f);
+	SpotLight* pSpotLight5 = new SpotLight("Spot Light 5", 700.0f, ToRadians(90.0f), ToRadians(120.0f), 0.1f, 80.0f);
 	pSpotLight5->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight5->SetIntensity(1.0f);
-	pSpotLight5->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));
-	pSpotLight5->GetTransform().SetRotation(CreateRotationXQuaternion(PI_DIV_2));
+	pSpotLight5->GetTransform().SetPosition(Vector3f(-800.0f, 600.0f, 39.0f));
 	pScene->AddSpotLight(pSpotLight5);
-#endif
 
-#if 1
-	SpotLight* pSpotLight6 = new SpotLight("Spot Light 6", 1900.0f, ToRadians(60.0f), ToRadians(70.0f), 0.1f, 80.0f);
+	SpotLight* pSpotLight6 = new SpotLight("Spot Light 6", 700.0f, ToRadians(90.0f), ToRadians(120.0f), 0.1f, 80.0f);
 	pSpotLight6->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	pSpotLight6->SetIntensity(1.0f);
-	pSpotLight6->GetTransform().SetPosition(Vector3f(-61.0f, 652.0f, 39.0f));
-	pSpotLight6->GetTransform().SetRotation(CreateRotationXQuaternion(-PI_DIV_2));
+	pSpotLight6->GetTransform().SetPosition(Vector3f(-800.0f, 600.0f, 39.0f));
+	pSpotLight6->GetTransform().SetRotation(CreateRotationYQuaternion(PI));
 	pScene->AddSpotLight(pSpotLight6);
-#endif
-
+		
 	return pScene;
 }
 
