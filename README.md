@@ -7,6 +7,7 @@ RenderSDK is a C++/Direct3D 12 project I am working in my spare time.
 - Deferred texturing based on Direct3D 12 bindless resources
 - Spot light lighting
 - Exponential shadow maps
+- CPU/GPU profiler
 
 <b>Camera navigation</b>
 - Keys W, S, A, D, E, Q to move the camera
@@ -16,4 +17,4 @@ RenderSDK is a C++/Direct3D 12 project I am working in my spare time.
 The project is setup for Visual Studio 2017, Debug, x64 mode.
 You might also need to update Target Platform Version (Configuration Properties/General) for the projects in the solution based on your current Windows SDK.
 Version <b>10.0.16299.0</b> is used by default.
-Select project <b>DynamicGI</b> as a start-up on.  
+Select project <b>DynamicGI</b> as a start-up on. 
