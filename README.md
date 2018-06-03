@@ -18,3 +18,5 @@ The project is setup for Visual Studio 2017, Debug, x64 mode.
 You might also need to update Target Platform Version (Configuration Properties/General) for the projects in the solution based on your current Windows SDK.
 Version <b>10.0.16299.0</b> is used by default.
 Select project <b>DynamicGI</b> as a start-up on. 
+
+![Alt text](/Samples/DynamicGI/Screenshots/Sponza.jpg?raw=true)
