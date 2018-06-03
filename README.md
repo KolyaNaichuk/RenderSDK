@@ -9,6 +9,12 @@ The project implements the following functionality:
 - Spot light lighting
 - Exponential shadow maps
 
-<b>Building the project</b>  
-The project is setup for Visual Studio 2017, Debug, x64 mode.  
-You might also need to update Target Platform Version (Configuration Properties/General) for the projects in the solution based on your current Windows SDK. Version 10.0.16299.0 is used by default.
+<b>Camera navigation</b>
+- Keys W, S, E, Q to move the camera
+- Keys UP, DOWN, LEFT, RIGHT to rotate the camera
+
+<b>Building and runnig the project</b>  
+The project is setup for Visual Studio 2017, Debug, x64 mode.
+You might also need to update Target Platform Version (Configuration Properties/General) for the projects in the solution based on your current Windows SDK.
+Version 10.0.16299.0 is used by default.
+Select project DynamicGI as a start-up on.  
