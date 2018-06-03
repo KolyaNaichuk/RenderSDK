@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.8
+VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RenderSDK", "RenderSDK\RenderSDK.vcxproj", "{81373C17-8965-4747-9818-AA450B2578DC}"
 EndProject
@@ -10,11 +10,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HelloRectangle", "Samples\H
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DynamicGI", "Samples\DynamicGI\DynamicGI.vcxproj", "{FEB52F9E-D717-46D3-ADA9-102908517202}"
-	ProjectSection(ProjectDependencies) = postProject
-		{81373C17-8965-4747-9818-AA450B2578DC} = {81373C17-8965-4747-9818-AA450B2578DC}
-	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ToneMapping", "Samples\ToneMapping\ToneMapping.vcxproj", "{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}"
 	ProjectSection(ProjectDependencies) = postProject
 		{81373C17-8965-4747-9818-AA450B2578DC} = {81373C17-8965-4747-9818-AA450B2578DC}
 	EndProjectSection
@@ -88,24 +83,6 @@ Global
 		{FEB52F9E-D717-46D3-ADA9-102908517202}.Release|x64.Build.0 = Release|x64
 		{FEB52F9E-D717-46D3-ADA9-102908517202}.Release|x86.ActiveCfg = Release|Win32
 		{FEB52F9E-D717-46D3-ADA9-102908517202}.Release|x86.Build.0 = Release|Win32
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Debug|Win32.ActiveCfg = Debug|Win32
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Debug|Win32.Build.0 = Debug|Win32
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Debug|x64.ActiveCfg = Debug|x64
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Debug|x64.Build.0 = Debug|x64
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Debug|x86.ActiveCfg = Debug|Win32
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Debug|x86.Build.0 = Debug|Win32
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Profile|Win32.ActiveCfg = Release|Win32
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Profile|Win32.Build.0 = Release|Win32
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Profile|x64.ActiveCfg = Release|x64
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Profile|x64.Build.0 = Release|x64
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Profile|x86.ActiveCfg = Release|Win32
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Profile|x86.Build.0 = Release|Win32
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Release|Win32.ActiveCfg = Release|Win32
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Release|Win32.Build.0 = Release|Win32
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Release|x64.ActiveCfg = Release|x64
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Release|x64.Build.0 = Release|x64
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Release|x86.ActiveCfg = Release|Win32
-		{A3B06D50-E2EA-4E06-833F-01E179DBB1F0}.Release|x86.Build.0 = Release|Win32
 		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Debug|Win32.ActiveCfg = Debug|Win32
 		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Debug|Win32.Build.0 = Debug|Win32
 		{371B9FA9-4C90-4AC6-A123-ACED756D6C77}.Debug|x64.ActiveCfg = Debug|x64
