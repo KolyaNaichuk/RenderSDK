@@ -4,7 +4,7 @@ RenderSDK is a C++/Direct3D 12 project I am working in my spare time.
 - GPU programmable occlussion culling for rendering geometry
 - Tiled light culling
 - Tiled deferred shading
-- Deferred texturing based on Direct3D 12 bindless resources
+- Deferred texturing based on bindless resources
 - Spot light lighting
 - Exponential shadow maps
 - CPU/GPU profiler based on timestamp queries
