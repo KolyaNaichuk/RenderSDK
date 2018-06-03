@@ -72,8 +72,8 @@ Scene* SceneLoader::LoadCrytekSponza()
 		1.5f/*nearClipPlane*/,
 		3800.0f/*farClipPlane*/,
 		1.0f/*aspectRatio*/,
-		3.0f/*maxMoveSpeed*/,
-		2.0f/*maxRotationSpeed*/);
+		1.0f/*maxMoveSpeed*/,
+		0.2f/*maxRotationSpeed*/);
 
 	pCamera->GetTransform().SetPosition(Vector3f(1190.48f, 204.495f, 38.693f));
 	pCamera->GetTransform().SetRotation(Quaternion(0.0f, 0.707107f, 0.0f, -0.707107f));

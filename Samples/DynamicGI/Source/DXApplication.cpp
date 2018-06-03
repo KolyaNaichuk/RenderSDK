@@ -1,6 +1,7 @@
 #include "DXApplication.h"
 
 #include "Common/Color.h"
+#include "Common/KeyboardInput.h"
 
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsFactory.h"
@@ -379,6 +380,9 @@ void DXApplication::OnInit()
 
 void DXApplication::OnUpdate()
 {
+	KeyboardInput::Poll();
+	HandleUserInput();
+
 	static Matrix4f prevViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
 	static Matrix4f prevViewProjInvMatrix = Inverse(prevViewProjMatrix);
 
@@ -522,132 +526,86 @@ void DXApplication::OnDestroy()
 	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
 }
 
-void DXApplication::OnKeyDown(UINT8 key)
+void DXApplication::HandleUserInput()
 {
-	const f32 cameraMoveSpeed = m_pCamera->GetMaxMoveSpeed();
+	const f32 moveSpeed = m_pCamera->GetMaxMoveSpeed();
 	const f32 rotationInRadians = ToRadians(m_pCamera->GetMaxRotationSpeed());
 
-	Transform& cameraTransform = m_pCamera->GetTransform();
-	BasisAxes cameraBasisAxes = ExtractBasisAxes(cameraTransform.GetRotation());
+	Vector3f cameraPosition = m_pCamera->GetTransform().GetPosition();
+	Quaternion cameraRotation = m_pCamera->GetTransform().GetRotation();
+	BasisAxes cameraBasisAxes = ExtractBasisAxes(cameraRotation);
 
-	switch (key)
+	if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Up))
 	{
-		case VK_UP:
-		{
-			cameraTransform.SetRotation(CreateRotationXQuaternion(-rotationInRadians) * cameraTransform.GetRotation());
-			break;
-		}
-		case VK_DOWN:
-		{
-			cameraTransform.SetRotation(CreateRotationXQuaternion(rotationInRadians) * cameraTransform.GetRotation());
-			break;
-		}
-		case VK_LEFT:
-		{
-			cameraTransform.SetRotation(CreateRotationYQuaternion(-rotationInRadians) * cameraTransform.GetRotation());
-			break;
-		}
-		case VK_RIGHT:
-		{
-			cameraTransform.SetRotation(CreateRotationYQuaternion(rotationInRadians) * cameraTransform.GetRotation());
-			break;
-		}
-
-		case 'a':
-		case 'A':
-		{
-			cameraTransform.SetPosition(cameraTransform.GetPosition() - cameraMoveSpeed * cameraBasisAxes.m_XAxis);
-			break;
-		}
-		case 'd':
-		case 'D':
-		{
-			cameraTransform.SetPosition(cameraTransform.GetPosition() + cameraMoveSpeed * cameraBasisAxes.m_XAxis);
-			break;
-		}
-		case 'w':
-		case 'W':
-		{
-			cameraTransform.SetPosition(cameraTransform.GetPosition() + cameraMoveSpeed * cameraBasisAxes.m_ZAxis);
-			break;
-		}
-		case 's':
-		case 'S':
-		{
-			cameraTransform.SetPosition(cameraTransform.GetPosition() - cameraMoveSpeed * cameraBasisAxes.m_ZAxis);
-			break;
-		}
-		case 'q':
-		case 'Q':
-		{
-			cameraTransform.SetPosition(cameraTransform.GetPosition() + cameraMoveSpeed * cameraBasisAxes.m_YAxis);
-			break;
-		}
-		case 'e':
-		case 'E':
-		{
-			cameraTransform.SetPosition(cameraTransform.GetPosition() - cameraMoveSpeed * cameraBasisAxes.m_YAxis);
-			break;
-		}
-				
-		case '1':
-		{
-			UpdateDisplayResult(DisplayResult::ShadingResult);
-			break;
-		}
-		case '2':
-		{
-			UpdateDisplayResult(DisplayResult::DepthBuffer);
-			break;
-		}
-		case '3':
-		{
-			UpdateDisplayResult(DisplayResult::ReprojectedDepthBuffer);
-			break;
-		}
-		case '4':
-		{
-			UpdateDisplayResult(DisplayResult::NormalBuffer);
-			break;
-		}
-		case '5':
-		{
-			UpdateDisplayResult(DisplayResult::TexCoordBuffer);
-			break;
-		}
-		case '6':
-		{
-			UpdateDisplayResult(DisplayResult::DepthBufferWithMeshType);
-			break;
-		}
-		case '7':
-		{
-			UpdateDisplayResult(DisplayResult::VoxelRelectance);
-			break;
-		}
+		cameraRotation = CreateRotationXQuaternion(-rotationInRadians) * cameraRotation;
+	}		
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Down))
+	{
+		cameraRotation = CreateRotationXQuaternion(rotationInRadians) * cameraRotation;
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Left))
+	{
+		cameraRotation = CreateRotationYQuaternion(-rotationInRadians) * cameraRotation;
+	}		
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Right))
+	{
+		cameraRotation = CreateRotationYQuaternion(rotationInRadians) * cameraRotation;
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_W))
+	{
+		cameraPosition += moveSpeed * cameraBasisAxes.m_ZAxis;
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_S))
+	{
+		cameraPosition -= moveSpeed * cameraBasisAxes.m_ZAxis;
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_A))
+	{
+		cameraPosition -= moveSpeed * cameraBasisAxes.m_XAxis;
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_D))
+	{
+		cameraPosition += moveSpeed * cameraBasisAxes.m_XAxis;
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_E))
+	{
+		cameraPosition -= moveSpeed * cameraBasisAxes.m_YAxis;
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Q))
+	{
+		cameraPosition += moveSpeed * cameraBasisAxes.m_YAxis;
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_1))
+	{
+		UpdateDisplayResult(DisplayResult::ShadingResult);
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_2))
+	{
+		UpdateDisplayResult(DisplayResult::DepthBuffer);
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_3))
+	{
+		UpdateDisplayResult(DisplayResult::ReprojectedDepthBuffer);
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_4))
+	{
+		UpdateDisplayResult(DisplayResult::NormalBuffer);
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_5))
+	{
+		UpdateDisplayResult(DisplayResult::TexCoordBuffer);
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_6))
+	{
+		UpdateDisplayResult(DisplayResult::DepthBufferWithMeshType);
+	}
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_7))
+	{
+		UpdateDisplayResult(DisplayResult::VoxelRelectance);
 	}
 
-#if 0
-	const auto& pos = cameraTransform.GetPosition();
-	const auto& rot = cameraTransform.GetRotation();
-	
-	std::stringstream stream;
-	stream << "Position: "
-		<< pos.m_X << ", "
-		<< pos.m_Y << ", "
-		<< pos.m_Z << ", "
-		<< " rotation: "
-		<< rot.m_X << ", "
-		<< rot.m_Y << ", "
-		<< rot.m_Z << ", "
-		<< rot.m_W << "\n";
-
-	OutputDebugStringA(stream.str().c_str());
-#endif
-}
-
-void DXApplication::OnKeyUp(UINT8 key)
-{
+	m_pCamera->GetTransform().SetPosition(cameraPosition);
+	m_pCamera->GetTransform().SetRotation(cameraRotation);
 }
 
 void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)

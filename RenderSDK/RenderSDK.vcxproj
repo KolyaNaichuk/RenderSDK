@@ -162,6 +162,7 @@
     <ClInclude Include="..\Include\Common\Color.h" />
     <ClInclude Include="..\Include\Common\Common.h" />
     <ClInclude Include="..\Include\Common\FileUtilities.h" />
+    <ClInclude Include="..\Include\Common\KeyboardInput.h" />
     <ClInclude Include="..\Include\Common\StringUtilities.h" />
     <ClInclude Include="..\Include\Common\Window.h" />
     <ClInclude Include="..\Include\D3DWrapper\CommandList.h" />
@@ -244,6 +245,7 @@
     <ClCompile Include="..\Source\Common\Application.cpp" />
     <ClCompile Include="..\Source\Common\Common.cpp" />
     <ClCompile Include="..\Source\Common\FileUtilities.cpp" />
+    <ClCompile Include="..\Source\Common\KeyboardInput.cpp" />
     <ClCompile Include="..\Source\Common\StringUtilities.cpp" />
     <ClCompile Include="..\Source\Common\Window.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\CommandList.cpp" />

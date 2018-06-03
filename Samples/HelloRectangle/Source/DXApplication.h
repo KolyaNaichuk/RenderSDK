@@ -27,12 +27,10 @@ public:
 	~DXApplication();
 
 private:
-	virtual void OnInit();
-	virtual void OnUpdate();
-	virtual void OnRender();
-	virtual void OnDestroy();
-	virtual void OnKeyDown(UINT8 key);
-	virtual void OnKeyUp(UINT8 key);
+	void OnInit() override;
+	void OnUpdate() override;
+	void OnRender() override;
+	void OnDestroy() override;
 	
 private:
 	enum { kNumBackBuffers = 3 };

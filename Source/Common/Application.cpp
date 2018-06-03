@@ -40,19 +40,8 @@ int Application::Run(int showCommand)
 			DispatchMessage(&msg);
 
 			if (msg.message == WM_QUIT)
-			{
 				break;
-			}
-			else if (msg.message == WM_KEYDOWN)
-			{
-				OnKeyDown((UINT8)msg.wParam);
-			}
-			else if (msg.message == WM_KEYUP)
-			{
-				OnKeyUp((UINT8)msg.wParam);
-			}
 		}
-
 		OnUpdate();
 		OnRender();
 	}

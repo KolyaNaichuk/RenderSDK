@@ -67,9 +67,7 @@ private:
 	void OnUpdate() override;
 	void OnRender() override;
 	void OnDestroy() override;
-	void OnKeyDown(UINT8 key) override;
-	void OnKeyUp(UINT8 key) override;
-
+	
 	void InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight);
 	void InitScene(UINT backBufferWidth, UINT backBufferHeight, Scene* pScene);
 	
@@ -148,9 +146,10 @@ private:
 
 	void InitSpotLightRenderResources(Scene* pScene);
 	void SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustum);
-			
+	
 	void UpdateDisplayResult(DisplayResult displayResult);
-		
+	void HandleUserInput();
+
 #ifdef DEBUG_RENDER_PASS
 	void OuputDebugRenderPassResult();
 #endif // DEBUG_RENDER_PASS

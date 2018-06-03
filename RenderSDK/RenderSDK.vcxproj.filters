@@ -270,6 +270,9 @@
     <ClInclude Include="..\Include\RenderPasses\SpotLightShadowMapRenderer.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Common\KeyboardInput.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -499,6 +502,9 @@
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\SpotLightShadowMapRenderer.cpp">
       <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Common\KeyboardInput.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

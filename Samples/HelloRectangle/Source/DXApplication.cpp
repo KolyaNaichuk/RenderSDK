@@ -190,11 +190,3 @@ void DXApplication::OnDestroy()
 	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
 }
-
-void DXApplication::OnKeyDown(UINT8 key)
-{
-}
-
-void DXApplication::OnKeyUp(UINT8 key)
-{
-}

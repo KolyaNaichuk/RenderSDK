@@ -17,8 +17,6 @@ private:
 	virtual void OnUpdate() = 0;
 	virtual void OnRender() = 0;
 	virtual void OnDestroy() = 0;
-	virtual void OnKeyDown(UINT8 key) = 0;
-	virtual void OnKeyUp(UINT8 key) = 0;
 
 protected:
 	Window* m_pWindow;
