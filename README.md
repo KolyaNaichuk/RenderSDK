@@ -9,7 +9,7 @@ RenderSDK is a C++/Direct3D 12 project I am working in my spare time.
 - Exponential shadow maps
 
 <b>Camera navigation</b>
-- Keys W, S, E, Q to move the camera
+- Keys W, S, A, D, E, Q to move the camera
 - Keys UP, DOWN, LEFT, RIGHT to rotate the camera
 
 <b>Building and runnig the project</b>  
