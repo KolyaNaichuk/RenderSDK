@@ -1,7 +1,6 @@
 RenderSDK is a C++/Direct3D 12 project I am working in my spare time.
 
-The project implements the following functionality:
-
+<b>Supported functionality</b>
 - GPU programmable occlussion culling for rendering geometry
 - Tiled light culling
 - Tiled deferred shading
@@ -16,5 +15,5 @@ The project implements the following functionality:
 <b>Building and runnig the project</b>  
 The project is setup for Visual Studio 2017, Debug, x64 mode.
 You might also need to update Target Platform Version (Configuration Properties/General) for the projects in the solution based on your current Windows SDK.
-Version 10.0.16299.0 is used by default.
-Select project DynamicGI as a start-up on.  
+Version <b>10.0.16299.0</b> is used by default.
+Select project <b>DynamicGI</b> as a start-up on.  
