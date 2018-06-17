@@ -82,6 +82,7 @@ f32 ArcCos(f32 cosAngle);
 
 f32 Tan(f32 angleInRadians);
 f32 ArcTan(f32 tanAngle);
+f32 ArcTan(f32 sinAngle, f32 cosAngle);
 
 void SinCos(f32& sinAngle, f32& cosAngle, f32 angleInRadians);
 

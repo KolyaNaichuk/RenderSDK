@@ -1,6 +1,5 @@
 #include "Math/Transform.h"
 #include "Math/AxisAngle.h"
-#include "Math/EulerAngles.h"
 #include "Math/Vector3.h"
 
 Transform::Transform()
@@ -150,6 +149,27 @@ const Matrix4f CreateRotationZMatrix(f32 angleInRadians)
 					0.0f, 0.0f, 0.0f, 1.0f);
 }
 
+const Matrix4f CreateRotationYXZMatrix(const Vector3f& anglesInRadians)
+{
+	return CreateRotationYMatrix(anglesInRadians.m_Y) * CreateRotationXMatrix(anglesInRadians.m_X) * CreateRotationZMatrix(anglesInRadians.m_Z);
+}
+
+const Matrix4f CreateRotationZXYMatrix(const Vector3f& anglesInRadians)
+{
+	f32 sinZ, cosZ;
+	f32 sinX, cosX;
+	f32 sinY, cosY;
+
+	SinCos(sinZ, cosZ, anglesInRadians.m_Z);
+	SinCos(sinX, cosX, anglesInRadians.m_X);
+	SinCos(sinY, cosY, anglesInRadians.m_Y);
+		
+	return Matrix4f(cosY * cosZ + sinY * sinX * sinZ, sinZ * cosX, -sinY * cosZ + cosY * sinX * sinZ, 0.0f,
+				   -cosY * sinZ + sinY * sinX * cosZ, cosZ * cosX, sinZ * sinY + cosY * sinX * cosZ, 0.0f,
+					sinY * cosX, -sinX, cosY * cosX, 0.0f,
+					0.0f, 0.0f, 0.0f, 1.0f);
+}
+
 const Matrix4f CreateRotationMatrix(const AxisAngle& axisAngle)
 {
 	assert(IsNormalized(axisAngle.m_Axis));
@@ -167,11 +187,6 @@ const Matrix4f CreateRotationMatrix(const AxisAngle& axisAngle)
 	return CreateRotationMatrix(BasisAxes(xAxis, yAxis, zAxis));
 }
 
-const Matrix4f CreateRotationMatrix(const EulerAngles& eulerAngles)
-{
-	return CreateRotationMatrix(Quaternion(eulerAngles));
-}
-
 const Matrix4f CreateRotationMatrix(const Quaternion& quat)
 {
 	return CreateRotationMatrix(ExtractBasisAxes(quat));
@@ -183,6 +198,18 @@ const Matrix4f CreateRotationMatrix(const BasisAxes& basis)
 					basis.m_YAxis.m_X, basis.m_YAxis.m_Y, basis.m_YAxis.m_Z, 0.0f,
 					basis.m_ZAxis.m_X, basis.m_ZAxis.m_Y, basis.m_ZAxis.m_Z, 0.0f,
 					0.0f, 0.0f, 0.0f, 1.0f);
+}
+
+const Matrix4f CreateLookAtMatrix(const Vector3f& eyePos, const BasisAxes& basisAxes)
+{
+	const Vector3f& xAxis = basisAxes.m_XAxis;
+	const Vector3f& yAxis = basisAxes.m_YAxis;
+	const Vector3f& zAxis = basisAxes.m_ZAxis;
+
+	return Matrix4f(xAxis.m_X, yAxis.m_X, zAxis.m_X, 0.0f,
+					xAxis.m_Y, yAxis.m_Y, zAxis.m_Y, 0.0f,
+					xAxis.m_Z, yAxis.m_Z, zAxis.m_Z, 0.0f,
+				   -Dot(xAxis, eyePos), -Dot(yAxis, eyePos), -Dot(zAxis, eyePos), 1.0f);
 }
 
 const Matrix4f CreateLookAtMatrix(const Vector3f& eyePos, const Vector3f& lookAtPos, const Vector3f& upDir)
@@ -232,9 +259,3 @@ const Matrix4f CreatePerspectiveFovProjMatrix(f32 fovYInRadians, f32 aspectRatio
 					0.0f, 0.0f, nearZ * farZ / (nearZ - farZ), 0.0f);
 }
 
-const BasisAxes ExtractBasisAxes(const Matrix4f& matrix)
-{
-	return BasisAxes(Vector3f(matrix.m_00, matrix.m_01, matrix.m_02),
-					 Vector3f(matrix.m_10, matrix.m_11, matrix.m_12),
-					 Vector3f(matrix.m_20, matrix.m_21, matrix.m_22));
-}

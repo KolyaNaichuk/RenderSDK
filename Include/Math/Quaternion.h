@@ -6,7 +6,6 @@
 struct Vector3f;
 struct Matrix4f;
 struct AxisAngle;
-struct EulerAngles;
 
 struct Quaternion
 {
@@ -15,7 +14,6 @@ struct Quaternion
 	explicit Quaternion(f32 x, f32 y, f32 z);
 	explicit Quaternion(f32 x, f32 y, f32 z, f32 w);
 	explicit Quaternion(const AxisAngle& axisAngle);
-	explicit Quaternion(const EulerAngles& eulerAngles);
 	explicit Quaternion(const Matrix4f& rotationMatrix);
 
 	const Quaternion operator- () const;

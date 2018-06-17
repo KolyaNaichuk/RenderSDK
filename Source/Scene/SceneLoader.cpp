@@ -4,57 +4,6 @@
 #include "Scene/Scene.h"
 #include "D3DWrapper/Common.h"
 
-Scene* SceneLoader::LoadCube()
-{
-#ifdef ENABLE_EXTERNAL_TOOL_DEBUGGING
-	const wchar_t* pFilePath = L"..\\..\\..\\Resources\\Cube\\cube.obj";
-#else
-	const wchar_t* pFilePath = L"..\\..\\Resources\\Cube\\cube.obj";
-#endif
-	Scene* pScene = LoadSceneFromOBJFile(pFilePath);
-	
-	Camera* pCamera = new Camera(
-		Camera::ProjType_Perspective,
-		0.1f/*nearClipPlane*/,
-		100.0f/*farClipPlane*/,
-		1.0f/*aspectRatio*/,
-		0.3f/*maxMoveSpeed*/,
-		0.1f/*maxRotationSpeed*/);
-	
-	pCamera->GetTransform().SetPosition(Vector3f(1.98481f, 2.67755f, -2.91555f));
-	pCamera->GetTransform().SetRotation(Quaternion(0.312956f, -0.25733f, 0.0987797f, 0.908892f));
-	
-	pScene->SetCamera(pCamera);
-	
-	PointLight* pPointLight = new PointLight("Point light", 10.0f, 0.1f);
-	pPointLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
-	pPointLight->SetIntensity(1.0f);
-	pPointLight->GetTransform().SetPosition(Vector3f(1.98481f, 2.67755f, -2.91555f));
-	pPointLight->GetTransform().SetRotation(Quaternion(0.312956f, -0.25733f, 0.0987797f, 0.908892f));
-		
-	pScene->AddPointLight(pPointLight);
-
-	SpotLight* pSpotLight = new SpotLight("Spot light", 5.0f, PI_DIV_4, PI_DIV_2, 0.1f, 80.0f);
-	pSpotLight->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
-	pSpotLight->SetIntensity(1.0f);
-	pSpotLight->GetTransform().SetPosition(Vector3f(0.0f, 0.0f, -1.0f));
-
-	pScene->AddSpotLight(pSpotLight);
-
-	return pScene;
-}
-
-Scene* SceneLoader::LoadErato()
-{
-#ifdef ENABLE_EXTERNAL_TOOL_DEBUGGING
-	const wchar_t* pFilePath = L"..\\..\\..\\Resources\\Erato\\erato-1.obj";
-#else
-	const wchar_t* pFilePath = L"..\\..\\Resources\\Erato\\erato-1.obj";
-#endif
-	Scene* pScene = LoadSceneFromOBJFile(pFilePath);
-	return pScene;
-}
-
 Scene* SceneLoader::LoadCrytekSponza()
 {
 #ifdef ENABLE_EXTERNAL_TOOL_DEBUGGING
@@ -67,16 +16,17 @@ Scene* SceneLoader::LoadCrytekSponza()
 	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
 	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-1920.94592f, -126.442497f, -1105.42603f}
 	const Vector3f maxPoint = worldBounds.m_Center + worldBounds.m_Radius; // {1799.90808f, 1429.43323f, 1182.80713f}
-		
-	Camera* pCamera = new Camera(Camera::ProjType_Perspective,
-		1.5f/*nearClipPlane*/,
-		3800.0f/*farClipPlane*/,
-		1.0f/*aspectRatio*/,
-		1.0f/*maxMoveSpeed*/,
-		0.2f/*maxRotationSpeed*/);
 
-	pCamera->GetTransform().SetPosition(Vector3f(1190.48f, 204.495f, 38.693f));
-	pCamera->GetTransform().SetRotation(Quaternion(0.0f, 0.707107f, 0.0f, -0.707107f));
+	Camera* pCamera = new Camera(
+		Vector3f(1190.48f, 204.495f, 38.693f)/*position*/,
+		BasisAxes(Vector3f::FORWARD, Vector3f::UP, Vector3f::LEFT),
+		PI_DIV_4/*fovYInRadians*/,
+		1.0f/*aspectRatio*/,
+		1.5f/*nearClipDist*/,
+		3800.0f/*farClipDist*/,
+		Vector3f(1.0f)/*moveSpeed*/,
+		Vector3f(0.2f)/*rotationSpeed*/);
+
 	pScene->SetCamera(pCamera);
 
 	SpotLight* pSpotLight1 = new SpotLight("Spot Light 1", 600.0f, ToRadians(45.0f), ToRadians(90.0f), 0.1f, 80.0f);
@@ -135,16 +85,17 @@ Scene* SceneLoader::LoadDabrovicSponza()
 	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
 	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-17.4027596, -0.906688690, -7.80148792}
 	const Vector3f maxPoint = worldBounds.m_Center + worldBounds.m_Radius; // {17.4172401, 15.6533108, 7.79851246}
-
-	Camera* pCamera = new Camera(Camera::ProjType_Perspective,
-		0.1f/*nearClipPlane*/,
-		50.0f/*farClipPlane*/,
+	
+	Camera* pCamera = new Camera(
+		Vector3f(-10.0f, 7.0f, 0.0f)/*position*/,
+		BasisAxes(Vector3f::BACK, Vector3f::UP, Vector3f::RIGHT),
+		PI_DIV_4/*fovYInRadians*/,
 		1.0f/*aspectRatio*/,
-		0.1f/*maxMoveSpeed*/,
-		0.4f/*maxRotationSpeed*/);
+		0.1f/*nearClipDist*/,
+		50.0f/*farClipDist*/,
+		Vector3f(0.1f)/*moveSpeed*/,
+		Vector3f(0.4f)/*rotationSpeed*/);
 
-	pCamera->GetTransform().SetPosition(Vector3f(-10.0f, 7.0f, 0.0f));
-	pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(PI_DIV_2));
 	pScene->SetCamera(pCamera);
 
 #if 1
@@ -171,15 +122,16 @@ Scene* SceneLoader::LoadSibenik()
 	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-20.1410999, -15.3123074, -8.49680042}
 	const Vector3f maxPoint = worldBounds.m_Center + worldBounds.m_Radius; // {20.1410999, 15.3000011, 8.49680042}
 
-	Camera* pCamera = new Camera(Camera::ProjType_Perspective,
-		1.0f/*nearClipPlane*/,
-		45.0f/*farClipPlane*/,
+	Camera* pCamera = new Camera(
+		Vector3f(-19.7f, -11.0f, 0.0f)/*position*/,
+		BasisAxes(Vector3f::BACK, Vector3f::UP, Vector3f::RIGHT),
+		PI_DIV_4/*fovYInRadians*/,
 		1.0f/*aspectRatio*/,
-		0.4f/*maxMoveSpeed*/,
-		0.8f/*maxRotationSpeed*/);
+		1.0f/*nearClipDist*/,
+		45.0f/*farClipDist*/,
+		Vector3f(0.4f)/*moveSpeed*/,
+		Vector3f(0.8f)/*rotationSpeed*/);
 
-	pCamera->GetTransform().SetPosition(Vector3f(-19.7f, -11.0f, 0.0f));
-	pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(PI_DIV_2));
 	pScene->SetCamera(pCamera);
 
 #if 1
@@ -266,16 +218,17 @@ Scene* SceneLoader::LoadSanMiguel()
 	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
 	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius; // {-22.2742996, -0.269336700, -14.9373989}
 	const Vector3f maxPoint = worldBounds.m_Center + worldBounds.m_Radius; // {46.7743988, 14.6000004, 12.0422001}
-
-	Camera* pCamera = new Camera(Camera::ProjType_Perspective,
-		0.2f/*nearClipPlane*/,
-		80.0f/*farClipPlane*/,
+	
+	Camera* pCamera = new Camera(
+		Vector3f(12.0f, 7.0f, 0.0f)/*position*/,
+		BasisAxes(Vector3f::BACK, Vector3f::UP, Vector3f::RIGHT),
+		PI_DIV_4/*fovYInRadians*/,
 		1.0f/*aspectRatio*/,
-		0.2f/*maxMoveSpeed*/,
-		0.4f/*maxRotationSpeed*/);
+		0.2f/*nearClipDist*/,
+		80.0f/*farClipDist*/,
+		Vector3f(0.2f)/*moveSpeed*/,
+		Vector3f(0.4f)/*rotationSpeed*/);
 
-	pCamera->GetTransform().SetPosition(Vector3f(12.0f, 7.0f, 0.0f));
-	pCamera->GetTransform().SetRotation(CreateRotationYQuaternion(PI_DIV_2));
 	pScene->SetCamera(pCamera);
 
 #if 1

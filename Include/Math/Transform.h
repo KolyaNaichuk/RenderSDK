@@ -5,7 +5,6 @@
 #include "Math/Quaternion.h"
 
 struct AxisAngle;
-struct EulerAngles;
 
 class Transform
 {
@@ -54,11 +53,13 @@ const Matrix4f CreateScalingMatrix(f32 scale);
 const Matrix4f CreateRotationXMatrix(f32 angleInRadians);
 const Matrix4f CreateRotationYMatrix(f32 angleInRadians);
 const Matrix4f CreateRotationZMatrix(f32 angleInRadians);
+const Matrix4f CreateRotationYXZMatrix(const Vector3f& anglesInRadians);
+const Matrix4f CreateRotationZXYMatrix(const Vector3f& anglesInRadians);
 const Matrix4f CreateRotationMatrix(const AxisAngle& axisAngle);
-const Matrix4f CreateRotationMatrix(const EulerAngles& eulerAngles);
 const Matrix4f CreateRotationMatrix(const Quaternion& quat);
 const Matrix4f CreateRotationMatrix(const BasisAxes& basis);
 
+const Matrix4f CreateLookAtMatrix(const Vector3f& eyePos, const BasisAxes& basisAxes);
 const Matrix4f CreateLookAtMatrix(const Vector3f& eyePos, const Vector3f& lookAtPos, const Vector3f& upDir);
 
 const Matrix4f CreateOrthoOffCenterProjMatrix(f32 leftX, f32 rightX, f32 bottomY, f32 topY, f32 nearZ, f32 farZ);
@@ -66,5 +67,3 @@ const Matrix4f CreateOrthoProjMatrix(f32 width, f32 height, f32 nearZ, f32 farZ)
 
 const Matrix4f CreatePerspectiveProjMatrix(f32 nearWidth, f32 nearHeight, f32 nearZ, f32 farZ);
 const Matrix4f CreatePerspectiveFovProjMatrix(f32 fovYInRadians, f32 aspectRatio, f32 nearZ, f32 farZ);
-
-const BasisAxes ExtractBasisAxes(const Matrix4f& matrix);

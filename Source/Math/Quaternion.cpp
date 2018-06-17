@@ -1,6 +1,5 @@
 #include "Math/Quaternion.h"
 #include "Math/AxisAngle.h"
-#include "Math/EulerAngles.h"
 #include "Math/Vector3.h"
 #include "Math/Matrix4.h"
 
@@ -38,23 +37,6 @@ Quaternion::Quaternion(const AxisAngle& axisAngle)
 	m_X = sinHalfAngle * axisAngle.m_Axis.m_X;
 	m_Y = sinHalfAngle * axisAngle.m_Axis.m_Y;
 	m_Z = sinHalfAngle * axisAngle.m_Axis.m_Z;
-}
-
-Quaternion::Quaternion(const EulerAngles& eulerAngles)
-{
-	f32 sinAngleZ, cosAngleZ;
-	SinCos(sinAngleZ, cosAngleZ, 0.5f * eulerAngles.m_ZAxisAngleInRadians);
-
-	f32 sinAngleX, cosAngleX;
-	SinCos(sinAngleX, cosAngleX, 0.5f * eulerAngles.m_XAxisAngleInRadians);
-
-	f32 sinAngleY, cosAngleY;
-	SinCos(sinAngleY, cosAngleY, 0.5f * eulerAngles.m_YAxisAngleInRadians);
-
-	m_W = cosAngleX * cosAngleY * cosAngleZ + sinAngleX * sinAngleY * sinAngleZ;
-	m_X = sinAngleX * cosAngleY * cosAngleZ + cosAngleX * sinAngleY * sinAngleZ;
-	m_Y = cosAngleX * sinAngleY * cosAngleZ - sinAngleX * cosAngleY * sinAngleZ;
-	m_Z = cosAngleX * cosAngleY * sinAngleZ - sinAngleX * sinAngleY * cosAngleZ;
 }
 
 Quaternion::Quaternion(const Matrix4f& rotationMatrix)

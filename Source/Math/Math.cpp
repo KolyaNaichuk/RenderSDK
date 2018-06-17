@@ -45,6 +45,12 @@ f32 ArcTan(f32 tanAngle)
 	return angleInRadians;
 }
 
+f32 ArcTan(f32 sinAngle, f32 cosAngle)
+{
+	f32 angleInRadians = std::atan2f(sinAngle, cosAngle);
+	return angleInRadians;
+}
+
 void SinCos(f32& sinAngle, f32& cosAngle, f32 angleInRadians)
 {
 	sinAngle = Sin(angleInRadians);

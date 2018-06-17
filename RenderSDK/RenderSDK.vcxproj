@@ -190,7 +190,6 @@
     <ClInclude Include="..\Include\Math\Quad.h" />
     <ClInclude Include="..\Include\Math\SAT.h" />
     <ClInclude Include="..\Include\Math\Sphere.h" />
-    <ClInclude Include="..\Include\Math\EulerAngles.h" />
     <ClInclude Include="..\Include\Math\Math.h" />
     <ClInclude Include="..\Include\Math\Matrix4.h" />
     <ClInclude Include="..\Include\Math\OverlapTest.h" />
@@ -271,7 +270,6 @@
     <ClCompile Include="..\Source\Math\Quad.cpp" />
     <ClCompile Include="..\Source\Math\SAT.cpp" />
     <ClCompile Include="..\Source\Math\Sphere.cpp" />
-    <ClCompile Include="..\Source\Math\EulerAngles.cpp" />
     <ClCompile Include="..\Source\Math\Math.cpp" />
     <ClCompile Include="..\Source\Math\Matrix4.cpp" />
     <ClCompile Include="..\Source\Math\OverlapTest.cpp" />

@@ -48,9 +48,6 @@
     <ClInclude Include="..\Include\Math\OverlapTest.h">
       <Filter>Math</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Math\EulerAngles.h">
-      <Filter>Math</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Math\Quaternion.h">
       <Filter>Math</Filter>
     </ClInclude>
@@ -294,9 +291,6 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Math\OverlapTest.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Math\EulerAngles.cpp">
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Math\Quaternion.cpp">

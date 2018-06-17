@@ -386,7 +386,7 @@ void DXApplication::OnUpdate()
 	static Matrix4f prevViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
 	static Matrix4f prevViewProjInvMatrix = Inverse(prevViewProjMatrix);
 
-	const Vector3f& cameraWorldSpacePos = m_pCamera->GetTransform().GetPosition();
+	const Vector3f& cameraWorldSpacePos = m_pCamera->GetWorldPosition();
 	
 	AppData* pAppData = (AppData*)m_UploadAppData[m_BackBufferIndex];
 	pAppData->m_ViewMatrix = m_pCamera->GetViewMatrix();
@@ -402,8 +402,8 @@ void DXApplication::OnUpdate()
 	prevViewProjInvMatrix = pAppData->m_ViewProjInvMatrix;
 
 	pAppData->m_CameraWorldSpacePos = Vector4f(cameraWorldSpacePos.m_X, cameraWorldSpacePos.m_Y, cameraWorldSpacePos.m_Z, 1.0f);
-	pAppData->m_CameraNearPlane = m_pCamera->GetNearClipPlane();
-	pAppData->m_CameraFarPlane = m_pCamera->GetFarClipPlane();
+	pAppData->m_CameraNearPlane = m_pCamera->GetNearClipDistance();
+	pAppData->m_CameraFarPlane = m_pCamera->GetFarClipDistance();
 
 	const Frustum cameraWorldFrustum(pAppData->m_ViewProjMatrix);
 	for (u8 planeIndex = 0; planeIndex < Frustum::NumPlanes; ++planeIndex)
@@ -478,12 +478,8 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordFillMeshTypeDepthBufferPass();
 	commandListBatch[commandListBatchSize++] = RecordUploadLightDataPass();
 
-	if (m_NumActiveSpotLights > 0)
-	{
-		commandListBatch[commandListBatchSize++] = RecordTiledLightCullingPass();
-		commandListBatch[commandListBatchSize++] = RecordRenderSpotLightShadowMaps();
-	}
-	
+	commandListBatch[commandListBatchSize++] = RecordTiledLightCullingPass();
+	commandListBatch[commandListBatchSize++] = RecordRenderSpotLightShadowMaps();	
 	commandListBatch[commandListBatchSize++] = RecordTiledShadingPass();
 	commandListBatch[commandListBatchSize++] = RecordVisualizeDisplayResultPass();
 	commandListBatch[commandListBatchSize++] = RecordPostRenderPass();
@@ -528,84 +524,52 @@ void DXApplication::OnDestroy()
 
 void DXApplication::HandleUserInput()
 {
-	const f32 moveSpeed = m_pCamera->GetMaxMoveSpeed();
-	const f32 rotationInRadians = ToRadians(m_pCamera->GetMaxRotationSpeed());
+	f32 deltaTime = 1.0f;
+	static const f32 moveStep = 2.0f;
+	static const f32 rotationStep = 0.01f;
 
-	Vector3f cameraPosition = m_pCamera->GetTransform().GetPosition();
-	Quaternion cameraRotation = m_pCamera->GetTransform().GetRotation();
-	BasisAxes cameraBasisAxes = ExtractBasisAxes(cameraRotation);
-
+	Vector3f cameraMoveDelta(0.0f, 0.0f, 0.0f);
+	Vector3f cameraRotationDeltaInRadians(0.0f, 0.0f, 0.0f);
+				
 	if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Up))
-	{
-		cameraRotation = CreateRotationXQuaternion(-rotationInRadians) * cameraRotation;
-	}		
+		cameraRotationDeltaInRadians.m_X = -rotationStep;
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Down))
-	{
-		cameraRotation = CreateRotationXQuaternion(rotationInRadians) * cameraRotation;
-	}
+		cameraRotationDeltaInRadians.m_X = rotationStep;
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Left))
-	{
-		cameraRotation = CreateRotationYQuaternion(-rotationInRadians) * cameraRotation;
-	}		
+		cameraRotationDeltaInRadians.m_Y = -rotationStep;
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Right))
-	{
-		cameraRotation = CreateRotationYQuaternion(rotationInRadians) * cameraRotation;
-	}
+		cameraRotationDeltaInRadians.m_Y = rotationStep;
+					
+	if (KeyboardInput::IsKeyDown(KeyboardInput::Key_S))
+		cameraMoveDelta.m_Z = -moveStep;
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_W))
-	{
-		cameraPosition += moveSpeed * cameraBasisAxes.m_ZAxis;
-	}
-	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_S))
-	{
-		cameraPosition -= moveSpeed * cameraBasisAxes.m_ZAxis;
-	}
+		cameraMoveDelta.m_Z = moveStep;
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_A))
-	{
-		cameraPosition -= moveSpeed * cameraBasisAxes.m_XAxis;
-	}
+		cameraMoveDelta.m_X = -moveStep;
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_D))
-	{
-		cameraPosition += moveSpeed * cameraBasisAxes.m_XAxis;
-	}
+		cameraMoveDelta.m_X = moveStep;
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_E))
-	{
-		cameraPosition -= moveSpeed * cameraBasisAxes.m_YAxis;
-	}
+		cameraMoveDelta.m_Y = -moveStep;
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Q))
-	{
-		cameraPosition += moveSpeed * cameraBasisAxes.m_YAxis;
-	}
-	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_1))
-	{
+		cameraMoveDelta.m_Y = moveStep;
+	
+	if (KeyboardInput::IsKeyDown(KeyboardInput::Key_1))
 		UpdateDisplayResult(DisplayResult::ShadingResult);
-	}
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_2))
-	{
 		UpdateDisplayResult(DisplayResult::DepthBuffer);
-	}
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_3))
-	{
 		UpdateDisplayResult(DisplayResult::ReprojectedDepthBuffer);
-	}
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_4))
-	{
 		UpdateDisplayResult(DisplayResult::NormalBuffer);
-	}
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_5))
-	{
 		UpdateDisplayResult(DisplayResult::TexCoordBuffer);
-	}
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_6))
-	{
 		UpdateDisplayResult(DisplayResult::DepthBufferWithMeshType);
-	}
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_7))
-	{
 		UpdateDisplayResult(DisplayResult::VoxelRelectance);
-	}
 
-	m_pCamera->GetTransform().SetPosition(cameraPosition);
-	m_pCamera->GetTransform().SetRotation(cameraRotation);
+	m_pCamera->Move(cameraMoveDelta, deltaTime);
+	m_pCamera->Rotate(cameraRotationDeltaInRadians, deltaTime);
 }
 
 void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
@@ -700,17 +664,17 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight, Scene
 {
 	assert(m_pCamera == nullptr);
 	f32 aspectRatio = f32(backBufferWidth) / f32(backBufferHeight);
-
-	m_pCamera = new Camera(Camera::ProjType_Perspective,
-		pScene->GetCamera()->GetNearClipPlane(),
-		pScene->GetCamera()->GetFarClipPlane(),
+	
+	m_pCamera = new Camera(
+		pScene->GetCamera()->GetWorldPosition(),
+		pScene->GetCamera()->GetBasisAxes(),
+		pScene->GetCamera()->GetFieldOfViewY(),
 		aspectRatio,
-		pScene->GetCamera()->GetMaxMoveSpeed(),
-		pScene->GetCamera()->GetMaxRotationSpeed());
-
-	m_pCamera->GetTransform().SetPosition(pScene->GetCamera()->GetTransform().GetPosition());
-	m_pCamera->GetTransform().SetRotation(pScene->GetCamera()->GetTransform().GetRotation());
-
+		pScene->GetCamera()->GetNearClipDistance(),
+		pScene->GetCamera()->GetFarClipDistance(),
+		pScene->GetCamera()->GetMoveSpeed(),
+		pScene->GetCamera()->GetRotationSpeed());
+	
 	MemoryRange readRange(0, 0);
 	ConstantBufferDesc appDataBufferDesc(sizeof(AppData));
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -1582,8 +1546,7 @@ void DXApplication::InitRenderSpotLightShadowMaps(Scene* pScene)
 CommandList* DXApplication::RecordRenderSpotLightShadowMaps()
 {
 	assert(m_pSpotLightShadowMapRenderer != nullptr);
-	assert(m_NumActiveSpotLights > 0);
-
+	
 	SpotLightShadowMapRenderer::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pRenderSpotLightShadowMapsCommandList");
@@ -1598,8 +1561,7 @@ CommandList* DXApplication::RecordRenderSpotLightShadowMaps()
 CommandList* DXApplication::RecordTiledLightCullingPass()
 {
 	assert(m_pTiledLightCullingPass != nullptr);
-	assert(m_NumActiveSpotLights > 0);
-
+	
 	TiledLightCullingPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pTiledLightCullingCommandList");
