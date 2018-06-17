@@ -151,6 +151,7 @@ const Matrix4f CreateRotationZMatrix(f32 angleInRadians)
 
 const Matrix4f CreateRotationYXZMatrix(const Vector3f& anglesInRadians)
 {
+	assert(false && "Could expand calculations directly");
 	return CreateRotationYMatrix(anglesInRadians.m_Y) * CreateRotationXMatrix(anglesInRadians.m_X) * CreateRotationZMatrix(anglesInRadians.m_Z);
 }
 
