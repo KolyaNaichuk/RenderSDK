@@ -5,8 +5,7 @@ RenderSDK is a C++/Direct3D 12 project I am working in my spare time.
 - Tiled light culling
 - Tiled deferred shading
 - Deferred texturing based on bindless resources
-- Spot light lighting
-- Exponential shadow maps
+- Spot light lighting and shadowing, based on exponential shadow maps
 - CPU/GPU profiler based on timestamp queries
 
 <b>Camera navigation</b>
