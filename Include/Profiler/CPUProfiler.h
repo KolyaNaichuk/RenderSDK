@@ -35,6 +35,5 @@ private:
 	std::vector<TimeInterval> m_TimeIntervals;
 	u32 m_NumUsedProfiles = 0;
 	u32 m_MaxNumQueries = 0;
-	u32 m_CurrentFrameIndex = 0;
 	LARGE_INTEGER m_Frequency;
 };
