@@ -35,10 +35,14 @@ float3 ComputeDiffuseIrradiance(TextureCube<float3> radianceMap, SamplerState ra
 			float cosTheta;
 			sincos(theta, sinTheta, cosTheta);
 						
-			float3 localSpaceDir = float3(cosPhi * sinTheta, cosTheta, sinPhi * sinTheta);
-			float3 worldSpaceDir = localSpaceDir.x * worldSpaceFrameX + localSpaceDir.y * worldSpaceNormal + localSpaceDir.z * worldSpaceFrameZ;
+			float3 localSpaceDirectionToLight = float3(cosPhi * sinTheta, cosTheta, sinPhi * sinTheta);
 
-			float3 radiance = radianceMap.SampleLevel(radianceMapSampler, worldSpaceDir, 0.0f);
+			float3 worldSpaceDirectionToLight = 
+				localSpaceDirectionToLight.x * worldSpaceFrameX +
+				localSpaceDirectionToLight.y * worldSpaceNormal +
+				localSpaceDirectionToLight.z * worldSpaceFrameZ;
+
+			float3 radiance = radianceMap.SampleLevel(radianceMapSampler, worldSpaceDirectionToLight, 0.0f);
 			irradiance += radiance * (sinTheta * cosTheta);
 
 			++numSamples;
@@ -49,4 +53,4 @@ float3 ComputeDiffuseIrradiance(TextureCube<float3> radianceMap, SamplerState ra
 	return irradiance;
 }
 
-void ComputeSHCoefficientsForDiffuseIrradiance();
+void ComputeDiffuseIrradianceSHCoefficients();
