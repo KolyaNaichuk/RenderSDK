@@ -619,5 +619,13 @@
     <None Include="..\Shaders\FilterExpShadowMapCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\Shaders\BRDF.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\Shaders\ImageBasedLighting.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
