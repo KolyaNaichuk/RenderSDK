@@ -17,10 +17,10 @@ float3 ComputeDiffuseIrradiance(TextureCube<float3> radianceMap, SamplerState ra
 	
 	static const float step = 0.025f;
 	float3 irradiance = float3(0.0f, 0.0f, 0.0f);
-	
-	float3 worldSpaceFrameX;
-	float3 worldSpaceFrameZ;
-	BuildOrthonormalBasis(worldSpaceNormal, worldSpaceFrameX, worldSpaceFrameZ);
+				
+	float3 worldSpaceTangentFrameX;
+	float3 worldSpaceTangentFrameY;
+	BuildOrthonormalBasis(worldSpaceNormal, worldSpaceTangentFrameX, worldSpaceTangentFrameY);
 	
 	uint numSamples = 0;
 	for (float phi = 0.0f; phi < g_2PI; phi += step)
@@ -35,14 +35,13 @@ float3 ComputeDiffuseIrradiance(TextureCube<float3> radianceMap, SamplerState ra
 			float cosTheta;
 			sincos(theta, sinTheta, cosTheta);
 						
-			float3 localSpaceDirectionToLight = float3(cosPhi * sinTheta, cosTheta, sinPhi * sinTheta);
+			float3 tangentSpaceSampleDir = float3(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta);
+			
+			float3 worldSpaceSampleDir = tangentSpaceSampleDir.x * worldSpaceTangentFrameX +
+				tangentSpaceSampleDir.y * worldSpaceTangentFrameY +
+				tangentSpaceSampleDir.z * worldSpaceNormal;
 
-			float3 worldSpaceDirectionToLight = 
-				localSpaceDirectionToLight.x * worldSpaceFrameX +
-				localSpaceDirectionToLight.y * worldSpaceNormal +
-				localSpaceDirectionToLight.z * worldSpaceFrameZ;
-
-			float3 radiance = radianceMap.SampleLevel(radianceMapSampler, worldSpaceDirectionToLight, 0.0f);
+			float3 radiance = radianceMap.SampleLevel(radianceMapSampler, worldSpaceSampleDir, 0.0f);
 			irradiance += radiance * (sinTheta * cosTheta);
 
 			++numSamples;
