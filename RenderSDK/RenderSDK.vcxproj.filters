@@ -622,10 +622,9 @@
     <None Include="..\Shaders\BRDF.hlsl">
       <Filter>Shaders</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="..\Shaders\ImageBasedLighting.hlsl">
+    <None Include="..\Shaders\ImageBasedLighting.hlsl" />
+    <None Include="..\Shaders\SphericalGaussians.hlsl">
       <Filter>Shaders</Filter>
-    </FxCompile>
+    </None>
   </ItemGroup>
 </Project>
