@@ -49,8 +49,8 @@ float3 CalcBlinnPhongLighting(float3 dirToViewer, float3 dirToLight, float3 ligh
 	float NdotL = saturate(dot(normal, dirToLight));
 	float3 diffuseColor = NdotL * diffuseAlbedo * lightColor;
 
-	float3 halfDir = normalize(dirToLight + dirToViewer);
-	float HdotN = saturate(dot(halfDir, normal));
+	float3 halfVec = normalize(dirToLight + dirToViewer);
+	float HdotN = saturate(dot(halfVec, normal));
 	float3 specularColor = (NdotL * pow(HdotN, shininess)) * specularAlbedo * lightColor;
 
 	return (diffuseColor + specularColor);

@@ -3,34 +3,36 @@
 
 #include "Foundation.hlsl"
 
-// f0 - specular reflectance at normal incidence.
-// Refer to this as the specular color of the surface.
-// The values are between 0 and 1.
-float3 F_Schlick(float LdotH, float3 f0)
+float3 BRDF(float3 normal, float3 dirToViewer, float3 dirToLight,
+	float3 baseColor, float metallness, float roughness)
 {
-	return f0 + (1.0f - f0) * pow(1.0f - LdotH, 5.0f);
-}
-
-float D_GGX(float NdotH, float roughness)
-{
+	float3 halfVec = normalize(dirToLight + dirToViewer);
+	float NdotV = saturate(dot(normal, dirToViewer));
+	float NdotH = saturate(dot(normal, halfVec));
+	float NdotL = saturate(dot(normal, dirToLight));
+	float LdotH = saturate(dot(dirToLight, halfVec));
 	float roughnessSquared = roughness * roughness;
-	float f = (NdotH * roughnessSquared - NdotH) * NdotH + 1.0f;
 	
-	return roughnessSquared / (g_PI * f * f);
-}
-
-float V_SmithGGXHeightCorrelated(float NdotV, float NdotL, float roughness)
-{
-	float roughnessSquared = roughness * roughness;
-	float GGXV = NdotL * sqrt(NdotV * NdotV * (1.0f - roughnessSquared) + roughnessSquared);
-	float GGXL = NdotV * sqrt(NdotL * NdotL * (1.0f - roughnessSquared) + roughnessSquared);
+	// GGX distribution term
+	float D = roughnessSquared / (g_PI * pow((NdotH * roughnessSquared - NdotH) * NdotH + 1.0f, 2.0f));
 	
-	return 0.5f / (GGXV + GGXL);
-}
+	// Smith GGX height correlated visibility term
+	float lambdaV = NdotL * sqrt(NdotV * NdotV * (1.0f - roughnessSquared) + roughnessSquared);
+	float lambdaL = NdotV * sqrt(NdotL * NdotL * (1.0f - roughnessSquared) + roughnessSquared);
+	float V = 0.5f / (lambdaV + lambdaL);
+	
+	// Fresnel term (Schlick approximation)
+	float3 f0 = baseColor * metallness;
+	float3 F = f0 + (1.0f - f0) * pow(1.0f - LdotH, 5.0f);
 
-float3 Fd_Lambert()
-{
-	return g_RcpPI;
+	// Cook-Torrance specular BRDF
+	float3 specularBRDF = (D * V) * F;
+
+	// Lambert diffuse BRDF
+	float3 diffuseAlbedo = (1.0f - metallness) * baseColor;
+	float3 diffuseBRDF = ((1.0f - F) * g_RcpPI) * diffuseAlbedo;
+	
+	return (diffuseBRDF + specularBRDF);
 }
 
 // Moving frostbite to PBR shading
@@ -47,7 +49,7 @@ float3 CalcSunLightingContribution()
 	float NdotL = saturate(dot(worldSpaceNormal, sunWorldSpaceDir));
 
 	float incomingIlluminance = sunIlluminance * NdotL;
-	float3 outgoingLuminance = BSDF * incomingIlluminance;
+	float3 reflectedLuminance = BSDF * incomingIlluminance;
 }
 
 #endif // __BRDF__
