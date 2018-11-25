@@ -102,8 +102,8 @@
       <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
-MKDIR "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders"
+      <Command>IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\Shaders" MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders" MKDIR "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders"
 
 COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Foundation.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Foundation.hlsl"
@@ -221,8 +221,8 @@ IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll" COPY /Y "$(So
       <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
-MKDIR "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders"
+      <Command>IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\Shaders" MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders" MKDIR "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders"
 
 COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Foundation.hlsl"
 COPY /Y "$(SolutionDir)Shaders\Foundation.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Foundation.hlsl"

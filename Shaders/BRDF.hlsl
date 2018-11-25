@@ -65,8 +65,8 @@ float CalcAngleFalloff(float3 dirToPosition, float3 lightDir, float angleFalloff
 	// innerConeAngle <= outerConeAngle
 	// outerConeAngle <= 180 degrees
 
-	// angleFalloffScale = 1.0f / max(0.001f, cosInnerConeAngle - cosOuterConeAngle);
-	// angleFalloffOffset = -cosOuterConeAngle * angleFalloffScale; 
+	// angleFalloffScale = 1.0f / max(0.001f, cosHalfInnerConeAngle - cosHalfOuterConeAngle);
+	// angleFalloffOffset = -cosHalfOuterConeAngle * angleFalloffScale; 
 
 	float cosAngle = dot(dirToPosition, lightDir);
 	float factor = saturate(cosAngle * angleFalloffScale + angleFalloffOffset);
