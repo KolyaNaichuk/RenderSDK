@@ -98,8 +98,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-3.3.1\lib\$(Platform)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-4.1.0\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\Shaders" MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
@@ -201,8 +201,8 @@ COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(Pro
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\GammaCorrection.hlsl"
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"
 
-IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\assimp.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\$(Platform)\assimp.dll" "$(SolutionDir)Samples\$(ProjectName)\assimp.dll"
-IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\$(Platform)\assimp.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll"</Command>
+IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-4.1.0\bin\$(Platform)\assimp-vc140-mt.dll" "$(SolutionDir)Samples\$(ProjectName)\assimp-vc140-mt.dll"
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-4.1.0\bin\$(Platform)\assimp-vc140-mt.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -217,8 +217,8 @@ IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll" COPY /Y "$(So
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-3.3.1\lib\$(Platform)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-4.1.0\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\Shaders" MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
@@ -320,8 +320,8 @@ COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(Pro
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\GammaCorrection.hlsl"
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"
 
-IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\assimp.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\$(Platform)\assimp.dll" "$(SolutionDir)Samples\$(ProjectName)\assimp.dll"
-IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll" COPY /Y "$(SolutionDir)Include\External\assimp-3.3.1\bin\$(Platform)\assimp.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll"</Command>
+IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-4.1.0\bin\$(Platform)\assimp-vc140-mt.dll" "$(SolutionDir)Samples\$(ProjectName)\assimp-vc140-mt.dll"
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-4.1.0\bin\$(Platform)\assimp-vc140-mt.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -340,8 +340,8 @@ IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp.dll" COPY /Y "$(So
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-3.3.1\lib\$(Platform)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-4.1.0\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
