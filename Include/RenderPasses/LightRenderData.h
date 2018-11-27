@@ -7,7 +7,7 @@
 
 struct SpotLightRenderData
 {
-	Matrix4f m_LightViewProjMatrix;
+	Matrix4f m_ViewProjMatrix;
 	Vector3f m_Color;
 	f32 m_LightRange;
 	Vector3f m_WorldSpacePos;

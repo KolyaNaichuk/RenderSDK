@@ -10,15 +10,9 @@ class RootSignature;
 class PipelineState;
 class CommandList;
 
-enum ShadingMode
-{
-	ShadingMode_Phong = 1,
-	ShadingMode_BlinnPhong = 2
-};
-
 struct SpotLightProps
 {
-	Matrix4f m_LightViewProjMatrix;
+	Matrix4f m_ViewProjMatrix;
 	Vector3f m_Color;
 	f32 m_LightRange;
 	Vector3f m_WorldSpacePos;
@@ -57,7 +51,6 @@ public:
 	{
 		const char* m_pName;
 		RenderEnv* m_pRenderEnv;
-		ShadingMode m_ShadingMode;
 		ResourceStates m_InputResourceStates;
 				
 		ColorTexture* m_pAccumLightTexture;

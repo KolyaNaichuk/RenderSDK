@@ -55,6 +55,13 @@
 #include "Math/Vector4.h"
 
 /*
+1.Update SpotLightProps on C++ side
+2.Update SpotLightRenderData on C++ side
+3.Update SpotLight, PointLight, DirectionalLight on C++ side
+4.Fix baseColor, metallic, roughness maps on C++ side
+*/
+
+/*
 To do:
 - I am doing pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap) on shared command list for 
 CreateExpShadowMap and FilterExpShadowMap. Since command list is shared I could do this once.
@@ -1707,7 +1714,6 @@ void DXApplication::InitTiledShadingPass()
 	TiledShadingPass::InitParams params;
 	params.m_pName = "TiledShadingPass";
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_ShadingMode = ShadingMode_BlinnPhong;
 
 	params.m_InputResourceStates.m_AccumLightTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	params.m_InputResourceStates.m_MeshTypeDepthTextureState = pFillMeshTypeDepthBufferPassStates->m_MeshTypeDepthTextureState;
@@ -1754,7 +1760,7 @@ void DXApplication::InitTiledShadingPass()
 		params.m_pSpotLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetSpotLightIndexPerTileBuffer();
 		params.m_pSpotLightRangePerTileBuffer = m_pTiledLightCullingPass->GetSpotLightRangePerTileBuffer();
 		params.m_pSpotLightShadowMaps = m_pSpotLightShadowMapRenderer->GetSpotLightShadowMaps();
-	}		
+	}
 	m_pTiledShadingPass = new TiledShadingPass(&params);
 }
 
@@ -1896,7 +1902,7 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		m_pSpotLights[lightIndex].m_LightRange = pLight->GetRange();
 		m_pSpotLights[lightIndex].m_CosHalfInnerConeAngle = Cos(0.5f * pLight->GetInnerConeAngle());
 		m_pSpotLights[lightIndex].m_CosHalfOuterConeAngle = Cos(0.5f * pLight->GetOuterConeAngle());
-		m_pSpotLights[lightIndex].m_LightViewProjMatrix = viewProjMatrix;
+		m_pSpotLights[lightIndex].m_ViewProjMatrix = viewProjMatrix;
 		m_pSpotLights[lightIndex].m_NegativeExpShadowMapConstant = -1.0f * pLight->GetExpShadowMapConstant();
 		m_pSpotLights[lightIndex].m_LightID = lightIndex;
 
@@ -1956,7 +1962,7 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 		const SpotLightRenderData* pLightData = m_ppActiveSpotLights[lightIndex];
 		pUploadActiveLightWorldBounds[lightIndex] = pLightData->m_WorldBounds;
 		
-		pUploadActiveLightProps[lightIndex].m_LightViewProjMatrix = pLightData->m_LightViewProjMatrix;
+		pUploadActiveLightProps[lightIndex].m_ViewProjMatrix = pLightData->m_ViewProjMatrix;
 		pUploadActiveLightProps[lightIndex].m_Color = pLightData->m_Color;
 		pUploadActiveLightProps[lightIndex].m_WorldSpacePos = pLightData->m_WorldSpacePos;
 		pUploadActiveLightProps[lightIndex].m_WorldSpaceDir = pLightData->m_WorldSpaceDir;

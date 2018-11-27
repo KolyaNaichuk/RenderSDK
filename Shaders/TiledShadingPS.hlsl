@@ -52,17 +52,17 @@ float4 Main(PSInput input) : SV_Target
 	DecodeTextureCoordinateDerivatives(derivativesLength, encodedDerivativesRotation, texCoordDX, texCoordDY);
 	
 	uint firstTextureIndex = g_FirstResourceIndexPerMaterialIDBuffer[materialID];
-	Texture2D diffuseTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex)];
-	Texture2D specularTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex + 1)];
-	Texture2D shininessTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex + 2)];
+	Texture2D baseColorTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex)];
+	Texture2D metallicTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex + 1)];
+	Texture2D roughnessTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex + 2)];
 	
-	float3 diffuseAlbedo = diffuseTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).rgb;
-	float3 specularAlbedo = specularTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).rgb;
-	float shininess = shininessTexture[uint2(0, 0)].r;
-
+	float3 baseColor = baseColorTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).rgb;
+	float metallic = metallicTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).r;
+	float roughness = roughnessTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).r;
+	
 	float3 worldSpacePos = ComputeWorldSpacePosition(input.texCoord, hardwareDepth, g_AppData.viewProjInvMatrix).xyz;
 	float3 worldSpaceDirToViewer = normalize(g_AppData.cameraWorldSpacePos.xyz - worldSpacePos);
-		
+	
 	uint2 tilePos = pixelPos / g_AppData.screenTileSize;
 	uint tileIndex = tilePos.y * g_AppData.numScreenTiles.x + tilePos.x;
 	
@@ -74,27 +74,18 @@ float4 Main(PSInput input) : SV_Target
 	for (uint lightIndexPerTile = spotLightIndexPerTileStart; lightIndexPerTile < spotLightIndexPerTileEnd; ++lightIndexPerTile)
 	{
 		uint lightIndex = g_SpotLightIndexPerTileBuffer[lightIndexPerTile];
+		SpotLightProps lightProps = g_SpotLightPropsBuffer[lightIndex];
 
-		float4x4 lightViewProjMatrix = g_SpotLightPropsBuffer[lightIndex].lightViewProjMatrix;
-		float3 lightColor = g_SpotLightPropsBuffer[lightIndex].color;
-		float3 lightWorldSpacePos = g_SpotLightPropsBuffer[lightIndex].worldSpacePos;
-		float3 lightWorldSpaceDir = g_SpotLightPropsBuffer[lightIndex].worldSpaceDir;
-		float lightRange = g_SpotLightPropsBuffer[lightIndex].lightRange;
-		float cosHalfInnerConeAngle = g_SpotLightPropsBuffer[lightIndex].cosHalfInnerConeAngle;
-		float cosHalfOuterConeAngle = g_SpotLightPropsBuffer[lightIndex].cosHalfOuterConeAngle;
-		float lightViewNearPlane = g_SpotLightPropsBuffer[lightIndex].viewNearPlane;
-		float lightRcpViewClipRange = g_SpotLightPropsBuffer[lightIndex].rcpViewClipRange;
-		float negativeExpShadowMapConstant = g_SpotLightPropsBuffer[lightIndex].negativeExpShadowMapConstant;
-		uint lightID = g_SpotLightPropsBuffer[lightIndex].lightID;
+		float3 reflectedRadiance = CalcSpotLightContribution(lightProps.worldSpacePos,
+			lightProps.worldSpaceDir, lightProps.radiantIntensity, lightProps.rcpSquaredRange,
+			lightProps.angleFalloffScale, lightProps.angleFalloffOffset, worldSpacePos,
+			worldSpaceNormal, worldSpaceDirToViewer, baseColor, metallic, roughness);
+		
+		float visibilityTerm = CalcSpotLightVisibility(g_SpotLightShadowMaps, lightProps.lightID,
+			g_ShadowMapSampler, lightProps.viewProjMatrix, lightProps.viewNearPlane, lightProps.rcpViewClipRange,
+			lightProps.negativeExpShadowMapConstant, lightProps.worldSpacePos);
 
-		float3 lightContrib = CalcSpotLightContribution(lightWorldSpacePos, lightWorldSpaceDir, lightColor, lightRange,
-			cosHalfInnerConeAngle, cosHalfOuterConeAngle, worldSpaceDirToViewer, worldSpacePos, worldSpaceNormal,
-			diffuseAlbedo, specularAlbedo, shininess);
-				
-		float lightVisibility = CalcSpotLightVisibility(g_SpotLightShadowMaps, lightID, g_ShadowMapSampler,
-			lightViewProjMatrix, lightViewNearPlane, lightRcpViewClipRange, negativeExpShadowMapConstant, worldSpacePos);
-
-		spotLightsContrib += lightVisibility * lightContrib;
+		spotLightsContrib += visibilityTerm * reflectedRadiance;
 	}
 #endif // ENABLE_SPOT_LIGHTS
 
@@ -104,9 +95,6 @@ float4 Main(PSInput input) : SV_Target
 #else // ENABLE_DIRECTIONAL_LIGHT
 	float3 directionalLightContrib = float3(0.0f, 0.0f, 0.0f);
 #endif // ENABLE_DIRECTIONAL_LIGHT
-	
-	float3 directRadiance = spotLightsContrib + directionalLightContrib;
-	float3 indirectRadiance = float3(0.0f, 0.0f, 0.0f);
-	
-	return float4(directRadiance + indirectRadiance, 1.0f);
+		
+	return float4(spotLightsContrib + directionalLightContrib, 1.0f);
 }

@@ -263,14 +263,12 @@ void TiledShadingPass::InitPipelineState(InitParams* pParams)
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	std::string shadingModeStr = std::to_string(pParams->m_ShadingMode);
 	std::string numMaterialTexturesStr = std::to_string(pParams->m_NumMaterialTextures);
 	std::string enableSpotLightsStr = std::to_string(pParams->m_EnableSpotLights ? 1 : 0);
 	std::string enableDirectionalLightStr = std::to_string(pParams->m_EnableDirectionalLight ? 1 : 0);
 
 	const ShaderMacro shaderDefines[] =
 	{
-		ShaderMacro("SHADING_MODE", shadingModeStr.c_str()),
 		ShaderMacro("NUM_MATERIAL_TEXTURES", numMaterialTexturesStr.c_str()),
 		ShaderMacro("ENABLE_SPOT_LIGHTS", enableSpotLightsStr.c_str()),
 		ShaderMacro("ENABLE_DIRECTIONAL_LIGHT", enableDirectionalLightStr.c_str()),

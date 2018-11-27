@@ -619,9 +619,6 @@
     <None Include="..\Shaders\FilterExpShadowMapCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\BRDF.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\ImageBasedLighting.hlsl" />
     <None Include="..\Shaders\SphericalGaussians.hlsl">
       <Filter>Shaders</Filter>
