@@ -24,17 +24,6 @@ struct SpotLightProps
 	uint lightID;
 };
 
-// illuminance = luminousIntensity / max(squaredDist, 0.01f * 0.01f);
-
-// point light
-// luminousPower
-// luminousIntensity = luminousPower / (4.0f * PI);
-
-// spot light
-// openingAngle
-// luminousPower
-// luminousIntensity = luminousPower / (2.0f * PI * (1.0f - cos(0.5f * openingAngle)))
-
 float3 BRDF(float3 normal, float3 dirToViewer, float3 dirToLight,
 	float3 baseColor, float metallness, float roughness)
 {

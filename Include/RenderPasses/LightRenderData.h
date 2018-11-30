@@ -8,12 +8,12 @@
 struct SpotLightRenderData
 {
 	Matrix4f m_ViewProjMatrix;
-	Vector3f m_Color;
-	f32 m_LightRange;
+	Vector3f m_RadiantIntensity;
+	f32 m_RcpSquaredRange;
 	Vector3f m_WorldSpacePos;
-	f32 m_CosHalfInnerConeAngle;
+	f32 m_AngleFalloffScale;
 	Vector3f m_WorldSpaceDir;
-	f32 m_CosHalfOuterConeAngle;
+	f32 m_AngleFalloffOffset;
 	Frustum m_WorldFrustum;
 	Sphere m_WorldBounds;
 	f32 m_NegativeExpShadowMapConstant;

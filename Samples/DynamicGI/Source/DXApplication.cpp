@@ -55,10 +55,10 @@
 #include "Math/Vector4.h"
 
 /*
-1.Update SpotLightProps on C++ side
-2.Update SpotLightRenderData on C++ side
-3.Update SpotLight, PointLight, DirectionalLight on C++ side
-4.Fix baseColor, metallic, roughness maps on C++ side
+- Fix DirectionalLight on C++ side
+- Fix DirectionalLight in shader
+- Fix baseColor, metallic, roughness maps on C++ side
+- Incoming radiant intensity should be multiplied by visibility term instead of reflected radiance
 */
 
 /*
@@ -1890,7 +1890,9 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		
 		Cone lightWorldCone(lightWorldSpacePos, pLight->GetOuterConeAngle(), lightWorldSpaceDir, pLight->GetRange());
 
-		m_pSpotLights[lightIndex].m_Color = pLight->GetColor();
+		assert(false);
+		//m_pSpotLights[lightIndex].m_RadiantIntensity = pLight->GetColor();
+		
 		m_pSpotLights[lightIndex].m_WorldSpacePos = lightWorldSpacePos;
 		m_pSpotLights[lightIndex].m_WorldSpaceDir = lightWorldSpaceDir;
 		m_pSpotLights[lightIndex].m_WorldFrustum = Frustum(viewProjMatrix);
@@ -1899,11 +1901,14 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		m_pSpotLights[lightIndex].m_LightRcpViewClipRange = Rcp(pLight->GetRange() - pLight->GetShadowNearPlane());
 		m_pSpotLights[lightIndex].m_LightProjMatrix43 = projMatrix.m_32;
 		m_pSpotLights[lightIndex].m_LightProjMatrix33 = projMatrix.m_22;
-		m_pSpotLights[lightIndex].m_LightRange = pLight->GetRange();
-		m_pSpotLights[lightIndex].m_CosHalfInnerConeAngle = Cos(0.5f * pLight->GetInnerConeAngle());
-		m_pSpotLights[lightIndex].m_CosHalfOuterConeAngle = Cos(0.5f * pLight->GetOuterConeAngle());
+		
+		assert(false);
+		//m_pSpotLights[lightIndex].m_RcpSquaredRange = pLight->GetRange();
+		//m_pSpotLights[lightIndex].m_AngleFalloffScale = Cos(0.5f * pLight->GetInnerConeAngle());
+		//m_pSpotLights[lightIndex].m_AngleFalloffOffset = Cos(0.5f * pLight->GetOuterConeAngle());
+		
 		m_pSpotLights[lightIndex].m_ViewProjMatrix = viewProjMatrix;
-		m_pSpotLights[lightIndex].m_NegativeExpShadowMapConstant = -1.0f * pLight->GetExpShadowMapConstant();
+		m_pSpotLights[lightIndex].m_NegativeExpShadowMapConstant = -pLight->GetExpShadowMapConstant();
 		m_pSpotLights[lightIndex].m_LightID = lightIndex;
 
 		m_ppActiveSpotLights[lightIndex] = nullptr;
@@ -1963,12 +1968,12 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 		pUploadActiveLightWorldBounds[lightIndex] = pLightData->m_WorldBounds;
 		
 		pUploadActiveLightProps[lightIndex].m_ViewProjMatrix = pLightData->m_ViewProjMatrix;
-		pUploadActiveLightProps[lightIndex].m_Color = pLightData->m_Color;
+		pUploadActiveLightProps[lightIndex].m_RadiantIntensity = pLightData->m_RadiantIntensity;
 		pUploadActiveLightProps[lightIndex].m_WorldSpacePos = pLightData->m_WorldSpacePos;
 		pUploadActiveLightProps[lightIndex].m_WorldSpaceDir = pLightData->m_WorldSpaceDir;
-		pUploadActiveLightProps[lightIndex].m_LightRange = pLightData->m_LightRange;
-		pUploadActiveLightProps[lightIndex].m_CosHalfInnerConeAngle = pLightData->m_CosHalfInnerConeAngle;
-		pUploadActiveLightProps[lightIndex].m_CosHalfOuterConeAngle = pLightData->m_CosHalfOuterConeAngle;
+		pUploadActiveLightProps[lightIndex].m_RcpSquaredRange = pLightData->m_RcpSquaredRange;
+		pUploadActiveLightProps[lightIndex].m_AngleFalloffScale = pLightData->m_AngleFalloffScale;
+		pUploadActiveLightProps[lightIndex].m_AngleFalloffOffset = pLightData->m_AngleFalloffOffset;
 		pUploadActiveLightProps[lightIndex].m_ViewNearPlane = pLightData->m_LightViewNearPlane;
 		pUploadActiveLightProps[lightIndex].m_RcpViewClipRange = pLightData->m_LightRcpViewClipRange;
 		pUploadActiveLightProps[lightIndex].m_NegativeExpShadowMapConstant = pLightData->m_NegativeExpShadowMapConstant;

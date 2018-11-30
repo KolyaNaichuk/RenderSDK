@@ -59,7 +59,7 @@ float4 Main(PSInput input) : SV_Target
 	float3 baseColor = baseColorTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).rgb;
 	float metallic = metallicTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).r;
 	float roughness = roughnessTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).r;
-	
+
 	float3 worldSpacePos = ComputeWorldSpacePosition(input.texCoord, hardwareDepth, g_AppData.viewProjInvMatrix).xyz;
 	float3 worldSpaceDirToViewer = normalize(g_AppData.cameraWorldSpacePos.xyz - worldSpacePos);
 	
