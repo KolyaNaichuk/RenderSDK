@@ -65,10 +65,10 @@ void PointLight::SetExpShadowMapConstant(f32 expShadowMapConstant)
 	m_ExpShadowMapConstant = expShadowMapConstant;
 }
 
-SpotLight::SpotLight(const Vector3f& worldPosition, const BasisAxes& basisAxes, const Vector3f& radiantPower, f32 range,
+SpotLight::SpotLight(const Vector3f& worldPosition, const BasisAxes& worldOrientation, const Vector3f& radiantPower, f32 range,
 	f32 innerConeAngleInRadians, f32 outerConeAngleInRadians, f32 shadowNearPlane, f32 expShadowMapConstant)
 	: m_WorldPosition(worldPosition)
-	, m_BasisAxes(basisAxes)
+	, m_WorldOrientation(worldOrientation)
 	, m_RadiantPower(radiantPower)
 	, m_Range(range)
 	, m_InnerConeAngleInRadians(innerConeAngleInRadians)
@@ -88,14 +88,14 @@ void SpotLight::SetWorldPosition(const Vector3f& worldPosition)
 	m_WorldPosition = worldPosition;
 }
 
-const BasisAxes& SpotLight::GetBasisAxes() const
+const BasisAxes& SpotLight::GetWorldOrientation() const
 {
-	return m_BasisAxes;
+	return m_WorldOrientation;
 }
 
-void SpotLight::SetBasisAxes(const BasisAxes& basisAxes)
+void SpotLight::SetWorldOrientation(const BasisAxes& worldOrientation)
 {
-	m_BasisAxes = basisAxes;
+	m_WorldOrientation = worldOrientation;
 }
 
 const Vector3f& SpotLight::GetRadiantPower() const

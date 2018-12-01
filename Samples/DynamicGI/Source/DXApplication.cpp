@@ -1877,22 +1877,17 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 	{
 		SpotLight* pLight = ppSpotLights[lightIndex];
 		
-		const Transform& lightWorldSpaceTransform = pLight->GetTransform();
-		const Vector3f& lightWorldSpacePos = lightWorldSpaceTransform.GetPosition();
-		
-		const BasisAxes lightWorldSpaceBasis = ExtractBasisAxes(lightWorldSpaceTransform.GetRotation());
-		assert(IsNormalized(lightWorldSpaceBasis.m_ZAxis));
+		const Vector3f& lightWorldSpacePos = pLight->GetWorldPosition();
+		const BasisAxes& lightWorldSpaceBasis = pLight->GetWorldOrientation();
 		const Vector3f& lightWorldSpaceDir = lightWorldSpaceBasis.m_ZAxis;
 		
+		const Matrix4f viewMatrix = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpaceBasis);
 		const Matrix4f projMatrix = CreatePerspectiveFovProjMatrix(pLight->GetOuterConeAngle(), 1.0f, pLight->GetShadowNearPlane(), pLight->GetRange());
-		const Matrix4f viewMatrix = lightWorldSpaceTransform.GetWorldToLocalMatrix();
 		const Matrix4f viewProjMatrix = viewMatrix * projMatrix;
 		
 		Cone lightWorldCone(lightWorldSpacePos, pLight->GetOuterConeAngle(), lightWorldSpaceDir, pLight->GetRange());
 
-		assert(false);
-		//m_pSpotLights[lightIndex].m_RadiantIntensity = pLight->GetColor();
-		
+		m_pSpotLights[lightIndex].m_RadiantIntensity = pLight->EvaluateRadiantIntensity();
 		m_pSpotLights[lightIndex].m_WorldSpacePos = lightWorldSpacePos;
 		m_pSpotLights[lightIndex].m_WorldSpaceDir = lightWorldSpaceDir;
 		m_pSpotLights[lightIndex].m_WorldFrustum = Frustum(viewProjMatrix);
@@ -1901,11 +1896,13 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		m_pSpotLights[lightIndex].m_LightRcpViewClipRange = Rcp(pLight->GetRange() - pLight->GetShadowNearPlane());
 		m_pSpotLights[lightIndex].m_LightProjMatrix43 = projMatrix.m_32;
 		m_pSpotLights[lightIndex].m_LightProjMatrix33 = projMatrix.m_22;
-		
-		assert(false);
-		//m_pSpotLights[lightIndex].m_RcpSquaredRange = pLight->GetRange();
-		//m_pSpotLights[lightIndex].m_AngleFalloffScale = Cos(0.5f * pLight->GetInnerConeAngle());
-		//m_pSpotLights[lightIndex].m_AngleFalloffOffset = Cos(0.5f * pLight->GetOuterConeAngle());
+		m_pSpotLights[lightIndex].m_RcpSquaredRange = Rcp(pLight->GetRange() * pLight->GetRange());
+				
+		float cosHalfInnerConeAngle = Cos(0.5f * pLight->GetInnerConeAngle());
+		float cosHalfOuterConeAngle = Cos(0.5f * pLight->GetOuterConeAngle());
+
+		m_pSpotLights[lightIndex].m_AngleFalloffScale = Rcp(Max(0.001f, cosHalfInnerConeAngle - cosHalfOuterConeAngle));
+		m_pSpotLights[lightIndex].m_AngleFalloffOffset = -cosHalfOuterConeAngle * m_pSpotLights[lightIndex].m_AngleFalloffScale;
 		
 		m_pSpotLights[lightIndex].m_ViewProjMatrix = viewProjMatrix;
 		m_pSpotLights[lightIndex].m_NegativeExpShadowMapConstant = -pLight->GetExpShadowMapConstant();

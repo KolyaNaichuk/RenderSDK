@@ -45,14 +45,17 @@ private:
 class SpotLight
 {
 public:
-	SpotLight(const Vector3f& worldPosition, const BasisAxes& basisAxes, const Vector3f& radiantPower, f32 range,
+	// innerConeAngle <= outerConeAngle
+	// outerConeAngle <= 180 degrees
+
+	SpotLight(const Vector3f& worldPosition, const BasisAxes& worldOrientation, const Vector3f& radiantPower, f32 range,
 		f32 innerConeAngleInRadians, f32 outerConeAngleInRadians, f32 shadowNearPlane, f32 expShadowMapConstant);
 
 	const Vector3f& GetWorldPosition() const;
 	void SetWorldPosition(const Vector3f& worldPosition);
 
-	const BasisAxes& GetBasisAxes() const;
-	void SetBasisAxes(const BasisAxes& basisAxes);
+	const BasisAxes& GetWorldOrientation() const;
+	void SetWorldOrientation(const BasisAxes& worldOrientation);
 
 	const Vector3f& GetRadiantPower() const;
 	void SetRadiantPower(const Vector3f& radiantPower);
@@ -75,7 +78,7 @@ public:
 
 private:
 	Vector3f m_WorldPosition;
-	BasisAxes m_BasisAxes;
+	BasisAxes m_WorldOrientation;
 	Vector3f m_RadiantPower;
 	f32 m_Range;
 	f32 m_InnerConeAngleInRadians;

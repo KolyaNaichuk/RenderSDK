@@ -8,7 +8,7 @@
 class Camera
 {
 public:
-	Camera(const Vector3f& worldPosition, const BasisAxes& basisAxes,
+	Camera(const Vector3f& worldPosition, const BasisAxes& worldOrientation,
 		f32 fovYInRadians, f32 aspectRatio, f32 nearClipDist, f32 farClipDist,
 		const Vector3f& moveSpeed = Vector3f::ZERO,
 		const Vector3f& rotationSpeed = Vector3f::ZERO);
@@ -16,8 +16,8 @@ public:
 	const Vector3f& GetWorldPosition() const;
 	void SetWorldPosition(const Vector3f& worldPosition);
 
-	const BasisAxes& GetBasisAxes() const;
-	void SetBasisAxes(const BasisAxes& basisAxes);
+	const BasisAxes& GetWorldOrientation() const;
+	void SetWorldOrientation(const BasisAxes& worldOrientation);
 
 	f32 GetFieldOfViewY() const;
 	void SetFieldOfViewY(f32 fovYInRadians);
@@ -49,7 +49,7 @@ private:
 
 private:
 	Vector3f m_WorldPosition;
-	BasisAxes m_BasisAxes;
+	BasisAxes m_WorldOrientation;
 	Vector3f m_RotationInRadians;
 
 	f32 m_FovYInRadians;

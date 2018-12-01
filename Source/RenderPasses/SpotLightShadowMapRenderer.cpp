@@ -8,6 +8,7 @@
 #include "D3DWrapper/CommandSignature.h"
 #include "Math/Frustum.h"
 #include "Math/OverlapTest.h"
+#include "Math/Transform.h"
 #include "Scene/Light.h"
 #include "Scene/MeshBatch.h"
 
@@ -135,17 +136,8 @@ void SpotLightShadowMapRenderer::InitResources(InitParams* pParams)
 	for (u32 lightIndex = 0; lightIndex < pParams->m_NumSpotLights; ++lightIndex)
 	{
 		const SpotLight* pLight = pParams->m_ppSpotLights[lightIndex];
-
-		const Transform& lightWorldSpaceTransform = pLight->GetTransform();
-		const Vector3f& lightWorldSpacePos = lightWorldSpaceTransform.GetPosition();
-		const BasisAxes lightWorldSpaceBasis = ExtractBasisAxes(lightWorldSpaceTransform.GetRotation());
-
-		assert(IsNormalized(lightWorldSpaceBasis.m_ZAxis));
-		const Vector3f& lightWorldSpaceDir = lightWorldSpaceBasis.m_ZAxis;
-		assert(IsNormalized(lightWorldSpaceBasis.m_YAxis));
-		const Vector3f& lightWorldSpaceUpDir = lightWorldSpaceBasis.m_YAxis;
-
-		const Matrix4f viewMatrix = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpacePos + lightWorldSpaceDir, lightWorldSpaceUpDir);
+				
+		const Matrix4f viewMatrix = CreateLookAtMatrix(pLight->GetWorldPosition(), pLight->GetWorldOrientation());
 		const Matrix4f projMatrix = CreatePerspectiveFovProjMatrix(pLight->GetOuterConeAngle(), 1.0f, pLight->GetShadowNearPlane(), pLight->GetRange());
 
 		const Matrix4f viewProjMatrix = viewMatrix * projMatrix;

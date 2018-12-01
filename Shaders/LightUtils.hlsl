@@ -72,12 +72,6 @@ float CalcDistanceFalloff(float squaredDistToLight, float lightRcpSquaredRange)
 
 float CalcAngleFalloff(float3 dirToPosition, float3 lightDir, float angleFalloffScale, float angleFalloffOffset)
 {
-	// innerConeAngle <= outerConeAngle
-	// outerConeAngle <= 180 degrees
-
-	// angleFalloffScale = 1.0f / max(0.001f, cosHalfInnerConeAngle - cosHalfOuterConeAngle);
-	// angleFalloffOffset = -cosHalfOuterConeAngle * angleFalloffScale; 
-
 	float cosAngle = dot(dirToPosition, lightDir);
 	float factor = saturate(cosAngle * angleFalloffScale + angleFalloffOffset);
 
