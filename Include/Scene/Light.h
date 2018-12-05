@@ -86,3 +86,11 @@ private:
 	f32 m_ShadowNearPlane;
 	f32 m_ExpShadowMapConstant;
 };
+
+struct DirectionalLight
+{
+	DirectionalLight(const Vector3f& worldDirection, const Vector3f& irradiancePerpToLightDirection);
+
+	Vector3f m_WorldDirection;
+	Vector3f m_IrradiancePerpToLightDirection;
+};

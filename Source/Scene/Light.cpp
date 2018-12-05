@@ -162,3 +162,9 @@ void SpotLight::SetExpShadowMapConstant(f32 expShadowMapConstant)
 {
 	m_ExpShadowMapConstant = expShadowMapConstant;
 }
+
+DirectionalLight::DirectionalLight(const Vector3f& worldDirection, const Vector3f& irradiancePerpToLightDirection)
+	: m_WorldDirection(worldDirection)
+	, m_IrradiancePerpToLightDirection(irradiancePerpToLightDirection)
+{
+}

@@ -118,6 +118,19 @@ float3 CalcSpotLightContribution(
 	return reflectedRadiance;
 }
 
+float3 CalcDirectionalLightContribution(
+	float3 dirToLight, float3 irradiancePerpToLightDir, float3 normal, float3 dirToViewer,
+	float3 baseColor, float metallic, float roughness)
+{
+	float3 brdf = BRDF(normal, dirToViewer, dirToLight, baseColor, metallic, roughness);
+	float NdotL = saturate(dot(normal, dirToLight));
+
+	float3 irradianceAtSurface = irradiancePerpToLightDir * NdotL;
+	float3 reflectedRadiance = irradianceAtSurface * brdf;
+
+	return reflectedRadiance;
+}
+
 float3 CalcPhongLighting(float3 dirToViewer, float3 dirToLight, float3 lightColor,
 	float3 normal, float3 diffuseAlbedo, float3 specularAlbedo, float shininess)
 {
