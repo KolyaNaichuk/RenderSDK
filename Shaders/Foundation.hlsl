@@ -14,6 +14,7 @@
 
 static const float g_PI = 3.141592654f;
 static const float g_2PI = 6.283185307f;
+static const float g_4PI = 12.566370616f;
 static const float g_1DIVPI = 0.318309886f;
 static const float g_PIDIV2 = 1.570796327f;
 

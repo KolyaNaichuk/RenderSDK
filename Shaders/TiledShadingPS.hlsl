@@ -90,8 +90,7 @@ float4 Main(PSInput input) : SV_Target
 #endif // ENABLE_SPOT_LIGHTS
 
 #if ENABLE_DIRECTIONAL_LIGHT == 1
-	float3 directionalLightContrib = CalcDirectionalLightContribution(g_AppData.sunWorldSpaceDir.xyz, g_AppData.sunLightColor, worldSpaceDirToViewer,
-		worldSpaceNormal, diffuseAlbedo, specularAlbedo, shininess);
+	float3 directionalLightContrib = ;
 #else // ENABLE_DIRECTIONAL_LIGHT
 	float3 directionalLightContrib = float3(0.0f, 0.0f, 0.0f);
 #endif // ENABLE_DIRECTIONAL_LIGHT
