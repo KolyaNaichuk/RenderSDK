@@ -18,6 +18,8 @@ static const float3x3 g_RotationMatrices[NUM_CUBE_MAP_FACES] =
 	matrix(), // CUBE_MAP_FACE_NEG_Z
 };
 
+groupshared float3 g_CachedData[FACE_SIZE];
+
 [numthreads(FACE_SIZE, 1, 1)]
 void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 {
@@ -27,14 +29,22 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 	float3 pixelValue = m_CubeMap[uint3(pixelPos, arraySlice)];
 	
 	float rcpHalfFaceSize = 2.0f / float(FACE_SIZE);
-
 	float3 localSpaceDir = float3(rcpHalfFaceSize * (float(pixelPos.x) + 0.5f) - 1.0f,
 		-rcpHalfFaceSize * (float(pixelPos.y) + 0.5f) + 1.0f,
 		1.0f
 	);
-		
+
+	float factor = dot(localSpaceDir, localSpaceDir);
+	float solidAngle = 4.0f / (factor * sqrt(factor));
+	float3 weightedPixelValue = solidAngle * pixelValue;
+
 	float3 worldSpaceDir = mul(g_RotationMatrices[arraySlice], localSpaceDir);
 	worldSpaceDir = normalize(worldSpaceDir);
+
+	float SHBasisFuncValues[9];
+	SH9EvaluateBasisFunctions(SHBasisFuncValues, worldSpaceDir);
+
+	g_CachedData[pixelPos.x] = SHBasisFuncValues[0] * weightedPixelValue;
 }
 
 #endif // INTEGRATE_CUBE_MAP_FACE
