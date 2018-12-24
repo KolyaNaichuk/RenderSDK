@@ -22,41 +22,6 @@ void SH9EvaluateBasisFunctions(out float SHBasisFuncValues[9], in float3 normDir
 	SHBasisFuncValues[8] =  0.546274f * (squaredNormDir.x - squaredNormDir.y);
 }
 
-void SH9ProjectCubeMap(out float3 SHProjCoeffs[9], in SamplerState cubeMapSampler, in TextureCube<float3> cubeMap)
-{
-	[unroll]
-	for (uint i = 0; i < 9; ++i)
-		SHProjCoeffs[i] = 0.0f;
-
-	float solidAngleSum = 0.0f;
-	for ()
-	{
-		float3 dirToPixel = ;
-		float3 normDirToPixel = normalize(dirToPixel);
-
-		float3 pixelValue = cubeMap.Sample(cubeMapSampler, dirToPixel);
-		
-		float factor = 1.0f + dot(faceTexCoord, faceTexCoord);
-		float solidAngle = 4.0f / (factor * sqrt(factor));
-		
-		float3 weightedPixelValue = solidAngle * pixelValue;
-	
-		float SHBasisFuncValues[9];
-		SH9EvaluateBasisFunctions(SHBasisFuncValues, normDirToPixel);
-
-		[unroll]
-		for (uint i = 0; i < 9; ++i)
-			SHProjCoeffs[i] += SHBasisFuncValues[i] * weightedPixelValue;
-
-		solidAngleSum += solidAngle;
-	}
-
-	float normTerm = g_4PI / solidAngleSum;
-	[unroll]
-	for (uint i = 0; i < 9; ++i)
-		SHProjCoeffs[i] *= normTerm;
-}
-
 float3 SH9Reconstruct(in float3 SHProjCoeffs[9], in float3 normDir)
 {
 	float SHBasisFuncValues[9];
