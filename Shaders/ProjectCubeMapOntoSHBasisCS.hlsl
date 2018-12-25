@@ -1,43 +1,44 @@
 #ifdef INTEGRATE_CUBEMAP_FACE
 
-#include "LightUtils.hlsl"
+#include "Foundation.hlsl"
+#include "SphericalHarmonics.hlsl"
 
 Texture2DArray<float3> m_CubeMap : register(t0);
 RWBuffer<float3> g_SumPerRowBuffer : register(u0);
 
-static const float3x3 g_RotationMatrices[NUM_CUBEMAP_FACES] =
+static const float3x3 g_RotationMatrices[g_NumCubeMapFaces] =
 {
-	// CUBEMAP_FACE_POSITIVE_X
+	// g_CubeMapFacePositiveX
 	{
 		0.0f, 0.0f, 1.0f,
 		0.0f, 1.0f, 0.0f,
 		-1.0f, 0.0f, 0.0f
 	},
-	// CUBEMAP_FACE_NEGATIVE_X
+	// g_CubeMapFaceNegativeX
 	{
 		0.0f, 0.0f, -1.0f,
 		0.0f, 1.0f, 0.0f,
 		1.0f, 0.0f, 0.0f,
 	}, 
-	// CUBEMAP_FACE_POSITIVE_Y
+	// g_CubeMapFacePositiveY
 	{
 		1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f,
 		0.0f, -1.0f, 0.0f
 	},
-	// CUBEMAP_FACE_NEGATIVE_Y
+	// g_CubeMapFaceNegativeY
 	{
 		1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, -1.0f,
 		0.0f, 1.0f, 0.0f
 	},
-	// CUBEMAP_FACE_POSITIVE_Z
+	// g_CubeMapFacePositiveZ
 	{
 		1.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f,
 		0.0f, 0.0f, 1.0f
 	},
-	// CUBEMAP_FACE_NEGATIVE_Z
+	// g_CubeMapFaceNegativeZ
 	{
 		-1.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f,
@@ -70,22 +71,30 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 	float3 worldSpaceDir = mul(g_RotationMatrices[arraySlice], localSpaceDir);
 	worldSpaceDir = normalize(worldSpaceDir);
 	
-#if COEFFICIENT_INDEX == 0
-	float SHValue = 0.282095f;
-#elif COEFFICIENT_INDEX == 1
-#elif COEFFICIENT_INDEX == 2
-#elif COEFFICIENT_INDEX == 3
-#elif COEFFICIENT_INDEX == 4
-#elif COEFFICIENT_INDEX == 5
-#elif COEFFICIENT_INDEX == 6
-#elif COEFFICIENT_INDEX == 7
-#elif COEFFICIENT_INDEX == 8
+#if SH_COEFFICIENT_INDEX == 0
+	float SHValue = SH0();
+#elif SH_COEFFICIENT_INDEX == 1
+	float SHValue = SH1(worldSpaceDir);
+#elif SH_COEFFICIENT_INDEX == 2
+	float SHValue = SH2(worldSpaceDir);
+#elif SH_COEFFICIENT_INDEX == 3
+	float SHValue = SH3(worldSpaceDir);
+#elif SH_COEFFICIENT_INDEX == 4
+	float SHValue = SH4(worldSpaceDir);
+#elif SH_COEFFICIENT_INDEX == 5
+	float SHValue = SH5(worldSpaceDir);
+#elif SH_COEFFICIENT_INDEX == 6
+	float SHValue = SH6(worldSpaceDir);
+#elif SH_COEFFICIENT_INDEX == 7
+	float SHValue = SH7(worldSpaceDir);
+#elif SH_COEFFICIENT_INDEX == 8
+	float SHValue = SH8(worldSpaceDir);
 #endif
 
 	g_SharedMem[localThreadId.x] = (SHValue * solidAngle) * pixelValue;
 	GroupMemoryBarrierWithGroupSync();
 
-	for (uint offset = FACE_SIZE / 2; offset > 0; offset >>= 1)
+	[unroll] for (uint offset = FACE_SIZE / 2; offset > 0; offset >>= 1)
 	{
 		if (localThreadId.x < offset)
 			g_SharedMem[localThreadId.x] += g_SharedMem[localThreadId.x + offset];
@@ -95,7 +104,7 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 	
 	if (localThreadId.x == 0)
 	{
-		uint writeIndex = pixelPos.y * NUM_CUBEMAP_FACES + arraySlice;
+		uint writeIndex = pixelPos.y * g_NumCubeMapFaces + arraySlice;
 		g_SumPerRowBuffer[writeIndex] = g_SharedMem[0];
 	}
 }
@@ -104,11 +113,11 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 
 #ifdef REDUCE
 
-#include "LightUtils.hlsl"
+#include "Foundation.hlsl"
 
 cbuffer Constants32BitBuffer : register(b0)
 {
-	uint g_CoefficientIndex;
+	uint g_SHCoefficientIndex;
 }
 
 Buffer<float3> g_SumPerRowBuffer : register(t0);
@@ -119,19 +128,16 @@ groupshared float3 g_SharedMem[FACE_SIZE];
 [numthreads(1, FACE_SIZE, 1)]
 void Main(uint3 localThreadId : SV_GroupThreadID)
 {
-	uint readOffset = localThreadId.y * NUM_CUBEMAP_FACES;
+	uint readOffset = localThreadId.y * g_NumCubeMapFaces;
 
-	float3 sum0 = g_SumPerRowBuffer[readOffset + 0];
-	float3 sum1 = g_SumPerRowBuffer[readOffset + 1];
-	float3 sum2 = g_SumPerRowBuffer[readOffset + 2];
-	float3 sum3 = g_SumPerRowBuffer[readOffset + 3];
-	float3 sum4 = g_SumPerRowBuffer[readOffset + 4];
-	float3 sum5 = g_SumPerRowBuffer[readOffset + 5];
+	float3 sum = 0.0f;
+	[unroll] for (uint faceIndex = 0; faceIndex < g_NumCubeMapFaces; ++faceIndex)
+		sum += g_SumPerRowBuffer[readOffset + faceIndex];
 	
-	g_SharedMem[localThreadId.y] = sum0 + sum1 + sum2 + sum3 + sum4 + sum5;
+	g_SharedMem[localThreadId.y] = sum;
 	GroupMemoryBarrierWithGroupSync();
 
-	for (uint offset = FACE_SIZE / 2; offset > 0; offset >>= 1)
+	[unroll] for (uint offset = FACE_SIZE / 2; offset > 0; offset >>= 1)
 	{
 		if (localThreadId.y < offset)
 			g_SharedMem[localThreadId.y] += g_SharedMem[localThreadId.y + offset];
@@ -140,7 +146,7 @@ void Main(uint3 localThreadId : SV_GroupThreadID)
 	}
 
 	if (localThreadId.y == 0)
-		g_SHCoefficientBuffer[g_CoefficientIndex] = g_SharedMem[0];
+		g_SHCoefficientBuffer[g_SHCoefficientIndex] = g_SharedMem[0];
 }
 
 #endif // REDUCE

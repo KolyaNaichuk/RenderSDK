@@ -1,13 +1,7 @@
 #ifndef __LIGHT_UTILS__
 #define __LIGHT_UTILS__
 
-#define CUBEMAP_FACE_POSITIVE_X			0
-#define CUBEMAP_FACE_NEGATIVE_X			1
-#define CUBEMAP_FACE_POSITIVE_Y			2
-#define CUBEMAP_FACE_NEGATIVE_Y			3
-#define CUBEMAP_FACE_POSITIVE_Z			4
-#define CUBEMAP_FACE_NEGATIVE_Z			5
-#define NUM_CUBEMAP_FACES			6
+#include "Foundation.hlsl"
 
 struct SpotLightProps
 {
@@ -155,24 +149,6 @@ float3 CalcBlinnPhongLighting(float3 dirToViewer, float3 dirToLight, float3 ligh
 	float3 specularColor = (NdotL * pow(HdotN, shininess)) * specularAlbedo * lightColor;
 
 	return (diffuseColor + specularColor);
-}
-
-uint DetectCubeMapFaceIndex(float3 cubeMapCenter, float3 pointToTest)
-{
-	float3 dirToPoint = normalize(pointToTest - cubeMapCenter);
-	float3 absDirToPoint = abs(dirToPoint);
-	float maxAxis = max(absDirToPoint.x, max(absDirToPoint.y, absDirToPoint.z));
-	
-	if (maxAxis == absDirToPoint.x)
-		return (dirToPoint.x > 0.0f) ? CUBEMAP_FACE_POSITIVE_X : CUBEMAP_FACE_NEGATIVE_X;
-	
-	if (maxAxis == absDirToPoint.y)
-		return (dirToPoint.y > 0.0f) ? CUBEMAP_FACE_POSITIVE_Y : CUBEMAP_FACE_NEGATIVE_Y;
-
-	if (maxAxis == absDirToPoint.z)
-		return (dirToPoint.z > 0.0f) ? CUBEMAP_FACE_POSITIVE_Z : CUBEMAP_FACE_NEGATIVE_Z;
-
-	return NUM_CUBEMAP_FACES;
 }
 
 #endif // __LIGHT_UTILS__

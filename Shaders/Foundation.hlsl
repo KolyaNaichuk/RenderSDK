@@ -18,6 +18,14 @@ static const float g_4PI = 12.566370616f;
 static const float g_1DIVPI = 0.318309886f;
 static const float g_PIDIV2 = 1.570796327f;
 
+static const uint g_CubeMapFacePositiveX = 0;
+static const uint g_CubeMapFaceNegativeX = 1;
+static const uint g_CubeMapFacePositiveY = 2;
+static const uint g_CubeMapFaceNegativeY = 3;
+static const uint g_CubeMapFacePositiveZ = 4;
+static const uint g_CubeMapFaceNegativeZ = 5;
+static const uint g_NumCubeMapFaces = 6;
+
 struct Range
 {
 	uint start;
@@ -101,5 +109,23 @@ struct AppData
 	float notUsed8[16];
 	float notUsed9[16];
 };
+
+uint DetectCubeMapFaceIndex(float3 cubeMapCenter, float3 pointToTest)
+{
+	float3 dirToPoint = normalize(pointToTest - cubeMapCenter);
+	float3 absDirToPoint = abs(dirToPoint);
+	float maxAxis = max(absDirToPoint.x, max(absDirToPoint.y, absDirToPoint.z));
+
+	if (maxAxis == absDirToPoint.x)
+		return (dirToPoint.x > 0.0f) ? g_CubeMapFacePositiveX : g_CubeMapFaceNegativeX;
+
+	if (maxAxis == absDirToPoint.y)
+		return (dirToPoint.y > 0.0f) ? g_CubeMapFacePositiveY : g_CubeMapFaceNegativeY;
+
+	if (maxAxis == absDirToPoint.z)
+		return (dirToPoint.z > 0.0f) ? g_CubeMapFacePositiveZ : g_CubeMapFaceNegativeZ;
+
+	return g_NumCubeMapFaces;
+}
 
 #endif // __FOUNDATION__
