@@ -36,7 +36,7 @@ void SH9EvaluateBasisFunctions(out float SHBasisFuncValues[9], in float3 normDir
 	SHBasisFuncValues[8] = SH8(normDir);
 }
 
-float3 SH9Reconstruct(in float3 SHProjCoeffs[9], in float3 normDir)
+float3 SH9Reconstruct(in float3 SHCoeffs[9], in float3 normDir)
 {
 	float SHBasisFuncValues[9];
 	SH9EvaluateBasisFunctions(SHBasisFuncValues, normDir);
@@ -45,9 +45,14 @@ float3 SH9Reconstruct(in float3 SHProjCoeffs[9], in float3 normDir)
 
 	[unroll]
 	for (uint i = 0; i < 9; ++i)
-		result += SHProjCoeffs[i] * SHBasisFuncValues[i];
+		result += SHCoeffs[i] * SHBasisFuncValues[i];
 
 	return result;
+}
+
+void SH9RadianceToIrradianceCoefficients(out float3 SHIrradianceCoeffs, in float3 SHRadianceCoeffs[9])
+{
+	Add implementation
 }
 
 #endif // __SPHERICAL_HARMONICS__

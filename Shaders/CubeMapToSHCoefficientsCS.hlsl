@@ -1,4 +1,4 @@
-#ifdef INTEGRATE_CUBEMAP_FACE
+#ifdef INTEGRATE
 
 #include "Foundation.hlsl"
 #include "SphericalHarmonics.hlsl"
@@ -8,37 +8,37 @@ RWBuffer<float3> g_SumPerRowBuffer : register(u0);
 
 static const float3x3 g_RotationMatrices[g_NumCubeMapFaces] =
 {
-	// g_CubeMapFacePositiveX
+	// Positive X
 	{
 		0.0f, 0.0f, 1.0f,
 		0.0f, 1.0f, 0.0f,
 		-1.0f, 0.0f, 0.0f
 	},
-	// g_CubeMapFaceNegativeX
+	// Negative X
 	{
 		0.0f, 0.0f, -1.0f,
 		0.0f, 1.0f, 0.0f,
 		1.0f, 0.0f, 0.0f,
 	}, 
-	// g_CubeMapFacePositiveY
+	// Positive Y
 	{
 		1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f,
 		0.0f, -1.0f, 0.0f
 	},
-	// g_CubeMapFaceNegativeY
+	// Negative Y
 	{
 		1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, -1.0f,
 		0.0f, 1.0f, 0.0f
 	},
-	// g_CubeMapFacePositiveZ
+	// Positive Z
 	{
 		1.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f,
 		0.0f, 0.0f, 1.0f
 	},
-	// g_CubeMapFaceNegativeZ
+	// Negative Z
 	{
 		-1.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f,
@@ -71,23 +71,23 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 	float3 worldSpaceDir = mul(g_RotationMatrices[arraySlice], localSpaceDir);
 	worldSpaceDir = normalize(worldSpaceDir);
 	
-#if SH_COEFFICIENT_INDEX == 0
+#if SH_INDEX == 0
 	float SHValue = SH0();
-#elif SH_COEFFICIENT_INDEX == 1
+#elif SH_INDEX == 1
 	float SHValue = SH1(worldSpaceDir);
-#elif SH_COEFFICIENT_INDEX == 2
+#elif SH_INDEX == 2
 	float SHValue = SH2(worldSpaceDir);
-#elif SH_COEFFICIENT_INDEX == 3
+#elif SH_INDEX == 3
 	float SHValue = SH3(worldSpaceDir);
-#elif SH_COEFFICIENT_INDEX == 4
+#elif SH_INDEX == 4
 	float SHValue = SH4(worldSpaceDir);
-#elif SH_COEFFICIENT_INDEX == 5
+#elif SH_INDEX == 5
 	float SHValue = SH5(worldSpaceDir);
-#elif SH_COEFFICIENT_INDEX == 6
+#elif SH_INDEX == 6
 	float SHValue = SH6(worldSpaceDir);
-#elif SH_COEFFICIENT_INDEX == 7
+#elif SH_INDEX == 7
 	float SHValue = SH7(worldSpaceDir);
-#elif SH_COEFFICIENT_INDEX == 8
+#elif SH_INDEX == 8
 	float SHValue = SH8(worldSpaceDir);
 #endif
 
@@ -109,15 +109,15 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 	}
 }
 
-#endif // INTEGRATE_CUBEMAP_FACE
+#endif // INTEGRATE
 
-#ifdef REDUCE
+#ifdef MERGE
 
 #include "Foundation.hlsl"
 
 cbuffer Constants32BitBuffer : register(b0)
 {
-	uint g_SHCoefficientIndex;
+	uint g_SHIndex;
 }
 
 Buffer<float3> g_SumPerRowBuffer : register(t0);
@@ -146,7 +146,7 @@ void Main(uint3 localThreadId : SV_GroupThreadID)
 	}
 
 	if (localThreadId.y == 0)
-		g_SHCoefficientBuffer[g_SHCoefficientIndex] = g_SharedMem[0];
+		g_SHCoefficientBuffer[g_SHIndex] = g_SharedMem[0];
 }
 
-#endif // REDUCE
+#endif // MERGE

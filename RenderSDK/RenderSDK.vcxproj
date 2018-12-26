@@ -210,13 +210,14 @@
     <ClInclude Include="..\Include\RenderPasses\CreateExpShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateFalseNegativeDrawCommandsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateMainDrawCommandsPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\CubeMapToSHCoefficientsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FilterExpShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FrustumMeshCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\GeometryBuffer.h" />
     <ClInclude Include="..\Include\RenderPasses\LightRenderData.h" />
     <ClInclude Include="..\Include\RenderPasses\MaterialRenderResources.h" />
     <ClInclude Include="..\Include\RenderPasses\MeshRenderResources.h" />
-    <ClInclude Include="..\Include\RenderPasses\ProjectCubeMapOntoSHBasisPass.h" />
+    <ClInclude Include="..\Include\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.h" />
     <ClInclude Include="..\Include\RenderPasses\RenderSpotLightShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\SpotLightShadowMapRenderer.h" />
     <ClInclude Include="..\Include\RenderPasses\SunShadowMapRenderer.h" />
@@ -291,12 +292,13 @@
     <ClCompile Include="..\Source\RenderPasses\CreateExpShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateMainDrawCommandsPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\CubeMapToSHCoefficientsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FilterExpShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FrustumMeshCullingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\GeometryBuffer.cpp" />
     <ClCompile Include="..\Source\RenderPasses\MaterialRenderResources.cpp" />
     <ClCompile Include="..\Source\RenderPasses\MeshRenderResources.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\ProjectCubeMapOntoSHBasisPass.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\RenderSpotLightShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\SunShadowMapRenderer.cpp" />
     <ClCompile Include="..\Source\RenderPasses\Utils.cpp" />
@@ -479,11 +481,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\SphericalHarmonics.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Shaders\BoundingVolumes.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
@@ -620,19 +617,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\ImageBasedLighting.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Shaders\SphericalGaussians.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
@@ -646,7 +630,15 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="..\Shaders\ProjectCubeMapOntoSHBasisCS.hlsl">
+    <None Include="..\Shaders\CubeMapToSHCoefficientsCS.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\SphericalHarmonics.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
@@ -655,7 +647,8 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
-    </FxCompile>
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

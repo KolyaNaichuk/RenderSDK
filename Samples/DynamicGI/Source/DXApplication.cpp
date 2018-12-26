@@ -63,6 +63,7 @@
 
 /*
 To do:
+- Check if using lookup table for (solidAngle * SHValue) in CubeMapToSHCoefficientsPass gives performance increase 
 - I am doing pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap) on shared command list for 
 CreateExpShadowMap and FilterExpShadowMap. Since command list is shared I could do this once.
 - Check if there is point in using downsampled exponential shadow map

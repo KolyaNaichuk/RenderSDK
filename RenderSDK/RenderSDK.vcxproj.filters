@@ -273,7 +273,10 @@
     <ClInclude Include="..\Include\RenderPasses\SunShadowMapRenderer.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\ProjectCubeMapOntoSHBasisPass.h">
+    <ClInclude Include="..\Include\RenderPasses\CubeMapToSHCoefficientsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -507,9 +510,12 @@
       <Filter>RenderPasses</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Math\Vector3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CubeMapToSHCoefficientsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\ProjectCubeMapOntoSHBasisPass.cpp">
+    <ClCompile Include="..\Source\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
@@ -548,9 +554,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\VisualizeTexturePS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\SphericalHarmonics.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\BoundingVolumes.hlsl">
@@ -628,13 +631,14 @@
     <None Include="..\Shaders\SphericalGaussians.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\ImageBasedLighting.hlsl">
+    <None Include="..\Shaders\SphericalHarmonics.hlsl">
       <Filter>Shaders</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="..\Shaders\ProjectCubeMapOntoSHBasisCS.hlsl">
+    <None Include="..\Shaders\CubeMapToSHCoefficientsCS.hlsl">
       <Filter>Shaders</Filter>
-    </FxCompile>
+    </None>
+    <None Include="..\Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

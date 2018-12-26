@@ -3,47 +3,60 @@
 #include "D3DWrapper/GraphicsResource.h"
 
 struct RenderEnv;
+class ColorTexture;
 class CommandList;
 class RootSignature;
 class PipelineState;
 
-class ProjectCubeMapOntoSHBasisPass
+class CubeMapToSHCoefficientsPass
 {
 public:
 	struct ResourceStates
 	{
 		D3D12_RESOURCE_STATES m_CubeMapState;
-	}
+	};
 
 	struct InitParams
 	{
 		const char* m_pName = nullptr;
 		RenderEnv* m_pRenderEnv = nullptr;
 		ResourceStates m_InputResourceStates;
-	}
+		u32 m_CubeMapFaceSize = 0;
+	};
 
 	struct RenderParams
 	{
 		RenderEnv* m_pRenderEnv = nullptr;
 		CommandList* m_pCommandList = nullptr;
+		ColorTexture* m_pCubeMap = nullptr;
 	};
 
-	ProjectCubeMapOntoSHBasisPass(InitParams* pParams);
-	~ProjectCubeMapOntoSHBasisPass();
+	CubeMapToSHCoefficientsPass(InitParams* pParams);
+	~CubeMapToSHCoefficientsPass();
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
 
 private:
 	void InitResources(InitParams* pParams);
-	void InitRootSignature(InitParams* pParams);
-	void InitPipelineState(InitParams* pParams);
+
+	void InitIntegrateRootSignature(InitParams* pParams);
+	void InitIntegratePipelineState(InitParams* pParams);
+
+	void InitMergeRootSignature(InitParams* pParams);
+	void InitMergePipelineState(InitParams* pParams);
 
 private:
-	std::string m_Name;
+	enum { kNumSHCoefficients = 9 };
 
-	RootSignature* m_pRootSignature = nullptr;
-	PipelineState* m_pPipelineState = nullptr;
+	std::string m_Name;
+	u32 m_CubeMapFaceSize = 0;
+
+	RootSignature* m_pIntegrateRootSignature = nullptr;
+	PipelineState* m_IntegratePipelineStates[kNumSHCoefficients];
+
+	RootSignature* m_pMergeRootSignature = nullptr;
+	PipelineState* m_pMergePipelineState = nullptr;
 
 	ResourceStates m_OutputResourceStates;
 };

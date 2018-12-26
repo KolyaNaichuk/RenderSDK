@@ -16,6 +16,7 @@ namespace
 		kReprojectRootSRVTableParam,
 		kReprojectNumRootParams
 	};
+
 	enum CopyRootParams
 	{
 		kCopyRootSRVTableParam = 0,
