@@ -38,6 +38,8 @@ public:
 	ID3D12DescriptorHeap* GetD3DObject() { return m_D3DDescriptorHeap.Get(); }
 
 	DescriptorHandle Allocate();
+	DescriptorHandle AllocateRange(UINT numDescriptors);
+	
 	void Reset();
 	
 private:
