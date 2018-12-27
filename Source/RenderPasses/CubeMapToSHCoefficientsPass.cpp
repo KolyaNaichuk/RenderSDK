@@ -15,8 +15,7 @@ namespace
 	
 	enum MergeRootParams
 	{
-		kMergeRoot32BitConstantParam = 0,
-		kMergeRootSRVTableParam,
+		kMergeRootSRVTableParam = 0,
 		kMergeNumRootParams
 	};
 }
@@ -41,23 +40,69 @@ CubeMapToSHCoefficientsPass::~CubeMapToSHCoefficientsPass()
 
 	SafeDelete(m_pMergePipelineState);
 	SafeDelete(m_pMergeRootSignature);
+
+	SafeDelete(m_pSumPerRowBuffer);
 }
 
 void CubeMapToSHCoefficientsPass::Record(RenderParams* pParams)
 {
-	assert(pParams->m_pCubeMap->GetDepthOrArraySize() == 6);
+	assert(pParams->m_pCubeMap->GetDepthOrArraySize() == kNumCubeMapFaces);
 	assert(m_CubeMapFaceSize == pParams->m_pCubeMap->GetWidth());
 	assert(m_CubeMapFaceSize == pParams->m_pCubeMap->GetHeight());
 
-	assert(false);
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	CommandList* pCommandList = pParams->m_pCommandList;
+	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
+
+	pCommandList->Begin();
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+#endif // ENABLE_PROFILING
+
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
+	
+	{
+		pCommandList->SetComputeRootSignature(m_pIntegrateRootSignature);
+
+		assert(false && "pCommandList->ResourceBarrier");
+		assert(false && "pCommandList->SetComputeRootDescriptorTable");
+		
+		for (u32 SHIndex = 0; SHIndex < kNumSHCoefficients; ++SHIndex)
+		{
+			pCommandList->SetPipelineState(m_IntegratePipelineStates[SHIndex]);
+			pCommandList->Dispatch(1, m_CubeMapFaceSize, kNumCubeMapFaces);
+		}
+	}
+	{
+		ResourceTransitionBarrier resourceBarrier(m_pSumPerRowBuffer,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
+		pCommandList->SetComputeRootSignature(m_pMergeRootSignature);
+		pCommandList->SetPipelineState(m_pMergePipelineState);
+		pCommandList->ResourceBarrier(1, &resourceBarrier);
+		assert(false && "pCommandList->SetComputeRootDescriptorTable");
+
+		pCommandList->Dispatch(kNumSHCoefficients, 1, 1);
+	}
+
+#ifdef ENABLE_PROFILING
+	pGPUProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_PROFILING
+	pCommandList->End();
 }
 
 void CubeMapToSHCoefficientsPass::InitResources(InitParams* pParams)
 {
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
 	assert(pParams->m_CubeMapFaceSize > 0);
 	m_CubeMapFaceSize = pParams->m_CubeMapFaceSize;
 
-	assert(false);
+	assert(m_pSumPerRowBuffer == nullptr);
+	FormattedBufferDesc sumPerRowBufferDesc(kNumSHCoefficients * kNumCubeMapFaces * m_CubeMapFaceSize, DXGI_FORMAT_R32G32B32_FLOAT, true, true);
+	m_pSumPerRowBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &sumPerRowBufferDesc,
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, L"CubeMapToSHCoefficientsPass::m_pSumPerRowBuffer");
 }
 
 void CubeMapToSHCoefficientsPass::InitIntegrateRootSignature(InitParams* pParams)
@@ -75,8 +120,8 @@ void CubeMapToSHCoefficientsPass::InitIntegrateRootSignature(InitParams* pParams
 void CubeMapToSHCoefficientsPass::InitIntegratePipelineState(InitParams* pParams)
 {
 	assert(m_pIntegrateRootSignature != nullptr);
-
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
 	for (u32 SHIndex = 0; SHIndex < kNumSHCoefficients; ++SHIndex)
 	{
 		assert(m_IntegratePipelineStates[SHIndex] == nullptr);
@@ -104,10 +149,8 @@ void CubeMapToSHCoefficientsPass::InitIntegratePipelineState(InitParams* pParams
 void CubeMapToSHCoefficientsPass::InitMergeRootSignature(InitParams* pParams)
 {
 	assert(m_pMergeRootSignature == nullptr);
-
 	D3D12_ROOT_PARAMETER rootParams[kMergeNumRootParams];
-	rootParams[kMergeRoot32BitConstantParam] = Root32BitConstantsParameter(0, D3D12_SHADER_VISIBILITY_ALL, 1);
-	
+		
 	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = {SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0)};
 	rootParams[kMergeRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), descriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
 
@@ -119,5 +162,20 @@ void CubeMapToSHCoefficientsPass::InitMergePipelineState(InitParams* pParams)
 {
 	assert(m_pMergePipelineState == nullptr);
 	assert(m_pMergeRootSignature != nullptr);
-	assert(false);
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
+	const std::string faceSizeStr = std::to_string(m_CubeMapFaceSize);
+	const ShaderMacro shaderDefines[] =
+	{
+		ShaderMacro("MERGE", "1"),
+		ShaderMacro("FACE_SIZE", faceSizeStr.c_str()),
+		ShaderMacro()
+	};
+	Shader computeShader(L"Shaders//CubeMapToSHCoefficientsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+
+	ComputePipelineStateDesc pipelineStateDesc;
+	pipelineStateDesc.SetRootSignature(m_pMergeRootSignature);
+	pipelineStateDesc.SetComputeShader(&computeShader);
+
+	m_pMergePipelineState = new PipelineState(pRenderEnv->m_pDevice, &pipelineStateDesc, L"CubeMapToSHCoefficientsPass::m_pMergePipelineState");
 }

@@ -2,17 +2,6 @@
 
 #include "Math/BasisAxes.h"
 
-enum CubeMapFaces
-{
-	kCubeMapFacePosX = 0,
-	kCubeMapFaceNegX,
-	kCubeMapFacePosY,
-	kCubeMapFaceNegY,
-	kCubeMapFacePosZ,
-	kCubeMapFaceNegZ,
-	kNumCubeMapFaces
-};
-
 class PointLight
 {
 public:

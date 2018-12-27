@@ -63,7 +63,9 @@
 
 /*
 To do:
-- Check if using lookup table for (solidAngle * SHValue) in CubeMapToSHCoefficientsPass gives performance increase 
+- Check if using lookup table for (solidAngle * SHValue) in CubeMapToSHCoefficientsPass gives performance increase
+- Check if there is a way to avoid changing PSO for each Integrate pass in CubeMapToSHCoefficientsPass.
+Using look-up table should allow avoid changing PSO and perform one dispatch call.
 - I am doing pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap) on shared command list for 
 CreateExpShadowMap and FilterExpShadowMap. Since command list is shared I could do this once.
 - Check if there is point in using downsampled exponential shadow map

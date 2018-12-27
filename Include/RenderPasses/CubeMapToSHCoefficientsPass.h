@@ -3,6 +3,7 @@
 #include "D3DWrapper/GraphicsResource.h"
 
 struct RenderEnv;
+class Buffer;
 class ColorTexture;
 class CommandList;
 class RootSignature;
@@ -59,4 +60,5 @@ private:
 	PipelineState* m_pMergePipelineState = nullptr;
 
 	ResourceStates m_OutputResourceStates;
+	Buffer* m_pSumPerRowBuffer = nullptr;
 };

@@ -1,7 +1,12 @@
-#ifdef INTEGRATE
-
 #include "Foundation.hlsl"
 #include "SphericalHarmonics.hlsl"
+
+uint ComputeDataOffset(uint SHIndex, uint rowIndex)
+{
+	return (SHIndex * FACE_SIZE + rowIndex) * g_NumCubeMapFaces;
+}
+
+#ifdef INTEGRATE
 
 Texture2DArray<float3> m_CubeMap : register(t0);
 RWBuffer<float3> g_SumPerRowBuffer : register(u0);
@@ -52,9 +57,9 @@ groupshared float3 g_SharedMem[FACE_SIZE];
 void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 {
 	uint2 pixelPos = uint2(localThreadId.x, groupId.y);
-	uint arraySlice = groupId.z;
+	uint faceIndex = groupId.z;
 
-	float3 pixelValue = m_CubeMap[uint3(pixelPos, arraySlice)];
+	float3 pixelValue = m_CubeMap[uint3(pixelPos, faceIndex)];
 	float rcpHalfFaceSize = 2.0f / float(FACE_SIZE);
 
 	// The following calculations are based on assumption
@@ -68,7 +73,7 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 	float sphereMappingJacobian = 1.0f / pow(dot(localSpaceDir, localSpaceDir), 1.5f);
 	float solidAngle = pixelArea * sphereMappingJacobian;
 	
-	float3 worldSpaceDir = mul(g_RotationMatrices[arraySlice], localSpaceDir);
+	float3 worldSpaceDir = mul(g_RotationMatrices[faceIndex], localSpaceDir);
 	worldSpaceDir = normalize(worldSpaceDir);
 	
 #if SH_INDEX == 0
@@ -104,8 +109,8 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 	
 	if (localThreadId.x == 0)
 	{
-		uint writeIndex = pixelPos.y * g_NumCubeMapFaces + arraySlice;
-		g_SumPerRowBuffer[writeIndex] = g_SharedMem[0];
+		uint dataOffset = ComputeDataOffset(SH_INDEX, pixelPos.y)
+		g_SumPerRowBuffer[dataOffset + faceIndex] = g_SharedMem[0];
 	}
 }
 
@@ -113,26 +118,20 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 
 #ifdef MERGE
 
-#include "Foundation.hlsl"
-
-cbuffer Constants32BitBuffer : register(b0)
-{
-	uint g_SHIndex;
-}
-
 Buffer<float3> g_SumPerRowBuffer : register(t0);
 RWBuffer<float3> g_SHCoefficientBuffer : register(u0);
 
 groupshared float3 g_SharedMem[FACE_SIZE];
 
 [numthreads(1, FACE_SIZE, 1)]
-void Main(uint3 localThreadId : SV_GroupThreadID)
+void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 {
-	uint readOffset = localThreadId.y * g_NumCubeMapFaces;
+	uint SHIndex = groupID.x;
+	uint dataOffset = ComputeDataOffset(SHIndex, localThreadId.y);
 
 	float3 sum = 0.0f;
 	[unroll] for (uint faceIndex = 0; faceIndex < g_NumCubeMapFaces; ++faceIndex)
-		sum += g_SumPerRowBuffer[readOffset + faceIndex];
+		sum += g_SumPerRowBuffer[dataOffset + faceIndex];
 	
 	g_SharedMem[localThreadId.y] = sum;
 	GroupMemoryBarrierWithGroupSync();
@@ -146,7 +145,7 @@ void Main(uint3 localThreadId : SV_GroupThreadID)
 	}
 
 	if (localThreadId.y == 0)
-		g_SHCoefficientBuffer[g_SHIndex] = g_SharedMem[0];
+		g_SHCoefficientBuffer[SHIndex] = g_SharedMem[0];
 }
 
 #endif // MERGE
