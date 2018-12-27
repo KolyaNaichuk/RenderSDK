@@ -1,4 +1,5 @@
 #include "RenderPasses/CubeMapToSHCoefficientsPass.h"
+#include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
@@ -62,10 +63,33 @@ void CubeMapToSHCoefficientsPass::Record(RenderParams* pParams)
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	
 	{
-		pCommandList->SetComputeRootSignature(m_pIntegrateRootSignature);
+		ResourceTransitionBarrier resourceBarriers[2];
+		u32 numResourceBarriers = 0;
+		
+		resourceBarriers[numResourceBarriers++] = ResourceTransitionBarrier(
+			m_pSumPerRowBuffer,
+			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+		);
 
-		assert(false && "pCommandList->ResourceBarrier");
-		assert(false && "pCommandList->SetComputeRootDescriptorTable");
+		if (pParams->m_InputResourceStates.m_CubeMapState != m_OutputResourceStates.m_CubeMapState)
+		{
+			resourceBarriers[numResourceBarriers++] = ResourceTransitionBarrier(
+				pParams->m_pCubeMap,
+				pParams->m_InputResourceStates.m_CubeMapState,
+				m_OutputResourceStates.m_CubeMapState
+			);
+		}
+
+		pRenderEnv->m_pDevice->CopyDescriptor(m_IntegrateSRVHeapStart,
+			pParams->m_pCubeMap->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		pRenderEnv->m_pDevice->CopyDescriptor(DescriptorHandle(m_IntegrateSRVHeapStart, 1),
+			m_pSumPerRowBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		pCommandList->SetComputeRootSignature(m_pIntegrateRootSignature);
+		pCommandList->ResourceBarrier(numResourceBarriers, resourceBarriers);
+		pCommandList->SetComputeRootDescriptorTable(kIntegrateRootSRVTableParam, m_IntegrateSRVHeapStart);
 		
 		for (u32 SHIndex = 0; SHIndex < kNumSHCoefficients; ++SHIndex)
 		{
@@ -74,15 +98,34 @@ void CubeMapToSHCoefficientsPass::Record(RenderParams* pParams)
 		}
 	}
 	{
-		ResourceTransitionBarrier resourceBarrier(m_pSumPerRowBuffer,
+		ResourceTransitionBarrier resourceBarriers[2];
+		u32 numResourceBarriers = 0;
+
+		resourceBarriers[numResourceBarriers++] = ResourceTransitionBarrier(
+			m_pSumPerRowBuffer,
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
+		);
+
+		if (pParams->m_InputResourceStates.m_SHCoefficientBufferState != m_OutputResourceStates.m_SHCoefficientBufferState)
+		{
+			resourceBarriers[numResourceBarriers++] = ResourceTransitionBarrier(
+				pParams->m_pSHCoefficientBuffer,
+				pParams->m_InputResourceStates.m_SHCoefficientBufferState,
+				m_OutputResourceStates.m_SHCoefficientBufferState
+			);
+		}
+
+		pRenderEnv->m_pDevice->CopyDescriptor(m_MergeSRVHeapStart,
+			m_pSumPerRowBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		pRenderEnv->m_pDevice->CopyDescriptor(DescriptorHandle(m_MergeSRVHeapStart, 1),
+			pParams->m_pSHCoefficientBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		pCommandList->SetComputeRootSignature(m_pMergeRootSignature);
 		pCommandList->SetPipelineState(m_pMergePipelineState);
-		pCommandList->ResourceBarrier(1, &resourceBarrier);
-		assert(false && "pCommandList->SetComputeRootDescriptorTable");
-
+		pCommandList->ResourceBarrier(numResourceBarriers, resourceBarriers);
+		pCommandList->SetComputeRootDescriptorTable(kMergeRootSRVTableParam, m_MergeSRVHeapStart);
 		pCommandList->Dispatch(kNumSHCoefficients, 1, 1);
 	}
 
@@ -103,6 +146,15 @@ void CubeMapToSHCoefficientsPass::InitResources(InitParams* pParams)
 	FormattedBufferDesc sumPerRowBufferDesc(kNumSHCoefficients * kNumCubeMapFaces * m_CubeMapFaceSize, DXGI_FORMAT_R32G32B32_FLOAT, true, true);
 	m_pSumPerRowBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &sumPerRowBufferDesc,
 		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, L"CubeMapToSHCoefficientsPass::m_pSumPerRowBuffer");
+
+	m_OutputResourceStates.m_CubeMapState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_SHCoefficientBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+	assert(!m_IntegrateSRVHeapStart.IsValid());
+	m_IntegrateSRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->AllocateRange(2);
+	
+	assert(!m_MergeSRVHeapStart.IsValid());
+	m_MergeSRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->AllocateRange(2);
 }
 
 void CubeMapToSHCoefficientsPass::InitIntegrateRootSignature(InitParams* pParams)

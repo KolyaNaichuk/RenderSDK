@@ -8,7 +8,7 @@ uint ComputeDataOffset(uint SHIndex, uint rowIndex)
 
 #ifdef INTEGRATE
 
-Texture2DArray<float3> m_CubeMap : register(t0);
+Texture2DArray<float3> g_CubeMap : register(t0);
 RWBuffer<float3> g_SumPerRowBuffer : register(u0);
 
 static const float3x3 g_RotationMatrices[g_NumCubeMapFaces] =
@@ -59,7 +59,7 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 	uint2 pixelPos = uint2(localThreadId.x, groupId.y);
 	uint faceIndex = groupId.z;
 
-	float3 pixelValue = m_CubeMap[uint3(pixelPos, faceIndex)];
+	float3 pixelValue = g_CubeMap[uint3(pixelPos, faceIndex)];
 	float rcpHalfFaceSize = 2.0f / float(FACE_SIZE);
 
 	// The following calculations are based on assumption
