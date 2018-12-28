@@ -88,11 +88,13 @@ float4 Main(PSInput input) : SV_Target
 		spotLightsContrib += visibilityTerm * reflectedRadiance;
 	}
 #endif // ENABLE_SPOT_LIGHTS
-
+	
 #if ENABLE_DIRECTIONAL_LIGHT == 1
-	float3 directionalLightContrib = ;
+	float3 directionalLightContrib = CalcDirectionalLightContribution(
+		g_AppData.worldSpaceDirToSun, g_AppData.irradiancePerpToSunDir,
+		worldSpaceNormal, worldSpaceDirToViewer, baseColor, metallic, roughness);
 #else // ENABLE_DIRECTIONAL_LIGHT
-	float3 directionalLightContrib = float3(0.0f, 0.0f, 0.0f);
+	float3 directionalLightContrib = 0.0f;
 #endif // ENABLE_DIRECTIONAL_LIGHT
 		
 	return float4(spotLightsContrib + directionalLightContrib, 1.0f);

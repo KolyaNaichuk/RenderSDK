@@ -91,23 +91,25 @@ struct AppData
 	float2 rcpScreenHalfSize;
 	uint2 screenQuarterSize;
 	float2 rcpScreenQuarterSize;
-	float4 sunWorldSpaceDir;
+	float3 worldSpaceDirToSun;
+	float notUsed3;
 
-	float4 sunLightColor;
+	float3 irradiancePerpToSunDir;
+	float notUsed4;
 	uint2 screenTileSize;
 	uint2 numScreenTiles;	
 	float3 voxelGridWorldMinPoint;
-	float notUsed3;
+	float notUsed5;
 	float3 voxelGridWorldMaxPoint;
-	float notUsed4;
+	float notUsed6;
 	float4x4 voxelGridViewProjMatrices[3];
 
 	float3 voxelRcpSize;
-	float notUsed5;
-	float notUsed6[12];
-	float notUsed7[16];
-	float notUsed8[16];
+	float notUsed7;
+	float notUsed8[12];
 	float notUsed9[16];
+	float notUsed10[16];
+	float notUsed11[16];
 };
 
 uint DetectCubeMapFaceIndex(float3 cubeMapCenter, float3 pointToTest)

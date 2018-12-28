@@ -55,8 +55,6 @@
 #include "Math/Vector4.h"
 
 /*
-- Fix DirectionalLight on C++ side
-- Fix DirectionalLight in shader
 - Fix baseColor, metallic, roughness maps on C++ side
 - Incoming radiant intensity should be multiplied by visibility term instead of reflected radiance
 */
@@ -137,25 +135,27 @@ namespace
 		Vector2f m_RcpScreenHalfSize;
 		Vector2u m_ScreenQuarterSize;
 		Vector2f m_RcpScreenQuarterSize;
-		Vector4f m_SunWorldSpaceDir;
-		
-		Vector4f m_SunLightColor;
+		Vector3f m_WorldSpaceDirToSun;
+		f32 m_NotUsed3;
+
+		Vector3f m_IrradiancePerpToSunDir;
+		f32 m_NotUsed4;
 		Vector2u m_ScreenTileSize;
 		Vector2u m_NumScreenTiles;
 		Vector3f m_VoxelGridWorldMinPoint;
-		f32 m_NotUsed3;
+		f32 m_NotUsed5;
 		Vector3f m_VoxelGridWorldMaxPoint;
-		f32 m_NotUsed4;
+		f32 m_NotUsed6;
 		Matrix4f m_VoxelGridViewProjMatrices[3];
 		
 		Vector3f m_VoxelRcpSize;
-		f32 m_NotUsed5;
-		f32 m_NotUsed6[12];
-		f32 m_NotUsed7[16];
-		f32 m_NotUsed8[16];
+		f32 m_NotUsed7;
+		f32 m_NotUsed8[12];
 		f32 m_NotUsed9[16];
+		f32 m_NotUsed10[16];
+		f32 m_NotUsed11[16];
 	};
-				
+
 	using BufferElementFormatter = std::function<std::string (const void* pElementData)>;
 	
 	void OutputBufferContent(RenderEnv* pRenderEnv, Buffer* pBuffer, D3D12_RESOURCE_STATES bufferState,
@@ -425,8 +425,8 @@ void DXApplication::OnUpdate()
 	pAppData->m_RcpScreenHalfSize = Vector2f(1.0f / f32(pAppData->m_ScreenHalfSize.m_X), 1.0f / f32(pAppData->m_ScreenHalfSize.m_Y));
 	pAppData->m_ScreenQuarterSize = Vector2u(pAppData->m_ScreenHalfSize.m_X >> 1, pAppData->m_ScreenHalfSize.m_Y >> 1);
 	pAppData->m_RcpScreenQuarterSize = Vector2f(1.0f / f32(pAppData->m_ScreenQuarterSize.m_X), 1.0f / f32(pAppData->m_ScreenQuarterSize.m_Y));
-	pAppData->m_SunWorldSpaceDir = Vector4f(0.0f, 0.0f, 1.0f, 0.0f);
-	pAppData->m_SunLightColor = Color::WHITE;
+	pAppData->m_WorldSpaceDirToSun = Vector3f::FORWARD;
+	pAppData->m_IrradiancePerpToSunDir = Vector3f::ZERO;
 	pAppData->m_ScreenTileSize = Vector2u(kTileSize, kTileSize);
 	pAppData->m_NumScreenTiles = Vector2u(kNumTilesX, kNumTilesY);
 
@@ -677,7 +677,7 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight, Scene
 	
 	m_pCamera = new Camera(
 		pScene->GetCamera()->GetWorldPosition(),
-		pScene->GetCamera()->GetBasisAxes(),
+		pScene->GetCamera()->GetWorldOrientation(),
 		pScene->GetCamera()->GetFieldOfViewY(),
 		aspectRatio,
 		pScene->GetCamera()->GetNearClipDistance(),
