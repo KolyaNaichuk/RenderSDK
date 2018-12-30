@@ -1312,7 +1312,7 @@ void DXApplication::InitVisualizeDepthBufferWithMeshTypePass()
 		params.m_pInputTexture = pDepthTextureWithMeshType;
 		params.m_InputTextureSRV = pDepthTextureWithMeshType->GetSRVHandle();
 		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
-		params.m_TextureType = VisualizeTexturePass::TextureType_Depth;
+		params.m_TextureType = VisualizeTexturePass::TextureType_R;
 
 		m_VisualizeDepthBufferWithMeshTypePasses[index] = new VisualizeTexturePass(&params);
 	}
@@ -1352,7 +1352,7 @@ void DXApplication::InitVisualizeAccumLightPass()
 		params.m_pInputTexture = m_pAccumLightTexture;
 		params.m_InputTextureSRV = m_pAccumLightTexture->GetSRVHandle();
 		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
-		params.m_TextureType = VisualizeTexturePass::TextureType_Other;
+		params.m_TextureType = VisualizeTexturePass::TextureType_RGB;
 
 		m_VisualizeAccumLightPasses[index] = new VisualizeTexturePass(&params);
 	}

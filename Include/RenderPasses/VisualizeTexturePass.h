@@ -17,7 +17,8 @@ public:
 		TextureType_GBufferTexCoord,
 		TextureType_Depth,
 		TextureType_ExpShadowMap,
-		TextureType_Other
+		TextureType_RGB,
+		TextureType_R
 	};
 
 	struct ResourceStates

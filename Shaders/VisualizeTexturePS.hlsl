@@ -6,7 +6,8 @@
 #define TEXTURE_TYPE_GBUFFER_TEXCOORD			2
 #define TEXTURE_TYPE_DEPTH						3
 #define TEXTURE_TYPE_EXP_SHADOW_MAP				4
-#define TEXTURE_TYPE_OTHER						5
+#define TEXTURE_TYPE_RGB						5
+#define TEXTURE_TYPE_R							6
 
 struct PSInput
 {
@@ -46,9 +47,15 @@ float4 Main(PSInput input) : SV_Target
 	float4 color = float4(normalizedLightSpaceDepth.rrr, 1.0f);
 #endif // TEXTURE_TYPE_EXP_SHADOW_MAP
 
-#if (TEXTURE_TYPE == TEXTURE_TYPE_OTHER)
-	float4 color = g_Texture.Sample(g_Sampler, input.texCoord).rgba;
-#endif // TEXTURE_TYPE_OTHER
+#if (TEXTURE_TYPE == TEXTURE_TYPE_RGB)
+	float3 value = g_Texture.Sample(g_Sampler, input.texCoord).rgb;
+	float4 color = float4(value.rgb, 1.0f);
+#endif // TEXTURE_TYPE_RGB
 
-	return float4(GammaCorrection(color.rgb), color.a);
+#if (TEXTURE_TYPE == TEXTURE_TYPE_R)
+	float value = g_Texture.Sample(g_Sampler, input.texCoord).r;
+	float4 color = float4(value.rrr, 1.0f);
+#endif // TEXTURE_TYPE_R
+
+	return color;
 }
