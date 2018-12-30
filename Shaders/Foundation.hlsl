@@ -112,6 +112,11 @@ struct AppData
 	float notUsed11[16];
 };
 
+float CalcMeshTypeDepth(uint meshType)
+{
+	return 1.0f / (1.0f + float(meshType));
+}
+
 uint DetectCubeMapFaceIndex(float3 cubeMapCenter, float3 pointToTest)
 {
 	float3 dirToPoint = normalize(pointToTest - cubeMapCenter);

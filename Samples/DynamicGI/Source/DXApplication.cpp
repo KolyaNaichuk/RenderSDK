@@ -1127,7 +1127,6 @@ CommandList* DXApplication::RecordFillMeshTypeDepthBufferPass()
 	FillMeshTypeDepthBufferPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pFillMeshTypeDepthBufferCommandList");
-	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
 	params.m_pViewport = m_pBackBufferViewport;
 
 	m_pFillMeshTypeDepthBufferPass->Record(&params);

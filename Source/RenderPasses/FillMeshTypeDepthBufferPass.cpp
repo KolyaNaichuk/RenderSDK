@@ -11,8 +11,7 @@ namespace
 {
 	enum RootParams
 	{
-		kRoot32BitConstantParam = 0,
-		kRootSRVTableParam,
+		kRootSRVTableParam = 0,
 		kNumRootParams
 	};
 }
@@ -49,7 +48,6 @@ void FillMeshTypeDepthBufferPass::Record(RenderParams* pParams)
 		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
-	pCommandList->SetGraphicsRoot32BitConstant(kRoot32BitConstantParam, pParams->m_NumMeshTypes, 0);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHeapStart = m_DSVHeapStart;
@@ -112,10 +110,8 @@ void FillMeshTypeDepthBufferPass::InitResources(InitParams* pParams)
 void FillMeshTypeDepthBufferPass::InitRootSignature(InitParams* pParams)
 {
 	assert(m_pRootSignature == nullptr);
-
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kRoot32BitConstantParam] = Root32BitConstantsParameter(0, D3D12_SHADER_VISIBILITY_PIXEL, 1);
-
+	
 	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = {SRVDescriptorRange(2, 0)};
 	rootParams[kRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), descriptorRanges, D3D12_SHADER_VISIBILITY_PIXEL);
 

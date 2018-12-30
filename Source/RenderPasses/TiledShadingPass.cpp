@@ -54,9 +54,7 @@ void TiledShadingPass::Record(RenderParams* pParams)
 		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap, pRenderEnv->m_pShaderVisibleSamplerHeap);
-
-	const UINT constants32BitVS[] = {meshType, numMeshTypes};
-	pCommandList->SetGraphicsRoot32BitConstants(kRoot32BitConstantsParamVS, ARRAYSIZE(constants32BitVS), constants32BitVS, 0);
+	pCommandList->SetGraphicsRoot32BitConstant(kRoot32BitConstantsParamVS, meshType, 0);
 	pCommandList->SetGraphicsRootConstantBufferView(kRootCBVParamPS, pParams->m_pAppDataBuffer);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParamPS, m_SRVHeapStartPS);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSamplerTableParamPS, m_SamplerHeapStartPS);
@@ -216,7 +214,7 @@ void TiledShadingPass::InitRootSignature(InitParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 		
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kRoot32BitConstantsParamVS] = Root32BitConstantsParameter(0, D3D12_SHADER_VISIBILITY_VERTEX, 2);
+	rootParams[kRoot32BitConstantsParamVS] = Root32BitConstantsParameter(0, D3D12_SHADER_VISIBILITY_VERTEX, 1);
 	rootParams[kRootCBVParamPS] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	std::vector<D3D12_DESCRIPTOR_RANGE> srvRangesPS = {SRVDescriptorRange(5, 0)};
