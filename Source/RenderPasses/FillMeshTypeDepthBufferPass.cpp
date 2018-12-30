@@ -82,7 +82,7 @@ void FillMeshTypeDepthBufferPass::InitResources(InitParams* pParams)
 	DepthStencilValue optimizedClearDepth(1.0f);
 
 	assert(m_pMeshTypeDepthTexture == nullptr);
-	DepthTexture2DDesc depthTextureDesc(DXGI_FORMAT_R16_TYPELESS, pParams->m_pGBuffer3->GetWidth(), pParams->m_pGBuffer3->GetHeight(), true, true);
+	DepthTexture2DDesc depthTextureDesc(DXGI_FORMAT_R32_TYPELESS, pParams->m_pGBuffer3->GetWidth(), pParams->m_pGBuffer3->GetHeight(), true, true);
 	m_pMeshTypeDepthTexture = new DepthTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &depthTextureDesc,
 		pParams->m_InputResourceStates.m_MeshTypeDepthTextureState, &optimizedClearDepth, L"FillMeshTypeDepthBufferPass::m_pMeshTypeDepthTexture");
 
