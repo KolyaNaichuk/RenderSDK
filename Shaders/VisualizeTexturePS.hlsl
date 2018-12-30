@@ -27,35 +27,33 @@ float4 Main(PSInput input) : SV_Target
 {
 #if (TEXTURE_TYPE == TEXTURE_TYPE_GBUFFER_NORMAL)
 	float3 worldSpaceNormal = g_Texture.Sample(g_Sampler, input.texCoord).rgb;
-	float4 color = float4(0.5f * worldSpaceNormal + 0.5f, 1.0f);
+	float3 color = 0.5f * worldSpaceNormal + 0.5f;
 #endif // TEXTURE_TYPE_GBUFFER_NORMAL
 
 #if (TEXTURE_TYPE == TEXTURE_TYPE_GBUFFER_TEXCOORD)
 	float2 texCoord = g_Texture.Sample(g_Sampler, input.texCoord).rgb;
-	float4 color = float4(texCoord, 0.0f, 1.0f);
+	float3 color = float3(texCoord, 0.0f);
 #endif // TEXTURE_TYPE_GBUFFER_TEXCOORD
 
 #if (TEXTURE_TYPE == TEXTURE_TYPE_DEPTH)
 	float hardwareDepth = g_Texture.Sample(g_Sampler, input.texCoord).r;
 	float viewSpaceDepth = ComputeViewSpaceDepth(hardwareDepth, g_AppData.projMatrix);
 	float normalizedViewSpaceDepth = NormalizeViewSpaceDepth(viewSpaceDepth, g_AppData.cameraNearPlane, g_AppData.cameraFarPlane);
-	float4 color = float4(normalizedViewSpaceDepth.rrr, 1.0f);
+	float3 color = normalizedViewSpaceDepth.rrr;
 #endif // TEXTURE_TYPE_DEPTH
 
 #if (TEXTURE_TYPE == TEXTURE_TYPE_EXP_SHADOW_MAP)
 	float normalizedLightSpaceDepth = g_Texture.Sample(g_Sampler, input.texCoord).r;
-	float4 color = float4(normalizedLightSpaceDepth.rrr, 1.0f);
+	float3 color = normalizedLightSpaceDepth.rrr;
 #endif // TEXTURE_TYPE_EXP_SHADOW_MAP
 
 #if (TEXTURE_TYPE == TEXTURE_TYPE_RGB)
-	float3 value = g_Texture.Sample(g_Sampler, input.texCoord).rgb;
-	float4 color = float4(value.rgb, 1.0f);
+	float3 color = g_Texture.Sample(g_Sampler, input.texCoord).rgb;
 #endif // TEXTURE_TYPE_RGB
 
 #if (TEXTURE_TYPE == TEXTURE_TYPE_R)
-	float value = g_Texture.Sample(g_Sampler, input.texCoord).r;
-	float4 color = float4(value.rrr, 1.0f);
+	float3 color = g_Texture.Sample(g_Sampler, input.texCoord).rrr;
 #endif // TEXTURE_TYPE_R
 
-	return color;
+	return float4(GammaCorrection(color), 1.0f);
 }
