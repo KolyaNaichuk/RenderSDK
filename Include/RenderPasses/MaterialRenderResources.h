@@ -18,15 +18,10 @@ public:
 	ColorTexture** GetTextures() { return m_Textures.data(); }
 		
 	Buffer* GetMeshTypePerMaterialIDBuffer() { return m_pMeshTypePerMaterialIDBuffer; }
-	Buffer* GetFirstResourceIndexPerMaterialIDBuffer() { return m_pFirstResourceIndexPerMaterialIDBuffer; }
-	
-private:
-	void InitMeshTypePerMaterialIDBuffer(RenderEnv* pRenderEnv, u16 numMaterials);
-	void InitFirstResourceIndexPerMaterialIDBuffer(RenderEnv* pRenderEnv, u16 numMaterials);
-	void InitTextures(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials);
+	Buffer* GetMaterialTextureIndicesBuffer() { return m_pMaterialTextureIndicesBuffer; }
 
 private:
-	Buffer* m_pMeshTypePerMaterialIDBuffer;
-	Buffer* m_pFirstResourceIndexPerMaterialIDBuffer;	
+	Buffer* m_pMeshTypePerMaterialIDBuffer = nullptr;
+	Buffer* m_pMaterialTextureIndicesBuffer = nullptr;	
 	std::vector<ColorTexture*> m_Textures;
 };

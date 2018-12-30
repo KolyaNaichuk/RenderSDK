@@ -115,33 +115,26 @@ namespace
 
 		aiString assimpName;
 		aiString assimpMapPath;
-		aiColor3D assimpColor;
 
 		for (decltype(pAssimpScene->mNumMaterials) materialIndex = 0; materialIndex < pAssimpScene->mNumMaterials; ++materialIndex)
 		{
-			aiMaterial* pAssimpMaterial = pAssimpScene->mMaterials[materialIndex];
+			const aiMaterial* pAssimpMaterial = pAssimpScene->mMaterials[materialIndex];
 			
 			pAssimpMaterial->Get(AI_MATKEY_NAME, assimpName);
 			Material* pMaterial = new Material(AnsiToWideString(assimpName.C_Str()));
 
 			if (pAssimpMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &assimpMapPath) == aiReturn_SUCCESS)
-				pMaterial->m_DiffuseMapFilePath = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
-			else if (pAssimpMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, assimpColor) == aiReturn_SUCCESS)
-				pMaterial->m_DiffuseColor = Vector3f(assimpColor.r, assimpColor.g, assimpColor.b);
+				pMaterial->m_FilePaths[Material::BaseColorTextureIndex] = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
 			else
 				assert(false);
 
-			if (pAssimpMaterial->GetTexture(aiTextureType_SPECULAR, 0, &assimpMapPath) == aiReturn_SUCCESS)
-				pMaterial->m_SpecularMapFilePath = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
-			else if (pAssimpMaterial->Get(AI_MATKEY_COLOR_SPECULAR, assimpColor) == aiReturn_SUCCESS)
-				pMaterial->m_SpecularColor = Vector3f(assimpColor.r, assimpColor.g, assimpColor.b);
+			if (pAssimpMaterial->GetTexture(aiTextureType_AMBIENT, 0, &assimpMapPath) == aiReturn_SUCCESS)
+				pMaterial->m_FilePaths[Material::MetallicTextureIndex] = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
 			else
 				assert(false);
 
 			if (pAssimpMaterial->GetTexture(aiTextureType_SHININESS, 0, &assimpMapPath) == aiReturn_SUCCESS)
-				pMaterial->m_ShininessMapFilePath = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
-			else if (pAssimpMaterial->Get(AI_MATKEY_SHININESS, assimpColor.r) == aiReturn_SUCCESS)
-				pMaterial->m_Shininess = assimpColor.r;
+				pMaterial->m_FilePaths[Material::RougnessTextureIndex] = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
 			else
 				assert(false);
 			

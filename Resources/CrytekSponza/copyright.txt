@@ -1,3 +1,9 @@
+PBR textures for the Sponza model.
+For more informations: www.alexandre-pestana.com
+
+
+Original copyright:
+
 July 14, 2011 Morgan McGuire modified the model from Crytek's OBJ
 export to correct some small errors.  He computed bump maps from the
 normal maps using <a

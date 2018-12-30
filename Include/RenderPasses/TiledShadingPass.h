@@ -31,15 +31,13 @@ public:
 	struct ResourceStates
 	{
 		D3D12_RESOURCE_STATES m_AccumLightTextureState;
-		D3D12_RESOURCE_STATES m_MeshTypeDepthTextureState;
-		D3D12_RESOURCE_STATES m_ShadingRectangleMinPointBufferState;
-		D3D12_RESOURCE_STATES m_ShadingRectangleMaxPointBufferState;		
+		D3D12_RESOURCE_STATES m_MeshTypeDepthTextureState;	
 		D3D12_RESOURCE_STATES m_DepthTextureState;
 		D3D12_RESOURCE_STATES m_GBuffer1State;
 		D3D12_RESOURCE_STATES m_GBuffer2State;
 		D3D12_RESOURCE_STATES m_GBuffer3State;
 		D3D12_RESOURCE_STATES m_GBuffer4State;
-		D3D12_RESOURCE_STATES m_FirstResourceIndexPerMaterialIDBufferState;
+		D3D12_RESOURCE_STATES m_MaterialTextureIndicesBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightPropsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightIndexPerTileBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightRangePerTileBufferState;
@@ -55,15 +53,14 @@ public:
 				
 		ColorTexture* m_pAccumLightTexture;
 		DepthTexture* m_pMeshTypeDepthTexture;
-		Buffer* m_pShadingRectangleMinPointBuffer;
-		Buffer* m_pShadingRectangleMaxPointBuffer;
 		DepthTexture* m_pDepthTexture;
 		ColorTexture* m_pGBuffer1;
 		ColorTexture* m_pGBuffer2;
 		ColorTexture* m_pGBuffer3;
 		ColorTexture* m_pGBuffer4;
-		Buffer* m_pFirstResourceIndexPerMaterialIDBuffer;
+		Buffer* m_pMaterialTextureIndicesBuffer;
 		u16 m_NumMaterialTextures;
+		u8 m_NumTexturesPerMaterial;
 		ColorTexture** m_ppMaterialTextures;
 
 		bool m_EnableDirectionalLight;
@@ -98,7 +95,6 @@ private:
 	std::string m_Name;
 	RootSignature* m_pRootSignature = nullptr;
 	PipelineState* m_pPipelineState = nullptr;
-	DescriptorHandle m_SRVHeapStartVS;
 	DescriptorHandle m_SRVHeapStartPS;
 	DescriptorHandle m_SamplerHeapStartPS;
 	DescriptorHandle m_RTVHeapStart;

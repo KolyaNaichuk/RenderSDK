@@ -29,7 +29,7 @@ StructuredBuffer<Range> g_SpotLightRangePerTileBuffer : register(t7);
 Texture2DArray<float> g_SpotLightShadowMaps : register(t8);
 #endif // ENABLE_SPOT_LIGHTS
 
-Buffer<uint> g_FirstResourceIndexPerMaterialIDBuffer : register(t9);
+Buffer<uint> g_MaterialTextureIndicesBuffer : register(t9);
 Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t10);
 
 SamplerState g_AnisoSampler : register(s0);
@@ -51,10 +51,14 @@ float4 Main(PSInput input) : SV_Target
 	float2 texCoordDY;
 	DecodeTextureCoordinateDerivatives(derivativesLength, encodedDerivativesRotation, texCoordDX, texCoordDY);
 	
-	uint firstTextureIndex = g_FirstResourceIndexPerMaterialIDBuffer[materialID];
-	Texture2D baseColorTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex)];
-	Texture2D metallicTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex + 1)];
-	Texture2D roughnessTexture = g_MaterialTextures[NonUniformResourceIndex(firstTextureIndex + 2)];
+	uint materialTextureOffset = materialID * NUM_TEXTURES_PER_MATERIAL;
+	uint baseColorTextureIndex = g_MaterialTextureIndicesBuffer[materialTextureOffset];
+	uint metallicTextureIndex = g_MaterialTextureIndicesBuffer[materialTextureOffset + 1];
+	uint roughnessTextureIndex = g_MaterialTextureIndicesBuffer[materialTextureOffset + 2];
+
+	Texture2D baseColorTexture = g_MaterialTextures[NonUniformResourceIndex(baseColorTextureIndex)];
+	Texture2D metallicTexture = g_MaterialTextures[NonUniformResourceIndex(metallicTextureIndex)];
+	Texture2D roughnessTexture = g_MaterialTextures[NonUniformResourceIndex(roughnessTextureIndex)];
 	
 	float3 baseColor = baseColorTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).rgb;
 	float metallic = metallicTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).r;

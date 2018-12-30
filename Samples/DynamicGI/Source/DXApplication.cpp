@@ -30,7 +30,6 @@
 #include "RenderPasses/CreateMainDrawCommandsPass.h"
 #include "RenderPasses/CreateFalseNegativeDrawCommandsPass.h"
 #include "RenderPasses/FillMeshTypeDepthBufferPass.h"
-#include "RenderPasses/CalcShadingRectanglesPass.h"
 #include "RenderPasses/SpotLightShadowMapRenderer.h"
 #include "RenderPasses/VoxelizePass.h"
 #include "RenderPasses/GeometryBuffer.h"
@@ -327,7 +326,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCreateFalseNegativeDrawCommandsPass);
 	SafeDelete(m_pRenderGBufferFalseNegativePass);
 	SafeDelete(m_pFillMeshTypeDepthBufferPass);
-	SafeDelete(m_pCalcShadingRectanglesPass);
 	SafeDelete(m_pSpotLightShadowMapRenderer);
 	SafeDelete(m_pTiledLightCullingPass);
 	SafeDelete(m_pCreateVoxelizeCommandsPass);
@@ -368,7 +366,6 @@ void DXApplication::OnInit()
 	InitFillVisibilityBufferFalseNegativePass();
 	InitCreateFalseNegativeDrawCommandsPass();
 	InitRenderGBufferFalseNegativePass(kBackBufferWidth, kBackBufferHeight);
-	InitCalcShadingRectanglesPass();
 	InitFillMeshTypeDepthBufferPass();
 
 	if (pScene->GetNumSpotLights() > 0)
@@ -484,7 +481,6 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferFalseNegativePass();
 	commandListBatch[commandListBatchSize++] = RecordCreateFalseNegativeDrawCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordRenderGBufferFalseNegativePass();
-	commandListBatch[commandListBatchSize++] = RecordCalcShadingRectanglesPass();
 	commandListBatch[commandListBatchSize++] = RecordFillMeshTypeDepthBufferPass();
 	commandListBatch[commandListBatchSize++] = RecordUploadLightDataPass();
 
@@ -1102,56 +1098,20 @@ CommandList* DXApplication::RecordRenderGBufferFalseNegativePass()
 	return params.m_pCommandList;
 }
 
-void DXApplication::InitCalcShadingRectanglesPass()
-{
-	assert(m_pCalcShadingRectanglesPass == nullptr);
-	assert(m_pRenderGBufferFalseNegativePass != nullptr);
-	assert(m_pMaterialRenderResources != nullptr);
-		
-	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
-		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
-
-	CalcShadingRectanglesPass::InitParams params;
-	params.m_pName = "CalcShadingRectanglesPass";
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_InputResourceStates.m_GBuffer3State = pRenderGBufferFalseNegativePassStates->m_GBuffer3State;
-	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_ShadingRectangleMinPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_ShadingRectangleMaxPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_pGBuffer3 = m_pGeometryBuffer->GetGBuffer3();
-	params.m_pMeshTypePerMaterialIDBuffer = m_pMaterialRenderResources->GetMeshTypePerMaterialIDBuffer();
-	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
-	
-	m_pCalcShadingRectanglesPass = new CalcShadingRectanglesPass(&params);
-}
-
-CommandList* DXApplication::RecordCalcShadingRectanglesPass()
-{
-	assert(m_pCalcShadingRectanglesPass != nullptr);
-
-	CalcShadingRectanglesPass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pCalcShadingRectanglesCommandList");
-	params.m_pAppDataBuffer = m_UploadAppDataBuffers[m_BackBufferIndex];
-
-	m_pCalcShadingRectanglesPass->Record(&params);
-	return params.m_pCommandList;
-}
-
 void DXApplication::InitFillMeshTypeDepthBufferPass()
 {
 	assert(m_pFillMeshTypeDepthBufferPass == nullptr);
 	assert(m_pGeometryBuffer != nullptr);
 	assert(m_pMaterialRenderResources != nullptr);
 	
-	const CalcShadingRectanglesPass::ResourceStates* pCalcShadingRectanglesPassStates =
-		m_pCalcShadingRectanglesPass->GetOutputResourceStates();
+	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
+		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
 
 	FillMeshTypeDepthBufferPass::InitParams params;
 	params.m_pName = "FillMeshTypeDepthBufferPass";
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_InputResourceStates.m_GBuffer3State = pCalcShadingRectanglesPassStates->m_GBuffer3State;
-	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = pCalcShadingRectanglesPassStates->m_MeshTypePerMaterialIDBufferState;
+	params.m_InputResourceStates.m_GBuffer3State = pRenderGBufferFalseNegativePassStates->m_GBuffer3State;
+	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_MeshTypeDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	params.m_pGBuffer3 = m_pGeometryBuffer->GetGBuffer3();
 	params.m_pMeshTypePerMaterialIDBuffer = m_pMaterialRenderResources->GetMeshTypePerMaterialIDBuffer();
@@ -1656,8 +1616,8 @@ void DXApplication::InitVoxelizePass()
 	}
 	
 	params.m_InputResourceStates.m_VoxelReflectanceTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-		
+	params.m_InputResourceStates.m_MaterialTextureIndicesBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	
 	params.m_pMeshRenderResources = m_pMeshRenderResources;
 	params.m_NumVoxelsX = kNumVoxelsInGridX;
 	params.m_NumVoxelsY = kNumVoxelsInGridY;
@@ -1665,7 +1625,7 @@ void DXApplication::InitVoxelizePass()
 	
 	params.m_NumMaterialTextures = m_pMaterialRenderResources->GetNumTextures();
 	params.m_ppMaterialTextures = m_pMaterialRenderResources->GetTextures();
-	params.m_pFirstResourceIndexPerMaterialIDBuffer = m_pMaterialRenderResources->GetFirstResourceIndexPerMaterialIDBuffer();
+	params.m_pMaterialTextureIndicesBuffer = m_pMaterialRenderResources->GetMaterialTextureIndicesBuffer();
 	params.m_pNumCommandsPerMeshTypeBuffer = m_pCreateVoxelizeCommandsPass->GetNumCommandsPerMeshTypeBuffer();
 	params.m_pVoxelizeCommandBuffer = m_pCreateVoxelizeCommandsPass->GetVoxelizeCommandBuffer();
 	params.m_pInstanceIndexBuffer = m_pFrustumMeshCullingPass->GetVisibleInstanceIndexBuffer();
@@ -1700,16 +1660,12 @@ void DXApplication::InitTiledShadingPass()
 {
 	assert(m_pTiledShadingPass == nullptr);
 	assert(m_pFillMeshTypeDepthBufferPass != nullptr);
-	assert(m_pCalcShadingRectanglesPass != nullptr);
 	assert(m_pRenderGBufferFalseNegativePass != nullptr);
 	assert(m_pGeometryBuffer != nullptr);
 	assert(m_pMaterialRenderResources != nullptr);
 	
 	const FillMeshTypeDepthBufferPass::ResourceStates* pFillMeshTypeDepthBufferPassStates =
 		m_pFillMeshTypeDepthBufferPass->GetOutputResourceStates();
-
-	const CalcShadingRectanglesPass::ResourceStates* pCalcShadingRectanglesPassStates =
-		m_pCalcShadingRectanglesPass->GetOutputResourceStates();
 
 	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
@@ -1720,27 +1676,24 @@ void DXApplication::InitTiledShadingPass()
 
 	params.m_InputResourceStates.m_AccumLightTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	params.m_InputResourceStates.m_MeshTypeDepthTextureState = pFillMeshTypeDepthBufferPassStates->m_MeshTypeDepthTextureState;
-	params.m_InputResourceStates.m_ShadingRectangleMinPointBufferState = pCalcShadingRectanglesPassStates->m_ShadingRectangleMinPointBufferState;
-	params.m_InputResourceStates.m_ShadingRectangleMaxPointBufferState = pCalcShadingRectanglesPassStates->m_ShadingRectangleMaxPointBufferState;
 	params.m_InputResourceStates.m_DepthTextureState = pRenderGBufferFalseNegativePassStates->m_DepthTextureState;		
 	params.m_InputResourceStates.m_GBuffer1State = pRenderGBufferFalseNegativePassStates->m_GBuffer1State;
 	params.m_InputResourceStates.m_GBuffer2State = pRenderGBufferFalseNegativePassStates->m_GBuffer2State;
 	params.m_InputResourceStates.m_GBuffer3State = pFillMeshTypeDepthBufferPassStates->m_GBuffer3State;
 	params.m_InputResourceStates.m_GBuffer4State = pRenderGBufferFalseNegativePassStates->m_GBuffer4State;
-	params.m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_MaterialTextureIndicesBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	
 	params.m_pAccumLightTexture = m_pAccumLightTexture;
 	params.m_pMeshTypeDepthTexture = m_pFillMeshTypeDepthBufferPass->GetMeshTypeDepthTexture();
-	params.m_pShadingRectangleMinPointBuffer = m_pCalcShadingRectanglesPass->GetShadingRectangleMinPointBuffer();
-	params.m_pShadingRectangleMaxPointBuffer = m_pCalcShadingRectanglesPass->GetShadingRectangleMaxPointBuffer();
 	params.m_pDepthTexture = m_pDepthTexture;
 	params.m_pGBuffer1 = m_pGeometryBuffer->GetGBuffer1();
 	params.m_pGBuffer2 = m_pGeometryBuffer->GetGBuffer2();
 	params.m_pGBuffer3 = m_pGeometryBuffer->GetGBuffer3();
 	params.m_pGBuffer4 = m_pGeometryBuffer->GetGBuffer4();
-	params.m_pFirstResourceIndexPerMaterialIDBuffer = m_pMaterialRenderResources->GetFirstResourceIndexPerMaterialIDBuffer();
+	params.m_pMaterialTextureIndicesBuffer = m_pMaterialRenderResources->GetMaterialTextureIndicesBuffer();
 	params.m_NumMaterialTextures = m_pMaterialRenderResources->GetNumTextures();
 	params.m_ppMaterialTextures = m_pMaterialRenderResources->GetTextures();
+	params.m_NumTexturesPerMaterial = Material::NumTextures;
 	params.m_EnableDirectionalLight = false;
 			
 	params.m_EnableSpotLights = m_NumSpotLights > 0;
@@ -1900,7 +1853,7 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		m_pSpotLights[lightIndex].m_LightProjMatrix43 = projMatrix.m_32;
 		m_pSpotLights[lightIndex].m_LightProjMatrix33 = projMatrix.m_22;
 		m_pSpotLights[lightIndex].m_RcpSquaredRange = Rcp(pLight->GetRange() * pLight->GetRange());
-				
+		
 		float cosHalfInnerConeAngle = Cos(0.5f * pLight->GetInnerConeAngle());
 		float cosHalfOuterConeAngle = Cos(0.5f * pLight->GetOuterConeAngle());
 

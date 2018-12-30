@@ -180,9 +180,6 @@
     <ClInclude Include="..\Include\RenderPasses\Common.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\CalcShadingRectanglesPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\FillMeshTypeDepthBufferPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -422,9 +419,6 @@
     <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\CalcShadingRectanglesPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\FillMeshTypeDepthBufferPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
@@ -453,9 +447,6 @@
       <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Scene\Light.cpp">
-      <Filter>Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Scene\Material.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Scene\Mesh.cpp">
@@ -584,9 +575,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\TiledShadingVS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CalcShadingRectanglesCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\FillMeshTypeDepthBufferPS.hlsl">

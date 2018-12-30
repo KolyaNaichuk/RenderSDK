@@ -27,7 +27,7 @@ StructuredBuffer<Sphere> g_SpotLightWorldBoundsBuffer : register(t0);
 StructuredBuffer<SpotLightProps> g_SpotLightPropsBuffer : register(t1);
 #endif // ENABLE_SPOT_LIGHTS
 
-Buffer<uint> g_FirstResourceIndexPerMaterialIDBuffer : register(t2);
+Buffer<uint> g_MaterialTextureIndicesBuffer : register(t2);
 Texture2D g_MaterialTextures[NUM_MATERIAL_TEXTURES] : register(t3);
 
 SamplerState g_AnisoSampler : register(s0);

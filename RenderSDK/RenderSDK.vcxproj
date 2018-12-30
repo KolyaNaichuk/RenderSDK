@@ -204,7 +204,6 @@
     <ClInclude Include="..\Include\Math\Vector4.h" />
     <ClInclude Include="..\Include\Profiler\CPUProfiler.h" />
     <ClInclude Include="..\Include\Profiler\GPUProfiler.h" />
-    <ClInclude Include="..\Include\RenderPasses\CalcShadingRectanglesPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
     <ClInclude Include="..\Include\RenderPasses\Common.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateExpShadowMapPass.h" />
@@ -287,7 +286,6 @@
     <ClCompile Include="..\Source\Math\Vector4.cpp" />
     <ClCompile Include="..\Source\Profiler\CPUProfiler.cpp" />
     <ClCompile Include="..\Source\Profiler\GPUProfiler.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CalcShadingRectanglesPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateExpShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp" />
@@ -316,7 +314,6 @@
     <ClCompile Include="..\Source\RenderPasses\VisualizeVoxelReflectancePass.cpp" />
     <ClCompile Include="..\Source\Scene\Camera.cpp" />
     <ClCompile Include="..\Source\Scene\Light.cpp" />
-    <ClCompile Include="..\Source\Scene\Material.cpp" />
     <ClCompile Include="..\Source\Scene\Mesh.cpp" />
     <ClCompile Include="..\Source\Scene\MeshBatch.cpp" />
     <ClCompile Include="..\Source\Scene\OBJFileLoader.cpp" />
@@ -552,9 +549,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Shaders\CalcShadingRectanglesCS.hlsl">
-      <FileType>Document</FileType>
-    </None>
     <None Include="..\Shaders\TiledShadingVS.hlsl">
       <FileType>Document</FileType>
     </None>

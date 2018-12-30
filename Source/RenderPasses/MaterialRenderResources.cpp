@@ -12,6 +12,8 @@
 namespace
 {
 	void GenerateImageData(UINT width, UINT height, DXGI_FORMAT format, u8* pPixelBytes, DirectX::ScratchImage& image);
+	UINT CountMips(UINT width, UINT height);
+
 	void LoadImageDataFromFile(const std::wstring& filePath, DirectX::ScratchImage& image, bool generateMips);
 		
 	void SetupImageDataForUpload(RenderEnv* pRenderEnv,
@@ -25,146 +27,71 @@ namespace
 }
 
 MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials)
-	: m_pMeshTypePerMaterialIDBuffer(nullptr)
-	, m_pFirstResourceIndexPerMaterialIDBuffer(nullptr)
 {
 	assert(numMaterials > 0);
 
-	InitMeshTypePerMaterialIDBuffer(pRenderEnv, numMaterials);
-	InitFirstResourceIndexPerMaterialIDBuffer(pRenderEnv, numMaterials);
-	InitTextures(pRenderEnv, numMaterials, ppMaterials);
-}
+	// We are managing 1 + numMaterials. The material at index 0 is reserved for the unknown material ID.
+	// Pixels in the GBuffer not affected by rendered geometry contain unknown material ID, that is 0.
 
-MaterialRenderResources::~MaterialRenderResources()
-{
-	SafeDelete(m_pMeshTypePerMaterialIDBuffer);
-	SafeDelete(m_pFirstResourceIndexPerMaterialIDBuffer);
-	
-	for (ColorTexture* pTexture : m_Textures)
-		SafeDelete(pTexture);
-}
-
-void MaterialRenderResources::InitMeshTypePerMaterialIDBuffer(RenderEnv* pRenderEnv, u16 numMaterials)
-{
-	assert(m_pMeshTypePerMaterialIDBuffer == nullptr);
+	const bool generateMips = true;
+	const u16 maxNumTextures = (1 + numMaterials) * Material::NumTextures;
 
 	const u16 meshType = 0;
-	std::vector<u16> bufferData(1 + numMaterials, std::numeric_limits<u16>::max());
-	for (u16 materialID = 1; materialID < bufferData.size(); ++materialID)
-		bufferData[materialID] = meshType;
-		
-	FormattedBufferDesc bufferDesc(bufferData.size(), DXGI_FORMAT_R16_UINT, true, false);
-	m_pMeshTypePerMaterialIDBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc,
-		D3D12_RESOURCE_STATE_COPY_DEST, L"MaterialRenderResources::m_pMeshTypePerMaterialIDBuffer");
+	const u16 numMeshTypes = 1;
+	std::vector<u16> meshTypePerMaterialID;
+	meshTypePerMaterialID.resize(1 + numMaterials, meshType);
+	meshTypePerMaterialID[0] = numMeshTypes; // Unknown material ID
 
-	UploadData(pRenderEnv, m_pMeshTypePerMaterialIDBuffer, bufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		bufferData.data(), bufferData.size() * sizeof(bufferData[0]));
-}
-
-void MaterialRenderResources::InitFirstResourceIndexPerMaterialIDBuffer(RenderEnv* pRenderEnv, u16 numMaterials)
-{
-	assert(m_pFirstResourceIndexPerMaterialIDBuffer == nullptr);
-
-	std::vector<u16> bufferData(1 + numMaterials, std::numeric_limits<u16>::max());
-	for (u16 materialID = 1; materialID < bufferData.size(); ++materialID)
-		bufferData[materialID] = 3 * (materialID - 1);
-
-	FormattedBufferDesc bufferDesc(bufferData.size(), DXGI_FORMAT_R16_UINT, true, false);
-	m_pFirstResourceIndexPerMaterialIDBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc,
-		D3D12_RESOURCE_STATE_COPY_DEST, L"MaterialRenderResources::m_pFirstResourceIndexPerMaterialIDBuffer");
-
-	UploadData(pRenderEnv, m_pFirstResourceIndexPerMaterialIDBuffer, bufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		bufferData.data(), bufferData.size() * sizeof(bufferData[0]));
-}
-
-void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMaterials, Material** ppMaterials)
-{
 	assert(m_Textures.empty());
-	
-	const u8 numTexturesPerMaterial = 3;
-	const u16 maxNumTextures = numMaterials * numTexturesPerMaterial;
+	m_Textures.reserve(maxNumTextures);
 
 	std::vector<Buffer*> uploadBuffers;
-	std::vector<ResourceTransitionBarrier> pendingTransitionBarriers;
-
-	m_Textures.reserve(maxNumTextures);
 	uploadBuffers.reserve(maxNumTextures);
+
+	std::vector<ResourceTransitionBarrier> pendingTransitionBarriers;
 	pendingTransitionBarriers.reserve(maxNumTextures);
+
+	std::vector<u16> materialTextureIndices;
+	materialTextureIndices.reserve(maxNumTextures);
+
+	// Adding bogus material texture indices for the unknown material ID
+	// to be able to calculate first texture index by formula materialID * Material::NumTextures
+	materialTextureIndices.insert(materialTextureIndices.end(), Material::NumTextures, 0);
+
+	std::unordered_map<std::wstring, u16> loadedTextures;
 
 	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"UploadCommandList");
 	pUploadCommandList->Begin();
 
-	for (u16 index = 0; index < numMaterials; ++index)
+	for (u16 materialIndex = 0; materialIndex < numMaterials; ++materialIndex)
 	{
-		const Material* pMaterial = ppMaterials[index];
+		const Material* pMaterial = ppMaterials[materialIndex];
+		for (u16 textureIndex = 0; textureIndex < Material::NumTextures; ++textureIndex)
 		{
-			const std::wstring debugMapName = L"Diffuse Map: " + pMaterial->m_Name;
-			const bool generateMips = true;
-			const bool forceSRGB = true;
+			const bool forceSRGB = (textureIndex == Material::BaseColorTextureIndex);
 
-			DirectX::ScratchImage image;
-			if (pMaterial->m_DiffuseMapFilePath.empty())
+			const std::wstring& textureFilePath = pMaterial->m_FilePaths[textureIndex];
+			assert(!textureFilePath.empty());
+
+			u16 globalTextureIndex = loadedTextures.size();
+
+			auto it = loadedTextures.find(textureFilePath);
+			if (it != loadedTextures.end())
 			{
-				u8 pixelBytes[4] =
-				{
-					u8(255.0f * pMaterial->m_DiffuseColor.m_X),
-					u8(255.0f * pMaterial->m_DiffuseColor.m_Y),
-					u8(255.0f * pMaterial->m_DiffuseColor.m_Z),
-					255
-				};
-				GenerateImageData(1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, pixelBytes, image);
+				globalTextureIndex = it->second;
 			}
 			else
 			{
-				LoadImageDataFromFile(pMaterial->m_DiffuseMapFilePath, image, generateMips);
-			}
-			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingTransitionBarriers);
-		}
-		{
-			const std::wstring debugMapName = L"Specular Map: " + pMaterial->m_Name;
-			const bool generateMips = true;
-			const bool forceSRGB = false;
+				DirectX::ScratchImage image;
+				LoadImageDataFromFile(textureFilePath, image, generateMips);
 
-			DirectX::ScratchImage image;
-			if (pMaterial->m_SpecularMapFilePath.empty())
-			{
-				u8 pixelBytes[4] =
-				{
-					u8(255.0f * pMaterial->m_SpecularColor.m_X),
-					u8(255.0f * pMaterial->m_SpecularColor.m_Y),
-					u8(255.0f * pMaterial->m_SpecularColor.m_Z),
-					255
-				};
-				GenerateImageData(1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, pixelBytes, image);
-			}
-			else
-			{
-				LoadImageDataFromFile(pMaterial->m_SpecularMapFilePath, image, generateMips);
-			}
-			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingTransitionBarriers);
-		}
-		{
-			const std::wstring debugMapName = L"Shininess Map: " + pMaterial->m_Name;
-			const bool generateMips = false;
-			const bool forceSRGB = false;
+				const std::wstring& debugTextureName = textureFilePath;
+				SetupImageDataForUpload(pRenderEnv, image, debugTextureName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingTransitionBarriers);
 
-			DirectX::ScratchImage image;
-			if (pMaterial->m_ShininessMapFilePath.empty())
-			{
-				const std::size_t numBytes = sizeof(f32);
-				static_assert(sizeof(pMaterial->m_Shininess) == numBytes, "Shininess is expected to be 32 bit");
-
-				u8 pixelBytes[numBytes];
-				std::memcpy(pixelBytes, &pMaterial->m_Shininess, numBytes);
-
-				GenerateImageData(1, 1, DXGI_FORMAT_R32_FLOAT, pixelBytes, image);
+				loadedTextures.emplace(textureFilePath, globalTextureIndex);
 			}
-			else
-			{
-				assert(false && "TileShadingPS.hlsl does not handle shininess map");
-				LoadImageDataFromFile(pMaterial->m_ShininessMapFilePath, image, generateMips);
-			}
-			SetupImageDataForUpload(pRenderEnv, image, debugMapName, forceSRGB, pUploadCommandList, uploadBuffers, m_Textures, pendingTransitionBarriers);
+
+			materialTextureIndices.emplace_back(globalTextureIndex);
 		}
 	}
 
@@ -177,6 +104,29 @@ void MaterialRenderResources::InitTextures(RenderEnv* pRenderEnv, u16 numMateria
 
 	for (Buffer* pBuffer : uploadBuffers)
 		SafeDelete(pBuffer);
+
+	FormattedBufferDesc meshTypePerMaterialIDBufferDesc(meshTypePerMaterialID.size(), DXGI_FORMAT_R16_UINT, true, false);
+	m_pMeshTypePerMaterialIDBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &meshTypePerMaterialIDBufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"MaterialRenderResources::m_pMeshTypePerMaterialIDBuffer");
+
+	UploadData(pRenderEnv, m_pMeshTypePerMaterialIDBuffer, meshTypePerMaterialIDBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		meshTypePerMaterialID.data(), meshTypePerMaterialID.size() * sizeof(meshTypePerMaterialID[0]));
+
+	FormattedBufferDesc materialTextureIndicesBufferDesc(materialTextureIndices.size(), DXGI_FORMAT_R16_UINT, true, false);
+	m_pMaterialTextureIndicesBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &materialTextureIndicesBufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"MaterialRenderResources::m_pMaterialTextureIndicesBuffer");
+
+	UploadData(pRenderEnv, m_pMaterialTextureIndicesBuffer, materialTextureIndicesBufferDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		materialTextureIndices.data(), materialTextureIndices.size() * sizeof(materialTextureIndices[0]));
+}
+
+MaterialRenderResources::~MaterialRenderResources()
+{
+	SafeDelete(m_pMeshTypePerMaterialIDBuffer);
+	SafeDelete(m_pMaterialTextureIndicesBuffer);
+	
+	for (ColorTexture* pTexture : m_Textures)
+		SafeDelete(pTexture);
 }
 
 namespace
@@ -193,48 +143,49 @@ namespace
 		
 		VerifyD3DResult(image.InitializeFromImage(sourceImage));
 	}
+
+	UINT CountMips(UINT width, UINT height)
+	{
+		UINT mipLevels = 1;
+		while (height > 1 || width > 1)
+		{
+			if (height > 1)
+				height >>= 1;
+
+			if (width > 1)
+				width >>= 1;
+
+			++mipLevels;
+		}
+		return mipLevels;
+	}
 	
 	void LoadImageDataFromFile(const std::wstring& filePath, DirectX::ScratchImage& image, bool generateMips)
 	{
 		const std::wstring fileExtension = ExtractFileExtension(filePath);
 		if ((fileExtension == L"DDS") || (fileExtension == L"dds"))
 		{
-			if (generateMips)
-			{
-				DirectX::ScratchImage tempImage;
-				VerifyD3DResult(DirectX::LoadFromDDSFile(filePath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, tempImage));
-				VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));
-			}
-			else
-			{
-				VerifyD3DResult(DirectX::LoadFromDDSFile(filePath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, image));
-			}
+			VerifyD3DResult(DirectX::LoadFromDDSFile(filePath.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, image));
 		}
 		else if ((fileExtension == L"TGA") || (fileExtension == L"tga"))
 		{
-			if (generateMips)
-			{
-				DirectX::ScratchImage tempImage;
-				VerifyD3DResult(DirectX::LoadFromTGAFile(filePath.c_str(), nullptr, tempImage));
-				VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));
-			}
-			else
-			{
-				VerifyD3DResult(DirectX::LoadFromTGAFile(filePath.c_str(), nullptr, image));
-			}
+			VerifyD3DResult(DirectX::LoadFromTGAFile(filePath.c_str(), nullptr, image));
 		}
 		else
 		{
-			if (generateMips)
+			VerifyD3DResult(DirectX::LoadFromWICFile(filePath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, image));
+		}
+
+		if (generateMips)
+		{
+			const DirectX::TexMetadata& metaData = image.GetMetadata();
+			if (CountMips(metaData.width, metaData.height) > 1)
 			{
-				DirectX::ScratchImage tempImage;
-				VerifyD3DResult(DirectX::LoadFromWICFile(filePath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, tempImage));
-				VerifyD3DResult(DirectX::GenerateMipMaps(*tempImage.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, image, false));
-			}
-			else
-			{
-				VerifyD3DResult(DirectX::LoadFromWICFile(filePath.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, image));
-			}
+				DirectX::ScratchImage mipMappedImage;
+				VerifyD3DResult(DirectX::GenerateMipMaps(*image.GetImage(0, 0, 0), DirectX::TEX_FILTER_DEFAULT, 0, mipMappedImage, false));
+				
+				image = std::move(mipMappedImage);
+			}			
 		}
 	}
 

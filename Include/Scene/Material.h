@@ -1,18 +1,20 @@
 #pragma once
 
-#include "Math/Vector3.h"
+#include "Common/Common.h"
 
 struct Material
 {
-	Material(std::wstring name);
+	Material(std::wstring name)
+		: m_Name(std::move(name))
+	{
+	}
+	enum
+	{
+		BaseColorTextureIndex,
+		MetallicTextureIndex,
+		RougnessTextureIndex,
+		NumTextures
+	};
 	std::wstring m_Name;
-	
-	Vector3f m_DiffuseColor;
-	std::wstring m_DiffuseMapFilePath;
-
-	Vector3f m_SpecularColor;
-	std::wstring m_SpecularMapFilePath;
-
-	f32 m_Shininess;
-	std::wstring m_ShininessMapFilePath;
+	std::wstring m_FilePaths[NumTextures];
 };

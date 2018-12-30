@@ -30,12 +30,10 @@ Scene* SceneLoader::LoadCrytekSponza()
 	);
 	pScene->SetCamera(pCamera);
 
-	assert(false && "Fix radiantPower");
-	// pSpotLight1->SetColor(Vector3f(0.78f, 0.78f, 0.78f)); 
 	SpotLight* pSpotLight1 = new SpotLight(
 		Vector3f(-894, 400.0f, 39.0f)/*worldPosition*/,
 		BasisAxes(CreateRotationMatrix(CreateRotationXQuaternion(PI_DIV_2)))/*worldOrientation*/,
-		Vector3f::ZERO/*radiantPower*/,
+		Vector3f(1.43f, 1.43f, 1.43f)/*radiantPower*/,
 		600.0f/*range*/,
 		ToRadians(45.0f)/*innerConeAngleInRadians*/,
 		ToRadians(90.0f)/*outerConeAngleInRadians*/,
@@ -44,12 +42,10 @@ Scene* SceneLoader::LoadCrytekSponza()
 	);
 	pScene->AddSpotLight(pSpotLight1);
 
-	assert(false && "Fix radiantPower");
-	// pSpotLight2->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	SpotLight* pSpotLight2 = new SpotLight(
 		Vector3f(-93.0f, 400.0f, 39.0f)/*worldPosition*/,
 		BasisAxes(CreateRotationMatrix(CreateRotationXQuaternion(PI_DIV_2)))/*worldOrientation*/,
-		Vector3f::ZERO/*radiantPower*/,
+		Vector3f(1.43f, 1.43f, 1.43f)/*radiantPower*/,
 		600.0f/*range*/,
 		ToRadians(45.0f)/*innerConeAngleInRadians*/,
 		ToRadians(90.0f)/*outerConeAngleInRadians*/,
@@ -58,12 +54,10 @@ Scene* SceneLoader::LoadCrytekSponza()
 	);
 	pScene->AddSpotLight(pSpotLight2);
 
-	assert(false && "Fix radiantPower");
-	// pSpotLight3->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	SpotLight* pSpotLight3 = new SpotLight(
 		Vector3f(708.0f, 400.0f, 39.0f)/*worldPosition*/,
 		BasisAxes(CreateRotationMatrix(CreateRotationXQuaternion(PI_DIV_2)))/*worldOrientation*/,
-		Vector3f::ZERO/*radiantPower*/,
+		Vector3f(1.43f, 1.43f, 1.43f)/*radiantPower*/,
 		600.0f/*range*/,
 		ToRadians(45.0f)/*innerConeAngleInRadians*/,
 		ToRadians(90.0f)/*outerConeAngleInRadians*/,
@@ -72,12 +66,10 @@ Scene* SceneLoader::LoadCrytekSponza()
 	);
 	pScene->AddSpotLight(pSpotLight3);
 	
-	assert(false && "Fix radiantPower");
-	// pSpotLight4->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	SpotLight* pSpotLight4 = new SpotLight(
 		Vector3f(-800.0f, 600.0f, 39.0f)/*worldPosition*/,
 		BasisAxes(CreateRotationMatrix(CreateRotationYQuaternion(-PI_DIV_2)))/*worldOrientation*/,
-		Vector3f::ZERO/*radiantPower*/,
+		Vector3f(2.45f, 2.45f, 2.45f)/*radiantPower*/,
 		700.0f/*range*/,
 		ToRadians(90.0f)/*innerConeAngleInRadians*/,
 		ToRadians(120.0f)/*outerConeAngleInRadians*/,
@@ -85,13 +77,11 @@ Scene* SceneLoader::LoadCrytekSponza()
 		80.0f/*expShadowMapConstant*/
 	);
 	pScene->AddSpotLight(pSpotLight4);
-
-	assert(false && "Fix radiantPower");
-	// pSpotLight5->SetColor(Vector3f(0.78f, 0.78f, 0.78f)); 
+ 
 	SpotLight* pSpotLight5 = new SpotLight(
 		Vector3f(-800.0f, 600.0f, 39.0f)/*worldPosition*/,
 		BasisAxes()/*worldOrientation*/,
-		Vector3f::ZERO/*radiantPower*/,
+		Vector3f(2.45f, 2.45f, 2.45f)/*radiantPower*/,
 		700.0f/*range*/,
 		ToRadians(90.0f)/*innerConeAngleInRadians*/,
 		ToRadians(120.0f)/*outerConeAngleInRadians*/,
@@ -100,12 +90,10 @@ Scene* SceneLoader::LoadCrytekSponza()
 	);
 	pScene->AddSpotLight(pSpotLight5);
 
-	assert(false && "Fix radiantPower");
-	// pSpotLight6->SetColor(Vector3f(0.78f, 0.78f, 0.78f));
 	SpotLight* pSpotLight6 = new SpotLight(
 		Vector3f(-800.0f, 600.0f, 39.0f)/*worldPosition*/,
 		BasisAxes(CreateRotationMatrix(CreateRotationYQuaternion(PI)))/*worldOrientation*/,
-		Vector3f::ZERO/*radiantPower*/,
+		Vector3f(2.45f, 2.45f, 2.45f)/*radiantPower*/,
 		700.0f/*range*/,
 		ToRadians(90.0f)/*innerConeAngleInRadians*/,
 		ToRadians(120.0f)/*outerConeAngleInRadians*/,

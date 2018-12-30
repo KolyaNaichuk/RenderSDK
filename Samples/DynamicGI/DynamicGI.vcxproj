@@ -296,9 +296,6 @@ COPY /Y "$(SolutionDir)Shaders\CreateFalseNegativeDrawCommandsCS.hlsl" "$(Soluti
 COPY /Y "$(SolutionDir)Shaders\FillMeshTypeDepthBufferPS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FillMeshTypeDepthBufferPS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\FillMeshTypeDepthBufferPS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FillMeshTypeDepthBufferPS.hlsl"
 
-COPY /Y "$(SolutionDir)Shaders\CalcShadingRectanglesCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CalcShadingRectanglesCS.hlsl"
-COPY /Y "$(SolutionDir)Shaders\CalcShadingRectanglesCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CalcShadingRectanglesCS.hlsl"
-
 COPY /Y "$(SolutionDir)Shaders\TiledShadingVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\TiledShadingVS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\TiledShadingVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\TiledShadingVS.hlsl"
 
