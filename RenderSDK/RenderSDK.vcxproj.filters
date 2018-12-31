@@ -276,6 +276,9 @@
     <ClInclude Include="..\Include\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\VisualizeNumLightsPerTilePass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -509,6 +512,9 @@
     <ClCompile Include="..\Source\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\VisualizeNumLightsPerTilePass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -626,6 +632,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VisualizeNumLightsPerTilePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

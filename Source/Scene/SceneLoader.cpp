@@ -30,6 +30,7 @@ Scene* SceneLoader::LoadCrytekSponza()
 	);
 	pScene->SetCamera(pCamera);
 
+#if 0
 	SpotLight* pSpotLight1 = new SpotLight(
 		Vector3f(-894, 400.0f, 39.0f)/*worldPosition*/,
 		BasisAxes(CreateRotationMatrix(CreateRotationXQuaternion(PI_DIV_2)))/*worldOrientation*/,
@@ -41,7 +42,9 @@ Scene* SceneLoader::LoadCrytekSponza()
 		80.0f/*expShadowMapConstant*/
 	);
 	pScene->AddSpotLight(pSpotLight1);
+#endif
 
+#if 0
 	SpotLight* pSpotLight2 = new SpotLight(
 		Vector3f(-93.0f, 400.0f, 39.0f)/*worldPosition*/,
 		BasisAxes(CreateRotationMatrix(CreateRotationXQuaternion(PI_DIV_2)))/*worldOrientation*/,
@@ -53,7 +56,9 @@ Scene* SceneLoader::LoadCrytekSponza()
 		80.0f/*expShadowMapConstant*/
 	);
 	pScene->AddSpotLight(pSpotLight2);
+#endif
 
+#if 0
 	SpotLight* pSpotLight3 = new SpotLight(
 		Vector3f(708.0f, 400.0f, 39.0f)/*worldPosition*/,
 		BasisAxes(CreateRotationMatrix(CreateRotationXQuaternion(PI_DIV_2)))/*worldOrientation*/,
@@ -65,7 +70,10 @@ Scene* SceneLoader::LoadCrytekSponza()
 		80.0f/*expShadowMapConstant*/
 	);
 	pScene->AddSpotLight(pSpotLight3);
-	
+#endif
+
+// Front
+#if 0
 	SpotLight* pSpotLight4 = new SpotLight(
 		Vector3f(-800.0f, 600.0f, 39.0f)/*worldPosition*/,
 		BasisAxes(CreateRotationMatrix(CreateRotationYQuaternion(-PI_DIV_2)))/*worldOrientation*/,
@@ -77,7 +85,10 @@ Scene* SceneLoader::LoadCrytekSponza()
 		80.0f/*expShadowMapConstant*/
 	);
 	pScene->AddSpotLight(pSpotLight4);
- 
+#endif
+
+// Right half part
+#if 1
 	SpotLight* pSpotLight5 = new SpotLight(
 		Vector3f(-800.0f, 600.0f, 39.0f)/*worldPosition*/,
 		BasisAxes()/*worldOrientation*/,
@@ -89,7 +100,10 @@ Scene* SceneLoader::LoadCrytekSponza()
 		80.0f/*expShadowMapConstant*/
 	);
 	pScene->AddSpotLight(pSpotLight5);
+#endif
 
+// Left half space
+#if 1
 	SpotLight* pSpotLight6 = new SpotLight(
 		Vector3f(-800.0f, 600.0f, 39.0f)/*worldPosition*/,
 		BasisAxes(CreateRotationMatrix(CreateRotationYQuaternion(PI)))/*worldOrientation*/,
@@ -101,6 +115,7 @@ Scene* SceneLoader::LoadCrytekSponza()
 		80.0f/*expShadowMapConstant*/
 	);
 	pScene->AddSpotLight(pSpotLight6);
+#endif
 		
 	return pScene;
 }

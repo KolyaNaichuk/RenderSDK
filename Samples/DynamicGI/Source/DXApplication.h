@@ -33,6 +33,7 @@ class SpotLightShadowMapRenderer;
 class TiledLightCullingPass;
 class TiledShadingPass;
 class CreateVoxelizeCommandsPass;
+class VisualizeNumLightsPerTilePass;
 class VisualizeTexturePass;
 class VisualizeVoxelReflectancePass;
 class VoxelizePass;
@@ -54,7 +55,7 @@ public:
 		NormalBuffer,
 		TexCoordBuffer,
 		DepthBufferWithMeshType,
-		VoxelRelectance,
+		NumLightsPerTile,
 		Unknown
 	};
 	
@@ -133,7 +134,10 @@ private:
 
 	void InitVisualizeAccumLightPass();
 	CommandList* RecordVisualizeAccumLightPass();
-		
+	
+	void InitVisualizeNumLightsPerTilePass();
+	CommandList* RecordVisualizeNumLightsPerTilePass();
+
 	void InitVisualizeVoxelReflectancePass();
 	CommandList* RecordVisualizeVoxelReflectancePass();
 
@@ -202,6 +206,7 @@ private:
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeTexturePass* m_VisualizeDepthBufferWithMeshTypePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	VisualizeNumLightsPerTilePass* m_VisualizeNumLightsPerTilePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeVoxelReflectancePass* m_VisualizeVoxelReflectancePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 		
 	u32 m_NumSpotLights = 0;
