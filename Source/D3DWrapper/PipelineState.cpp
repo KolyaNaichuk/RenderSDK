@@ -25,10 +25,10 @@ Shader::Shader(LPCWSTR pFileName, LPCSTR pEntryPoint, LPCSTR pShaderModel, const
 	UINT compileFlags = 0;
 	compileFlags |= D3DCOMPILE_ENABLE_STRICTNESS;
 
-#ifdef ENABLE_GRAPHICS_DEBUGGING
+#ifdef ENABLE_SHADER_DEBUGGING
 	compileFlags |= D3DCOMPILE_DEBUG;
 	compileFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
-#endif // ENABLE_GRAPHICS_DEBUGGING
+#endif // ENABLE_SHADER_DEBUGGING
 
 	ComPtr<ID3DBlob> d3dErrorBlob;
 	HRESULT result = D3DCompileFromFile(pFileName, pDefines, D3D_COMPILE_STANDARD_FILE_INCLUDE,

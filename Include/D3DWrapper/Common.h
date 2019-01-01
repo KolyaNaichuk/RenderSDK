@@ -12,13 +12,9 @@
 using namespace Microsoft::WRL;
 
 //#define ENABLE_EXTERNAL_TOOL_DEBUGGING
-
-#ifndef ENABLE_EXTERNAL_TOOL_DEBUGGING
-
+#define ENABLE_SHADER_DEBUGGING
 #define ENABLE_GRAPHICS_DEBUGGING
 //#define ENABLE_PROFILING
-
-#endif // ENABLE_EXTERNAL_TOOL_DEBUGGING
 
 static void VerifyD3DResult(HRESULT result)
 {
