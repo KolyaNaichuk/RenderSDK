@@ -195,6 +195,7 @@ Mesh::~Mesh()
 	SafeDelete(m_pIndexData);
 	SafeArrayDelete(m_pInstanceWorldMatrices);
 	SafeArrayDelete(m_pInstanceWorldAABBs);
+	SafeArrayDelete(m_pInstanceWorldOBBs);
 }
 
 void Mesh::RecalcInstanceWorldBounds()

@@ -12,7 +12,7 @@
 
 namespace
 {
-	void AddAssimpMeshes(Scene* pScene, const aiScene* pAssimpScene, bool use32BitIndices)
+	void AddAssimpMeshes(Scene* pScene, const aiScene* pAssimpScene, const Matrix4f& worldMatrix, bool use32BitIndices)
 	{
 		assert(pAssimpScene->HasMeshes());
 
@@ -99,7 +99,7 @@ namespace
 
 			const u8 numInstances = 1;
 			Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
-			pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
+			pInstanceWorldMatrices[0] = worldMatrix;
 
 			Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices,
 				pAssimpMesh->mMaterialIndex, primitiveTopologyType, primitiveTopology);
@@ -143,11 +143,11 @@ namespace
 	}
 }
 
-Scene* LoadSceneFromOBJFile(const wchar_t* pFilePath, bool use32BitIndices)
+Scene* LoadSceneFromOBJFile(const wchar_t* pFilePath, const Matrix4f& worldMatrix, bool use32BitIndices)
 {
 	Assimp::Importer importer;
 	
-	u32 importFlags = aiProcess_CalcTangentSpace |
+	const u32 importFlags = aiProcess_CalcTangentSpace |
 		aiProcess_GenNormals |
 		aiProcess_Triangulate |
 		aiProcess_SortByPType |
@@ -166,7 +166,7 @@ Scene* LoadSceneFromOBJFile(const wchar_t* pFilePath, bool use32BitIndices)
 	}
 
 	Scene* pScene = new Scene();
-	AddAssimpMeshes(pScene, pAssimpScene, use32BitIndices);
+	AddAssimpMeshes(pScene, pAssimpScene, worldMatrix, use32BitIndices);
 			
 	std::experimental::filesystem::path materialDirectoryPath(pFilePath);
 	materialDirectoryPath.remove_filename();
