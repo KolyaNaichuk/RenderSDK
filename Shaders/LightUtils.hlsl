@@ -51,7 +51,7 @@ float3 BRDF(float NdotL, float3 normal, float3 dirToLight, float3 dirToViewer,
 
 float CalcDistanceFalloff(float squaredDistToLight, float lightRcpSquaredRange)
 {
-	float rcpSquareDistFalloff = 1.0f / max(lightRcpSquaredRange, 0.01f * 0.01f);
+	float rcpSquareDistFalloff = 1.0f / max(squaredDistToLight, 0.01f * 0.01f);
 
 	float factor = squaredDistToLight * lightRcpSquaredRange;
 	float smoothFactor = saturate(1.0f - factor * factor);
@@ -75,13 +75,13 @@ float3 CalcPointLightContribution(
 	float3 reflectedRadiance = 0.0f;
 	
 	float3 dirToLight = lightPos - position;
-	float distToLight = length(dirToLight);
-	dirToLight /= distToLight;
+	float squaredDistToLight = dot(dirToLight, dirToLight);
+	dirToLight /= sqrt(squaredDistToLight);
 
 	float NdotL = dot(normal, dirToLight);
 	if (NdotL > 0.0f)
 	{
-		float distFalloff = CalcDistanceFalloff(distToLight * distToLight, lightRcpSquaredRange);
+		float distFalloff = CalcDistanceFalloff(squaredDistToLight, lightRcpSquaredRange);
 
 		float3 incidentRadiance = distFalloff * radiantIntensity;
 		float3 brdf = BRDF(NdotL, normal, dirToLight, dirToViewer, baseColor, metallic, roughness);
@@ -101,13 +101,13 @@ float3 CalcSpotLightContribution(
 	float3 reflectedRadiance = 0.0f;
 
 	float3 dirToLight = lightPos - position;
-	float distToLight = length(dirToLight);
-	dirToLight /= distToLight;
+	float squaredDistToLight = dot(dirToLight, dirToLight);
+	dirToLight /= sqrt(squaredDistToLight);
 
 	float NdotL = dot(normal, dirToLight);
 	if (NdotL > 0.0f)
 	{
-		float distFalloff = CalcDistanceFalloff(distToLight * distToLight, lightRcpSquaredRange);
+		float distFalloff = CalcDistanceFalloff(squaredDistToLight, lightRcpSquaredRange);
 		float angleFalloff = CalcAngleFalloff(-dirToLight, lightDir, angleFalloffScale, angleFalloffOffset);
 
 		float3 incidentRadiance = (distFalloff * angleFalloff) * radiantIntensity;
