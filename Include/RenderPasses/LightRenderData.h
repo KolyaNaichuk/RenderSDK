@@ -17,9 +17,9 @@ struct SpotLightRenderData
 	Frustum m_WorldFrustum;
 	Sphere m_WorldBounds;
 	f32 m_NegativeExpShadowMapConstant;
-	f32 m_LightViewNearPlane;
-	f32 m_LightRcpViewClipRange;
-	f32 m_LightProjMatrix43;
-	f32 m_LightProjMatrix33;
+	f32 m_ViewNearPlane;
+	f32 m_RcpViewClipRange;
+	f32 m_ProjMatrix43;
+	f32 m_ProjMatrix33;
 	u32 m_LightID;
 };

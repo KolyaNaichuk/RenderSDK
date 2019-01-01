@@ -1890,7 +1890,7 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 
 	for (decltype(m_NumSpotLights) lightIndex = 0; lightIndex < m_NumSpotLights; ++lightIndex)
 	{
-		SpotLight* pLight = ppSpotLights[lightIndex];
+		const SpotLight* pLight = ppSpotLights[lightIndex];
 		
 		const Vector3f& lightWorldSpacePos = pLight->GetWorldPosition();
 		const BasisAxes& lightWorldSpaceBasis = pLight->GetWorldOrientation();
@@ -1903,16 +1903,16 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 		Cone lightWorldCone(lightWorldSpacePos, pLight->GetOuterConeAngle(), lightWorldSpaceDir, pLight->GetRange());
 
 		m_pSpotLights[lightIndex].m_RadiantIntensity = pLight->EvaluateRadiantIntensity();
+		m_pSpotLights[lightIndex].m_RcpSquaredRange = Rcp(pLight->GetRange() * pLight->GetRange());
 		m_pSpotLights[lightIndex].m_WorldSpacePos = lightWorldSpacePos;
 		m_pSpotLights[lightIndex].m_WorldSpaceDir = lightWorldSpaceDir;
 		m_pSpotLights[lightIndex].m_WorldFrustum = Frustum(viewProjMatrix);
 		m_pSpotLights[lightIndex].m_WorldBounds = ExtractBoundingSphere(lightWorldCone);
-		m_pSpotLights[lightIndex].m_LightViewNearPlane = pLight->GetShadowNearPlane();
-		m_pSpotLights[lightIndex].m_LightRcpViewClipRange = Rcp(pLight->GetRange() - pLight->GetShadowNearPlane());
-		m_pSpotLights[lightIndex].m_LightProjMatrix43 = projMatrix.m_32;
-		m_pSpotLights[lightIndex].m_LightProjMatrix33 = projMatrix.m_22;
-		m_pSpotLights[lightIndex].m_RcpSquaredRange = Rcp(pLight->GetRange() * pLight->GetRange());
-		
+		m_pSpotLights[lightIndex].m_ViewNearPlane = pLight->GetShadowNearPlane();
+		m_pSpotLights[lightIndex].m_RcpViewClipRange = Rcp(pLight->GetRange() - pLight->GetShadowNearPlane());
+		m_pSpotLights[lightIndex].m_ProjMatrix43 = projMatrix.m_32;
+		m_pSpotLights[lightIndex].m_ProjMatrix33 = projMatrix.m_22;
+				
 		float cosHalfInnerConeAngle = Cos(0.5f * pLight->GetInnerConeAngle());
 		float cosHalfOuterConeAngle = Cos(0.5f * pLight->GetOuterConeAngle());
 
@@ -1986,8 +1986,8 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 		pUploadActiveLightProps[lightIndex].m_RcpSquaredRange = pLightData->m_RcpSquaredRange;
 		pUploadActiveLightProps[lightIndex].m_AngleFalloffScale = pLightData->m_AngleFalloffScale;
 		pUploadActiveLightProps[lightIndex].m_AngleFalloffOffset = pLightData->m_AngleFalloffOffset;
-		pUploadActiveLightProps[lightIndex].m_ViewNearPlane = pLightData->m_LightViewNearPlane;
-		pUploadActiveLightProps[lightIndex].m_RcpViewClipRange = pLightData->m_LightRcpViewClipRange;
+		pUploadActiveLightProps[lightIndex].m_ViewNearPlane = pLightData->m_ViewNearPlane;
+		pUploadActiveLightProps[lightIndex].m_RcpViewClipRange = pLightData->m_RcpViewClipRange;
 		pUploadActiveLightProps[lightIndex].m_NegativeExpShadowMapConstant = pLightData->m_NegativeExpShadowMapConstant;
 		pUploadActiveLightProps[lightIndex].m_LightID = pLightData->m_LightID;
 	}
