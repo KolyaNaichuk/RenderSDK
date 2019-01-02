@@ -1,5 +1,5 @@
 static const float g_RcpShadowMapSize = 1.0f / float(SHADOW_MAP_SIZE);
-static const float4 g_FilterWeights = {0.006f, 0.061f, 0.242f, 0.383f};
+static const float4 g_FilterWeights = {0.00038771f, 0.01330373f, 0.11098164f, 0.22508352f};
 
 cbuffer Constants32BitBuffer : register(b0)
 {

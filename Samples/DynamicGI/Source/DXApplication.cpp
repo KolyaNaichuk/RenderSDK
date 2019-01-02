@@ -59,6 +59,7 @@ To do:
 - Check if using lookup table for (solidAngle * SHValue) in CubeMapToSHCoefficientsPass gives performance increase
 - Check if there is a way to avoid changing PSO for each Integrate pass in CubeMapToSHCoefficientsPass.
 Using look-up table should allow avoid changing PSO and perform one dispatch call.
+- Fix shadow map filtering for spot lights.
 - I am doing pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap) on shared command list for 
 CreateExpShadowMap and FilterExpShadowMap. Since command list is shared I could do this once.
 - Check if there is point in using downsampled exponential shadow map
@@ -241,8 +242,8 @@ namespace
 enum
 {
 	kTileSize = 16,
-	kNumTilesX = 90,
-	kNumTilesY = 60,
+	kNumTilesX = 9 * 6,
+	kNumTilesY = 6 * 6,
 	kNumVoxelsInGridX = 128,
 	kNumVoxelsInGridY = 128,
 	kNumVoxelsInGridZ = 128,
@@ -595,6 +596,16 @@ void DXApplication::HandleUserInput()
 
 	m_pCamera->Move(cameraMoveDelta, deltaTime);
 	m_pCamera->Rotate(cameraRotationDeltaInRadians, deltaTime);
+
+#if 0
+	std::stringstream stream;
+	stream << "x: " << m_pCamera->GetWorldPosition().m_X
+		<< ", y: " << m_pCamera->GetWorldPosition().m_Y
+		<< ", z: " << m_pCamera->GetWorldPosition().m_Z
+		<< "\n";
+	auto str = stream.str();
+	OutputDebugStringA(str.c_str());
+#endif
 }
 
 void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
