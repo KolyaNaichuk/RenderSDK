@@ -180,9 +180,6 @@
     <ClInclude Include="..\Include\RenderPasses\Common.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\CalcShadingRectanglesPass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\FillMeshTypeDepthBufferPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -273,6 +270,15 @@
     <ClInclude Include="..\Include\RenderPasses\SunShadowMapRenderer.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\CubeMapToSHCoefficientsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\VisualizeNumLightsPerTilePass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -309,9 +315,6 @@
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Math\Matrix4.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Math\Vector3.cpp">
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Math\Vector4.cpp">
@@ -419,9 +422,6 @@
     <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\CalcShadingRectanglesPass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\FillMeshTypeDepthBufferPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
@@ -450,9 +450,6 @@
       <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Scene\Light.cpp">
-      <Filter>Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Scene\Material.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Scene\Mesh.cpp">
@@ -506,6 +503,18 @@
     <ClCompile Include="..\Source\RenderPasses\SunShadowMapRenderer.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\Math\Vector3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\CubeMapToSHCoefficientsPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\VisualizeNumLightsPerTilePass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -544,9 +553,6 @@
     <None Include="..\Shaders\VisualizeTexturePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\SphericalHarmonics.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\BoundingVolumes.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -575,9 +581,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\TiledShadingVS.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\Shaders\CalcShadingRectanglesCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\FillMeshTypeDepthBufferPS.hlsl">
@@ -617,6 +620,21 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\FilterExpShadowMapCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\SphericalGaussians.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\SphericalHarmonics.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\CubeMapToSHCoefficientsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VisualizeNumLightsPerTilePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

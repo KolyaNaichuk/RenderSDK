@@ -40,3 +40,14 @@ static void VerifyWinAPIResult(BOOL result)
 {
 	assert(result != 0);
 }
+
+enum CubeMapFaces
+{
+	kCubeMapFacePositiveX = 0,
+	kCubeMapFaceNegativeX,
+	kCubeMapFacePositiveY,
+	kCubeMapFaceNegativeY,
+	kCubeMapFacePositiveZ,
+	kCubeMapFaceNegativeZ,
+	kNumCubeMapFaces
+};

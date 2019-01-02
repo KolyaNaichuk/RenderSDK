@@ -1,67 +1,58 @@
 #pragma once
 
-#include "Scene/SceneObject.h"
-#include "Math/Vector4.h"
+#include "Math/BasisAxes.h"
 
-enum LightType
+class PointLight
 {
-	LightType_Spot = 1,
-	LightType_Directional = 2,
-	LightType_Point = 3
-};
-
-enum CubeMapFaces
-{
-	kCubeMapFacePosX = 0,
-	kCubeMapFaceNegX,
-	kCubeMapFacePosY,
-	kCubeMapFaceNegY,
-	kCubeMapFacePosZ,
-	kCubeMapFaceNegZ,
-	kNumCubeMapFaces
-};
-
-class Light : public SceneObject
-{
-protected:
-	Light(const std::string& name);
-
 public:
-	f32 GetIntensity() const;
-	void SetIntensity(f32 inensity);
+	PointLight(const Vector3f& worldPosition, const Vector3f& radiantPower, f32 range, f32 shadowNearPlane, f32 expShadowMapConstant);
 
-	const Vector3f& GetColor() const;
-	void SetColor(const Vector3f& color);
-				
+	const Vector3f& GetWorldPosition() const;
+	void SetWorldPosition(const Vector3f& worldPosition);
+
+	const Vector3f& GetRadiantPower() const;
+	void SetRadiantPower(const Vector3f& radiantPower);
+	Vector3f EvaluateRadiantIntensity() const;
+
+	f32 GetRange() const;
+	void SetRange(f32 range);
+
+	f32 GetShadowNearPlane() const;
+	void SetShadowNearPlane(float shadowNearPlane);
+
+	f32 GetExpShadowMapConstant() const;
+	void SetExpShadowMapConstant(f32 expShadowMapConstant);
+
 private:
-	f32 m_Intensity;
-	Vector3f m_Color;
+	Vector3f m_WorldPosition;
+	Vector3f m_RadiantPower;
+	f32 m_Range;
+	f32 m_ShadowNearPlane;
+	f32 m_ExpShadowMapConstant;
 };
 
-class PointLight : public Light
+class SpotLight
 {
 public:
-	PointLight(const std::string& name, f32 range, f32 shadowNearPlane);
+	// innerConeAngle <= outerConeAngle
+	// outerConeAngle <= 180 degrees
+
+	SpotLight(const Vector3f& worldPosition, const BasisAxes& worldOrientation, const Vector3f& radiantPower, f32 range,
+		f32 innerConeAngleInRadians, f32 outerConeAngleInRadians, f32 shadowNearPlane, f32 expShadowMapConstant);
+
+	const Vector3f& GetWorldPosition() const;
+	void SetWorldPosition(const Vector3f& worldPosition);
+
+	const BasisAxes& GetWorldOrientation() const;
+	void SetWorldOrientation(const BasisAxes& worldOrientation);
+
+	const Vector3f& GetRadiantPower() const;
+	void SetRadiantPower(const Vector3f& radiantPower);
+	Vector3f EvaluateRadiantIntensity() const;
 
 	f32 GetRange() const;
 	void SetRange(f32 range);
 	
-	f32 GetShadowNearPlane() const;
-	void SetShadowNearPlane(f32 shadowNearPlane);
-
-private:
-	f32 m_Range;
-	f32 m_ShadowNearPlane;
-};
-
-class SpotLight : public Light
-{
-public:
-	SpotLight(const std::string& name, f32 range, f32 innerConeAngleInRadians, f32 outerConeAngleInRadians, f32 shadowNearPlane, f32 expShadowMapConstant);
-
-	f32 GetRange() const;
-	void SetRange(f32 range);
-		
 	f32 GetInnerConeAngle() const;
 	void SetInnerConeAngle(f32 innerConeAngleInRadians);
 
@@ -75,6 +66,9 @@ public:
 	void SetExpShadowMapConstant(f32 expShadowMapConstant);
 
 private:
+	Vector3f m_WorldPosition;
+	BasisAxes m_WorldOrientation;
+	Vector3f m_RadiantPower;
 	f32 m_Range;
 	f32 m_InnerConeAngleInRadians;
 	f32 m_OuterConeAngleInRadians;
@@ -82,8 +76,10 @@ private:
 	f32 m_ExpShadowMapConstant;
 };
 
-class DirectionalLight : public Light
+struct DirectionalLight
 {
-public:
-	DirectionalLight(const std::string& name);
+	DirectionalLight(const Vector3f& worldDirection, const Vector3f& irradiancePerpToLightDirection);
+
+	Vector3f m_WorldDirection;
+	Vector3f m_IrradiancePerpToLightDirection;
 };

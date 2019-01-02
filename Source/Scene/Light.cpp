@@ -1,38 +1,38 @@
 #include "Scene/Light.h"
-#include "Common/Color.h"
+#include "Math/Math.h"
 
-Light::Light(const std::string& name)
-	: SceneObject(name)
-	, m_Intensity(1.0f)
-	, m_Color(Vector3f::ONE)
-{
-}
-
-f32 Light::GetIntensity() const
-{
-	return m_Intensity;
-}
-
-void Light::SetIntensity(f32 inensity)
-{
-	m_Intensity = inensity;
-}
-
-const Vector3f& Light::GetColor() const
-{
-	return m_Color;
-}
-
-void Light::SetColor(const Vector3f& color)
-{
-	m_Color = color;
-}
-
-PointLight::PointLight(const std::string& name, f32 range, f32 shadowNearPlane)
-	: Light(name)
+PointLight::PointLight(const Vector3f& worldPosition, const Vector3f& radiantPower, f32 range, f32 shadowNearPlane, f32 expShadowMapConstant)
+	: m_WorldPosition(worldPosition)
+	, m_RadiantPower(radiantPower)
 	, m_Range(range)
 	, m_ShadowNearPlane(shadowNearPlane)
+	, m_ExpShadowMapConstant(expShadowMapConstant)
 {
+}
+
+const Vector3f& PointLight::GetWorldPosition() const
+{
+	return m_WorldPosition;
+}
+
+void PointLight::SetWorldPosition(const Vector3f& worldPosition)
+{
+	m_WorldPosition = worldPosition;
+}
+
+Vector3f PointLight::EvaluateRadiantIntensity() const
+{
+	return (m_RadiantPower / (4.0f * PI));
+}
+
+const Vector3f& PointLight::GetRadiantPower() const
+{
+	return m_RadiantPower;
+}
+
+void PointLight::SetRadiantPower(const Vector3f& radiantPower)
+{
+	m_RadiantPower = radiantPower;
 }
 
 f32 PointLight::GetRange() const
@@ -50,19 +50,67 @@ f32 PointLight::GetShadowNearPlane() const
 	return m_ShadowNearPlane;
 }
 
-void PointLight::SetShadowNearPlane(f32 shadowNearPlane)
+void PointLight::SetShadowNearPlane(float shadowNearPlane)
 {
 	m_ShadowNearPlane = shadowNearPlane;
 }
 
-SpotLight::SpotLight(const std::string& name, f32 range, f32 innerConeAngleInRadians, f32 outerConeAngleInRadians, f32 shadowNearPlane, f32 expShadowMapConstant)
-	: Light(name)
+f32 PointLight::GetExpShadowMapConstant() const
+{
+	return m_ExpShadowMapConstant;
+}
+
+void PointLight::SetExpShadowMapConstant(f32 expShadowMapConstant)
+{
+	m_ExpShadowMapConstant = expShadowMapConstant;
+}
+
+SpotLight::SpotLight(const Vector3f& worldPosition, const BasisAxes& worldOrientation, const Vector3f& radiantPower, f32 range,
+	f32 innerConeAngleInRadians, f32 outerConeAngleInRadians, f32 shadowNearPlane, f32 expShadowMapConstant)
+	: m_WorldPosition(worldPosition)
+	, m_WorldOrientation(worldOrientation)
+	, m_RadiantPower(radiantPower)
 	, m_Range(range)
 	, m_InnerConeAngleInRadians(innerConeAngleInRadians)
 	, m_OuterConeAngleInRadians(outerConeAngleInRadians)
 	, m_ShadowNearPlane(shadowNearPlane)
 	, m_ExpShadowMapConstant(expShadowMapConstant)
 {
+}
+
+const Vector3f& SpotLight::GetWorldPosition() const
+{
+	return m_WorldPosition;
+}
+
+void SpotLight::SetWorldPosition(const Vector3f& worldPosition)
+{
+	m_WorldPosition = worldPosition;
+}
+
+const BasisAxes& SpotLight::GetWorldOrientation() const
+{
+	return m_WorldOrientation;
+}
+
+void SpotLight::SetWorldOrientation(const BasisAxes& worldOrientation)
+{
+	m_WorldOrientation = worldOrientation;
+}
+
+const Vector3f& SpotLight::GetRadiantPower() const
+{
+	return m_RadiantPower;
+}
+
+void SpotLight::SetRadiantPower(const Vector3f& radiantPower)
+{
+	m_RadiantPower = radiantPower;
+}
+
+Vector3f SpotLight::EvaluateRadiantIntensity() const
+{
+	return (m_RadiantPower / (TWO_PI * (1.0f - Cos(0.5f * m_OuterConeAngleInRadians))));
 }
 
 f32 SpotLight::GetRange() const
@@ -115,7 +163,8 @@ void SpotLight::SetExpShadowMapConstant(f32 expShadowMapConstant)
 	m_ExpShadowMapConstant = expShadowMapConstant;
 }
 
-DirectionalLight::DirectionalLight(const std::string& name)
-	: Light(name)
+DirectionalLight::DirectionalLight(const Vector3f& worldDirection, const Vector3f& irradiancePerpToLightDirection)
+	: m_WorldDirection(worldDirection)
+	, m_IrradiancePerpToLightDirection(irradiancePerpToLightDirection)
 {
 }

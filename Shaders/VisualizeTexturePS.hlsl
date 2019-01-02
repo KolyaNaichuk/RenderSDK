@@ -6,7 +6,8 @@
 #define TEXTURE_TYPE_GBUFFER_TEXCOORD			2
 #define TEXTURE_TYPE_DEPTH						3
 #define TEXTURE_TYPE_EXP_SHADOW_MAP				4
-#define TEXTURE_TYPE_OTHER						5
+#define TEXTURE_TYPE_RGB						5
+#define TEXTURE_TYPE_R							6
 
 struct PSInput
 {
@@ -26,29 +27,33 @@ float4 Main(PSInput input) : SV_Target
 {
 #if (TEXTURE_TYPE == TEXTURE_TYPE_GBUFFER_NORMAL)
 	float3 worldSpaceNormal = g_Texture.Sample(g_Sampler, input.texCoord).rgb;
-	float4 color = float4(0.5f * worldSpaceNormal + 0.5f, 1.0f);
+	float3 color = 0.5f * worldSpaceNormal + 0.5f;
 #endif // TEXTURE_TYPE_GBUFFER_NORMAL
 
 #if (TEXTURE_TYPE == TEXTURE_TYPE_GBUFFER_TEXCOORD)
 	float2 texCoord = g_Texture.Sample(g_Sampler, input.texCoord).rgb;
-	float4 color = float4(texCoord, 0.0f, 1.0f);
+	float3 color = float3(texCoord, 0.0f);
 #endif // TEXTURE_TYPE_GBUFFER_TEXCOORD
 
 #if (TEXTURE_TYPE == TEXTURE_TYPE_DEPTH)
 	float hardwareDepth = g_Texture.Sample(g_Sampler, input.texCoord).r;
 	float viewSpaceDepth = ComputeViewSpaceDepth(hardwareDepth, g_AppData.projMatrix);
 	float normalizedViewSpaceDepth = NormalizeViewSpaceDepth(viewSpaceDepth, g_AppData.cameraNearPlane, g_AppData.cameraFarPlane);
-	float4 color = float4(normalizedViewSpaceDepth.rrr, 1.0f);
+	float3 color = normalizedViewSpaceDepth.rrr;
 #endif // TEXTURE_TYPE_DEPTH
 
 #if (TEXTURE_TYPE == TEXTURE_TYPE_EXP_SHADOW_MAP)
 	float normalizedLightSpaceDepth = g_Texture.Sample(g_Sampler, input.texCoord).r;
-	float4 color = float4(normalizedLightSpaceDepth.rrr, 1.0f);
+	float3 color = normalizedLightSpaceDepth.rrr;
 #endif // TEXTURE_TYPE_EXP_SHADOW_MAP
 
-#if (TEXTURE_TYPE == TEXTURE_TYPE_OTHER)
-	float4 color = g_Texture.Sample(g_Sampler, input.texCoord).rgba;
-#endif // TEXTURE_TYPE_OTHER
+#if (TEXTURE_TYPE == TEXTURE_TYPE_RGB)
+	float3 color = g_Texture.Sample(g_Sampler, input.texCoord).rgb;
+#endif // TEXTURE_TYPE_RGB
 
-	return float4(GammaCorrection(color.rgb), color.a);
+#if (TEXTURE_TYPE == TEXTURE_TYPE_R)
+	float3 color = g_Texture.Sample(g_Sampler, input.texCoord).rrr;
+#endif // TEXTURE_TYPE_R
+
+	return float4(GammaCorrection(color), 1.0f);
 }

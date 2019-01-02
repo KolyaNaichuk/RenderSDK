@@ -31,7 +31,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		UINT m_NumMeshTypes;
 		Viewport* m_pViewport;
 	};
 

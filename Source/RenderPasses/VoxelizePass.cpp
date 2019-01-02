@@ -137,7 +137,7 @@ void VoxelizePass::InitResources(InitParams* pParams)
 	m_OutputResourceStates.m_InstanceIndexBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_InstanceWorldMatrixBufferState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_VoxelReflectanceTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	m_OutputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	m_OutputResourceStates.m_MaterialTextureIndicesBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightWorldBoundsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SpotLightPropsBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 
@@ -162,9 +162,9 @@ void VoxelizePass::InitResources(InitParams* pParams)
 		pParams->m_InputResourceStates.m_VoxelReflectanceTextureState,
 		m_OutputResourceStates.m_VoxelReflectanceTextureState);
 
-	AddResourceBarrierIfRequired(pParams->m_pFirstResourceIndexPerMaterialIDBuffer,
-		pParams->m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState,
-		m_OutputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState);
+	AddResourceBarrierIfRequired(pParams->m_pMaterialTextureIndicesBuffer,
+		pParams->m_InputResourceStates.m_MaterialTextureIndicesBufferState,
+		m_OutputResourceStates.m_MaterialTextureIndicesBufferState);
 
 	if (pParams->m_EnableSpotLights)
 	{
@@ -198,7 +198,7 @@ void VoxelizePass::InitResources(InitParams* pParams)
 	}
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-		pParams->m_pFirstResourceIndexPerMaterialIDBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		pParams->m_pMaterialTextureIndicesBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	for (decltype(pParams->m_NumMaterialTextures) index = 0; index < pParams->m_NumMaterialTextures; ++index)
 	{

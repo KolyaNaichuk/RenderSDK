@@ -27,7 +27,5 @@ void SHProjectPointLight(f32* pOutRCoeffs, f32* pOutGCoeffs, f32* pOutBCoeffs,
 void SHProjectDirectionalLight(f32* pOutRCoeffs, f32* pOutGCoeffs, f32* pOutBCoeffs,
 	i32 numBands, const Vector3f& dir, Vector3f lightRadiance, u8 flags);
 
-void SHProjectCubeMap();
-
 void ZHProjectCosineLobeOrientedAlongZAxis(f32* pOutCoeffs, i32 numBands);
 void SHProjectCosineLobe(f32* pOutCoeffs, i32 numBands, const Vector3f& dir);

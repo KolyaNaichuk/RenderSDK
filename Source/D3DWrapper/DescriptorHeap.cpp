@@ -91,6 +91,17 @@ DescriptorHandle DescriptorHeap::Allocate()
 	return DescriptorHandle(m_FirstDescriptor, offsetInDescriptors);
 }
 
+DescriptorHandle DescriptorHeap::AllocateRange(UINT numDescriptors)
+{
+	assert(numDescriptors > 0);
+	assert(m_NumUsedDescriptors + numDescriptors <= m_NumReservedDescriptors);
+
+	INT offsetInDescriptors = m_NumUsedDescriptors;
+	m_NumUsedDescriptors += numDescriptors;
+
+	return DescriptorHandle(m_FirstDescriptor, offsetInDescriptors);
+}
+
 void DescriptorHeap::Reset()
 {
 	m_NumUsedDescriptors = 0;

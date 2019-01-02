@@ -22,16 +22,16 @@
 #include "RenderPasses/RenderGBufferPass.h"
 #include "RenderPasses/TiledLightCullingPass.h"
 #include "RenderPasses/TiledShadingPass.h"
-#include "RenderPasses/VisualizeTexturePass.h"
-#include "RenderPasses/VisualizeVoxelReflectancePass.h"
 #include "RenderPasses/DownscaleAndReprojectDepthPass.h"
 #include "RenderPasses/FrustumMeshCullingPass.h"
 #include "RenderPasses/FillVisibilityBufferPass.h"
 #include "RenderPasses/CreateMainDrawCommandsPass.h"
 #include "RenderPasses/CreateFalseNegativeDrawCommandsPass.h"
 #include "RenderPasses/FillMeshTypeDepthBufferPass.h"
-#include "RenderPasses/CalcShadingRectanglesPass.h"
 #include "RenderPasses/SpotLightShadowMapRenderer.h"
+#include "RenderPasses/VisualizeNumLightsPerTilePass.h"
+#include "RenderPasses/VisualizeTexturePass.h"
+#include "RenderPasses/VisualizeVoxelReflectancePass.h"
 #include "RenderPasses/VoxelizePass.h"
 #include "RenderPasses/GeometryBuffer.h"
 #include "RenderPasses/MeshRenderResources.h"
@@ -56,6 +56,10 @@
 
 /*
 To do:
+- Check if using lookup table for (solidAngle * SHValue) in CubeMapToSHCoefficientsPass gives performance increase
+- Check if there is a way to avoid changing PSO for each Integrate pass in CubeMapToSHCoefficientsPass.
+Using look-up table should allow avoid changing PSO and perform one dispatch call.
+- Fix shadow map filtering for spot lights.
 - I am doing pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap) on shared command list for 
 CreateExpShadowMap and FilterExpShadowMap. Since command list is shared I could do this once.
 - Check if there is point in using downsampled exponential shadow map
@@ -66,7 +70,6 @@ CreateExpShadowMap and FilterExpShadowMap. Since command list is shared I could 
 - When generating visible static geometry for lights I could also run back-face culling
 - Check if it is possible to pre-sort (front to back) commands for rendering shadow maps for static meshes
 - In TiledLightCulling pass use spot light frustum vs view frustum test
-- Rewrite CalcShadingRectanglesCS using Gather to process 4 values at a time
 - Depth and shadow maps are using DXGI_FORMAT_R32_TYPELESS format. Check if I could use more optimal formats (see COD presentation)
 
 - Enable InitCreateVoxelizeCommandsPass(), InitVoxelizePass(), InitVisualizeVoxelReflectancePass()
@@ -76,7 +79,6 @@ CreateExpShadowMap and FilterExpShadowMap. Since command list is shared I could 
 - Enable VoxelizePass. Fix calculation for frustum corners
 - VoxelizationPass does not pass point/spot light count to the shader
 - Move upload visible light data to separate render pass
-- Point light data in the scene object has bad CPU cache coherence when doing frustum culling
 - Spot light data in the scene object has bad CPU cache coherence when doing frustum culling
 - Cannot use ROV and 1 render pass for voxelization. ROV is messed up when specifying projection dominant axis from geometry shader.
   When doing 3 render passes for voxelization should also be careful as the same triangle could be rendered multiple times,
@@ -95,7 +97,6 @@ For an example, plane in original coordinates is passing through point (0, 0, 0)
 OOB will have coordinates expanding from -1 to 1 not merely passing through 0 when world matrix is applied.
 - Check Torque3D engine for plane object implementation. mPlane.h and mPlane.cpp
 - Using std::experimental::filesystem::path from OBJFileLoader. Should be consistent with the code.
-- Review to-dos
 - Use Task graph for resource state transition after each render pass.
 https://patterns.eecs.berkeley.edu/?page_id=609
 - Fix compilation warnings for x64 build
@@ -127,25 +128,27 @@ namespace
 		Vector2f m_RcpScreenHalfSize;
 		Vector2u m_ScreenQuarterSize;
 		Vector2f m_RcpScreenQuarterSize;
-		Vector4f m_SunWorldSpaceDir;
-		
-		Vector4f m_SunLightColor;
+		Vector3f m_WorldSpaceDirToSun;
+		f32 m_NotUsed3;
+
+		Vector3f m_IrradiancePerpToSunDir;
+		f32 m_NotUsed4;
 		Vector2u m_ScreenTileSize;
 		Vector2u m_NumScreenTiles;
 		Vector3f m_VoxelGridWorldMinPoint;
-		f32 m_NotUsed3;
+		f32 m_NotUsed5;
 		Vector3f m_VoxelGridWorldMaxPoint;
-		f32 m_NotUsed4;
+		f32 m_NotUsed6;
 		Matrix4f m_VoxelGridViewProjMatrices[3];
 		
 		Vector3f m_VoxelRcpSize;
-		f32 m_NotUsed5;
-		f32 m_NotUsed6[12];
-		f32 m_NotUsed7[16];
-		f32 m_NotUsed8[16];
+		f32 m_NotUsed7;
+		f32 m_NotUsed8[12];
 		f32 m_NotUsed9[16];
+		f32 m_NotUsed10[16];
+		f32 m_NotUsed11[16];
 	};
-				
+
 	using BufferElementFormatter = std::function<std::string (const void* pElementData)>;
 	
 	void OutputBufferContent(RenderEnv* pRenderEnv, Buffer* pBuffer, D3D12_RESOURCE_STATES bufferState,
@@ -239,8 +242,8 @@ namespace
 enum
 {
 	kTileSize = 16,
-	kNumTilesX = 90,
-	kNumTilesY = 60,
+	kNumTilesX = 9 * 6,
+	kNumTilesY = 6 * 6,
 	kNumVoxelsInGridX = 128,
 	kNumVoxelsInGridY = 128,
 	kNumVoxelsInGridZ = 128,
@@ -270,23 +273,46 @@ DXApplication::~DXApplication()
 	CoUninitialize();
 
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
-	{
 		SafeDelete(m_VisualizeAccumLightPasses[index]);
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
 		SafeDelete(m_VisualizeNormalBufferPasses[index]);
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
 		SafeDelete(m_VisualizeDepthBufferPasses[index]);
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
 		SafeDelete(m_VisualizeReprojectedDepthBufferPasses[index]);
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
 		SafeDelete(m_VisualizeTexCoordBufferPasses[index]);
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
 		SafeDelete(m_VisualizeDepthBufferWithMeshTypePasses[index]);
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+		SafeDelete(m_VisualizeNumLightsPerTilePasses[index]);
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
 		SafeDelete(m_VisualizeVoxelReflectancePasses[index]);
 
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
 		m_UploadAppDataBuffers[index]->Unmap(0, nullptr);
 		SafeDelete(m_UploadAppDataBuffers[index]);
+	}
 
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
 		if (m_UploadActiveSpotLightWorldBoundsBuffers[index] != nullptr)
 		{
 			m_UploadActiveSpotLightWorldBoundsBuffers[index]->Unmap(0, nullptr);
 			SafeDelete(m_UploadActiveSpotLightWorldBoundsBuffers[index]);
 		}
+	}
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
 		if (m_UploadActiveSpotLightPropsBuffers[index] != nullptr)
 		{
 			m_UploadActiveSpotLightPropsBuffers[index]->Unmap(0, nullptr);
@@ -317,7 +343,6 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pCreateFalseNegativeDrawCommandsPass);
 	SafeDelete(m_pRenderGBufferFalseNegativePass);
 	SafeDelete(m_pFillMeshTypeDepthBufferPass);
-	SafeDelete(m_pCalcShadingRectanglesPass);
 	SafeDelete(m_pSpotLightShadowMapRenderer);
 	SafeDelete(m_pTiledLightCullingPass);
 	SafeDelete(m_pCreateVoxelizeCommandsPass);
@@ -358,7 +383,6 @@ void DXApplication::OnInit()
 	InitFillVisibilityBufferFalseNegativePass();
 	InitCreateFalseNegativeDrawCommandsPass();
 	InitRenderGBufferFalseNegativePass(kBackBufferWidth, kBackBufferHeight);
-	InitCalcShadingRectanglesPass();
 	InitFillMeshTypeDepthBufferPass();
 
 	if (pScene->GetNumSpotLights() > 0)
@@ -367,7 +391,10 @@ void DXApplication::OnInit()
 		InitRenderSpotLightShadowMaps(pScene);
 	}
 	InitTiledShadingPass();
-		
+
+	if (pScene->GetNumSpotLights() > 0)
+		InitVisualizeNumLightsPerTilePass();
+	
 	InitVisualizeAccumLightPass();
 	InitVisualizeDepthBufferPass();
 	InitVisualizeReprojectedDepthBufferPass();
@@ -415,8 +442,8 @@ void DXApplication::OnUpdate()
 	pAppData->m_RcpScreenHalfSize = Vector2f(1.0f / f32(pAppData->m_ScreenHalfSize.m_X), 1.0f / f32(pAppData->m_ScreenHalfSize.m_Y));
 	pAppData->m_ScreenQuarterSize = Vector2u(pAppData->m_ScreenHalfSize.m_X >> 1, pAppData->m_ScreenHalfSize.m_Y >> 1);
 	pAppData->m_RcpScreenQuarterSize = Vector2f(1.0f / f32(pAppData->m_ScreenQuarterSize.m_X), 1.0f / f32(pAppData->m_ScreenQuarterSize.m_Y));
-	pAppData->m_SunWorldSpaceDir = Vector4f(0.0f, 0.0f, 1.0f, 0.0f);
-	pAppData->m_SunLightColor = Color::WHITE;
+	pAppData->m_WorldSpaceDirToSun = Vector3f::FORWARD;
+	pAppData->m_IrradiancePerpToSunDir = Vector3f::ZERO;
 	pAppData->m_ScreenTileSize = Vector2u(kTileSize, kTileSize);
 	pAppData->m_NumScreenTiles = Vector2u(kNumTilesX, kNumTilesY);
 
@@ -474,7 +501,6 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordFillVisibilityBufferFalseNegativePass();
 	commandListBatch[commandListBatchSize++] = RecordCreateFalseNegativeDrawCommandsPass();
 	commandListBatch[commandListBatchSize++] = RecordRenderGBufferFalseNegativePass();
-	commandListBatch[commandListBatchSize++] = RecordCalcShadingRectanglesPass();
 	commandListBatch[commandListBatchSize++] = RecordFillMeshTypeDepthBufferPass();
 	commandListBatch[commandListBatchSize++] = RecordUploadLightDataPass();
 
@@ -566,10 +592,20 @@ void DXApplication::HandleUserInput()
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_6))
 		UpdateDisplayResult(DisplayResult::DepthBufferWithMeshType);
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_7))
-		UpdateDisplayResult(DisplayResult::VoxelRelectance);
+		UpdateDisplayResult(DisplayResult::NumLightsPerTile);
 
 	m_pCamera->Move(cameraMoveDelta, deltaTime);
 	m_pCamera->Rotate(cameraRotationDeltaInRadians, deltaTime);
+
+#if 0
+	std::stringstream stream;
+	stream << "x: " << m_pCamera->GetWorldPosition().m_X
+		<< ", y: " << m_pCamera->GetWorldPosition().m_Y
+		<< ", z: " << m_pCamera->GetWorldPosition().m_Z
+		<< "\n";
+	auto str = stream.str();
+	OutputDebugStringA(str.c_str());
+#endif
 }
 
 void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
@@ -667,7 +703,7 @@ void DXApplication::InitScene(UINT backBufferWidth, UINT backBufferHeight, Scene
 	
 	m_pCamera = new Camera(
 		pScene->GetCamera()->GetWorldPosition(),
-		pScene->GetCamera()->GetBasisAxes(),
+		pScene->GetCamera()->GetWorldOrientation(),
 		pScene->GetCamera()->GetFieldOfViewY(),
 		aspectRatio,
 		pScene->GetCamera()->GetNearClipDistance(),
@@ -1092,56 +1128,20 @@ CommandList* DXApplication::RecordRenderGBufferFalseNegativePass()
 	return params.m_pCommandList;
 }
 
-void DXApplication::InitCalcShadingRectanglesPass()
-{
-	assert(m_pCalcShadingRectanglesPass == nullptr);
-	assert(m_pRenderGBufferFalseNegativePass != nullptr);
-	assert(m_pMaterialRenderResources != nullptr);
-		
-	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
-		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
-
-	CalcShadingRectanglesPass::InitParams params;
-	params.m_pName = "CalcShadingRectanglesPass";
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_InputResourceStates.m_GBuffer3State = pRenderGBufferFalseNegativePassStates->m_GBuffer3State;
-	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	params.m_InputResourceStates.m_ShadingRectangleMinPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_ShadingRectangleMaxPointBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_pGBuffer3 = m_pGeometryBuffer->GetGBuffer3();
-	params.m_pMeshTypePerMaterialIDBuffer = m_pMaterialRenderResources->GetMeshTypePerMaterialIDBuffer();
-	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
-	
-	m_pCalcShadingRectanglesPass = new CalcShadingRectanglesPass(&params);
-}
-
-CommandList* DXApplication::RecordCalcShadingRectanglesPass()
-{
-	assert(m_pCalcShadingRectanglesPass != nullptr);
-
-	CalcShadingRectanglesPass::RenderParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pCalcShadingRectanglesCommandList");
-	params.m_pAppDataBuffer = m_UploadAppDataBuffers[m_BackBufferIndex];
-
-	m_pCalcShadingRectanglesPass->Record(&params);
-	return params.m_pCommandList;
-}
-
 void DXApplication::InitFillMeshTypeDepthBufferPass()
 {
 	assert(m_pFillMeshTypeDepthBufferPass == nullptr);
 	assert(m_pGeometryBuffer != nullptr);
 	assert(m_pMaterialRenderResources != nullptr);
 	
-	const CalcShadingRectanglesPass::ResourceStates* pCalcShadingRectanglesPassStates =
-		m_pCalcShadingRectanglesPass->GetOutputResourceStates();
+	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
+		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
 
 	FillMeshTypeDepthBufferPass::InitParams params;
 	params.m_pName = "FillMeshTypeDepthBufferPass";
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_InputResourceStates.m_GBuffer3State = pCalcShadingRectanglesPassStates->m_GBuffer3State;
-	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = pCalcShadingRectanglesPassStates->m_MeshTypePerMaterialIDBufferState;
+	params.m_InputResourceStates.m_GBuffer3State = pRenderGBufferFalseNegativePassStates->m_GBuffer3State;
+	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_MeshTypeDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	params.m_pGBuffer3 = m_pGeometryBuffer->GetGBuffer3();
 	params.m_pMeshTypePerMaterialIDBuffer = m_pMaterialRenderResources->GetMeshTypePerMaterialIDBuffer();
@@ -1157,7 +1157,6 @@ CommandList* DXApplication::RecordFillMeshTypeDepthBufferPass()
 	FillMeshTypeDepthBufferPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pFillMeshTypeDepthBufferCommandList");
-	params.m_NumMeshTypes = m_pMeshRenderResources->GetNumMeshTypes();
 	params.m_pViewport = m_pBackBufferViewport;
 
 	m_pFillMeshTypeDepthBufferPass->Record(&params);
@@ -1342,7 +1341,7 @@ void DXApplication::InitVisualizeDepthBufferWithMeshTypePass()
 		params.m_pInputTexture = pDepthTextureWithMeshType;
 		params.m_InputTextureSRV = pDepthTextureWithMeshType->GetSRVHandle();
 		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
-		params.m_TextureType = VisualizeTexturePass::TextureType_Depth;
+		params.m_TextureType = VisualizeTexturePass::TextureType_R;
 
 		m_VisualizeDepthBufferWithMeshTypePasses[index] = new VisualizeTexturePass(&params);
 	}
@@ -1382,7 +1381,7 @@ void DXApplication::InitVisualizeAccumLightPass()
 		params.m_pInputTexture = m_pAccumLightTexture;
 		params.m_InputTextureSRV = m_pAccumLightTexture->GetSRVHandle();
 		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
-		params.m_TextureType = VisualizeTexturePass::TextureType_Other;
+		params.m_TextureType = VisualizeTexturePass::TextureType_RGB;
 
 		m_VisualizeAccumLightPasses[index] = new VisualizeTexturePass(&params);
 	}
@@ -1400,6 +1399,47 @@ CommandList* DXApplication::RecordVisualizeAccumLightPass()
 	params.m_pViewport = m_pBackBufferViewport;
 
 	pVisualizeTexturePass->Record(&params);
+	return params.m_pCommandList;
+}
+
+void DXApplication::InitVisualizeNumLightsPerTilePass()
+{
+	assert(m_pTiledLightCullingPass != nullptr);
+	assert(m_pTiledShadingPass != nullptr);
+
+	const TiledShadingPass::ResourceStates* pTiledShadingPassStates =
+		m_pTiledShadingPass->GetOutputResourceStates();
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
+		assert(m_VisualizeNumLightsPerTilePasses[index] == nullptr);
+		
+		VisualizeNumLightsPerTilePass::InitParams params;
+		params.m_pName = "VisualizeNumLightsPerTilePass";
+		params.m_pRenderEnv = m_pRenderEnv;
+		params.m_InputResourceStates.m_LightRangePerTileBufferState = pTiledShadingPassStates->m_SpotLightRangePerTileBufferState;
+		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
+		params.m_pLightRangePerTileBuffer = m_pTiledLightCullingPass->GetSpotLightRangePerTileBuffer();
+		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
+		params.m_ColorMode = VisualizeNumLightsPerTilePass::RadarColor;
+
+		m_VisualizeNumLightsPerTilePasses[index] = new VisualizeNumLightsPerTilePass(&params);
+	}
+}
+
+CommandList* DXApplication::RecordVisualizeNumLightsPerTilePass()
+{
+	VisualizeNumLightsPerTilePass* pVisualizeNumLightsPerTilePass = m_VisualizeNumLightsPerTilePasses[m_BackBufferIndex];
+	assert(pVisualizeNumLightsPerTilePass != nullptr);
+	
+	VisualizeNumLightsPerTilePass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeNumLightsPerTileCommandList");
+	params.m_pAppDataBuffer = m_UploadAppDataBuffers[m_BackBufferIndex];
+	params.m_pViewport = m_pBackBufferViewport;
+	params.m_MaxNumLights = m_NumSpotLights;
+
+	pVisualizeNumLightsPerTilePass->Record(&params);
 	return params.m_pCommandList;
 }
 
@@ -1646,8 +1686,8 @@ void DXApplication::InitVoxelizePass()
 	}
 	
 	params.m_InputResourceStates.m_VoxelReflectanceTextureState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-	params.m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-		
+	params.m_InputResourceStates.m_MaterialTextureIndicesBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	
 	params.m_pMeshRenderResources = m_pMeshRenderResources;
 	params.m_NumVoxelsX = kNumVoxelsInGridX;
 	params.m_NumVoxelsY = kNumVoxelsInGridY;
@@ -1655,7 +1695,7 @@ void DXApplication::InitVoxelizePass()
 	
 	params.m_NumMaterialTextures = m_pMaterialRenderResources->GetNumTextures();
 	params.m_ppMaterialTextures = m_pMaterialRenderResources->GetTextures();
-	params.m_pFirstResourceIndexPerMaterialIDBuffer = m_pMaterialRenderResources->GetFirstResourceIndexPerMaterialIDBuffer();
+	params.m_pMaterialTextureIndicesBuffer = m_pMaterialRenderResources->GetMaterialTextureIndicesBuffer();
 	params.m_pNumCommandsPerMeshTypeBuffer = m_pCreateVoxelizeCommandsPass->GetNumCommandsPerMeshTypeBuffer();
 	params.m_pVoxelizeCommandBuffer = m_pCreateVoxelizeCommandsPass->GetVoxelizeCommandBuffer();
 	params.m_pInstanceIndexBuffer = m_pFrustumMeshCullingPass->GetVisibleInstanceIndexBuffer();
@@ -1690,7 +1730,6 @@ void DXApplication::InitTiledShadingPass()
 {
 	assert(m_pTiledShadingPass == nullptr);
 	assert(m_pFillMeshTypeDepthBufferPass != nullptr);
-	assert(m_pCalcShadingRectanglesPass != nullptr);
 	assert(m_pRenderGBufferFalseNegativePass != nullptr);
 	assert(m_pGeometryBuffer != nullptr);
 	assert(m_pMaterialRenderResources != nullptr);
@@ -1698,40 +1737,33 @@ void DXApplication::InitTiledShadingPass()
 	const FillMeshTypeDepthBufferPass::ResourceStates* pFillMeshTypeDepthBufferPassStates =
 		m_pFillMeshTypeDepthBufferPass->GetOutputResourceStates();
 
-	const CalcShadingRectanglesPass::ResourceStates* pCalcShadingRectanglesPassStates =
-		m_pCalcShadingRectanglesPass->GetOutputResourceStates();
-
 	const RenderGBufferPass::ResourceStates* pRenderGBufferFalseNegativePassStates =
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
 	
 	TiledShadingPass::InitParams params;
 	params.m_pName = "TiledShadingPass";
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_ShadingMode = ShadingMode_BlinnPhong;
 
 	params.m_InputResourceStates.m_AccumLightTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	params.m_InputResourceStates.m_MeshTypeDepthTextureState = pFillMeshTypeDepthBufferPassStates->m_MeshTypeDepthTextureState;
-	params.m_InputResourceStates.m_ShadingRectangleMinPointBufferState = pCalcShadingRectanglesPassStates->m_ShadingRectangleMinPointBufferState;
-	params.m_InputResourceStates.m_ShadingRectangleMaxPointBufferState = pCalcShadingRectanglesPassStates->m_ShadingRectangleMaxPointBufferState;
 	params.m_InputResourceStates.m_DepthTextureState = pRenderGBufferFalseNegativePassStates->m_DepthTextureState;		
 	params.m_InputResourceStates.m_GBuffer1State = pRenderGBufferFalseNegativePassStates->m_GBuffer1State;
 	params.m_InputResourceStates.m_GBuffer2State = pRenderGBufferFalseNegativePassStates->m_GBuffer2State;
 	params.m_InputResourceStates.m_GBuffer3State = pFillMeshTypeDepthBufferPassStates->m_GBuffer3State;
 	params.m_InputResourceStates.m_GBuffer4State = pRenderGBufferFalseNegativePassStates->m_GBuffer4State;
-	params.m_InputResourceStates.m_FirstResourceIndexPerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_MaterialTextureIndicesBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	
 	params.m_pAccumLightTexture = m_pAccumLightTexture;
 	params.m_pMeshTypeDepthTexture = m_pFillMeshTypeDepthBufferPass->GetMeshTypeDepthTexture();
-	params.m_pShadingRectangleMinPointBuffer = m_pCalcShadingRectanglesPass->GetShadingRectangleMinPointBuffer();
-	params.m_pShadingRectangleMaxPointBuffer = m_pCalcShadingRectanglesPass->GetShadingRectangleMaxPointBuffer();
 	params.m_pDepthTexture = m_pDepthTexture;
 	params.m_pGBuffer1 = m_pGeometryBuffer->GetGBuffer1();
 	params.m_pGBuffer2 = m_pGeometryBuffer->GetGBuffer2();
 	params.m_pGBuffer3 = m_pGeometryBuffer->GetGBuffer3();
 	params.m_pGBuffer4 = m_pGeometryBuffer->GetGBuffer4();
-	params.m_pFirstResourceIndexPerMaterialIDBuffer = m_pMaterialRenderResources->GetFirstResourceIndexPerMaterialIDBuffer();
+	params.m_pMaterialTextureIndicesBuffer = m_pMaterialRenderResources->GetMaterialTextureIndicesBuffer();
 	params.m_NumMaterialTextures = m_pMaterialRenderResources->GetNumTextures();
 	params.m_ppMaterialTextures = m_pMaterialRenderResources->GetTextures();
+	params.m_NumTexturesPerMaterial = Material::NumTextures;
 	params.m_EnableDirectionalLight = false;
 			
 	params.m_EnableSpotLights = m_NumSpotLights > 0;
@@ -1754,7 +1786,7 @@ void DXApplication::InitTiledShadingPass()
 		params.m_pSpotLightIndexPerTileBuffer = m_pTiledLightCullingPass->GetSpotLightIndexPerTileBuffer();
 		params.m_pSpotLightRangePerTileBuffer = m_pTiledLightCullingPass->GetSpotLightRangePerTileBuffer();
 		params.m_pSpotLightShadowMaps = m_pSpotLightShadowMapRenderer->GetSpotLightShadowMaps();
-	}		
+	}
 	m_pTiledShadingPass = new TiledShadingPass(&params);
 }
 
@@ -1792,8 +1824,8 @@ CommandList* DXApplication::RecordVisualizeDisplayResultPass()
 	if (m_DisplayResult == DisplayResult::DepthBufferWithMeshType)
 		return RecordVisualizeDepthBufferWithMeshTypePass();
 	
-	if (m_DisplayResult == DisplayResult::VoxelRelectance)
-		return RecordVisualizeVoxelReflectancePass();
+	if (m_DisplayResult == DisplayResult::NumLightsPerTile)
+		return RecordVisualizeNumLightsPerTilePass();
 		
 	assert(false);
 	return nullptr;
@@ -1838,13 +1870,6 @@ CommandList* DXApplication::RecordPostRenderPass()
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	}
-	else if (m_DisplayResult == DisplayResult::VoxelRelectance)
-	{
-		ColorTexture* pVoxelReflectanceTexture = m_pVoxelizePass->GetVoxelReflectanceTexture();
-		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(pVoxelReflectanceTexture,
-			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	}
 
 	pCommandList->ResourceBarrier(numBarriers, resourceBarriers);
 
@@ -1869,35 +1894,37 @@ void DXApplication::InitSpotLightRenderResources(Scene* pScene)
 
 	for (decltype(m_NumSpotLights) lightIndex = 0; lightIndex < m_NumSpotLights; ++lightIndex)
 	{
-		SpotLight* pLight = ppSpotLights[lightIndex];
+		const SpotLight* pLight = ppSpotLights[lightIndex];
 		
-		const Transform& lightWorldSpaceTransform = pLight->GetTransform();
-		const Vector3f& lightWorldSpacePos = lightWorldSpaceTransform.GetPosition();
-		
-		const BasisAxes lightWorldSpaceBasis = ExtractBasisAxes(lightWorldSpaceTransform.GetRotation());
-		assert(IsNormalized(lightWorldSpaceBasis.m_ZAxis));
+		const Vector3f& lightWorldSpacePos = pLight->GetWorldPosition();
+		const BasisAxes& lightWorldSpaceBasis = pLight->GetWorldOrientation();
 		const Vector3f& lightWorldSpaceDir = lightWorldSpaceBasis.m_ZAxis;
 		
+		const Matrix4f viewMatrix = CreateLookAtMatrix(lightWorldSpacePos, lightWorldSpaceBasis);
 		const Matrix4f projMatrix = CreatePerspectiveFovProjMatrix(pLight->GetOuterConeAngle(), 1.0f, pLight->GetShadowNearPlane(), pLight->GetRange());
-		const Matrix4f viewMatrix = lightWorldSpaceTransform.GetWorldToLocalMatrix();
 		const Matrix4f viewProjMatrix = viewMatrix * projMatrix;
 		
 		Cone lightWorldCone(lightWorldSpacePos, pLight->GetOuterConeAngle(), lightWorldSpaceDir, pLight->GetRange());
 
-		m_pSpotLights[lightIndex].m_Color = pLight->GetColor();
+		m_pSpotLights[lightIndex].m_RadiantIntensity = pLight->EvaluateRadiantIntensity();
+		m_pSpotLights[lightIndex].m_RcpSquaredRange = Rcp(pLight->GetRange() * pLight->GetRange());
 		m_pSpotLights[lightIndex].m_WorldSpacePos = lightWorldSpacePos;
 		m_pSpotLights[lightIndex].m_WorldSpaceDir = lightWorldSpaceDir;
 		m_pSpotLights[lightIndex].m_WorldFrustum = Frustum(viewProjMatrix);
 		m_pSpotLights[lightIndex].m_WorldBounds = ExtractBoundingSphere(lightWorldCone);
-		m_pSpotLights[lightIndex].m_LightViewNearPlane = pLight->GetShadowNearPlane();
-		m_pSpotLights[lightIndex].m_LightRcpViewClipRange = Rcp(pLight->GetRange() - pLight->GetShadowNearPlane());
-		m_pSpotLights[lightIndex].m_LightProjMatrix43 = projMatrix.m_32;
-		m_pSpotLights[lightIndex].m_LightProjMatrix33 = projMatrix.m_22;
-		m_pSpotLights[lightIndex].m_LightRange = pLight->GetRange();
-		m_pSpotLights[lightIndex].m_CosHalfInnerConeAngle = Cos(0.5f * pLight->GetInnerConeAngle());
-		m_pSpotLights[lightIndex].m_CosHalfOuterConeAngle = Cos(0.5f * pLight->GetOuterConeAngle());
-		m_pSpotLights[lightIndex].m_LightViewProjMatrix = viewProjMatrix;
-		m_pSpotLights[lightIndex].m_NegativeExpShadowMapConstant = -1.0f * pLight->GetExpShadowMapConstant();
+		m_pSpotLights[lightIndex].m_ViewNearPlane = pLight->GetShadowNearPlane();
+		m_pSpotLights[lightIndex].m_RcpViewClipRange = Rcp(pLight->GetRange() - pLight->GetShadowNearPlane());
+		m_pSpotLights[lightIndex].m_ProjMatrix43 = projMatrix.m_32;
+		m_pSpotLights[lightIndex].m_ProjMatrix33 = projMatrix.m_22;
+				
+		float cosHalfInnerConeAngle = Cos(0.5f * pLight->GetInnerConeAngle());
+		float cosHalfOuterConeAngle = Cos(0.5f * pLight->GetOuterConeAngle());
+
+		m_pSpotLights[lightIndex].m_AngleFalloffScale = Rcp(Max(0.001f, cosHalfInnerConeAngle - cosHalfOuterConeAngle));
+		m_pSpotLights[lightIndex].m_AngleFalloffOffset = -cosHalfOuterConeAngle * m_pSpotLights[lightIndex].m_AngleFalloffScale;
+		
+		m_pSpotLights[lightIndex].m_ViewProjMatrix = viewProjMatrix;
+		m_pSpotLights[lightIndex].m_NegativeExpShadowMapConstant = -pLight->GetExpShadowMapConstant();
 		m_pSpotLights[lightIndex].m_LightID = lightIndex;
 
 		m_ppActiveSpotLights[lightIndex] = nullptr;
@@ -1956,15 +1983,15 @@ void DXApplication::SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustu
 		const SpotLightRenderData* pLightData = m_ppActiveSpotLights[lightIndex];
 		pUploadActiveLightWorldBounds[lightIndex] = pLightData->m_WorldBounds;
 		
-		pUploadActiveLightProps[lightIndex].m_LightViewProjMatrix = pLightData->m_LightViewProjMatrix;
-		pUploadActiveLightProps[lightIndex].m_Color = pLightData->m_Color;
+		pUploadActiveLightProps[lightIndex].m_ViewProjMatrix = pLightData->m_ViewProjMatrix;
+		pUploadActiveLightProps[lightIndex].m_RadiantIntensity = pLightData->m_RadiantIntensity;
 		pUploadActiveLightProps[lightIndex].m_WorldSpacePos = pLightData->m_WorldSpacePos;
 		pUploadActiveLightProps[lightIndex].m_WorldSpaceDir = pLightData->m_WorldSpaceDir;
-		pUploadActiveLightProps[lightIndex].m_LightRange = pLightData->m_LightRange;
-		pUploadActiveLightProps[lightIndex].m_CosHalfInnerConeAngle = pLightData->m_CosHalfInnerConeAngle;
-		pUploadActiveLightProps[lightIndex].m_CosHalfOuterConeAngle = pLightData->m_CosHalfOuterConeAngle;
-		pUploadActiveLightProps[lightIndex].m_ViewNearPlane = pLightData->m_LightViewNearPlane;
-		pUploadActiveLightProps[lightIndex].m_RcpViewClipRange = pLightData->m_LightRcpViewClipRange;
+		pUploadActiveLightProps[lightIndex].m_RcpSquaredRange = pLightData->m_RcpSquaredRange;
+		pUploadActiveLightProps[lightIndex].m_AngleFalloffScale = pLightData->m_AngleFalloffScale;
+		pUploadActiveLightProps[lightIndex].m_AngleFalloffOffset = pLightData->m_AngleFalloffOffset;
+		pUploadActiveLightProps[lightIndex].m_ViewNearPlane = pLightData->m_ViewNearPlane;
+		pUploadActiveLightProps[lightIndex].m_RcpViewClipRange = pLightData->m_RcpViewClipRange;
 		pUploadActiveLightProps[lightIndex].m_NegativeExpShadowMapConstant = pLightData->m_NegativeExpShadowMapConstant;
 		pUploadActiveLightProps[lightIndex].m_LightID = pLightData->m_LightID;
 	}
@@ -1987,8 +2014,8 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 		m_pWindow->SetWindowText(L"Depth buffer");
 	else if (m_DisplayResult == DisplayResult::ReprojectedDepthBuffer)
 		m_pWindow->SetWindowText(L"Reprojected depth buffer");
-	else if (m_DisplayResult == DisplayResult::VoxelRelectance)
-		m_pWindow->SetWindowText(L"Voxel reflectance");
+	else if (m_DisplayResult == DisplayResult::NumLightsPerTile)
+		m_pWindow->SetWindowText(L"Number of lights per tile");
 	else if (m_DisplayResult == DisplayResult::DepthBufferWithMeshType)
 		m_pWindow->SetWindowText(L"Depth buffer with mesh type");
 	else

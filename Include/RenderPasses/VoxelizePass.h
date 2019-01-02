@@ -22,7 +22,7 @@ public:
 		D3D12_RESOURCE_STATES m_InstanceIndexBufferState;
 		D3D12_RESOURCE_STATES m_InstanceWorldMatrixBufferState;
 		D3D12_RESOURCE_STATES m_VoxelReflectanceTextureState;
-		D3D12_RESOURCE_STATES m_FirstResourceIndexPerMaterialIDBufferState;
+		D3D12_RESOURCE_STATES m_MaterialTextureIndicesBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightWorldBoundsBufferState;
 		D3D12_RESOURCE_STATES m_SpotLightPropsBufferState;
 	};
@@ -40,7 +40,7 @@ public:
 
 		u16 m_NumMaterialTextures;
 		ColorTexture** m_ppMaterialTextures;
-		Buffer* m_pFirstResourceIndexPerMaterialIDBuffer;
+		Buffer* m_pMaterialTextureIndicesBuffer;
 
 		Buffer* m_pNumCommandsPerMeshTypeBuffer;
 		Buffer* m_pVoxelizeCommandBuffer;

@@ -32,8 +32,8 @@ class RenderGBufferPass;
 class SpotLightShadowMapRenderer;
 class TiledLightCullingPass;
 class TiledShadingPass;
-class CalcShadingRectanglesPass;
 class CreateVoxelizeCommandsPass;
+class VisualizeNumLightsPerTilePass;
 class VisualizeTexturePass;
 class VisualizeVoxelReflectancePass;
 class VoxelizePass;
@@ -55,7 +55,7 @@ public:
 		NormalBuffer,
 		TexCoordBuffer,
 		DepthBufferWithMeshType,
-		VoxelRelectance,
+		NumLightsPerTile,
 		Unknown
 	};
 	
@@ -96,9 +96,6 @@ private:
 
 	void InitRenderGBufferFalseNegativePass(UINT bufferWidth, UINT bufferHeight);
 	CommandList* RecordRenderGBufferFalseNegativePass();
-	
-	void InitCalcShadingRectanglesPass();
-	CommandList* RecordCalcShadingRectanglesPass();
 
 	void InitFillMeshTypeDepthBufferPass();
 	CommandList* RecordFillMeshTypeDepthBufferPass();
@@ -137,7 +134,10 @@ private:
 
 	void InitVisualizeAccumLightPass();
 	CommandList* RecordVisualizeAccumLightPass();
-		
+	
+	void InitVisualizeNumLightsPerTilePass();
+	CommandList* RecordVisualizeNumLightsPerTilePass();
+
 	void InitVisualizeVoxelReflectancePass();
 	CommandList* RecordVisualizeVoxelReflectancePass();
 
@@ -195,7 +195,6 @@ private:
 	CreateFalseNegativeDrawCommandsPass* m_pCreateFalseNegativeDrawCommandsPass = nullptr;
 	RenderGBufferPass* m_pRenderGBufferFalseNegativePass = nullptr;
 	FillMeshTypeDepthBufferPass* m_pFillMeshTypeDepthBufferPass = nullptr;
-	CalcShadingRectanglesPass* m_pCalcShadingRectanglesPass = nullptr;
 	SpotLightShadowMapRenderer* m_pSpotLightShadowMapRenderer = nullptr;
 	CreateVoxelizeCommandsPass* m_pCreateVoxelizeCommandsPass = nullptr;
 	VoxelizePass* m_pVoxelizePass = nullptr;
@@ -207,6 +206,7 @@ private:
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeTexturePass* m_VisualizeDepthBufferWithMeshTypePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	VisualizeNumLightsPerTilePass* m_VisualizeNumLightsPerTilePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeVoxelReflectancePass* m_VisualizeVoxelReflectancePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 		
 	u32 m_NumSpotLights = 0;

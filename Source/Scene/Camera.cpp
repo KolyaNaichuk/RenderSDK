@@ -15,11 +15,11 @@ namespace
 	}
 }
 
-Camera::Camera(const Vector3f& worldPosition, const BasisAxes& basisAxes,
+Camera::Camera(const Vector3f& worldPosition, const BasisAxes& worldOrientation,
 	f32 fovYInRadians, f32 aspectRatio, f32 nearClipDist, f32 farClipDist,
 	const Vector3f& moveSpeed, const Vector3f& rotationSpeed)
 	: m_WorldPosition(worldPosition)
-	, m_BasisAxes(basisAxes)
+	, m_WorldOrientation(worldOrientation)
 	, m_FovYInRadians(fovYInRadians)
 	, m_AspectRatio(aspectRatio)
 	, m_NearClipDist(nearClipDist)
@@ -28,14 +28,14 @@ Camera::Camera(const Vector3f& worldPosition, const BasisAxes& basisAxes,
 	, m_RotationSpeed(rotationSpeed)
 	, m_Dirty(true)
 {
-	m_RotationInRadians.m_X = ArcSin(-basisAxes.m_ZAxis.m_Y);
+	m_RotationInRadians.m_X = ArcSin(-worldOrientation.m_ZAxis.m_Y);
 	f32 cosX = Cos(m_RotationInRadians.m_X);
 
 	assert(!AreEqual(cosX, 0.0f, EPSILON) && "Encountered Gimbal lock - needs special handling");
 	f32 rcpCosX = Rcp(cosX);
 
-	m_RotationInRadians.m_Y = ArcTan(basisAxes.m_ZAxis.m_X * rcpCosX, basisAxes.m_ZAxis.m_Z * rcpCosX);
-	m_RotationInRadians.m_Z = ArcTan(basisAxes.m_XAxis.m_Y * rcpCosX, basisAxes.m_YAxis.m_Y * rcpCosX);
+	m_RotationInRadians.m_Y = ArcTan(worldOrientation.m_ZAxis.m_X * rcpCosX, worldOrientation.m_ZAxis.m_Z * rcpCosX);
+	m_RotationInRadians.m_Z = ArcTan(worldOrientation.m_XAxis.m_Y * rcpCosX, worldOrientation.m_YAxis.m_Y * rcpCosX);
 
 	RecalcMatricesIfDirty();
 }
@@ -51,14 +51,14 @@ void Camera::SetWorldPosition(const Vector3f& worldPosition)
 	m_Dirty = true;
 }
 
-const BasisAxes& Camera::GetBasisAxes() const
+const BasisAxes& Camera::GetWorldOrientation() const
 {
-	return m_BasisAxes;
+	return m_WorldOrientation;
 }
 
-void Camera::SetBasisAxes(const BasisAxes& basisAxes)
+void Camera::SetWorldOrientation(const BasisAxes& worldOrientation)
 {
-	m_BasisAxes = basisAxes;
+	m_WorldOrientation = worldOrientation;
 	m_Dirty = true;
 }
 
@@ -147,9 +147,9 @@ void Camera::Move(const Vector3f& moveDelta, f32 deltaTime)
 {
 	const Vector3f moveOffset = (deltaTime * m_MoveSpeed) * moveDelta;
 	
-	m_WorldPosition += moveOffset.m_X * m_BasisAxes.m_XAxis;
-	m_WorldPosition += moveOffset.m_Y * m_BasisAxes.m_YAxis;
-	m_WorldPosition += moveOffset.m_Z * m_BasisAxes.m_ZAxis;
+	m_WorldPosition += moveOffset.m_X * m_WorldOrientation.m_XAxis;
+	m_WorldPosition += moveOffset.m_Y * m_WorldOrientation.m_YAxis;
+	m_WorldPosition += moveOffset.m_Z * m_WorldOrientation.m_ZAxis;
 	
 	m_Dirty = true;
 }
@@ -164,7 +164,7 @@ void Camera::Rotate(const Vector3f& rotationDeltaInRadians, f32 deltaTime)
 	m_RotationInRadians.m_X = Clamp(-PI_DIV_2, PI_DIV_2, m_RotationInRadians.m_X);
 	m_RotationInRadians.m_Z = NormalizeAngle(m_RotationInRadians.m_Z);
 	
-	m_BasisAxes = BasisAxes(CreateRotationZXYMatrix(m_RotationInRadians));
+	m_WorldOrientation = BasisAxes(CreateRotationZXYMatrix(m_RotationInRadians));
 	m_Dirty = true;
 }
 
@@ -172,7 +172,7 @@ void Camera::RecalcMatricesIfDirty() const
 {
 	if (m_Dirty)
 	{
-		m_ViewMatrix = CreateLookAtMatrix(m_WorldPosition, m_BasisAxes);
+		m_ViewMatrix = CreateLookAtMatrix(m_WorldPosition, m_WorldOrientation);
 		m_ProjMatrix = CreatePerspectiveFovProjMatrix(m_FovYInRadians, m_AspectRatio, m_NearClipDist, m_FarClipDist);
 		m_ViewProjMatrix = m_ViewMatrix * m_ProjMatrix;
 

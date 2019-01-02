@@ -12,7 +12,7 @@
 
 namespace
 {
-	void AddAssimpMeshes(Scene* pScene, const aiScene* pAssimpScene, bool use32BitIndices)
+	void AddAssimpMeshes(Scene* pScene, const aiScene* pAssimpScene, const Matrix4f& worldMatrix, bool use32BitIndices)
 	{
 		assert(pAssimpScene->HasMeshes());
 
@@ -99,7 +99,7 @@ namespace
 
 			const u8 numInstances = 1;
 			Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
-			pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
+			pInstanceWorldMatrices[0] = worldMatrix;
 
 			Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices,
 				pAssimpMesh->mMaterialIndex, primitiveTopologyType, primitiveTopology);
@@ -115,33 +115,26 @@ namespace
 
 		aiString assimpName;
 		aiString assimpMapPath;
-		aiColor3D assimpColor;
 
 		for (decltype(pAssimpScene->mNumMaterials) materialIndex = 0; materialIndex < pAssimpScene->mNumMaterials; ++materialIndex)
 		{
-			aiMaterial* pAssimpMaterial = pAssimpScene->mMaterials[materialIndex];
+			const aiMaterial* pAssimpMaterial = pAssimpScene->mMaterials[materialIndex];
 			
 			pAssimpMaterial->Get(AI_MATKEY_NAME, assimpName);
 			Material* pMaterial = new Material(AnsiToWideString(assimpName.C_Str()));
 
 			if (pAssimpMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &assimpMapPath) == aiReturn_SUCCESS)
-				pMaterial->m_DiffuseMapFilePath = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
-			else if (pAssimpMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, assimpColor) == aiReturn_SUCCESS)
-				pMaterial->m_DiffuseColor = Vector3f(assimpColor.r, assimpColor.g, assimpColor.b);
+				pMaterial->m_FilePaths[Material::BaseColorTextureIndex] = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
 			else
 				assert(false);
 
-			if (pAssimpMaterial->GetTexture(aiTextureType_SPECULAR, 0, &assimpMapPath) == aiReturn_SUCCESS)
-				pMaterial->m_SpecularMapFilePath = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
-			else if (pAssimpMaterial->Get(AI_MATKEY_COLOR_SPECULAR, assimpColor) == aiReturn_SUCCESS)
-				pMaterial->m_SpecularColor = Vector3f(assimpColor.r, assimpColor.g, assimpColor.b);
+			if (pAssimpMaterial->GetTexture(aiTextureType_AMBIENT, 0, &assimpMapPath) == aiReturn_SUCCESS)
+				pMaterial->m_FilePaths[Material::MetallicTextureIndex] = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
 			else
 				assert(false);
 
 			if (pAssimpMaterial->GetTexture(aiTextureType_SHININESS, 0, &assimpMapPath) == aiReturn_SUCCESS)
-				pMaterial->m_ShininessMapFilePath = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
-			else if (pAssimpMaterial->Get(AI_MATKEY_SHININESS, assimpColor.r) == aiReturn_SUCCESS)
-				pMaterial->m_Shininess = assimpColor.r;
+				pMaterial->m_FilePaths[Material::RougnessTextureIndex] = materialDirectoryPath / std::experimental::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
 			else
 				assert(false);
 			
@@ -150,11 +143,11 @@ namespace
 	}
 }
 
-Scene* LoadSceneFromOBJFile(const wchar_t* pFilePath, bool use32BitIndices)
+Scene* LoadSceneFromOBJFile(const wchar_t* pFilePath, const Matrix4f& worldMatrix, bool use32BitIndices)
 {
 	Assimp::Importer importer;
 	
-	u32 importFlags = aiProcess_CalcTangentSpace |
+	const u32 importFlags = aiProcess_CalcTangentSpace |
 		aiProcess_GenNormals |
 		aiProcess_Triangulate |
 		aiProcess_SortByPType |
@@ -173,7 +166,7 @@ Scene* LoadSceneFromOBJFile(const wchar_t* pFilePath, bool use32BitIndices)
 	}
 
 	Scene* pScene = new Scene();
-	AddAssimpMeshes(pScene, pAssimpScene, use32BitIndices);
+	AddAssimpMeshes(pScene, pAssimpScene, worldMatrix, use32BitIndices);
 			
 	std::experimental::filesystem::path materialDirectoryPath(pFilePath);
 	materialDirectoryPath.remove_filename();
