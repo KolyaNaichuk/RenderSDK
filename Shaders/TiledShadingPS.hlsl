@@ -82,7 +82,7 @@ float4 Main(PSInput input) : SV_Target
 
 		float visibility = CalcSpotLightVisibility(g_SpotLightShadowMaps, lightProps.lightID,
 			g_ShadowMapSampler, lightProps.viewProjMatrix, lightProps.viewNearPlane, lightProps.rcpViewClipRange,
-			lightProps.negativeExpShadowMapConstant, lightProps.worldSpacePos);
+			lightProps.negativeExpShadowMapConstant, worldSpacePos);
 
 		float3 reflectedRadiance = CalcSpotLightContribution(visibility, lightProps.worldSpacePos,
 			lightProps.worldSpaceDir, lightProps.radiantIntensity, lightProps.rcpSquaredRange,
