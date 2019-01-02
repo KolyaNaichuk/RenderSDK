@@ -27,7 +27,7 @@ Scene* SceneLoader::LoadCrytekSponza()
 	const Vector3f maxPoint = worldBounds.m_Center + worldBounds.m_Radius;
 
 	Camera* pCamera = new Camera(
-		Vector3f(0.0f, 2.8f, 5.5f)/*worldPosition*/,
+		Vector3f(0.0f, 2.8f, 9.32f)/*worldPosition*/,
 		BasisAxes()/*worldOrientation*/,
 		PI_DIV_4/*fovYInRadians*/,
 		1.0f/*aspectRatio*/,
@@ -40,90 +40,87 @@ Scene* SceneLoader::LoadCrytekSponza()
 
 #if 1
 	SpotLight* pSpotLight1 = new SpotLight(
-		Vector3f(0.0f, 8.0f, 17.0f)/*worldPosition*/,
+		Vector3f(0.0f, 5.5f, 16.5f)/*worldPosition*/,
 		BasisAxes(Vector3f::RIGHT, Vector3f::FORWARD, Vector3f::DOWN)/*worldOrientation*/,
 		Vector3f(20.0f, 20.0f, 20.0f)/*radiantPower*/,
-		12.0f/*range*/,
-		ToRadians(45.0f)/*innerConeAngleInRadians*/,
-		ToRadians(60.0f)/*outerConeAngleInRadians*/,
+		7.5f/*range*/,
+		ToRadians(60.0f)/*innerConeAngleInRadians*/,
+		ToRadians(90.0f)/*outerConeAngleInRadians*/,
 		0.1f/*shadowNearPlane*/,
 		80.0f/*expShadowMapConstant*/
 	);
 	pScene->AddSpotLight(pSpotLight1);
 #endif
 
-#if 0
+#if 1
 	SpotLight* pSpotLight2 = new SpotLight(
-		Vector3f(-93.0f, 400.0f, 39.0f)/*worldPosition*/,
-		BasisAxes(CreateRotationMatrix(CreateRotationXQuaternion(PI_DIV_2)))/*worldOrientation*/,
-		Vector3f(1.43f, 1.43f, 1.43f)/*radiantPower*/,
-		600.0f/*range*/,
-		ToRadians(45.0f)/*innerConeAngleInRadians*/,
-		ToRadians(90.0f)/*outerConeAngleInRadians*/,
+		Vector3f(0.0f, 7.0f, 23.5f)/*worldPosition*/,
+		BasisAxes(Vector3f::RIGHT, Vector3f::FORWARD, Vector3f::DOWN)/*worldOrientation*/,
+		Vector3f(20.0f, 20.0f, 20.0f)/*radiantPower*/,
+		10.0f/*range*/,
+		ToRadians(50.0f)/*innerConeAngleInRadians*/,
+		ToRadians(70.0f)/*outerConeAngleInRadians*/,
 		0.1f/*shadowNearPlane*/,
 		80.0f/*expShadowMapConstant*/
 	);
 	pScene->AddSpotLight(pSpotLight2);
 #endif
 
-#if 0
+#if 1
 	SpotLight* pSpotLight3 = new SpotLight(
-		Vector3f(708.0f, 400.0f, 39.0f)/*worldPosition*/,
-		BasisAxes(CreateRotationMatrix(CreateRotationXQuaternion(PI_DIV_2)))/*worldOrientation*/,
-		Vector3f(1.43f, 1.43f, 1.43f)/*radiantPower*/,
-		600.0f/*range*/,
-		ToRadians(45.0f)/*innerConeAngleInRadians*/,
+		Vector3f(0.0f, 5.5f, 31.5f)/*worldPosition*/,
+		BasisAxes(Vector3f::RIGHT, Vector3f::FORWARD, Vector3f::DOWN)/*worldOrientation*/,
+		Vector3f(20.0f, 20.0f, 20.0f)/*radiantPower*/,
+		7.5f/*range*/,
+		ToRadians(60.0f)/*innerConeAngleInRadians*/,
 		ToRadians(90.0f)/*outerConeAngleInRadians*/,
 		0.1f/*shadowNearPlane*/,
 		80.0f/*expShadowMapConstant*/
 	);
 	pScene->AddSpotLight(pSpotLight3);
 #endif
-
-// Front
-#if 0
+		
+#if 1
 	SpotLight* pSpotLight4 = new SpotLight(
-		Vector3f(-800.0f, 600.0f, 39.0f)/*worldPosition*/,
-		BasisAxes(CreateRotationMatrix(CreateRotationYQuaternion(-PI_DIV_2)))/*worldOrientation*/,
-		Vector3f(2.45f, 2.45f, 2.45f)/*radiantPower*/,
-		700.0f/*range*/,
-		ToRadians(90.0f)/*innerConeAngleInRadians*/,
-		ToRadians(120.0f)/*outerConeAngleInRadians*/,
+		Vector3f(0.0f, 7.5f, 23.9312f)/*worldPosition*/,
+		BasisAxes()/*worldOrientation*/,
+		Vector3f(20.0f, 20.0f, 20.0f)/*radiantPower*/,
+		12.0f/*range*/,
+		ToRadians(60.0f)/*innerConeAngleInRadians*/,
+		ToRadians(75.0f)/*outerConeAngleInRadians*/,
 		0.1f/*shadowNearPlane*/,
 		80.0f/*expShadowMapConstant*/
 	);
 	pScene->AddSpotLight(pSpotLight4);
 #endif
 
-// Right half part
-#if 0
+#if 1
 	SpotLight* pSpotLight5 = new SpotLight(
-		Vector3f(-800.0f, 600.0f, 39.0f)/*worldPosition*/,
-		BasisAxes()/*worldOrientation*/,
-		Vector3f(2.45f, 2.45f, 2.45f)/*radiantPower*/,
-		700.0f/*range*/,
-		ToRadians(90.0f)/*innerConeAngleInRadians*/,
-		ToRadians(120.0f)/*outerConeAngleInRadians*/,
+		Vector3f(0.0f, 7.5f, 23.9312f)/*worldPosition*/,
+		BasisAxes(Vector3f::BACK, Vector3f::UP, Vector3f::RIGHT)/*worldOrientation*/,
+		Vector3f(20.0f, 20.0f, 20.0f)/*radiantPower*/,
+		13.0f/*range*/,
+		ToRadians(60.0f)/*innerConeAngleInRadians*/,
+		ToRadians(90.0f)/*outerConeAngleInRadians*/,
 		0.1f/*shadowNearPlane*/,
 		80.0f/*expShadowMapConstant*/
 	);
 	pScene->AddSpotLight(pSpotLight5);
 #endif
 
-// Left half space
-#if 0
+#if 1
 	SpotLight* pSpotLight6 = new SpotLight(
-		Vector3f(-800.0f, 600.0f, 39.0f)/*worldPosition*/,
-		BasisAxes(CreateRotationMatrix(CreateRotationYQuaternion(PI)))/*worldOrientation*/,
-		Vector3f(2.45f, 2.45f, 2.45f)/*radiantPower*/,
-		700.0f/*range*/,
-		ToRadians(90.0f)/*innerConeAngleInRadians*/,
-		ToRadians(120.0f)/*outerConeAngleInRadians*/,
+		Vector3f(0.0f, 7.5f, 23.9312f)/*worldPosition*/,
+		BasisAxes(Vector3f::FORWARD, Vector3f::UP, Vector3f::LEFT)/*worldOrientation*/,
+		Vector3f(20.0f, 20.0f, 20.0f)/*radiantPower*/,
+		13.0f/*range*/,
+		ToRadians(60.0f)/*innerConeAngleInRadians*/,
+		ToRadians(90.0f)/*outerConeAngleInRadians*/,
 		0.1f/*shadowNearPlane*/,
 		80.0f/*expShadowMapConstant*/
 	);
 	pScene->AddSpotLight(pSpotLight6);
 #endif
-		
+
 	return pScene;
 }
