@@ -55,10 +55,6 @@
 #include "Math/Vector4.h"
 
 /*
-- Incoming radiant intensity should be multiplied by visibility term instead of reflected radiance
-*/
-
-/*
 To do:
 - Check if using lookup table for (solidAngle * SHValue) in CubeMapToSHCoefficientsPass gives performance increase
 - Check if there is a way to avoid changing PSO for each Integrate pass in CubeMapToSHCoefficientsPass.
@@ -73,7 +69,6 @@ CreateExpShadowMap and FilterExpShadowMap. Since command list is shared I could 
 - When generating visible static geometry for lights I could also run back-face culling
 - Check if it is possible to pre-sort (front to back) commands for rendering shadow maps for static meshes
 - In TiledLightCulling pass use spot light frustum vs view frustum test
-- Rewrite CalcShadingRectanglesCS using Gather to process 4 values at a time
 - Depth and shadow maps are using DXGI_FORMAT_R32_TYPELESS format. Check if I could use more optimal formats (see COD presentation)
 
 - Enable InitCreateVoxelizeCommandsPass(), InitVoxelizePass(), InitVisualizeVoxelReflectancePass()
@@ -83,7 +78,6 @@ CreateExpShadowMap and FilterExpShadowMap. Since command list is shared I could 
 - Enable VoxelizePass. Fix calculation for frustum corners
 - VoxelizationPass does not pass point/spot light count to the shader
 - Move upload visible light data to separate render pass
-- Point light data in the scene object has bad CPU cache coherence when doing frustum culling
 - Spot light data in the scene object has bad CPU cache coherence when doing frustum culling
 - Cannot use ROV and 1 render pass for voxelization. ROV is messed up when specifying projection dominant axis from geometry shader.
   When doing 3 render passes for voxelization should also be careful as the same triangle could be rendered multiple times,
@@ -102,7 +96,6 @@ For an example, plane in original coordinates is passing through point (0, 0, 0)
 OOB will have coordinates expanding from -1 to 1 not merely passing through 0 when world matrix is applied.
 - Check Torque3D engine for plane object implementation. mPlane.h and mPlane.cpp
 - Using std::experimental::filesystem::path from OBJFileLoader. Should be consistent with the code.
-- Review to-dos
 - Use Task graph for resource state transition after each render pass.
 https://patterns.eecs.berkeley.edu/?page_id=609
 - Fix compilation warnings for x64 build

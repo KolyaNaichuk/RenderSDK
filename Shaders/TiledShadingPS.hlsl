@@ -80,16 +80,16 @@ float4 Main(PSInput input) : SV_Target
 		uint lightIndex = g_SpotLightIndexPerTileBuffer[lightIndexPerTile];
 		SpotLightProps lightProps = g_SpotLightPropsBuffer[lightIndex];
 
-		float3 reflectedRadiance = CalcSpotLightContribution(lightProps.worldSpacePos,
+		float visibility = CalcSpotLightVisibility(g_SpotLightShadowMaps, lightProps.lightID,
+			g_ShadowMapSampler, lightProps.viewProjMatrix, lightProps.viewNearPlane, lightProps.rcpViewClipRange,
+			lightProps.negativeExpShadowMapConstant, lightProps.worldSpacePos);
+
+		float3 reflectedRadiance = CalcSpotLightContribution(visibility, lightProps.worldSpacePos,
 			lightProps.worldSpaceDir, lightProps.radiantIntensity, lightProps.rcpSquaredRange,
 			lightProps.angleFalloffScale, lightProps.angleFalloffOffset, worldSpacePos,
 			worldSpaceNormal, worldSpaceDirToViewer, baseColor, metallic, roughness);
 		
-		float visibilityTerm = CalcSpotLightVisibility(g_SpotLightShadowMaps, lightProps.lightID,
-			g_ShadowMapSampler, lightProps.viewProjMatrix, lightProps.viewNearPlane, lightProps.rcpViewClipRange,
-			lightProps.negativeExpShadowMapConstant, lightProps.worldSpacePos);
-
-		spotLightsContrib += visibilityTerm * reflectedRadiance;
+		spotLightsContrib += reflectedRadiance;
 	}
 #endif // ENABLE_SPOT_LIGHTS
 	

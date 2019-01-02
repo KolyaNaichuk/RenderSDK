@@ -42,10 +42,10 @@ Scene* SceneLoader::LoadCrytekSponza()
 	SpotLight* pSpotLight1 = new SpotLight(
 		Vector3f(0.0f, 8.0f, 17.0f)/*worldPosition*/,
 		BasisAxes(Vector3f::RIGHT, Vector3f::FORWARD, Vector3f::DOWN)/*worldOrientation*/,
-		Vector3f(1.43f, 1.43f, 1.43f)/*radiantPower*/,
+		Vector3f(20.0f, 20.0f, 20.0f)/*radiantPower*/,
 		12.0f/*range*/,
 		ToRadians(45.0f)/*innerConeAngleInRadians*/,
-		ToRadians(90.0f)/*outerConeAngleInRadians*/,
+		ToRadians(60.0f)/*outerConeAngleInRadians*/,
 		0.1f/*shadowNearPlane*/,
 		80.0f/*expShadowMapConstant*/
 	);

@@ -68,7 +68,7 @@ float CalcAngleFalloff(float3 dirToPosition, float3 lightDir, float angleFalloff
 }
 
 float3 CalcPointLightContribution(
-	float3 lightPos, float3 radiantIntensity, float lightRcpSquaredRange,
+	float visibility, float3 lightPos, float3 radiantIntensity, float lightRcpSquaredRange,
 	float3 position, float3 normal, float3 dirToViewer,
 	float3 baseColor, float metallic, float roughness)
 {
@@ -86,14 +86,14 @@ float3 CalcPointLightContribution(
 		float3 incidentRadiance = distFalloff * radiantIntensity;
 		float3 brdf = BRDF(NdotL, normal, dirToLight, dirToViewer, baseColor, metallic, roughness);
 
-		reflectedRadiance = incidentRadiance * brdf * NdotL;
+		reflectedRadiance = incidentRadiance * brdf * (visibility * NdotL);
 	}
 
 	return reflectedRadiance;
 }
 
 float3 CalcSpotLightContribution(
-	float3 lightPos, float3 lightDir, float3 radiantIntensity,
+	float visibility, float3 lightPos, float3 lightDir, float3 radiantIntensity,
 	float lightRcpSquaredRange, float angleFalloffScale, float angleFalloffOffset,
 	float3 position, float3 normal, float3 dirToViewer,
 	float3 baseColor, float metallic, float roughness)
@@ -113,7 +113,7 @@ float3 CalcSpotLightContribution(
 		float3 incidentRadiance = (distFalloff * angleFalloff) * radiantIntensity;
 		float3 brdf = BRDF(NdotL, normal, dirToLight, dirToViewer, baseColor, metallic, roughness);
 
-		reflectedRadiance = incidentRadiance * brdf * NdotL;
+		reflectedRadiance = incidentRadiance * brdf * (visibility * NdotL);
 	}
 
 	return reflectedRadiance;
