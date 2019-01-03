@@ -320,6 +320,15 @@ COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(Pro
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\GammaCorrection.hlsl"
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"
 
+COPY /Y "$(SolutionDir)Shaders\SphericalHarmonics.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\SphericalHarmonics.hlsl"
+COPY /Y "$(SolutionDir)Shaders\SphericalHarmonics.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\SphericalHarmonics.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CubeMapToSHCoefficientsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CubeMapToSHCoefficientsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CubeMapToSHCoefficientsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CubeMapToSHCoefficientsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl"
+
 IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-4.1.0\bin\$(Platform)\assimp-vc140-mt.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

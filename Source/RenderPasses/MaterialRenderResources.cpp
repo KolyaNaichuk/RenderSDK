@@ -60,7 +60,7 @@ MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u16 numM
 
 	std::unordered_map<std::wstring, u16> loadedTextures;
 
-	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"UploadCommandList");
+	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"MaterialRenderResources::pUploadCommandList");
 	pUploadCommandList->Begin();
 
 	for (u16 materialIndex = 0; materialIndex < numMaterials; ++materialIndex)

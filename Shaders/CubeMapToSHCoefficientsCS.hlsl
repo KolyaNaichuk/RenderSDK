@@ -1,4 +1,3 @@
-#include "Foundation.hlsl"
 #include "SphericalHarmonics.hlsl"
 
 uint ComputeDataOffset(uint SHIndex, uint rowIndex)
@@ -9,7 +8,7 @@ uint ComputeDataOffset(uint SHIndex, uint rowIndex)
 #ifdef INTEGRATE
 
 Texture2DArray<float3> g_CubeMap : register(t0);
-RWBuffer<float3> g_SumPerRowBuffer : register(u0);
+RWStructuredBuffer<float3> g_SumPerRowBuffer : register(u0);
 
 static const float3x3 g_RotationMatrices[g_NumCubeMapFaces] =
 {
@@ -54,7 +53,7 @@ static const float3x3 g_RotationMatrices[g_NumCubeMapFaces] =
 groupshared float3 g_SharedMem[FACE_SIZE];
 
 [numthreads(FACE_SIZE, 1, 1)]
-void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
+void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 {
 	uint2 pixelPos = uint2(localThreadId.x, groupId.y);
 	uint faceIndex = groupId.z;
@@ -109,7 +108,7 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 	
 	if (localThreadId.x == 0)
 	{
-		uint dataOffset = ComputeDataOffset(SH_INDEX, pixelPos.y)
+		uint dataOffset = ComputeDataOffset(SH_INDEX, pixelPos.y);
 		g_SumPerRowBuffer[dataOffset + faceIndex] = g_SharedMem[0];
 	}
 }
@@ -118,15 +117,15 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
 
 #ifdef MERGE
 
-Buffer<float3> g_SumPerRowBuffer : register(t0);
-RWBuffer<float3> g_SHCoefficientBuffer : register(u0);
+StructuredBuffer<float3> g_SumPerRowBuffer : register(t0);
+RWStructuredBuffer<float3> g_SHCoefficientBuffer : register(u0);
 
 groupshared float3 g_SharedMem[FACE_SIZE];
 
 [numthreads(1, FACE_SIZE, 1)]
-void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupID : SV_GroupID)
+void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 {
-	uint SHIndex = groupID.x;
+	uint SHIndex = groupId.x;
 	uint dataOffset = ComputeDataOffset(SHIndex, localThreadId.y);
 
 	float3 sum = 0.0f;

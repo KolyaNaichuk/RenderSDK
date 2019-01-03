@@ -27,6 +27,7 @@
 #include "RenderPasses/FillVisibilityBufferPass.h"
 #include "RenderPasses/CreateMainDrawCommandsPass.h"
 #include "RenderPasses/CreateFalseNegativeDrawCommandsPass.h"
+#include "RenderPasses/CubeMapToSHCoefficientsPass.h"
 #include "RenderPasses/FillMeshTypeDepthBufferPass.h"
 #include "RenderPasses/SpotLightShadowMapRenderer.h"
 #include "RenderPasses/VisualizeNumLightsPerTilePass.h"
@@ -232,7 +233,7 @@ namespace
 		for (SIZE_T i = 0; i < numElements; ++i)
 		{ 
 			const u8* pElementData = byteData.data() + i * elementSizeInBytes;
-			outputStream << i << ":\n" << elementFormatter(pElementData) << "\n";
+			outputStream << i << ". " << elementFormatter(pElementData) << "\n";
 		}
 		std::string outputString = outputStream.str();
 		OutputDebugStringA(outputString.c_str());
@@ -334,6 +335,10 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pActiveSpotLightWorldBoundsBuffer);
 	SafeDelete(m_pActiveSpotLightPropsBuffer);
 	
+	SafeDelete(m_pCubeMap);
+	SafeDelete(m_pSHCoefficientBuffer);
+	SafeDelete(m_pCubeMapToSHCoefficientsPass);
+
 	SafeDelete(m_pDownscaleAndReprojectDepthPass);
 	SafeDelete(m_pFrustumMeshCullingPass);
 	SafeDelete(m_pFillVisibilityBufferMainPass);
@@ -402,6 +407,7 @@ void DXApplication::OnInit()
 	InitVisualizeTexCoordBufferPass();
 	InitVisualizeDepthBufferWithMeshTypePass();
 
+	InitCubeMapToSHCoefficientsPass();
 	SafeDelete(pScene);
 }
 
@@ -508,6 +514,7 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordRenderSpotLightShadowMaps();	
 	commandListBatch[commandListBatchSize++] = RecordTiledShadingPass();
 	commandListBatch[commandListBatchSize++] = RecordVisualizeDisplayResultPass();
+	commandListBatch[commandListBatchSize++] = RecordCubeMapToSHCoefficientsPass();
 	commandListBatch[commandListBatchSize++] = RecordPostRenderPass();
 				
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
@@ -1804,6 +1811,71 @@ CommandList* DXApplication::RecordTiledShadingPass()
 	return params.m_pCommandList;
 }
 
+void DXApplication::InitCubeMapToSHCoefficientsPass()
+{
+	const u32 cubeMapFaceSize = 64;
+	assert(m_pCubeMap == nullptr);
+	ColorTexture2DDesc cubeMapDesc(DXGI_FORMAT_R11G11B10_FLOAT, cubeMapFaceSize, cubeMapFaceSize,
+		false, true, true, 1, kNumCubeMapFaces);
+	m_pCubeMap = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &cubeMapDesc,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, L"m_pCubeMap");
+
+	assert(m_pSHCoefficientBuffer == nullptr);
+	StructuredBufferDesc SHCoefficientBufferDesc(CubeMapToSHCoefficientsPass::kNumSHCoefficients, sizeof(Vector3f), true, true);
+	m_pSHCoefficientBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &SHCoefficientBufferDesc,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pSHCoefficientBuffer");
+
+	assert(m_pCubeMapToSHCoefficientsPass == nullptr);
+	CubeMapToSHCoefficientsPass::InitParams params;
+	params.m_pName = "CubeMapToSHCoefficientsPass";
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_CubeMapFaceSize = cubeMapFaceSize;
+
+	m_pCubeMapToSHCoefficientsPass = new CubeMapToSHCoefficientsPass(&params);
+
+	CommandList* pCommandList = m_pCommandListPool->Create(L"");
+	pCommandList->Begin();
+	
+	DescriptorHandle gpuHandle = m_pShaderVisibleSRVHeap->Allocate();
+	const FLOAT clearColor[] = {12.4f, 25.6f, 20.0f, 0.0f};
+	for (UINT arraySlice = 0; arraySlice < kNumCubeMapFaces; ++arraySlice)
+	{
+		DescriptorHandle cpuHandle = m_pCubeMap->GetUAVHandle(0, arraySlice);
+		m_pDevice->CopyDescriptor(gpuHandle, cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		pCommandList->ClearUnorderedAccessView(gpuHandle, cpuHandle, m_pCubeMap, clearColor);
+	}
+
+	ResourceTransitionBarrier resourceBarrier(m_pCubeMap,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+	
+	pCommandList->ResourceBarrier(1, &resourceBarrier);
+	pCommandList->End();
+
+	++m_pRenderEnv->m_LastSubmissionFenceValue;
+	m_pCommandQueue->ExecuteCommandLists(1, &pCommandList, m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
+	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
+}
+
+CommandList* DXApplication::RecordCubeMapToSHCoefficientsPass()
+{
+	assert(m_pCubeMapToSHCoefficientsPass != nullptr);
+	assert(m_pCubeMap != nullptr);
+	assert(m_pSHCoefficientBuffer != nullptr);
+
+	CubeMapToSHCoefficientsPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pCubeMapToSHCoefficientsCommandList");;
+	params.m_pCubeMap = m_pCubeMap;
+	params.m_pSHCoefficientBuffer = m_pSHCoefficientBuffer;
+	params.m_InputResourceStates.m_CubeMapState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+	params.m_InputResourceStates.m_SHCoefficientBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+	m_pCubeMapToSHCoefficientsPass->Record(&params);
+	return params.m_pCommandList;
+}
+
 CommandList* DXApplication::RecordVisualizeDisplayResultPass()
 {
 	if (m_DisplayResult == DisplayResult::ShadingResult)
@@ -2025,37 +2097,30 @@ void DXApplication::UpdateDisplayResult(DisplayResult displayResult)
 #ifdef DEBUG_RENDER_PASS
 void DXApplication::OuputDebugRenderPassResult()
 {
-	static unsigned frameNumber = 0;
-	static unsigned frameNumberForOutput = 10;
+	static u64 frameNumber = 0;
+	static u64 frameNumberForOutput = 10;
 
 	++frameNumber;
 
 	if (frameNumber == frameNumberForOutput)
 	{
-		struct ShadowMapCommand
-		{
-			UINT m_DataOffset;
-			DrawIndexedArguments m_Args;
-		};
-
 		OutputDebugStringA("1.Debug =========================\n");
-		using ElementType = ShadowMapCommand;
+		using ElementType = Vector3f;
 		
 		auto elementFormatter = [](const void* pElementData)
 		{
 			const ElementType* pElement = (ElementType*)pElementData;
 
 			std::stringstream stringStream;
-			stringStream << "m_DataOffset: " << pElement->m_DataOffset
-				<< "\nm_IndexCountPerInstance: " << pElement->m_Args.m_IndexCountPerInstance
-				<< "\nm_InstanceCount: " << pElement->m_Args.m_InstanceCount
-				<< "\nm_StartIndexLocation: " << pElement->m_Args.m_StartIndexLocation
-				<< "\nm_BaseVertexLocation: " << pElement->m_Args.m_BaseVertexLocation
-				<< "\nm_StartInstanceLocation: " << pElement->m_Args.m_StartInstanceLocation;
+			stringStream
+				<< "(" << pElement->m_X << ", "
+				<< pElement->m_Y << ", "
+				<< pElement->m_Z << ")\n";
+
 			return stringStream.str();
 		};
 		OutputBufferContent(m_pRenderEnv,
-			m_pCreateTiledShadowMapCommandsPass->GetPointLightCommandBuffer(),
+			m_pSHCoefficientBuffer,
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 			sizeof(ElementType),
 			elementFormatter);

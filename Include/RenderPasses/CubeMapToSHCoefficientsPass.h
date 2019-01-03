@@ -56,7 +56,7 @@ private:
 	u32 m_CubeMapFaceSize = 0;
 
 	RootSignature* m_pIntegrateRootSignature = nullptr;
-	PipelineState* m_IntegratePipelineStates[kNumSHCoefficients];
+	PipelineState* m_IntegratePipelineStates[kNumSHCoefficients] = {};
 	DescriptorHandle m_IntegrateSRVHeapStart;
 
 	RootSignature* m_pMergeRootSignature = nullptr;

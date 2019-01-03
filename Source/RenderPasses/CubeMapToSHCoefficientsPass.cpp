@@ -4,6 +4,7 @@
 #include "D3DWrapper/PipelineState.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/RootSignature.h"
+#include "Math/Vector3.h"
 #include "Profiler/GPUProfiler.h"
 
 namespace
@@ -143,7 +144,7 @@ void CubeMapToSHCoefficientsPass::InitResources(InitParams* pParams)
 	m_CubeMapFaceSize = pParams->m_CubeMapFaceSize;
 
 	assert(m_pSumPerRowBuffer == nullptr);
-	FormattedBufferDesc sumPerRowBufferDesc(kNumSHCoefficients * kNumCubeMapFaces * m_CubeMapFaceSize, DXGI_FORMAT_R32G32B32_FLOAT, true, true);
+	StructuredBufferDesc sumPerRowBufferDesc(kNumSHCoefficients * kNumCubeMapFaces * m_CubeMapFaceSize, sizeof(Vector3f), true, true);
 	m_pSumPerRowBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &sumPerRowBufferDesc,
 		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, L"CubeMapToSHCoefficientsPass::m_pSumPerRowBuffer");
 

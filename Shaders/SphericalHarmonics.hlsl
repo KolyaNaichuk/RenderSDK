@@ -50,9 +50,4 @@ float3 SH9Reconstruct(in float3 SHCoeffs[9], in float3 normDir)
 	return result;
 }
 
-void SH9RadianceToIrradianceCoefficients(out float3 SHIrradianceCoeffs, in float3 SHRadianceCoeffs[9])
-{
-	Add implementation
-}
-
 #endif // __SPHERICAL_HARMONICS__

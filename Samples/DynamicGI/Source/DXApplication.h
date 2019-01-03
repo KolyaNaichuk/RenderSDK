@@ -27,6 +27,7 @@ class FrustumMeshCullingPass;
 class FillVisibilityBufferPass;
 class CreateMainDrawCommandsPass;
 class CreateFalseNegativeDrawCommandsPass;
+class CubeMapToSHCoefficientsPass;
 class FillMeshTypeDepthBufferPass;
 class RenderGBufferPass;
 class SpotLightShadowMapRenderer;
@@ -117,6 +118,9 @@ private:
 	void InitTiledShadingPass();
 	CommandList* RecordTiledShadingPass();
 
+	void InitCubeMapToSHCoefficientsPass();
+	CommandList* RecordCubeMapToSHCoefficientsPass();
+
 	void InitVisualizeDepthBufferPass();
 	CommandList* RecordVisualizeDepthBufferPass();
 
@@ -200,6 +204,7 @@ private:
 	VoxelizePass* m_pVoxelizePass = nullptr;
 	TiledLightCullingPass* m_pTiledLightCullingPass = nullptr;
 	TiledShadingPass* m_pTiledShadingPass = nullptr;
+	
 	VisualizeTexturePass* m_VisualizeAccumLightPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeTexturePass* m_VisualizeReprojectedDepthBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
@@ -208,7 +213,11 @@ private:
 	VisualizeTexturePass* m_VisualizeDepthBufferWithMeshTypePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeNumLightsPerTilePass* m_VisualizeNumLightsPerTilePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeVoxelReflectancePass* m_VisualizeVoxelReflectancePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
-		
+	
+	ColorTexture* m_pCubeMap = nullptr;
+	Buffer* m_pSHCoefficientBuffer = nullptr;
+	CubeMapToSHCoefficientsPass* m_pCubeMapToSHCoefficientsPass = nullptr;
+
 	u32 m_NumSpotLights = 0;
 	SpotLightRenderData* m_pSpotLights = nullptr;
 
