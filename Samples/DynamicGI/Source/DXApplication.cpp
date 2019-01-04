@@ -56,7 +56,6 @@
 #include "Math/Vector4.h"
 
 /*
-To do:
 - Check if using lookup table for (solidAngle * SHValue) in CubeMapToSHCoefficientsPass gives performance increase
 - Check if there is a way to avoid changing PSO for each Integrate pass in CubeMapToSHCoefficientsPass.
 Using look-up table should allow avoid changing PSO and perform one dispatch call.
@@ -72,6 +71,11 @@ CreateExpShadowMap and FilterExpShadowMap. Since command list is shared I could 
 - Check if it is possible to pre-sort (front to back) commands for rendering shadow maps for static meshes
 - In TiledLightCulling pass use spot light frustum vs view frustum test
 - Depth and shadow maps are using DXGI_FORMAT_R32_TYPELESS format. Check if I could use more optimal formats (see COD presentation)
+
+- Check https://github.com/Microsoft/DirectX-Graphics-Samples/blob/07008938a0dc5a187a23abcb55b61f8c2809c874/Samples/Desktop/D3D12Raytracing/src/D3D12RaytracingProceduralGeometry/util/PerformanceTimers.cpp
+for profiler implementation. Could resolve query data for the whole batch at the end of the render frame.
+- https://github.com/Microsoft/DirectX-Graphics-Samples/blob/8f68bf07dfd134df3b90e83a63535d053bae9a8a/MiniEngine/Core/EngineProfiling.cpp
+for profiler graph implementation.
 
 - Enable InitCreateVoxelizeCommandsPass(), InitVoxelizePass(), InitVisualizeVoxelReflectancePass()
 - Clean up RenderPasses/Common.h
@@ -101,6 +105,7 @@ OOB will have coordinates expanding from -1 to 1 not merely passing through 0 wh
 - Use Task graph for resource state transition after each render pass.
 https://patterns.eecs.berkeley.edu/?page_id=609
 - Fix compilation warnings for x64 build
+- Enable x64 release build
 */
 
 namespace
@@ -492,7 +497,7 @@ void DXApplication::OnRender()
 {
 #ifdef ENABLE_PROFILING
 	m_pCPUProfiler->StartFrame();
-	m_pGPUProfiler->StartFrame(m_BackBufferIndex);
+	m_pGPUProfiler->StartFrame();
 #endif // ENABLE_PROFILING
 
 	static CommandList* commandListBatch[MAX_NUM_COMMAND_LISTS_IN_BATCH];
@@ -516,7 +521,15 @@ void DXApplication::OnRender()
 	commandListBatch[commandListBatchSize++] = RecordVisualizeDisplayResultPass();
 	commandListBatch[commandListBatchSize++] = RecordCubeMapToSHCoefficientsPass();
 	commandListBatch[commandListBatchSize++] = RecordPostRenderPass();
-				
+	
+#ifdef ENABLE_PROFILING
+	m_pCPUProfiler->EndFrame();
+	m_pGPUProfiler->EndFrame(m_pCommandQueue);
+
+	m_pCPUProfiler->OutputToConsole();
+	m_pGPUProfiler->OutputToConsole();
+#endif // #ifdef ENABLE_PROFILING
+
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_pCommandQueue->ExecuteCommandLists(commandListBatchSize, commandListBatch, m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
@@ -530,14 +543,6 @@ void DXApplication::OnRender()
 #endif // ENABLE_PROFILING
 
 	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
-
-#ifdef ENABLE_PROFILING
-	m_pCPUProfiler->EndFrame();
-	m_pGPUProfiler->EndFrame(m_pCommandQueue);
-
-	m_pCPUProfiler->OutputToConsole();
-	m_pGPUProfiler->OutputToConsole();
-#endif // #ifdef ENABLE_PROFILING
 
 #ifdef DEBUG_RENDER_PASS
 	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
