@@ -39,7 +39,6 @@ class VisualizeTexturePass;
 class VisualizeVoxelReflectancePass;
 class VoxelizePass;
 class Scene;
-class SpotLight;
 class CPUProfiler;
 class GPUProfiler;
 

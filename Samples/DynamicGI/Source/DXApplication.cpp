@@ -1819,6 +1819,8 @@ CommandList* DXApplication::RecordTiledShadingPass()
 void DXApplication::InitCubeMapToSHCoefficientsPass()
 {
 	const u32 cubeMapFaceSize = 64;
+	const u32 numSHCoefficients = 9;
+
 	assert(m_pCubeMap == nullptr);
 	ColorTexture2DDesc cubeMapDesc(DXGI_FORMAT_R11G11B10_FLOAT, cubeMapFaceSize, cubeMapFaceSize,
 		false, true, true, 1, kNumCubeMapFaces);
@@ -1826,7 +1828,7 @@ void DXApplication::InitCubeMapToSHCoefficientsPass()
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, L"m_pCubeMap");
 
 	assert(m_pSHCoefficientBuffer == nullptr);
-	StructuredBufferDesc SHCoefficientBufferDesc(CubeMapToSHCoefficientsPass::kNumSHCoefficients, sizeof(Vector3f), true, true);
+	StructuredBufferDesc SHCoefficientBufferDesc(numSHCoefficients, sizeof(Vector3f), true, true);
 	m_pSHCoefficientBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &SHCoefficientBufferDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"m_pSHCoefficientBuffer");
 
@@ -1834,6 +1836,7 @@ void DXApplication::InitCubeMapToSHCoefficientsPass()
 	CubeMapToSHCoefficientsPass::InitParams params;
 	params.m_pName = "CubeMapToSHCoefficientsPass";
 	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_MaxNumSHCoefficients = numSHCoefficients;
 	params.m_CubeMapFaceSize = cubeMapFaceSize;
 
 	m_pCubeMapToSHCoefficientsPass = new CubeMapToSHCoefficientsPass(&params);
@@ -1873,6 +1876,7 @@ CommandList* DXApplication::RecordCubeMapToSHCoefficientsPass()
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pCubeMapToSHCoefficientsCommandList");;
 	params.m_pCubeMap = m_pCubeMap;
+	params.m_NumSHCoefficients = 9;
 	params.m_pSHCoefficientBuffer = m_pSHCoefficientBuffer;
 	params.m_InputResourceStates.m_CubeMapState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_SHCoefficientBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;

@@ -1,14 +1,16 @@
 #include "SphericalHarmonics.hlsl"
 
-uint ComputeDataOffset(uint SHIndex, uint rowIndex)
+uint ComputeSHMapIndex(uint SHIndex, uint faceIndex)
+{
+	return (SHIndex * g_NumCubeMapFaces + faceIndex);
+}
+
+uint ComputeIntegratedDataOffset(uint SHIndex, uint rowIndex)
 {
 	return (SHIndex * FACE_SIZE + rowIndex) * g_NumCubeMapFaces;
 }
 
-#ifdef INTEGRATE
-
-Texture2DArray<float3> g_CubeMap : register(t0);
-RWStructuredBuffer<float3> g_SumPerRowBuffer : register(u0);
+#ifdef PRECOMPUTE
 
 static const float3x3 g_RotationMatrices[g_NumCubeMapFaces] =
 {
@@ -23,7 +25,7 @@ static const float3x3 g_RotationMatrices[g_NumCubeMapFaces] =
 		0.0f, 0.0f, -1.0f,
 		0.0f, 1.0f, 0.0f,
 		1.0f, 0.0f, 0.0f,
-	}, 
+	},
 	// Positive Y
 	{
 		1.0f, 0.0f, 0.0f,
@@ -50,15 +52,14 @@ static const float3x3 g_RotationMatrices[g_NumCubeMapFaces] =
 	}
 };
 
-groupshared float3 g_SharedMem[FACE_SIZE];
+RWTexture2DArray<float> g_WeightedSHMap : register(u0);
 
 [numthreads(FACE_SIZE, 1, 1)]
 void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 {
-	uint2 pixelPos = uint2(localThreadId.x, groupId.y);
 	uint faceIndex = groupId.z;
-
-	float3 pixelValue = g_CubeMap[uint3(pixelPos, faceIndex)];
+	uint2 pixelPos = uint2(localThreadId.x, groupId.y);
+	
 	float rcpHalfFaceSize = 2.0f / float(FACE_SIZE);
 
 	// The following calculations are based on assumption
@@ -71,10 +72,10 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 	float pixelArea = rcpHalfFaceSize * rcpHalfFaceSize;
 	float sphereMappingJacobian = 1.0f / pow(dot(localSpaceDir, localSpaceDir), 1.5f);
 	float solidAngle = pixelArea * sphereMappingJacobian;
-	
+
 	float3 worldSpaceDir = mul(g_RotationMatrices[faceIndex], localSpaceDir);
 	worldSpaceDir = normalize(worldSpaceDir);
-	
+
 #if SH_INDEX == 0
 	float SHValue = SH0();
 #elif SH_INDEX == 1
@@ -95,20 +96,43 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 	float SHValue = SH8(worldSpaceDir);
 #endif
 
-	g_SharedMem[localThreadId.x] = (SHValue * solidAngle) * pixelValue;
-	GroupMemoryBarrierWithGroupSync();
+	uint SHMapIndex = ComputeSHMapIndex(SH_INDEX, faceIndex);
+	g_WeightedSHMap[uint3(pixelPos, SHMapIndex)] = SHValue * solidAngle;
+}
 
+#endif // PRECOMPUTE
+
+#ifdef INTEGRATE
+
+RWStructuredBuffer<float3> g_SumPerRowBuffer : register(u0);
+Texture2DArray<float> g_WeightedSHMap : register(t0);
+Texture2DArray<float3> g_CubeMap : register(t1);
+
+groupshared float3 g_SharedMem[FACE_SIZE];
+
+[numthreads(FACE_SIZE, 1, 1)]
+void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
+{
+	uint faceIndex = groupId.z;
+	uint2 pixelPos = uint2(localThreadId.x, groupId.y);
+	float3 pixelValue = g_CubeMap[uint3(pixelPos, faceIndex)];
+
+	uint SHIndex = groupId.x;
+	uint SHMapIndex = ComputeSHMapIndex(SHIndex, faceIndex);
+	float weightedSHValue = g_WeightedSHMap[uint3(pixelPos, SHMapIndex)];
+
+	g_SharedMem[localThreadId.x] = weightedSHValue * pixelValue;
 	[unroll] for (uint offset = FACE_SIZE / 2; offset > 0; offset >>= 1)
 	{
+		GroupMemoryBarrierWithGroupSync();
+
 		if (localThreadId.x < offset)
 			g_SharedMem[localThreadId.x] += g_SharedMem[localThreadId.x + offset];
-		
-		GroupMemoryBarrierWithGroupSync();
 	}
 	
 	if (localThreadId.x == 0)
 	{
-		uint dataOffset = ComputeDataOffset(SH_INDEX, pixelPos.y);
+		uint dataOffset = ComputeIntegratedDataOffset(SHIndex, pixelPos.y);
 		g_SumPerRowBuffer[dataOffset + faceIndex] = g_SharedMem[0];
 	}
 }
@@ -126,21 +150,19 @@ groupshared float3 g_SharedMem[FACE_SIZE];
 void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 {
 	uint SHIndex = groupId.x;
-	uint dataOffset = ComputeDataOffset(SHIndex, localThreadId.y);
+	uint dataOffset = ComputeIntegratedDataOffset(SHIndex, localThreadId.y);
 
 	float3 sum = 0.0f;
 	[unroll] for (uint faceIndex = 0; faceIndex < g_NumCubeMapFaces; ++faceIndex)
 		sum += g_SumPerRowBuffer[dataOffset + faceIndex];
 	
 	g_SharedMem[localThreadId.y] = sum;
-	GroupMemoryBarrierWithGroupSync();
-
 	[unroll] for (uint offset = FACE_SIZE / 2; offset > 0; offset >>= 1)
 	{
+		GroupMemoryBarrierWithGroupSync();
+
 		if (localThreadId.y < offset)
 			g_SharedMem[localThreadId.y] += g_SharedMem[localThreadId.y + offset];
-
-		GroupMemoryBarrierWithGroupSync();
 	}
 
 	if (localThreadId.y == 0)
