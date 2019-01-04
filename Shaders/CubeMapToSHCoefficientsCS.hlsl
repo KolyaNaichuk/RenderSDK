@@ -106,7 +106,7 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 
 RWStructuredBuffer<float3> g_SumPerRowBuffer : register(u0);
 Texture2DArray<float> g_WeightedSHMap : register(t0);
-Texture2DArray<float3> g_CubeMap : register(t1);
+Texture2DArray<float4> g_CubeMap : register(t1);
 
 groupshared float3 g_SharedMem[FACE_SIZE];
 
@@ -115,7 +115,7 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 {
 	uint faceIndex = groupId.z;
 	uint2 pixelPos = uint2(localThreadId.x, groupId.y);
-	float3 pixelValue = g_CubeMap[uint3(pixelPos, faceIndex)];
+	float3 pixelValue = g_CubeMap[uint3(pixelPos, faceIndex)].rgb;
 
 	uint SHIndex = groupId.x;
 	uint SHMapIndex = ComputeSHMapIndex(SHIndex, faceIndex);

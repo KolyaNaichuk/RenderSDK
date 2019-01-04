@@ -67,6 +67,8 @@ DXGI_FORMAT GetShaderResourceViewFormat(DXGI_FORMAT resourceFormat)
 			return DXGI_FORMAT_R16G16_SNORM;
 		case DXGI_FORMAT_R8G8B8A8_UNORM:
 			return DXGI_FORMAT_R8G8B8A8_UNORM;
+		case DXGI_FORMAT_R32G32B32A32_FLOAT:
+			return DXGI_FORMAT_R32G32B32A32_FLOAT;
 		case DXGI_FORMAT_R16G16B16A16_FLOAT:
 			return DXGI_FORMAT_R16G16B16A16_FLOAT;
 		case DXGI_FORMAT_R32G32_FLOAT:
@@ -102,6 +104,8 @@ DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat)
 			return DXGI_FORMAT_R10G10B10A2_UNORM;
 		case DXGI_FORMAT_R16G16B16A16_FLOAT:
 			return DXGI_FORMAT_R16G16B16A16_FLOAT;
+		case DXGI_FORMAT_R32G32B32A32_FLOAT:
+			return DXGI_FORMAT_R32G32B32A32_FLOAT;
 		case DXGI_FORMAT_R32G32_FLOAT:
 			return DXGI_FORMAT_R32G32_FLOAT;
 		case DXGI_FORMAT_R32_FLOAT:
@@ -121,7 +125,23 @@ DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat)
 
 UINT CalcSubresource(UINT mipSlice, UINT arraySlice, UINT mipLevels)
 {
-	return (mipSlice + arraySlice * mipLevels);
+	return (arraySlice * mipLevels + mipSlice);
+}
+
+UINT CountMips(UINT width, UINT height)
+{
+	UINT mipLevels = 1;
+	while (height > 1 || width > 1)
+	{
+		if (height > 1)
+			height >>= 1;
+
+		if (width > 1)
+			width >>= 1;
+
+		++mipLevels;
+	}
+	return mipLevels;
 }
 
 ResourceTransitionBarrier::ResourceTransitionBarrier(GraphicsResource* pResource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter, UINT subresource, D3D12_RESOURCE_BARRIER_FLAGS flags)

@@ -1822,7 +1822,7 @@ void DXApplication::InitCubeMapToSHCoefficientsPass()
 	const u32 numSHCoefficients = 9;
 
 	assert(m_pCubeMap == nullptr);
-	ColorTexture2DDesc cubeMapDesc(DXGI_FORMAT_R11G11B10_FLOAT, cubeMapFaceSize, cubeMapFaceSize,
+	ColorTexture2DDesc cubeMapDesc(DXGI_FORMAT_R32G32B32A32_FLOAT, cubeMapFaceSize, cubeMapFaceSize,
 		false, true, true, 1, kNumCubeMapFaces);
 	m_pCubeMap = new ColorTexture(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &cubeMapDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, L"m_pCubeMap");
@@ -1845,10 +1845,24 @@ void DXApplication::InitCubeMapToSHCoefficientsPass()
 	pCommandList->Begin();
 	
 	DescriptorHandle gpuHandle = m_pShaderVisibleSRVHeap->Allocate();
-	const FLOAT clearColor[] = {12.4f, 25.6f, 20.0f, 0.0f};
-	for (UINT arraySlice = 0; arraySlice < kNumCubeMapFaces; ++arraySlice)
+	
+	const FLOAT faceColor0[] = {12.4f, 25.6f, 20.0f, 0.0f};
+	const FLOAT faceColor1[] = {22.4f, 15.6f, 3.0f, 0.0f};
+	const FLOAT faceColor2[] = {32.4f, 7.6f, 23.0f, 0.0f};
+	const FLOAT faceColor3[] = {3.4f,  17.6f, 6.0f, 0.0f};
+	const FLOAT faceColor4[] = {14.4f, 5.6f, 33.0f, 0.0f};
+	const FLOAT faceColor5[] = {8.4f, 15.6f, 13.0f, 0.0f};
+
+	const FLOAT* faceColors[kNumCubeMapFaces] = {
+		faceColor0, faceColor1, faceColor2,
+		faceColor3, faceColor4, faceColor5
+	};
+
+	for (UINT faceIndex = 0; faceIndex < kNumCubeMapFaces; ++faceIndex)
 	{
-		DescriptorHandle cpuHandle = m_pCubeMap->GetUAVHandle(0, arraySlice);
+		const FLOAT* clearColor = faceColors[faceIndex];
+
+		DescriptorHandle cpuHandle = m_pCubeMap->GetUAVHandle(0, faceIndex);
 		m_pDevice->CopyDescriptor(gpuHandle, cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 		pCommandList->ClearUnorderedAccessView(gpuHandle, cpuHandle, m_pCubeMap, clearColor);

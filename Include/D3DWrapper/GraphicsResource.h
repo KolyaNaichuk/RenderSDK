@@ -15,6 +15,7 @@ DXGI_FORMAT GetShaderResourceViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat);
 
 UINT CalcSubresource(UINT mipSlice, UINT arraySlice, UINT mipLevels);
+UINT CountMips(UINT width, UINT height);
 
 struct ResourceTransitionBarrier : D3D12_RESOURCE_BARRIER
 {
