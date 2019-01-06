@@ -20,7 +20,6 @@ public:
 
 	struct InitParams
 	{
-		const char* m_pName = nullptr;
 		RenderEnv* m_pRenderEnv = nullptr;
 		u32 m_MaxNumSHCoefficients = 0;
 		u32 m_CubeMapFaceSize = 0;
@@ -53,7 +52,6 @@ private:
 	void InitMergePipelineState(InitParams* pParams);
 
 private:
-	std::string m_Name;
 	u32 m_MaxNumSHCoefficients = 0;
 	u32 m_CubeMapFaceSize = 0;
 
@@ -67,5 +65,5 @@ private:
 
 	ResourceStates m_OutputResourceStates;
 	ColorTexture* m_pWeightedSHMap = nullptr;
-	Buffer* m_pSumPerRowBuffer = nullptr;
+	Buffer* m_pSumPerColumnBuffer = nullptr;
 };

@@ -5,10 +5,8 @@ uint ComputeSHMapIndex(uint SHIndex, uint faceIndex)
 	return (SHIndex * g_NumCubeMapFaces + faceIndex);
 }
 
-uint ComputeIntegratedDataOffset(uint SHIndex, uint rowIndex)
-{
-	return (SHIndex * FACE_SIZE + rowIndex) * g_NumCubeMapFaces;
-}
+#define FACE_SIZE_DIV_2		(FACE_SIZE / 2)
+#define FACE_SIZE_DIV_4		(FACE_SIZE / 4)
 
 #ifdef PRECOMPUTE
 
@@ -104,36 +102,57 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 
 #ifdef INTEGRATE
 
-RWStructuredBuffer<float3> g_SumPerRowBuffer : register(u0);
+RWStructuredBuffer<float3> g_SumPerColumnBuffer : register(u0);
 Texture2DArray<float> g_WeightedSHMap : register(t0);
 Texture2DArray<float4> g_CubeMap : register(t1);
+SamplerState g_Sampler : register(s0);
 
 groupshared float3 g_SharedMem[FACE_SIZE];
 
-[numthreads(FACE_SIZE, 1, 1)]
+[numthreads(1, FACE_SIZE, 1)]
 void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 {
 	uint faceIndex = groupId.z;
-	uint2 pixelPos = uint2(localThreadId.x, groupId.y);
-	float3 pixelValue = g_CubeMap[uint3(pixelPos, faceIndex)].rgb;
+	float2 texCoords = (float2(groupId.x << 2, localThreadId.y) + 0.5f) / float(FACE_SIZE);
 
-	uint SHIndex = groupId.x;
+	int2 offset0 = int2(0, 0);
+	int2 offset1 = int2(1, 0);
+	int2 offset2 = int2(2, 0);
+	int2 offset3 = int2(3, 0);
+
+	float4 redValues = g_CubeMap.GatherRed(g_Sampler,
+		float3(texCoords, faceIndex), offset0, offset1, offset2, offset3);
+
+	float4 greenValues = g_CubeMap.GatherGreen(g_Sampler,
+		float3(texCoords, faceIndex), offset0, offset1, offset2, offset3);
+
+	float4 blueValues = g_CubeMap.GatherBlue(g_Sampler,
+		float3(texCoords, faceIndex), offset0, offset1, offset2, offset3);
+
+	uint SHIndex = groupId.y;
 	uint SHMapIndex = ComputeSHMapIndex(SHIndex, faceIndex);
-	float weightedSHValue = g_WeightedSHMap[uint3(pixelPos, SHMapIndex)];
 
-	g_SharedMem[localThreadId.x] = weightedSHValue * pixelValue;
-	[unroll] for (uint offset = FACE_SIZE / 2; offset > 0; offset >>= 1)
+	float4 weightedSHValues = g_WeightedSHMap.GatherRed(g_Sampler,
+		float3(texCoords, SHMapIndex), offset0, offset1, offset2, offset3);
+
+	float3 sum;
+	sum.r = dot(weightedSHValues, redValues);
+	sum.g = dot(weightedSHValues, greenValues);
+	sum.b = dot(weightedSHValues, blueValues);
+
+	g_SharedMem[localThreadId.y] = sum;
+	[unroll] for (uint offset = FACE_SIZE_DIV_2; offset > 0; offset >>= 1)
 	{
 		GroupMemoryBarrierWithGroupSync();
 
-		if (localThreadId.x < offset)
-			g_SharedMem[localThreadId.x] += g_SharedMem[localThreadId.x + offset];
+		if (localThreadId.y < offset)
+			g_SharedMem[localThreadId.y] += g_SharedMem[localThreadId.y + offset];
 	}
 	
-	if (localThreadId.x == 0)
+	if (localThreadId.y == 0)
 	{
-		uint dataOffset = ComputeIntegratedDataOffset(SHIndex, pixelPos.y);
-		g_SumPerRowBuffer[dataOffset + faceIndex] = g_SharedMem[0];
+		uint writeOffset = FACE_SIZE_DIV_4 * (SHIndex * g_NumCubeMapFaces + faceIndex) + groupId.x;
+		g_SumPerColumnBuffer[writeOffset] = g_SharedMem[0];
 	}
 }
 
@@ -141,31 +160,31 @@ void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 
 #ifdef MERGE
 
-StructuredBuffer<float3> g_SumPerRowBuffer : register(t0);
+StructuredBuffer<float3> g_SumPerColumnBuffer : register(t0);
 RWStructuredBuffer<float3> g_SHCoefficientBuffer : register(u0);
 
 groupshared float3 g_SharedMem[FACE_SIZE];
 
-[numthreads(1, FACE_SIZE, 1)]
+[numthreads(FACE_SIZE, 1, 1)]
 void Main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID)
 {
-	uint SHIndex = groupId.x;
-	uint dataOffset = ComputeIntegratedDataOffset(SHIndex, localThreadId.y);
+	uint SHIndex = groupId.y;
 
-	float3 sum = 0.0f;
-	[unroll] for (uint faceIndex = 0; faceIndex < g_NumCubeMapFaces; ++faceIndex)
-		sum += g_SumPerRowBuffer[dataOffset + faceIndex];
-	
-	g_SharedMem[localThreadId.y] = sum;
-	[unroll] for (uint offset = FACE_SIZE / 2; offset > 0; offset >>= 1)
+	uint readOffset = SHIndex * g_NumCubeMapFaces * FACE_SIZE_DIV_4 + localThreadId.x;
+	float3 sum = g_SumPerColumnBuffer[readOffset];
+	if (localThreadId.x < FACE_SIZE_DIV_2)
+		sum += g_SumPerColumnBuffer[readOffset + FACE_SIZE_DIV_2];
+		
+	g_SharedMem[localThreadId.x] = sum;
+	[unroll] for (uint offset = FACE_SIZE_DIV_2; offset > 0; offset >>= 1)
 	{
 		GroupMemoryBarrierWithGroupSync();
 
-		if (localThreadId.y < offset)
-			g_SharedMem[localThreadId.y] += g_SharedMem[localThreadId.y + offset];
+		if (localThreadId.x < offset)
+			g_SharedMem[localThreadId.x] += g_SharedMem[localThreadId.x + offset];
 	}
 
-	if (localThreadId.y == 0)
+	if (localThreadId.x == 0)
 		g_SHCoefficientBuffer[SHIndex] = g_SharedMem[0];
 }
 

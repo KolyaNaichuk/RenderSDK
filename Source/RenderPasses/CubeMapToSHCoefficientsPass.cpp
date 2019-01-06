@@ -29,7 +29,6 @@ namespace
 }
 
 CubeMapToSHCoefficientsPass::CubeMapToSHCoefficientsPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	
@@ -50,7 +49,7 @@ CubeMapToSHCoefficientsPass::~CubeMapToSHCoefficientsPass()
 	SafeDelete(m_pMergePipelineState);
 	SafeDelete(m_pMergeRootSignature);
 
-	SafeDelete(m_pSumPerRowBuffer);
+	SafeDelete(m_pSumPerColumnBuffer);
 }
 
 void CubeMapToSHCoefficientsPass::Record(RenderParams* pParams)
@@ -66,10 +65,6 @@ void CubeMapToSHCoefficientsPass::Record(RenderParams* pParams)
 	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
 
 	pCommandList->Begin();
-#ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
-#endif // ENABLE_PROFILING
-
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	
 	{
@@ -77,7 +72,7 @@ void CubeMapToSHCoefficientsPass::Record(RenderParams* pParams)
 		u32 numBarriers = 0;
 		
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pSumPerRowBuffer,
+			m_pSumPerColumnBuffer,
 			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS
 		);
@@ -94,18 +89,26 @@ void CubeMapToSHCoefficientsPass::Record(RenderParams* pParams)
 		pRenderEnv->m_pDevice->CopyDescriptor(DescriptorHandle(m_IntegrateSRVHeapStart, 2),
 			pParams->m_pCubeMap->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+#ifdef ENABLE_PROFILING
+		u32 profileIndex1 = pGPUProfiler->StartProfile(pCommandList, "CubeMapToSHCoefficientsPass: Integrate");
+#endif // ENABLE_PROFILING
+		
 		pCommandList->SetComputeRootSignature(m_pIntegrateRootSignature);
 		pCommandList->SetPipelineState(m_pIntegratePipelineState);
 		pCommandList->ResourceBarrier(numBarriers, resourceBarriers);
 		pCommandList->SetComputeRootDescriptorTable(kIntegrateRootSRVTableParam, m_IntegrateSRVHeapStart);
-		pCommandList->Dispatch(pParams->m_NumSHCoefficients, m_CubeMapFaceSize, kNumCubeMapFaces);
+		pCommandList->Dispatch(m_CubeMapFaceSize / 4, pParams->m_NumSHCoefficients, kNumCubeMapFaces);
+		
+#ifdef ENABLE_PROFILING
+		pGPUProfiler->EndProfile(pCommandList, profileIndex1);
+#endif // ENABLE_PROFILING
 	}
 	{
 		ResourceTransitionBarrier resourceBarriers[2];
 		u32 numBarriers = 0;
 
 		resourceBarriers[numBarriers++] = ResourceTransitionBarrier(
-			m_pSumPerRowBuffer,
+			m_pSumPerColumnBuffer,
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 			D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
 		);
@@ -122,16 +125,21 @@ void CubeMapToSHCoefficientsPass::Record(RenderParams* pParams)
 		pRenderEnv->m_pDevice->CopyDescriptor(DescriptorHandle(m_MergeSRVHeapStart, 1),
 			pParams->m_pSHCoefficientBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+#ifdef ENABLE_PROFILING
+		u32 profileIndex2 = pGPUProfiler->StartProfile(pCommandList, "CubeMapToSHCoefficientsPass: Merge");
+#endif // ENABLE_PROFILING
+
 		pCommandList->SetComputeRootSignature(m_pMergeRootSignature);
 		pCommandList->SetPipelineState(m_pMergePipelineState);
 		pCommandList->ResourceBarrier(numBarriers, resourceBarriers);
 		pCommandList->SetComputeRootDescriptorTable(kMergeRootSRVTableParam, m_MergeSRVHeapStart);
-		pCommandList->Dispatch(pParams->m_NumSHCoefficients, 1, 1);
+		pCommandList->Dispatch(1, pParams->m_NumSHCoefficients, 1);
+		
+#ifdef ENABLE_PROFILING
+		pGPUProfiler->EndProfile(pCommandList, profileIndex2);
+#endif // ENABLE_PROFILING
 	}
 
-#ifdef ENABLE_PROFILING
-	pGPUProfiler->EndProfile(pCommandList, profileIndex);
-#endif // ENABLE_PROFILING
 	pCommandList->End();
 }
 
@@ -151,10 +159,10 @@ void CubeMapToSHCoefficientsPass::InitResources(InitParams* pParams)
 	m_pWeightedSHMap = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &weightedSHMapDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, L"CubeMapToSHCoefficientsPass::m_pWeightedSHMap");
 
-	assert(m_pSumPerRowBuffer == nullptr);
-	StructuredBufferDesc sumPerRowBufferDesc(m_MaxNumSHCoefficients * kNumCubeMapFaces * m_CubeMapFaceSize, sizeof(Vector3f), true, true);
-	m_pSumPerRowBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &sumPerRowBufferDesc,
-		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, L"CubeMapToSHCoefficientsPass::m_pSumPerRowBuffer");
+	assert(m_pSumPerColumnBuffer == nullptr);
+	StructuredBufferDesc sumPerColumnBufferDesc(m_MaxNumSHCoefficients * kNumCubeMapFaces * (m_CubeMapFaceSize / 4), sizeof(Vector3f), true, true);
+	m_pSumPerColumnBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &sumPerColumnBufferDesc,
+		D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, L"CubeMapToSHCoefficientsPass::m_pSumPerColumnBuffer");
 
 	m_OutputResourceStates.m_CubeMapState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_SHCoefficientBufferState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
@@ -163,7 +171,7 @@ void CubeMapToSHCoefficientsPass::InitResources(InitParams* pParams)
 	m_IntegrateSRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->AllocateRange(3);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(m_IntegrateSRVHeapStart,
-		m_pSumPerRowBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pSumPerColumnBuffer->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(DescriptorHandle(m_IntegrateSRVHeapStart, 1),
 		m_pWeightedSHMap->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -172,7 +180,7 @@ void CubeMapToSHCoefficientsPass::InitResources(InitParams* pParams)
 	m_MergeSRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->AllocateRange(2);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(m_MergeSRVHeapStart,
-		m_pSumPerRowBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		m_pSumPerColumnBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void CubeMapToSHCoefficientsPass::PrecomputeWeightedSHMap(InitParams* pParams)
@@ -259,7 +267,8 @@ void CubeMapToSHCoefficientsPass::InitIntegrateRootSignature(InitParams* pParams
 	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = {UAVDescriptorRange(1, 0), SRVDescriptorRange(2, 0)};
 	rootParams[kIntegrateRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), descriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
 
-	RootSignatureDesc rootSignatureDesc(kIntegrateNumRootParams, rootParams);
+	StaticSamplerDesc samplerDesc(StaticSamplerDesc::Point, 0, D3D12_SHADER_VISIBILITY_ALL);
+	RootSignatureDesc rootSignatureDesc(kIntegrateNumRootParams, rootParams, 1, &samplerDesc);
 	m_pIntegrateRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"CubeMapToSHCoefficientsPass::m_pRootSignature");
 }
 
