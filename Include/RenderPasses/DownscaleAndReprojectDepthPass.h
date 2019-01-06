@@ -19,7 +19,6 @@ public:
 
 	struct InitParams
 	{
-		const char* m_pName;
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		DepthTexture* m_pPrevDepthTexture;
@@ -52,8 +51,6 @@ private:
 	void AddCopyResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 
 private:
-	std::string m_Name;
-
 	RootSignature* m_pReprojectRootSignature = nullptr;
 	PipelineState* m_pReprojectPipelineState = nullptr;
 	DescriptorHandle m_ReprojectSRVHeapStart;

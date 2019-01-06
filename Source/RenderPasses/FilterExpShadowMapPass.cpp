@@ -18,7 +18,6 @@ namespace
 }
 
 FilterExpShadowMapPass::FilterExpShadowMapPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -37,11 +36,7 @@ void FilterExpShadowMapPass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
-
 	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
-#ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
-#endif // ENABLE_PROFILING
 	
 	const UINT constants32Bit[] = {pParams->m_ExpShadowMapIndex, pParams->m_IntermediateResultIndex};
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
@@ -61,10 +56,18 @@ void FilterExpShadowMapPass::Record(RenderParams* pParams)
 			pParams->m_ExpShadowMapIndex)
 	};
 
+#ifdef ENABLE_PROFILING
+	u32 profileIndex1 = pGPUProfiler->StartProfile(pCommandList, "FilterExpShadowMapPass: Blur X");
+#endif // ENABLE_PROFILING
+
 	pCommandList->SetPipelineState(m_pPipelineStateX);
 	pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriersX), resourceBarriersX);
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStartX);
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
+
+#ifdef ENABLE_PROFILING
+	pGPUProfiler->EndProfile(pCommandList, profileIndex1);
+#endif // ENABLE_PROFILING
 
 	const ResourceTransitionBarrier resourceBarriersY[] =
 	{
@@ -78,14 +81,18 @@ void FilterExpShadowMapPass::Record(RenderParams* pParams)
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 			pParams->m_ExpShadowMapIndex)
 	};
-	
+
+#ifdef ENABLE_PROFILING
+	u32 profileIndex2 = pGPUProfiler->StartProfile(pCommandList, "FilterExpShadowMapPass: Blur Y");
+#endif // ENABLE_PROFILING
+
 	pCommandList->SetPipelineState(m_pPipelineStateY);
 	pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriersY), resourceBarriersY);
 	pCommandList->SetComputeRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStartY);
 	pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
 
 #ifdef ENABLE_PROFILING
-	pGPUProfiler->EndProfile(pCommandList, profileIndex);
+	pGPUProfiler->EndProfile(pCommandList, profileIndex2);
 #endif // ENABLE_PROFILING
 }
 

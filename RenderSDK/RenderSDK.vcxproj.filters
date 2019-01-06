@@ -93,9 +93,6 @@
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\ScaleTexturePass.h">
-      <Filter>RenderPasses</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\TiledLightCullingPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
@@ -344,9 +341,6 @@
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\ScaleTexturePass.cpp">
-      <Filter>RenderPasses</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\TiledLightCullingPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
@@ -532,9 +526,6 @@
     <None Include="..\Shaders\CalcTextureLuminancePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\ScaleTexture.hlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\Shaders\OverlapTest.hlsl">
       <Filter>Shaders</Filter>
     </None>
@@ -637,5 +628,8 @@
     <None Include="..\Shaders\VisualizeNumLightsPerTilePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Notes.txt" />
   </ItemGroup>
 </Project>

@@ -23,8 +23,7 @@ namespace
 }
 
 TiledLightCullingPass::TiledLightCullingPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
-	, m_NumThreadGroupsX(pParams->m_NumTilesX)
+	: m_NumThreadGroupsX(pParams->m_NumTilesX)
 	, m_NumThreadGroupsY(pParams->m_NumTilesY)
 {
 	assert(pParams->m_MaxNumSpotLights > 0);
@@ -51,7 +50,7 @@ void TiledLightCullingPass::Record(RenderParams* pParams)
 	
 	pCommandList->Begin(m_pPipelineState);
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "TiledLightCullingPass");
 #endif // ENABLE_PROFILING
 
 	pCommandList->SetComputeRootSignature(m_pRootSignature);

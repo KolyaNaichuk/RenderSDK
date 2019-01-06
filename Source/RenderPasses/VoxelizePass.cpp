@@ -25,7 +25,6 @@ namespace
 }
 
 VoxelizePass::VoxelizePass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
@@ -67,7 +66,7 @@ void VoxelizePass::Record(RenderParams* pParams)
 
 	pCommandList->Begin(m_pPipelineState);
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "VoxelizePass");
 #endif // ENABLE_PROFILING
 
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
@@ -107,7 +106,7 @@ void VoxelizePass::Record(RenderParams* pParams)
 
 	pCommandList->Begin();
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "VoxelizePass");
 #endif // ENABLE_PROFILING
 
 	if (!m_ResourceBarriers.empty())

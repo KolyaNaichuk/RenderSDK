@@ -228,7 +228,6 @@
     <ClInclude Include="..\Include\RenderPasses\FillMeshTypeDepthBufferPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FillVisibilityBufferPass.h" />
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\ScaleTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledLightCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledShadingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\VisualizeTexturePass.h" />
@@ -309,7 +308,6 @@
     <ClCompile Include="..\Source\RenderPasses\FillMeshTypeDepthBufferPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FillVisibilityBufferPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\ScaleTexturePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledLightCullingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledShadingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VisualizeTexturePass.cpp" />
@@ -380,19 +378,6 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Shaders\ScaleTexture.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
@@ -658,6 +643,9 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
       <FileType>Document</FileType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Notes.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

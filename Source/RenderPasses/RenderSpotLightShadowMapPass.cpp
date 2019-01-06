@@ -19,7 +19,6 @@ namespace
 }
 
 RenderSpotLightShadowMapPass::RenderSpotLightShadowMapPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -46,7 +45,7 @@ void RenderSpotLightShadowMapPass::Record(RenderParams* pParams)
 
 	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "RenderSpotLightShadowMapPass");
 #endif // ENABLE_PROFILING
 
 	const ResourceTransitionBarrier resourceBarriers[] =

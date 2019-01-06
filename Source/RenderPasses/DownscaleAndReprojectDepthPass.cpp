@@ -25,7 +25,6 @@ namespace
 }
 
 DownscaleAndReprojectDepthPass::DownscaleAndReprojectDepthPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	const UINT64 reprojectedDepthTextureWidth = pParams->m_pPrevDepthTexture->GetWidth() / 4;
 	const UINT reprojectedDepthTextureHeight = pParams->m_pPrevDepthTexture->GetHeight() / 4;
@@ -87,13 +86,13 @@ void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
 	
 	pCommandList->Begin();
-#ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
-#endif // ENABLE_PROFILING
-
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
 	{
+#ifdef ENABLE_PROFILING
+		u32 profileIndex1 = pGPUProfiler->StartProfile(pCommandList, "DownscaleAndReprojectDepthPass: Reproject");
+#endif // ENABLE_PROFILING
+		
 		pCommandList->SetPipelineState(m_pReprojectPipelineState);
 		pCommandList->SetComputeRootSignature(m_pReprojectRootSignature);
 
@@ -105,10 +104,17 @@ void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 		pCommandList->ClearUnorderedAccessView(reprojectedDepthTextureHandle, m_pReprojectionColorTexture->GetUAVHandle(), m_pReprojectionColorTexture, clearDepthValue);
 		pCommandList->SetComputeRootConstantBufferView(kReprojectRootCBVParam, pParams->m_pAppDataBuffer);
 		pCommandList->SetComputeRootDescriptorTable(kReprojectRootSRVTableParam, m_ReprojectSRVHeapStart);
-
 		pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
+
+#ifdef ENABLE_PROFILING
+		pGPUProfiler->EndProfile(pCommandList, profileIndex1);
+#endif // ENABLE_PROFILING
 	}
 	{
+#ifdef ENABLE_PROFILING
+		u32 profileIndex2 = pGPUProfiler->StartProfile(pCommandList, "DownscaleAndReprojectDepthPass: Copy");
+#endif // ENABLE_PROFILING
+
 		pCommandList->SetPipelineState(m_pCopyPipelineState);
 		pCommandList->SetGraphicsRootSignature(m_pCopyRootSignature);
 
@@ -127,13 +133,13 @@ void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 		Rect copyScissorRect(ExtractRect(m_pCopyViewport));
 		pCommandList->RSSetViewports(1, m_pCopyViewport);
 		pCommandList->RSSetScissorRects(1, &copyScissorRect);
-		
 		pCommandList->DrawInstanced(3, 1, 0, 0);
-	}
 
 #ifdef ENABLE_PROFILING
-	pGPUProfiler->EndProfile(pCommandList, profileIndex);
+		pGPUProfiler->EndProfile(pCommandList, profileIndex2);
 #endif // ENABLE_PROFILING
+	}
+
 	pCommandList->End();
 }
 

@@ -18,7 +18,6 @@ namespace
 }
 
 CreateExpShadowMapPass::CreateExpShadowMapPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -51,7 +50,7 @@ void CreateExpShadowMapPass::Record(RenderParams* pParams)
 	
 	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "CreateExpShadowMapPass");
 #endif // ENABLE_PROFILING
 
 	const UINT constants32Bit[] = {pParams->m_StandardShadowMapIndex, pParams->m_ExpShadowMapIndex};

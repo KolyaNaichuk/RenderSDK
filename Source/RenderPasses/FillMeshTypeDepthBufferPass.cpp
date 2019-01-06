@@ -17,7 +17,6 @@ namespace
 }
 
 FillMeshTypeDepthBufferPass::FillMeshTypeDepthBufferPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -39,7 +38,7 @@ void FillMeshTypeDepthBufferPass::Record(RenderParams* pParams)
 
 	pCommandList->Begin(m_pPipelineState);
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "FillMeshTypeDepthBufferPass");
 #endif // ENABLE_PROFILING
 
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
@@ -60,7 +59,6 @@ void FillMeshTypeDepthBufferPass::Record(RenderParams* pParams)
 	Rect scissorRect(ExtractRect(pParams->m_pViewport));
 	pCommandList->RSSetViewports(1, pParams->m_pViewport);
 	pCommandList->RSSetScissorRects(1, &scissorRect);
-
 	pCommandList->DrawInstanced(3, 1, 0, 0);
 
 #ifdef ENABLE_PROFILING

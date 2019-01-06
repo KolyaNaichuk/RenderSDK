@@ -30,7 +30,6 @@ public:
 
 	struct InitParams
 	{
-		const char* m_pName = nullptr;
 		RenderEnv* m_pRenderEnv = nullptr;
 		ResourceStates m_InputResourceStates;
 		MeshRenderResources* m_pMeshRenderResources = nullptr;
@@ -67,8 +66,6 @@ private:
 	void InitCommandSignature(InitParams* pParams);
 
 private:
-	std::string m_Name;
-
 	RootSignature* m_pRootSignature = nullptr;
 	PipelineState* m_pPipelineState = nullptr;
 	CommandSignature* m_pCommandSignature = nullptr;

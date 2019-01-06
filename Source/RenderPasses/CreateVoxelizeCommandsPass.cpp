@@ -26,7 +26,6 @@ namespace
 }
 
 CreateVoxelizeCommandsPass::CreateVoxelizeCommandsPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	InitSetArgumentsResources(pParams);
 	InitSetArgumentsRootSignature(pParams);
@@ -60,7 +59,7 @@ void CreateVoxelizeCommandsPass::Record(RenderParams* pParams)
 
 	pCommandList->Begin();
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "CreateVoxelizeCommandsPass");
 #endif // ENABLE_PROFILING
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);

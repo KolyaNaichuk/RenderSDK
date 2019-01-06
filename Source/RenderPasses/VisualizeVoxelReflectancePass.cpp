@@ -20,7 +20,6 @@ namespace
 }
 
 VisualizeVoxelReflectancePass::VisualizeVoxelReflectancePass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -41,7 +40,7 @@ void VisualizeVoxelReflectancePass::Record(RenderParams* pParams)
 	
 	pCommandList->Begin(m_pPipelineState);
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "VisualizeVoxelReflectancePass");
 #endif // ENABLE_PROFILING
 
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);

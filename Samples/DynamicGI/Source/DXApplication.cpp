@@ -51,6 +51,7 @@
 #include "Math/Matrix4.h"
 #include "Math/OverlapTest.h"
 #include "Math/Sphere.h"
+#include "Math/SphericalHarmonics.h"
 #include "Math/Transform.h"
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
@@ -747,7 +748,6 @@ void DXApplication::InitDownscaleAndReprojectDepthPass()
 	assert(m_pDownscaleAndReprojectDepthPass == nullptr);
 
 	DownscaleAndReprojectDepthPass::InitParams params;
-	params.m_pName = "DownscaleAndReprojectDepthPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_InputResourceStates.m_PrevDepthTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	params.m_InputResourceStates.m_ReprojectedDepthTextureState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
@@ -795,7 +795,6 @@ void DXApplication::InitFrustumMeshCullingPass()
 	assert(m_pFrustumMeshCullingPass == nullptr);
 
 	FrustumMeshCullingPass::InitParams params;
-	params.m_pName = "FrustumMeshCullingPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pInstanceWorldAABBBuffer = m_pMeshRenderResources->GetInstanceWorldAABBBuffer();
 	params.m_pMeshInfoBuffer = m_pMeshRenderResources->GetMeshInfoBuffer();
@@ -881,7 +880,6 @@ void DXApplication::InitCreateMainDrawCommandsPass()
 		m_pFillVisibilityBufferMainPass->GetOutputResourceStates();
 
 	CreateMainDrawCommandsPass::InitParams params;
-	params.m_pName = "CreateMainDrawCommandsPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 
 	params.m_InputResourceStates.m_NumMeshesBufferState = pFrustumMeshCullingPassStates->m_NumVisibleMeshesBufferState;
@@ -1150,7 +1148,6 @@ void DXApplication::InitFillMeshTypeDepthBufferPass()
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
 
 	FillMeshTypeDepthBufferPass::InitParams params;
-	params.m_pName = "FillMeshTypeDepthBufferPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_InputResourceStates.m_GBuffer3State = pRenderGBufferFalseNegativePassStates->m_GBuffer3State;
 	params.m_InputResourceStates.m_MeshTypePerMaterialIDBufferState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
@@ -1386,7 +1383,7 @@ void DXApplication::InitVisualizeAccumLightPass()
 		assert(m_VisualizeAccumLightPasses[index] == nullptr);
 
 		VisualizeTexturePass::InitParams params;
-		params.m_pName = "VisualizeAccumLightPass";
+		params.m_pName = "VisualizeAccumulatedLightPass";
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_AccumLightTextureState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
@@ -1427,7 +1424,6 @@ void DXApplication::InitVisualizeNumLightsPerTilePass()
 		assert(m_VisualizeNumLightsPerTilePasses[index] == nullptr);
 		
 		VisualizeNumLightsPerTilePass::InitParams params;
-		params.m_pName = "VisualizeNumLightsPerTilePass";
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_LightRangePerTileBufferState = pTiledShadingPassStates->m_SpotLightRangePerTileBufferState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
@@ -1471,7 +1467,6 @@ void DXApplication::InitVisualizeVoxelReflectancePass()
 		assert(m_VisualizeVoxelReflectancePasses[index] == nullptr);
 
 		VisualizeVoxelReflectancePass::InitParams params;
-		params.m_pName = "VisualizeVoxelReflectancePass";
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
 		params.m_InputResourceStates.m_DepthTextureState = pTiledShadingPassStates->m_DepthTextureState;
@@ -1556,7 +1551,6 @@ void DXApplication::InitTiledLightCullingPass()
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
 	
 	TiledLightCullingPass::InitParams params;
-	params.m_pName = "TiledLightCullingPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pDepthTexture = m_pDepthTexture;
 	
@@ -1635,7 +1629,6 @@ void DXApplication::InitCreateVoxelizeCommandsPass()
 		m_pCreateFalseNegativeDrawCommandsPass->GetOutputResourceStates();
 	
 	CreateVoxelizeCommandsPass::InitParams params;
-	params.m_pName = "CreateVoxelizeCommandsPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_NumMeshesBufferState = pCreateFalseNegativeDrawCommandsPassStates->m_NumMeshesBufferState;
@@ -1683,7 +1676,6 @@ void DXApplication::InitVoxelizePass()
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
 		
 	VoxelizePass::InitParams params;
-	params.m_pName = "VoxelizePass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_NumCommandsPerMeshTypeBufferState = pCreateVoxelizeCommandsPassStates->m_NumCommandsPerMeshTypeBufferState;
@@ -1753,7 +1745,6 @@ void DXApplication::InitTiledShadingPass()
 		m_pRenderGBufferFalseNegativePass->GetOutputResourceStates();
 	
 	TiledShadingPass::InitParams params;
-	params.m_pName = "TiledShadingPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 
 	params.m_InputResourceStates.m_AccumLightTextureState = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -1834,7 +1825,6 @@ void DXApplication::InitCubeMapToSHCoefficientsPass()
 
 	assert(m_pCubeMapToSHCoefficientsPass == nullptr);
 	CubeMapToSHCoefficientsPass::InitParams params;
-	params.m_pName = "CubeMapToSHCoefficientsPass";
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_MaxNumSHCoefficients = numSHCoefficients;
 	params.m_CubeMapFaceSize = cubeMapFaceSize;
@@ -2147,6 +2137,70 @@ void DXApplication::OuputDebugRenderPassResult()
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 			sizeof(ElementType),
 			elementFormatter);
+
+		const f32 coeffX[9] = {
+			55.1857f,
+			-24.6684f,
+			5.1038f,
+			8.50634f,
+			0.0f,
+			0.0f,
+			-9.1052f,
+			0.0f,
+			-0.630827f
+		};
+		const f32 coeffY[9] = {
+			51.7588f,
+			8.50634f,
+			-8.50634f,
+			-8.50634f,
+			0.0f,
+			0.0f,
+			-8.74099f,
+			0.0f,
+			10.0932f
+		};
+		const f32 coeffZ[9] = {
+			57.9037f,
+			-14.4608f,
+			17.0127f,
+			-14.4608f,
+			0.0f,
+			0.0f,
+			14.5683f,
+			0.0f,
+			-3.78495f
+		};
+		
+		// 22.4f, 15.6f, 3.0f, 0.0f
+		Vector3f left(SHReconstruct(coeffX, 3, Vector3f::LEFT),
+			SHReconstruct(coeffY, 3, Vector3f::LEFT),
+			SHReconstruct(coeffZ, 3, Vector3f::LEFT));
+		
+		// 12.4f, 25.6f, 20.0f, 0.0f
+		Vector3f right(SHReconstruct(coeffX, 3, Vector3f::RIGHT),
+			SHReconstruct(coeffY, 3, Vector3f::RIGHT),
+			SHReconstruct(coeffZ, 3, Vector3f::RIGHT));
+
+		// 14.4f, 5.6f, 33.0f, 0.0f
+		Vector3f forward(SHReconstruct(coeffX, 3, Vector3f::FORWARD),
+			SHReconstruct(coeffY, 3, Vector3f::FORWARD),
+			SHReconstruct(coeffZ, 3, Vector3f::FORWARD));
+
+		// 8.4f, 15.6f, 13.0f, 0.0f
+		Vector3f back(SHReconstruct(coeffX, 3, Vector3f::BACK),
+			SHReconstruct(coeffY, 3, Vector3f::BACK),
+			SHReconstruct(coeffZ, 3, Vector3f::BACK));
+
+		// 32.4f, 7.6f, 23.0f, 0.0f
+		Vector3f up(SHReconstruct(coeffX, 3, Vector3f::UP),
+			SHReconstruct(coeffY, 3, Vector3f::UP),
+			SHReconstruct(coeffZ, 3, Vector3f::UP));
+
+		// 3.4f,  17.6f, 6.0f, 0.0f
+		Vector3f down(SHReconstruct(coeffX, 3, Vector3f::DOWN),
+			SHReconstruct(coeffY, 3, Vector3f::DOWN),
+			SHReconstruct(coeffZ, 3, Vector3f::DOWN));
 
 		OutputDebugStringA("2.Debug =========================\n");
 	}

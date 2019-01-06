@@ -22,7 +22,6 @@ public:
 
 	struct InitParams
 	{
-		const char* m_pName;
 		RenderEnv* m_pRenderEnv;
 		ResourceStates m_InputResourceStates;
 		Buffer* m_pNumMeshesBuffer;
@@ -59,8 +58,6 @@ private:
 	void AddCreateCommandsResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState);
 			
 private:
-	std::string m_Name;
-
 	RootSignature* m_pSetArgumentsRootSignature = nullptr;
 	PipelineState* m_pSetArgumentsPipelineState = nullptr;
 	Buffer* m_pArgumentBuffer = nullptr;

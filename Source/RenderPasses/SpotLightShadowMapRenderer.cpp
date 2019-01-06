@@ -227,7 +227,6 @@ void SpotLightShadowMapRenderer::InitRenderSpotLightShadowMapPass(InitParams* pP
 	assert(m_pRenderSpotLightShadowMapPass == nullptr);
 	
 	RenderSpotLightShadowMapPass::InitParams params;
-	params.m_pName = "RenderSpotLightShadowMapPass";
 	params.m_pRenderEnv = pParams->m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_RenderCommandBufferState = D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
@@ -255,7 +254,6 @@ void SpotLightShadowMapRenderer::InitCreateExpShadowMapPass(InitParams* pParams)
 		m_pRenderSpotLightShadowMapPass->GetOutputResourceStates();
 	
 	CreateExpShadowMapPass::InitParams params;
-	params.m_pName = "CreateExpShadowMapPass";
 	params.m_pRenderEnv = pParams->m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_StandardShadowMapsState = pRenderSpotLightShadowMapPassStates->m_SpotLightShadowMapsState;
@@ -278,7 +276,6 @@ void SpotLightShadowMapRenderer::InitFilterExpShadowMapPass(InitParams* pParams)
 		m_pCreateExpShadowMapPass->GetOutputResourceStates();
 
 	FilterExpShadowMapPass::InitParams params;
-	params.m_pName = "FilterExpShadowMapPass";
 	params.m_pRenderEnv = pParams->m_pRenderEnv;
 	params.m_InputResourceStates.m_ExpShadowMapsState = pCreateExpShadowMapPassStates->m_ExpShadowMapsState;
 	params.m_MaxNumActiveExpShadowMaps = pParams->m_MaxNumActiveSpotLights;

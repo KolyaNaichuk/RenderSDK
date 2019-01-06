@@ -19,7 +19,6 @@ namespace
 }
 
 CreateMainDrawCommandsPass::CreateMainDrawCommandsPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -48,7 +47,7 @@ void CreateMainDrawCommandsPass::Record(RenderParams* pParams)
 
 	pCommandList->Begin(m_pPipelineState);
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "CreateMainDrawCommandsPass");
 #endif // ENABLE_PROFILING
 
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
