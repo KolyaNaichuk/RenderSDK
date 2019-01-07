@@ -270,10 +270,10 @@
     <ClInclude Include="..\Include\RenderPasses\CubeMapToSHCoefficientsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.h">
+    <ClInclude Include="..\Include\RenderPasses\VisualizeNumLightsPerTilePass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\RenderPasses\VisualizeNumLightsPerTilePass.h">
+    <ClInclude Include="..\Include\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -503,10 +503,10 @@
     <ClCompile Include="..\Source\RenderPasses\CubeMapToSHCoefficientsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.cpp">
+    <ClCompile Include="..\Source\RenderPasses\VisualizeNumLightsPerTilePass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\RenderPasses\VisualizeNumLightsPerTilePass.cpp">
+    <ClCompile Include="..\Source\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.cpp">
       <Filter>RenderPasses</Filter>
     </ClCompile>
   </ItemGroup>
@@ -622,10 +622,10 @@
     <None Include="..\Shaders\CubeMapToSHCoefficientsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl">
+    <None Include="..\Shaders\VisualizeNumLightsPerTilePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\Shaders\VisualizeNumLightsPerTilePS.hlsl">
+    <None Include="..\Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

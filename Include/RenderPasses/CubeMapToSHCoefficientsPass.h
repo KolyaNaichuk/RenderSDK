@@ -29,10 +29,10 @@ public:
 	{
 		RenderEnv* m_pRenderEnv = nullptr;
 		CommandList* m_pCommandList = nullptr;
-		ColorTexture* m_pCubeMap = nullptr;
-		u32 m_NumSHCoefficients = 0;
-		Buffer* m_pSHCoefficientBuffer = nullptr;
 		ResourceStates m_InputResourceStates;
+		ColorTexture* m_pCubeMap = nullptr;
+		Buffer* m_pSHCoefficientBuffer = nullptr;
+		u32 m_NumSHCoefficients = 0;
 	};
 
 	CubeMapToSHCoefficientsPass(InitParams* pParams);

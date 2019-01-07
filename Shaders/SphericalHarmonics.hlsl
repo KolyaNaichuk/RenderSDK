@@ -38,7 +38,7 @@ float3 SH9Reconstruct(in float3 SHCoeffs[9], in float3 normDir)
 	return result;
 }
 
-void SH9RadianceToIrradianceCoefficients(out float3 irradianceSHCoeffs[9], in float3 radianceSHCoeffs[9])
+void SH9RadianceToIrradianceCoefficients(out float3 SHIrradianceCoeffs[9], in float3 SHRadianceCoeffs[9])
 {
 	// Based on article An Efficient Representation for Irradiance Environment Maps
 	// by Ravi Ramamoorthi and Pat Hanrahan. Formulae 5 and 9.
@@ -48,19 +48,19 @@ void SH9RadianceToIrradianceCoefficients(out float3 irradianceSHCoeffs[9], in fl
 	const float A2 = 0.785398f;
 
 	// Band 0
-	irradianceSHCoeffs[0] = A0 * radianceSHCoeffs[0];
+	SHIrradianceCoeffs[0] = A0 * SHRadianceCoeffs[0];
 
 	// Band 1
-	irradianceSHCoeffs[1] = A1 * radianceSHCoeffs[1];
-	irradianceSHCoeffs[2] = A1 * radianceSHCoeffs[2];
-	irradianceSHCoeffs[3] = A1 * radianceSHCoeffs[3];
+	SHIrradianceCoeffs[1] = A1 * SHRadianceCoeffs[1];
+	SHIrradianceCoeffs[2] = A1 * SHRadianceCoeffs[2];
+	SHIrradianceCoeffs[3] = A1 * SHRadianceCoeffs[3];
 
 	// Band 2
-	irradianceSHCoeffs[4] = A2 * radianceSHCoeffs[4];
-	irradianceSHCoeffs[5] = A2 * radianceSHCoeffs[5];
-	irradianceSHCoeffs[6] = A2 * radianceSHCoeffs[6];
-	irradianceSHCoeffs[7] = A2 * radianceSHCoeffs[7];
-	irradianceSHCoeffs[8] = A2 * radianceSHCoeffs[8];
+	SHIrradianceCoeffs[4] = A2 * SHRadianceCoeffs[4];
+	SHIrradianceCoeffs[5] = A2 * SHRadianceCoeffs[5];
+	SHIrradianceCoeffs[6] = A2 * SHRadianceCoeffs[6];
+	SHIrradianceCoeffs[7] = A2 * SHRadianceCoeffs[7];
+	SHIrradianceCoeffs[8] = A2 * SHRadianceCoeffs[8];
 }
 
 #endif // __SPHERICAL_HARMONICS__
