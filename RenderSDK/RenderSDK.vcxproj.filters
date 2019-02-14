@@ -628,6 +628,15 @@
     <None Include="..\Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\Shaders\ImageBasedLighting.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\BRDF.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\Sampling.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Notes.txt" />

@@ -329,6 +329,15 @@ COPY /Y "$(SolutionDir)Shaders\CubeMapToSHCoefficientsCS.hlsl" "$(SolutionDir)Sa
 COPY /Y "$(SolutionDir)Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl"
 
+COPY /Y "$(SolutionDir)Shaders\BRDF.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\BRDF.hlsl"
+COPY /Y "$(SolutionDir)Shaders\BRDF.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\BRDF.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\Sampling.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Sampling.hlsl"
+COPY /Y "$(SolutionDir)Shaders\Sampling.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Sampling.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\ImageBasedLighting.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ImageBasedLighting.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ImageBasedLighting.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ImageBasedLighting.hlsl"
+
 IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-4.1.0\bin\$(Platform)\assimp-vc140-mt.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>

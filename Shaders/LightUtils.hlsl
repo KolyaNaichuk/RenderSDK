@@ -2,6 +2,7 @@
 #define __LIGHT_UTILS__
 
 #include "Foundation.hlsl"
+#include "BRDF.hlsl"
 
 struct SpotLightProps
 {
@@ -27,17 +28,11 @@ float3 BRDF(float NdotL, float3 normal, float3 dirToLight, float3 dirToViewer,
 	float LdotH = saturate(dot(dirToLight, halfVec));
 	float squaredRoughness = roughness * roughness;
 
-	// GGX distribution term
-	float D = squaredRoughness / (g_PI * pow((NdotH * squaredRoughness - NdotH) * NdotH + 1.0f, 2.0f));
+	float D = D_GGX(squaredRoughness, NdotH);
+	float V = V_SmithGGXCorrelated(squaredRoughness, NdotV, NdotL);
 
-	// Smith GGX height correlated visibility term
-	float lambdaV = NdotL * sqrt(NdotV * NdotV * (1.0f - squaredRoughness) + squaredRoughness);
-	float lambdaL = NdotV * sqrt(NdotL * NdotL * (1.0f - squaredRoughness) + squaredRoughness);
-	float V = 0.5f / (lambdaV + lambdaL);
-
-	// Fresnel term (Schlick approximation)
 	float3 f0 = baseColor * metallic;
-	float3 F = f0 + (1.0f - f0) * pow(1.0f - LdotH, 5.0f);
+	float3 F = F_Schlick(f0, LdotH);
 
 	// Cook-Torrance specular BRDF
 	float3 specularBRDF = (D * V) * F;
