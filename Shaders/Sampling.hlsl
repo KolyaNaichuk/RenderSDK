@@ -22,11 +22,25 @@ float2 Hammersley(uint sampleIndex, uint numSamples)
 	return float2(E1, E2);
 }
 
+float3 CosineSampleHemisphere(float2 E)
+{
+	float cosTheta = sqrt(1.0f - E.x);
+	float sinTheta = sqrt(E.x);
+	float phi = g_2PI * E.y;
+
+	float3 L;
+	L.x = sinTheta * cos(phi);
+	L.y = sinTheta * sin(phi);
+	L.z = cosTheta;
+
+	return L;
+}
+
 float3 SampleGGX(float2 E, float squaredRoughness)
 {
 	float cosTheta = sqrt((1.0f - E.x) / ((squaredRoughness - 1.0f) * E.x + 1.0f));
 	float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
-	float phi = E.y * g_2PI;
+	float phi = g_2PI * E.y;
 	
 	float3 H;
 	H.x = sinTheta * cos(phi);

@@ -1,6 +1,38 @@
 #include "BRDF.hlsl"
 
-float3 CalcSpecularLightingReference(TextureCube radianceCubeMap, SamplerState radianceSampler,
+float3 CalcDiffuseLightingReference(TextureCube<float4> radianceCubeMap, SamplerState radianceSampler,
+	float3 N, float3 diffuseAlbedo, uint numSamples)
+{
+	float3 reflectedRadiance = 0.0f;
+
+	float3 upVector = abs(N.z) < 0.999f ? float3(0.0f, 0.0f, 1.0f) : float3(1.0f, 0.0f, 0.0f);
+	float3 worldBasisX = normalize(cross(upVector, N));
+	float3 worldBasisY = cross(N, worldBasisX);
+
+	for (uint sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
+	{
+		float2 E = Hammersley(sampleIndex, numSamples);
+		
+		float3 L = CosineSampleHemisphere(E);
+		L = normalize(L.x * worldBasisX + L.y * worldBasisY + L.z * N);
+
+		float NdotL = saturate(dot(N, L));
+		if (NdotL > 0.0f)
+		{
+			float3 incidentRadiance = radianceCubeMap.Sample(radianceSampler, L, 0.0f).rgb;
+
+			// Lambert diffuse BRDF = diffuseAlbedo / PI
+			// PDF = NdotL / PI
+
+			reflectedRadiance += incidentRadiance * diffuseAlbedo;
+		}
+	}
+
+	reflectedRadiance /= float(numSamples);
+	return reflectedRadiance;
+}
+
+float3 CalcSpecularLightingReference(TextureCube<float4> radianceCubeMap, SamplerState radianceSampler,
 	float3 N, float3 V, float3 f0, float squaredRoughness, uint numSamples)
 {
 	float3 reflectedRadiance = 0.0f;

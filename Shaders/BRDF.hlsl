@@ -3,6 +3,8 @@
 
 #include "Foundation.hlsl"
 
+// Lambert diffuse BRDF = diffuseAlbedo / PI
+
 // Cook-Torrance specular BRDF = D * G * F / (4.0f * NdotL * NdotV) = D * V * F
 // V = G / (4.0f * NdotL * NdotV)
 
