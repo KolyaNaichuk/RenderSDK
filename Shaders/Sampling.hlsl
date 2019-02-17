@@ -14,6 +14,7 @@ float RadicalInverse(uint bits)
 	return float(bits) * 2.3283064365386963e-10;
 }
 
+// Generates uniformly distributed 2D sample in range [0, 1) x [0, 1)
 float2 Hammersley(uint sampleIndex, uint numSamples)
 {
 	float E1 = float(sampleIndex) / float(numSamples);
@@ -22,6 +23,8 @@ float2 Hammersley(uint sampleIndex, uint numSamples)
 	return float2(E1, E2);
 }
 
+// Generates light sample direction in local coordinate space.
+// By assumption, N is (0, 0, 1) in this space.
 float3 CosineSampleHemisphere(float2 E)
 {
 	float cosTheta = sqrt(1.0f - E.x);
@@ -36,6 +39,8 @@ float3 CosineSampleHemisphere(float2 E)
 	return L;
 }
 
+// Generates microfacet orientation sample (H) from GGX distribution in local coordinate space.
+// By assumption, N is (0, 0, 1) in this space.
 float3 SampleGGX(float2 E, float squaredRoughness)
 {
 	float cosTheta = sqrt((1.0f - E.x) / ((squaredRoughness - 1.0f) * E.x + 1.0f));

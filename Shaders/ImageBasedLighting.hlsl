@@ -75,3 +75,51 @@ float3 CalcSpecularLightingReference(TextureCube<float4> radianceCubeMap, Sample
 	reflectedRadiance /= float(numSamples);
 	return reflectedRadiance;
 }
+
+float2 IntegrateDFG(float roughness, float NdotV, uint numSamples)
+{
+	// See section 4.9.2 "Light probe filtering"
+	// in paper "Moving Frostbite to PBR" for DFG term derivation.
+
+	// It does not matter in which coordinate space we perform the integration.
+	// All we care about is just NdotV represents the cosine of the angle between N and V.
+	// For the sake of convenience, we choose N as (0, 0, 1), that is positive Z.
+	// This also means that sampled H from GGX is already in this space.
+
+	float2 DFG = 0.0f;
+
+	// The integral is symmetrical with respect to N.
+	// We can go with any V that satisfies NdotV condition.
+	// Let us take V that lies in XZ plane.
+	
+	float3 V;
+	V.x = sqrt(1.0f - NdotV * NdotV);
+	V.y = 0.0f;
+	V.z = NdotV;
+
+	float squaredRoughness = roughness * roughness;
+	for (uint sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
+	{
+		float2 E = Hammersley(sampleIndex, numSamples);
+		float3 H = SampleGGX(E, squaredRoughness);
+		float3 L = normalize(2.0f * dot(V, H) * H - V);
+
+		float NdotL = saturate(L.z);
+		float NdotH = saturate(H.z);
+		float VdotH = saturate(dot(V, H));
+
+		if (NdotL > 0.0f)
+		{
+			float V = V_SmithGGXCorrelated(squaredRoughness, NdotV, NdotL);
+
+			float GVis = (4.0f * V * NdotL * VdotH) / NdotH;
+			float Fc = pow(1.0f - VdotH, 5.0f);
+
+			DFG.x += (1.0f - Fc) * GVis;
+			DFG.y += Fc * GVis;
+		}
+	}
+
+	DFG /= float(numSamples);
+	return DFG;
+}

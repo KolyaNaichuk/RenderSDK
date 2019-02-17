@@ -16,8 +16,8 @@ float D_GGX(float squaredRoughness, float NdotH)
 
 float V_SmithGGXCorrelated(float squaredRoughness, float NdotV, float NdotL)
 {
-	float lambdaV = NdotL * sqrt(NdotV * (NdotV - NdotV * squaredRoughness) + squaredRoughness);
-	float lambdaL = NdotV * sqrt(NdotL * (NdotL - NdotL * squaredRoughness) + squaredRoughness);
+	float lambdaV = NdotL * sqrt((-NdotV * squaredRoughness + NdotV) * NdotV + squaredRoughness);
+	float lambdaL = NdotV * sqrt((-NdotL * squaredRoughness + NdotL) * NdotL + squaredRoughness);
 	return 0.5f / (lambdaV + lambdaL);
 }
 
