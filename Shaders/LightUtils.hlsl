@@ -19,31 +19,6 @@ struct SpotLightProps
 	uint lightID;
 };
 
-float3 BRDF(float NdotL, float3 normal, float3 dirToLight, float3 dirToViewer,
-	float3 baseColor, float metallic, float roughness)
-{
-	float3 halfVec = normalize(dirToLight + dirToViewer);
-	float NdotV = saturate(dot(normal, dirToViewer));
-	float NdotH = saturate(dot(normal, halfVec));
-	float LdotH = saturate(dot(dirToLight, halfVec));
-	float squaredRoughness = roughness * roughness;
-
-	float D = D_GGX(squaredRoughness, NdotH);
-	float V = V_SmithGGXCorrelated(squaredRoughness, NdotV, NdotL);
-
-	float3 f0 = baseColor * metallic;
-	float3 F = F_Schlick(f0, LdotH);
-
-	// Cook-Torrance specular BRDF
-	float3 specularBRDF = (D * V) * F;
-
-	// Lambert diffuse BRDF
-	float3 diffuseAlbedo = (1.0f - metallic) * baseColor;
-	float3 diffuseBRDF = ((1.0f - F) * g_1DIVPI) * diffuseAlbedo;
-
-	return (diffuseBRDF + specularBRDF);
-}
-
 float CalcDistanceFalloff(float squaredDistToLight, float lightRcpSquaredRange)
 {
 	float rcpSquareDistFalloff = 1.0f / max(squaredDistToLight, 0.01f * 0.01f);

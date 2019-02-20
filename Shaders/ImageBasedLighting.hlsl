@@ -33,7 +33,7 @@ float3 CalcDiffuseLightingReference(TextureCube<float4> radianceCubeMap, Sampler
 }
 
 float3 CalcSpecularLightingReference(TextureCube<float4> radianceCubeMap, SamplerState radianceSampler,
-	float3 N, float3 V, float3 f0, float squaredRoughness, uint numSamples)
+	float3 N, float3 V, float3 f0, float roughness, uint numSamples)
 {
 	float3 reflectedRadiance = 0.0f;
 
@@ -41,6 +41,7 @@ float3 CalcSpecularLightingReference(TextureCube<float4> radianceCubeMap, Sample
 	float3 worldBasisX = normalize(cross(upVector, N));
 	float3 worldBasisY = cross(N, worldBasisX);
 
+	float squaredRoughness = roughness * roughness;
 	for (uint sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
 	{
 		float2 E = Hammersley(sampleIndex, numSamples);
@@ -59,21 +60,88 @@ float3 CalcSpecularLightingReference(TextureCube<float4> radianceCubeMap, Sample
 		{
 			float3 incidentRadiance = radianceCubeMap.Sample(radianceSampler, L, 0.0f).rgb;
 
-			float V = V_SmithGGXCorrelated(squaredRoughness, NdotV, NdotL);
+			float Vis = V_SmithGGXCorrelated(squaredRoughness, NdotV, NdotL);
 			float3 F = F_Schlick(f0, LdotH);
-			
+
 			// PDF in half angle space = D * NdotH.
 			// Jacobian to convert PDF from half angle to incident light space = 1 / (4 * LdotH).
 			// See PBR 3rd edition section Sampling Reflection Functions for Jacobian derivation. 
 			// PDF in incident light space = D * NdotH / (4 * LdotH).
-			// Cook-Torrance specular BRDF = D * V * F.
+			// Cook-Torrance specular BRDF = D * Vis * F.
 
-			reflectedRadiance += incidentRadiance * F * (V * (4 * LdotH / NdotH) * NdotL);
+			reflectedRadiance += incidentRadiance * F * (Vis * (4 * LdotH / NdotH) * NdotL);
 		}
 	}
 
 	reflectedRadiance /= float(numSamples);
 	return reflectedRadiance;
+}
+
+float3 IntegrateLD(TextureCube<float4> radianceCubeMap, SamplerState radianceSampler,
+	float cubeMapFaceSize, float numMips, float3 R, float roughness, uint numSamples)
+{
+	// See section 4.9.2 "Light probe filtering"
+	// in paper "Moving Frostbite to PBR" for DFG term derivation.
+
+	// We integrate based on the reflected direction R, where R = reflect(-V, N).
+	// So for every direction R, we store a preintegrated value in the cube map.
+	// Different mip levels of the cube map correspond to different roughness values.
+	// To simplify the integral, we assume N is equal to V, which means that R is equal to V as well.
+
+	float3 N = R;
+	float3 V = R;
+	
+	float3 LD = 0.0f;
+	float totalWeight = 0.0f;
+
+	float3 upVector = abs(N.z) < 0.999f ? float3(0.0f, 0.0f, 1.0f) : float3(1.0f, 0.0f, 0.0f);
+	float3 worldBasisX = normalize(cross(upVector, N));
+	float3 worldBasisY = cross(N, worldBasisX);
+
+	float squaredRoughness = roughness * roughness;
+
+	// Crude approximation of the pixel solid area.
+	// Assumed to be the same for all the sample directions.
+	// Need to incorrporate Jacobian for transforming from sphere to cube map space to be correct. 
+	
+	float pixelSolidAngle = g_4PI / (6.0f * cubeMapFaceSize * cubeMapFaceSize);
+	
+	for (uint sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
+	{
+		float2 E = Hammersley(sampleIndex, numSamples);
+
+		float3 H = SampleGGX(E, squaredRoughness);
+		H = normalize(H.x * worldBasisX + H.y * worldBasisY + H.z * N);
+
+		float3 L = normalize(2.0f * dot(V, H) * H - V);
+
+		float NdotL = saturate(dot(N, L));
+		float NdotH = saturate(dot(N, H));
+
+		if (NdotL > 0.0f)
+		{
+			// Prefiltering importance sampling.
+			// See chapter 20. GPU-Based importance sampling from GPU Gems 3.
+
+			// PDF in half angle space = D * NdotH.
+			// Jacobian to convert PDF from half angle to incident light space = 1 / (4 * LdotH).
+			// See PBR 3rd edition section Sampling Reflection Functions for Jacobian derivation. 
+			// PDF in incident light space = D * NdotH / (4 * LdotH).
+			// Since V = N, then VdotH = LdotH = NdotH and PDF = D / 4.
+
+			float PDF = 0.25f * D_GGX(squaredRoughness, NdotH);
+			float sampleSolidAngle = 1.0f / (float(numSamples) * PDF);
+
+			float mipLevel = clamp(0.5f * log2(sampleSolidAngle / pixelSolidAngle), 0.0f, numMips);
+			float3 incidentRadiance = radianceCubeMap.Sample(radianceSampler, L, mipLevel).rgb;
+
+			LD += incidentRadiance * NdotL;
+			totalWeight += NdotL;
+		}
+	}
+
+	LD /= max(totalWeight, 0.000001f);
+	return LD;
 }
 
 float2 IntegrateDFG(float roughness, float NdotV, uint numSamples)
@@ -110,9 +178,9 @@ float2 IntegrateDFG(float roughness, float NdotV, uint numSamples)
 
 		if (NdotL > 0.0f)
 		{
-			float V = V_SmithGGXCorrelated(squaredRoughness, NdotV, NdotL);
+			float Vis = V_SmithGGXCorrelated(squaredRoughness, NdotV, NdotL);
+			float GVis = (4.0f * Vis * NdotL * VdotH) / NdotH;
 
-			float GVis = (4.0f * V * NdotL * VdotH) / NdotH;
 			float Fc = pow(1.0f - VdotH, 5.0f);
 
 			DFG.x += (1.0f - Fc) * GVis;
