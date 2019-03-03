@@ -78,7 +78,7 @@ float3 CalcSpecularLightingReference(TextureCube<float4> radianceCubeMap, Sample
 }
 
 float3 IntegrateLD(TextureCube<float4> radianceCubeMap, SamplerState radianceSampler,
-	float cubeMapFaceSize, float numMips, float3 R, float roughness, uint numSamples)
+	float cubeMapFaceSize, float numMipLevels, float3 R, float roughness, uint numSamples)
 {
 	// See section 4.9.2 "Light probe filtering"
 	// in paper "Moving Frostbite to PBR" for DFG term derivation.
@@ -132,7 +132,7 @@ float3 IntegrateLD(TextureCube<float4> radianceCubeMap, SamplerState radianceSam
 			float PDF = 0.25f * D_GGX(squaredRoughness, NdotH);
 			float sampleSolidAngle = 1.0f / (float(numSamples) * PDF);
 
-			float mipLevel = clamp(0.5f * log2(sampleSolidAngle / pixelSolidAngle), 0.0f, numMips);
+			float mipLevel = clamp(0.5f * log2(sampleSolidAngle / pixelSolidAngle), 0.0f, numMipLevels);
 			float3 incidentRadiance = radianceCubeMap.Sample(radianceSampler, L, mipLevel).rgb;
 
 			LD += incidentRadiance * NdotL;
