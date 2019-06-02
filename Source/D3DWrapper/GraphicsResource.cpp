@@ -1689,3 +1689,35 @@ TextureCopyLocation::TextureCopyLocation(GraphicsResource* pGraphicsResource, co
 	Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
 	PlacedFootprint = footprint;
 }
+
+RayTracingTrianglesGeometryDesc::RayTracingTrianglesGeometryDesc(DXGI_FORMAT vertexFormat, Buffer* pVertexBuffer, Buffer* pIndexBuffer,
+	D3D12_RAYTRACING_GEOMETRY_FLAGS flags, Buffer* pTransformBuffer)
+{
+	Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+	Flags = flags;
+
+	Triangles.Transform3x4 = (pTransformBuffer != nullptr) ? pTransformBuffer->GetD3DObject()->GetGPUVirtualAddress() : 0;
+	
+	assert(pVertexBuffer != nullptr);
+	const VertexBufferView* pVBView = pVertexBuffer->GetVBView();
+	
+	Triangles.VertexFormat = vertexFormat;
+	Triangles.VertexCount = pVBView->SizeInBytes / pVBView->StrideInBytes;
+	Triangles.VertexBuffer.StartAddress = pVBView->BufferLocation;
+	Triangles.VertexBuffer.StrideInBytes = pVBView->StrideInBytes;
+
+	if (pIndexBuffer != nullptr)
+	{
+		const IndexBufferView* pIBView = pIndexBuffer->GetIBView();
+
+		Triangles.IndexFormat = pIBView->Format;
+		Triangles.IndexCount = (pIBView->Format == DXGI_FORMAT_R16_UINT) ? (pIBView->SizeInBytes / sizeof(u16)) : (pIBView->SizeInBytes / sizeof(u32));
+		Triangles.IndexBuffer = pIBView->BufferLocation;
+	}
+	else
+	{
+		Triangles.IndexFormat = DXGI_FORMAT_UNKNOWN;
+		Triangles.IndexCount = 0;
+		Triangles.IndexBuffer = 0;
+	}
+}

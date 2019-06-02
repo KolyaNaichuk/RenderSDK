@@ -20,3 +20,4 @@ Samples/ToneMapping/Shaders/
 ipch/
 .vs/
 Include/External/DirectXTex/Bin/
+Samples/DXR_HelloTriangle/x64/

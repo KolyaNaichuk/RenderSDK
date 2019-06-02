@@ -22,7 +22,7 @@ class CommandList
 public:
 	CommandList(GraphicsDevice* pDevice, D3D12_COMMAND_LIST_TYPE type, LPCWSTR pName);
 	
-	ID3D12GraphicsCommandList* GetD3DObject() { return m_D3DCommandList.Get(); }
+	ID3D12GraphicsCommandList4* GetD3DObject() { return m_D3DCommandList.Get(); }
 	void SetName(LPCWSTR pName);
 
 	void Begin(PipelineState* pPipelineState = nullptr);
@@ -88,7 +88,7 @@ public:
 	bool CompletedExecution();
 
 private:
-	ComPtr<ID3D12GraphicsCommandList> m_D3DCommandList;
+	ComPtr<ID3D12GraphicsCommandList4> m_D3DCommandList;
 	ComPtr<ID3D12CommandAllocator> m_D3DCommandAllocator;	
 	Fence* m_pCompletionFence;
 	UINT64 m_CompletionFenceValue;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/DescriptorHeap.h"
 #include "D3DWrapper/CommandQueue.h"
 #include "D3DWrapper/CommandList.h"
@@ -7,7 +8,6 @@
 
 class GraphicsDevice;
 class GraphicsResource;
-struct RenderEnv;
 
 DXGI_FORMAT GetRenderTargetViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetDepthStencilViewFormat(DXGI_FORMAT resourceFormat);
@@ -517,6 +517,12 @@ struct TextureCopyLocation : public D3D12_TEXTURE_COPY_LOCATION
 {
 	TextureCopyLocation(GraphicsResource* pGraphicsResource, UINT subresourceIndex);
 	TextureCopyLocation(GraphicsResource* pGraphicsResource, const D3D12_PLACED_SUBRESOURCE_FOOTPRINT& footprint);
+};
+
+struct RayTracingTrianglesGeometryDesc : D3D12_RAYTRACING_GEOMETRY_DESC
+{
+	RayTracingTrianglesGeometryDesc(DXGI_FORMAT vertexFormat, Buffer* pVertexBuffer, Buffer* pIndexBuffer,
+		D3D12_RAYTRACING_GEOMETRY_FLAGS flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE, Buffer* pTransformBuffer = nullptr);
 };
 
 template <typename DestBufferDesc>
