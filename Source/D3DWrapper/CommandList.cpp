@@ -82,6 +82,12 @@ void CommandList::ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER
 	m_D3DCommandList->ResourceBarrier(numBarriers, pBarriers);
 }
 
+void CommandList::BuildRaytracingAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* pDesc,
+	UINT numPostbuildInfoDescs, const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC* pPostbuildInfoDescs)
+{
+	m_D3DCommandList->BuildRaytracingAccelerationStructure(pDesc, numPostbuildInfoDescs, pPostbuildInfoDescs);
+}
+
 void CommandList::SetGraphicsRootSignature(RootSignature* pRootSignature)
 {
 	m_D3DCommandList->SetGraphicsRootSignature(pRootSignature->GetD3DObject());

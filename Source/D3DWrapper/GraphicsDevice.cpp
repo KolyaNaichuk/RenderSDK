@@ -75,3 +75,9 @@ void GraphicsDevice::GetCopyableFootprints(const D3D12_RESOURCE_DESC* pResourceD
 {
 	m_D3DDevice->GetCopyableFootprints(pResourceDesc, firstSubresource, numSubresources, baseOffsetInBytes, pFootprints, pNumRows, pRowSizeInBytes, pTotalBytes);
 }
+
+void GraphicsDevice::GetRaytracingAccelerationStructurePrebuildInfo(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* pInputs,
+	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO* pInfo)
+{
+	m_D3DDevice->GetRaytracingAccelerationStructurePrebuildInfo(pInputs, pInfo);
+}

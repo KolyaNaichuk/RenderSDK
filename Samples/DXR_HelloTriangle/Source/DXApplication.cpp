@@ -25,6 +25,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pPipelineState(nullptr)
 	, m_pVertexBuffer(nullptr)
 	, m_pIndexBuffer(nullptr)
+	, m_pBLASBuffer(nullptr)
 	, m_pDefaultHeapProps(new HeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new HeapProperties(D3D12_HEAP_TYPE_UPLOAD))
 	, m_pRenderEnv(new RenderEnv())
@@ -45,6 +46,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pUploadHeapProps);
 	SafeDelete(m_pViewport);
 	SafeDelete(m_pScissorRect);
+	SafeDelete(m_pBLASBuffer);
 	SafeDelete(m_pVertexBuffer);
 	SafeDelete(m_pIndexBuffer);
 	SafeDelete(m_pFence);
@@ -122,21 +124,44 @@ void DXApplication::OnInit()
 	
 	const Vector3f vertices[] = 
 	{
-		Vector3f(),
-		Vector3f(),
-		Vector3f()
+		Vector3f(0.0f, 10.0f, 2.0f),
+		Vector3f(10.0f, -10.0f, 2.0f),
+		Vector3f(-10.0f, -10.0f, 2.0f)
 	};
 	const WORD indices[] = {0, 1, 2};
 
 	VertexBufferDesc vertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]));
 	m_pVertexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pVertexBuffer");
-	UploadData(m_pRenderEnv, m_pVertexBuffer, vertexBufferDesc,
-		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, vertices, sizeof(vertices));
+	UploadData(m_pRenderEnv, m_pVertexBuffer, vertexBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, vertices, sizeof(vertices));
 	
 	IndexBufferDesc indexBufferDesc(ARRAYSIZE(indices), sizeof(indices[0]));
 	m_pIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pIndexBuffer");
-	UploadData(m_pRenderEnv, m_pIndexBuffer, indexBufferDesc,
-		D3D12_RESOURCE_STATE_INDEX_BUFFER, indices, sizeof(indices));
+	UploadData(m_pRenderEnv, m_pIndexBuffer, indexBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, indices, sizeof(indices));
+
+	RayTracingTrianglesGeometryDesc trianglesGeometryDesc(DXGI_FORMAT_R32G32B32_FLOAT, m_pVertexBuffer, m_pIndexBuffer, D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE);
+	
+	BuildRayTracingAccelerationStructureInputs BLASInputs;
+	BLASInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+	BLASInputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+	BLASInputs.NumDescs = 1;
+	BLASInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+	BLASInputs.pGeometryDescs = &trianglesGeometryDesc;
+
+	RayTracingAccelerationStructurePrebuildInfo BLASPrebuildInfo;
+	m_pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&BLASInputs, &BLASPrebuildInfo);
+	
+	assert(BLASPrebuildInfo.ResultDataMaxSizeInBytes > 0);
+	assert(BLASPrebuildInfo.ScratchDataSizeInBytes > 0);
+	assert(BLASPrebuildInfo.UpdateScratchDataSizeInBytes == 0);
+
+	StructuredBufferDesc BLASBufferDesc(1, BLASPrebuildInfo.ResultDataMaxSizeInBytes, false, true);
+	m_pBLASBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &BLASBufferDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, L"m_pBLASBuffer");
+
+	StructuredBufferDesc BLASScratchBufferDesc(1, BLASPrebuildInfo.ScratchDataSizeInBytes, false, true);
+	Buffer BLASScratchBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &BLASScratchBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"BLASScratchBuffer");
+
+	BuildRayTracingAccelerationStructureDesc BLASDesc(&BLASInputs, m_pBLASBuffer, &BLASScratchBuffer);
+
 }
 
 void DXApplication::OnUpdate()

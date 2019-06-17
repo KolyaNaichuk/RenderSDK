@@ -1721,3 +1721,15 @@ RayTracingTrianglesGeometryDesc::RayTracingTrianglesGeometryDesc(DXGI_FORMAT ver
 		Triangles.IndexBuffer = 0;
 	}
 }
+
+BuildRayTracingAccelerationStructureDesc::BuildRayTracingAccelerationStructureDesc(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* pInputs,
+	Buffer* pDestBuffer, Buffer* pScratchBuffer, Buffer* pSourceBuffer)
+{
+	assert(pDestBuffer != nullptr);
+	assert(pScratchBuffer != nullptr);
+
+	DestAccelerationStructureData = pDestBuffer->GetD3DObject()->GetGPUVirtualAddress();
+	Inputs = *pInputs;
+	SourceAccelerationStructureData = (pSourceBuffer != nullptr) ? pSourceBuffer->GetD3DObject()->GetGPUVirtualAddress() : 0;
+	ScratchAccelerationStructureData = pScratchBuffer->GetD3DObject()->GetGPUVirtualAddress();
+}

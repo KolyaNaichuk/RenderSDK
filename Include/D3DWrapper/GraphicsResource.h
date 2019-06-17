@@ -525,6 +525,20 @@ struct RayTracingTrianglesGeometryDesc : D3D12_RAYTRACING_GEOMETRY_DESC
 		D3D12_RAYTRACING_GEOMETRY_FLAGS flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE, Buffer* pTransformBuffer = nullptr);
 };
 
+struct BuildRayTracingAccelerationStructureInputs : D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS
+{
+};
+
+struct RayTracingAccelerationStructurePrebuildInfo : D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO
+{
+};
+
+struct BuildRayTracingAccelerationStructureDesc : D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC
+{
+	BuildRayTracingAccelerationStructureDesc(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* pInputs,
+		Buffer* pDestBuffer, Buffer* pScratchBuffer, Buffer* pSourceBuffer = nullptr);
+};
+
 template <typename DestBufferDesc>
 void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, DestBufferDesc destBufferDesc,
 	D3D12_RESOURCE_STATES destBufferStateAfter, const void* pUploadData, SIZE_T numUploadBytes)

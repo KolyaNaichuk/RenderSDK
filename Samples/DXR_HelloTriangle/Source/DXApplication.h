@@ -45,6 +45,7 @@ private:
 	PipelineState* m_pPipelineState;
 	Buffer* m_pVertexBuffer;
 	Buffer* m_pIndexBuffer;
+	Buffer* m_pBLASBuffer;
 	HeapProperties* m_pDefaultHeapProps;
 	HeapProperties* m_pUploadHeapProps;
 	RenderEnv* m_pRenderEnv;
