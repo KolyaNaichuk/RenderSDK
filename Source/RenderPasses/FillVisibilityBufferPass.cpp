@@ -91,7 +91,7 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 	const u16 unitAABBTriangleStripIndices[] = {1, 0, 3, 2, 6, 0, 4, 1, 5, 3, 7, 6, 5, 4};
 	const u32 unitAABBIndexCount = ARRAYSIZE(unitAABBTriangleStripIndices);
 
-	IndexBufferDesc unitAABBIndexBufferDesc(unitAABBIndexCount, sizeof(unitAABBTriangleStripIndices[0]));
+	FormattedBufferDesc unitAABBIndexBufferDesc(unitAABBIndexCount, GetIndexBufferFormat(sizeof(unitAABBTriangleStripIndices[0])), false, false, true);
 	m_pUnitAABBIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &unitAABBIndexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pUnitAABBIndexBuffer");
 	UploadData(pRenderEnv, m_pUnitAABBIndexBuffer, unitAABBIndexBufferDesc,
 		D3D12_RESOURCE_STATE_INDEX_BUFFER, unitAABBTriangleStripIndices, sizeof(unitAABBTriangleStripIndices));

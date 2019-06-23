@@ -31,6 +31,9 @@ private:
 	void OnUpdate() override;
 	void OnRender() override;
 	void OnDestroy() override;
+
+	void BuildGeometryBuffers();
+	void BuildAccelerationStructures();
 	
 private:
 	enum { kNumBackBuffers = 3 };
@@ -41,11 +44,11 @@ private:
 	CommandListPool* m_pCommandListPool;
 	DescriptorHeap* m_pShaderInvisibleRTVHeap;
 	DescriptorHeap* m_pShaderInvisibleSRVHeap;
-	RootSignature* m_pRootSignature;
-	PipelineState* m_pPipelineState;
 	Buffer* m_pVertexBuffer;
 	Buffer* m_pIndexBuffer;
 	Buffer* m_pBLASBuffer;
+	Buffer* m_pTLASBuffer;
+	Buffer* m_pInstanceBuffer;
 	HeapProperties* m_pDefaultHeapProps;
 	HeapProperties* m_pUploadHeapProps;
 	RenderEnv* m_pRenderEnv;

@@ -21,11 +21,11 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pCommandListPool(nullptr)
 	, m_pShaderInvisibleRTVHeap(nullptr)
 	, m_pShaderInvisibleSRVHeap(nullptr)
-	, m_pRootSignature(nullptr)
-	, m_pPipelineState(nullptr)
 	, m_pVertexBuffer(nullptr)
 	, m_pIndexBuffer(nullptr)
 	, m_pBLASBuffer(nullptr)
+	, m_pTLASBuffer(nullptr)
+	, m_pInstanceBuffer(nullptr)
 	, m_pDefaultHeapProps(new HeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new HeapProperties(D3D12_HEAP_TYPE_UPLOAD))
 	, m_pRenderEnv(new RenderEnv())
@@ -46,14 +46,14 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pUploadHeapProps);
 	SafeDelete(m_pViewport);
 	SafeDelete(m_pScissorRect);
+	SafeDelete(m_pTLASBuffer);
 	SafeDelete(m_pBLASBuffer);
+	SafeDelete(m_pInstanceBuffer);
 	SafeDelete(m_pVertexBuffer);
 	SafeDelete(m_pIndexBuffer);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pShaderInvisibleSRVHeap);
 	SafeDelete(m_pShaderInvisibleRTVHeap);
-	SafeDelete(m_pRootSignature);
-	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pDevice);
 	SafeDelete(m_pSwapChain);
 	SafeDelete(m_pCommandQueue);
@@ -71,7 +71,7 @@ void DXApplication::OnInit()
 	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kNumBackBuffers, false);
 	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	DescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, kNumBackBuffers, false);
+	DescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32, false);
 	m_pShaderInvisibleSRVHeap = new DescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pShaderInvisibleSRVHeap");
 	
 	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -99,69 +99,9 @@ void DXApplication::OnInit()
 	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
 	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-			
-	RootSignatureDesc rootSignatureDesc(D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new RootSignature(m_pDevice, &rootSignatureDesc, L"RootSignature");
 
-	const InputElementDesc inputElementDescs[] =
-	{
-		InputElementDesc("POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0),
-		InputElementDesc("COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16)
-	};
-	
-	Shader vertexShader(L"Shaders//PassThroughVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//PassThroughPS.hlsl", "Main", "ps_4_0");
-
-	GraphicsPipelineStateDesc pipelineStateDesc;
-	pipelineStateDesc.SetRootSignature(m_pRootSignature);
-	pipelineStateDesc.SetVertexShader(&vertexShader);
-	pipelineStateDesc.SetPixelShader(&pixelShader);
-	pipelineStateDesc.InputLayout = InputLayoutDesc(ARRAYSIZE(inputElementDescs), inputElementDescs);
-	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipelineStateDesc.SetRenderTargetFormat(DXGI_FORMAT_R8G8B8A8_UNORM);
-		
-	m_pPipelineState = new PipelineState(m_pDevice, &pipelineStateDesc, L"m_pPipelineState");
-	
-	const Vector3f vertices[] = 
-	{
-		Vector3f(0.0f, 10.0f, 2.0f),
-		Vector3f(10.0f, -10.0f, 2.0f),
-		Vector3f(-10.0f, -10.0f, 2.0f)
-	};
-	const WORD indices[] = {0, 1, 2};
-
-	VertexBufferDesc vertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]));
-	m_pVertexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pVertexBuffer");
-	UploadData(m_pRenderEnv, m_pVertexBuffer, vertexBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, vertices, sizeof(vertices));
-	
-	IndexBufferDesc indexBufferDesc(ARRAYSIZE(indices), sizeof(indices[0]));
-	m_pIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pIndexBuffer");
-	UploadData(m_pRenderEnv, m_pIndexBuffer, indexBufferDesc, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, indices, sizeof(indices));
-
-	RayTracingTrianglesGeometryDesc trianglesGeometryDesc(DXGI_FORMAT_R32G32B32_FLOAT, m_pVertexBuffer, m_pIndexBuffer, D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE);
-	
-	BuildRayTracingAccelerationStructureInputs BLASInputs;
-	BLASInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
-	BLASInputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
-	BLASInputs.NumDescs = 1;
-	BLASInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	BLASInputs.pGeometryDescs = &trianglesGeometryDesc;
-
-	RayTracingAccelerationStructurePrebuildInfo BLASPrebuildInfo;
-	m_pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&BLASInputs, &BLASPrebuildInfo);
-	
-	assert(BLASPrebuildInfo.ResultDataMaxSizeInBytes > 0);
-	assert(BLASPrebuildInfo.ScratchDataSizeInBytes > 0);
-	assert(BLASPrebuildInfo.UpdateScratchDataSizeInBytes == 0);
-
-	StructuredBufferDesc BLASBufferDesc(1, BLASPrebuildInfo.ResultDataMaxSizeInBytes, false, true);
-	m_pBLASBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &BLASBufferDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, L"m_pBLASBuffer");
-
-	StructuredBufferDesc BLASScratchBufferDesc(1, BLASPrebuildInfo.ScratchDataSizeInBytes, false, true);
-	Buffer BLASScratchBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &BLASScratchBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"BLASScratchBuffer");
-
-	BuildRayTracingAccelerationStructureDesc BLASDesc(&BLASInputs, m_pBLASBuffer, &BLASScratchBuffer);
-
+	BuildGeometryBuffers();
+	BuildAccelerationStructures();
 }
 
 void DXApplication::OnUpdate()
@@ -170,6 +110,7 @@ void DXApplication::OnUpdate()
 
 void DXApplication::OnRender()
 {
+	/*
 	CommandList* pCommandList = m_pCommandListPool->Create(L"renderRectCommandList");
 	
 	pCommandList->Begin(m_pPipelineState);
@@ -205,10 +146,157 @@ void DXApplication::OnRender()
 	m_FrameCompletionFenceValues[m_BackBufferIndex] = m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 	m_pFence->WaitForSignalOnCPU(m_FrameCompletionFenceValues[m_BackBufferIndex]);
+	*/
 }
 
 void DXApplication::OnDestroy()
 {
 	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
+}
+
+void DXApplication::BuildGeometryBuffers()
+{
+	const Vector3f vertices[] =
+	{
+		Vector3f(0.0f, 10.0f, 2.0f),
+		Vector3f(10.0f, -10.0f, 2.0f),
+		Vector3f(-10.0f, -10.0f, 2.0f)
+	};
+	const WORD indices[] = {0, 1, 2};
+
+	assert(m_pVertexBuffer == nullptr);
+	StructuredBufferDesc vertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]), true, false, true);
+	m_pVertexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pVertexBuffer");
+
+	StructuredBufferDesc uploadVertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]), false, false);
+	Buffer uploadVertexBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &uploadVertexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadVertexBuffer");
+	uploadVertexBuffer.Write(vertices, sizeof(vertices));
+
+	assert(m_pIndexBuffer == nullptr);
+	FormattedBufferDesc indexBufferDesc(ARRAYSIZE(indices), GetIndexBufferFormat(sizeof(indices[0])), true, false, true);
+	m_pIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pIndexBuffer");
+
+	FormattedBufferDesc uploadIndexBufferDesc(ARRAYSIZE(indices), GetIndexBufferFormat(sizeof(indices[0])), false, false);
+	Buffer uploadIndexBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &uploadIndexBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadIndexBuffer");
+	uploadIndexBuffer.Write(indices, sizeof(indices));
+
+	const ResourceTransitionBarrier resourceBarriers[] = {
+		ResourceTransitionBarrier(m_pVertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE),
+		ResourceTransitionBarrier(m_pIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+	};
+	
+	CommandList* pUploadCommandList = m_pCommandListPool->Create(L"uploadVertexDataCommandList");
+	pUploadCommandList->Begin();
+	pUploadCommandList->CopyResource(m_pVertexBuffer, &uploadVertexBuffer);
+	pUploadCommandList->CopyResource(m_pIndexBuffer, &uploadIndexBuffer);
+	pUploadCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
+	pUploadCommandList->End();
+
+	++m_pRenderEnv->m_LastSubmissionFenceValue;
+	m_pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pUploadCommandList, m_pRenderEnv->m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
+	m_pRenderEnv->m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
+}
+
+void DXApplication::BuildAccelerationStructures()
+{
+	// Bottom level acceleration structure
+	
+	RayTracingTrianglesGeometryDesc geometryDesc(DXGI_FORMAT_R32G32B32_FLOAT, m_pVertexBuffer, m_pIndexBuffer, D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE);
+
+	BuildRayTracingAccelerationStructureInputs BLASBuildInputs;
+	BLASBuildInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+	BLASBuildInputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+	BLASBuildInputs.NumDescs = 1;
+	BLASBuildInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+	BLASBuildInputs.pGeometryDescs = &geometryDesc;
+
+	RayTracingAccelerationStructurePrebuildInfo BLASPrebuildInfo;
+	m_pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&BLASBuildInputs, &BLASPrebuildInfo);
+
+	assert(BLASPrebuildInfo.ResultDataMaxSizeInBytes > 0);
+	assert(BLASPrebuildInfo.ScratchDataSizeInBytes > 0);
+	assert(BLASPrebuildInfo.UpdateScratchDataSizeInBytes == 0);
+
+	assert(m_pBLASBuffer == nullptr);
+	StructuredBufferDesc BLASBufferDesc(1, BLASPrebuildInfo.ResultDataMaxSizeInBytes, true, true);
+	m_pBLASBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &BLASBufferDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, L"m_pBLASBuffer");
+
+	StructuredBufferDesc BLASScratchBufferDesc(1, BLASPrebuildInfo.ScratchDataSizeInBytes, false, true);
+	Buffer BLASScratchBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &BLASScratchBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"BLASScratchBuffer");
+				
+	// Top level instance data
+
+	const FLOAT instanceMatrix[3][4] = {
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f
+	};
+
+	RayTracingInstanceDesc instanceDesc;
+	CopyMemory(instanceDesc.Transform, instanceMatrix, sizeof(instanceMatrix));
+	instanceDesc.InstanceID = 0;
+	instanceDesc.InstanceMask = 1;
+	instanceDesc.InstanceContributionToHitGroupIndex = 0;
+	instanceDesc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+	instanceDesc.AccelerationStructure = m_pBLASBuffer->GetGPUVirtualAddress();
+	
+	assert(m_pInstanceBuffer == nullptr);
+	StructuredBufferDesc instanceBufferDesc(1, sizeof(instanceDesc), true, false);
+	m_pInstanceBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &instanceBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pInstanceBuffer");
+	
+	StructuredBufferDesc uploadInstanceBufferDesc(1, sizeof(instanceDesc), false, false);
+	Buffer uploadInstanceBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &uploadInstanceBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadInstanceBuffer");
+	uploadInstanceBuffer.Write(&instanceDesc, sizeof(instanceDesc));
+
+	const ResourceTransitionBarrier uploadResourceBarriers[] = {
+		ResourceTransitionBarrier(m_pInstanceBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+	};
+	CommandList* pUploadCommandList = m_pCommandListPool->Create(L"uploadInstanceDataCommandList");
+	pUploadCommandList->Begin();
+	pUploadCommandList->CopyResource(m_pInstanceBuffer, &uploadInstanceBuffer);
+	pUploadCommandList->ResourceBarrier(ARRAYSIZE(uploadResourceBarriers), uploadResourceBarriers);
+	pUploadCommandList->End();
+
+	++m_pRenderEnv->m_LastSubmissionFenceValue;
+	m_pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pUploadCommandList, m_pRenderEnv->m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
+	m_pRenderEnv->m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
+
+	// Top level acceleration structure
+
+	BuildRayTracingAccelerationStructureInputs TLASBuildInputs;
+	TLASBuildInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
+	TLASBuildInputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+	TLASBuildInputs.NumDescs = 1;
+	TLASBuildInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+	TLASBuildInputs.InstanceDescs = m_pInstanceBuffer->GetGPUVirtualAddress();
+
+	RayTracingAccelerationStructurePrebuildInfo TLASPrebuildInfo;
+	m_pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&TLASBuildInputs, &TLASPrebuildInfo);
+
+	assert(TLASPrebuildInfo.ResultDataMaxSizeInBytes > 0);
+	assert(TLASPrebuildInfo.ScratchDataSizeInBytes > 0);
+	assert(TLASPrebuildInfo.UpdateScratchDataSizeInBytes == 0);
+
+	assert(m_pTLASBuffer == nullptr);
+	StructuredBufferDesc TLASBufferDesc(1, TLASPrebuildInfo.ResultDataMaxSizeInBytes, true, true);
+	m_pTLASBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &TLASBufferDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, L"m_pTLASBuffer");
+
+	StructuredBufferDesc TLASScratchBufferDesc(1, TLASPrebuildInfo.ScratchDataSizeInBytes, false, true);
+	Buffer TLASScratchBuffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &TLASScratchBufferDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"TLASScratchBuffer");
+
+	// Common
+
+	BuildRayTracingAccelerationStructureDesc buildBLASDesc(&BLASBuildInputs, m_pBLASBuffer, &BLASScratchBuffer);
+	BuildRayTracingAccelerationStructureDesc buildTLASDesc(&TLASBuildInputs, m_pTLASBuffer, &TLASScratchBuffer);
+
+	CommandList* pBuildCommandList = m_pCommandListPool->Create(L"buildRayTracingASCommandList");
+	pBuildCommandList->Begin();
+	pBuildCommandList->BuildRaytracingAccelerationStructure(&buildBLASDesc, 0, nullptr);
+	pBuildCommandList->BuildRaytracingAccelerationStructure(&buildTLASDesc, 0, nullptr);
+	pBuildCommandList->End();
+
+	++m_pRenderEnv->m_LastSubmissionFenceValue;
+	m_pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pBuildCommandList, m_pRenderEnv->m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
+	m_pRenderEnv->m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
 }

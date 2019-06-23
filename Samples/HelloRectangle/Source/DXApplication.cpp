@@ -131,15 +131,13 @@ void DXApplication::OnInit()
 	};
 	const WORD indices[] = {0, 1, 3, 1, 2, 3};
 
-	VertexBufferDesc vertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]));
+	StructuredBufferDesc vertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]), false, false, true);
 	m_pVertexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pVertexBuffer");
-	UploadData(m_pRenderEnv, m_pVertexBuffer, vertexBufferDesc,
-		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, vertices, sizeof(vertices));
+	UploadData(m_pRenderEnv, m_pVertexBuffer, vertexBufferDesc, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, vertices, sizeof(vertices));
 	
-	IndexBufferDesc indexBufferDesc(ARRAYSIZE(indices), sizeof(indices[0]));
+	FormattedBufferDesc indexBufferDesc(ARRAYSIZE(indices), GetIndexBufferFormat(sizeof(indices[0])), false, false, true);
 	m_pIndexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &indexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pIndexBuffer");
-	UploadData(m_pRenderEnv, m_pIndexBuffer, indexBufferDesc,
-		D3D12_RESOURCE_STATE_INDEX_BUFFER, indices, sizeof(indices));
+	UploadData(m_pRenderEnv, m_pIndexBuffer, indexBufferDesc, D3D12_RESOURCE_STATE_INDEX_BUFFER, indices, sizeof(indices));
 }
 
 void DXApplication::OnUpdate()

@@ -64,38 +64,25 @@ struct ConstantBufferViewDesc : public D3D12_CONSTANT_BUFFER_VIEW_DESC
 	ConstantBufferViewDesc(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes);
 };
 
-struct VertexBufferDesc : public D3D12_RESOURCE_DESC
-{
-	VertexBufferDesc(UINT numVertices, UINT strideInBytes, UINT64 alignment = 0);
-
-	UINT NumVertices;
-	UINT StrideInBytes;
-};
-
 struct VertexBufferView : public D3D12_VERTEX_BUFFER_VIEW
 {
 	VertexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes);
 };
 
-struct IndexBufferDesc : public D3D12_RESOURCE_DESC
-{
-	IndexBufferDesc(UINT numIndices, UINT strideInBytes, UINT64 alignment = 0);
-
-	UINT NumIndices;
-	UINT StrideInBytes;
-};
+DXGI_FORMAT GetIndexBufferFormat(UINT strideInBytes);
 
 struct IndexBufferView : public D3D12_INDEX_BUFFER_VIEW
 {
-	IndexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes);
+	IndexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, DXGI_FORMAT format);
 };
 
 struct StructuredBufferDesc : public D3D12_RESOURCE_DESC
 {
-	StructuredBufferDesc(UINT numElements, UINT structureByteStride, bool createSRV, bool createUAV, UINT64 alignment = 0);
+	StructuredBufferDesc(UINT numElements, UINT structureByteStride, bool createSRV, bool createUAV, bool createVBView = false, UINT64 alignment = 0);
 
 	UINT NumElements;
 	UINT StructureByteStride;
+	bool CreateVBView;
 };
 
 struct StructuredBufferSRVDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
@@ -111,11 +98,12 @@ struct StructuredBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 
 struct FormattedBufferDesc : public D3D12_RESOURCE_DESC
 {
-	FormattedBufferDesc(UINT numElements, DXGI_FORMAT format, bool createSRV, bool createUAV, UINT64 alignment = 0);
+	FormattedBufferDesc(UINT numElements, DXGI_FORMAT format, bool createSRV, bool createUAV, bool createIBView = false, UINT64 alignment = 0);
 
 	UINT NumElements;
 	DXGI_FORMAT SRVFormat;
 	DXGI_FORMAT UAVFormat;
+	bool CreateIBView;
 };
 
 struct FormattedBufferSRVDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
@@ -463,17 +451,11 @@ public:
 		const ConstantBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
 	Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const VertexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
-
-	Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const IndexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
-
-	Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const StructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
 	Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const FormattedBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
-	
+
 	~Buffer();
 	
 	VertexBufferView* GetVBView();
@@ -484,14 +466,13 @@ public:
 	DescriptorHandle GetCBVHandle();
 
 	UINT64 GetWidth() const { return m_Desc.Width; }
-		
+	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() { return m_D3DResource->GetGPUVirtualAddress(); }
+	
 private:
 	void CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
 	void CreateBufferView(RenderEnv* pRenderEnv, const ConstantBufferDesc* pBufferDesc);
-	void CreateBufferView(RenderEnv* pRenderEnv, const VertexBufferDesc* pBufferDesc);
-	void CreateBufferView(RenderEnv* pRenderEnv, const IndexBufferDesc* pBufferDesc);
 	void CreateBufferViews(RenderEnv* pRenderEnv, const StructuredBufferDesc* pBufferDesc);
 	void CreateBufferViews(RenderEnv* pRenderEnv, const FormattedBufferDesc* pBufferDesc);
 
@@ -525,6 +506,10 @@ struct RayTracingTrianglesGeometryDesc : D3D12_RAYTRACING_GEOMETRY_DESC
 		D3D12_RAYTRACING_GEOMETRY_FLAGS flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE, Buffer* pTransformBuffer = nullptr);
 };
 
+struct RayTracingInstanceDesc : D3D12_RAYTRACING_INSTANCE_DESC
+{
+};
+
 struct BuildRayTracingAccelerationStructureInputs : D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS
 {
 };
@@ -543,7 +528,7 @@ template <typename DestBufferDesc>
 void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, DestBufferDesc destBufferDesc,
 	D3D12_RESOURCE_STATES destBufferStateAfter, const void* pUploadData, SIZE_T numUploadBytes)
 {
-	destBufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+	destBufferDesc.Flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 
 	Buffer* pUploadBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &destBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"UploadData::pUploadBuffer");
 	pUploadBuffer->Write(pUploadData, numUploadBytes);
