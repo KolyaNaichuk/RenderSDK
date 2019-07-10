@@ -32,8 +32,10 @@ private:
 	void OnRender() override;
 	void OnDestroy() override;
 
+	void InitRenderEnvironment();
 	void BuildGeometryBuffers();
 	void BuildAccelerationStructures();
+	void CreateRootSignatures();
 	
 private:
 	enum { kNumBackBuffers = 3 };
@@ -49,6 +51,8 @@ private:
 	Buffer* m_pBLASBuffer;
 	Buffer* m_pTLASBuffer;
 	Buffer* m_pInstanceBuffer;
+	RootSignature* m_pGlobalRootSignature;
+	RootSignature* m_pLocalRootSignature;
 	HeapProperties* m_pDefaultHeapProps;
 	HeapProperties* m_pUploadHeapProps;
 	RenderEnv* m_pRenderEnv;

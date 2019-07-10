@@ -26,6 +26,8 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pBLASBuffer(nullptr)
 	, m_pTLASBuffer(nullptr)
 	, m_pInstanceBuffer(nullptr)
+	, m_pGlobalRootSignature(nullptr)
+	, m_pLocalRootSignature(nullptr)
 	, m_pDefaultHeapProps(new HeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new HeapProperties(D3D12_HEAP_TYPE_UPLOAD))
 	, m_pRenderEnv(new RenderEnv())
@@ -51,6 +53,8 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pInstanceBuffer);
 	SafeDelete(m_pVertexBuffer);
 	SafeDelete(m_pIndexBuffer);
+	SafeDelete(m_pGlobalRootSignature);
+	SafeDelete(m_pLocalRootSignature);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pShaderInvisibleSRVHeap);
 	SafeDelete(m_pShaderInvisibleRTVHeap);
@@ -61,47 +65,10 @@ DXApplication::~DXApplication()
 
 void DXApplication::OnInit()
 {
-	GraphicsFactory factory;
-	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_12_1);
-
-	D3D12_FEATURE_DATA_D3D12_OPTIONS5 supportedOptions;
-	m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &supportedOptions, sizeof(supportedOptions));
-	assert(supportedOptions.RaytracingTier == D3D12_RAYTRACING_TIER_1_0);
-		
-	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kNumBackBuffers, false);
-	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
-
-	DescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32, false);
-	m_pShaderInvisibleSRVHeap = new DescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pShaderInvisibleSRVHeap");
-	
-	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
-	
-	m_pCommandListPool = new CommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_pFence = new Fence(m_pDevice, m_pRenderEnv->m_LastSubmissionFenceValue, L"m_pFence");
-	
-	m_pRenderEnv->m_pDevice = m_pDevice;
-	m_pRenderEnv->m_pCommandListPool = m_pCommandListPool;
-	m_pRenderEnv->m_pCommandQueue = m_pCommandQueue;
-	m_pRenderEnv->m_pFence = m_pFence;
-	m_pRenderEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
-	m_pRenderEnv->m_pUploadHeapProps = m_pUploadHeapProps;
-	m_pRenderEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
-	m_pRenderEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
-
-	const RECT bufferRect = m_pWindow->GetClientRect();
-	const UINT bufferWidth = bufferRect.right - bufferRect.left;
-	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
-
-	m_pViewport = new Viewport(0.0f, 0.0f, FLOAT(bufferWidth), FLOAT(bufferHeight));
-	m_pScissorRect = new Rect(0, 0, bufferWidth, bufferHeight);
-
-	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
-	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
-	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-
+	InitRenderEnvironment();
 	BuildGeometryBuffers();
 	BuildAccelerationStructures();
+	CreateRootSignatures();
 }
 
 void DXApplication::OnUpdate()
@@ -155,6 +122,48 @@ void DXApplication::OnDestroy()
 	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
 }
 
+void DXApplication::InitRenderEnvironment()
+{
+	GraphicsFactory factory;
+	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_12_1);
+
+	D3D12_FEATURE_DATA_D3D12_OPTIONS5 supportedOptions;
+	m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &supportedOptions, sizeof(supportedOptions));
+	assert(supportedOptions.RaytracingTier == D3D12_RAYTRACING_TIER_1_0);
+
+	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kNumBackBuffers, false);
+	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
+
+	DescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32, false);
+	m_pShaderInvisibleSRVHeap = new DescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pShaderInvisibleSRVHeap");
+
+	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
+
+	m_pCommandListPool = new CommandListPool(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pFence = new Fence(m_pDevice, m_pRenderEnv->m_LastSubmissionFenceValue, L"m_pFence");
+
+	m_pRenderEnv->m_pDevice = m_pDevice;
+	m_pRenderEnv->m_pCommandListPool = m_pCommandListPool;
+	m_pRenderEnv->m_pCommandQueue = m_pCommandQueue;
+	m_pRenderEnv->m_pFence = m_pFence;
+	m_pRenderEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
+	m_pRenderEnv->m_pUploadHeapProps = m_pUploadHeapProps;
+	m_pRenderEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
+	m_pRenderEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
+
+	const RECT bufferRect = m_pWindow->GetClientRect();
+	const UINT bufferWidth = bufferRect.right - bufferRect.left;
+	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
+
+	m_pViewport = new Viewport(0.0f, 0.0f, FLOAT(bufferWidth), FLOAT(bufferHeight));
+	m_pScissorRect = new Rect(0, 0, bufferWidth, bufferHeight);
+
+	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
+	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
+	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+}
+
 void DXApplication::BuildGeometryBuffers()
 {
 	const Vector3f vertices[] =
@@ -201,7 +210,10 @@ void DXApplication::BuildGeometryBuffers()
 void DXApplication::BuildAccelerationStructures()
 {
 	// Bottom level acceleration structure
-	
+
+	assert(m_pVertexBuffer != nullptr);
+	assert(m_pIndexBuffer != nullptr);
+
 	RayTracingTrianglesGeometryDesc geometryDesc(DXGI_FORMAT_R32G32B32_FLOAT, m_pVertexBuffer, m_pIndexBuffer, D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE);
 
 	BuildRayTracingAccelerationStructureInputs BLASBuildInputs;
@@ -299,4 +311,13 @@ void DXApplication::BuildAccelerationStructures()
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pBuildCommandList, m_pRenderEnv->m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 	m_pRenderEnv->m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
+}
+
+void DXApplication::CreateRootSignatures()
+{
+	assert(m_pGlobalRootSignature == nullptr);
+	assert(false && "Needs impl");
+
+	assert(m_pLocalRootSignature == nullptr);
+	assert(false && "Needs impl");
 }
