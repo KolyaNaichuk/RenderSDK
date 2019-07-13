@@ -201,8 +201,8 @@ void RenderGBufferPass::InitPipelineState(InitParams* pParams)
 	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
 	const u32 meshType = 0;
 
-	Shader vertexShader(L"Shaders//RenderGBufferVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//RenderGBufferPS.hlsl", "Main", "ps_5_0");
+	Shader vertexShader(L"Shaders//RenderGBufferVS.hlsl", L"Main", L"vs_6_1");
+	Shader pixelShader(L"Shaders//RenderGBufferPS.hlsl", L"Main", L"ps_6_1");
 
 	const InputLayoutDesc& inputLayout = pMeshRenderResources->GetInputLayout(meshType);
 	assert(inputLayout.NumElements == 3);

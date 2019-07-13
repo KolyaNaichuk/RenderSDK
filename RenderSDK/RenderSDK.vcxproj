@@ -204,7 +204,6 @@
     <ClInclude Include="..\Include\Math\Vector4.h" />
     <ClInclude Include="..\Include\Profiler\CPUProfiler.h" />
     <ClInclude Include="..\Include\Profiler\GPUProfiler.h" />
-    <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
     <ClInclude Include="..\Include\RenderPasses\Common.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateExpShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateFalseNegativeDrawCommandsPass.h" />
@@ -286,7 +285,6 @@
     <ClCompile Include="..\Source\Math\Vector4.cpp" />
     <ClCompile Include="..\Source\Profiler\CPUProfiler.cpp" />
     <ClCompile Include="..\Source\Profiler\GPUProfiler.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateExpShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateMainDrawCommandsPass.cpp" />
@@ -369,15 +367,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\Reconstruction.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Shaders\CalcTextureLuminancePS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

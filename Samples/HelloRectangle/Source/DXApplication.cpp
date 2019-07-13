@@ -103,8 +103,8 @@ void DXApplication::OnInit()
 		InputElementDesc("COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16)
 	};
 	
-	Shader vertexShader(L"Shaders//PassThroughVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//PassThroughPS.hlsl", "Main", "ps_4_0");
+	Shader vertexShader(L"Shaders//PassThroughVS.hlsl", L"Main", L"vs_6_1");
+	Shader pixelShader(L"Shaders//PassThroughPS.hlsl", L"Main", L"ps_6_1");
 
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
@@ -114,7 +114,7 @@ void DXApplication::OnInit()
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.SetRenderTargetFormat(DXGI_FORMAT_R8G8B8A8_UNORM);
 		
-	m_pPipelineState = new PipelineState(m_pDevice, &pipelineStateDesc, L"PipelineState");
+	m_pPipelineState = new PipelineState(m_pDevice, &pipelineStateDesc, L"m_pPipelineState");
 	
 	const FLOAT scale = 0.5f;
 	struct Vertex

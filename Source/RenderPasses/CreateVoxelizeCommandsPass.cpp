@@ -141,14 +141,13 @@ void CreateVoxelizeCommandsPass::InitSetArgumentsPipelineState(InitParams* pPara
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	std::string numThreadsPerGroupStr = std::to_string(NUM_THREADS_PER_GROUP);
-	const ShaderMacro shaderDefines[] =
+	std::wstring numThreadsPerGroupStr = std::to_wstring(NUM_THREADS_PER_GROUP);
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("SET_ARGUMENTS", "1"),
-		ShaderMacro("NUM_THREADS_PER_GROUP", numThreadsPerGroupStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"SET_ARGUMENTS", L"1"),
+		ShaderDefine(L"NUM_THREADS_PER_GROUP", numThreadsPerGroupStr.c_str())
 	};
-	Shader computeShader(L"Shaders//CreateVoxelizeCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//CreateVoxelizeCommandsCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pSetArgumentsRootSignature);
@@ -234,17 +233,16 @@ void CreateVoxelizeCommandsPass::InitCreateCommandsPipelineState(InitParams* pPa
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	std::string numThreadsPerGroupStr = std::to_string(NUM_THREADS_PER_GROUP);
-	std::string numMeshTypesStr = std::to_string(pParams->m_NumMeshTypes);
+	std::wstring numThreadsPerGroupStr = std::to_wstring(NUM_THREADS_PER_GROUP);
+	std::wstring numMeshTypesStr = std::to_wstring(pParams->m_NumMeshTypes);
 
-	const ShaderMacro shaderDefines[] =
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("CREATE_COMMANDS", "1"),
-		ShaderMacro("NUM_THREADS_PER_GROUP", numThreadsPerGroupStr.c_str()),
-		ShaderMacro("NUM_MESH_TYPES", numMeshTypesStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"CREATE_COMMANDS", L"1"),
+		ShaderDefine(L"NUM_THREADS_PER_GROUP", numThreadsPerGroupStr.c_str()),
+		ShaderDefine(L"NUM_MESH_TYPES", numMeshTypesStr.c_str())
 	};
-	Shader computeShader(L"Shaders//CreateVoxelizeCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//CreateVoxelizeCommandsCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pCreateCommandsRootSignature);

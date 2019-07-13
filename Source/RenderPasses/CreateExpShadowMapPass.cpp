@@ -129,13 +129,12 @@ void CreateExpShadowMapPass::InitPipelineState(InitParams* pParams)
 	m_NumThreadGroupsX = (u32)Ceil((f32)pExpShadowMaps->GetWidth() / (f32)numThreads);
 	m_NumThreadGroupsY = m_NumThreadGroupsX;
 
-	std::string numThreadsStr = std::to_string(numThreads);
-	const ShaderMacro shaderDefines[] =
+	std::wstring numThreadsStr = std::to_wstring(numThreads);
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("NUM_THREADS", numThreadsStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"NUM_THREADS", numThreadsStr.c_str())
 	};
-	Shader computeShader(L"Shaders//CreateExpShadowMapCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//CreateExpShadowMapCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);

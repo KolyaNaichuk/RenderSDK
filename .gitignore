@@ -21,3 +21,4 @@ ipch/
 .vs/
 Include/External/DirectXTex/Bin/
 Samples/DXR_HelloTriangle/x64/
+*.dll

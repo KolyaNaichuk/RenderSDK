@@ -201,17 +201,16 @@ void RadianceCubeMapToSHIrradianceCoefficientsPass::PrecomputeWeightedSHMap(Init
 	std::vector<PipelineState*> pipelineStates(m_MaxNumSHCoefficients);
 	for (u32 SHIndex = 0; SHIndex < m_MaxNumSHCoefficients; ++SHIndex)
 	{
-		const std::string faceSizeStr = std::to_string(m_RadianceCubeMapFaceSize);
-		const std::string SHIndexStr = std::to_string(SHIndex);
+		const std::wstring faceSizeStr = std::to_wstring(m_RadianceCubeMapFaceSize);
+		const std::wstring SHIndexStr = std::to_wstring(SHIndex);
 
-		const ShaderMacro shaderDefines[] =
+		const ShaderDefine shaderDefines[] =
 		{
-			ShaderMacro("PRECOMPUTE", "1"),
-			ShaderMacro("FACE_SIZE", faceSizeStr.c_str()),
-			ShaderMacro("SH_INDEX", SHIndexStr.c_str()),
-			ShaderMacro()
+			ShaderDefine(L"PRECOMPUTE", L"1"),
+			ShaderDefine(L"FACE_SIZE", faceSizeStr.c_str()),
+			ShaderDefine(L"SH_INDEX", SHIndexStr.c_str())
 		};
-		Shader computeShader(L"Shaders//RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+		Shader computeShader(L"Shaders//RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 		ComputePipelineStateDesc pipelineStateDesc;
 		pipelineStateDesc.SetRootSignature(&rootSignature);
@@ -279,14 +278,13 @@ void RadianceCubeMapToSHIrradianceCoefficientsPass::InitIntegratePipelineState(I
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	const std::string faceSizeStr = std::to_string(m_RadianceCubeMapFaceSize);
-	const ShaderMacro shaderDefines[] =
+	const std::wstring faceSizeStr = std::to_wstring(m_RadianceCubeMapFaceSize);
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("INTEGRATE", "1"),
-		ShaderMacro("FACE_SIZE", faceSizeStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"INTEGRATE", L"1"),
+		ShaderDefine(L"FACE_SIZE", faceSizeStr.c_str())
 	};
-	Shader computeShader(L"Shaders//RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pIntegrateRootSignature);
@@ -313,14 +311,13 @@ void RadianceCubeMapToSHIrradianceCoefficientsPass::InitMergePipelineState(InitP
 	assert(m_pMergeRootSignature != nullptr);
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	const std::string faceSizeStr = std::to_string(m_RadianceCubeMapFaceSize);
-	const ShaderMacro shaderDefines[] =
+	const std::wstring faceSizeStr = std::to_wstring(m_RadianceCubeMapFaceSize);
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("MERGE", "1"),
-		ShaderMacro("FACE_SIZE", faceSizeStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"MERGE", L"1"),
+		ShaderDefine(L"FACE_SIZE", faceSizeStr.c_str())
 	};
-	Shader computeShader(L"Shaders//RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pMergeRootSignature);

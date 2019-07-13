@@ -147,7 +147,7 @@ void RenderSpotLightShadowMapPass::InitPipelineState(InitParams* pParams)
 	assert(HasVertexSemantic(inputLayout, "NORMAL"));
 	assert(HasVertexSemantic(inputLayout, "TEXCOORD"));
 
-	Shader vertexShader(L"Shaders//RenderSpotLightShadowMapVS.hlsl", "Main", "vs_4_0");
+	Shader vertexShader(L"Shaders//RenderSpotLightShadowMapVS.hlsl", L"Main", L"vs_6_1");
 	
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);

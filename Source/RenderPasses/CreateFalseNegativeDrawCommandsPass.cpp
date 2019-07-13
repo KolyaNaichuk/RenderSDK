@@ -178,16 +178,15 @@ void CreateFalseNegativeDrawCommandsPass::InitPipelineState(InitParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	const u8 numThreadsPerMesh = 64;
-	std::string numThreadsPerMeshStr = std::to_string(numThreadsPerMesh);
-	std::string maxNumInstancesPerMeshStr = std::to_string(pParams->m_MaxNumInstancesPerMesh);
+	std::wstring numThreadsPerMeshStr = std::to_wstring(numThreadsPerMesh);
+	std::wstring maxNumInstancesPerMeshStr = std::to_wstring(pParams->m_MaxNumInstancesPerMesh);
 
-	const ShaderMacro shaderDefines[] =
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("NUM_THREADS_PER_MESH", numThreadsPerMeshStr.c_str()),
-		ShaderMacro("MAX_NUM_INSTANCES_PER_MESH", maxNumInstancesPerMeshStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"NUM_THREADS_PER_MESH", numThreadsPerMeshStr.c_str()),
+		ShaderDefine(L"MAX_NUM_INSTANCES_PER_MESH", maxNumInstancesPerMeshStr.c_str())
 	};
-	Shader computeShader(L"Shaders//CreateFalseNegativeDrawCommandsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//CreateFalseNegativeDrawCommandsCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);

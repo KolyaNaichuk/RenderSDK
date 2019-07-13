@@ -156,22 +156,21 @@ void FilterExpShadowMapPass::InitPipelineState(InitParams* pParams)
 	assert(pExpShadowMaps->GetWidth() == pExpShadowMaps->GetHeight());
 
 	const u32 numThreads = 8;
-	const std::string numThreadsStr = std::to_string(numThreads);
-	const std::string shadowMapSizeStr = std::to_string(pExpShadowMaps->GetWidth());
+	const std::wstring numThreadsStr = std::to_wstring(numThreads);
+	const std::wstring shadowMapSizeStr = std::to_wstring(pExpShadowMaps->GetWidth());
 
 	m_NumThreadGroupsX = (u32)Ceil((f32)pExpShadowMaps->GetWidth() / (f32)numThreads);
 	m_NumThreadGroupsY = m_NumThreadGroupsX;
 
 	{
 		assert(m_pPipelineStateX == nullptr);
-		const ShaderMacro shaderDefines[] =
+		const ShaderDefine shaderDefines[] =
 		{
-			ShaderMacro("SHADOW_MAP_SIZE", shadowMapSizeStr.c_str()),
-			ShaderMacro("FILTER_X", "1"),
-			ShaderMacro("NUM_THREADS", numThreadsStr.c_str()),
-			ShaderMacro()
+			ShaderDefine(L"SHADOW_MAP_SIZE", shadowMapSizeStr.c_str()),
+			ShaderDefine(L"FILTER_X", L"1"),
+			ShaderDefine(L"NUM_THREADS", numThreadsStr.c_str())
 		};
-		Shader computeShader(L"Shaders//FilterExpShadowMapCS.hlsl", "Main", "cs_5_0", shaderDefines);
+		Shader computeShader(L"Shaders//FilterExpShadowMapCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 		ComputePipelineStateDesc pipelineStateDesc;
 		pipelineStateDesc.SetRootSignature(m_pRootSignature);
@@ -181,14 +180,13 @@ void FilterExpShadowMapPass::InitPipelineState(InitParams* pParams)
 	}
 	{
 		assert(m_pPipelineStateY == nullptr);
-		const ShaderMacro shaderDefines[] =
+		const ShaderDefine shaderDefines[] =
 		{
-			ShaderMacro("SHADOW_MAP_SIZE", shadowMapSizeStr.c_str()),
-			ShaderMacro("FILTER_Y", "1"),
-			ShaderMacro("NUM_THREADS", numThreadsStr.c_str()),
-			ShaderMacro()
+			ShaderDefine(L"SHADOW_MAP_SIZE", shadowMapSizeStr.c_str()),
+			ShaderDefine(L"FILTER_Y", L"1"),
+			ShaderDefine(L"NUM_THREADS", numThreadsStr.c_str())
 		};
-		Shader computeShader(L"Shaders//FilterExpShadowMapCS.hlsl", "Main", "cs_5_0", shaderDefines);
+		Shader computeShader(L"Shaders//FilterExpShadowMapCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 		ComputePipelineStateDesc pipelineStateDesc;
 		pipelineStateDesc.SetRootSignature(m_pRootSignature);

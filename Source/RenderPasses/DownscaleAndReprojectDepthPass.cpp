@@ -170,14 +170,13 @@ void DownscaleAndReprojectDepthPass::InitReprojectPipelineState(InitParams* pPar
 	m_NumThreadGroupsX = (u32)Ceil((f32)reprojectedDepthTextureWidth / (f32)numThreads);
 	m_NumThreadGroupsY = (u32)Ceil((f32)reprojectedDepthTextureHeight / (f32)numThreads);
 
-	std::string numThreadsStr = std::to_string(numThreads);
-	const ShaderMacro shaderDefines[] =
+	std::wstring numThreadsStr = std::to_wstring(numThreads);
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("NUM_THREADS_X", numThreadsStr.c_str()),
-		ShaderMacro("NUM_THREADS_Y", numThreadsStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"NUM_THREADS_X", numThreadsStr.c_str()),
+		ShaderDefine(L"NUM_THREADS_Y", numThreadsStr.c_str())
 	};
-	Shader computeShader(L"Shaders//DownscaleAndReprojectDepthCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//DownscaleAndReprojectDepthCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pReprojectRootSignature);
@@ -239,8 +238,8 @@ void DownscaleAndReprojectDepthPass::InitCopyPipelineState(InitParams* pParams)
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//CopyReprojectedDepthPS.hlsl", "Main", "ps_4_0");
+	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", L"Main", L"vs_6_1");
+	Shader pixelShader(L"Shaders//CopyReprojectedDepthPS.hlsl", L"Main", L"ps_6_1");
 
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pCopyRootSignature);

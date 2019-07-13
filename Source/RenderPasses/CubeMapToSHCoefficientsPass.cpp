@@ -201,17 +201,16 @@ void CubeMapToSHCoefficientsPass::PrecomputeWeightedSHMap(InitParams* pParams)
 	std::vector<PipelineState*> pipelineStates(m_MaxNumSHCoefficients);
 	for (u32 SHIndex = 0; SHIndex < m_MaxNumSHCoefficients; ++SHIndex)
 	{
-		const std::string faceSizeStr = std::to_string(m_CubeMapFaceSize);
-		const std::string SHIndexStr = std::to_string(SHIndex);
+		const std::wstring faceSizeStr = std::to_wstring(m_CubeMapFaceSize);
+		const std::wstring SHIndexStr = std::to_wstring(SHIndex);
 
-		const ShaderMacro shaderDefines[] =
+		const ShaderDefine shaderDefines[] =
 		{
-			ShaderMacro("PRECOMPUTE", "1"),
-			ShaderMacro("FACE_SIZE", faceSizeStr.c_str()),
-			ShaderMacro("SH_INDEX", SHIndexStr.c_str()),
-			ShaderMacro()
+			ShaderDefine(L"PRECOMPUTE", L"1"),
+			ShaderDefine(L"FACE_SIZE", faceSizeStr.c_str()),
+			ShaderDefine(L"SH_INDEX", SHIndexStr.c_str())
 		};
-		Shader computeShader(L"Shaders//CubeMapToSHCoefficientsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+		Shader computeShader(L"Shaders//CubeMapToSHCoefficientsCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 		ComputePipelineStateDesc pipelineStateDesc;
 		pipelineStateDesc.SetRootSignature(&rootSignature);
@@ -279,14 +278,13 @@ void CubeMapToSHCoefficientsPass::InitIntegratePipelineState(InitParams* pParams
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	const std::string faceSizeStr = std::to_string(m_CubeMapFaceSize);
-	const ShaderMacro shaderDefines[] =
+	const std::wstring faceSizeStr = std::to_wstring(m_CubeMapFaceSize);
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("INTEGRATE", "1"),
-		ShaderMacro("FACE_SIZE", faceSizeStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"INTEGRATE", L"1"),
+		ShaderDefine(L"FACE_SIZE", faceSizeStr.c_str())
 	};
-	Shader computeShader(L"Shaders//CubeMapToSHCoefficientsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//CubeMapToSHCoefficientsCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pIntegrateRootSignature);
@@ -313,14 +311,13 @@ void CubeMapToSHCoefficientsPass::InitMergePipelineState(InitParams* pParams)
 	assert(m_pMergeRootSignature != nullptr);
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	const std::string faceSizeStr = std::to_string(m_CubeMapFaceSize);
-	const ShaderMacro shaderDefines[] =
+	const std::wstring faceSizeStr = std::to_wstring(m_CubeMapFaceSize);
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("MERGE", "1"),
-		ShaderMacro("FACE_SIZE", faceSizeStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"MERGE", L"1"),
+		ShaderDefine(L"FACE_SIZE", faceSizeStr.c_str())
 	};
-	Shader computeShader(L"Shaders//CubeMapToSHCoefficientsCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//CubeMapToSHCoefficientsCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pMergeRootSignature);

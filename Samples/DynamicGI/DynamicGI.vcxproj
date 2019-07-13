@@ -99,7 +99,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-4.1.0\lib\$(Platform)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;dxcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\Shaders" MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
@@ -218,7 +218,7 @@ IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll" COPY
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-4.1.0\lib\$(Platform)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;dxcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\Shaders" MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
@@ -338,7 +338,9 @@ COPY /Y "$(SolutionDir)Shaders\Sampling.hlsl" "$(SolutionDir)Samples\Bin\$(Proje
 COPY /Y "$(SolutionDir)Shaders\ImageBasedLighting.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ImageBasedLighting.hlsl"
 COPY /Y "$(SolutionDir)Shaders\ImageBasedLighting.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ImageBasedLighting.hlsl"
 
-IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-4.1.0\bin\$(Platform)\assimp-vc140-mt.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll"</Command>
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-4.1.0\bin\$(Platform)\assimp-vc140-mt.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll"
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\dxcompiler.dll" COPY /Y "$(SolutionDir)Include\External\DxcCompiler\bin\$(Platform)\dxcompiler.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\dxcompiler.dll"
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\dxil.dll" COPY /Y "$(SolutionDir)Include\External\DxcCompiler\bin\$(Platform)\dxil.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\dxil.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

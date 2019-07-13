@@ -264,9 +264,9 @@ void VoxelizePass::InitPipelineState(InitParams* pParams)
 		ShaderMacro()
 	};
 
-	Shader vertexShader(L"Shaders//VoxelizeVS.hlsl", "Main", "vs_4_0");
-	Shader geometryShader(L"Shaders//VoxelizeGS.hlsl", "Main", "gs_4_0");
-	Shader pixelShader(L"Shaders//VoxelizePS.hlsl", "Main", "ps_5_1", shaderDefinesPS);
+	Shader vertexShader(L"Shaders//VoxelizeVS.hlsl", "Main", "vs_6_1");
+	Shader geometryShader(L"Shaders//VoxelizeGS.hlsl", "Main", "gs_6_1");
+	Shader pixelShader(L"Shaders//VoxelizePS.hlsl", "Main", "ps_6_1", shaderDefinesPS);
 
 	const InputLayoutDesc& inputLayout = pMeshRenderResources->GetInputLayout(meshType);
 	assert(inputLayout.NumElements == 3);
