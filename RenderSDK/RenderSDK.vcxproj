@@ -178,6 +178,7 @@
     <ClInclude Include="..\Include\D3DWrapper\RenderEnv.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsResource.h" />
     <ClInclude Include="..\Include\D3DWrapper\RootSignature.h" />
+    <ClInclude Include="..\Include\D3DWrapper\StateObject.h" />
     <ClInclude Include="..\Include\D3DWrapper\SwapChain.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsUtils.h" />
     <ClInclude Include="..\Include\Math\AxisAngle.h" />
@@ -259,6 +260,7 @@
     <ClCompile Include="..\Source\D3DWrapper\GraphicsResource.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\QueryHeap.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\RootSignature.cpp" />
+    <ClCompile Include="..\Source\D3DWrapper\StateObject.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\SwapChain.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\GraphicsUtils.cpp" />
     <ClCompile Include="..\Source\Math\AxisAngle.cpp" />

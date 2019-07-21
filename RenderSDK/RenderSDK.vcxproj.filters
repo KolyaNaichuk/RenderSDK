@@ -273,6 +273,9 @@
     <ClInclude Include="..\Include\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\StateObject.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -502,6 +505,9 @@
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\RadianceCubeMapToSHIrradianceCoefficientsPass.cpp">
       <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\StateObject.cpp">
+      <Filter>D3DWrapper</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

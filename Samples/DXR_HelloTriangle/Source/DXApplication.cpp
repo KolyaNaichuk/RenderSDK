@@ -7,6 +7,7 @@
 #include "D3DWrapper/DescriptorHeap.h"
 #include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/PipelineState.h"
+#include "D3DWrapper/StateObject.h"
 #include "D3DWrapper/GraphicsResource.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/Fence.h"
@@ -14,7 +15,7 @@
 #include "Math/Vector3.h"
 
 DXApplication::DXApplication(HINSTANCE hApp)
-	: Application(hApp, L"DXR - Hello Triangle", 0, 0, 1024, 512)
+	: Application(hApp, L"Hello Triangle", 0, 0, 1024, 512)
 	, m_pDevice(nullptr)
 	, m_pSwapChain(nullptr)
 	, m_pCommandQueue(nullptr)
@@ -26,8 +27,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pBLASBuffer(nullptr)
 	, m_pTLASBuffer(nullptr)
 	, m_pInstanceBuffer(nullptr)
-	, m_pGlobalRootSignature(nullptr)
-	, m_pLocalRootSignature(nullptr)
+	, m_pRayGenLocalRootSignature(nullptr)
+	, m_pEmptyLocalRootSignature(nullptr)
+	, m_pStateObject(nullptr)
 	, m_pDefaultHeapProps(new HeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new HeapProperties(D3D12_HEAP_TYPE_UPLOAD))
 	, m_pRenderEnv(new RenderEnv())
@@ -53,8 +55,9 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pInstanceBuffer);
 	SafeDelete(m_pVertexBuffer);
 	SafeDelete(m_pIndexBuffer);
-	SafeDelete(m_pGlobalRootSignature);
-	SafeDelete(m_pLocalRootSignature);
+	SafeDelete(m_pRayGenLocalRootSignature);
+	SafeDelete(m_pEmptyLocalRootSignature);
+	SafeDelete(m_pStateObject);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pShaderInvisibleSRVHeap);
 	SafeDelete(m_pShaderInvisibleRTVHeap);
@@ -69,6 +72,7 @@ void DXApplication::OnInit()
 	BuildGeometryBuffers();
 	BuildAccelerationStructures();
 	CreateRootSignatures();
+	CreateStateObject();
 }
 
 void DXApplication::OnUpdate()
@@ -239,7 +243,8 @@ void DXApplication::BuildAccelerationStructures()
 				
 	// Top level instance data
 
-	const FLOAT instanceMatrix[3][4] = {
+	const FLOAT instanceMatrix[3][4] =
+	{
 		1.0f, 0.0f, 0.0f, 0.0f,
 		0.0f, 1.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f
@@ -315,9 +320,86 @@ void DXApplication::BuildAccelerationStructures()
 
 void DXApplication::CreateRootSignatures()
 {
-	assert(m_pGlobalRootSignature == nullptr);
-	assert(false && "Needs impl");
+	enum RayGenRootParams
+	{
+		kRayGenRootCBVParam = 0,
+		kRayGenRootSRVTableParam,
+		kRayGenNumRootParams
+	};
 
-	assert(m_pLocalRootSignature == nullptr);
-	assert(false && "Needs impl");
+	D3D12_ROOT_PARAMETER rayGenRootParams[kRayGenNumRootParams];
+	rayGenRootParams[kRayGenRootCBVParam] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
+
+	D3D12_DESCRIPTOR_RANGE rayGenDescriptorRanges[] = {SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0)};
+	rayGenRootParams[kRayGenRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(rayGenDescriptorRanges), rayGenDescriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
+	 
+	assert(m_pRayGenLocalRootSignature == nullptr);
+	RootSignatureDesc rayGenRootSignatureDesc(kRayGenNumRootParams, rayGenRootParams, D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
+	m_pRayGenLocalRootSignature = new RootSignature(m_pRenderEnv->m_pDevice, &rayGenRootSignatureDesc, L"m_pRayGenLocalRootSignature");
+
+	assert(m_pEmptyLocalRootSignature == nullptr);
+	RootSignatureDesc emptyLocalRootSignatureDesc(D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
+	m_pEmptyLocalRootSignature = new RootSignature(m_pRenderEnv->m_pDevice, &emptyLocalRootSignatureDesc, L"m_pEmptyLocalRootSignature");
 }
+
+void DXApplication::CreateStateObject()
+{
+	enum StateObjectIndices
+	{
+		kDXILLibraryIndex = 0,
+		kHitGroupIndex,
+		kPipelineConfigIndex,
+		kShaderConfigIndex,
+		kRayGenLocalRSIndex,
+		kRayGenLocalRSAssocIndex,
+		kEmptyLocalRSIndex,
+		kEmptyLocalRSAssocIndex,
+		kNumStateObjects
+	};
+	D3D12_STATE_SUBOBJECT stateSubobjects[kNumStateObjects];
+				
+	Shader shaderLibrary(L"Shaders//RayTracing.hlsl", nullptr, L"lib_6_3");
+	
+	LPCWSTR pRayGenShaderName = L"RayGeneration";
+	LPCWSTR pMissShaderName = L"RayMiss";
+	LPCWSTR pClosesHitShaderName = L"RayClosestHit";
+	LPCWSTR pHitGroupName = L"HitGroup";
+
+	ExportDesc exportDescs[] =
+	{
+		ExportDesc(pRayGenShaderName),
+		ExportDesc(pMissShaderName),
+		ExportDesc(pClosesHitShaderName)
+	};
+
+	DXILLibraryDesc libraryDesc(shaderLibrary.GetBytecode(), ARRAYSIZE(exportDescs), exportDescs);
+	stateSubobjects[kDXILLibraryIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY, &libraryDesc);
+
+	HitGroupDesc hitGroupDesc(pHitGroupName, D3D12_HIT_GROUP_TYPE_TRIANGLES, nullptr, pClosesHitShaderName, nullptr);
+	stateSubobjects[kHitGroupIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP, &hitGroupDesc);
+
+	RayTracingPipelineConfig pipelineConfig(1);
+	stateSubobjects[kPipelineConfigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG, &pipelineConfig);
+
+	RayTracingShaderConfig shaderConfig(3 * sizeof(f32)/*color*/, 2 * sizeof(f32)/*intersectionAttribs*/);
+	stateSubobjects[kShaderConfigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG, &shaderConfig);
+
+	assert(m_pRayGenLocalRootSignature != nullptr);
+	stateSubobjects[kRayGenLocalRSIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE, m_pRayGenLocalRootSignature);
+
+	LPCWSTR rayGenLocalRSExports[] = {pRayGenShaderName};
+	SubobjectToExportsAssociation rayGenLocalRSExportsAssoc(&stateSubobjects[kRayGenLocalRSIndex], ARRAYSIZE(rayGenLocalRSExports), rayGenLocalRSExports);
+	stateSubobjects[kRayGenLocalRSAssocIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION, &rayGenLocalRSExportsAssoc);
+
+	assert(m_pEmptyLocalRootSignature != nullptr);
+	stateSubobjects[kEmptyLocalRSIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE, m_pEmptyLocalRootSignature);
+	
+	LPCWSTR emptyLocalRSExports[] = {pMissShaderName, pHitGroupName};
+	SubobjectToExportsAssociation emptyLocalRSExportsAssoc(&stateSubobjects[kEmptyLocalRSIndex], ARRAYSIZE(emptyLocalRSExports), emptyLocalRSExports);
+	stateSubobjects[kEmptyLocalRSAssocIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION, &emptyLocalRSExportsAssoc);
+
+	assert(m_pStateObject == nullptr);
+	StateObjectDesc stateObjectDesc(D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE, kNumStateObjects, stateSubobjects);
+	m_pStateObject = new StateObject(m_pRenderEnv->m_pDevice, &stateObjectDesc, L"m_pStateObject");
+}
+

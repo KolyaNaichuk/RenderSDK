@@ -21,8 +21,6 @@ Shader::Shader(LPCWSTR pFileName, LPCWSTR pEntryPoint, LPCWSTR pTargetProfile)
 
 Shader::Shader(LPCWSTR pFileName, LPCWSTR pEntryPoint, LPCWSTR pTargetProfile, const ShaderDefine* pDefines, UINT32 defineCount)
 {
-	// TargetProfile: "vs_6_1", "hs_6_1", "ds_6_1", "gs_6_1", "ps_6_1", "cs_6_1", "lib_6_3"
-
 	ComPtr<IDxcLibrary> dxcLibrary;
 	VerifyD3DResult(DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&dxcLibrary)));
 	
