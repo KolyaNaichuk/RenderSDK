@@ -49,7 +49,10 @@ class StateObject
 public:
 	StateObject(GraphicsDevice* pDevice, const StateObjectDesc* pDesc, LPCWSTR pName);
 	ID3D12StateObject* GetD3DObject() { return m_D3DStateObject.Get(); }
-
+	
+	void* GetShaderIdentifier(LPCWSTR pExportName);
+	
 private:
 	ComPtr<ID3D12StateObject> m_D3DStateObject;
+	ComPtr<ID3D12StateObjectProperties> m_D3DStateObjectProperties;
 };

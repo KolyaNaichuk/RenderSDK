@@ -38,6 +38,7 @@ private:
 	void BuildAccelerationStructures();
 	void CreateRootSignatures();
 	void CreateStateObject();
+	void CreateShaderTables();
 	
 private:
 	enum { kNumBackBuffers = 3 };
@@ -53,6 +54,9 @@ private:
 	Buffer* m_pBLASBuffer;
 	Buffer* m_pTLASBuffer;
 	Buffer* m_pInstanceBuffer;
+	Buffer* m_pRayGenShaderTable;
+	Buffer* m_pMissShaderTable;
+	Buffer* m_pHitGroupTable;
 	RootSignature* m_pRayGenLocalRootSignature;
 	RootSignature* m_pEmptyLocalRootSignature;
 	StateObject* m_pStateObject;

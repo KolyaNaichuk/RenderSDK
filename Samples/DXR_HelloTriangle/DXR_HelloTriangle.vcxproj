@@ -86,7 +86,10 @@
     </Link>
     <PostBuildEvent>
       <Command>IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\dxcompiler.dll" COPY /Y "$(SolutionDir)Include\External\DxcCompiler\bin\$(Platform)\dxcompiler.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\dxcompiler.dll"
-IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\dxil.dll" COPY /Y "$(SolutionDir)Include\External\DxcCompiler\bin\$(Platform)\dxil.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\dxil.dll"</Command>
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\dxil.dll" COPY /Y "$(SolutionDir)Include\External\DxcCompiler\bin\$(Platform)\dxil.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\dxil.dll"
+
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders" MKDIR "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders"
+COPY /Y "$(SolutionDir)Samples\$(ProjectName)\Shaders\RayTracing.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RayTracing.hlsl"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -141,15 +144,7 @@ IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\dxil.dll" COPY /Y "$(Solu
     <ClInclude Include="Source\DXApplication.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="RayTracing.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+    <None Include="Shaders\RayTracing.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

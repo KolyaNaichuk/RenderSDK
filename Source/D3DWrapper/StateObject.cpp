@@ -63,4 +63,11 @@ StateObject::StateObject(GraphicsDevice* pDevice, const StateObjectDesc* pDesc, 
 #ifdef ENABLE_GRAPHICS_DEBUGGING
 	m_D3DStateObject->SetName(pName);
 #endif // ENABLE_GRAPHICS_DEBUGGING
+
+	VerifyD3DResult(m_D3DStateObject->QueryInterface(IID_PPV_ARGS(&m_D3DStateObjectProperties)));
+}
+
+void* StateObject::GetShaderIdentifier(LPCWSTR pExportName)
+{
+	return m_D3DStateObjectProperties->GetShaderIdentifier(pExportName);
 }

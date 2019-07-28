@@ -342,6 +342,22 @@ CounterBufferUAVDesc::CounterBufferUAVDesc(UINT64 firstElement, UINT numElements
 	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 }
 
+ShaderTableDesc::ShaderTableDesc(UINT numRecords, UINT recordSizeInBytes, UINT64 alignment)
+{
+	Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	Alignment = alignment;
+	Width = numRecords * Align(recordSizeInBytes, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
+	Height = 1;
+	DepthOrArraySize = 1;
+	MipLevels = 1;
+	Format = DXGI_FORMAT_UNKNOWN;
+	SampleDesc.Count = 1;
+	SampleDesc.Quality = 0;
+	Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	Flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+	NumRecords = numRecords;
+}
+
 ColorTexture1DDesc::ColorTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool createRTV, bool createSRV, bool createUAV,
 	UINT16 mipLevels, D3D12_TEXTURE_LAYOUT layout, UINT64 alignment)
 {
@@ -1483,6 +1499,7 @@ void DepthTexture::CreateTexture2DViews(RenderEnv* pRenderEnv, const D3D12_RESOU
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const ConstantBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
 	: GraphicsResource(pBufferDesc)
+	, m_NumElements(1)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateBufferView(pRenderEnv, pBufferDesc);
@@ -1491,6 +1508,7 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const StructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
 	: GraphicsResource(pBufferDesc)
+	, m_NumElements(pBufferDesc->NumElements)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateBufferViews(pRenderEnv, pBufferDesc);
@@ -1499,9 +1517,18 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const FormattedBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
 	: GraphicsResource(pBufferDesc)
+	, m_NumElements(pBufferDesc->NumElements)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateBufferViews(pRenderEnv, pBufferDesc);
+}
+
+Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const ShaderTableDesc* pShaderTableDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: GraphicsResource(pShaderTableDesc)
+	, m_NumElements(pShaderTableDesc->NumRecords)
+{
+	CreateCommittedResource(pRenderEnv, pHeapProps, pShaderTableDesc, initialState, pName);
 }
 
 Buffer::~Buffer()
@@ -1681,4 +1708,71 @@ BuildRayTracingAccelerationStructureDesc::BuildRayTracingAccelerationStructureDe
 	Inputs = *pInputs;
 	SourceAccelerationStructureData = (pSourceBuffer != nullptr) ? pSourceBuffer->GetGPUVirtualAddress() : 0;
 	ScratchAccelerationStructureData = pScratchBuffer->GetGPUVirtualAddress();
+}
+
+ShaderRecord::ShaderRecord(void* pShaderIdentifier, UINT shaderIdentifierSizeInBytes)
+	: ShaderRecord(pShaderIdentifier, shaderIdentifierSizeInBytes, nullptr, 0)
+{
+}
+
+ShaderRecord::ShaderRecord(void* pShaderIdentifier, UINT shaderIdentifierSizeInBytes, void* pLocalRootArguments, UINT localRootArgumentsSizeInBytes)
+	: m_pShaderIdentifier(pShaderIdentifier)
+	, m_ShaderIdentifierSizeInBytes(shaderIdentifierSizeInBytes)
+	, m_pLocalRootArguments(pLocalRootArguments)
+	, m_LocalRootArgumentsSizeInBytes(localRootArgumentsSizeInBytes)
+{
+}
+
+ShaderRecordData::ShaderRecordData(UINT maxNumRecords, UINT recordSizeInBytes)
+{
+	assert(maxNumRecords > 0);
+	assert(recordSizeInBytes > 0);
+
+	m_RecordSizeInBytes = Align(recordSizeInBytes, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
+	
+	m_SizeInBytes = 0;
+	m_MaxSizeInBytes = maxNumRecords * m_RecordSizeInBytes;
+	
+	m_pData = new BYTE[m_MaxSizeInBytes];
+}
+
+ShaderRecordData::~ShaderRecordData()
+{
+	SafeArrayDelete(m_pData);
+}
+
+UINT ShaderRecordData::GetSizeInBytes() const
+{
+	return m_SizeInBytes;
+}
+
+const void* ShaderRecordData::GetData() const
+{
+	return m_pData;
+}
+
+void ShaderRecordData::Append(const ShaderRecord& record)
+{
+	assert(m_SizeInBytes + m_RecordSizeInBytes <= m_MaxSizeInBytes);
+	
+	assert(record.m_pShaderIdentifier != nullptr);
+	assert(record.m_ShaderIdentifierSizeInBytes > 0);
+
+	BYTE* pDestMem = m_pData + m_SizeInBytes;
+	CopyMemory(pDestMem, record.m_pShaderIdentifier, record.m_ShaderIdentifierSizeInBytes);
+
+	if (record.m_pLocalRootArguments != nullptr)
+	{
+		assert(record.m_LocalRootArgumentsSizeInBytes > 0);
+
+		pDestMem += record.m_ShaderIdentifierSizeInBytes;
+		CopyMemory(pDestMem, record.m_pLocalRootArguments, record.m_LocalRootArgumentsSizeInBytes);
+	}
+	
+	m_SizeInBytes += m_RecordSizeInBytes;
+}
+
+void ShaderRecordData::Reset()
+{
+	m_SizeInBytes = 0;
 }

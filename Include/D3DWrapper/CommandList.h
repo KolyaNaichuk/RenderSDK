@@ -11,11 +11,19 @@ class RootSignature;
 class DescriptorHeap;
 class QueryHeap;
 class Fence;
+class Buffer;
 
 struct Viewport;
 struct Rect;
 struct VertexBufferView;
 struct IndexBufferView;
+
+struct DispatchRaysDesc : public D3D12_DISPATCH_RAYS_DESC
+{
+	DispatchRaysDesc(UINT numRaysX, UINT numRaysY, UINT numRaysZ,
+		Buffer* pRayGenerationShaderTable, Buffer* pMissShaderTable, Buffer* pHitGroupTable,
+		Buffer* pCallableShaderTable = nullptr);
+};
 
 class CommandList
 {
@@ -59,6 +67,7 @@ public:
 	void DrawInstanced(UINT vertexCountPerInstance, UINT instanceCount, UINT startVertexLocation, UINT startInstanceLocation);
 	void DrawIndexedInstanced(UINT indexCountPerInstance, UINT instanceCount, UINT startIndexLocation, INT baseVertexLocation, UINT startInstanceLocation);
 	void Dispatch(UINT numThreadGroupsX, UINT numThreadGroupsY, UINT numThreadGroupsZ);
+	void DispatchRays(const DispatchRaysDesc* pDesc);
 	
 	void ExecuteIndirect(CommandSignature* pCommandSignature, UINT maxCommandCount,
 		Buffer* pArgumentBuffer, UINT64 argumentBufferOffset,

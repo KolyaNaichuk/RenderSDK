@@ -14,6 +14,14 @@
 #include "D3DWrapper/GraphicsUtils.h"
 #include "Math/Vector3.h"
 
+namespace
+{
+	LPCWSTR g_pRayGenShaderName = L"RayGeneration";
+	LPCWSTR g_pMissShaderName = L"RayMiss";
+	LPCWSTR g_pClosesHitShaderName = L"RayClosestHit";
+	LPCWSTR g_pHitGroupName = L"HitGroup";
+}
+
 DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Hello Triangle", 0, 0, 1024, 512)
 	, m_pDevice(nullptr)
@@ -27,6 +35,9 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	, m_pBLASBuffer(nullptr)
 	, m_pTLASBuffer(nullptr)
 	, m_pInstanceBuffer(nullptr)
+	, m_pRayGenShaderTable(nullptr)
+	, m_pMissShaderTable(nullptr)
+	, m_pHitGroupTable(nullptr)
 	, m_pRayGenLocalRootSignature(nullptr)
 	, m_pEmptyLocalRootSignature(nullptr)
 	, m_pStateObject(nullptr)
@@ -57,6 +68,9 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pIndexBuffer);
 	SafeDelete(m_pRayGenLocalRootSignature);
 	SafeDelete(m_pEmptyLocalRootSignature);
+	SafeDelete(m_pRayGenShaderTable);
+	SafeDelete(m_pMissShaderTable);
+	SafeDelete(m_pHitGroupTable);
 	SafeDelete(m_pStateObject);
 	SafeDelete(m_pFence);
 	SafeDelete(m_pShaderInvisibleSRVHeap);
@@ -73,6 +87,7 @@ void DXApplication::OnInit()
 	BuildAccelerationStructures();
 	CreateRootSignatures();
 	CreateStateObject();
+	CreateShaderTables();
 }
 
 void DXApplication::OnUpdate()
@@ -360,22 +375,17 @@ void DXApplication::CreateStateObject()
 				
 	Shader shaderLibrary(L"Shaders//RayTracing.hlsl", nullptr, L"lib_6_3");
 	
-	LPCWSTR pRayGenShaderName = L"RayGeneration";
-	LPCWSTR pMissShaderName = L"RayMiss";
-	LPCWSTR pClosesHitShaderName = L"RayClosestHit";
-	LPCWSTR pHitGroupName = L"HitGroup";
-
 	ExportDesc exportDescs[] =
 	{
-		ExportDesc(pRayGenShaderName),
-		ExportDesc(pMissShaderName),
-		ExportDesc(pClosesHitShaderName)
+		ExportDesc(g_pRayGenShaderName),
+		ExportDesc(g_pMissShaderName),
+		ExportDesc(g_pClosesHitShaderName)
 	};
-
+	
 	DXILLibraryDesc libraryDesc(shaderLibrary.GetBytecode(), ARRAYSIZE(exportDescs), exportDescs);
 	stateSubobjects[kDXILLibraryIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY, &libraryDesc);
 
-	HitGroupDesc hitGroupDesc(pHitGroupName, D3D12_HIT_GROUP_TYPE_TRIANGLES, nullptr, pClosesHitShaderName, nullptr);
+	HitGroupDesc hitGroupDesc(g_pHitGroupName, D3D12_HIT_GROUP_TYPE_TRIANGLES, nullptr, g_pClosesHitShaderName, nullptr);
 	stateSubobjects[kHitGroupIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP, &hitGroupDesc);
 
 	RayTracingPipelineConfig pipelineConfig(1);
@@ -387,14 +397,14 @@ void DXApplication::CreateStateObject()
 	assert(m_pRayGenLocalRootSignature != nullptr);
 	stateSubobjects[kRayGenLocalRSIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE, m_pRayGenLocalRootSignature);
 
-	LPCWSTR rayGenLocalRSExports[] = {pRayGenShaderName};
+	LPCWSTR rayGenLocalRSExports[] = {g_pRayGenShaderName};
 	SubobjectToExportsAssociation rayGenLocalRSExportsAssoc(&stateSubobjects[kRayGenLocalRSIndex], ARRAYSIZE(rayGenLocalRSExports), rayGenLocalRSExports);
 	stateSubobjects[kRayGenLocalRSAssocIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION, &rayGenLocalRSExportsAssoc);
 
 	assert(m_pEmptyLocalRootSignature != nullptr);
 	stateSubobjects[kEmptyLocalRSIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE, m_pEmptyLocalRootSignature);
 	
-	LPCWSTR emptyLocalRSExports[] = {pMissShaderName, pHitGroupName};
+	LPCWSTR emptyLocalRSExports[] = {g_pMissShaderName, g_pClosesHitShaderName};
 	SubobjectToExportsAssociation emptyLocalRSExportsAssoc(&stateSubobjects[kEmptyLocalRSIndex], ARRAYSIZE(emptyLocalRSExports), emptyLocalRSExports);
 	stateSubobjects[kEmptyLocalRSAssocIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION, &emptyLocalRSExportsAssoc);
 
@@ -403,3 +413,37 @@ void DXApplication::CreateStateObject()
 	m_pStateObject = new StateObject(m_pRenderEnv->m_pDevice, &stateObjectDesc, L"m_pStateObject");
 }
 
+void DXApplication::CreateShaderTables()
+{
+	assert(m_pStateObject != nullptr);
+
+	assert(m_pRayGenShaderTable == nullptr);
+	assert(m_pMissShaderTable == nullptr);
+	assert(m_pHitGroupTable == nullptr);
+
+	Buffer* pUploadRayGenShaderTable = nullptr;
+	Buffer* pUploadMissShaderTable = nullptr;
+	Buffer* pUploadHitGroupTable = nullptr;
+
+	{				
+		struct RootArguments
+		{
+		};		
+		RootArguments rootArguments;
+
+		const UINT shaderRecordSizeInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + sizeof(rootArguments);
+		
+		ShaderRecordData shaderRecordData(1, shaderRecordSizeInBytes);
+		shaderRecordData.Append(ShaderRecord(m_pStateObject->GetShaderIdentifier(g_pRayGenShaderName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES, &rootArguments, sizeof(rootArguments)));
+	}
+	
+	{
+	}
+
+	{
+	}
+
+	SafeDelete(pUploadRayGenShaderTable);
+	SafeDelete(pUploadMissShaderTable);
+	SafeDelete(pUploadHitGroupTable);
+}

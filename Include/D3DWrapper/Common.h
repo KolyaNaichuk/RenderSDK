@@ -21,3 +21,8 @@ static void VerifyD3DResult(HRESULT result)
 {
 	assert(SUCCEEDED(result));
 }
+
+static UINT Align(UINT size, UINT alignment)
+{
+	return (size + (alignment - 1)) & ~(alignment - 1);
+}

@@ -39,7 +39,7 @@ void RayGeneration()
 	RayPayload payload;
 	payload.color = float3(0.0f, 0.0f, 0.0f);
 
-	TraceRay(g_AccelStruct, );
+	//TraceRay(g_AccelStruct, );
 
 	g_OutputTexture[pixelPos] = float4(payload.color, 1.0f);
 }

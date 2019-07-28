@@ -9,6 +9,42 @@
 #include "D3DWrapper/Fence.h"
 #include "D3DWrapper/GraphicsUtils.h"
 
+DispatchRaysDesc::DispatchRaysDesc(UINT numRaysX, UINT numRaysY, UINT numRaysZ,
+	Buffer* pRayGenerationShaderTable, Buffer* pMissShaderTable, Buffer* pHitGroupTable,
+	Buffer* pCallableShaderTable)
+{
+	assert(pRayGenerationShaderTable != nullptr);
+	RayGenerationShaderRecord.StartAddress = pRayGenerationShaderTable->GetGPUVirtualAddress();
+	RayGenerationShaderRecord.SizeInBytes = pRayGenerationShaderTable->GetSizeInBytes();
+
+	assert(pMissShaderTable != nullptr);
+	MissShaderTable.StartAddress = pMissShaderTable->GetGPUVirtualAddress();
+	MissShaderTable.SizeInBytes = pMissShaderTable->GetSizeInBytes();
+	MissShaderTable.StrideInBytes = pMissShaderTable->GetSizeInBytes() / pMissShaderTable->GetNumElements();
+
+	assert(pHitGroupTable != nullptr);
+	HitGroupTable.StartAddress = pHitGroupTable->GetGPUVirtualAddress();
+	HitGroupTable.SizeInBytes = pHitGroupTable->GetSizeInBytes();
+	HitGroupTable.StrideInBytes = pHitGroupTable->GetSizeInBytes() / pHitGroupTable->GetNumElements();
+
+	if (pHitGroupTable != nullptr)
+	{
+		CallableShaderTable.StartAddress = pCallableShaderTable->GetGPUVirtualAddress();
+		CallableShaderTable.SizeInBytes = pCallableShaderTable->GetSizeInBytes();
+		CallableShaderTable.StrideInBytes = pCallableShaderTable->GetSizeInBytes() / pCallableShaderTable->GetNumElements();
+	}
+	else
+	{
+		CallableShaderTable.StartAddress = 0;
+		CallableShaderTable.SizeInBytes = 0;
+		CallableShaderTable.StrideInBytes = 0;
+	}
+		
+	Width = numRaysX;
+	Height = numRaysY;
+	Depth = numRaysZ;
+}
+
 CommandList::CommandList(GraphicsDevice* pDevice, D3D12_COMMAND_LIST_TYPE type, LPCWSTR pName)
 {
 	ID3D12Device* pD3DDevice = pDevice->GetD3DObject();
@@ -195,6 +231,11 @@ void CommandList::DrawIndexedInstanced(UINT indexCountPerInstance, UINT instance
 void CommandList::Dispatch(UINT numThreadGroupsX, UINT numThreadGroupsY, UINT numThreadGroupsZ)
 {
 	m_D3DCommandList->Dispatch(numThreadGroupsX, numThreadGroupsY, numThreadGroupsZ);
+}
+
+void CommandList::DispatchRays(const DispatchRaysDesc* pDesc)
+{
+	m_D3DCommandList->DispatchRays(pDesc);
 }
 
 void CommandList::ExecuteIndirect(CommandSignature* pCommandSignature, UINT maxCommandCount,
