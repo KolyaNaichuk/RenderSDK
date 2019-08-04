@@ -9,7 +9,6 @@ class CommandListPool;
 class DescriptorHeap;
 class RootSignature;
 class PipelineState;
-class StateObject;
 class Buffer;
 class ColorTexture;
 class Fence;
@@ -34,11 +33,6 @@ private:
 	void OnDestroy() override;
 
 	void InitRenderEnvironment();
-	void BuildGeometryBuffers();
-	void BuildAccelerationStructures();
-	void CreateRootSignatures();
-	void CreateStateObject();
-	void CreateShaderTables();
 	
 private:
 	enum { kNumBackBuffers = 3 };
@@ -49,17 +43,6 @@ private:
 	CommandListPool* m_pCommandListPool;
 	DescriptorHeap* m_pShaderInvisibleRTVHeap;
 	DescriptorHeap* m_pShaderInvisibleSRVHeap;
-	Buffer* m_pVertexBuffer;
-	Buffer* m_pIndexBuffer;
-	Buffer* m_pBLASBuffer;
-	Buffer* m_pTLASBuffer;
-	Buffer* m_pInstanceBuffer;
-	Buffer* m_pRayGenShaderTable;
-	Buffer* m_pMissShaderTable;
-	Buffer* m_pHitGroupTable;
-	RootSignature* m_pRayGenLocalRootSignature;
-	RootSignature* m_pEmptyLocalRootSignature;
-	StateObject* m_pStateObject;
 	HeapProperties* m_pDefaultHeapProps;
 	HeapProperties* m_pUploadHeapProps;
 	RenderEnv* m_pRenderEnv;

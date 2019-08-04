@@ -1732,13 +1732,19 @@ ShaderRecordData::ShaderRecordData(UINT maxNumRecords, UINT recordSizeInBytes)
 	
 	m_SizeInBytes = 0;
 	m_MaxSizeInBytes = maxNumRecords * m_RecordSizeInBytes;
-	
+	m_NumRecords = 0;
+
 	m_pData = new BYTE[m_MaxSizeInBytes];
 }
 
 ShaderRecordData::~ShaderRecordData()
 {
 	SafeArrayDelete(m_pData);
+}
+
+UINT ShaderRecordData::GetNumRecords() const
+{
+	return m_NumRecords;
 }
 
 UINT ShaderRecordData::GetSizeInBytes() const
@@ -1770,9 +1776,11 @@ void ShaderRecordData::Append(const ShaderRecord& record)
 	}
 	
 	m_SizeInBytes += m_RecordSizeInBytes;
+	++m_NumRecords;
 }
 
 void ShaderRecordData::Reset()
 {
 	m_SizeInBytes = 0;
+	m_NumRecords = 0;
 }

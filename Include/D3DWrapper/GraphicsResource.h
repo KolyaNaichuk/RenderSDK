@@ -555,6 +555,7 @@ public:
 	ShaderRecordData(UINT maxNumRecords, UINT recordSizeInBytes);
 	~ShaderRecordData();
 
+	UINT GetNumRecords() const;
 	UINT GetSizeInBytes() const;
 	const void* GetData() const;
 
@@ -566,6 +567,7 @@ private:
 	UINT m_RecordSizeInBytes;
 	UINT m_SizeInBytes;
 	UINT m_MaxSizeInBytes;
+	UINT m_NumRecords;
 };
 
 template <typename DestBufferDesc>

@@ -139,9 +139,11 @@ COPY /Y "$(SolutionDir)Samples\$(ProjectName)\Shaders\RayTracing.hlsl" "$(Soluti
   <ItemGroup>
     <ClCompile Include="Source\DXApplication.cpp" />
     <ClCompile Include="Source\Main.cpp" />
+    <ClCompile Include="Source\RayTracingPass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\DXApplication.h" />
+    <ClInclude Include="Source\RayTracingPass.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\RayTracing.hlsl">
