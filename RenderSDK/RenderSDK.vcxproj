@@ -221,6 +221,7 @@
     <ClInclude Include="..\Include\RenderPasses\SpotLightShadowMapRenderer.h" />
     <ClInclude Include="..\Include\RenderPasses\SunShadowMapRenderer.h" />
     <ClInclude Include="..\Include\RenderPasses\Utils.h" />
+    <ClInclude Include="..\Include\RenderPasses\VisualizeDepthTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\VisualizeNumLightsPerTilePass.h" />
     <ClInclude Include="..\Include\RenderPasses\VoxelizePass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelizeCommandsPass.h" />
@@ -301,6 +302,7 @@
     <ClCompile Include="..\Source\RenderPasses\SunShadowMapRenderer.cpp" />
     <ClCompile Include="..\Source\RenderPasses\Utils.cpp" />
     <ClCompile Include="..\Source\RenderPasses\SpotLightShadowMapRenderer.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\VisualizeDepthTexturePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VisualizeNumLightsPerTilePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VoxelizePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelizeCommandsPass.cpp" />
@@ -685,6 +687,11 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\VisualizeDepthTexturePS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

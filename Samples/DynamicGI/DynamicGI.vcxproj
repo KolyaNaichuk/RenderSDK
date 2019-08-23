@@ -248,6 +248,9 @@ COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(Pr
 COPY /Y "$(SolutionDir)Shaders\VisualizeTexturePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeTexturePS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\VisualizeTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeTexturePS.hlsl"
 
+COPY /Y "$(SolutionDir)Shaders\VisualizeDepthTexturePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeDepthTexturePS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VisualizeDepthTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeDepthTexturePS.hlsl"
+
 COPY /Y "$(SolutionDir)Shaders\VisualizeNumLightsPerTilePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeNumLightsPerTilePS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\VisualizeNumLightsPerTilePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeNumLightsPerTilePS.hlsl"
 

@@ -32,6 +32,7 @@
 #include "RenderPasses/SpotLightShadowMapRenderer.h"
 #include "RenderPasses/VisualizeNumLightsPerTilePass.h"
 #include "RenderPasses/VisualizeTexturePass.h"
+#include "RenderPasses/VisualizeDepthTexturePass.h"
 #include "RenderPasses/VisualizeVoxelReflectancePass.h"
 #include "RenderPasses/VoxelizePass.h"
 #include "RenderPasses/GeometryBuffer.h"
@@ -383,7 +384,7 @@ void DXApplication::OnInit()
 {
 	Scene* pScene = SceneLoader::LoadCrytekSponza();
 
-	InitRenderEnv(kBackBufferWidth, kBackBufferHeight);
+	InitRenderEnvironment(kBackBufferWidth, kBackBufferHeight);
 	InitScene(kBackBufferWidth, kBackBufferHeight, pScene);		
 	InitDownscaleAndReprojectDepthPass();
 	InitFrustumMeshCullingPass();
@@ -621,7 +622,7 @@ void DXApplication::HandleUserInput()
 #endif
 }
 
-void DXApplication::InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight)
+void DXApplication::InitRenderEnvironment(UINT backBufferWidth, UINT backBufferHeight)
 {
 	GraphicsFactory factory;
 	m_pDevice = new GraphicsDevice(&factory, D3D_FEATURE_LEVEL_11_0);
@@ -1182,7 +1183,7 @@ void DXApplication::InitVisualizeDepthBufferPass()
 	{
 		assert(m_VisualizeDepthBufferPasses[index] == nullptr);
 		
-		VisualizeTexturePass::InitParams params;
+		VisualizeDepthTexturePass::InitParams params;
 		params.m_pName = "VisualizeDepthBufferPass";
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_InputTextureState = pTiledShadingPassStates->m_DepthTextureState;
@@ -1190,21 +1191,26 @@ void DXApplication::InitVisualizeDepthBufferPass()
 		params.m_pInputTexture = m_pDepthTexture;
 		params.m_InputTextureSRV = m_pDepthTexture->GetSRVHandle();
 		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
-		params.m_TextureType = VisualizeTexturePass::TextureType_Depth;
 
-		m_VisualizeDepthBufferPasses[index] = new VisualizeTexturePass(&params);
+		m_VisualizeDepthBufferPasses[index] = new VisualizeDepthTexturePass(&params);
 	}
 }
 
 CommandList* DXApplication::RecordVisualizeDepthBufferPass()
 {
-	VisualizeTexturePass* pVisualizeTexturePass = m_VisualizeDepthBufferPasses[m_BackBufferIndex];
+	VisualizeDepthTexturePass* pVisualizeTexturePass = m_VisualizeDepthBufferPasses[m_BackBufferIndex];
 	assert(pVisualizeTexturePass != nullptr);
 
-	VisualizeTexturePass::RenderParams params;
+	assert(m_pCamera != nullptr);
+	const Matrix4f& projMatrix = m_pCamera->GetProjMatrix();
+	
+	VisualizeDepthTexturePass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeDepthBufferCommandList");
-	params.m_pAppDataBuffer = m_UploadAppDataBuffers[m_BackBufferIndex];
+	params.m_CameraSettings.m_ProjMatrix32 = projMatrix.m_32;
+	params.m_CameraSettings.m_ProjMatrix22 = projMatrix.m_22;
+	params.m_CameraSettings.m_ViewNearPlaneDist = m_pCamera->GetNearClipDistance();
+	params.m_CameraSettings.m_RcpViewClipRange = Rcp(m_pCamera->GetFarClipDistance() - m_pCamera->GetNearClipDistance());
 	params.m_pViewport = m_pBackBufferViewport;
 
 	pVisualizeTexturePass->Record(&params);
@@ -1223,7 +1229,7 @@ void DXApplication::InitVisualizeReprojectedDepthBufferPass()
 	{
 		assert(m_VisualizeReprojectedDepthBufferPasses[index] == nullptr);
 
-		VisualizeTexturePass::InitParams params;
+		VisualizeDepthTexturePass::InitParams params;
 		params.m_pName = "VisualizeReprojectedDepthBufferPass";
 		params.m_pRenderEnv = m_pRenderEnv;
 		params.m_InputResourceStates.m_InputTextureState = pResourceStates->m_ReprojectedDepthTextureState;
@@ -1231,21 +1237,26 @@ void DXApplication::InitVisualizeReprojectedDepthBufferPass()
 		params.m_pInputTexture = pProjectedDepthTexture;
 		params.m_InputTextureSRV = pProjectedDepthTexture->GetSRVHandle();
 		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
-		params.m_TextureType = VisualizeTexturePass::TextureType_Depth;
-
-		m_VisualizeReprojectedDepthBufferPasses[index] = new VisualizeTexturePass(&params);
+		
+		m_VisualizeReprojectedDepthBufferPasses[index] = new VisualizeDepthTexturePass(&params);
 	}
 }
 
 CommandList* DXApplication::RecordVisualizeReprojectedDepthBufferPass()
 {
-	VisualizeTexturePass* pVisualizeTexturePass = m_VisualizeReprojectedDepthBufferPasses[m_BackBufferIndex];
+	VisualizeDepthTexturePass* pVisualizeTexturePass = m_VisualizeReprojectedDepthBufferPasses[m_BackBufferIndex];
 	assert(pVisualizeTexturePass != nullptr);
 
-	VisualizeTexturePass::RenderParams params;
+	assert(m_pCamera != nullptr);
+	const Matrix4f& projMatrix = m_pCamera->GetProjMatrix();
+
+	VisualizeDepthTexturePass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeReprojectedDepthBufferCommandList");
-	params.m_pAppDataBuffer = m_UploadAppDataBuffers[m_BackBufferIndex];
+	params.m_CameraSettings.m_ProjMatrix32 = projMatrix.m_32;
+	params.m_CameraSettings.m_ProjMatrix22 = projMatrix.m_22;
+	params.m_CameraSettings.m_ViewNearPlaneDist = m_pCamera->GetNearClipDistance();
+	params.m_CameraSettings.m_RcpViewClipRange = Rcp(m_pCamera->GetFarClipDistance() - m_pCamera->GetNearClipDistance());
 	params.m_pViewport = m_pBackBufferViewport;
 
 	pVisualizeTexturePass->Record(&params);
@@ -1270,7 +1281,7 @@ void DXApplication::InitVisualizeNormalBufferPass()
 		params.m_pInputTexture = m_pGeometryBuffer->GetGBuffer4();
 		params.m_InputTextureSRV = m_pGeometryBuffer->GetGBuffer4()->GetSRVHandle();
 		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
-		params.m_TextureType = VisualizeTexturePass::TextureType_GBufferNormal;
+		params.m_TextureType = VisualizeTexturePass::TextureType_Normal;
 
 		m_VisualizeNormalBufferPasses[index] = new VisualizeTexturePass(&params);
 	}
@@ -1284,7 +1295,6 @@ CommandList* DXApplication::RecordVisualizeNormalBufferPass()
 	VisualizeTexturePass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeNormalBufferCommandList");
-	params.m_pAppDataBuffer = m_UploadAppDataBuffers[m_BackBufferIndex];
 	params.m_pViewport = m_pBackBufferViewport;
 
 	pVisualizeTexturePass->Record(&params);
@@ -1309,7 +1319,7 @@ void DXApplication::InitVisualizeTexCoordBufferPass()
 		params.m_pInputTexture = m_pGeometryBuffer->GetGBuffer1();
 		params.m_InputTextureSRV = m_pGeometryBuffer->GetGBuffer1()->GetSRVHandle();
 		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
-		params.m_TextureType = VisualizeTexturePass::TextureType_GBufferTexCoord;
+		params.m_TextureType = VisualizeTexturePass::TextureType_TexCoord;
 
 		m_VisualizeTexCoordBufferPasses[index] = new VisualizeTexturePass(&params);
 	}
@@ -1323,7 +1333,6 @@ CommandList* DXApplication::RecordVisualizeTexCoordBufferPass()
 	VisualizeTexturePass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeTexCoordBufferCommandList");
-	params.m_pAppDataBuffer = m_UploadAppDataBuffers[m_BackBufferIndex];
 	params.m_pViewport = m_pBackBufferViewport;
 
 	pVisualizeTexturePass->Record(&params);
@@ -1364,7 +1373,6 @@ CommandList* DXApplication::RecordVisualizeDepthBufferWithMeshTypePass()
 	VisualizeTexturePass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeDepthBufferWithMeshTypeCommandList");
-	params.m_pAppDataBuffer = m_UploadAppDataBuffers[m_BackBufferIndex];
 	params.m_pViewport = m_pBackBufferViewport;
 
 	pVisualizeTexturePass->Record(&params);
@@ -1404,7 +1412,6 @@ CommandList* DXApplication::RecordVisualizeAccumLightPass()
 	VisualizeTexturePass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeAccumLightCommandList");
-	params.m_pAppDataBuffer = m_UploadAppDataBuffers[m_BackBufferIndex];
 	params.m_pViewport = m_pBackBufferViewport;
 
 	pVisualizeTexturePass->Record(&params);
@@ -1574,10 +1581,8 @@ void DXApplication::InitRenderSpotLightShadowMaps(Scene* pScene)
 	assert(m_pSpotLightShadowMapRenderer == nullptr);
 
 	SpotLightShadowMapRenderer::InitParams params;
-	params.m_pRenderEnv = m_pRenderEnv;
-	
+	params.m_pRenderEnv = m_pRenderEnv;	
 	params.m_InputResourceStates.m_SpotLightShadowMapsState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-		
 	params.m_NumSpotLights = pScene->GetNumSpotLights();
 	params.m_ppSpotLights = pScene->GetSpotLights();
 	params.m_MaxNumActiveSpotLights = kMaxNumActiveSpotLights;

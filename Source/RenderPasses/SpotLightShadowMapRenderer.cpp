@@ -143,8 +143,8 @@ void SpotLightShadowMapRenderer::InitResources(InitParams* pParams)
 		const Matrix4f viewProjMatrix = viewMatrix * projMatrix;
 		spotLightViewProjMatrices[lightIndex] = viewProjMatrix;
 
-		createExpShadowMapParams[lightIndex].m_LightProjMatrix43 = projMatrix.m_32;
-		createExpShadowMapParams[lightIndex].m_LightProjMatrix33 = projMatrix.m_22;
+		createExpShadowMapParams[lightIndex].m_LightProjMatrix32 = projMatrix.m_32;
+		createExpShadowMapParams[lightIndex].m_LightProjMatrix22 = projMatrix.m_22;
 		createExpShadowMapParams[lightIndex].m_LightViewNearPlane = pLight->GetShadowNearPlane();
 		createExpShadowMapParams[lightIndex].m_LightRcpViewClipRange = Rcp(pLight->GetRange() - pLight->GetShadowNearPlane());
 		createExpShadowMapParams[lightIndex].m_ExpShadowMapConstant = pLight->GetExpShadowMapConstant();

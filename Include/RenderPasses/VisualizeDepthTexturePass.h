@@ -8,15 +8,15 @@ class CommandList;
 class RootSignature;
 class PipelineState;
 
-class VisualizeTexturePass
+class VisualizeDepthTexturePass
 {
 public:
-	enum TextureType
+	struct CameraSettings
 	{
-		TextureType_Normal = 1,
-		TextureType_TexCoord,
-		TextureType_RGB,
-		TextureType_R
+		f32 m_ProjMatrix32;
+		f32 m_ProjMatrix22;
+		f32 m_ViewNearPlaneDist;
+		f32 m_RcpViewClipRange;
 	};
 
 	struct ResourceStates
@@ -33,18 +33,18 @@ public:
 		GraphicsResource* m_pInputTexture;
 		DescriptorHandle m_InputTextureSRV;
 		ColorTexture* m_pBackBuffer;
-		TextureType m_TextureType;
 	};
 
 	struct RenderParams
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
+		CameraSettings m_CameraSettings;
 		Viewport* m_pViewport;
 	};
 
-	VisualizeTexturePass(InitParams* pParams);
-	~VisualizeTexturePass();
+	VisualizeDepthTexturePass(InitParams* pParams);
+	~VisualizeDepthTexturePass();
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }

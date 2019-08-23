@@ -1,4 +1,5 @@
 #include "DXApplication.h"
+#include "RayTracingPass.h"
 #include "D3DWrapper/GraphicsFactory.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/SwapChain.h"
@@ -9,24 +10,16 @@
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/Fence.h"
 #include "D3DWrapper/GraphicsUtils.h"
+#include "Profiler/GPUProfiler.h"
+#include "RenderPasses/VisualizeTexturePass.h"
 #include "Scene/Mesh.h"
 #include "Math/Vector3.h"
 
 DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Hello Triangle", 0, 0, 1024, 512)
-	, m_pDevice(nullptr)
-	, m_pSwapChain(nullptr)
-	, m_pCommandQueue(nullptr)
-	, m_pCommandListPool(nullptr)
-	, m_pShaderInvisibleRTVHeap(nullptr)
-	, m_pShaderInvisibleSRVHeap(nullptr)
 	, m_pDefaultHeapProps(new HeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new HeapProperties(D3D12_HEAP_TYPE_UPLOAD))
 	, m_pRenderEnv(new RenderEnv())
-	, m_pFence(nullptr)
-	, m_pViewport(nullptr)
-	, m_pScissorRect(nullptr)
-	, m_BackBufferIndex(0)
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 		m_FrameCompletionFenceValues[index] = m_pRenderEnv->m_LastSubmissionFenceValue;
@@ -34,6 +27,10 @@ DXApplication::DXApplication(HINSTANCE hApp)
 
 DXApplication::~DXApplication()
 {
+	SafeDelete(m_pRayTracingPass);
+	SafeDelete(m_pVisualizeRayTracedResultPass);
+	SafeDelete(m_pAppDataBuffer);
+	SafeDelete(m_pGPUProfiler);
 	SafeDelete(m_pCommandListPool);
 	SafeDelete(m_pRenderEnv);
 	SafeDelete(m_pDefaultHeapProps);
@@ -51,14 +48,8 @@ DXApplication::~DXApplication()
 void DXApplication::OnInit()
 {
 	InitRenderEnvironment();
-
-	const Vector3f vertices[] =
-	{
-		Vector3f(0.0f, 10.0f, 2.0f),
-		Vector3f(10.0f, -10.0f, 2.0f),
-		Vector3f(-10.0f, -10.0f, 2.0f)
-	};
-	const WORD indices[] = {0, 1, 2};
+	InitRayTracingPass();
+	InitVisualizeRayTracedResultPass();
 }
 
 void DXApplication::OnUpdate()
@@ -67,43 +58,37 @@ void DXApplication::OnUpdate()
 
 void DXApplication::OnRender()
 {
-	/*
-	CommandList* pCommandList = m_pCommandListPool->Create(L"renderRectCommandList");
+#ifdef ENABLE_PROFILING
+	m_pGPUProfiler->StartFrame();
+#endif // ENABLE_PROFILING
 	
-	pCommandList->Begin(m_pPipelineState);
-	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
-		
+	static const u8 commandListBatchSize = 2;
+	static CommandList* commandListBatch[commandListBatchSize];
+	commandListBatch[0] = RecordRayTracingPass();
+	commandListBatch[1] = RecordVisualizeRayTracedResultPass();
+	
+#ifdef ENABLE_PROFILING
+	m_pGPUProfiler->EndFrame(m_pCommandQueue);
+	m_pGPUProfiler->OutputToConsole();
+#endif // #ifdef ENABLE_PROFILING
+
+	++m_pRenderEnv->m_LastSubmissionFenceValue;
+	m_pCommandQueue->ExecuteCommandLists(commandListBatchSize, commandListBatch, m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-	ResourceTransitionBarrier renderTargetBarrier(pRenderTarget, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	pCommandList->ResourceBarrier(1, &renderTargetBarrier);
-		
-	const FLOAT clearColor[4] = {0.1f, 0.7f, 0.4f, 1.0f};
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = pRenderTarget->GetRTVHandle();
-	pCommandList->ClearRenderTargetView(rtvHandle, clearColor);
-
-	pCommandList->OMSetRenderTargets(1, &rtvHandle);
-	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	pCommandList->IASetVertexBuffers(0, 1, m_pVertexBuffer->GetVBView());
-	pCommandList->IASetIndexBuffer(m_pIndexBuffer->GetIBView());
-	pCommandList->RSSetViewports(1, m_pViewport);
-	pCommandList->RSSetScissorRects(1, m_pScissorRect);
-	pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
-
-	ResourceTransitionBarrier presentStateBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-	pCommandList->ResourceBarrier(1, &presentStateBarrier);
-	pCommandList->End();
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
-	m_pCommandQueue->ExecuteCommandLists(1, &pCommandList, m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 
-	++m_pRenderEnv->m_LastSubmissionFenceValue;
-	m_pSwapChain->Present(1, 0);
+#ifdef ENABLE_PROFILING
+	m_pSwapChain->Present(0/*vsync disabled*/, 0);
+#else // ENABLE_PROFILING
+	m_pSwapChain->Present(1/*vsync enabled*/, 0);
+#endif // ENABLE_PROFILING
+
 	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
-
+	
 	m_FrameCompletionFenceValues[m_BackBufferIndex] = m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 	m_pFence->WaitForSignalOnCPU(m_FrameCompletionFenceValues[m_BackBufferIndex]);
-	*/
 }
 
 void DXApplication::OnDestroy()
@@ -142,6 +127,11 @@ void DXApplication::InitRenderEnvironment()
 	m_pRenderEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
 	m_pRenderEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
 
+#ifdef ENABLE_PROFILING
+	m_pGPUProfiler = new GPUProfiler(m_pRenderEnv, 2/*maxNumProfiles*/, kNumBackBuffers);
+#endif // ENABLE_PROFILING
+	m_pRenderEnv->m_pGPUProfiler = m_pGPUProfiler;
+
 	const RECT bufferRect = m_pWindow->GetClientRect();
 	const UINT bufferWidth = bufferRect.right - bufferRect.left;
 	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
@@ -152,4 +142,50 @@ void DXApplication::InitRenderEnvironment()
 	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
 	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+}
+
+void DXApplication::InitRayTracingPass()
+{
+	assert(m_pRayTracingPass == nullptr);
+
+	const Vector3f vertices[] =
+	{
+		Vector3f(0.0f, 10.0f, 2.0f),
+		Vector3f(10.0f, -10.0f, 2.0f),
+		Vector3f(-10.0f, -10.0f, 2.0f)
+	};
+	const WORD indices[] = {0, 1, 2};
+
+	assert(false);
+}
+
+CommandList* DXApplication::RecordRayTracingPass()
+{
+	assert(m_pRayTracingPass != nullptr);
+
+	RayTracingPass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pRayTracingCommandList");
+	
+	m_pRayTracingPass->Record(&params);
+	return params.m_pCommandList;
+}
+
+void DXApplication::InitVisualizeRayTracedResultPass()
+{
+	assert(m_pVisualizeRayTracedResultPass == nullptr);
+	assert(false);
+}
+
+CommandList* DXApplication::RecordVisualizeRayTracedResultPass()
+{
+	assert(m_pVisualizeRayTracedResultPass != nullptr);
+	
+	VisualizeTexturePass::RenderParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeRayTracedResultCommandList");;
+	params.m_pViewport = m_pViewport;
+
+	m_pVisualizeRayTracedResultPass->Record(&params);
+	return params.m_pCommandList;
 }

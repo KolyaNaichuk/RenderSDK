@@ -1,4 +1,4 @@
-#include "RenderPasses/VisualizeTexturePass.h"
+#include "RenderPasses/VisualizeDepthTexturePass.h"
 #include "D3DWrapper/CommandList.h"
 #include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/PipelineState.h"
@@ -11,12 +11,13 @@ namespace
 {
 	enum RootParams
 	{
-		kRootSRVTableParam = 0,
+		kRoot32BitConstantsParam = 0,
+		kRootSRVTableParam,
 		kNumRootParams
 	};
 }
 
-VisualizeTexturePass::VisualizeTexturePass(InitParams* pParams)
+VisualizeDepthTexturePass::VisualizeDepthTexturePass(InitParams* pParams)
 	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
@@ -24,13 +25,13 @@ VisualizeTexturePass::VisualizeTexturePass(InitParams* pParams)
 	InitPipelineState(pParams);
 }
 
-VisualizeTexturePass::~VisualizeTexturePass()
+VisualizeDepthTexturePass::~VisualizeDepthTexturePass()
 {
 	SafeDelete(m_pPipelineState);
 	SafeDelete(m_pRootSignature);
 }
 
-void VisualizeTexturePass::Record(RenderParams* pParams)
+void VisualizeDepthTexturePass::Record(RenderParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
@@ -47,6 +48,7 @@ void VisualizeTexturePass::Record(RenderParams* pParams)
 		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
+	pCommandList->SetGraphicsRoot32BitConstants(kRoot32BitConstantsParam, sizeof(CameraSettings) / sizeof(f32), &pParams->m_CameraSettings, 0);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = m_RTVHeapStart;
@@ -68,13 +70,13 @@ void VisualizeTexturePass::Record(RenderParams* pParams)
 	pCommandList->End();
 }
 
-void VisualizeTexturePass::InitResources(InitParams* pParams)
+void VisualizeDepthTexturePass::InitResources(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-	
+
 	m_OutputResourceStates.m_InputTextureState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	m_OutputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	
+
 	assert(m_ResourceBarriers.empty());
 	AddResourceBarrierIfRequired(pParams->m_pInputTexture,
 		pParams->m_InputResourceStates.m_InputTextureState,
@@ -91,33 +93,29 @@ void VisualizeTexturePass::InitResources(InitParams* pParams)
 	m_RTVHeapStart = pParams->m_pBackBuffer->GetRTVHandle();
 }
 
-void VisualizeTexturePass::InitRootSignature(InitParams* pParams)
+void VisualizeDepthTexturePass::InitRootSignature(InitParams* pParams)
 {
 	assert(m_pRootSignature == nullptr);
-	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
 
+	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
+	rootParams[kRoot32BitConstantsParam] = Root32BitConstantsParameter(0, D3D12_SHADER_VISIBILITY_PIXEL, sizeof(CameraSettings) / sizeof(f32));
+	
 	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = {SRVDescriptorRange(1, 0)};
 	rootParams[kRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), descriptorRanges, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	StaticSamplerDesc samplerDesc(StaticSamplerDesc::Point, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	RootSignatureDesc rootSignatureDesc(kNumRootParams, rootParams, 1, &samplerDesc, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"VisualizeTexturePass::m_pRootSignature");
+	m_pRootSignature = new RootSignature(pParams->m_pRenderEnv->m_pDevice, &rootSignatureDesc, L"VisualizeDepthTexturePass::m_pRootSignature");
 }
 
-void VisualizeTexturePass::InitPipelineState(InitParams* pParams)
+void VisualizeDepthTexturePass::InitPipelineState(InitParams* pParams)
 {
 	assert(m_pRootSignature != nullptr);
 	assert(m_pPipelineState == nullptr);
 	
-	std::wstring textureTypeStr = std::to_wstring(pParams->m_TextureType);
-	const ShaderDefine shaderDefines[] =
-	{
-		ShaderDefine(L"TEXTURE_TYPE", textureTypeStr.c_str())
-	};
-
 	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", L"Main", L"vs_6_1");
-	Shader pixelShader(L"Shaders//VisualizeTexturePS.hlsl", L"Main", L"ps_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
+	Shader pixelShader(L"Shaders//VisualizeDepthTexturePS.hlsl", L"Main", L"ps_6_1");
 
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
@@ -126,10 +124,10 @@ void VisualizeTexturePass::InitPipelineState(InitParams* pParams)
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateDesc.SetRenderTargetFormat(GetRenderTargetViewFormat(pParams->m_pBackBuffer->GetFormat()));
 
-	m_pPipelineState = new PipelineState(pParams->m_pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeTexturePass::m_pPipelineState");
+	m_pPipelineState = new PipelineState(pParams->m_pRenderEnv->m_pDevice, &pipelineStateDesc, L"VisualizeDepthTexturePass::m_pPipelineState");
 }
 
-void VisualizeTexturePass::AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
+void VisualizeDepthTexturePass::AddResourceBarrierIfRequired(GraphicsResource* pResource, D3D12_RESOURCE_STATES currState, D3D12_RESOURCE_STATES requiredState)
 {
 	if (currState != requiredState)
 		m_ResourceBarriers.emplace_back(pResource, currState, requiredState);

@@ -2,12 +2,10 @@
 #include "Foundation.hlsl"
 #include "GammaCorrection.hlsl"
 
-#define TEXTURE_TYPE_GBUFFER_NORMAL				1
-#define TEXTURE_TYPE_GBUFFER_TEXCOORD			2
-#define TEXTURE_TYPE_DEPTH						3
-#define TEXTURE_TYPE_EXP_SHADOW_MAP				4
-#define TEXTURE_TYPE_RGB						5
-#define TEXTURE_TYPE_R							6
+#define TEXTURE_TYPE_NORMAL						1
+#define TEXTURE_TYPE_TEXCOORD					2
+#define TEXTURE_TYPE_RGB						3
+#define TEXTURE_TYPE_R							4
 
 struct PSInput
 {
@@ -25,27 +23,15 @@ SamplerState g_Sampler	: register(s0);
 
 float4 Main(PSInput input) : SV_Target
 {
-#if (TEXTURE_TYPE == TEXTURE_TYPE_GBUFFER_NORMAL)
+#if (TEXTURE_TYPE == TEXTURE_TYPE_NORMAL)
 	float3 worldSpaceNormal = g_Texture.Sample(g_Sampler, input.texCoord).rgb;
 	float3 color = 0.5f * worldSpaceNormal + 0.5f;
-#endif // TEXTURE_TYPE_GBUFFER_NORMAL
+#endif // TEXTURE_TYPE_NORMAL
 
-#if (TEXTURE_TYPE == TEXTURE_TYPE_GBUFFER_TEXCOORD)
-	float2 texCoord = g_Texture.Sample(g_Sampler, input.texCoord).rgb;
+#if (TEXTURE_TYPE == TEXTURE_TYPE_TEXCOORD)
+	float2 texCoord = g_Texture.Sample(g_Sampler, input.texCoord).rg;
 	float3 color = float3(texCoord, 0.0f);
-#endif // TEXTURE_TYPE_GBUFFER_TEXCOORD
-
-#if (TEXTURE_TYPE == TEXTURE_TYPE_DEPTH)
-	float hardwareDepth = g_Texture.Sample(g_Sampler, input.texCoord).r;
-	float viewSpaceDepth = ComputeViewSpaceDepth(hardwareDepth, g_AppData.projMatrix);
-	float normalizedViewSpaceDepth = NormalizeViewSpaceDepth(viewSpaceDepth, g_AppData.cameraNearPlane, g_AppData.cameraFarPlane);
-	float3 color = normalizedViewSpaceDepth.rrr;
-#endif // TEXTURE_TYPE_DEPTH
-
-#if (TEXTURE_TYPE == TEXTURE_TYPE_EXP_SHADOW_MAP)
-	float normalizedLightSpaceDepth = g_Texture.Sample(g_Sampler, input.texCoord).r;
-	float3 color = normalizedLightSpaceDepth.rrr;
-#endif // TEXTURE_TYPE_EXP_SHADOW_MAP
+#endif // TEXTURE_TYPE_TEXCOORD
 
 #if (TEXTURE_TYPE == TEXTURE_TYPE_RGB)
 	float3 color = g_Texture.Sample(g_Sampler, input.texCoord).rgb;

@@ -6,11 +6,11 @@ struct RayPayload
 struct AppData
 {
 	float3 cameraWorldPos;
+	float rayMinExtent;
 	float3 cameraWorldAxisX;
+	float rayMaxExtent;
 	float3 cameraWorldAxisY;
 	float3 cameraWorldAxisZ;
-	float rayMinExtent;
-	float rayMaxExtent;
 };
 
 ConstantBuffer<AppData> g_AppDataBuffer : register(b0);

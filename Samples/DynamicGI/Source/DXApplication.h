@@ -36,6 +36,7 @@ class TiledShadingPass;
 class CreateVoxelizeCommandsPass;
 class VisualizeNumLightsPerTilePass;
 class VisualizeTexturePass;
+class VisualizeDepthTexturePass;
 class VisualizeVoxelReflectancePass;
 class VoxelizePass;
 class Scene;
@@ -68,7 +69,7 @@ private:
 	void OnRender() override;
 	void OnDestroy() override;
 	
-	void InitRenderEnv(UINT backBufferWidth, UINT backBufferHeight);
+	void InitRenderEnvironment(UINT backBufferWidth, UINT backBufferHeight);
 	void InitScene(UINT backBufferWidth, UINT backBufferHeight, Scene* pScene);
 	
 	void InitDownscaleAndReprojectDepthPass();
@@ -205,8 +206,8 @@ private:
 	TiledShadingPass* m_pTiledShadingPass = nullptr;
 	
 	VisualizeTexturePass* m_VisualizeAccumLightPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
-	VisualizeTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
-	VisualizeTexturePass* m_VisualizeReprojectedDepthBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	VisualizeDepthTexturePass* m_VisualizeDepthBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	VisualizeDepthTexturePass* m_VisualizeReprojectedDepthBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeTexturePass* m_VisualizeNormalBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeTexturePass* m_VisualizeTexCoordBufferPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	VisualizeTexturePass* m_VisualizeDepthBufferWithMeshTypePasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};

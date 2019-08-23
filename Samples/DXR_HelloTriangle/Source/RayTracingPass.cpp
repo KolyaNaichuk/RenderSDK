@@ -4,6 +4,7 @@
 #include "D3DWrapper/StateObject.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/RenderEnv.h"
+#include "Profiler/GPUProfiler.h"
 #include "Scene/Mesh.h"
 #include "Math/Vector3.h"
 
@@ -44,6 +45,9 @@ RayTracingPass::~RayTracingPass()
 
 void RayTracingPass::Record(RenderParams* pParams)
 {
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	CommandList* pCommandList = pParams->m_pCommandList;
+	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
 }
 
 void RayTracingPass::InitTextures(InitParams* pParams)

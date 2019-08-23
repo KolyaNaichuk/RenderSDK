@@ -276,6 +276,9 @@
     <ClInclude Include="..\Include\D3DWrapper\StateObject.h">
       <Filter>D3DWrapper</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\RenderPasses\VisualizeDepthTexturePass.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -509,6 +512,9 @@
     <ClCompile Include="..\Source\D3DWrapper\StateObject.cpp">
       <Filter>D3DWrapper</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\RenderPasses\VisualizeDepthTexturePass.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\PassThroughPS.hlsl">
@@ -635,6 +641,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\Shaders\FilterRadianceCubeMapCS.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\Shaders\VisualizeDepthTexturePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

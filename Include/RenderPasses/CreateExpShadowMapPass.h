@@ -9,8 +9,8 @@ class PipelineState;
 
 struct CreateExpShadowMapParams
 {
-	f32 m_LightProjMatrix43;
-	f32 m_LightProjMatrix33;
+	f32 m_LightProjMatrix32;
+	f32 m_LightProjMatrix22;
 	f32 m_LightViewNearPlane;
 	f32 m_LightRcpViewClipRange;
 	f32 m_ExpShadowMapConstant;
