@@ -7,6 +7,7 @@
 #include "D3DWrapper/DescriptorHeap.h"
 #include "D3DWrapper/QueryHeap.h"
 #include "D3DWrapper/Fence.h"
+#include "D3DWrapper/StateObject.h"
 #include "D3DWrapper/GraphicsUtils.h"
 
 DispatchRaysDesc::DispatchRaysDesc(UINT numRaysX, UINT numRaysY, UINT numRaysZ,
@@ -27,7 +28,7 @@ DispatchRaysDesc::DispatchRaysDesc(UINT numRaysX, UINT numRaysY, UINT numRaysZ,
 	HitGroupTable.SizeInBytes = pHitGroupTable->GetSizeInBytes();
 	HitGroupTable.StrideInBytes = pHitGroupTable->GetSizeInBytes() / pHitGroupTable->GetNumElements();
 
-	if (pHitGroupTable != nullptr)
+	if (pCallableShaderTable != nullptr)
 	{
 		CallableShaderTable.StartAddress = pCallableShaderTable->GetGPUVirtualAddress();
 		CallableShaderTable.SizeInBytes = pCallableShaderTable->GetSizeInBytes();
@@ -80,6 +81,11 @@ void CommandList::End()
 void CommandList::SetPipelineState(PipelineState* pPipelineState)
 {
 	m_D3DCommandList->SetPipelineState(pPipelineState->GetD3DObject());
+}
+
+void CommandList::SetPipelineState(StateObject* pStateObject)
+{
+	m_D3DCommandList->SetPipelineState1(pStateObject->GetD3DObject());
 }
 
 void CommandList::IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)

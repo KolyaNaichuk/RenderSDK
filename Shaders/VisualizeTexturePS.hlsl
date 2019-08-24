@@ -1,5 +1,3 @@
-#include "Reconstruction.hlsl"
-#include "Foundation.hlsl"
 #include "GammaCorrection.hlsl"
 
 #define TEXTURE_TYPE_NORMAL						1
@@ -11,11 +9,6 @@ struct PSInput
 {
 	float4 screenSpacePos	: SV_Position;
 	float2 texCoord			: TEXCOORD0;
-};
-
-cbuffer AppDataBuffer : register(b0)
-{
-	AppData g_AppData;
 };
 
 Texture2D g_Texture		: register(t0);

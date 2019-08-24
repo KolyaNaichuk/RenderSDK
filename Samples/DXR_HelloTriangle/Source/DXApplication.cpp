@@ -15,8 +15,33 @@
 #include "Scene/Mesh.h"
 #include "Math/Vector3.h"
 
+// ToDo:
+// At the moment constant buffer is static, make it dynamic (dynamically change camera position and orientation)
+// Add support for instancing
+
+struct AppData
+{
+	Vector3f m_CameraWorldPos;
+	f32 m_RayMinExtent;
+	Vector3f m_CameraWorldAxisX;
+	f32 m_RayMaxExtent;
+	Vector3f m_CameraWorldAxisY;
+	f32 m_NotUsed1;
+	Vector3f m_CameraWorldAxisZ;
+	f32 m_NotUsed2;
+	f32 m_NotUsed3[16];
+	f32 m_NotUsed4[16];
+	f32 m_NotUsed5[16];
+};
+
+enum
+{
+	kBackBufferWidth = 1024,
+	kBackBufferHeight = 512
+};
+
 DXApplication::DXApplication(HINSTANCE hApp)
-	: Application(hApp, L"Hello Triangle", 0, 0, 1024, 512)
+	: Application(hApp, L"Hello Triangle", 0, 0, kBackBufferWidth, kBackBufferHeight)
 	, m_pDefaultHeapProps(new HeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new HeapProperties(D3D12_HEAP_TYPE_UPLOAD))
 	, m_pRenderEnv(new RenderEnv())
@@ -28,7 +53,10 @@ DXApplication::DXApplication(HINSTANCE hApp)
 DXApplication::~DXApplication()
 {
 	SafeDelete(m_pRayTracingPass);
-	SafeDelete(m_pVisualizeRayTracedResultPass);
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+		SafeDelete(m_VisualizeRayTracedResultPasses[index]);
+	
 	SafeDelete(m_pAppDataBuffer);
 	SafeDelete(m_pGPUProfiler);
 	SafeDelete(m_pCommandListPool);
@@ -38,6 +66,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pViewport);
 	SafeDelete(m_pScissorRect);
 	SafeDelete(m_pFence);
+	SafeDelete(m_pShaderVisibleSRVHeap);
 	SafeDelete(m_pShaderInvisibleSRVHeap);
 	SafeDelete(m_pShaderInvisibleRTVHeap);
 	SafeDelete(m_pDevice);
@@ -62,10 +91,11 @@ void DXApplication::OnRender()
 	m_pGPUProfiler->StartFrame();
 #endif // ENABLE_PROFILING
 	
-	static const u8 commandListBatchSize = 2;
+	static const u8 commandListBatchSize = 3;
 	static CommandList* commandListBatch[commandListBatchSize];
 	commandListBatch[0] = RecordRayTracingPass();
 	commandListBatch[1] = RecordVisualizeRayTracedResultPass();
+	commandListBatch[2] = RecordPostRenderPass();
 	
 #ifdef ENABLE_PROFILING
 	m_pGPUProfiler->EndFrame(m_pCommandQueue);
@@ -74,18 +104,20 @@ void DXApplication::OnRender()
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_pCommandQueue->ExecuteCommandLists(commandListBatchSize, commandListBatch, m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
-	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-
+	
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
-
 #ifdef ENABLE_PROFILING
 	m_pSwapChain->Present(0/*vsync disabled*/, 0);
 #else // ENABLE_PROFILING
 	m_pSwapChain->Present(1/*vsync enabled*/, 0);
 #endif // ENABLE_PROFILING
-
 	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
-	
+
+#ifdef DEBUG_RENDER_PASS
+	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
+	OuputDebugRenderPassResult();
+#endif // DEBUG_RENDER_PASS
+
 	m_FrameCompletionFenceValues[m_BackBufferIndex] = m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 	m_pFence->WaitForSignalOnCPU(m_FrameCompletionFenceValues[m_BackBufferIndex]);
@@ -109,8 +141,11 @@ void DXApplication::InitRenderEnvironment()
 	DescriptorHeapDesc rtvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, kNumBackBuffers, false);
 	m_pShaderInvisibleRTVHeap = new DescriptorHeap(m_pDevice, &rtvHeapDesc, L"m_pShaderInvisibleRTVHeap");
 
-	DescriptorHeapDesc srvHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32, false);
-	m_pShaderInvisibleSRVHeap = new DescriptorHeap(m_pDevice, &srvHeapDesc, L"m_pShaderInvisibleSRVHeap");
+	DescriptorHeapDesc shaderInvisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32, false);
+	m_pShaderInvisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderInvisibleSRVHeapDesc, L"m_pShaderInvisibleSRVHeap");
+
+	DescriptorHeapDesc shaderVisibleSRVHeapDesc(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32, true);
+	m_pShaderVisibleSRVHeap = new DescriptorHeap(m_pDevice, &shaderVisibleSRVHeapDesc, L"m_pShaderVisibleSRVHeap");
 
 	CommandQueueDesc commandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pCommandQueue = new CommandQueue(m_pDevice, &commandQueueDesc, L"m_pCommandQueue");
@@ -126,37 +161,77 @@ void DXApplication::InitRenderEnvironment()
 	m_pRenderEnv->m_pUploadHeapProps = m_pUploadHeapProps;
 	m_pRenderEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
 	m_pRenderEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
+	m_pRenderEnv->m_pShaderVisibleSRVHeap = m_pShaderVisibleSRVHeap;
 
 #ifdef ENABLE_PROFILING
 	m_pGPUProfiler = new GPUProfiler(m_pRenderEnv, 2/*maxNumProfiles*/, kNumBackBuffers);
 #endif // ENABLE_PROFILING
 	m_pRenderEnv->m_pGPUProfiler = m_pGPUProfiler;
+	
+	m_pViewport = new Viewport(0.0f, 0.0f, FLOAT(kBackBufferWidth), FLOAT(kBackBufferHeight));
+	m_pScissorRect = new Rect(0, 0, kBackBufferWidth, kBackBufferHeight);
 
-	const RECT bufferRect = m_pWindow->GetClientRect();
-	const UINT bufferWidth = bufferRect.right - bufferRect.left;
-	const UINT bufferHeight = bufferRect.bottom - bufferRect.top;
-
-	m_pViewport = new Viewport(0.0f, 0.0f, FLOAT(bufferWidth), FLOAT(bufferHeight));
-	m_pScissorRect = new Rect(0, 0, bufferWidth, bufferHeight);
-
-	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), bufferWidth, bufferHeight);
+	SwapChainDesc swapChainDesc(kNumBackBuffers, m_pWindow->GetHWND(), kBackBufferWidth, kBackBufferHeight);
 	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+
+	AppData appData;
+	appData.m_CameraWorldPos = Vector3f::ZERO;
+	appData.m_CameraWorldAxisX = Vector3f::RIGHT;
+	appData.m_CameraWorldAxisY = Vector3f::UP;
+	appData.m_CameraWorldAxisZ = Vector3f::FORWARD;
+	appData.m_RayMinExtent = 0.0001f;
+	appData.m_RayMaxExtent = 20.0f;
+
+	assert(m_pAppDataBuffer == nullptr);
+	ConstantBufferDesc appDataBufferDesc(sizeof(appData));
+	m_pAppDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &appDataBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pAppDataBuffer");
+	
+	Buffer uploadAppDataBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &appDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadAppDataBuffer");
+	uploadAppDataBuffer.Write(&appData, sizeof(appData));
+
+	const ResourceTransitionBarrier resourceBarriers[] =
+	{
+		ResourceTransitionBarrier(m_pAppDataBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER)
+	};
+
+	CommandList* pUploadAppDataCommandList = m_pRenderEnv->m_pCommandListPool->Create(L"pUploadAppDataCommandList");
+	pUploadAppDataCommandList->Begin();
+	pUploadAppDataCommandList->CopyResource(m_pAppDataBuffer, &uploadAppDataBuffer);
+	pUploadAppDataCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
+	pUploadAppDataCommandList->End();
+
+	++m_pRenderEnv->m_LastSubmissionFenceValue;
+	m_pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pUploadAppDataCommandList, m_pRenderEnv->m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
+	m_pRenderEnv->m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
 }
 
 void DXApplication::InitRayTracingPass()
 {
 	assert(m_pRayTracingPass == nullptr);
+	assert(m_pAppDataBuffer != nullptr);
 
 	const Vector3f vertices[] =
 	{
-		Vector3f(0.0f, 10.0f, 2.0f),
-		Vector3f(10.0f, -10.0f, 2.0f),
-		Vector3f(-10.0f, -10.0f, 2.0f)
+		Vector3f(0.0f, 2.0f, 5.0f),
+		Vector3f(2.0f, -2.0f, 5.0f),
+		Vector3f(-2.0f, -2.0f, 5.0f)
 	};
 	const WORD indices[] = {0, 1, 2};
 
-	assert(false);
+	VertexData vertexData(ARRAYSIZE(vertices), vertices);
+	IndexData indexData(ARRAYSIZE(indices), indices);
+	
+	RayTracingPass::InitParams params;
+	params.m_pRenderEnv = m_pRenderEnv;
+	params.m_InputResourceStates.m_RayTracedResultState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	params.m_pVertexData = &vertexData;
+	params.m_pIndexData = &indexData;
+	params.m_pAppDataBuffer = m_pAppDataBuffer;
+	params.m_NumRaysX = kBackBufferWidth;
+	params.m_NumRaysY = kBackBufferHeight;
+
+	m_pRayTracingPass = new RayTracingPass(&params);
 }
 
 CommandList* DXApplication::RecordRayTracingPass()
@@ -166,6 +241,8 @@ CommandList* DXApplication::RecordRayTracingPass()
 	RayTracingPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pRayTracingCommandList");
+	params.m_NumRaysX = kBackBufferWidth;
+	params.m_NumRaysY = kBackBufferHeight;
 	
 	m_pRayTracingPass->Record(&params);
 	return params.m_pCommandList;
@@ -173,19 +250,59 @@ CommandList* DXApplication::RecordRayTracingPass()
 
 void DXApplication::InitVisualizeRayTracedResultPass()
 {
-	assert(m_pVisualizeRayTracedResultPass == nullptr);
-	assert(false);
+	assert(m_pRayTracingPass != nullptr);
+	
+	const RayTracingPass::ResourceStates* pRayTracingPassResourceStates = m_pRayTracingPass->GetOutputResourceStates();
+	ColorTexture* pRayTracedResult = m_pRayTracingPass->GetRayTracedResult();
+
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
+		assert(m_VisualizeRayTracedResultPasses[index] == nullptr);
+
+		VisualizeTexturePass::InitParams params;
+		params.m_pName = "VisualizeRayTracedResultPass";
+		params.m_pRenderEnv = m_pRenderEnv;
+		params.m_InputResourceStates.m_InputTextureState = pRayTracingPassResourceStates->m_RayTracedResultState;
+		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
+		params.m_pInputTexture = pRayTracedResult;
+		params.m_InputTextureSRV = pRayTracedResult->GetSRVHandle();
+		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
+		params.m_TextureType = VisualizeTexturePass::TextureType_RGB;
+
+		m_VisualizeRayTracedResultPasses[index] = new VisualizeTexturePass(&params);
+	}
 }
 
 CommandList* DXApplication::RecordVisualizeRayTracedResultPass()
 {
-	assert(m_pVisualizeRayTracedResultPass != nullptr);
-	
+	VisualizeTexturePass* pVisualizeRayTracedResultPass = m_VisualizeRayTracedResultPasses[m_BackBufferIndex];
+	assert(pVisualizeRayTracedResultPass != nullptr);
+		
 	VisualizeTexturePass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeRayTracedResultCommandList");;
 	params.m_pViewport = m_pViewport;
 
-	m_pVisualizeRayTracedResultPass->Record(&params);
+	pVisualizeRayTracedResultPass->Record(&params);
 	return params.m_pCommandList;
+}
+
+CommandList* DXApplication::RecordPostRenderPass()
+{
+	CommandList* pCommandList = m_pCommandListPool->Create(L"pPostRenderCommandList");
+	pCommandList->Begin();
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = m_pGPUProfiler->StartProfile(pCommandList, "PostRenderPass");
+#endif // ENABLE_PROFILING
+
+	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
+	ResourceTransitionBarrier resourceBarrier(pRenderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	pCommandList->ResourceBarrier(1, &resourceBarrier);
+
+#ifdef ENABLE_PROFILING
+	m_pGPUProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_PROFILING
+	pCommandList->End();
+
+	return pCommandList;
 }

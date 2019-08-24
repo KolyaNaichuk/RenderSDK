@@ -136,7 +136,7 @@ struct CounterBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 
 struct ShaderTableDesc : public D3D12_RESOURCE_DESC
 {
-	ShaderTableDesc(UINT numRecords, UINT recordSizeInBytes, UINT64 alignment = 0);
+	ShaderTableDesc(UINT numRecords, UINT recordSizeInBytes, bool allowUnorderedAccess = false, UINT64 alignment = 0);
 
 	UINT NumRecords;
 };

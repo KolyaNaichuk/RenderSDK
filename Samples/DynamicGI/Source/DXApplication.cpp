@@ -534,16 +534,13 @@ void DXApplication::OnRender()
 
 	++m_pRenderEnv->m_LastSubmissionFenceValue;
 	m_pCommandQueue->ExecuteCommandLists(commandListBatchSize, commandListBatch, m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
-	ColorTexture* pRenderTarget = m_pSwapChain->GetBackBuffer(m_BackBufferIndex);
-
-	++m_pRenderEnv->m_LastSubmissionFenceValue;
 	
+	++m_pRenderEnv->m_LastSubmissionFenceValue;
 #ifdef ENABLE_PROFILING
 	m_pSwapChain->Present(0/*vsync disabled*/, 0);
 #else // ENABLE_PROFILING
 	m_pSwapChain->Present(1/*vsync enabled*/, 0);
 #endif // ENABLE_PROFILING
-
 	m_pCommandQueue->Signal(m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
 
 #ifdef DEBUG_RENDER_PASS

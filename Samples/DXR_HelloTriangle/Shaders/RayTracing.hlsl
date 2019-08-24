@@ -10,12 +10,17 @@ struct AppData
 	float3 cameraWorldAxisX;
 	float rayMaxExtent;
 	float3 cameraWorldAxisY;
+	float notUsed1;
 	float3 cameraWorldAxisZ;
+	float notUsed2;
+	float notUsed3[16];
+	float notUsed4[16];
+	float notUsed5[16];
 };
 
 ConstantBuffer<AppData> g_AppDataBuffer : register(b0);
 RaytracingAccelerationStructure g_AccelStruct : register(t0);
-RWTexture<float4> g_OutputTexture : register(u0);
+RWTexture2D<float4> g_OutputTexture : register(u0);
 
 [shader("raygeneration")]
 void RayGeneration()

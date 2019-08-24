@@ -44,6 +44,8 @@ private:
 
 	void InitVisualizeRayTracedResultPass();
 	CommandList* RecordVisualizeRayTracedResultPass();
+
+	CommandList* RecordPostRenderPass();
 	
 private:
 	enum { kNumBackBuffers = 3 };
@@ -54,6 +56,7 @@ private:
 	CommandListPool* m_pCommandListPool = nullptr;
 	DescriptorHeap* m_pShaderInvisibleRTVHeap = nullptr;
 	DescriptorHeap* m_pShaderInvisibleSRVHeap = nullptr;
+	DescriptorHeap* m_pShaderVisibleSRVHeap = nullptr;
 	HeapProperties* m_pDefaultHeapProps = nullptr;
 	HeapProperties* m_pUploadHeapProps = nullptr;
 	RenderEnv* m_pRenderEnv = nullptr;
@@ -65,6 +68,6 @@ private:
 
 	Buffer* m_pAppDataBuffer = nullptr;
 	RayTracingPass* m_pRayTracingPass = nullptr;
-	VisualizeTexturePass* m_pVisualizeRayTracedResultPass = nullptr;
+	VisualizeTexturePass* m_VisualizeRayTracedResultPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	GPUProfiler* m_pGPUProfiler = nullptr;
 };

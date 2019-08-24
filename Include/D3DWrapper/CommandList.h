@@ -7,6 +7,7 @@ class GraphicsDevice;
 class GraphicsResource;
 class CommandSignature;
 class PipelineState;
+class StateObject;
 class RootSignature;
 class DescriptorHeap;
 class QueryHeap;
@@ -37,6 +38,7 @@ public:
 	void End();
 
 	void SetPipelineState(PipelineState* pPipelineState);
+	void SetPipelineState(StateObject* pStateObject);
 				
 	void IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
 	void IASetVertexBuffers(UINT startSlot, UINT numViews, const VertexBufferView* pViews);

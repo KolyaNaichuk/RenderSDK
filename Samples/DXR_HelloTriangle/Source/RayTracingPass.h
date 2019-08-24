@@ -34,6 +34,8 @@ public:
 	{
 		RenderEnv* m_pRenderEnv = nullptr;
 		CommandList* m_pCommandList = nullptr;
+		u32 m_NumRaysX = 0;
+		u32 m_NumRaysY = 0;
 	};
 
 	RayTracingPass(InitParams* pParams);
@@ -60,9 +62,9 @@ private:
 	ColorTexture* m_pRayTracedResult = nullptr;
 	Buffer* m_pVertexBuffer = nullptr;
 	Buffer* m_pIndexBuffer = nullptr;
+	Buffer* m_pInstanceBuffer = nullptr;
 	Buffer* m_pBLASBuffer = nullptr;
 	Buffer* m_pTLASBuffer = nullptr;
-	Buffer* m_pInstanceBuffer = nullptr;
 	Buffer* m_pRayGenShaderTable = nullptr;
 	Buffer* m_pMissShaderTable = nullptr;
 	Buffer* m_pHitGroupTable = nullptr;

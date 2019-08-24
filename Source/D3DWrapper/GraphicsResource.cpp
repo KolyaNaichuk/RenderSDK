@@ -342,7 +342,7 @@ CounterBufferUAVDesc::CounterBufferUAVDesc(UINT64 firstElement, UINT numElements
 	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 }
 
-ShaderTableDesc::ShaderTableDesc(UINT numRecords, UINT recordSizeInBytes, UINT64 alignment)
+ShaderTableDesc::ShaderTableDesc(UINT numRecords, UINT recordSizeInBytes, bool allowUnorderedAccess, UINT64 alignment)
 {
 	Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	Alignment = alignment;
@@ -354,7 +354,7 @@ ShaderTableDesc::ShaderTableDesc(UINT numRecords, UINT recordSizeInBytes, UINT64
 	SampleDesc.Count = 1;
 	SampleDesc.Quality = 0;
 	Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+	Flags = allowUnorderedAccess ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS : D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 	NumRecords = numRecords;
 }
 

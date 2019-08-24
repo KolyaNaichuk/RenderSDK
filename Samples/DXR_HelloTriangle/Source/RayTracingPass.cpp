@@ -48,6 +48,26 @@ void RayTracingPass::Record(RenderParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	CommandList* pCommandList = pParams->m_pCommandList;
 	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
+
+	pCommandList->Begin();
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "RayTracingPass");
+#endif // ENABLE_PROFILING
+
+	pCommandList->SetPipelineState(m_pStateObject);
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
+	
+	if (!m_ResourceBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	
+	DispatchRaysDesc dispatchDesc(pParams->m_NumRaysX, pParams->m_NumRaysY, 1,
+		m_pRayGenShaderTable, m_pMissShaderTable, m_pHitGroupTable);
+	pCommandList->DispatchRays(&dispatchDesc);
+
+#ifdef ENABLE_PROFILING
+	pGPUProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_PROFILING
+	pCommandList->End();
 }
 
 void RayTracingPass::InitTextures(InitParams* pParams)
@@ -238,14 +258,11 @@ void RayTracingPass::InitRootSignatures(InitParams* pParams)
 
 	enum RayGenRootParams
 	{
-		kRayGenRootCBVParam = 0,
-		kRayGenRootSRVTableParam,
+		kRayGenRootSRVTableParam = 0,
 		kRayGenNumRootParams
 	};
 
 	D3D12_ROOT_PARAMETER rayGenRootParams[kRayGenNumRootParams];
-	rayGenRootParams[kRayGenRootCBVParam] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
-
 	D3D12_DESCRIPTOR_RANGE rayGenDescriptorRanges[] = {CBVDescriptorRange(1, 0), SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0)};
 	rayGenRootParams[kRayGenRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(rayGenDescriptorRanges), rayGenDescriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
 
@@ -276,7 +293,7 @@ void RayTracingPass::InitStateObject(InitParams* pParams)
 	};
 	D3D12_STATE_SUBOBJECT stateSubobjects[kNumStateObjects];
 
-	Shader shaderLibrary(L"Shaders//RayTracing.hlsl", nullptr, L"lib_6_3");
+	Shader shaderLibrary(L"Shaders//RayTracing.hlsl", L"", L"lib_6_3");
 	ExportDesc exportDescs[] = {ExportDesc(g_pRayGenShaderName), ExportDesc(g_pMissShaderName), ExportDesc(g_pClosesHitShaderName)};
 	
 	DXILLibraryDesc libraryDesc(shaderLibrary.GetBytecode(), ARRAYSIZE(exportDescs), exportDescs);
@@ -355,11 +372,12 @@ void RayTracingPass::InitShaderTables(InitParams* pParams)
 		ShaderRecordData shaderRecordData(1, shaderRecordSizeInBytes);
 		shaderRecordData.Append(ShaderRecord(m_pStateObject->GetShaderIdentifier(g_pRayGenShaderName), shaderIdentifierSizeInBytes, &rootArguments, sizeof(rootArguments)));
 		
-		ShaderTableDesc shaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes);
+		ShaderTableDesc shaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes, true);
 		m_pRayGenShaderTable = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shaderTableDesc,
 			D3D12_RESOURCE_STATE_COPY_DEST, L"RayTracingPass::m_pRayGenShaderTable");
 		
-		pUploadRayGenShaderTable = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &shaderTableDesc,
+		ShaderTableDesc uploadShaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes);
+		pUploadRayGenShaderTable = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &uploadShaderTableDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ, L"RayTracingPass::pUploadRayGenShaderTable");
 		pUploadRayGenShaderTable->Write(shaderRecordData.GetData(), shaderRecordData.GetSizeInBytes());
 	}
@@ -369,11 +387,12 @@ void RayTracingPass::InitShaderTables(InitParams* pParams)
 		ShaderRecordData shaderRecordData(1, shaderRecordSizeInBytes);
 		shaderRecordData.Append(ShaderRecord(m_pStateObject->GetShaderIdentifier(g_pMissShaderName), shaderIdentifierSizeInBytes));
 
-		ShaderTableDesc shaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes);
+		ShaderTableDesc shaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes, true);
 		m_pMissShaderTable = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shaderTableDesc,
 			D3D12_RESOURCE_STATE_COPY_DEST, L"RayTracingPass::m_pMissShaderTable");
 
-		pUploadMissShaderTable = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &shaderTableDesc,
+		ShaderTableDesc uploadShaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes);
+		pUploadMissShaderTable = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &uploadShaderTableDesc,
 			D3D12_RESOURCE_STATE_GENERIC_READ, L"RayTracingPass::pUploadMissShaderTable");
 		pUploadMissShaderTable->Write(shaderRecordData.GetData(), shaderRecordData.GetSizeInBytes());
 	}
@@ -383,12 +402,13 @@ void RayTracingPass::InitShaderTables(InitParams* pParams)
 		ShaderRecordData shaderRecordData(1, shaderRecordSizeInBytes);
 		shaderRecordData.Append(ShaderRecord(m_pStateObject->GetShaderIdentifier(g_pHitGroupName), shaderIdentifierSizeInBytes));
 		
-		ShaderTableDesc shaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes);
+		ShaderTableDesc shaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes, true);
 		m_pHitGroupTable = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shaderTableDesc,
 			D3D12_RESOURCE_STATE_COPY_DEST, L"RayTracingPass::m_pHitGroupTable");
 
-		pUploadHitGroupTable = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &shaderTableDesc,
-			D3D12_RESOURCE_STATE_COPY_DEST, L"RayTracingPass::pUploadHitGroupTable");
+		ShaderTableDesc uploadShaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes);
+		pUploadHitGroupTable = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &uploadShaderTableDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ, L"RayTracingPass::pUploadHitGroupTable");
 		pUploadHitGroupTable->Write(shaderRecordData.GetData(), shaderRecordData.GetSizeInBytes());
 	}
 	
