@@ -64,9 +64,11 @@ private:
 	Viewport* m_pViewport = nullptr;
 	Rect* m_pScissorRect = nullptr;
 	UINT m_BackBufferIndex = 0;
-	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers] = {0, 0, 0};
 
-	Buffer* m_pAppDataBuffer = nullptr;
+	UINT64 m_FrameCompletionFenceValues[kNumBackBuffers] = {0, 0, 0};
+	Buffer* m_AppDataBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	void* m_AppData[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+
 	RayTracingPass* m_pRayTracingPass = nullptr;
 	VisualizeTexturePass* m_VisualizeRayTracedResultPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	GPUProfiler* m_pGPUProfiler = nullptr;

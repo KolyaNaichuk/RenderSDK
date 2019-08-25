@@ -14,6 +14,12 @@ namespace
 	LPCWSTR g_pMissShaderName = L"RayMiss";
 	LPCWSTR g_pClosesHitShaderName = L"RayClosestHit";
 	LPCWSTR g_pHitGroupName = L"HitGroup";
+
+	enum GlobalRootParams
+	{
+		kGlobalRootCBVParam = 0,
+		kGlobalNumRootParams
+	};
 }
 
 RayTracingPass::RayTracingPass(InitParams* pParams)
@@ -34,6 +40,7 @@ RayTracingPass::~RayTracingPass()
 	SafeDelete(m_pInstanceBuffer);
 	SafeDelete(m_pVertexBuffer);
 	SafeDelete(m_pIndexBuffer);
+	SafeDelete(m_pGlobalRootSignature);
 	SafeDelete(m_pRayGenLocalRootSignature);
 	SafeDelete(m_pEmptyLocalRootSignature);
 	SafeDelete(m_pRayGenShaderTable);
@@ -56,6 +63,8 @@ void RayTracingPass::Record(RenderParams* pParams)
 
 	pCommandList->SetPipelineState(m_pStateObject);
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
+	pCommandList->SetComputeRootSignature(m_pGlobalRootSignature);
+	pCommandList->SetComputeRootConstantBufferView(kGlobalRootCBVParam, pParams->m_pAppDataBuffer);
 	
 	if (!m_ResourceBarriers.empty())
 		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
@@ -256,6 +265,13 @@ void RayTracingPass::InitRootSignatures(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
+	D3D12_ROOT_PARAMETER globalRootParams[kGlobalNumRootParams];
+	globalRootParams[kGlobalRootCBVParam] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
+	
+	assert(m_pGlobalRootSignature == nullptr);
+	RootSignatureDesc globalRootSignatureDesc(kGlobalNumRootParams, globalRootParams);
+	m_pGlobalRootSignature = new RootSignature(pRenderEnv->m_pDevice, &globalRootSignatureDesc, L"RayTracingPass::m_pGlobalRootSignature");
+
 	enum RayGenRootParams
 	{
 		kRayGenRootSRVTableParam = 0,
@@ -263,7 +279,7 @@ void RayTracingPass::InitRootSignatures(InitParams* pParams)
 	};
 
 	D3D12_ROOT_PARAMETER rayGenRootParams[kRayGenNumRootParams];
-	D3D12_DESCRIPTOR_RANGE rayGenDescriptorRanges[] = {CBVDescriptorRange(1, 0), SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0)};
+	D3D12_DESCRIPTOR_RANGE rayGenDescriptorRanges[] = {SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0)};
 	rayGenRootParams[kRayGenRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(rayGenDescriptorRanges), rayGenDescriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
 
 	assert(m_pRayGenLocalRootSignature == nullptr);
@@ -285,10 +301,12 @@ void RayTracingPass::InitStateObject(InitParams* pParams)
 		kHitGroupIndex,
 		kPipelineConfigIndex,
 		kShaderConfigIndex,
-		kRayGenLocalRSIndex,
-		kRayGenLocalRSAssocIndex,
-		kEmptyLocalRSIndex,
-		kEmptyLocalRSAssocIndex,
+		kShaderConfigAssocIndex,
+		kGlobalRootSigIndex,
+		kRayGenLocalRootSigIndex,
+		kRayGenLocalRootSigAssocIndex,
+		kEmptyLocalRootSigIndex,
+		kEmptyLocalRootSigAssocIndex,
 		kNumStateObjects
 	};
 	D3D12_STATE_SUBOBJECT stateSubobjects[kNumStateObjects];
@@ -308,19 +326,29 @@ void RayTracingPass::InitStateObject(InitParams* pParams)
 	RayTracingShaderConfig shaderConfig(3 * sizeof(f32)/*color*/, 2 * sizeof(f32)/*intersectionAttribs*/);
 	stateSubobjects[kShaderConfigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG, &shaderConfig);
 
-	assert(m_pRayGenLocalRootSignature != nullptr);
-	stateSubobjects[kRayGenLocalRSIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE, m_pRayGenLocalRootSignature);
+	LPCWSTR shaderConfigExports[] = {g_pRayGenShaderName, g_pMissShaderName, g_pClosesHitShaderName};
+	SubobjectToExportsAssociation shaderConfigExportsAssoc(&stateSubobjects[kShaderConfigIndex], ARRAYSIZE(shaderConfigExports), shaderConfigExports);
+	stateSubobjects[kShaderConfigAssocIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION, &shaderConfigExportsAssoc);
 
-	LPCWSTR rayGenLocalRSExports[] = {g_pRayGenShaderName};
-	SubobjectToExportsAssociation rayGenLocalRSExportsAssoc(&stateSubobjects[kRayGenLocalRSIndex], ARRAYSIZE(rayGenLocalRSExports), rayGenLocalRSExports);
-	stateSubobjects[kRayGenLocalRSAssocIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION, &rayGenLocalRSExportsAssoc);
+	assert(m_pGlobalRootSignature != nullptr);
+	GlobalRootSignature globalRootSignature(m_pGlobalRootSignature);
+	stateSubobjects[kGlobalRootSigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE, &globalRootSignature);
+
+	assert(m_pRayGenLocalRootSignature != nullptr);
+	LocalRootSignature rayGenlocalRootSignature(m_pRayGenLocalRootSignature);
+	stateSubobjects[kRayGenLocalRootSigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE, &rayGenlocalRootSignature);
+
+	LPCWSTR rayGenLocalRootSigExports[] = {g_pRayGenShaderName};
+	SubobjectToExportsAssociation rayGenLocalRootSigExportsAssoc(&stateSubobjects[kRayGenLocalRootSigIndex], ARRAYSIZE(rayGenLocalRootSigExports), rayGenLocalRootSigExports);
+	stateSubobjects[kRayGenLocalRootSigAssocIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION, &rayGenLocalRootSigExportsAssoc);
 
 	assert(m_pEmptyLocalRootSignature != nullptr);
-	stateSubobjects[kEmptyLocalRSIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE, m_pEmptyLocalRootSignature);
+	LocalRootSignature emptyLocalRootSignature(m_pEmptyLocalRootSignature);
+	stateSubobjects[kEmptyLocalRootSigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE, &emptyLocalRootSignature);
 
-	LPCWSTR emptyLocalRSExports[] = {g_pMissShaderName, g_pClosesHitShaderName};
-	SubobjectToExportsAssociation emptyLocalRSExportsAssoc(&stateSubobjects[kEmptyLocalRSIndex], ARRAYSIZE(emptyLocalRSExports), emptyLocalRSExports);
-	stateSubobjects[kEmptyLocalRSAssocIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION, &emptyLocalRSExportsAssoc);
+	LPCWSTR emptyLocalRootSigExports[] = {g_pMissShaderName, g_pClosesHitShaderName};
+	SubobjectToExportsAssociation emptyLocalRootSigExportsAssoc(&stateSubobjects[kEmptyLocalRootSigIndex], ARRAYSIZE(emptyLocalRootSigExports), emptyLocalRootSigExports);
+	stateSubobjects[kEmptyLocalRootSigAssocIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION, &emptyLocalRootSigExportsAssoc);
 
 	assert(m_pStateObject == nullptr);
 	StateObjectDesc stateObjectDesc(D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE, kNumStateObjects, stateSubobjects);
@@ -334,9 +362,6 @@ void RayTracingPass::InitDescriptorHeap(InitParams* pParams)
 
 	m_SRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStart,
-		pParams->m_pAppDataBuffer->GetCBVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		m_pTLASBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),

@@ -15,10 +15,6 @@
 #include "Scene/Mesh.h"
 #include "Math/Vector3.h"
 
-// ToDo:
-// At the moment constant buffer is static, make it dynamic (dynamically change camera position and orientation)
-// Add support for instancing
-
 struct AppData
 {
 	Vector3f m_CameraWorldPos;
@@ -55,9 +51,11 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pRayTracingPass);
 
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
+	{
 		SafeDelete(m_VisualizeRayTracedResultPasses[index]);
+		SafeDelete(m_AppDataBuffers[index]);
+	}
 	
-	SafeDelete(m_pAppDataBuffer);
 	SafeDelete(m_pGPUProfiler);
 	SafeDelete(m_pCommandListPool);
 	SafeDelete(m_pRenderEnv);
@@ -83,6 +81,13 @@ void DXApplication::OnInit()
 
 void DXApplication::OnUpdate()
 {
+	AppData* pAppData = (AppData*)m_AppData[m_BackBufferIndex];
+	pAppData->m_CameraWorldPos = Vector3f::ZERO;
+	pAppData->m_CameraWorldAxisX = Vector3f::RIGHT;
+	pAppData->m_CameraWorldAxisY = Vector3f::UP;
+	pAppData->m_CameraWorldAxisZ = Vector3f::FORWARD;
+	pAppData->m_RayMinExtent = 0.0001f;
+	pAppData->m_RayMaxExtent = 20.0f;
 }
 
 void DXApplication::OnRender()
@@ -175,42 +180,19 @@ void DXApplication::InitRenderEnvironment()
 	m_pSwapChain = new SwapChain(&factory, m_pRenderEnv, &swapChainDesc, m_pCommandQueue);
 	m_BackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
-	AppData appData;
-	appData.m_CameraWorldPos = Vector3f::ZERO;
-	appData.m_CameraWorldAxisX = Vector3f::RIGHT;
-	appData.m_CameraWorldAxisY = Vector3f::UP;
-	appData.m_CameraWorldAxisZ = Vector3f::FORWARD;
-	appData.m_RayMinExtent = 0.0001f;
-	appData.m_RayMaxExtent = 20.0f;
-
-	assert(m_pAppDataBuffer == nullptr);
-	ConstantBufferDesc appDataBufferDesc(sizeof(appData));
-	m_pAppDataBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &appDataBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pAppDataBuffer");
-	
-	Buffer uploadAppDataBuffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &appDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"uploadAppDataBuffer");
-	uploadAppDataBuffer.Write(&appData, sizeof(appData));
-
-	const ResourceTransitionBarrier resourceBarriers[] =
+	MemoryRange readRange(0, 0);
+	ConstantBufferDesc appDataBufferDesc(sizeof(AppData));
+	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
-		ResourceTransitionBarrier(m_pAppDataBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER)
-	};
-
-	CommandList* pUploadAppDataCommandList = m_pRenderEnv->m_pCommandListPool->Create(L"pUploadAppDataCommandList");
-	pUploadAppDataCommandList->Begin();
-	pUploadAppDataCommandList->CopyResource(m_pAppDataBuffer, &uploadAppDataBuffer);
-	pUploadAppDataCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
-	pUploadAppDataCommandList->End();
-
-	++m_pRenderEnv->m_LastSubmissionFenceValue;
-	m_pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pUploadAppDataCommandList, m_pRenderEnv->m_pFence, m_pRenderEnv->m_LastSubmissionFenceValue);
-	m_pRenderEnv->m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
+		m_AppDataBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &appDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pAppDataBuffer");
+		m_AppData[index] = m_AppDataBuffers[index]->Map(0, &readRange);
+	}
 }
 
 void DXApplication::InitRayTracingPass()
 {
 	assert(m_pRayTracingPass == nullptr);
-	assert(m_pAppDataBuffer != nullptr);
-
+	
 	const Vector3f vertices[] =
 	{
 		Vector3f(0.0f, 2.0f, 5.0f),
@@ -227,7 +209,6 @@ void DXApplication::InitRayTracingPass()
 	params.m_InputResourceStates.m_RayTracedResultState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	params.m_pVertexData = &vertexData;
 	params.m_pIndexData = &indexData;
-	params.m_pAppDataBuffer = m_pAppDataBuffer;
 	params.m_NumRaysX = kBackBufferWidth;
 	params.m_NumRaysY = kBackBufferHeight;
 
@@ -241,6 +222,7 @@ CommandList* DXApplication::RecordRayTracingPass()
 	RayTracingPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_pCommandList = m_pCommandListPool->Create(L"pRayTracingCommandList");
+	params.m_pAppDataBuffer = m_AppDataBuffers[m_BackBufferIndex];
 	params.m_NumRaysX = kBackBufferWidth;
 	params.m_NumRaysY = kBackBufferHeight;
 	

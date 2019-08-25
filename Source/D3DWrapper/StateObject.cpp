@@ -1,4 +1,5 @@
 #include "D3DWrapper/StateObject.h"
+#include "D3DWrapper/RootSignature.h"
 #include "D3DWrapper/GraphicsDevice.h"
 
 StateSubobject::StateSubobject(D3D12_STATE_SUBOBJECT_TYPE type, const void* pSubobjectDesc)
@@ -53,6 +54,16 @@ SubobjectToExportsAssociation::SubobjectToExportsAssociation(const D3D12_STATE_S
 	pSubobjectToAssociate = pSubobjectToAssoc;
 	NumExports = numExports;
 	pExports = pFirstExport;
+}
+
+GlobalRootSignature::GlobalRootSignature(RootSignature* pGlobalRootSig)
+{
+	pGlobalRootSignature = pGlobalRootSig->GetD3DObject();
+}
+
+LocalRootSignature::LocalRootSignature(RootSignature* pLocalRootSig)
+{
+	pLocalRootSignature = pLocalRootSig->GetD3DObject();
 }
 
 StateObject::StateObject(GraphicsDevice* pDevice, const StateObjectDesc* pDesc, LPCWSTR pName)

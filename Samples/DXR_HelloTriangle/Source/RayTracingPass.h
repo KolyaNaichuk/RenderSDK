@@ -25,7 +25,6 @@ public:
 		ResourceStates m_InputResourceStates;
 		VertexData* m_pVertexData = nullptr;
 		IndexData* m_pIndexData = nullptr;
-		Buffer* m_pAppDataBuffer = nullptr;
 		u32 m_NumRaysX = 0;
 		u32 m_NumRaysY = 0;
 	};
@@ -34,6 +33,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv = nullptr;
 		CommandList* m_pCommandList = nullptr;
+		Buffer* m_pAppDataBuffer = nullptr;
 		u32 m_NumRaysX = 0;
 		u32 m_NumRaysY = 0;
 	};
@@ -68,6 +68,7 @@ private:
 	Buffer* m_pRayGenShaderTable = nullptr;
 	Buffer* m_pMissShaderTable = nullptr;
 	Buffer* m_pHitGroupTable = nullptr;
+	RootSignature* m_pGlobalRootSignature = nullptr;
 	RootSignature* m_pRayGenLocalRootSignature = nullptr;
 	RootSignature* m_pEmptyLocalRootSignature = nullptr;
 	StateObject* m_pStateObject = nullptr;

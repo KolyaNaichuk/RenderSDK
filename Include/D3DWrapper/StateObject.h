@@ -3,6 +3,7 @@
 #include "D3DWrapper/Common.h"
 
 class GraphicsDevice;
+class RootSignature;
 
 struct StateSubobject : public D3D12_STATE_SUBOBJECT
 {
@@ -42,6 +43,16 @@ struct HitGroupDesc : public D3D12_HIT_GROUP_DESC
 struct SubobjectToExportsAssociation : public D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION
 {
 	SubobjectToExportsAssociation(const D3D12_STATE_SUBOBJECT* pSubobjectToAssoc, UINT numExports, LPCWSTR* pFirstExport);
+};
+
+struct GlobalRootSignature : D3D12_GLOBAL_ROOT_SIGNATURE
+{
+	GlobalRootSignature(RootSignature* pGlobalRootSig);
+};
+
+struct LocalRootSignature : D3D12_LOCAL_ROOT_SIGNATURE
+{
+	LocalRootSignature(RootSignature* pLocalRootSig);
 };
 
 class StateObject
