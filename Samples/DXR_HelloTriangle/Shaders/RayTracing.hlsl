@@ -19,7 +19,7 @@ struct AppData
 };
 
 ConstantBuffer<AppData> g_AppDataBuffer : register(b0);
-RaytracingAccelerationStructure g_AccelStruct : register(t0);
+RaytracingAccelerationStructure g_TopLevelAccelStruct : register(t0);
 RWTexture2D<float4> g_OutputTexture : register(u0);
 
 [shader("raygeneration")]
@@ -42,7 +42,7 @@ void RayGeneration()
 	ray.TMax = g_AppDataBuffer.rayMaxExtent;
 
 	RayPayload payload;
-	TraceRay(g_AccelStruct, RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH, 0xFF/*instanceInclusionMask*/,
+	TraceRay(g_TopLevelAccelStruct, RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH, 0xFF/*instanceInclusionMask*/,
 		0/*hitGroupIndex*/, 1/*numHitGroups*/, 0/*missShaderIndex*/, ray, payload);
 	
 	g_OutputTexture[pixelPos] = float4(payload.color, 1.0f);
