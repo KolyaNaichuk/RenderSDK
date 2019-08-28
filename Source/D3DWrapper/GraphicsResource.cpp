@@ -1678,7 +1678,7 @@ RayTracingTrianglesGeometryDesc::RayTracingTrianglesGeometryDesc(DXGI_FORMAT ver
 	const VertexBufferView* pVBView = pVertexBuffer->GetVBView();
 	
 	Triangles.VertexFormat = vertexFormat;
-	Triangles.VertexCount = pVBView->SizeInBytes / pVBView->StrideInBytes;
+	Triangles.VertexCount = pVertexBuffer->GetNumElements();
 	Triangles.VertexBuffer.StartAddress = pVBView->BufferLocation;
 	Triangles.VertexBuffer.StrideInBytes = pVBView->StrideInBytes;
 
@@ -1687,7 +1687,7 @@ RayTracingTrianglesGeometryDesc::RayTracingTrianglesGeometryDesc(DXGI_FORMAT ver
 		const IndexBufferView* pIBView = pIndexBuffer->GetIBView();
 
 		Triangles.IndexFormat = pIBView->Format;
-		Triangles.IndexCount = (pIBView->Format == DXGI_FORMAT_R16_UINT) ? (pIBView->SizeInBytes / sizeof(u16)) : (pIBView->SizeInBytes / sizeof(u32));
+		Triangles.IndexCount = pIndexBuffer->GetNumElements();
 		Triangles.IndexBuffer = pIBView->BufferLocation;
 	}
 	else

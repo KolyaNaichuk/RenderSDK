@@ -182,15 +182,11 @@ void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
 
 	// Top level instance data
 
-	const FLOAT instanceMatrix[3][4] =
-	{
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f
-	};
-
 	RayTracingInstanceDesc instanceDesc;
-	CopyMemory(instanceDesc.Transform, instanceMatrix, sizeof(instanceMatrix));
+	ZeroMemory(instanceDesc.Transform, sizeof(instanceDesc.Transform));
+	instanceDesc.Transform[0][0] = 1.0f;
+	instanceDesc.Transform[1][1] = 1.0f;
+	instanceDesc.Transform[2][2] = 1.0f;
 	instanceDesc.InstanceID = 0;
 	instanceDesc.InstanceMask = 1;
 	instanceDesc.InstanceContributionToHitGroupIndex = 0;
@@ -246,13 +242,15 @@ void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"RayTracingPass::TLASScratchBuffer");
 
 	// Common
-
+	
 	BuildRayTracingAccelerationStructureDesc buildBLASDesc(&BLASBuildInputs, m_pBLASBuffer, &BLASScratchBuffer);
 	BuildRayTracingAccelerationStructureDesc buildTLASDesc(&TLASBuildInputs, m_pTLASBuffer, &TLASScratchBuffer);
+	ResourceUAVBarrier buildBLASBarrier(m_pBLASBuffer);
 
 	CommandList* pBuildCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::buildRayTracingASCommandList");
 	pBuildCommandList->Begin();
 	pBuildCommandList->BuildRaytracingAccelerationStructure(&buildBLASDesc, 0, nullptr);
+	pBuildCommandList->ResourceBarrier(1, &buildBLASBarrier);
 	pBuildCommandList->BuildRaytracingAccelerationStructure(&buildTLASDesc, 0, nullptr);
 	pBuildCommandList->End();
 
