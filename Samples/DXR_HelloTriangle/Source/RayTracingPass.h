@@ -55,7 +55,7 @@ private:
 	void InitShaderTables(InitParams* pParams);
 	
 private:
-	DescriptorHandle m_SRVHeapStart;
+	DescriptorHandle m_GlobalSRVHeapStart;
 	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
 
@@ -69,7 +69,6 @@ private:
 	Buffer* m_pMissShaderTable = nullptr;
 	Buffer* m_pHitGroupTable = nullptr;
 	RootSignature* m_pGlobalRootSignature = nullptr;
-	RootSignature* m_pRayGenLocalRootSignature = nullptr;
 	RootSignature* m_pEmptyLocalRootSignature = nullptr;
 	StateObject* m_pStateObject = nullptr;
 };

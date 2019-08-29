@@ -308,6 +308,29 @@ FormattedBufferUAVDesc::FormattedBufferUAVDesc(UINT64 firstElement, UINT numElem
 	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 }
 
+RawBufferDesc::RawBufferDesc(UINT64 sizeInBytes, bool createSRV, bool createUAV, UINT64 alignment)
+{
+	Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	Alignment = alignment;
+	Width = sizeInBytes;
+	Height = 1;
+	DepthOrArraySize = 1;
+	MipLevels = 1;
+	Format = DXGI_FORMAT_UNKNOWN;
+	SampleDesc.Count = 1;
+	SampleDesc.Quality = 0;
+	Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	Flags = D3D12_RESOURCE_FLAG_NONE;
+	if (createUAV)
+		Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	if (!createSRV)
+		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+
+	const UINT strideInBytes = 4;
+	NumElements = sizeInBytes / strideInBytes;
+}
+
 RawBufferSRVDesc::RawBufferSRVDesc(UINT64 firstElement, UINT numElements, UINT shader4ComponentMapping)
 {
 	Format = DXGI_FORMAT_R32_TYPELESS;
@@ -1524,6 +1547,15 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 }
 
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const RawBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: GraphicsResource(pBufferDesc)
+	, m_NumElements(pBufferDesc->NumElements)
+{
+	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
+	CreateBufferViews(pRenderEnv, pBufferDesc);
+}
+
+Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const ShaderTableDesc* pShaderTableDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
 	: GraphicsResource(pShaderTableDesc)
 	, m_NumElements(pShaderTableDesc->NumRecords)
@@ -1641,6 +1673,28 @@ void Buffer::CreateBufferViews(RenderEnv* pRenderEnv, const FormattedBufferDesc*
 	}
 	if (pBufferDesc->CreateIBView)
 		m_pIBView = new IndexBufferView(GetGPUVirtualAddress(), (UINT)pBufferDesc->Width, pBufferDesc->SRVFormat);
+}
+
+void Buffer::CreateBufferViews(RenderEnv* pRenderEnv, const RawBufferDesc* pBufferDesc)
+{
+	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
+
+	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_SRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+
+		RawBufferSRVDesc viewDesc(0, pBufferDesc->NumElements);
+		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_SRVHandle);
+	}
+	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
+	{
+		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_UAVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+
+		RawBufferUAVDesc viewDesc(0, pBufferDesc->NumElements);
+		pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, m_UAVHandle);
+	}
 }
 
 Sampler::Sampler(RenderEnv* pRenderEnv, const D3D12_SAMPLER_DESC* pDesc)

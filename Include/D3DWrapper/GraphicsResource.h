@@ -117,6 +117,13 @@ struct FormattedBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 	FormattedBufferUAVDesc(UINT64 firstElement, UINT numElements, DXGI_FORMAT format);
 };
 
+struct RawBufferDesc : public D3D12_RESOURCE_DESC
+{
+	RawBufferDesc(UINT64 sizeInBytes, bool createSRV, bool createUAV, UINT64 alignment = 0);
+
+	UINT NumElements;
+};
+
 struct RawBufferSRVDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 {
 	RawBufferSRVDesc(UINT64 firstElement, UINT numElements,
@@ -464,6 +471,9 @@ public:
 		const FormattedBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
 	Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const RawBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+
+	Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const ShaderTableDesc* pShaderTableDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
 	~Buffer();
@@ -487,6 +497,7 @@ private:
 	void CreateBufferView(RenderEnv* pRenderEnv, const ConstantBufferDesc* pBufferDesc);
 	void CreateBufferViews(RenderEnv* pRenderEnv, const StructuredBufferDesc* pBufferDesc);
 	void CreateBufferViews(RenderEnv* pRenderEnv, const FormattedBufferDesc* pBufferDesc);
+	void CreateBufferViews(RenderEnv* pRenderEnv, const RawBufferDesc* pBufferDesc);
 
 private:
 	DescriptorHandle m_SRVHandle;

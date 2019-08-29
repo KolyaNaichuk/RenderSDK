@@ -18,6 +18,7 @@ namespace
 	enum GlobalRootParams
 	{
 		kGlobalRootCBVParam = 0,
+		kGlobalRootSRVTableParam,
 		kGlobalNumRootParams
 	};
 }
@@ -41,7 +42,6 @@ RayTracingPass::~RayTracingPass()
 	SafeDelete(m_pVertexBuffer);
 	SafeDelete(m_pIndexBuffer);
 	SafeDelete(m_pGlobalRootSignature);
-	SafeDelete(m_pRayGenLocalRootSignature);
 	SafeDelete(m_pEmptyLocalRootSignature);
 	SafeDelete(m_pRayGenShaderTable);
 	SafeDelete(m_pMissShaderTable);
@@ -65,7 +65,8 @@ void RayTracingPass::Record(RenderParams* pParams)
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootSignature(m_pGlobalRootSignature);
 	pCommandList->SetComputeRootConstantBufferView(kGlobalRootCBVParam, pParams->m_pAppDataBuffer);
-	
+	pCommandList->SetComputeRootDescriptorTable(kGlobalRootSRVTableParam, m_GlobalSRVHeapStart);
+		
 	if (!m_ResourceBarriers.empty())
 		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 	
@@ -172,11 +173,11 @@ void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
 	assert(BLASPrebuildInfo.UpdateScratchDataSizeInBytes == 0);
 
 	assert(m_pBLASBuffer == nullptr);
-	StructuredBufferDesc BLASBufferDesc(1, BLASPrebuildInfo.ResultDataMaxSizeInBytes, true, true);
+	RawBufferDesc BLASBufferDesc(BLASPrebuildInfo.ResultDataMaxSizeInBytes, true, true);
 	m_pBLASBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &BLASBufferDesc,
 		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, L"RayTracingPass::m_pBLASBuffer");
 
-	StructuredBufferDesc BLASScratchBufferDesc(1, BLASPrebuildInfo.ScratchDataSizeInBytes, false, true);
+	RawBufferDesc BLASScratchBufferDesc(BLASPrebuildInfo.ScratchDataSizeInBytes, false, true);
 	Buffer BLASScratchBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &BLASScratchBufferDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"RayTracingPass::BLASScratchBuffer");
 
@@ -233,11 +234,11 @@ void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
 	assert(TLASPrebuildInfo.UpdateScratchDataSizeInBytes == 0);
 
 	assert(m_pTLASBuffer == nullptr);
-	StructuredBufferDesc TLASBufferDesc(1, TLASPrebuildInfo.ResultDataMaxSizeInBytes, true, true);
+	RawBufferDesc TLASBufferDesc(TLASPrebuildInfo.ResultDataMaxSizeInBytes, true, true);
 	m_pTLASBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &TLASBufferDesc,
 		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, L"RayTracingPass::m_pTLASBuffer");
 
-	StructuredBufferDesc TLASScratchBufferDesc(1, TLASPrebuildInfo.ScratchDataSizeInBytes, false, true);
+	RawBufferDesc TLASScratchBufferDesc(TLASPrebuildInfo.ScratchDataSizeInBytes, false, true);
 	Buffer TLASScratchBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &TLASScratchBufferDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"RayTracingPass::TLASScratchBuffer");
 
@@ -265,24 +266,13 @@ void RayTracingPass::InitRootSignatures(InitParams* pParams)
 
 	D3D12_ROOT_PARAMETER globalRootParams[kGlobalNumRootParams];
 	globalRootParams[kGlobalRootCBVParam] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
-	
+
+	D3D12_DESCRIPTOR_RANGE globalDescriptorRanges[] = {SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0)};
+	globalRootParams[kGlobalRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(globalDescriptorRanges), globalDescriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
+			
 	assert(m_pGlobalRootSignature == nullptr);
 	RootSignatureDesc globalRootSignatureDesc(kGlobalNumRootParams, globalRootParams);
 	m_pGlobalRootSignature = new RootSignature(pRenderEnv->m_pDevice, &globalRootSignatureDesc, L"RayTracingPass::m_pGlobalRootSignature");
-
-	enum RayGenRootParams
-	{
-		kRayGenRootSRVTableParam = 0,
-		kRayGenNumRootParams
-	};
-
-	D3D12_ROOT_PARAMETER rayGenRootParams[kRayGenNumRootParams];
-	D3D12_DESCRIPTOR_RANGE rayGenDescriptorRanges[] = {SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0)};
-	rayGenRootParams[kRayGenRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(rayGenDescriptorRanges), rayGenDescriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
-
-	assert(m_pRayGenLocalRootSignature == nullptr);
-	RootSignatureDesc rayGenRootSignatureDesc(kRayGenNumRootParams, rayGenRootParams, D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
-	m_pRayGenLocalRootSignature = new RootSignature(pRenderEnv->m_pDevice, &rayGenRootSignatureDesc, L"RayTracingPass::m_pRayGenLocalRootSignature");
 
 	assert(m_pEmptyLocalRootSignature == nullptr);
 	RootSignatureDesc emptyLocalRootSignatureDesc(D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
@@ -301,8 +291,6 @@ void RayTracingPass::InitStateObject(InitParams* pParams)
 		kShaderConfigIndex,
 		kShaderConfigAssocIndex,
 		kGlobalRootSigIndex,
-		kRayGenLocalRootSigIndex,
-		kRayGenLocalRootSigAssocIndex,
 		kEmptyLocalRootSigIndex,
 		kEmptyLocalRootSigAssocIndex,
 		kNumStateObjects
@@ -321,7 +309,7 @@ void RayTracingPass::InitStateObject(InitParams* pParams)
 	RayTracingPipelineConfig pipelineConfig(1);
 	stateSubobjects[kPipelineConfigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG, &pipelineConfig);
 
-	RayTracingShaderConfig shaderConfig(3 * sizeof(f32)/*color*/, 2 * sizeof(f32)/*intersectionAttribs*/);
+	RayTracingShaderConfig shaderConfig(3 * sizeof(f32)/*color*/, 2 * sizeof(f32)/*attribs*/);
 	stateSubobjects[kShaderConfigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG, &shaderConfig);
 
 	LPCWSTR shaderConfigExports[] = {g_pRayGenShaderName, g_pMissShaderName, g_pClosesHitShaderName};
@@ -332,19 +320,11 @@ void RayTracingPass::InitStateObject(InitParams* pParams)
 	GlobalRootSignature globalRootSignature(m_pGlobalRootSignature);
 	stateSubobjects[kGlobalRootSigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE, &globalRootSignature);
 
-	assert(m_pRayGenLocalRootSignature != nullptr);
-	LocalRootSignature rayGenlocalRootSignature(m_pRayGenLocalRootSignature);
-	stateSubobjects[kRayGenLocalRootSigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE, &rayGenlocalRootSignature);
-
-	LPCWSTR rayGenLocalRootSigExports[] = {g_pRayGenShaderName};
-	SubobjectToExportsAssociation rayGenLocalRootSigExportsAssoc(&stateSubobjects[kRayGenLocalRootSigIndex], ARRAYSIZE(rayGenLocalRootSigExports), rayGenLocalRootSigExports);
-	stateSubobjects[kRayGenLocalRootSigAssocIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION, &rayGenLocalRootSigExportsAssoc);
-
 	assert(m_pEmptyLocalRootSignature != nullptr);
 	LocalRootSignature emptyLocalRootSignature(m_pEmptyLocalRootSignature);
 	stateSubobjects[kEmptyLocalRootSigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE, &emptyLocalRootSignature);
 
-	LPCWSTR emptyLocalRootSigExports[] = {g_pMissShaderName, g_pClosesHitShaderName};
+	LPCWSTR emptyLocalRootSigExports[] = {g_pRayGenShaderName, g_pClosesHitShaderName, g_pMissShaderName};
 	SubobjectToExportsAssociation emptyLocalRootSigExportsAssoc(&stateSubobjects[kEmptyLocalRootSigIndex], ARRAYSIZE(emptyLocalRootSigExports), emptyLocalRootSigExports);
 	stateSubobjects[kEmptyLocalRootSigAssocIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION, &emptyLocalRootSigExportsAssoc);
 
@@ -355,11 +335,11 @@ void RayTracingPass::InitStateObject(InitParams* pParams)
 
 void RayTracingPass::InitDescriptorHeap(InitParams* pParams)
 {
-	assert(!m_SRVHeapStart.IsValid());
+	assert(!m_GlobalSRVHeapStart.IsValid());
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	m_SRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
-	pRenderEnv->m_pDevice->CopyDescriptor(m_SRVHeapStart,
+	m_GlobalSRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
+	pRenderEnv->m_pDevice->CopyDescriptor(m_GlobalSRVHeapStart,
 		m_pTLASBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
@@ -381,19 +361,10 @@ void RayTracingPass::InitShaderTables(InitParams* pParams)
 	Buffer* pUploadHitGroupTable = nullptr;
 
 	const SIZE_T shaderIdentifierSizeInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-	{
-		struct RootArguments
-		{
-			D3D12_GPU_DESCRIPTOR_HANDLE m_SRVTableBaseHandle;
-		};
-
-		assert(m_SRVHeapStart.IsValid());
-		RootArguments rootArguments;
-		rootArguments.m_SRVTableBaseHandle = m_SRVHeapStart;
-		
-		const UINT shaderRecordSizeInBytes = shaderIdentifierSizeInBytes + sizeof(rootArguments);
+	{		
+		const UINT shaderRecordSizeInBytes = shaderIdentifierSizeInBytes;
 		ShaderRecordData shaderRecordData(1, shaderRecordSizeInBytes);
-		shaderRecordData.Append(ShaderRecord(m_pStateObject->GetShaderIdentifier(g_pRayGenShaderName), shaderIdentifierSizeInBytes, &rootArguments, sizeof(rootArguments)));
+		shaderRecordData.Append(ShaderRecord(m_pStateObject->GetShaderIdentifier(g_pRayGenShaderName), shaderIdentifierSizeInBytes));
 		
 		ShaderTableDesc shaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes, true);
 		m_pRayGenShaderTable = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shaderTableDesc,
