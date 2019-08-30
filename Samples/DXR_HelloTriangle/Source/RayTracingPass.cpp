@@ -18,6 +18,7 @@ namespace
 	enum GlobalRootParams
 	{
 		kGlobalRootCBVParam = 0,
+		kGlobalRootTLASParam,
 		kGlobalRootSRVTableParam,
 		kGlobalNumRootParams
 	};
@@ -65,6 +66,7 @@ void RayTracingPass::Record(RenderParams* pParams)
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 	pCommandList->SetComputeRootSignature(m_pGlobalRootSignature);
 	pCommandList->SetComputeRootConstantBufferView(kGlobalRootCBVParam, pParams->m_pAppDataBuffer);
+	pCommandList->SetComputeRootShaderResourceView(kGlobalRootTLASParam, m_pTLASBuffer);
 	pCommandList->SetComputeRootDescriptorTable(kGlobalRootSRVTableParam, m_GlobalSRVHeapStart);
 		
 	if (!m_ResourceBarriers.empty())
@@ -266,10 +268,11 @@ void RayTracingPass::InitRootSignatures(InitParams* pParams)
 
 	D3D12_ROOT_PARAMETER globalRootParams[kGlobalNumRootParams];
 	globalRootParams[kGlobalRootCBVParam] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
+	globalRootParams[kGlobalRootTLASParam] = RootSRVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
 
-	D3D12_DESCRIPTOR_RANGE globalDescriptorRanges[] = {SRVDescriptorRange(1, 0), UAVDescriptorRange(1, 0)};
+	D3D12_DESCRIPTOR_RANGE globalDescriptorRanges[] = {UAVDescriptorRange(1, 0)};
 	globalRootParams[kGlobalRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(globalDescriptorRanges), globalDescriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
-			
+	
 	assert(m_pGlobalRootSignature == nullptr);
 	RootSignatureDesc globalRootSignatureDesc(kGlobalNumRootParams, globalRootParams);
 	m_pGlobalRootSignature = new RootSignature(pRenderEnv->m_pDevice, &globalRootSignatureDesc, L"RayTracingPass::m_pGlobalRootSignature");
@@ -340,9 +343,6 @@ void RayTracingPass::InitDescriptorHeap(InitParams* pParams)
 
 	m_GlobalSRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_GlobalSRVHeapStart,
-		m_pTLASBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		m_pRayTracedResult->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
