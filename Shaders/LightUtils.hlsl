@@ -2,6 +2,7 @@
 #define __LIGHT_UTILS__
 
 #include "Foundation.hlsl"
+#include "BRDF.hlsl"
 
 struct SpotLightProps
 {
@@ -17,37 +18,6 @@ struct SpotLightProps
 	float negativeExpShadowMapConstant;
 	uint lightID;
 };
-
-float3 BRDF(float NdotL, float3 normal, float3 dirToLight, float3 dirToViewer,
-	float3 baseColor, float metallic, float roughness)
-{
-	float3 halfVec = normalize(dirToLight + dirToViewer);
-	float NdotV = saturate(dot(normal, dirToViewer));
-	float NdotH = saturate(dot(normal, halfVec));
-	float LdotH = saturate(dot(dirToLight, halfVec));
-	float squaredRoughness = roughness * roughness;
-
-	// GGX distribution term
-	float D = squaredRoughness / (g_PI * pow((NdotH * squaredRoughness - NdotH) * NdotH + 1.0f, 2.0f));
-
-	// Smith GGX height correlated visibility term
-	float lambdaV = NdotL * sqrt(NdotV * NdotV * (1.0f - squaredRoughness) + squaredRoughness);
-	float lambdaL = NdotV * sqrt(NdotL * NdotL * (1.0f - squaredRoughness) + squaredRoughness);
-	float V = 0.5f / (lambdaV + lambdaL);
-
-	// Fresnel term (Schlick approximation)
-	float3 f0 = baseColor * metallic;
-	float3 F = f0 + (1.0f - f0) * pow(1.0f - LdotH, 5.0f);
-
-	// Cook-Torrance specular BRDF
-	float3 specularBRDF = (D * V) * F;
-
-	// Lambert diffuse BRDF
-	float3 diffuseAlbedo = (1.0f - metallic) * baseColor;
-	float3 diffuseBRDF = ((1.0f - F) * g_1DIVPI) * diffuseAlbedo;
-
-	return (diffuseBRDF + specularBRDF);
-}
 
 float CalcDistanceFalloff(float squaredDistToLight, float lightRcpSquaredRange)
 {

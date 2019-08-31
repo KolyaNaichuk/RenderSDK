@@ -9,8 +9,8 @@ class PipelineState;
 
 struct CreateExpShadowMapParams
 {
-	f32 m_LightProjMatrix43;
-	f32 m_LightProjMatrix33;
+	f32 m_LightProjMatrix32;
+	f32 m_LightProjMatrix22;
 	f32 m_LightViewNearPlane;
 	f32 m_LightRcpViewClipRange;
 	f32 m_ExpShadowMapConstant;
@@ -28,7 +28,6 @@ public:
 
 	struct InitParams
 	{
-		const char* m_pName = nullptr;
 		RenderEnv* m_pRenderEnv = nullptr;
 		ResourceStates m_InputResourceStates;
 		DepthTexture* m_pStandardShadowMaps = nullptr;
@@ -58,8 +57,6 @@ private:
 	void InitPipelineState(InitParams* pParams);
 
 private:
-	std::string m_Name;
-
 	RootSignature* m_pRootSignature = nullptr;
 	PipelineState* m_pPipelineState = nullptr;
 	DescriptorHandle m_SRVHeapStart;

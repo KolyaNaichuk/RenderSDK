@@ -53,6 +53,8 @@ DXGI_FORMAT GetShaderResourceViewFormat(DXGI_FORMAT resourceFormat)
 			return DXGI_FORMAT_R32_FLOAT;
 		case DXGI_FORMAT_R16G16_UINT:
 			return DXGI_FORMAT_R16G16_UINT;
+		case DXGI_FORMAT_R11G11B10_FLOAT:
+			return DXGI_FORMAT_R11G11B10_FLOAT;
 		case DXGI_FORMAT_R32_UINT:
 			return DXGI_FORMAT_R32_UINT;
 		case DXGI_FORMAT_R24G8_TYPELESS:
@@ -65,6 +67,8 @@ DXGI_FORMAT GetShaderResourceViewFormat(DXGI_FORMAT resourceFormat)
 			return DXGI_FORMAT_R16G16_SNORM;
 		case DXGI_FORMAT_R8G8B8A8_UNORM:
 			return DXGI_FORMAT_R8G8B8A8_UNORM;
+		case DXGI_FORMAT_R32G32B32A32_FLOAT:
+			return DXGI_FORMAT_R32G32B32A32_FLOAT;
 		case DXGI_FORMAT_R16G16B16A16_FLOAT:
 			return DXGI_FORMAT_R16G16B16A16_FLOAT;
 		case DXGI_FORMAT_R32G32_FLOAT:
@@ -100,6 +104,8 @@ DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat)
 			return DXGI_FORMAT_R10G10B10A2_UNORM;
 		case DXGI_FORMAT_R16G16B16A16_FLOAT:
 			return DXGI_FORMAT_R16G16B16A16_FLOAT;
+		case DXGI_FORMAT_R32G32B32A32_FLOAT:
+			return DXGI_FORMAT_R32G32B32A32_FLOAT;
 		case DXGI_FORMAT_R32G32_FLOAT:
 			return DXGI_FORMAT_R32G32_FLOAT;
 		case DXGI_FORMAT_R32_FLOAT:
@@ -110,6 +116,8 @@ DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat)
 			return DXGI_FORMAT_R16G16_SNORM;
 		case DXGI_FORMAT_R8G8B8A8_SNORM:
 			return DXGI_FORMAT_R8G8B8A8_SNORM;
+		case DXGI_FORMAT_R11G11B10_FLOAT:
+			return DXGI_FORMAT_R11G11B10_FLOAT;
 	}
 	assert(false);
 	return resourceFormat;
@@ -117,7 +125,23 @@ DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat)
 
 UINT CalcSubresource(UINT mipSlice, UINT arraySlice, UINT mipLevels)
 {
-	return (mipSlice + arraySlice * mipLevels);
+	return (arraySlice * mipLevels + mipSlice);
+}
+
+UINT CountMips(UINT width, UINT height)
+{
+	UINT mipLevels = 1;
+	while (height > 1 || width > 1)
+	{
+		if (height > 1)
+			height >>= 1;
+
+		if (width > 1)
+			width >>= 1;
+
+		++mipLevels;
+	}
+	return mipLevels;
 }
 
 ResourceTransitionBarrier::ResourceTransitionBarrier(GraphicsResource* pResource, D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter, UINT subresource, D3D12_RESOURCE_BARRIER_FLAGS flags)
@@ -164,23 +188,6 @@ ConstantBufferViewDesc::ConstantBufferViewDesc(D3D12_GPU_VIRTUAL_ADDRESS bufferL
 	SizeInBytes = sizeInBytes;
 }
 
-VertexBufferDesc::VertexBufferDesc(UINT numVertices, UINT strideInBytes, UINT64 alignment)
-{
-	Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	Alignment = alignment;
-	Width = numVertices * strideInBytes;
-	Height = 1;
-	DepthOrArraySize = 1;
-	MipLevels = 1;
-	Format = DXGI_FORMAT_UNKNOWN;
-	SampleDesc.Count = 1;
-	SampleDesc.Quality = 0;
-	Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-	NumVertices = numVertices;
-	StrideInBytes = strideInBytes;
-}
-
 VertexBufferView::VertexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes)
 {
 	BufferLocation = bufferLocation;
@@ -188,33 +195,25 @@ VertexBufferView::VertexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UIN
 	StrideInBytes = strideInBytes;
 }
 
-IndexBufferDesc::IndexBufferDesc(UINT numIndices, UINT strideInBytes, UINT64 alignment)
+DXGI_FORMAT GetIndexBufferFormat(UINT strideInBytes)
 {
-	Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	Alignment = alignment;
-	Width = numIndices * strideInBytes;
-	Height = 1;
-	DepthOrArraySize = 1;
-	MipLevels = 1;
-	Format = DXGI_FORMAT_UNKNOWN;
-	SampleDesc.Count = 1;
-	SampleDesc.Quality = 0;
-	Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	Flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-	NumIndices = numIndices;
-	StrideInBytes = strideInBytes;
+	if (strideInBytes == sizeof(u16))
+		return DXGI_FORMAT_R16_UINT;
+
+	assert(strideInBytes == sizeof(u32));
+	return DXGI_FORMAT_R32_UINT;
 }
 
-IndexBufferView::IndexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes)
+IndexBufferView::IndexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, DXGI_FORMAT format)
 {
-	assert((strideInBytes == sizeof(u16)) || (strideInBytes == sizeof(u32)));
-
+	assert((format == DXGI_FORMAT_R16_UINT) || (format == DXGI_FORMAT_R32_UINT));
+	
 	BufferLocation = bufferLocation;
 	SizeInBytes = sizeInBytes;
-	Format = (strideInBytes == sizeof(u16)) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
+	Format = format;
 }
 
-StructuredBufferDesc::StructuredBufferDesc(UINT numElements, UINT structureByteStride, bool createSRV, bool createUAV, UINT64 alignment)
+StructuredBufferDesc::StructuredBufferDesc(UINT numElements, UINT structureByteStride, bool createSRV, bool createUAV, bool createVBView, UINT64 alignment)
 {
 	Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	Alignment = alignment;
@@ -235,6 +234,7 @@ StructuredBufferDesc::StructuredBufferDesc(UINT numElements, UINT structureByteS
 	
 	NumElements = numElements;
 	StructureByteStride = structureByteStride;
+	CreateVBView = createVBView;
 }
 
 StructuredBufferSRVDesc::StructuredBufferSRVDesc(UINT64 firstElement, UINT numElements,
@@ -260,7 +260,7 @@ StructuredBufferUAVDesc::StructuredBufferUAVDesc(UINT64 firstElement, UINT numEl
 	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 }
 
-FormattedBufferDesc::FormattedBufferDesc(UINT numElements, DXGI_FORMAT format, bool createSRV, bool createUAV, UINT64 alignment)
+FormattedBufferDesc::FormattedBufferDesc(UINT numElements, DXGI_FORMAT format, bool createSRV, bool createUAV, bool createIBView, UINT64 alignment)
 {
 	Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	Alignment = alignment;
@@ -282,6 +282,7 @@ FormattedBufferDesc::FormattedBufferDesc(UINT numElements, DXGI_FORMAT format, b
 	NumElements = numElements;
 	SRVFormat = format;
 	UAVFormat = format;
+	CreateIBView = createIBView;
 }
 
 FormattedBufferSRVDesc::FormattedBufferSRVDesc(UINT64 firstElement, UINT numElements,
@@ -305,6 +306,29 @@ FormattedBufferUAVDesc::FormattedBufferUAVDesc(UINT64 firstElement, UINT numElem
 	Buffer.StructureByteStride = 0;
 	Buffer.CounterOffsetInBytes = 0;
 	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+}
+
+RawBufferDesc::RawBufferDesc(UINT64 sizeInBytes, bool createSRV, bool createUAV, UINT64 alignment)
+{
+	Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	Alignment = alignment;
+	Width = sizeInBytes;
+	Height = 1;
+	DepthOrArraySize = 1;
+	MipLevels = 1;
+	Format = DXGI_FORMAT_UNKNOWN;
+	SampleDesc.Count = 1;
+	SampleDesc.Quality = 0;
+	Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	Flags = D3D12_RESOURCE_FLAG_NONE;
+	if (createUAV)
+		Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	if (!createSRV)
+		Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+
+	const UINT strideInBytes = 4;
+	NumElements = sizeInBytes / strideInBytes;
 }
 
 RawBufferSRVDesc::RawBufferSRVDesc(UINT64 firstElement, UINT numElements, UINT shader4ComponentMapping)
@@ -339,6 +363,22 @@ CounterBufferUAVDesc::CounterBufferUAVDesc(UINT64 firstElement, UINT numElements
 	Buffer.StructureByteStride = structureByteStride;
 	Buffer.CounterOffsetInBytes = counterOffsetInBytes;
 	Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+}
+
+ShaderTableDesc::ShaderTableDesc(UINT numRecords, UINT recordSizeInBytes, bool allowUnorderedAccess, UINT64 alignment)
+{
+	Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	Alignment = alignment;
+	Width = numRecords * Align(recordSizeInBytes, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
+	Height = 1;
+	DepthOrArraySize = 1;
+	MipLevels = 1;
+	Format = DXGI_FORMAT_UNKNOWN;
+	SampleDesc.Count = 1;
+	SampleDesc.Quality = 0;
+	Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	Flags = allowUnorderedAccess ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS : D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+	NumRecords = numRecords;
 }
 
 ColorTexture1DDesc::ColorTexture1DDesc(DXGI_FORMAT format, UINT64 width, bool createRTV, bool createSRV, bool createUAV,
@@ -904,7 +944,7 @@ void GraphicsResource::Write(const void* pInputData, SIZE_T numBytes)
 	const MemoryRange readRange(0, 0);
 	void* pResourceData = Map(subresource, &readRange);
 
-	std::memcpy(pResourceData, pInputData, numBytes);
+	CopyMemory(pResourceData, pInputData, numBytes);
 	
 	const MemoryRange writtenRange(0, numBytes);
 	Unmap(subresource, &writtenRange);
@@ -917,7 +957,7 @@ void GraphicsResource::Read(void* pOutputData, SIZE_T numBytes)
 	const MemoryRange readRange(0, numBytes);
 	void* pResourceData = Map(subresource, &readRange);
 
-	std::memcpy(pOutputData, pResourceData, numBytes);
+	CopyMemory(pOutputData, pResourceData, numBytes);
 	
 	const MemoryRange writtenRange(0, 0);
 	Unmap(subresource, &writtenRange);
@@ -1482,22 +1522,7 @@ void DepthTexture::CreateTexture2DViews(RenderEnv* pRenderEnv, const D3D12_RESOU
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const ConstantBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
 	: GraphicsResource(pBufferDesc)
-{
-	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
-	CreateBufferView(pRenderEnv, pBufferDesc);
-}
-
-Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const VertexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
-	: GraphicsResource(pBufferDesc)
-{
-	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
-	CreateBufferView(pRenderEnv, pBufferDesc);
-}
-
-Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-	const IndexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
-	: GraphicsResource(pBufferDesc)
+	, m_NumElements(1)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateBufferView(pRenderEnv, pBufferDesc);
@@ -1506,6 +1531,7 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const StructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
 	: GraphicsResource(pBufferDesc)
+	, m_NumElements(pBufferDesc->NumElements)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateBufferViews(pRenderEnv, pBufferDesc);
@@ -1514,9 +1540,27 @@ Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 	const FormattedBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
 	: GraphicsResource(pBufferDesc)
+	, m_NumElements(pBufferDesc->NumElements)
 {
 	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
 	CreateBufferViews(pRenderEnv, pBufferDesc);
+}
+
+Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const RawBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: GraphicsResource(pBufferDesc)
+	, m_NumElements(pBufferDesc->NumElements)
+{
+	CreateCommittedResource(pRenderEnv, pHeapProps, pBufferDesc, initialState, pName);
+	CreateBufferViews(pRenderEnv, pBufferDesc);
+}
+
+Buffer::Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+	const ShaderTableDesc* pShaderTableDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName)
+	: GraphicsResource(pShaderTableDesc)
+	, m_NumElements(pShaderTableDesc->NumRecords)
+{
+	CreateCommittedResource(pRenderEnv, pHeapProps, pShaderTableDesc, initialState, pName);
 }
 
 Buffer::~Buffer()
@@ -1579,24 +1623,8 @@ void Buffer::CreateBufferView(RenderEnv* pRenderEnv, const ConstantBufferDesc* p
 	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
 	m_CBVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
 	
-	ConstantBufferViewDesc viewDesc(GetD3DObject()->GetGPUVirtualAddress(), (UINT)pBufferDesc->Width);
+	ConstantBufferViewDesc viewDesc(GetGPUVirtualAddress(), (UINT)pBufferDesc->Width);
 	pD3DDevice->CreateConstantBufferView(&viewDesc, m_CBVHandle);
-}
-
-void Buffer::CreateBufferView(RenderEnv* pRenderEnv, const VertexBufferDesc* pBufferDesc)
-{
-	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
-	D3D12_GPU_VIRTUAL_ADDRESS gpuVirtualAddress = GetD3DObject()->GetGPUVirtualAddress();
-
-	m_pVBView = new VertexBufferView(gpuVirtualAddress, (UINT)pBufferDesc->Width, pBufferDesc->StrideInBytes);
-}
-
-void Buffer::CreateBufferView(RenderEnv* pRenderEnv, const IndexBufferDesc* pBufferDesc)
-{
-	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
-	D3D12_GPU_VIRTUAL_ADDRESS gpuVirtualAddress = GetD3DObject()->GetGPUVirtualAddress();
-
-	m_pIBView = new IndexBufferView(gpuVirtualAddress, (UINT)pBufferDesc->Width, pBufferDesc->StrideInBytes);
 }
 
 void Buffer::CreateBufferViews(RenderEnv* pRenderEnv, const StructuredBufferDesc* pBufferDesc)
@@ -1619,6 +1647,8 @@ void Buffer::CreateBufferViews(RenderEnv* pRenderEnv, const StructuredBufferDesc
 		StructuredBufferUAVDesc viewDesc(0, pBufferDesc->NumElements, pBufferDesc->StructureByteStride);
 		pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, m_UAVHandle);
 	}
+	if (pBufferDesc->CreateVBView)
+		m_pVBView = new VertexBufferView(GetGPUVirtualAddress(), (UINT)pBufferDesc->Width, pBufferDesc->StructureByteStride);
 }
 
 void Buffer::CreateBufferViews(RenderEnv* pRenderEnv, const FormattedBufferDesc* pBufferDesc)
@@ -1639,6 +1669,30 @@ void Buffer::CreateBufferViews(RenderEnv* pRenderEnv, const FormattedBufferDesc*
 		m_UAVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
 
 		FormattedBufferUAVDesc viewDesc(0, pBufferDesc->NumElements, pBufferDesc->UAVFormat);
+		pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, m_UAVHandle);
+	}
+	if (pBufferDesc->CreateIBView)
+		m_pIBView = new IndexBufferView(GetGPUVirtualAddress(), (UINT)pBufferDesc->Width, pBufferDesc->SRVFormat);
+}
+
+void Buffer::CreateBufferViews(RenderEnv* pRenderEnv, const RawBufferDesc* pBufferDesc)
+{
+	ID3D12Device* pD3DDevice = pRenderEnv->m_pDevice->GetD3DObject();
+
+	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0)
+	{
+		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_SRVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+
+		RawBufferSRVDesc viewDesc(0, pBufferDesc->NumElements);
+		pD3DDevice->CreateShaderResourceView(GetD3DObject(), &viewDesc, m_SRVHandle);
+	}
+	if ((pBufferDesc->Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0)
+	{
+		assert(pRenderEnv->m_pShaderInvisibleSRVHeap != nullptr);
+		m_UAVHandle = pRenderEnv->m_pShaderInvisibleSRVHeap->Allocate();
+
+		RawBufferUAVDesc viewDesc(0, pBufferDesc->NumElements);
 		pD3DDevice->CreateUnorderedAccessView(GetD3DObject(), nullptr, &viewDesc, m_UAVHandle);
 	}
 }
@@ -1664,4 +1718,123 @@ TextureCopyLocation::TextureCopyLocation(GraphicsResource* pGraphicsResource, co
 	pResource = pGraphicsResource->GetD3DObject();
 	Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
 	PlacedFootprint = footprint;
+}
+
+RayTracingTrianglesGeometryDesc::RayTracingTrianglesGeometryDesc(DXGI_FORMAT vertexFormat, Buffer* pVertexBuffer, Buffer* pIndexBuffer,
+	D3D12_RAYTRACING_GEOMETRY_FLAGS flags, Buffer* pTransformBuffer)
+{
+	Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+	Flags = flags;
+
+	Triangles.Transform3x4 = (pTransformBuffer != nullptr) ? pTransformBuffer->GetGPUVirtualAddress() : 0;
+	
+	assert(pVertexBuffer != nullptr);
+	const VertexBufferView* pVBView = pVertexBuffer->GetVBView();
+	
+	Triangles.VertexFormat = vertexFormat;
+	Triangles.VertexCount = pVertexBuffer->GetNumElements();
+	Triangles.VertexBuffer.StartAddress = pVBView->BufferLocation;
+	Triangles.VertexBuffer.StrideInBytes = pVBView->StrideInBytes;
+
+	if (pIndexBuffer != nullptr)
+	{
+		const IndexBufferView* pIBView = pIndexBuffer->GetIBView();
+
+		Triangles.IndexFormat = pIBView->Format;
+		Triangles.IndexCount = pIndexBuffer->GetNumElements();
+		Triangles.IndexBuffer = pIBView->BufferLocation;
+	}
+	else
+	{
+		Triangles.IndexFormat = DXGI_FORMAT_UNKNOWN;
+		Triangles.IndexCount = 0;
+		Triangles.IndexBuffer = 0;
+	}
+}
+
+BuildRayTracingAccelerationStructureDesc::BuildRayTracingAccelerationStructureDesc(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* pInputs,
+	Buffer* pDestBuffer, Buffer* pScratchBuffer, Buffer* pSourceBuffer)
+{
+	assert(pDestBuffer != nullptr);
+	assert(pScratchBuffer != nullptr);
+
+	DestAccelerationStructureData = pDestBuffer->GetGPUVirtualAddress();
+	Inputs = *pInputs;
+	SourceAccelerationStructureData = (pSourceBuffer != nullptr) ? pSourceBuffer->GetGPUVirtualAddress() : 0;
+	ScratchAccelerationStructureData = pScratchBuffer->GetGPUVirtualAddress();
+}
+
+ShaderRecord::ShaderRecord(void* pShaderIdentifier, UINT shaderIdentifierSizeInBytes)
+	: ShaderRecord(pShaderIdentifier, shaderIdentifierSizeInBytes, nullptr, 0)
+{
+}
+
+ShaderRecord::ShaderRecord(void* pShaderIdentifier, UINT shaderIdentifierSizeInBytes, void* pLocalRootArguments, UINT localRootArgumentsSizeInBytes)
+	: m_pShaderIdentifier(pShaderIdentifier)
+	, m_ShaderIdentifierSizeInBytes(shaderIdentifierSizeInBytes)
+	, m_pLocalRootArguments(pLocalRootArguments)
+	, m_LocalRootArgumentsSizeInBytes(localRootArgumentsSizeInBytes)
+{
+}
+
+ShaderRecordData::ShaderRecordData(UINT maxNumRecords, UINT recordSizeInBytes)
+{
+	assert(maxNumRecords > 0);
+	assert(recordSizeInBytes > 0);
+
+	m_RecordSizeInBytes = Align(recordSizeInBytes, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
+	
+	m_SizeInBytes = 0;
+	m_MaxSizeInBytes = maxNumRecords * m_RecordSizeInBytes;
+	m_NumRecords = 0;
+
+	m_pData = new BYTE[m_MaxSizeInBytes];
+}
+
+ShaderRecordData::~ShaderRecordData()
+{
+	SafeArrayDelete(m_pData);
+}
+
+UINT ShaderRecordData::GetNumRecords() const
+{
+	return m_NumRecords;
+}
+
+UINT ShaderRecordData::GetSizeInBytes() const
+{
+	return m_SizeInBytes;
+}
+
+const void* ShaderRecordData::GetData() const
+{
+	return m_pData;
+}
+
+void ShaderRecordData::Append(const ShaderRecord& record)
+{
+	assert(m_SizeInBytes + m_RecordSizeInBytes <= m_MaxSizeInBytes);
+	
+	assert(record.m_pShaderIdentifier != nullptr);
+	assert(record.m_ShaderIdentifierSizeInBytes > 0);
+
+	BYTE* pDestMem = m_pData + m_SizeInBytes;
+	CopyMemory(pDestMem, record.m_pShaderIdentifier, record.m_ShaderIdentifierSizeInBytes);
+
+	if (record.m_pLocalRootArguments != nullptr)
+	{
+		assert(record.m_LocalRootArgumentsSizeInBytes > 0);
+
+		pDestMem += record.m_ShaderIdentifierSizeInBytes;
+		CopyMemory(pDestMem, record.m_pLocalRootArguments, record.m_LocalRootArgumentsSizeInBytes);
+	}
+	
+	m_SizeInBytes += m_RecordSizeInBytes;
+	++m_NumRecords;
+}
+
+void ShaderRecordData::Reset()
+{
+	m_SizeInBytes = 0;
+	m_NumRecords = 0;
 }

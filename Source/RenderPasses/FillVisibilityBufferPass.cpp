@@ -91,7 +91,7 @@ void FillVisibilityBufferPass::InitResources(InitParams* pParams)
 	const u16 unitAABBTriangleStripIndices[] = {1, 0, 3, 2, 6, 0, 4, 1, 5, 3, 7, 6, 5, 4};
 	const u32 unitAABBIndexCount = ARRAYSIZE(unitAABBTriangleStripIndices);
 
-	IndexBufferDesc unitAABBIndexBufferDesc(unitAABBIndexCount, sizeof(unitAABBTriangleStripIndices[0]));
+	FormattedBufferDesc unitAABBIndexBufferDesc(unitAABBIndexCount, GetIndexBufferFormat(sizeof(unitAABBTriangleStripIndices[0])), false, false, true);
 	m_pUnitAABBIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &unitAABBIndexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pUnitAABBIndexBuffer");
 	UploadData(pRenderEnv, m_pUnitAABBIndexBuffer, unitAABBIndexBufferDesc,
 		D3D12_RESOURCE_STATE_INDEX_BUFFER, unitAABBTriangleStripIndices, sizeof(unitAABBTriangleStripIndices));
@@ -179,14 +179,13 @@ void FillVisibilityBufferPass::InitPipelineState(InitParams* pParams)
 	m_pViewport = new Viewport(0.0f, 0.0f, FLOAT(pParams->m_pDepthTexture->GetWidth()), FLOAT(pParams->m_pDepthTexture->GetHeight()));
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	std::string clampVerticesBehindCameraNearPlaneStr = std::to_string(pParams->m_ClampVerticesBehindCameraNearPlane ? 1 : 0);
-	const ShaderMacro shaderDefinesVS[] =
+	std::wstring clampVerticesBehindCameraNearPlaneStr = std::to_wstring(pParams->m_ClampVerticesBehindCameraNearPlane ? 1 : 0);
+	const ShaderDefine shaderDefinesVS[] =
 	{
-		ShaderMacro("CLAMP_VERTICES_BEHIND_CAMERA_NEAR_PLANE", clampVerticesBehindCameraNearPlaneStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"CLAMP_VERTICES_BEHIND_CAMERA_NEAR_PLANE", clampVerticesBehindCameraNearPlaneStr.c_str())
 	};
-	Shader vertexShader(L"Shaders//FillVisibilityBufferVS.hlsl", "Main", "vs_4_0", shaderDefinesVS);
-	Shader pixelShader(L"Shaders//FillVisibilityBufferPS.hlsl", "Main", "ps_5_0");
+	Shader vertexShader(L"Shaders//FillVisibilityBufferVS.hlsl", L"Main", L"vs_6_1", shaderDefinesVS, ARRAYSIZE(shaderDefinesVS));
+	Shader pixelShader(L"Shaders//FillVisibilityBufferPS.hlsl", L"Main", L"ps_6_1");
 	
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);

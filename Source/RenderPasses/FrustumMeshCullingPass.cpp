@@ -18,8 +18,7 @@ namespace
 }
 
 FrustumMeshCullingPass::FrustumMeshCullingPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
-	, m_MaxNumMeshes(pParams->m_MaxNumMeshes)
+	: m_MaxNumMeshes(pParams->m_MaxNumMeshes)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -134,16 +133,15 @@ void FrustumMeshCullingPass::InitPipelineState(InitParams* pParams)
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
 	const u8 numThreadsPerMesh = 64;
-	std::string numThreadsPerMeshStr = std::to_string(numThreadsPerMesh);
-	std::string maxNumInstancesPerMeshStr = std::to_string(pParams->m_MaxNumInstancesPerMesh);
+	std::wstring numThreadsPerMeshStr = std::to_wstring(numThreadsPerMesh);
+	std::wstring maxNumInstancesPerMeshStr = std::to_wstring(pParams->m_MaxNumInstancesPerMesh);
 
-	const ShaderMacro shaderDefines[] =
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("NUM_THREADS_PER_MESH", numThreadsPerMeshStr.c_str()),
-		ShaderMacro("MAX_NUM_INSTANCES_PER_MESH", maxNumInstancesPerMeshStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"NUM_THREADS_PER_MESH", numThreadsPerMeshStr.c_str()),
+		ShaderDefine(L"MAX_NUM_INSTANCES_PER_MESH", maxNumInstancesPerMeshStr.c_str())
 	};
-	Shader computeShader(L"Shaders//FrustumMeshCullingCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//FrustumMeshCullingCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);
@@ -166,7 +164,7 @@ void FrustumMeshCullingPass::Record(RenderParams* pParams)
 
 	pCommandList->Begin(m_pPipelineState);
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "FrustumMeshCullingPass");
 #endif // ENABLE_PROFILING
 
 	pCommandList->SetComputeRootSignature(m_pRootSignature);

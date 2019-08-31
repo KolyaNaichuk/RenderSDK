@@ -10,20 +10,21 @@ struct ShaderBytecode : public D3D12_SHADER_BYTECODE
 	ShaderBytecode(const void* pBytecode = nullptr, SIZE_T bytecodeLength = 0);
 };
 
-struct ShaderMacro : public D3D_SHADER_MACRO
+struct ShaderDefine : public DxcDefine
 {
-	ShaderMacro();
-	ShaderMacro(LPCSTR pName, LPCSTR pDefinition);
+	ShaderDefine(LPCWSTR pName, LPCWSTR pValue);
 };
 
 class Shader
 {
 public:
-	Shader(LPCWSTR pFileName, LPCSTR pEntryPoint, LPCSTR pShaderModel, const ShaderMacro* pDefines = nullptr);
+	Shader(LPCWSTR pFileName, LPCWSTR pEntryPoint, LPCWSTR pTargetProfile);
+	Shader(LPCWSTR pFileName, LPCWSTR pEntryPoint, LPCWSTR pTargetProfile, const ShaderDefine* pDefines, UINT32 defineCount);
+
 	ShaderBytecode GetBytecode();
 
 private:
-	ComPtr<ID3DBlob> m_D3DBytecodeBlob;
+	ComPtr<IDxcBlob> m_DXCBytecodeBlob;
 };
 
 struct CachedPipelineState : public D3D12_CACHED_PIPELINE_STATE

@@ -1,0 +1,13 @@
+
+/////////////////////////////////////////////////////////////
+
+// Direct3D 10.1
+f4Ret = Tex.Gather(g_SamplePoint, f2TexCoord);
+
+// Direct3D 10.0
+f4Ret.x = Tex.SampleLevel(g_SamplePoint, f2TexCoord, 0, int2(0, 1)).x;
+f4Ret.y = Tex.SampleLevel(g_SamplePoint, f2TexCoord, 0, int2(1, 1)).x;
+f4Ret.z = Tex.SampleLevel(g_SamplePoint, f2TexCoord, 0, int2(1, 0)).x;
+f4Ret.w = Tex.SampleLevel(g_SamplePoint, f2TexCoord, 0, int2(0, 0)).x;
+
+/////////////////////////////////////////////////////////////

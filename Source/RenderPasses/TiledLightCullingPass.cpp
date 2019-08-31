@@ -23,8 +23,7 @@ namespace
 }
 
 TiledLightCullingPass::TiledLightCullingPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
-	, m_NumThreadGroupsX(pParams->m_NumTilesX)
+	: m_NumThreadGroupsX(pParams->m_NumTilesX)
 	, m_NumThreadGroupsY(pParams->m_NumTilesY)
 {
 	assert(pParams->m_MaxNumSpotLights > 0);
@@ -51,7 +50,7 @@ void TiledLightCullingPass::Record(RenderParams* pParams)
 	
 	pCommandList->Begin(m_pPipelineState);
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "TiledLightCullingPass");
 #endif // ENABLE_PROFILING
 
 	pCommandList->SetComputeRootSignature(m_pRootSignature);
@@ -159,18 +158,17 @@ void TiledLightCullingPass::InitPipelineState(InitParams* pParams)
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	std::string tileSizeStr = std::to_string(pParams->m_TileSize);
-	std::string numTilesXStr = std::to_string(pParams->m_NumTilesX);
-	std::string maxNumSpotLightsStr = std::to_string(pParams->m_MaxNumSpotLights);
+	std::wstring tileSizeStr = std::to_wstring(pParams->m_TileSize);
+	std::wstring numTilesXStr = std::to_wstring(pParams->m_NumTilesX);
+	std::wstring maxNumSpotLightsStr = std::to_wstring(pParams->m_MaxNumSpotLights);
 
-	const ShaderMacro shaderDefines[] =
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("TILE_SIZE", tileSizeStr.c_str()),
-		ShaderMacro("NUM_TILES_X", numTilesXStr.c_str()),
-		ShaderMacro("MAX_NUM_SPOT_LIGHTS", maxNumSpotLightsStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"TILE_SIZE", tileSizeStr.c_str()),
+		ShaderDefine(L"NUM_TILES_X", numTilesXStr.c_str()),
+		ShaderDefine(L"MAX_NUM_SPOT_LIGHTS", maxNumSpotLightsStr.c_str())
 	};
-	Shader computeShader(L"Shaders//TiledLightCullingCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//TiledLightCullingCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);

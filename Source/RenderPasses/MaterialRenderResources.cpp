@@ -12,8 +12,6 @@
 namespace
 {
 	void GenerateImageData(UINT width, UINT height, DXGI_FORMAT format, u8* pPixelBytes, DirectX::ScratchImage& image);
-	UINT CountMips(UINT width, UINT height);
-
 	void LoadImageDataFromFile(const std::wstring& filePath, DirectX::ScratchImage& image, bool generateMips);
 		
 	void SetupImageDataForUpload(RenderEnv* pRenderEnv,
@@ -60,7 +58,7 @@ MaterialRenderResources::MaterialRenderResources(RenderEnv* pRenderEnv, u16 numM
 
 	std::unordered_map<std::wstring, u16> loadedTextures;
 
-	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"UploadCommandList");
+	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"MaterialRenderResources::pUploadCommandList");
 	pUploadCommandList->Begin();
 
 	for (u16 materialIndex = 0; materialIndex < numMaterials; ++materialIndex)
@@ -144,22 +142,6 @@ namespace
 		VerifyD3DResult(image.InitializeFromImage(sourceImage));
 	}
 
-	UINT CountMips(UINT width, UINT height)
-	{
-		UINT mipLevels = 1;
-		while (height > 1 || width > 1)
-		{
-			if (height > 1)
-				height >>= 1;
-
-			if (width > 1)
-				width >>= 1;
-
-			++mipLevels;
-		}
-		return mipLevels;
-	}
-	
 	void LoadImageDataFromFile(const std::wstring& filePath, DirectX::ScratchImage& image, bool generateMips)
 	{
 		const std::wstring fileExtension = ExtractFileExtension(filePath);

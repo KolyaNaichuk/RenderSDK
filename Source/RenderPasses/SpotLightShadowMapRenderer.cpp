@@ -143,8 +143,8 @@ void SpotLightShadowMapRenderer::InitResources(InitParams* pParams)
 		const Matrix4f viewProjMatrix = viewMatrix * projMatrix;
 		spotLightViewProjMatrices[lightIndex] = viewProjMatrix;
 
-		createExpShadowMapParams[lightIndex].m_LightProjMatrix43 = projMatrix.m_32;
-		createExpShadowMapParams[lightIndex].m_LightProjMatrix33 = projMatrix.m_22;
+		createExpShadowMapParams[lightIndex].m_LightProjMatrix32 = projMatrix.m_32;
+		createExpShadowMapParams[lightIndex].m_LightProjMatrix22 = projMatrix.m_22;
 		createExpShadowMapParams[lightIndex].m_LightViewNearPlane = pLight->GetShadowNearPlane();
 		createExpShadowMapParams[lightIndex].m_LightRcpViewClipRange = Rcp(pLight->GetRange() - pLight->GetShadowNearPlane());
 		createExpShadowMapParams[lightIndex].m_ExpShadowMapConstant = pLight->GetExpShadowMapConstant();
@@ -227,7 +227,6 @@ void SpotLightShadowMapRenderer::InitRenderSpotLightShadowMapPass(InitParams* pP
 	assert(m_pRenderSpotLightShadowMapPass == nullptr);
 	
 	RenderSpotLightShadowMapPass::InitParams params;
-	params.m_pName = "RenderSpotLightShadowMapPass";
 	params.m_pRenderEnv = pParams->m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_RenderCommandBufferState = D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
@@ -255,7 +254,6 @@ void SpotLightShadowMapRenderer::InitCreateExpShadowMapPass(InitParams* pParams)
 		m_pRenderSpotLightShadowMapPass->GetOutputResourceStates();
 	
 	CreateExpShadowMapPass::InitParams params;
-	params.m_pName = "CreateExpShadowMapPass";
 	params.m_pRenderEnv = pParams->m_pRenderEnv;
 	
 	params.m_InputResourceStates.m_StandardShadowMapsState = pRenderSpotLightShadowMapPassStates->m_SpotLightShadowMapsState;
@@ -278,7 +276,6 @@ void SpotLightShadowMapRenderer::InitFilterExpShadowMapPass(InitParams* pParams)
 		m_pCreateExpShadowMapPass->GetOutputResourceStates();
 
 	FilterExpShadowMapPass::InitParams params;
-	params.m_pName = "FilterExpShadowMapPass";
 	params.m_pRenderEnv = pParams->m_pRenderEnv;
 	params.m_InputResourceStates.m_ExpShadowMapsState = pCreateExpShadowMapPassStates->m_ExpShadowMapsState;
 	params.m_MaxNumActiveExpShadowMaps = pParams->m_MaxNumActiveSpotLights;

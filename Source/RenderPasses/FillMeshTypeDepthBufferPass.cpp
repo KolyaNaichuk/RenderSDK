@@ -17,7 +17,6 @@ namespace
 }
 
 FillMeshTypeDepthBufferPass::FillMeshTypeDepthBufferPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -39,7 +38,7 @@ void FillMeshTypeDepthBufferPass::Record(RenderParams* pParams)
 
 	pCommandList->Begin(m_pPipelineState);
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "FillMeshTypeDepthBufferPass");
 #endif // ENABLE_PROFILING
 
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
@@ -60,7 +59,6 @@ void FillMeshTypeDepthBufferPass::Record(RenderParams* pParams)
 	Rect scissorRect(ExtractRect(pParams->m_pViewport));
 	pCommandList->RSSetViewports(1, pParams->m_pViewport);
 	pCommandList->RSSetScissorRects(1, &scissorRect);
-
 	pCommandList->DrawInstanced(3, 1, 0, 0);
 
 #ifdef ENABLE_PROFILING
@@ -126,8 +124,8 @@ void FillMeshTypeDepthBufferPass::InitPipelineState(InitParams* pParams)
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//FillMeshTypeDepthBufferPS.hlsl", "Main", "ps_4_0");
+	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", L"Main", L"vs_6_1");
+	Shader pixelShader(L"Shaders//FillMeshTypeDepthBufferPS.hlsl", L"Main", L"ps_6_1");
 
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);

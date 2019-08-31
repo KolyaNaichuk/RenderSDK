@@ -25,7 +25,6 @@ namespace
 }
 
 DownscaleAndReprojectDepthPass::DownscaleAndReprojectDepthPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	const UINT64 reprojectedDepthTextureWidth = pParams->m_pPrevDepthTexture->GetWidth() / 4;
 	const UINT reprojectedDepthTextureHeight = pParams->m_pPrevDepthTexture->GetHeight() / 4;
@@ -87,13 +86,13 @@ void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
 	
 	pCommandList->Begin();
-#ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
-#endif // ENABLE_PROFILING
-
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
 
 	{
+#ifdef ENABLE_PROFILING
+		u32 profileIndex1 = pGPUProfiler->StartProfile(pCommandList, "DownscaleAndReprojectDepthPass: Reproject");
+#endif // ENABLE_PROFILING
+		
 		pCommandList->SetPipelineState(m_pReprojectPipelineState);
 		pCommandList->SetComputeRootSignature(m_pReprojectRootSignature);
 
@@ -105,10 +104,17 @@ void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 		pCommandList->ClearUnorderedAccessView(reprojectedDepthTextureHandle, m_pReprojectionColorTexture->GetUAVHandle(), m_pReprojectionColorTexture, clearDepthValue);
 		pCommandList->SetComputeRootConstantBufferView(kReprojectRootCBVParam, pParams->m_pAppDataBuffer);
 		pCommandList->SetComputeRootDescriptorTable(kReprojectRootSRVTableParam, m_ReprojectSRVHeapStart);
-
 		pCommandList->Dispatch(m_NumThreadGroupsX, m_NumThreadGroupsY, 1);
+
+#ifdef ENABLE_PROFILING
+		pGPUProfiler->EndProfile(pCommandList, profileIndex1);
+#endif // ENABLE_PROFILING
 	}
 	{
+#ifdef ENABLE_PROFILING
+		u32 profileIndex2 = pGPUProfiler->StartProfile(pCommandList, "DownscaleAndReprojectDepthPass: Copy");
+#endif // ENABLE_PROFILING
+
 		pCommandList->SetPipelineState(m_pCopyPipelineState);
 		pCommandList->SetGraphicsRootSignature(m_pCopyRootSignature);
 
@@ -127,13 +133,13 @@ void DownscaleAndReprojectDepthPass::Record(RenderParams* pParams)
 		Rect copyScissorRect(ExtractRect(m_pCopyViewport));
 		pCommandList->RSSetViewports(1, m_pCopyViewport);
 		pCommandList->RSSetScissorRects(1, &copyScissorRect);
-		
 		pCommandList->DrawInstanced(3, 1, 0, 0);
-	}
 
 #ifdef ENABLE_PROFILING
-	pGPUProfiler->EndProfile(pCommandList, profileIndex);
+		pGPUProfiler->EndProfile(pCommandList, profileIndex2);
 #endif // ENABLE_PROFILING
+	}
+
 	pCommandList->End();
 }
 
@@ -164,14 +170,13 @@ void DownscaleAndReprojectDepthPass::InitReprojectPipelineState(InitParams* pPar
 	m_NumThreadGroupsX = (u32)Ceil((f32)reprojectedDepthTextureWidth / (f32)numThreads);
 	m_NumThreadGroupsY = (u32)Ceil((f32)reprojectedDepthTextureHeight / (f32)numThreads);
 
-	std::string numThreadsStr = std::to_string(numThreads);
-	const ShaderMacro shaderDefines[] =
+	std::wstring numThreadsStr = std::to_wstring(numThreads);
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("NUM_THREADS_X", numThreadsStr.c_str()),
-		ShaderMacro("NUM_THREADS_Y", numThreadsStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"NUM_THREADS_X", numThreadsStr.c_str()),
+		ShaderDefine(L"NUM_THREADS_Y", numThreadsStr.c_str())
 	};
-	Shader computeShader(L"Shaders//DownscaleAndReprojectDepthCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//DownscaleAndReprojectDepthCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pReprojectRootSignature);
@@ -233,8 +238,8 @@ void DownscaleAndReprojectDepthPass::InitCopyPipelineState(InitParams* pParams)
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//CopyReprojectedDepthPS.hlsl", "Main", "ps_4_0");
+	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", L"Main", L"vs_6_1");
+	Shader pixelShader(L"Shaders//CopyReprojectedDepthPS.hlsl", L"Main", L"ps_6_1");
 
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pCopyRootSignature);

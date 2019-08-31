@@ -7,28 +7,38 @@ class GraphicsDevice;
 class GraphicsResource;
 class CommandSignature;
 class PipelineState;
+class StateObject;
 class RootSignature;
 class DescriptorHeap;
 class QueryHeap;
 class Fence;
+class Buffer;
 
 struct Viewport;
 struct Rect;
 struct VertexBufferView;
 struct IndexBufferView;
 
+struct DispatchRaysDesc : public D3D12_DISPATCH_RAYS_DESC
+{
+	DispatchRaysDesc(UINT numRaysX, UINT numRaysY, UINT numRaysZ,
+		Buffer* pRayGenerationShaderTable, Buffer* pMissShaderTable, Buffer* pHitGroupTable,
+		Buffer* pCallableShaderTable = nullptr);
+};
+
 class CommandList
 {
 public:
 	CommandList(GraphicsDevice* pDevice, D3D12_COMMAND_LIST_TYPE type, LPCWSTR pName);
 	
-	ID3D12GraphicsCommandList* GetD3DObject() { return m_D3DCommandList.Get(); }
+	ID3D12GraphicsCommandList4* GetD3DObject() { return m_D3DCommandList.Get(); }
 	void SetName(LPCWSTR pName);
 
 	void Begin(PipelineState* pPipelineState = nullptr);
 	void End();
 
 	void SetPipelineState(PipelineState* pPipelineState);
+	void SetPipelineState(StateObject* pStateObject);
 				
 	void IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
 	void IASetVertexBuffers(UINT startSlot, UINT numViews, const VertexBufferView* pViews);
@@ -59,6 +69,7 @@ public:
 	void DrawInstanced(UINT vertexCountPerInstance, UINT instanceCount, UINT startVertexLocation, UINT startInstanceLocation);
 	void DrawIndexedInstanced(UINT indexCountPerInstance, UINT instanceCount, UINT startIndexLocation, INT baseVertexLocation, UINT startInstanceLocation);
 	void Dispatch(UINT numThreadGroupsX, UINT numThreadGroupsY, UINT numThreadGroupsZ);
+	void DispatchRays(const DispatchRaysDesc* pDesc);
 	
 	void ExecuteIndirect(CommandSignature* pCommandSignature, UINT maxCommandCount,
 		Buffer* pArgumentBuffer, UINT64 argumentBufferOffset,
@@ -83,12 +94,15 @@ public:
 	void CopyBufferRegion(Buffer* pDestBuffer, UINT64 destOffsetInBytes, Buffer* pSourceBuffer, UINT64 sourceOffsetInBytes, UINT64 numBytesToCopy);
 
 	void ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER* pBarriers);
-		
+	
+	void BuildRaytracingAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* pDesc,
+		UINT numPostbuildInfoDescs, const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC* pPostbuildInfoDescs);
+
 	void SetCompletionFence(Fence* pFence, UINT64 fenceValue);
 	bool CompletedExecution();
 
 private:
-	ComPtr<ID3D12GraphicsCommandList> m_D3DCommandList;
+	ComPtr<ID3D12GraphicsCommandList4> m_D3DCommandList;
 	ComPtr<ID3D12CommandAllocator> m_D3DCommandAllocator;	
 	Fence* m_pCompletionFence;
 	UINT64 m_CompletionFenceValue;

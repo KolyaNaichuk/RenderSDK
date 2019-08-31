@@ -1,5 +1,6 @@
 #pragma once
 
+#include "D3DWrapper/RenderEnv.h"
 #include "D3DWrapper/DescriptorHeap.h"
 #include "D3DWrapper/CommandQueue.h"
 #include "D3DWrapper/CommandList.h"
@@ -7,7 +8,6 @@
 
 class GraphicsDevice;
 class GraphicsResource;
-struct RenderEnv;
 
 DXGI_FORMAT GetRenderTargetViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetDepthStencilViewFormat(DXGI_FORMAT resourceFormat);
@@ -15,6 +15,7 @@ DXGI_FORMAT GetShaderResourceViewFormat(DXGI_FORMAT resourceFormat);
 DXGI_FORMAT GetUnorderedAccessViewFormat(DXGI_FORMAT resourceFormat);
 
 UINT CalcSubresource(UINT mipSlice, UINT arraySlice, UINT mipLevels);
+UINT CountMips(UINT width, UINT height);
 
 struct ResourceTransitionBarrier : D3D12_RESOURCE_BARRIER
 {
@@ -63,38 +64,25 @@ struct ConstantBufferViewDesc : public D3D12_CONSTANT_BUFFER_VIEW_DESC
 	ConstantBufferViewDesc(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes);
 };
 
-struct VertexBufferDesc : public D3D12_RESOURCE_DESC
-{
-	VertexBufferDesc(UINT numVertices, UINT strideInBytes, UINT64 alignment = 0);
-
-	UINT NumVertices;
-	UINT StrideInBytes;
-};
-
 struct VertexBufferView : public D3D12_VERTEX_BUFFER_VIEW
 {
 	VertexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes);
 };
 
-struct IndexBufferDesc : public D3D12_RESOURCE_DESC
-{
-	IndexBufferDesc(UINT numIndices, UINT strideInBytes, UINT64 alignment = 0);
-
-	UINT NumIndices;
-	UINT StrideInBytes;
-};
+DXGI_FORMAT GetIndexBufferFormat(UINT strideInBytes);
 
 struct IndexBufferView : public D3D12_INDEX_BUFFER_VIEW
 {
-	IndexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, UINT strideInBytes);
+	IndexBufferView(D3D12_GPU_VIRTUAL_ADDRESS bufferLocation, UINT sizeInBytes, DXGI_FORMAT format);
 };
 
 struct StructuredBufferDesc : public D3D12_RESOURCE_DESC
 {
-	StructuredBufferDesc(UINT numElements, UINT structureByteStride, bool createSRV, bool createUAV, UINT64 alignment = 0);
+	StructuredBufferDesc(UINT numElements, UINT structureByteStride, bool createSRV, bool createUAV, bool createVBView = false, UINT64 alignment = 0);
 
 	UINT NumElements;
 	UINT StructureByteStride;
+	bool CreateVBView;
 };
 
 struct StructuredBufferSRVDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
@@ -110,11 +98,12 @@ struct StructuredBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 
 struct FormattedBufferDesc : public D3D12_RESOURCE_DESC
 {
-	FormattedBufferDesc(UINT numElements, DXGI_FORMAT format, bool createSRV, bool createUAV, UINT64 alignment = 0);
+	FormattedBufferDesc(UINT numElements, DXGI_FORMAT format, bool createSRV, bool createUAV, bool createIBView = false, UINT64 alignment = 0);
 
 	UINT NumElements;
 	DXGI_FORMAT SRVFormat;
 	DXGI_FORMAT UAVFormat;
+	bool CreateIBView;
 };
 
 struct FormattedBufferSRVDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
@@ -126,6 +115,13 @@ struct FormattedBufferSRVDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
 struct FormattedBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 {
 	FormattedBufferUAVDesc(UINT64 firstElement, UINT numElements, DXGI_FORMAT format);
+};
+
+struct RawBufferDesc : public D3D12_RESOURCE_DESC
+{
+	RawBufferDesc(UINT64 sizeInBytes, bool createSRV, bool createUAV, UINT64 alignment = 0);
+
+	UINT NumElements;
 };
 
 struct RawBufferSRVDesc : public D3D12_SHADER_RESOURCE_VIEW_DESC
@@ -143,6 +139,13 @@ struct CounterBufferUAVDesc : public D3D12_UNORDERED_ACCESS_VIEW_DESC
 {
 	CounterBufferUAVDesc(UINT64 firstElement, UINT numElements,
 		UINT structureByteStride, UINT64 counterOffsetInBytes);
+};
+
+struct ShaderTableDesc : public D3D12_RESOURCE_DESC
+{
+	ShaderTableDesc(UINT numRecords, UINT recordSizeInBytes, bool allowUnorderedAccess = false, UINT64 alignment = 0);
+
+	UINT NumRecords;
 };
 
 struct ColorTexture1DDesc : public D3D12_RESOURCE_DESC
@@ -462,17 +465,17 @@ public:
 		const ConstantBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
 	Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const VertexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
-
-	Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
-		const IndexBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
-
-	Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const StructuredBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
 	Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const FormattedBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
-	
+
+	Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const RawBufferDesc* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+
+	Buffer(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
+		const ShaderTableDesc* pShaderTableDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
+
 	~Buffer();
 	
 	VertexBufferView* GetVBView();
@@ -482,17 +485,19 @@ public:
 	DescriptorHandle GetUAVHandle();
 	DescriptorHandle GetCBVHandle();
 
-	UINT64 GetWidth() const { return m_Desc.Width; }
-		
+	UINT64 GetSizeInBytes() const { return m_Desc.Width; }
+	UINT64 GetNumElements() const { return m_NumElements; }
+
+	D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() { return m_D3DResource->GetGPUVirtualAddress(); }
+	
 private:
 	void CreateCommittedResource(RenderEnv* pRenderEnv, const D3D12_HEAP_PROPERTIES* pHeapProps,
 		const D3D12_RESOURCE_DESC* pBufferDesc, D3D12_RESOURCE_STATES initialState, LPCWSTR pName);
 
 	void CreateBufferView(RenderEnv* pRenderEnv, const ConstantBufferDesc* pBufferDesc);
-	void CreateBufferView(RenderEnv* pRenderEnv, const VertexBufferDesc* pBufferDesc);
-	void CreateBufferView(RenderEnv* pRenderEnv, const IndexBufferDesc* pBufferDesc);
 	void CreateBufferViews(RenderEnv* pRenderEnv, const StructuredBufferDesc* pBufferDesc);
 	void CreateBufferViews(RenderEnv* pRenderEnv, const FormattedBufferDesc* pBufferDesc);
+	void CreateBufferViews(RenderEnv* pRenderEnv, const RawBufferDesc* pBufferDesc);
 
 private:
 	DescriptorHandle m_SRVHandle;
@@ -500,6 +505,7 @@ private:
 	DescriptorHandle m_CBVHandle;
 	VertexBufferView* m_pVBView;
 	IndexBufferView* m_pIBView;
+	UINT64 m_NumElements;
 };
 
 class Sampler
@@ -518,11 +524,68 @@ struct TextureCopyLocation : public D3D12_TEXTURE_COPY_LOCATION
 	TextureCopyLocation(GraphicsResource* pGraphicsResource, const D3D12_PLACED_SUBRESOURCE_FOOTPRINT& footprint);
 };
 
+struct RayTracingTrianglesGeometryDesc : D3D12_RAYTRACING_GEOMETRY_DESC
+{
+	RayTracingTrianglesGeometryDesc(DXGI_FORMAT vertexFormat, Buffer* pVertexBuffer, Buffer* pIndexBuffer,
+		D3D12_RAYTRACING_GEOMETRY_FLAGS flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE, Buffer* pTransformBuffer = nullptr);
+};
+
+struct RayTracingInstanceDesc : D3D12_RAYTRACING_INSTANCE_DESC
+{
+};
+
+struct BuildRayTracingAccelerationStructureInputs : D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS
+{
+};
+
+struct RayTracingAccelerationStructurePrebuildInfo : D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO
+{
+};
+
+struct BuildRayTracingAccelerationStructureDesc : D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC
+{
+	BuildRayTracingAccelerationStructureDesc(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* pInputs,
+		Buffer* pDestBuffer, Buffer* pScratchBuffer, Buffer* pSourceBuffer = nullptr);
+};
+
+struct ShaderRecord
+{
+	ShaderRecord(void* pShaderIdentifier, UINT shaderIdentifierSizeInBytes);
+	ShaderRecord(void* pShaderIdentifier, UINT shaderIdentifierSizeInBytes, void* pLocalRootArguments, UINT localRootArgumentsSizeInBytes);
+
+	void* m_pShaderIdentifier;
+	UINT m_ShaderIdentifierSizeInBytes;
+
+	void* m_pLocalRootArguments;
+	UINT m_LocalRootArgumentsSizeInBytes;
+};
+
+class ShaderRecordData
+{
+public:
+	ShaderRecordData(UINT maxNumRecords, UINT recordSizeInBytes);
+	~ShaderRecordData();
+
+	UINT GetNumRecords() const;
+	UINT GetSizeInBytes() const;
+	const void* GetData() const;
+
+	void Append(const ShaderRecord& record);
+	void Reset();
+
+private:
+	BYTE* m_pData;
+	UINT m_RecordSizeInBytes;
+	UINT m_SizeInBytes;
+	UINT m_MaxSizeInBytes;
+	UINT m_NumRecords;
+};
+
 template <typename DestBufferDesc>
 void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, DestBufferDesc destBufferDesc,
 	D3D12_RESOURCE_STATES destBufferStateAfter, const void* pUploadData, SIZE_T numUploadBytes)
 {
-	destBufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+	destBufferDesc.Flags = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
 
 	Buffer* pUploadBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &destBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"UploadData::pUploadBuffer");
 	pUploadBuffer->Write(pUploadData, numUploadBytes);
@@ -540,4 +603,4 @@ void UploadData(RenderEnv* pRenderEnv, Buffer* pDestBuffer, DestBufferDesc destB
 	pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
 
 	SafeDelete(pUploadBuffer);
-}
+} 

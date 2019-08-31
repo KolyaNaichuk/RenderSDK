@@ -17,7 +17,6 @@ public:
 
 	struct InitParams
 	{
-		const char* m_pName = nullptr;
 		RenderEnv* m_pRenderEnv = nullptr;
 		ResourceStates m_InputResourceStates;
 		u32 m_MaxNumActiveExpShadowMaps = 0;
@@ -45,8 +44,6 @@ private:
 	void InitPipelineState(InitParams* pParams);
 
 private:
-	std::string m_Name;
-
 	RootSignature* m_pRootSignature = nullptr;
 	PipelineState* m_pPipelineStateX = nullptr;
 	DescriptorHandle m_SRVHeapStartX;

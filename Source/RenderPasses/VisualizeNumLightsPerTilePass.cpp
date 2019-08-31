@@ -20,7 +20,6 @@ namespace
 }
 
 VisualizeNumLightsPerTilePass::VisualizeNumLightsPerTilePass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -41,7 +40,7 @@ void VisualizeNumLightsPerTilePass::Record(RenderParams* pParams)
 
 	pCommandList->Begin(m_pPipelineState);
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "VisualizeNumLightsPerTilePass");
 #endif // ENABLE_PROFILING
 
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
@@ -118,15 +117,14 @@ void VisualizeNumLightsPerTilePass::InitPipelineState(InitParams* pParams)
 	assert(m_pPipelineState == nullptr);
 	assert(m_pRootSignature != nullptr);
 	
-	std::string colorModeStr = std::to_string(pParams->m_ColorMode);
-	const ShaderMacro shaderDefines[] =
+	std::wstring colorModeStr = std::to_wstring(pParams->m_ColorMode);
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("COLOR_MODE", colorModeStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"COLOR_MODE", colorModeStr.c_str())
 	};
 
-	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//VisualizeNumLightsPerTilePS.hlsl", "Main", "ps_4_0", shaderDefines);
+	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", L"Main", L"vs_6_1");
+	Shader pixelShader(L"Shaders//VisualizeNumLightsPerTilePS.hlsl", L"Main", L"ps_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);

@@ -22,7 +22,7 @@
     <ProjectGuid>{FEB52F9E-D717-46D3-ADA9-102908517202}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>DynamicGI</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -99,7 +99,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-4.1.0\lib\$(Platform)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;dxcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\Shaders" MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
@@ -218,7 +218,7 @@ IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll" COPY
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-4.1.0\lib\$(Platform)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;d3dcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;dxcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>IF NOT EXIST "$(SolutionDir)Samples\$(ProjectName)\Shaders" MKDIR "$(SolutionDir)Samples\$(ProjectName)\Shaders"
@@ -247,6 +247,9 @@ COPY /Y "$(SolutionDir)Shaders\OverlapTest.hlsl" "$(SolutionDir)Samples\Bin\$(Pr
 
 COPY /Y "$(SolutionDir)Shaders\VisualizeTexturePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeTexturePS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\VisualizeTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeTexturePS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\VisualizeDepthTexturePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeDepthTexturePS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\VisualizeDepthTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeDepthTexturePS.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\VisualizeNumLightsPerTilePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeNumLightsPerTilePS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\VisualizeNumLightsPerTilePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeNumLightsPerTilePS.hlsl"
@@ -320,7 +323,27 @@ COPY /Y "$(SolutionDir)Shaders\VoxelizePS.hlsl" "$(SolutionDir)Samples\Bin\$(Pro
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\GammaCorrection.hlsl"
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"
 
-IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-4.1.0\bin\$(Platform)\assimp-vc140-mt.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll"</Command>
+COPY /Y "$(SolutionDir)Shaders\SphericalHarmonics.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\SphericalHarmonics.hlsl"
+COPY /Y "$(SolutionDir)Shaders\SphericalHarmonics.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\SphericalHarmonics.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\CubeMapToSHCoefficientsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\CubeMapToSHCoefficientsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\CubeMapToSHCoefficientsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\CubeMapToSHCoefficientsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RadianceCubeMapToSHIrradianceCoefficientsCS.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\BRDF.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\BRDF.hlsl"
+COPY /Y "$(SolutionDir)Shaders\BRDF.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\BRDF.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\Sampling.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\Sampling.hlsl"
+COPY /Y "$(SolutionDir)Shaders\Sampling.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\Sampling.hlsl"
+
+COPY /Y "$(SolutionDir)Shaders\ImageBasedLighting.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\ImageBasedLighting.hlsl"
+COPY /Y "$(SolutionDir)Shaders\ImageBasedLighting.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\ImageBasedLighting.hlsl"
+
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-4.1.0\bin\$(Platform)\assimp-vc140-mt.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll"
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\dxcompiler.dll" COPY /Y "$(SolutionDir)Include\External\DxcCompiler\bin\$(Platform)\dxcompiler.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\dxcompiler.dll"
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\dxil.dll" COPY /Y "$(SolutionDir)Include\External\DxcCompiler\bin\$(Platform)\dxil.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\dxil.dll"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

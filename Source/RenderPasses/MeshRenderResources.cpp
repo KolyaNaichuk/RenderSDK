@@ -294,10 +294,9 @@ void MeshRenderResources::InitVertexBuffer(RenderEnv* pRenderEnv, u32 meshType, 
 		vertexOffset += elementSizeInBytes;
 	}
 
-	VertexBufferDesc bufferDesc(numVertices, m_VertexStrideInBytes[meshType]);
+	StructuredBufferDesc bufferDesc(numVertices, m_VertexStrideInBytes[meshType], true, false, true);
 	m_VertexBuffers[meshType] = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pVertexBuffer");
-	UploadData(pRenderEnv, m_VertexBuffers[meshType], bufferDesc,
-		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, pVertexData, sizeInBytes);
+	UploadData(pRenderEnv, m_VertexBuffers[meshType], bufferDesc, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, pVertexData, sizeInBytes);
 	
 	SafeArrayDelete(pVertexData);
 }
@@ -310,7 +309,7 @@ void MeshRenderResources::InitIndexBuffer(RenderEnv* pRenderEnv, u32 meshType, c
 	const u32 strideInBytes = use16BitIndices ? sizeof(u16) : sizeof(u32);
 	const u32 sizeInBytes = numIndices * strideInBytes;
 
-	IndexBufferDesc bufferDesc(numIndices, strideInBytes);
+	FormattedBufferDesc bufferDesc(numIndices, GetIndexBufferFormat(strideInBytes), true, false, true);
 	m_IndexBuffers[meshType] = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"MeshRenderResources::m_pIndexBuffer");
 	
 	const void* pIndexData = nullptr;

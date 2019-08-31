@@ -7,7 +7,44 @@
 #include "D3DWrapper/DescriptorHeap.h"
 #include "D3DWrapper/QueryHeap.h"
 #include "D3DWrapper/Fence.h"
+#include "D3DWrapper/StateObject.h"
 #include "D3DWrapper/GraphicsUtils.h"
+
+DispatchRaysDesc::DispatchRaysDesc(UINT numRaysX, UINT numRaysY, UINT numRaysZ,
+	Buffer* pRayGenerationShaderTable, Buffer* pMissShaderTable, Buffer* pHitGroupTable,
+	Buffer* pCallableShaderTable)
+{
+	assert(pRayGenerationShaderTable != nullptr);
+	RayGenerationShaderRecord.StartAddress = pRayGenerationShaderTable->GetGPUVirtualAddress();
+	RayGenerationShaderRecord.SizeInBytes = pRayGenerationShaderTable->GetSizeInBytes();
+
+	assert(pMissShaderTable != nullptr);
+	MissShaderTable.StartAddress = pMissShaderTable->GetGPUVirtualAddress();
+	MissShaderTable.SizeInBytes = pMissShaderTable->GetSizeInBytes();
+	MissShaderTable.StrideInBytes = pMissShaderTable->GetSizeInBytes() / pMissShaderTable->GetNumElements();
+
+	assert(pHitGroupTable != nullptr);
+	HitGroupTable.StartAddress = pHitGroupTable->GetGPUVirtualAddress();
+	HitGroupTable.SizeInBytes = pHitGroupTable->GetSizeInBytes();
+	HitGroupTable.StrideInBytes = pHitGroupTable->GetSizeInBytes() / pHitGroupTable->GetNumElements();
+
+	if (pCallableShaderTable != nullptr)
+	{
+		CallableShaderTable.StartAddress = pCallableShaderTable->GetGPUVirtualAddress();
+		CallableShaderTable.SizeInBytes = pCallableShaderTable->GetSizeInBytes();
+		CallableShaderTable.StrideInBytes = pCallableShaderTable->GetSizeInBytes() / pCallableShaderTable->GetNumElements();
+	}
+	else
+	{
+		CallableShaderTable.StartAddress = 0;
+		CallableShaderTable.SizeInBytes = 0;
+		CallableShaderTable.StrideInBytes = 0;
+	}
+		
+	Width = numRaysX;
+	Height = numRaysY;
+	Depth = numRaysZ;
+}
 
 CommandList::CommandList(GraphicsDevice* pDevice, D3D12_COMMAND_LIST_TYPE type, LPCWSTR pName)
 {
@@ -46,6 +83,11 @@ void CommandList::SetPipelineState(PipelineState* pPipelineState)
 	m_D3DCommandList->SetPipelineState(pPipelineState->GetD3DObject());
 }
 
+void CommandList::SetPipelineState(StateObject* pStateObject)
+{
+	m_D3DCommandList->SetPipelineState1(pStateObject->GetD3DObject());
+}
+
 void CommandList::IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
 {
 	m_D3DCommandList->IASetPrimitiveTopology(primitiveTopology);
@@ -80,6 +122,12 @@ void CommandList::CopyBufferRegion(Buffer* pDestBuffer, UINT64 destOffsetInBytes
 void CommandList::ResourceBarrier(UINT numBarriers, const D3D12_RESOURCE_BARRIER* pBarriers)
 {
 	m_D3DCommandList->ResourceBarrier(numBarriers, pBarriers);
+}
+
+void CommandList::BuildRaytracingAccelerationStructure(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC* pDesc,
+	UINT numPostbuildInfoDescs, const D3D12_RAYTRACING_ACCELERATION_STRUCTURE_POSTBUILD_INFO_DESC* pPostbuildInfoDescs)
+{
+	m_D3DCommandList->BuildRaytracingAccelerationStructure(pDesc, numPostbuildInfoDescs, pPostbuildInfoDescs);
 }
 
 void CommandList::SetGraphicsRootSignature(RootSignature* pRootSignature)
@@ -122,14 +170,12 @@ void CommandList::SetGraphicsRoot32BitConstants(UINT rootParamIndex, UINT num32B
 
 void CommandList::SetGraphicsRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer)
 {
-	ID3D12Resource* pD3DResource = pBuffer->GetD3DObject();
-	m_D3DCommandList->SetGraphicsRootConstantBufferView(rootParamIndex, pD3DResource->GetGPUVirtualAddress());
+	m_D3DCommandList->SetGraphicsRootConstantBufferView(rootParamIndex, pBuffer->GetGPUVirtualAddress());
 }
 
 void CommandList::SetGraphicsRootShaderResourceView(UINT rootParamIndex, Buffer* pBuffer)
 {
-	ID3D12Resource* pD3DResource = pBuffer->GetD3DObject();
-	m_D3DCommandList->SetGraphicsRootShaderResourceView(rootParamIndex, pD3DResource->GetGPUVirtualAddress());
+	m_D3DCommandList->SetGraphicsRootShaderResourceView(rootParamIndex, pBuffer->GetGPUVirtualAddress());
 }
 
 void CommandList::SetComputeRootSignature(RootSignature* pRootSignature)
@@ -154,14 +200,12 @@ void CommandList::SetComputeRoot32BitConstants(UINT rootParamIndex, UINT num32Bi
 
 void CommandList::SetComputeRootConstantBufferView(UINT rootParamIndex, Buffer* pBuffer)
 {
-	ID3D12Resource* pD3DResource = pBuffer->GetD3DObject();
-	m_D3DCommandList->SetComputeRootConstantBufferView(rootParamIndex, pD3DResource->GetGPUVirtualAddress());
+	m_D3DCommandList->SetComputeRootConstantBufferView(rootParamIndex, pBuffer->GetGPUVirtualAddress());
 }
 
 void CommandList::SetComputeRootShaderResourceView(UINT rootParamIndex, Buffer* pBuffer)
 {
-	ID3D12Resource* pD3DResource = pBuffer->GetD3DObject();
-	m_D3DCommandList->SetComputeRootShaderResourceView(rootParamIndex, pD3DResource->GetGPUVirtualAddress());
+	m_D3DCommandList->SetComputeRootShaderResourceView(rootParamIndex, pBuffer->GetGPUVirtualAddress());
 }
 
 void CommandList::RSSetViewports(UINT numViewports, const Viewport* pViewports)
@@ -193,6 +237,11 @@ void CommandList::DrawIndexedInstanced(UINT indexCountPerInstance, UINT instance
 void CommandList::Dispatch(UINT numThreadGroupsX, UINT numThreadGroupsY, UINT numThreadGroupsZ)
 {
 	m_D3DCommandList->Dispatch(numThreadGroupsX, numThreadGroupsY, numThreadGroupsZ);
+}
+
+void CommandList::DispatchRays(const DispatchRaysDesc* pDesc)
+{
+	m_D3DCommandList->DispatchRays(pDesc);
 }
 
 void CommandList::ExecuteIndirect(CommandSignature* pCommandSignature, UINT maxCommandCount,

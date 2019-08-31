@@ -8,42 +8,64 @@ ShaderBytecode::ShaderBytecode(const void* pBytecode, SIZE_T bytecodeLength)
 	BytecodeLength = bytecodeLength;
 }
 
-ShaderMacro::ShaderMacro()
-{
-	Name = nullptr;
-	Definition = nullptr;
-}
-
-ShaderMacro::ShaderMacro(LPCSTR pName, LPCSTR pDefinition)
+ShaderDefine::ShaderDefine(LPCWSTR pName, LPCWSTR pValue)
 {
 	Name = pName;
-	Definition = pDefinition;
+	Value = pValue;
 }
 
-Shader::Shader(LPCWSTR pFileName, LPCSTR pEntryPoint, LPCSTR pShaderModel, const ShaderMacro* pDefines)
+Shader::Shader(LPCWSTR pFileName, LPCWSTR pEntryPoint, LPCWSTR pTargetProfile)
+	: Shader(pFileName, pEntryPoint, pTargetProfile, nullptr, 0)
 {
-	UINT compileFlags = 0;
-	compileFlags |= D3DCOMPILE_ENABLE_STRICTNESS;
+}
 
+Shader::Shader(LPCWSTR pFileName, LPCWSTR pEntryPoint, LPCWSTR pTargetProfile, const ShaderDefine* pDefines, UINT32 defineCount)
+{
+	ComPtr<IDxcLibrary> dxcLibrary;
+	VerifyD3DResult(DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&dxcLibrary)));
+	
+	ComPtr<IDxcCompiler> dxcCompiler;
+	VerifyD3DResult(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&dxcCompiler)));
+
+	ComPtr<IDxcIncludeHandler> dxcIncludeHandler;
+	VerifyD3DResult(dxcLibrary->CreateIncludeHandler(&dxcIncludeHandler));
+
+	ComPtr<IDxcBlobEncoding> dxcSourceBlob;
+	VerifyD3DResult(dxcLibrary->CreateBlobFromFile(pFileName, nullptr/*codePage*/, &dxcSourceBlob));
+
+	LPCWSTR compilationArgs[] = {
 #ifdef ENABLE_SHADER_DEBUGGING
-	compileFlags |= D3DCOMPILE_DEBUG;
-	compileFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+		L"/Zi"
 #endif // ENABLE_SHADER_DEBUGGING
+	};
 
-	ComPtr<ID3DBlob> d3dErrorBlob;
-	HRESULT result = D3DCompileFromFile(pFileName, pDefines, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		pEntryPoint, pShaderModel, compileFlags, 0, &m_D3DBytecodeBlob, &d3dErrorBlob);
+	ComPtr<IDxcOperationResult> dxcCompilationResult;
+	VerifyD3DResult(dxcCompiler->Compile(dxcSourceBlob.Get(), pFileName, pEntryPoint, pTargetProfile,
+		compilationArgs, ARRAYSIZE(compilationArgs), pDefines, defineCount, dxcIncludeHandler.Get(), &dxcCompilationResult));
 
-	if (FAILED(result))
+	HRESULT compilationStatus = S_OK;
+	dxcCompilationResult->GetStatus(&compilationStatus);
+
+	if (SUCCEEDED(compilationStatus))
 	{
-		OutputDebugStringA((LPCSTR)d3dErrorBlob->GetBufferPointer());
+		VerifyD3DResult(dxcCompilationResult->GetResult(&m_DXCBytecodeBlob));
+	}
+	else
+	{
+		ComPtr<IDxcBlobEncoding> dxcErrorBlob;
+		VerifyD3DResult(dxcCompilationResult->GetErrorBuffer(&dxcErrorBlob));
+
+		ComPtr<IDxcBlobEncoding> dxcError16Blob;
+		VerifyD3DResult(dxcLibrary->GetBlobAsUtf16(dxcErrorBlob.Get(), &dxcError16Blob));
+
+		OutputDebugStringW((LPCWSTR)dxcError16Blob->GetBufferPointer());
 		assert(false);
 	}
 }
 
 ShaderBytecode Shader::GetBytecode()
 {
-	return ShaderBytecode(m_D3DBytecodeBlob->GetBufferPointer(), m_D3DBytecodeBlob->GetBufferSize());
+	return ShaderBytecode(m_DXCBytecodeBlob->GetBufferPointer(), m_DXCBytecodeBlob->GetBufferSize());
 }
 
 CachedPipelineState::CachedPipelineState(const void* pBlob, SIZE_T blobSizeInBytes)

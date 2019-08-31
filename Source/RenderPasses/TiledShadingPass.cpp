@@ -20,7 +20,6 @@ namespace
 }
 
 TiledShadingPass::TiledShadingPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -45,7 +44,7 @@ void TiledShadingPass::Record(RenderParams* pParams)
 
 	pCommandList->Begin(m_pPipelineState);
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "TiledShadingPass");
 #endif // ENABLE_PROFILING
 
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
@@ -239,22 +238,21 @@ void TiledShadingPass::InitPipelineState(InitParams* pParams)
 
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
-	std::string numMaterialTexturesStr = std::to_string(pParams->m_NumMaterialTextures);
-	std::string numTexturesPerMaterialStr = std::to_string(pParams->m_NumTexturesPerMaterial);
-	std::string enableSpotLightsStr = std::to_string(pParams->m_EnableSpotLights ? 1 : 0);
-	std::string enableDirectionalLightStr = std::to_string(pParams->m_EnableDirectionalLight ? 1 : 0);
+	std::wstring numMaterialTexturesStr = std::to_wstring(pParams->m_NumMaterialTextures);
+	std::wstring numTexturesPerMaterialStr = std::to_wstring(pParams->m_NumTexturesPerMaterial);
+	std::wstring enableSpotLightsStr = std::to_wstring(pParams->m_EnableSpotLights ? 1 : 0);
+	std::wstring enableDirectionalLightStr = std::to_wstring(pParams->m_EnableDirectionalLight ? 1 : 0);
 
-	const ShaderMacro shaderDefines[] =
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("NUM_MATERIAL_TEXTURES", numMaterialTexturesStr.c_str()),
-		ShaderMacro("NUM_TEXTURES_PER_MATERIAL", numTexturesPerMaterialStr.c_str()),
-		ShaderMacro("ENABLE_SPOT_LIGHTS", enableSpotLightsStr.c_str()),
-		ShaderMacro("ENABLE_DIRECTIONAL_LIGHT", enableDirectionalLightStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"NUM_MATERIAL_TEXTURES", numMaterialTexturesStr.c_str()),
+		ShaderDefine(L"NUM_TEXTURES_PER_MATERIAL", numTexturesPerMaterialStr.c_str()),
+		ShaderDefine(L"ENABLE_SPOT_LIGHTS", enableSpotLightsStr.c_str()),
+		ShaderDefine(L"ENABLE_DIRECTIONAL_LIGHT", enableDirectionalLightStr.c_str())
 	};
 	
-	Shader vertexShader(L"Shaders//TiledShadingVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//TiledShadingPS.hlsl", "Main", "ps_5_1", shaderDefines);
+	Shader vertexShader(L"Shaders//TiledShadingVS.hlsl", L"Main", L"vs_6_1");
+	Shader pixelShader(L"Shaders//TiledShadingPS.hlsl", L"Main", L"ps_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	DXGI_FORMAT rtvFormat = GetRenderTargetViewFormat(pParams->m_pAccumLightTexture->GetFormat());
 	DXGI_FORMAT dsvFormat = GetDepthStencilViewFormat(pParams->m_pMeshTypeDepthTexture->GetFormat());

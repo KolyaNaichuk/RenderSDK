@@ -13,10 +13,8 @@ class VisualizeTexturePass
 public:
 	enum TextureType
 	{
-		TextureType_GBufferNormal = 1,
-		TextureType_GBufferTexCoord,
-		TextureType_Depth,
-		TextureType_ExpShadowMap,
+		TextureType_Normal = 1,
+		TextureType_TexCoord,
 		TextureType_RGB,
 		TextureType_R
 	};
@@ -42,7 +40,6 @@ public:
 	{
 		RenderEnv* m_pRenderEnv;
 		CommandList* m_pCommandList;
-		Buffer* m_pAppDataBuffer;
 		Viewport* m_pViewport;
 	};
 

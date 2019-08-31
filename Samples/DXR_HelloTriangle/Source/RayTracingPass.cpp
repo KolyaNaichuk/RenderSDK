@@ -1,0 +1,419 @@
+#include "RayTracingPass.h"
+#include "D3DWrapper/RootSignature.h"
+#include "D3DWrapper/PipelineState.h"
+#include "D3DWrapper/StateObject.h"
+#include "D3DWrapper/GraphicsDevice.h"
+#include "D3DWrapper/RenderEnv.h"
+#include "RenderPasses/MeshRenderResources.h"
+#include "Profiler/GPUProfiler.h"
+#include "Math/Vector2.h"
+#include "Math/Vector4.h"
+
+namespace
+{
+	LPCWSTR g_pRayGenShaderName = L"RayGeneration";
+	LPCWSTR g_pMissShaderName = L"RayMiss";
+	LPCWSTR g_pClosesHitShaderName = L"RayClosestHit";
+	LPCWSTR g_pHitGroupName = L"HitGroup";
+
+	enum GlobalRootParams
+	{
+		kGlobalRootCBVParam = 0,
+		kGlobalRootTLASParam,
+		kGlobalRootSRVTableParam,
+		kGlobalNumRootParams
+	};
+}
+
+RayTracingPass::RayTracingPass(InitParams* pParams)
+{
+	InitTextures(pParams);
+	InitGeometryBuffers(pParams);
+	InitAccelerationStructures(pParams);
+	InitRootSignatures(pParams);
+	InitStateObject(pParams);
+	InitDescriptorHeap(pParams);
+	InitShaderTables(pParams);
+}
+
+RayTracingPass::~RayTracingPass()
+{
+	SafeDelete(m_pTLASBuffer);
+	SafeDelete(m_pBLASBuffer);
+	SafeDelete(m_pInstanceBuffer);
+	SafeDelete(m_pGlobalRootSignature);
+	SafeDelete(m_pEmptyLocalRootSignature);
+	SafeDelete(m_pRayGenShaderTable);
+	SafeDelete(m_pMissShaderTable);
+	SafeDelete(m_pHitGroupTable);
+	SafeDelete(m_pStateObject);
+	SafeDelete(m_pRayTracedResult);
+}
+
+void RayTracingPass::Record(RenderParams* pParams)
+{
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	CommandList* pCommandList = pParams->m_pCommandList;
+	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
+
+	pCommandList->Begin();
+#ifdef ENABLE_PROFILING
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "RayTracingPass");
+#endif // ENABLE_PROFILING
+
+	pCommandList->SetPipelineState(m_pStateObject);
+	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
+	pCommandList->SetComputeRootSignature(m_pGlobalRootSignature);
+	pCommandList->SetComputeRootConstantBufferView(kGlobalRootCBVParam, pParams->m_pAppDataBuffer);
+	pCommandList->SetComputeRootShaderResourceView(kGlobalRootTLASParam, m_pTLASBuffer);
+	pCommandList->SetComputeRootDescriptorTable(kGlobalRootSRVTableParam, m_GlobalSRVHeapStart);
+		
+	if (!m_ResourceBarriers.empty())
+		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
+	
+	DispatchRaysDesc dispatchDesc(pParams->m_NumRaysX, pParams->m_NumRaysY, 1,
+		m_pRayGenShaderTable, m_pMissShaderTable, m_pHitGroupTable);
+	pCommandList->DispatchRays(&dispatchDesc);
+
+#ifdef ENABLE_PROFILING
+	pGPUProfiler->EndProfile(pCommandList, profileIndex);
+#endif // ENABLE_PROFILING
+	pCommandList->End();
+}
+
+void RayTracingPass::InitTextures(InitParams* pParams)
+{
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	
+	assert(m_pRayTracedResult == nullptr);	
+	const FLOAT optimizedClearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
+	ColorTexture2DDesc rayTracedResultDesc(DXGI_FORMAT_R10G10B10A2_UNORM, pParams->m_NumRaysX, pParams->m_NumRaysY, false, true, true);
+	m_pRayTracedResult = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &rayTracedResultDesc,
+		pParams->m_InputResourceStates.m_RayTracedResultState, optimizedClearColor, L"RayTracingPass::m_pRayTracedResult");
+
+	m_OutputResourceStates.m_RayTracedResultState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	if (pParams->m_InputResourceStates.m_RayTracedResultState != m_OutputResourceStates.m_RayTracedResultState)
+		m_ResourceBarriers.emplace_back(m_pRayTracedResult, pParams->m_InputResourceStates.m_RayTracedResultState, m_OutputResourceStates.m_RayTracedResultState);
+}
+
+void RayTracingPass::InitGeometryBuffers(InitParams* pParams)
+{
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	MeshRenderResources* pMeshRenderResources = pParams->m_pMeshRenderResources;
+
+	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
+	const u32 meshType = 0;
+	Buffer* pVertexBuffer = pMeshRenderResources->GetVertexBuffer(meshType);
+	Buffer* pIndexBuffer = pMeshRenderResources->GetIndexBuffer(meshType);
+
+	const ResourceTransitionBarrier resourceBarriers[] =
+	{
+		ResourceTransitionBarrier(pVertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE),
+		ResourceTransitionBarrier(pIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+	};
+
+	CommandList* pTransitionCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pTransitionCommandList");
+	pTransitionCommandList->Begin();
+	pTransitionCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
+	pTransitionCommandList->End();
+
+	++pRenderEnv->m_LastSubmissionFenceValue;
+	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pTransitionCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
+	pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
+}
+
+void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
+{
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	MeshRenderResources* pMeshRenderResources = pParams->m_pMeshRenderResources;
+
+	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
+	const u32 meshType = 0;
+	Buffer* pVertexBuffer = pMeshRenderResources->GetVertexBuffer(meshType);
+	Buffer* pIndexBuffer = pMeshRenderResources->GetIndexBuffer(meshType);
+
+	// Bottom level acceleration structure
+	RayTracingTrianglesGeometryDesc geometryDesc(DXGI_FORMAT_R32G32B32_FLOAT, pVertexBuffer, pIndexBuffer, D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE);
+
+	BuildRayTracingAccelerationStructureInputs BLASBuildInputs;
+	BLASBuildInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+	BLASBuildInputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+	BLASBuildInputs.NumDescs = 1;
+	BLASBuildInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+	BLASBuildInputs.pGeometryDescs = &geometryDesc;
+
+	RayTracingAccelerationStructurePrebuildInfo BLASPrebuildInfo;
+	pRenderEnv->m_pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&BLASBuildInputs, &BLASPrebuildInfo);
+
+	assert(BLASPrebuildInfo.ResultDataMaxSizeInBytes > 0);
+	assert(BLASPrebuildInfo.ScratchDataSizeInBytes > 0);
+	assert(BLASPrebuildInfo.UpdateScratchDataSizeInBytes == 0);
+
+	assert(m_pBLASBuffer == nullptr);
+	RawBufferDesc BLASBufferDesc(BLASPrebuildInfo.ResultDataMaxSizeInBytes, true, true);
+	m_pBLASBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &BLASBufferDesc,
+		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, L"RayTracingPass::m_pBLASBuffer");
+
+	RawBufferDesc BLASScratchBufferDesc(BLASPrebuildInfo.ScratchDataSizeInBytes, false, true);
+	Buffer BLASScratchBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &BLASScratchBufferDesc,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"RayTracingPass::BLASScratchBuffer");
+
+	// Top level instance data
+
+	RayTracingInstanceDesc instanceDesc;
+	ZeroMemory(instanceDesc.Transform, sizeof(instanceDesc.Transform));
+	instanceDesc.Transform[0][0] = 1.0f;
+	instanceDesc.Transform[1][1] = 1.0f;
+	instanceDesc.Transform[2][2] = 1.0f;
+	instanceDesc.InstanceID = 0;
+	instanceDesc.InstanceMask = 1;
+	instanceDesc.InstanceContributionToHitGroupIndex = 0;
+	instanceDesc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
+	instanceDesc.AccelerationStructure = m_pBLASBuffer->GetGPUVirtualAddress();
+
+	assert(m_pInstanceBuffer == nullptr);
+	StructuredBufferDesc instanceBufferDesc(1, sizeof(instanceDesc), true, false);
+	m_pInstanceBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &instanceBufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"RayTracingPass::m_pInstanceBuffer");
+
+	StructuredBufferDesc uploadInstanceBufferDesc(1, sizeof(instanceDesc), false, false);
+	Buffer uploadInstanceBuffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &uploadInstanceBufferDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ, L"RayTracingPass::uploadInstanceBuffer");
+	uploadInstanceBuffer.Write(&instanceDesc, sizeof(instanceDesc));
+
+	const ResourceTransitionBarrier uploadResourceBarriers[] = {
+		ResourceTransitionBarrier(m_pInstanceBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+	};
+	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pUploadInstanceDataCommandList");
+	pUploadCommandList->Begin();
+	pUploadCommandList->CopyResource(m_pInstanceBuffer, &uploadInstanceBuffer);
+	pUploadCommandList->ResourceBarrier(ARRAYSIZE(uploadResourceBarriers), uploadResourceBarriers);
+	pUploadCommandList->End();
+
+	++pRenderEnv->m_LastSubmissionFenceValue;
+	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pUploadCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
+	pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
+
+	// Top level acceleration structure
+
+	BuildRayTracingAccelerationStructureInputs TLASBuildInputs;
+	TLASBuildInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
+	TLASBuildInputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
+	TLASBuildInputs.NumDescs = 1;
+	TLASBuildInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+	TLASBuildInputs.InstanceDescs = m_pInstanceBuffer->GetGPUVirtualAddress();
+
+	RayTracingAccelerationStructurePrebuildInfo TLASPrebuildInfo;
+	pRenderEnv->m_pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&TLASBuildInputs, &TLASPrebuildInfo);
+
+	assert(TLASPrebuildInfo.ResultDataMaxSizeInBytes > 0);
+	assert(TLASPrebuildInfo.ScratchDataSizeInBytes > 0);
+	assert(TLASPrebuildInfo.UpdateScratchDataSizeInBytes == 0);
+
+	assert(m_pTLASBuffer == nullptr);
+	RawBufferDesc TLASBufferDesc(TLASPrebuildInfo.ResultDataMaxSizeInBytes, true, true);
+	m_pTLASBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &TLASBufferDesc,
+		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, L"RayTracingPass::m_pTLASBuffer");
+
+	RawBufferDesc TLASScratchBufferDesc(TLASPrebuildInfo.ScratchDataSizeInBytes, false, true);
+	Buffer TLASScratchBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &TLASScratchBufferDesc,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"RayTracingPass::TLASScratchBuffer");
+
+	// Common
+	
+	BuildRayTracingAccelerationStructureDesc buildBLASDesc(&BLASBuildInputs, m_pBLASBuffer, &BLASScratchBuffer);
+	BuildRayTracingAccelerationStructureDesc buildTLASDesc(&TLASBuildInputs, m_pTLASBuffer, &TLASScratchBuffer);
+	ResourceUAVBarrier buildBLASBarrier(m_pBLASBuffer);
+
+	CommandList* pBuildCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pBuildRayTracingASCommandList");
+	pBuildCommandList->Begin();
+	pBuildCommandList->BuildRaytracingAccelerationStructure(&buildBLASDesc, 0, nullptr);
+	pBuildCommandList->ResourceBarrier(1, &buildBLASBarrier);
+	pBuildCommandList->BuildRaytracingAccelerationStructure(&buildTLASDesc, 0, nullptr);
+	pBuildCommandList->End();
+
+	++pRenderEnv->m_LastSubmissionFenceValue;
+	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pBuildCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
+	pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
+}
+
+void RayTracingPass::InitRootSignatures(InitParams* pParams)
+{
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
+	D3D12_ROOT_PARAMETER globalRootParams[kGlobalNumRootParams];
+	globalRootParams[kGlobalRootCBVParam] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
+	globalRootParams[kGlobalRootTLASParam] = RootSRVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
+
+	D3D12_DESCRIPTOR_RANGE globalDescriptorRanges[] = {SRVDescriptorRange(2, 1), UAVDescriptorRange(1, 0)};
+	globalRootParams[kGlobalRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(globalDescriptorRanges), globalDescriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
+	
+	assert(m_pGlobalRootSignature == nullptr);
+	RootSignatureDesc globalRootSignatureDesc(kGlobalNumRootParams, globalRootParams);
+	m_pGlobalRootSignature = new RootSignature(pRenderEnv->m_pDevice, &globalRootSignatureDesc, L"RayTracingPass::m_pGlobalRootSignature");
+
+	assert(m_pEmptyLocalRootSignature == nullptr);
+	RootSignatureDesc emptyLocalRootSignatureDesc(D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
+	m_pEmptyLocalRootSignature = new RootSignature(pRenderEnv->m_pDevice, &emptyLocalRootSignatureDesc, L"RayTracingPass::m_pEmptyLocalRootSignature");
+}
+
+void RayTracingPass::InitStateObject(InitParams* pParams)
+{
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
+	enum StateObjectIndices
+	{
+		kDXILLibraryIndex = 0,
+		kHitGroupIndex,
+		kPipelineConfigIndex,
+		kShaderConfigIndex,
+		kShaderConfigAssocIndex,
+		kGlobalRootSigIndex,
+		kEmptyLocalRootSigIndex,
+		kEmptyLocalRootSigAssocIndex,
+		kNumStateObjects
+	};
+	D3D12_STATE_SUBOBJECT stateSubobjects[kNumStateObjects];
+
+	Shader shaderLibrary(L"Shaders//RayTracing.hlsl", L"", L"lib_6_3");
+	ExportDesc exportDescs[] = {ExportDesc(g_pRayGenShaderName), ExportDesc(g_pMissShaderName), ExportDesc(g_pClosesHitShaderName)};
+	
+	DXILLibraryDesc libraryDesc(shaderLibrary.GetBytecode(), ARRAYSIZE(exportDescs), exportDescs);
+	stateSubobjects[kDXILLibraryIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY, &libraryDesc);
+
+	HitGroupDesc hitGroupDesc(g_pHitGroupName, D3D12_HIT_GROUP_TYPE_TRIANGLES, nullptr, g_pClosesHitShaderName, nullptr);
+	stateSubobjects[kHitGroupIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP, &hitGroupDesc);
+
+	RayTracingPipelineConfig pipelineConfig(1);
+	stateSubobjects[kPipelineConfigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG, &pipelineConfig);
+
+	RayTracingShaderConfig shaderConfig(sizeof(Vector4f)/*color*/, sizeof(Vector2f)/*attribs*/);
+	stateSubobjects[kShaderConfigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG, &shaderConfig);
+
+	LPCWSTR shaderConfigExports[] = {g_pRayGenShaderName, g_pMissShaderName, g_pClosesHitShaderName};
+	SubobjectToExportsAssociation shaderConfigExportsAssoc(&stateSubobjects[kShaderConfigIndex], ARRAYSIZE(shaderConfigExports), shaderConfigExports);
+	stateSubobjects[kShaderConfigAssocIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION, &shaderConfigExportsAssoc);
+
+	assert(m_pGlobalRootSignature != nullptr);
+	GlobalRootSignature globalRootSignature(m_pGlobalRootSignature);
+	stateSubobjects[kGlobalRootSigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE, &globalRootSignature);
+
+	assert(m_pEmptyLocalRootSignature != nullptr);
+	LocalRootSignature emptyLocalRootSignature(m_pEmptyLocalRootSignature);
+	stateSubobjects[kEmptyLocalRootSigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE, &emptyLocalRootSignature);
+
+	LPCWSTR emptyLocalRootSigExports[] = {g_pRayGenShaderName, g_pClosesHitShaderName, g_pMissShaderName};
+	SubobjectToExportsAssociation emptyLocalRootSigExportsAssoc(&stateSubobjects[kEmptyLocalRootSigIndex], ARRAYSIZE(emptyLocalRootSigExports), emptyLocalRootSigExports);
+	stateSubobjects[kEmptyLocalRootSigAssocIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION, &emptyLocalRootSigExportsAssoc);
+
+	assert(m_pStateObject == nullptr);
+	StateObjectDesc stateObjectDesc(D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE, kNumStateObjects, stateSubobjects);
+	m_pStateObject = new StateObject(pRenderEnv->m_pDevice, &stateObjectDesc, L"RayTracingPass::m_pStateObject");
+}
+
+void RayTracingPass::InitDescriptorHeap(InitParams* pParams)
+{
+	assert(!m_GlobalSRVHeapStart.IsValid());
+
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	MeshRenderResources* pMeshRenderResources = pParams->m_pMeshRenderResources;
+
+	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
+	const u32 meshType = 0;
+	Buffer* pVertexBuffer = pMeshRenderResources->GetVertexBuffer(meshType);
+	Buffer* pIndexBuffer = pMeshRenderResources->GetIndexBuffer(meshType);
+
+	m_GlobalSRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
+	pRenderEnv->m_pDevice->CopyDescriptor(m_GlobalSRVHeapStart,
+		pVertexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+		pIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+		m_pRayTracedResult->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}
+
+void RayTracingPass::InitShaderTables(InitParams* pParams)
+{
+	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+
+	assert(m_pRayGenShaderTable == nullptr);
+	assert(m_pMissShaderTable == nullptr);
+	assert(m_pHitGroupTable == nullptr);
+
+	assert(m_pStateObject != nullptr);
+
+	Buffer* pUploadRayGenShaderTable = nullptr;
+	Buffer* pUploadMissShaderTable = nullptr;
+	Buffer* pUploadHitGroupTable = nullptr;
+
+	const SIZE_T shaderIdentifierSizeInBytes = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+	{		
+		const UINT shaderRecordSizeInBytes = shaderIdentifierSizeInBytes;
+		ShaderRecordData shaderRecordData(1, shaderRecordSizeInBytes);
+		shaderRecordData.Append(ShaderRecord(m_pStateObject->GetShaderIdentifier(g_pRayGenShaderName), shaderIdentifierSizeInBytes));
+		
+		ShaderTableDesc shaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes, true);
+		m_pRayGenShaderTable = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shaderTableDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST, L"RayTracingPass::m_pRayGenShaderTable");
+		
+		ShaderTableDesc uploadShaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes);
+		pUploadRayGenShaderTable = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &uploadShaderTableDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ, L"RayTracingPass::pUploadRayGenShaderTable");
+		pUploadRayGenShaderTable->Write(shaderRecordData.GetData(), shaderRecordData.GetSizeInBytes());
+	}
+
+	{
+		const UINT shaderRecordSizeInBytes = shaderIdentifierSizeInBytes;
+		ShaderRecordData shaderRecordData(1, shaderRecordSizeInBytes);
+		shaderRecordData.Append(ShaderRecord(m_pStateObject->GetShaderIdentifier(g_pMissShaderName), shaderIdentifierSizeInBytes));
+
+		ShaderTableDesc shaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes, true);
+		m_pMissShaderTable = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shaderTableDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST, L"RayTracingPass::m_pMissShaderTable");
+
+		ShaderTableDesc uploadShaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes);
+		pUploadMissShaderTable = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &uploadShaderTableDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ, L"RayTracingPass::pUploadMissShaderTable");
+		pUploadMissShaderTable->Write(shaderRecordData.GetData(), shaderRecordData.GetSizeInBytes());
+	}
+
+	{
+		const UINT shaderRecordSizeInBytes = shaderIdentifierSizeInBytes;
+		ShaderRecordData shaderRecordData(1, shaderRecordSizeInBytes);
+		shaderRecordData.Append(ShaderRecord(m_pStateObject->GetShaderIdentifier(g_pHitGroupName), shaderIdentifierSizeInBytes));
+		
+		ShaderTableDesc shaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes, true);
+		m_pHitGroupTable = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shaderTableDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST, L"RayTracingPass::m_pHitGroupTable");
+
+		ShaderTableDesc uploadShaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes);
+		pUploadHitGroupTable = new Buffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &uploadShaderTableDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ, L"RayTracingPass::pUploadHitGroupTable");
+		pUploadHitGroupTable->Write(shaderRecordData.GetData(), shaderRecordData.GetSizeInBytes());
+	}
+	
+	const ResourceTransitionBarrier resourceBarriers[] =
+	{
+		ResourceTransitionBarrier(m_pRayGenShaderTable, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE),
+		ResourceTransitionBarrier(m_pMissShaderTable, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE),
+		ResourceTransitionBarrier(m_pHitGroupTable, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+	};
+
+	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pUploadShaderTableDataCommandList");
+	pUploadCommandList->Begin();
+	pUploadCommandList->CopyResource(m_pRayGenShaderTable, pUploadRayGenShaderTable);
+	pUploadCommandList->CopyResource(m_pMissShaderTable, pUploadMissShaderTable);
+	pUploadCommandList->CopyResource(m_pHitGroupTable, pUploadHitGroupTable);
+	pUploadCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
+	pUploadCommandList->End();
+
+	++pRenderEnv->m_LastSubmissionFenceValue;
+	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pUploadCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
+	pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
+
+	SafeDelete(pUploadRayGenShaderTable);
+	SafeDelete(pUploadMissShaderTable);
+	SafeDelete(pUploadHitGroupTable);
+}

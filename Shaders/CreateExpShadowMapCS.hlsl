@@ -1,7 +1,7 @@
 struct CreateExpShadowMapParams
 {
-	float lightProjMatrix43;
-	float lightProjMatrix33;
+	float lightProjMatrix32;
+	float lightProjMatrix22;
 	float lightViewNearPlane;
 	float lightRcpViewClipRange;
 	float expShadowMapConstant;
@@ -23,7 +23,7 @@ void Main(uint3 globalThreadId : SV_DispatchThreadID)
 	CreateExpShadowMapParams params = g_CreateExpShadowMapParamsBuffer[g_ExpShadowMapIndex];
 
 	float hardwareDepth = g_StandardShadowMaps[uint3(globalThreadId.xy, g_StandardShadowMapIndex)];
-	float lightSpaceDepth = params.lightProjMatrix43 / (hardwareDepth - params.lightProjMatrix33);
+	float lightSpaceDepth = params.lightProjMatrix32 / (hardwareDepth - params.lightProjMatrix22);
 	float linearDepth = (lightSpaceDepth - params.lightViewNearPlane) * params.lightRcpViewClipRange;
 
 	g_ExpShadowMaps[uint3(globalThreadId.xy, g_ExpShadowMapIndex)] = exp(params.expShadowMapConstant * linearDepth);

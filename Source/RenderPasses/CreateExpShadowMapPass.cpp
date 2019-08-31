@@ -18,7 +18,6 @@ namespace
 }
 
 CreateExpShadowMapPass::CreateExpShadowMapPass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	InitResources(pParams);
 	InitRootSignature(pParams);
@@ -51,7 +50,7 @@ void CreateExpShadowMapPass::Record(RenderParams* pParams)
 	
 	GPUProfiler* pGPUProfiler = pRenderEnv->m_pGPUProfiler;
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "CreateExpShadowMapPass");
 #endif // ENABLE_PROFILING
 
 	const UINT constants32Bit[] = {pParams->m_StandardShadowMapIndex, pParams->m_ExpShadowMapIndex};
@@ -130,13 +129,12 @@ void CreateExpShadowMapPass::InitPipelineState(InitParams* pParams)
 	m_NumThreadGroupsX = (u32)Ceil((f32)pExpShadowMaps->GetWidth() / (f32)numThreads);
 	m_NumThreadGroupsY = m_NumThreadGroupsX;
 
-	std::string numThreadsStr = std::to_string(numThreads);
-	const ShaderMacro shaderDefines[] =
+	std::wstring numThreadsStr = std::to_wstring(numThreads);
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("NUM_THREADS", numThreadsStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"NUM_THREADS", numThreadsStr.c_str())
 	};
-	Shader computeShader(L"Shaders//CreateExpShadowMapCS.hlsl", "Main", "cs_5_0", shaderDefines);
+	Shader computeShader(L"Shaders//CreateExpShadowMapCS.hlsl", L"Main", L"cs_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	ComputePipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);

@@ -25,7 +25,6 @@ namespace
 }
 
 VoxelizePass::VoxelizePass(InitParams* pParams)
-	: m_Name(pParams->m_pName)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 
@@ -67,7 +66,7 @@ void VoxelizePass::Record(RenderParams* pParams)
 
 	pCommandList->Begin(m_pPipelineState);
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "VoxelizePass");
 #endif // ENABLE_PROFILING
 
 	pCommandList->SetGraphicsRootSignature(m_pRootSignature);
@@ -107,7 +106,7 @@ void VoxelizePass::Record(RenderParams* pParams)
 
 	pCommandList->Begin();
 #ifdef ENABLE_PROFILING
-	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, m_Name.c_str());
+	u32 profileIndex = pGPUProfiler->StartProfile(pCommandList, "VoxelizePass");
 #endif // ENABLE_PROFILING
 
 	if (!m_ResourceBarriers.empty())
@@ -265,9 +264,9 @@ void VoxelizePass::InitPipelineState(InitParams* pParams)
 		ShaderMacro()
 	};
 
-	Shader vertexShader(L"Shaders//VoxelizeVS.hlsl", "Main", "vs_4_0");
-	Shader geometryShader(L"Shaders//VoxelizeGS.hlsl", "Main", "gs_4_0");
-	Shader pixelShader(L"Shaders//VoxelizePS.hlsl", "Main", "ps_5_1", shaderDefinesPS);
+	Shader vertexShader(L"Shaders//VoxelizeVS.hlsl", "Main", "vs_6_1");
+	Shader geometryShader(L"Shaders//VoxelizeGS.hlsl", "Main", "gs_6_1");
+	Shader pixelShader(L"Shaders//VoxelizePS.hlsl", "Main", "ps_6_1", shaderDefinesPS);
 
 	const InputLayoutDesc& inputLayout = pMeshRenderResources->GetInputLayout(meshType);
 	assert(inputLayout.NumElements == 3);

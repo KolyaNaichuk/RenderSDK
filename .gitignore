@@ -20,3 +20,9 @@ Samples/ToneMapping/Shaders/
 ipch/
 .vs/
 Include/External/DirectXTex/Bin/
+Samples/DXR_HelloTriangle/x64/
+*.dll
+Samples/DXR_HelloTriangle/Shaders/VisualizeTexturePS.hlsl
+Samples/DXR_HelloTriangle/Shaders/FullScreenTriangleVS.hlsl
+Samples/DXR_HelloTriangle/Shaders/GammaCorrection.hlsl
+Samples/DXR_HelloTriangle/Shaders/RayTracingUtils.hlsl

@@ -6,6 +6,7 @@
 #include <dxgi1_4.h>
 #include <D3Dcompiler.h>
 #include <wrl.h>
+#include <dxcapi.h>
 
 #include "Common/Common.h"
 
@@ -19,4 +20,9 @@ using namespace Microsoft::WRL;
 static void VerifyD3DResult(HRESULT result)
 {
 	assert(SUCCEEDED(result));
+}
+
+static UINT Align(UINT size, UINT alignment)
+{
+	return (size + (alignment - 1)) & ~(alignment - 1);
 }

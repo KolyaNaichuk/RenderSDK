@@ -11,8 +11,7 @@ namespace
 {
 	enum RootParams
 	{
-		kRootCBVParam = 0,
-		kRootSRVTableParam,
+		kRootSRVTableParam = 0,
 		kNumRootParams
 	};
 }
@@ -48,7 +47,6 @@ void VisualizeTexturePass::Record(RenderParams* pParams)
 		pCommandList->ResourceBarrier((UINT)m_ResourceBarriers.size(), m_ResourceBarriers.data());
 
 	pCommandList->SetDescriptorHeaps(pRenderEnv->m_pShaderVisibleSRVHeap);
-	pCommandList->SetGraphicsRootConstantBufferView(kRootCBVParam, pParams->m_pAppDataBuffer);
 	pCommandList->SetGraphicsRootDescriptorTable(kRootSRVTableParam, m_SRVHeapStart);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = m_RTVHeapStart;
@@ -96,9 +94,7 @@ void VisualizeTexturePass::InitResources(InitParams* pParams)
 void VisualizeTexturePass::InitRootSignature(InitParams* pParams)
 {
 	assert(m_pRootSignature == nullptr);
-
 	D3D12_ROOT_PARAMETER rootParams[kNumRootParams];
-	rootParams[kRootCBVParam] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_PIXEL);
 
 	D3D12_DESCRIPTOR_RANGE descriptorRanges[] = {SRVDescriptorRange(1, 0)};
 	rootParams[kRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(descriptorRanges), descriptorRanges, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -114,15 +110,14 @@ void VisualizeTexturePass::InitPipelineState(InitParams* pParams)
 	assert(m_pRootSignature != nullptr);
 	assert(m_pPipelineState == nullptr);
 	
-	std::string textureTypeStr = std::to_string(pParams->m_TextureType);
-	const ShaderMacro shaderDefines[] =
+	std::wstring textureTypeStr = std::to_wstring(pParams->m_TextureType);
+	const ShaderDefine shaderDefines[] =
 	{
-		ShaderMacro("TEXTURE_TYPE", textureTypeStr.c_str()),
-		ShaderMacro()
+		ShaderDefine(L"TEXTURE_TYPE", textureTypeStr.c_str())
 	};
 
-	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", "Main", "vs_4_0");
-	Shader pixelShader(L"Shaders//VisualizeTexturePS.hlsl", "Main", "ps_4_0", shaderDefines);
+	Shader vertexShader(L"Shaders//FullScreenTriangleVS.hlsl", L"Main", L"vs_6_1");
+	Shader pixelShader(L"Shaders//VisualizeTexturePS.hlsl", L"Main", L"ps_6_1", shaderDefines, ARRAYSIZE(shaderDefines));
 
 	GraphicsPipelineStateDesc pipelineStateDesc;
 	pipelineStateDesc.SetRootSignature(m_pRootSignature);

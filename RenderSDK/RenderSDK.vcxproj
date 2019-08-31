@@ -22,7 +22,7 @@
     <ProjectGuid>{81373C17-8965-4747-9818-AA450B2578DC}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>RenderSDK</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -178,6 +178,7 @@
     <ClInclude Include="..\Include\D3DWrapper\RenderEnv.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsResource.h" />
     <ClInclude Include="..\Include\D3DWrapper\RootSignature.h" />
+    <ClInclude Include="..\Include\D3DWrapper\StateObject.h" />
     <ClInclude Include="..\Include\D3DWrapper\SwapChain.h" />
     <ClInclude Include="..\Include\D3DWrapper\GraphicsUtils.h" />
     <ClInclude Include="..\Include\Math\AxisAngle.h" />
@@ -204,7 +205,6 @@
     <ClInclude Include="..\Include\Math\Vector4.h" />
     <ClInclude Include="..\Include\Profiler\CPUProfiler.h" />
     <ClInclude Include="..\Include\Profiler\GPUProfiler.h" />
-    <ClInclude Include="..\Include\RenderPasses\CalcTextureLuminancePass.h" />
     <ClInclude Include="..\Include\RenderPasses\Common.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateExpShadowMapPass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateFalseNegativeDrawCommandsPass.h" />
@@ -221,6 +221,7 @@
     <ClInclude Include="..\Include\RenderPasses\SpotLightShadowMapRenderer.h" />
     <ClInclude Include="..\Include\RenderPasses\SunShadowMapRenderer.h" />
     <ClInclude Include="..\Include\RenderPasses\Utils.h" />
+    <ClInclude Include="..\Include\RenderPasses\VisualizeDepthTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\VisualizeNumLightsPerTilePass.h" />
     <ClInclude Include="..\Include\RenderPasses\VoxelizePass.h" />
     <ClInclude Include="..\Include\RenderPasses\CreateVoxelizeCommandsPass.h" />
@@ -228,7 +229,6 @@
     <ClInclude Include="..\Include\RenderPasses\FillMeshTypeDepthBufferPass.h" />
     <ClInclude Include="..\Include\RenderPasses\FillVisibilityBufferPass.h" />
     <ClInclude Include="..\Include\RenderPasses\RenderGBufferPass.h" />
-    <ClInclude Include="..\Include\RenderPasses\ScaleTexturePass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledLightCullingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\TiledShadingPass.h" />
     <ClInclude Include="..\Include\RenderPasses\VisualizeTexturePass.h" />
@@ -242,6 +242,10 @@
     <ClInclude Include="..\Include\Scene\Scene.h" />
     <ClInclude Include="..\Include\Scene\SceneLoader.h" />
     <ClInclude Include="..\Include\Scene\SceneObject.h" />
+    <None Include="..\Shaders\RayTracingUtils.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Common\Application.cpp" />
@@ -261,6 +265,7 @@
     <ClCompile Include="..\Source\D3DWrapper\GraphicsResource.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\QueryHeap.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\RootSignature.cpp" />
+    <ClCompile Include="..\Source\D3DWrapper\StateObject.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\SwapChain.cpp" />
     <ClCompile Include="..\Source\D3DWrapper\GraphicsUtils.cpp" />
     <ClCompile Include="..\Source\Math\AxisAngle.cpp" />
@@ -287,7 +292,6 @@
     <ClCompile Include="..\Source\Math\Vector4.cpp" />
     <ClCompile Include="..\Source\Profiler\CPUProfiler.cpp" />
     <ClCompile Include="..\Source\Profiler\GPUProfiler.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\CalcTextureLuminancePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateExpShadowMapPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateFalseNegativeDrawCommandsPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateMainDrawCommandsPass.cpp" />
@@ -302,6 +306,7 @@
     <ClCompile Include="..\Source\RenderPasses\SunShadowMapRenderer.cpp" />
     <ClCompile Include="..\Source\RenderPasses\Utils.cpp" />
     <ClCompile Include="..\Source\RenderPasses\SpotLightShadowMapRenderer.cpp" />
+    <ClCompile Include="..\Source\RenderPasses\VisualizeDepthTexturePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VisualizeNumLightsPerTilePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VoxelizePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\CreateVoxelizeCommandsPass.cpp" />
@@ -309,7 +314,6 @@
     <ClCompile Include="..\Source\RenderPasses\FillMeshTypeDepthBufferPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\FillVisibilityBufferPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\RenderGBufferPass.cpp" />
-    <ClCompile Include="..\Source\RenderPasses\ScaleTexturePass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledLightCullingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\TiledShadingPass.cpp" />
     <ClCompile Include="..\Source\RenderPasses\VisualizeTexturePass.cpp" />
@@ -371,28 +375,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Shaders\Reconstruction.hlsl">
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Shaders\CalcTextureLuminancePS.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <FileType>Document</FileType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Shaders\ScaleTexture.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
@@ -656,6 +638,64 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Notes.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\ImageBasedLighting.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\BRDF.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+    <None Include="..\Shaders\Sampling.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\FilterRadianceCubeMapCS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Shaders\VisualizeDepthTexturePS.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
