@@ -97,6 +97,9 @@ COPY /Y "$(SolutionDir)Shaders\FullScreenTriangleVS.hlsl" "$(SolutionDir)Samples
 COPY /Y "$(SolutionDir)Shaders\VisualizeTexturePS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\VisualizeTexturePS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\VisualizeTexturePS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\VisualizeTexturePS.hlsl"
 
+COPY /Y "$(SolutionDir)Shaders\RayTracingUtils.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\RayTracingUtils.hlsl"
+COPY /Y "$(SolutionDir)Shaders\RayTracingUtils.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RayTracingUtils.hlsl"
+
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\GammaCorrection.hlsl"
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"</Command>
     </PostBuildEvent>

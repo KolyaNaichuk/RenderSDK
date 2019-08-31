@@ -25,3 +25,4 @@ Samples/DXR_HelloTriangle/x64/
 Samples/DXR_HelloTriangle/Shaders/VisualizeTexturePS.hlsl
 Samples/DXR_HelloTriangle/Shaders/FullScreenTriangleVS.hlsl
 Samples/DXR_HelloTriangle/Shaders/GammaCorrection.hlsl
+Samples/DXR_HelloTriangle/Shaders/RayTracingUtils.hlsl

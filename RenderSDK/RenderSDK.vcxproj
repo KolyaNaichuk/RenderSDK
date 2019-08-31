@@ -242,6 +242,10 @@
     <ClInclude Include="..\Include\Scene\Scene.h" />
     <ClInclude Include="..\Include\Scene\SceneLoader.h" />
     <ClInclude Include="..\Include\Scene\SceneObject.h" />
+    <None Include="..\Shaders\RayTracingUtils.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Common\Application.cpp" />

@@ -12,8 +12,11 @@
 #include "D3DWrapper/GraphicsUtils.h"
 #include "Profiler/GPUProfiler.h"
 #include "RenderPasses/VisualizeTexturePass.h"
+#include "RenderPasses/MeshRenderResources.h"
+#include "Scene/MeshBatch.h"
 #include "Scene/Mesh.h"
 #include "Math/Vector3.h"
+#include "Common/Color.h"
 
 struct AppData
 {
@@ -25,7 +28,8 @@ struct AppData
 	f32 m_NotUsed1;
 	Vector3f m_CameraWorldAxisZ;
 	f32 m_NotUsed2;
-	f32 m_NotUsed3[16];
+	Vector4f m_BackgroundColor;
+	f32 m_NotUsed3[12];
 	f32 m_NotUsed4[16];
 	f32 m_NotUsed5[16];
 };
@@ -35,6 +39,10 @@ enum
 	kBackBufferWidth = 1024,
 	kBackBufferHeight = 512
 };
+
+// To do:
+// Add multiple instances
+// Add camera navigation
 
 DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Hello Triangle", 0, 0, kBackBufferWidth, kBackBufferHeight)
@@ -56,6 +64,7 @@ DXApplication::~DXApplication()
 		SafeDelete(m_AppDataBuffers[index]);
 	}
 	
+	SafeDelete(m_pMeshRenderResources);
 	SafeDelete(m_pGPUProfiler);
 	SafeDelete(m_pCommandListPool);
 	SafeDelete(m_pRenderEnv);
@@ -88,6 +97,7 @@ void DXApplication::OnUpdate()
 	pAppData->m_CameraWorldAxisZ = Vector3f::FORWARD;
 	pAppData->m_RayMinExtent = 0.0001f;
 	pAppData->m_RayMaxExtent = 20.0f;
+	pAppData->m_BackgroundColor = Color::GRAY;
 }
 
 void DXApplication::OnRender()
@@ -192,23 +202,31 @@ void DXApplication::InitRenderEnvironment()
 void DXApplication::InitRayTracingPass()
 {
 	assert(m_pRayTracingPass == nullptr);
-	
-	const Vector3f vertices[] =
-	{
-		Vector3f(0.0f, 2.0f, 5.0f),
-		Vector3f(2.0f, -2.0f, 5.0f),
-		Vector3f(-2.0f, -2.0f, 5.0f)
-	};
+	assert(m_pMeshRenderResources == nullptr);
+				
+	const Vector3f positions[] = {Vector3f(0.0f, 2.0f, 5.0f), Vector3f(2.0f, -2.0f, 5.0f), Vector3f(-2.0f, -2.0f, 5.0f)};	
+	const Vector4f colors[] = {Color::RED, Color::GREEN, Color::BLUE};
 	const WORD indices[] = {0, 1, 2};
 
-	VertexData vertexData(ARRAYSIZE(vertices), vertices);
-	IndexData indexData(ARRAYSIZE(indices), indices);
+	VertexData* pVertexData = new VertexData(ARRAYSIZE(positions), positions, nullptr, nullptr, colors);
+	IndexData* pIndexData = new IndexData(ARRAYSIZE(indices), indices);
 	
+	const u32 numInstances = 1;
+	Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
+	pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
+	
+	Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, -1, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	
+	MeshBatch meshBatch(pVertexData->GetFormatFlags(), pIndexData->GetFormat(), mesh.GetPrimitiveTopologyType(), mesh.GetPrimitiveTopology());
+	meshBatch.AddMesh(&mesh);
+
+	MeshBatch* meshBatches[] = {&meshBatch};
+	m_pMeshRenderResources = new MeshRenderResources(m_pRenderEnv, ARRAYSIZE(meshBatches), meshBatches);
+
 	RayTracingPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_InputResourceStates.m_RayTracedResultState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	params.m_pVertexData = &vertexData;
-	params.m_pIndexData = &indexData;
+	params.m_pMeshRenderResources = m_pMeshRenderResources;
 	params.m_NumRaysX = kBackBufferWidth;
 	params.m_NumRaysY = kBackBufferHeight;
 

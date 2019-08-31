@@ -12,6 +12,7 @@ class RootSignature;
 class PipelineState;
 class Buffer;
 class ColorTexture;
+class MeshRenderResources;
 class Fence;
 class GPUProfiler;
 
@@ -69,6 +70,7 @@ private:
 	Buffer* m_AppDataBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	void* m_AppData[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 
+	MeshRenderResources* m_pMeshRenderResources = nullptr;
 	RayTracingPass* m_pRayTracingPass = nullptr;
 	VisualizeTexturePass* m_VisualizeRayTracedResultPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	GPUProfiler* m_pGPUProfiler = nullptr;

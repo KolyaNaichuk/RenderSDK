@@ -8,8 +8,7 @@ struct Vector3f;
 class CommandList;
 class RootSignature;
 class StateObject;
-class VertexData;
-class IndexData;
+class MeshRenderResources;
 
 class RayTracingPass
 {
@@ -23,8 +22,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv = nullptr;
 		ResourceStates m_InputResourceStates;
-		VertexData* m_pVertexData = nullptr;
-		IndexData* m_pIndexData = nullptr;
+		MeshRenderResources* m_pMeshRenderResources = nullptr;
 		u32 m_NumRaysX = 0;
 		u32 m_NumRaysY = 0;
 	};
@@ -60,8 +58,6 @@ private:
 	ResourceStates m_OutputResourceStates;
 
 	ColorTexture* m_pRayTracedResult = nullptr;
-	Buffer* m_pVertexBuffer = nullptr;
-	Buffer* m_pIndexBuffer = nullptr;
 	Buffer* m_pInstanceBuffer = nullptr;
 	Buffer* m_pBLASBuffer = nullptr;
 	Buffer* m_pTLASBuffer = nullptr;

@@ -4,9 +4,10 @@
 #include "D3DWrapper/StateObject.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/RenderEnv.h"
+#include "RenderPasses/MeshRenderResources.h"
 #include "Profiler/GPUProfiler.h"
-#include "Scene/Mesh.h"
-#include "Math/Vector3.h"
+#include "Math/Vector2.h"
+#include "Math/Vector4.h"
 
 namespace
 {
@@ -40,8 +41,6 @@ RayTracingPass::~RayTracingPass()
 	SafeDelete(m_pTLASBuffer);
 	SafeDelete(m_pBLASBuffer);
 	SafeDelete(m_pInstanceBuffer);
-	SafeDelete(m_pVertexBuffer);
-	SafeDelete(m_pIndexBuffer);
 	SafeDelete(m_pGlobalRootSignature);
 	SafeDelete(m_pEmptyLocalRootSignature);
 	SafeDelete(m_pRayGenShaderTable);
@@ -100,65 +99,41 @@ void RayTracingPass::InitTextures(InitParams* pParams)
 void RayTracingPass::InitGeometryBuffers(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-	
-	const VertexData* pVertexData = pParams->m_pVertexData;
-	assert(pVertexData != nullptr);
-	
-	assert(m_pVertexBuffer == nullptr);
-	StructuredBufferDesc vertexBufferDesc(pVertexData->GetNumVertices(), sizeof(Vector3f), true, false, true);
-	m_pVertexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &vertexBufferDesc,
-		D3D12_RESOURCE_STATE_COPY_DEST, L"RayTracingPass::m_pVertexBuffer");
+	MeshRenderResources* pMeshRenderResources = pParams->m_pMeshRenderResources;
 
-	StructuredBufferDesc uploadVertexBufferDesc(pVertexData->GetNumVertices(), sizeof(Vector3f), false, false);
-	Buffer uploadVertexBuffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &uploadVertexBufferDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ, L"RayTracingPass::uploadVertexBuffer");
-	uploadVertexBuffer.Write(pVertexData->GetPositions(), pVertexData->GetNumVertices() * sizeof(Vector3f));
-
-	const IndexData* pIndexData = pParams->m_pIndexData;
-	assert(pIndexData != nullptr);
-
-	assert(m_pIndexBuffer == nullptr);
-	FormattedBufferDesc indexBufferDesc(pIndexData->GetNumIndices(), pIndexData->GetFormat(), true, false, true);
-	m_pIndexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &indexBufferDesc,
-		D3D12_RESOURCE_STATE_COPY_DEST, L"RayTracingPass::m_pIndexBuffer");
-
-	FormattedBufferDesc uploadIndexBufferDesc(pIndexData->GetNumIndices(), pIndexData->GetFormat(), false, false);
-	Buffer uploadIndexBuffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &uploadIndexBufferDesc,
-		D3D12_RESOURCE_STATE_GENERIC_READ, L"RayTracingPass::uploadIndexBuffer");
-
-	if (pIndexData->GetFormat() == DXGI_FORMAT_R16_UINT)
-		uploadIndexBuffer.Write(pIndexData->Get16BitIndices(), pIndexData->GetNumIndices() * sizeof(u16));
-	else
-		uploadIndexBuffer.Write(pIndexData->Get32BitIndices(), pIndexData->GetNumIndices() * sizeof(u32));
+	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
+	const u32 meshType = 0;
+	Buffer* pVertexBuffer = pMeshRenderResources->GetVertexBuffer(meshType);
+	Buffer* pIndexBuffer = pMeshRenderResources->GetIndexBuffer(meshType);
 
 	const ResourceTransitionBarrier resourceBarriers[] =
 	{
-		ResourceTransitionBarrier(m_pVertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE),
-		ResourceTransitionBarrier(m_pIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+		ResourceTransitionBarrier(pVertexBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE),
+		ResourceTransitionBarrier(pIndexBuffer, D3D12_RESOURCE_STATE_INDEX_BUFFER, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
 	};
 
-	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::uploadVertexDataCommandList");
-	pUploadCommandList->Begin();
-	pUploadCommandList->CopyResource(m_pVertexBuffer, &uploadVertexBuffer);
-	pUploadCommandList->CopyResource(m_pIndexBuffer, &uploadIndexBuffer);
-	pUploadCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
-	pUploadCommandList->End();
+	CommandList* pTransitionCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pTransitionCommandList");
+	pTransitionCommandList->Begin();
+	pTransitionCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
+	pTransitionCommandList->End();
 
 	++pRenderEnv->m_LastSubmissionFenceValue;
-	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pUploadCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
+	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pTransitionCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
 	pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
 }
 
 void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	MeshRenderResources* pMeshRenderResources = pParams->m_pMeshRenderResources;
+
+	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
+	const u32 meshType = 0;
+	Buffer* pVertexBuffer = pMeshRenderResources->GetVertexBuffer(meshType);
+	Buffer* pIndexBuffer = pMeshRenderResources->GetIndexBuffer(meshType);
 
 	// Bottom level acceleration structure
-
-	assert(m_pVertexBuffer != nullptr);
-	assert(m_pIndexBuffer != nullptr);
-
-	RayTracingTrianglesGeometryDesc geometryDesc(DXGI_FORMAT_R32G32B32_FLOAT, m_pVertexBuffer, m_pIndexBuffer, D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE);
+	RayTracingTrianglesGeometryDesc geometryDesc(DXGI_FORMAT_R32G32B32_FLOAT, pVertexBuffer, pIndexBuffer, D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE);
 
 	BuildRayTracingAccelerationStructureInputs BLASBuildInputs;
 	BLASBuildInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
@@ -209,7 +184,7 @@ void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
 	const ResourceTransitionBarrier uploadResourceBarriers[] = {
 		ResourceTransitionBarrier(m_pInstanceBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
 	};
-	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::uploadInstanceDataCommandList");
+	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pUploadInstanceDataCommandList");
 	pUploadCommandList->Begin();
 	pUploadCommandList->CopyResource(m_pInstanceBuffer, &uploadInstanceBuffer);
 	pUploadCommandList->ResourceBarrier(ARRAYSIZE(uploadResourceBarriers), uploadResourceBarriers);
@@ -250,7 +225,7 @@ void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
 	BuildRayTracingAccelerationStructureDesc buildTLASDesc(&TLASBuildInputs, m_pTLASBuffer, &TLASScratchBuffer);
 	ResourceUAVBarrier buildBLASBarrier(m_pBLASBuffer);
 
-	CommandList* pBuildCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::buildRayTracingASCommandList");
+	CommandList* pBuildCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pBuildRayTracingASCommandList");
 	pBuildCommandList->Begin();
 	pBuildCommandList->BuildRaytracingAccelerationStructure(&buildBLASDesc, 0, nullptr);
 	pBuildCommandList->ResourceBarrier(1, &buildBLASBarrier);
@@ -270,7 +245,7 @@ void RayTracingPass::InitRootSignatures(InitParams* pParams)
 	globalRootParams[kGlobalRootCBVParam] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
 	globalRootParams[kGlobalRootTLASParam] = RootSRVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
 
-	D3D12_DESCRIPTOR_RANGE globalDescriptorRanges[] = {UAVDescriptorRange(1, 0)};
+	D3D12_DESCRIPTOR_RANGE globalDescriptorRanges[] = {SRVDescriptorRange(2, 1), UAVDescriptorRange(1, 0)};
 	globalRootParams[kGlobalRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(globalDescriptorRanges), globalDescriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
 	
 	assert(m_pGlobalRootSignature == nullptr);
@@ -312,7 +287,7 @@ void RayTracingPass::InitStateObject(InitParams* pParams)
 	RayTracingPipelineConfig pipelineConfig(1);
 	stateSubobjects[kPipelineConfigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG, &pipelineConfig);
 
-	RayTracingShaderConfig shaderConfig(3 * sizeof(f32)/*color*/, 2 * sizeof(f32)/*attribs*/);
+	RayTracingShaderConfig shaderConfig(sizeof(Vector4f)/*color*/, sizeof(Vector2f)/*attribs*/);
 	stateSubobjects[kShaderConfigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG, &shaderConfig);
 
 	LPCWSTR shaderConfigExports[] = {g_pRayGenShaderName, g_pMissShaderName, g_pClosesHitShaderName};
@@ -339,10 +314,23 @@ void RayTracingPass::InitStateObject(InitParams* pParams)
 void RayTracingPass::InitDescriptorHeap(InitParams* pParams)
 {
 	assert(!m_GlobalSRVHeapStart.IsValid());
+
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
+	MeshRenderResources* pMeshRenderResources = pParams->m_pMeshRenderResources;
+
+	assert(pMeshRenderResources->GetNumMeshTypes() == 1);
+	const u32 meshType = 0;
+	Buffer* pVertexBuffer = pMeshRenderResources->GetVertexBuffer(meshType);
+	Buffer* pIndexBuffer = pMeshRenderResources->GetIndexBuffer(meshType);
 
 	m_GlobalSRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_GlobalSRVHeapStart,
+		pVertexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
+		pIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		m_pRayTracedResult->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
@@ -413,7 +401,7 @@ void RayTracingPass::InitShaderTables(InitParams* pParams)
 		ResourceTransitionBarrier(m_pHitGroupTable, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
 	};
 
-	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::uploadShaderTableDataCommandList");
+	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pUploadShaderTableDataCommandList");
 	pUploadCommandList->Begin();
 	pUploadCommandList->CopyResource(m_pRayGenShaderTable, pUploadRayGenShaderTable);
 	pUploadCommandList->CopyResource(m_pMissShaderTable, pUploadMissShaderTable);

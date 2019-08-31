@@ -646,6 +646,9 @@
     <None Include="..\Shaders\VisualizeDepthTexturePS.hlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\Shaders\RayTracingUtils.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Notes.txt" />
