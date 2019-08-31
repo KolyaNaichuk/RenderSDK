@@ -60,6 +60,7 @@ private:
 	DescriptorHeap* m_pShaderVisibleSRVHeap = nullptr;
 	HeapProperties* m_pDefaultHeapProps = nullptr;
 	HeapProperties* m_pUploadHeapProps = nullptr;
+	HeapProperties* m_pReadbackHeapProps = nullptr;
 	RenderEnv* m_pRenderEnv = nullptr;
 	Fence* m_pFence = nullptr;
 	Viewport* m_pViewport = nullptr;

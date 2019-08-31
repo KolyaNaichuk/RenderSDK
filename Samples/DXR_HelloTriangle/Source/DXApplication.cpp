@@ -48,6 +48,7 @@ DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Hello Triangle", 0, 0, kBackBufferWidth, kBackBufferHeight)
 	, m_pDefaultHeapProps(new HeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new HeapProperties(D3D12_HEAP_TYPE_UPLOAD))
+	, m_pReadbackHeapProps(new HeapProperties(D3D12_HEAP_TYPE_READBACK))
 	, m_pRenderEnv(new RenderEnv())
 {
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
@@ -70,6 +71,7 @@ DXApplication::~DXApplication()
 	SafeDelete(m_pRenderEnv);
 	SafeDelete(m_pDefaultHeapProps);
 	SafeDelete(m_pUploadHeapProps);
+	SafeDelete(m_pReadbackHeapProps);
 	SafeDelete(m_pViewport);
 	SafeDelete(m_pScissorRect);
 	SafeDelete(m_pFence);
@@ -174,12 +176,13 @@ void DXApplication::InitRenderEnvironment()
 	m_pRenderEnv->m_pFence = m_pFence;
 	m_pRenderEnv->m_pDefaultHeapProps = m_pDefaultHeapProps;
 	m_pRenderEnv->m_pUploadHeapProps = m_pUploadHeapProps;
+	m_pRenderEnv->m_pReadbackHeapProps = m_pReadbackHeapProps;
 	m_pRenderEnv->m_pShaderInvisibleRTVHeap = m_pShaderInvisibleRTVHeap;
 	m_pRenderEnv->m_pShaderInvisibleSRVHeap = m_pShaderInvisibleSRVHeap;
 	m_pRenderEnv->m_pShaderVisibleSRVHeap = m_pShaderVisibleSRVHeap;
 
 #ifdef ENABLE_PROFILING
-	m_pGPUProfiler = new GPUProfiler(m_pRenderEnv, 2/*maxNumProfiles*/, kNumBackBuffers);
+	m_pGPUProfiler = new GPUProfiler(m_pRenderEnv, 8/*maxNumProfiles*/, kNumBackBuffers);
 #endif // ENABLE_PROFILING
 	m_pRenderEnv->m_pGPUProfiler = m_pGPUProfiler;
 	
