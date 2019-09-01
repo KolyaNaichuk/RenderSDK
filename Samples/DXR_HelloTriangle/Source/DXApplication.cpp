@@ -65,7 +65,6 @@ DXApplication::~DXApplication()
 		SafeDelete(m_AppDataBuffers[index]);
 	}
 	
-	SafeDelete(m_pMeshRenderResources);
 	SafeDelete(m_pGPUProfiler);
 	SafeDelete(m_pCommandListPool);
 	SafeDelete(m_pRenderEnv);
@@ -205,7 +204,6 @@ void DXApplication::InitRenderEnvironment()
 void DXApplication::InitRayTracingPass()
 {
 	assert(m_pRayTracingPass == nullptr);
-	assert(m_pMeshRenderResources == nullptr);
 				
 	const Vector3f positions[] = {Vector3f(0.0f, 2.0f, 5.0f), Vector3f(2.0f, -2.0f, 5.0f), Vector3f(-2.0f, -2.0f, 5.0f)};	
 	const Vector4f colors[] = {Color::RED, Color::GREEN, Color::BLUE};
@@ -222,14 +220,11 @@ void DXApplication::InitRayTracingPass()
 	
 	MeshBatch meshBatch(pVertexData->GetFormatFlags(), pIndexData->GetFormat(), mesh.GetPrimitiveTopologyType(), mesh.GetPrimitiveTopology());
 	meshBatch.AddMesh(&mesh);
-
-	MeshBatch* meshBatches[] = {&meshBatch};
-	m_pMeshRenderResources = new MeshRenderResources(m_pRenderEnv, ARRAYSIZE(meshBatches), meshBatches);
-
+		
 	RayTracingPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_InputResourceStates.m_RayTracedResultState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	params.m_pMeshRenderResources = m_pMeshRenderResources;
+	params.m_pMeshBatch = &meshBatch;
 	params.m_NumRaysX = kBackBufferWidth;
 	params.m_NumRaysY = kBackBufferHeight;
 

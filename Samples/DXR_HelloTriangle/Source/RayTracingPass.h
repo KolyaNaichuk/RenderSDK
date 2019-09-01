@@ -3,12 +3,10 @@
 #include "D3DWrapper/GraphicsResource.h"
 
 struct RenderEnv;
-struct Viewport;
-struct Vector3f;
 class CommandList;
 class RootSignature;
 class StateObject;
-class MeshRenderResources;
+class MeshBatch;
 
 class RayTracingPass
 {
@@ -22,7 +20,7 @@ public:
 	{
 		RenderEnv* m_pRenderEnv = nullptr;
 		ResourceStates m_InputResourceStates;
-		MeshRenderResources* m_pMeshRenderResources = nullptr;
+		MeshBatch* m_pMeshBatch = nullptr;
 		u32 m_NumRaysX = 0;
 		u32 m_NumRaysY = 0;
 	};
@@ -58,6 +56,8 @@ private:
 	ResourceStates m_OutputResourceStates;
 
 	ColorTexture* m_pRayTracedResult = nullptr;
+	Buffer* m_pVertexBuffer = nullptr;
+	Buffer* m_pIndexBuffer = nullptr;
 	Buffer* m_pInstanceBuffer = nullptr;
 	Buffer* m_pBLASBuffer = nullptr;
 	Buffer* m_pTLASBuffer = nullptr;
