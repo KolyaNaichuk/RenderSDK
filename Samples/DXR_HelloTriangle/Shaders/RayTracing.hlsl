@@ -49,6 +49,8 @@ void RayGeneration()
 	ray.TMax = g_AppDataBuffer.rayMaxExtent;
 
 	RayPayload payload;
+	payload.color = float3(0.0f, 0.0f, 0.0f);
+
 	TraceRay(g_TopLevelAccelStruct, RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH, 0xFF/*instanceInclusionMask*/,
 		0/*hitGroupIndex*/, 1/*numHitGroups*/, 0/*missShaderIndex*/, ray, payload);
 	

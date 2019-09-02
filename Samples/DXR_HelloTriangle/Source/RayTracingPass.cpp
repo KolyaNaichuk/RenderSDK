@@ -435,9 +435,13 @@ void RayTracingPass::InitShaderTables(InitParams* pParams)
 	}
 
 	{
+		const UINT numGeometriesInBLAS = pParams->m_pMeshBatch->GetNumMeshes();
+
 		const UINT shaderRecordSizeInBytes = shaderIdentifierSizeInBytes;
-		ShaderRecordData shaderRecordData(1, shaderRecordSizeInBytes);
-		shaderRecordData.Append(ShaderRecord(m_pStateObject->GetShaderIdentifier(g_pHitGroupName), shaderIdentifierSizeInBytes));
+		ShaderRecordData shaderRecordData(numGeometriesInBLAS, shaderRecordSizeInBytes);
+
+		for (UINT index = 0; index < numGeometriesInBLAS; ++index)
+			shaderRecordData.Append(ShaderRecord(m_pStateObject->GetShaderIdentifier(g_pHitGroupName), shaderIdentifierSizeInBytes));
 		
 		ShaderTableDesc shaderTableDesc(shaderRecordData.GetNumRecords(), shaderRecordSizeInBytes, true);
 		m_pHitGroupTable = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &shaderTableDesc,
