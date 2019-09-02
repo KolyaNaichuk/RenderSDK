@@ -16,6 +16,7 @@
 #include "Scene/MeshBatch.h"
 #include "Scene/Mesh.h"
 #include "Math/Vector3.h"
+#include "Math/Transform.h"
 #include "Common/Color.h"
 
 struct AppData
@@ -204,49 +205,25 @@ void DXApplication::InitRayTracingPass()
 	assert(m_pRayTracingPass == nullptr);	
 	MeshBatch meshBatch(VertexData::FormatFlag_Position, DXGI_FORMAT_R16_UINT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	// Mesh 1
+	const Matrix4f worldMatrices[] =
 	{
-		const Vector3f positions[] = {Vector3f(-6.0f, 2.0f, 9.0f), Vector3f(-4.0f, -2.0f, 9.0f), Vector3f(-8.0f, -2.0f, 9.0f)};
-		const WORD indices[] = {0, 1, 2};
-
-		VertexData* pVertexData = new VertexData(ARRAYSIZE(positions), positions);
-		IndexData* pIndexData = new IndexData(ARRAYSIZE(indices), indices);
-
-		const u32 numInstances = 1;
-		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
-		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
-
-		Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, -1, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		meshBatch.AddMesh(&mesh);
-	}
-
-	// Mesh 2
-	{
-		const Vector3f positions[] = {Vector3f(6.0f, 2.0f, 9.0f), Vector3f(8.0f, -2.0f, 9.0f), Vector3f(4.0f, -2.0f, 9.0f)};
-		const WORD indices[] = {0, 1, 2};
-
-		VertexData* pVertexData = new VertexData(ARRAYSIZE(positions), positions);
-		IndexData* pIndexData = new IndexData(ARRAYSIZE(indices), indices);
-
-		const u32 numInstances = 1;
-		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
-		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
-
-		Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, -1, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		meshBatch.AddMesh(&mesh);
-	}
-
-	// Mesh 3
+		CreateTranslationMatrix( 0.0f, 0.0f, 0.0f),
+		CreateTranslationMatrix(-2.5f, 0.0f, 5.0f),
+		CreateTranslationMatrix(-7.5f, 0.0f, 5.0f),
+		CreateTranslationMatrix( 2.5f, 0.0f, 5.0f),
+		CreateTranslationMatrix( 7.5f, 0.0f, 5.0f),
+	};
+	for (u32 index = 0; index < ARRAYSIZE(worldMatrices); ++index)
 	{
 		const Vector3f positions[] = {Vector3f(0.0f, 2.0f, 5.0f), Vector3f(2.0f, -2.0f, 5.0f), Vector3f(-2.0f, -2.0f, 5.0f)};
-		const WORD indices[] = {0, 1, 2};
+		const u16 indices[] = {0, 1, 2};
 
 		VertexData* pVertexData = new VertexData(ARRAYSIZE(positions), positions);
 		IndexData* pIndexData = new IndexData(ARRAYSIZE(indices), indices);
 
 		const u32 numInstances = 1;
 		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
-		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
+		pInstanceWorldMatrices[0] = worldMatrices[index];
 
 		Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, -1, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		meshBatch.AddMesh(&mesh);

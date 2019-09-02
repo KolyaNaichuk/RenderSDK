@@ -157,15 +157,15 @@ void RayTracingPass::InitGeometryBuffers(InitParams* pParams)
 		ResourceTransitionBarrier(m_pIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
 	};
 
-	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pUploadVertexDataCommandList");
-	pUploadCommandList->Begin();
-	pUploadCommandList->CopyResource(m_pVertexBuffer, &uploadVertexBuffer);
-	pUploadCommandList->CopyResource(m_pIndexBuffer, &uploadIndexBuffer);
-	pUploadCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
-	pUploadCommandList->End();
+	CommandList* pCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pUploadVertexDataCommandList");
+	pCommandList->Begin();
+	pCommandList->CopyResource(m_pVertexBuffer, &uploadVertexBuffer);
+	pCommandList->CopyResource(m_pIndexBuffer, &uploadIndexBuffer);
+	pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
+	pCommandList->End();
 
 	++pRenderEnv->m_LastSubmissionFenceValue;
-	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pUploadCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
+	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
 	pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
 }
 
@@ -182,7 +182,52 @@ void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
 
 	const u32 numMeshes = pMeshBatch->GetNumMeshes();
 	const MeshInfo* meshInfos = pMeshBatch->GetMeshInfos();
+	const Matrix4f* instanceWorldMatrices = pMeshBatch->GetMeshInstanceWorldMatrices();
+
+	// Bottom level geometry transforms
+
+	struct Tranform3x4
+	{
+		f32 m_Values[3][4];
+	};
+
+	std::vector<Tranform3x4> geometryTransforms(numMeshes);
+	for (u32 index = 0; index < numMeshes; ++index)
+	{
+		const MeshInfo& meshInfo = meshInfos[index];
+		assert(meshInfo.m_InstanceCount == 1);
+
+		const Matrix4f& worldMatrix = instanceWorldMatrices[index];
+		Matrix4f transposedWorldMatrix = Transpose(worldMatrix);
+
+		CopyMemory(&geometryTransforms[index], &transposedWorldMatrix, sizeof(Tranform3x4));
+	}
+
+	StructuredBufferDesc transformBufferDesc((UINT)geometryTransforms.size(), sizeof(Tranform3x4), true, false);
+	Buffer transformBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &transformBufferDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST, L"RayTracingPass::m_pTransformBuffer");
+
+	StructuredBufferDesc uploadTrasformBufferDesc((UINT)geometryTransforms.size(), sizeof(Tranform3x4), false, false);
+	Buffer uploadTransformBuffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &uploadTrasformBufferDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ, L"RayTracingPass::uploadTransformBuffer");
+	uploadTransformBuffer.Write(geometryTransforms.data(), geometryTransforms.size() * sizeof(Tranform3x4));
+
+	{
+		ResourceTransitionBarrier resourceBarrier(&transformBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+		
+		CommandList* pCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pUploadTransformDataCommandList");
+		pCommandList->Begin();
+		pCommandList->CopyResource(&transformBuffer, &uploadTransformBuffer);
+		pCommandList->ResourceBarrier(1, &resourceBarrier);
+		pCommandList->End();
+
+		++pRenderEnv->m_LastSubmissionFenceValue;
+		pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
+		pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
+	}
 	
+	// Bottom level geometry descriptions
+
 	std::vector<RayTracingGeometryDesc> geometryDescs(numMeshes);
 	for (u32 index = 0; index < numMeshes; ++index)
 	{
@@ -192,7 +237,7 @@ void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
 		geometryDescs[index].Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
 		geometryDescs[index].Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
-		geometryDescs[index].Triangles.Transform3x4 = 0;
+		geometryDescs[index].Triangles.Transform3x4 = transformBuffer.GetGPUVirtualAddress() + index * sizeof(Tranform3x4);
 		geometryDescs[index].Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 		geometryDescs[index].Triangles.VertexCount = meshInfo.m_VertexCount;
 		geometryDescs[index].Triangles.VertexBuffer.StartAddress = pVBView->BufferLocation + pVBView->StrideInBytes * meshInfo.m_BaseVertexLocation;
@@ -226,7 +271,7 @@ void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
 	Buffer BLASScratchBuffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &BLASScratchBufferDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, L"RayTracingPass::BLASScratchBuffer");
 
-	// Top level instance data
+	// Top level instance description
 
 	RayTracingInstanceDesc instanceDesc;
 	ZeroMemory(instanceDesc.Transform, sizeof(instanceDesc.Transform));
@@ -249,19 +294,20 @@ void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
 		D3D12_RESOURCE_STATE_GENERIC_READ, L"RayTracingPass::uploadInstanceBuffer");
 	uploadInstanceBuffer.Write(&instanceDesc, sizeof(instanceDesc));
 
-	const ResourceTransitionBarrier uploadResourceBarriers[] = {
-		ResourceTransitionBarrier(m_pInstanceBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
-	};
-	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pUploadInstanceDataCommandList");
-	pUploadCommandList->Begin();
-	pUploadCommandList->CopyResource(m_pInstanceBuffer, &uploadInstanceBuffer);
-	pUploadCommandList->ResourceBarrier(ARRAYSIZE(uploadResourceBarriers), uploadResourceBarriers);
-	pUploadCommandList->End();
+	{
+		ResourceTransitionBarrier resourceBarrier(m_pInstanceBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+		
+		CommandList* pCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pUploadInstanceDataCommandList");
+		pCommandList->Begin();
+		pCommandList->CopyResource(m_pInstanceBuffer, &uploadInstanceBuffer);
+		pCommandList->ResourceBarrier(1, &resourceBarrier);
+		pCommandList->End();
 
-	++pRenderEnv->m_LastSubmissionFenceValue;
-	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pUploadCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
-	pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
-
+		++pRenderEnv->m_LastSubmissionFenceValue;
+		pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
+		pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
+	}
+		
 	// Top level acceleration structure
 
 	BuildRayTracingAccelerationStructureInputs TLASBuildInputs;
@@ -291,18 +337,21 @@ void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
 	
 	BuildRayTracingAccelerationStructureDesc buildBLASDesc(&BLASBuildInputs, m_pBLASBuffer, &BLASScratchBuffer);
 	BuildRayTracingAccelerationStructureDesc buildTLASDesc(&TLASBuildInputs, m_pTLASBuffer, &TLASScratchBuffer);
-	ResourceUAVBarrier buildBLASBarrier(m_pBLASBuffer);
 
-	CommandList* pBuildCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pBuildRayTracingASCommandList");
-	pBuildCommandList->Begin();
-	pBuildCommandList->BuildRaytracingAccelerationStructure(&buildBLASDesc, 0, nullptr);
-	pBuildCommandList->ResourceBarrier(1, &buildBLASBarrier);
-	pBuildCommandList->BuildRaytracingAccelerationStructure(&buildTLASDesc, 0, nullptr);
-	pBuildCommandList->End();
+	{
+		ResourceUAVBarrier resourceBarrier(m_pBLASBuffer);
 
-	++pRenderEnv->m_LastSubmissionFenceValue;
-	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pBuildCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
-	pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
+		CommandList* pCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pBuildRayTracingASCommandList");
+		pCommandList->Begin();
+		pCommandList->BuildRaytracingAccelerationStructure(&buildBLASDesc, 0, nullptr);
+		pCommandList->ResourceBarrier(1, &resourceBarrier);
+		pCommandList->BuildRaytracingAccelerationStructure(&buildTLASDesc, 0, nullptr);
+		pCommandList->End();
+
+		++pRenderEnv->m_LastSubmissionFenceValue;
+		pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
+		pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
+	}
 }
 
 void RayTracingPass::InitRootSignatures(InitParams* pParams)
@@ -460,16 +509,16 @@ void RayTracingPass::InitShaderTables(InitParams* pParams)
 		ResourceTransitionBarrier(m_pHitGroupTable, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
 	};
 
-	CommandList* pUploadCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pUploadShaderTableDataCommandList");
-	pUploadCommandList->Begin();
-	pUploadCommandList->CopyResource(m_pRayGenShaderTable, pUploadRayGenShaderTable);
-	pUploadCommandList->CopyResource(m_pMissShaderTable, pUploadMissShaderTable);
-	pUploadCommandList->CopyResource(m_pHitGroupTable, pUploadHitGroupTable);
-	pUploadCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
-	pUploadCommandList->End();
+	CommandList* pCommandList = pRenderEnv->m_pCommandListPool->Create(L"RayTracingPass::pUploadShaderTableDataCommandList");
+	pCommandList->Begin();
+	pCommandList->CopyResource(m_pRayGenShaderTable, pUploadRayGenShaderTable);
+	pCommandList->CopyResource(m_pMissShaderTable, pUploadMissShaderTable);
+	pCommandList->CopyResource(m_pHitGroupTable, pUploadHitGroupTable);
+	pCommandList->ResourceBarrier(ARRAYSIZE(resourceBarriers), resourceBarriers);
+	pCommandList->End();
 
 	++pRenderEnv->m_LastSubmissionFenceValue;
-	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pUploadCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
+	pRenderEnv->m_pCommandQueue->ExecuteCommandLists(1, &pCommandList, pRenderEnv->m_pFence, pRenderEnv->m_LastSubmissionFenceValue);
 	pRenderEnv->m_pFence->WaitForSignalOnCPU(pRenderEnv->m_LastSubmissionFenceValue);
 
 	SafeDelete(pUploadRayGenShaderTable);
