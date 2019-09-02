@@ -28,8 +28,7 @@ struct AppData
 	f32 m_NotUsed1;
 	Vector3f m_CameraWorldAxisZ;
 	f32 m_NotUsed2;
-	Vector4f m_BackgroundColor;
-	f32 m_NotUsed3[12];
+	f32 m_NotUsed3[16];
 	f32 m_NotUsed4[16];
 	f32 m_NotUsed5[16];
 };
@@ -98,7 +97,6 @@ void DXApplication::OnUpdate()
 	pAppData->m_CameraWorldAxisZ = Vector3f::FORWARD;
 	pAppData->m_RayMinExtent = 0.0001f;
 	pAppData->m_RayMaxExtent = 20.0f;
-	pAppData->m_BackgroundColor = Color::GRAY;
 }
 
 void DXApplication::OnRender()
@@ -203,24 +201,57 @@ void DXApplication::InitRenderEnvironment()
 
 void DXApplication::InitRayTracingPass()
 {
-	assert(m_pRayTracingPass == nullptr);
-				
-	const Vector3f positions[] = {Vector3f(0.0f, 2.0f, 5.0f), Vector3f(2.0f, -2.0f, 5.0f), Vector3f(-2.0f, -2.0f, 5.0f)};	
-	const Vector4f colors[] = {Color::RED, Color::GREEN, Color::BLUE};
-	const WORD indices[] = {0, 1, 2};
+	assert(m_pRayTracingPass == nullptr);	
+	MeshBatch meshBatch(VertexData::FormatFlag_Position, DXGI_FORMAT_R16_UINT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	VertexData* pVertexData = new VertexData(ARRAYSIZE(positions), positions, nullptr, nullptr, colors);
-	IndexData* pIndexData = new IndexData(ARRAYSIZE(indices), indices);
-	
-	const u32 numInstances = 1;
-	Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
-	pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
-	
-	Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, -1, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	
-	MeshBatch meshBatch(pVertexData->GetFormatFlags(), pIndexData->GetFormat(), mesh.GetPrimitiveTopologyType(), mesh.GetPrimitiveTopology());
-	meshBatch.AddMesh(&mesh);
-		
+	// Mesh 1
+	{
+		const Vector3f positions[] = {Vector3f(-6.0f, 2.0f, 9.0f), Vector3f(-4.0f, -2.0f, 9.0f), Vector3f(-8.0f, -2.0f, 9.0f)};
+		const WORD indices[] = {0, 1, 2};
+
+		VertexData* pVertexData = new VertexData(ARRAYSIZE(positions), positions);
+		IndexData* pIndexData = new IndexData(ARRAYSIZE(indices), indices);
+
+		const u32 numInstances = 1;
+		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
+		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
+
+		Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, -1, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		meshBatch.AddMesh(&mesh);
+	}
+
+	// Mesh 2
+	{
+		const Vector3f positions[] = {Vector3f(6.0f, 2.0f, 9.0f), Vector3f(8.0f, -2.0f, 9.0f), Vector3f(4.0f, -2.0f, 9.0f)};
+		const WORD indices[] = {0, 1, 2};
+
+		VertexData* pVertexData = new VertexData(ARRAYSIZE(positions), positions);
+		IndexData* pIndexData = new IndexData(ARRAYSIZE(indices), indices);
+
+		const u32 numInstances = 1;
+		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
+		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
+
+		Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, -1, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		meshBatch.AddMesh(&mesh);
+	}
+
+	// Mesh 3
+	{
+		const Vector3f positions[] = {Vector3f(0.0f, 2.0f, 5.0f), Vector3f(2.0f, -2.0f, 5.0f), Vector3f(-2.0f, -2.0f, 5.0f)};
+		const WORD indices[] = {0, 1, 2};
+
+		VertexData* pVertexData = new VertexData(ARRAYSIZE(positions), positions);
+		IndexData* pIndexData = new IndexData(ARRAYSIZE(indices), indices);
+
+		const u32 numInstances = 1;
+		Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
+		pInstanceWorldMatrices[0] = Matrix4f::IDENTITY;
+
+		Mesh mesh(pVertexData, pIndexData, numInstances, pInstanceWorldMatrices, -1, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		meshBatch.AddMesh(&mesh);
+	}
+
 	RayTracingPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_InputResourceStates.m_RayTracedResultState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;

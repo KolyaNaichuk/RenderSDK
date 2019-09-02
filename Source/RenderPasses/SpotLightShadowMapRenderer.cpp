@@ -175,7 +175,7 @@ void SpotLightShadowMapRenderer::InitResources(InitParams* pParams)
 			{
 				ShadowMapCommand shadowMapCommand;
 				shadowMapCommand.m_InstanceOffset = visibleMeshInstanceIndices.size() - numVisibleMeshInstances;
-				shadowMapCommand.m_Args.m_IndexCountPerInstance = meshInfo.m_IndexCountPerInstance;
+				shadowMapCommand.m_Args.m_IndexCountPerInstance = meshInfo.m_IndexCount;
 				shadowMapCommand.m_Args.m_InstanceCount = numVisibleMeshInstances;
 				shadowMapCommand.m_Args.m_StartIndexLocation = meshInfo.m_StartIndexLocation;
 				shadowMapCommand.m_Args.m_BaseVertexLocation = meshInfo.m_BaseVertexLocation;

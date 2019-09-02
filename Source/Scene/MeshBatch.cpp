@@ -82,6 +82,7 @@ void MeshBatch::AddMesh(const Mesh* pMesh)
 	m_MeshInfos.emplace_back(numInstances,
 		instanceOffset,
 		numIndices,
+		numVertices,
 		startIndexLocation,
 		baseVertexLocation,
 		pMesh->GetMaterialID());

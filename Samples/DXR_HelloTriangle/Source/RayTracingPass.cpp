@@ -78,7 +78,7 @@ void RayTracingPass::Record(RenderParams* pParams)
 	DispatchRaysDesc dispatchDesc(pParams->m_NumRaysX, pParams->m_NumRaysY, 1,
 		m_pRayGenShaderTable, m_pMissShaderTable, m_pHitGroupTable);
 	pCommandList->DispatchRays(&dispatchDesc);
-
+	
 #ifdef ENABLE_PROFILING
 	pGPUProfiler->EndProfile(pCommandList, profileIndex);
 #endif // ENABLE_PROFILING
@@ -89,7 +89,7 @@ void RayTracingPass::InitTextures(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
 	
-	assert(m_pRayTracedResult == nullptr);	
+	assert(m_pRayTracedResult == nullptr);
 	const FLOAT optimizedClearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
 	ColorTexture2DDesc rayTracedResultDesc(DXGI_FORMAT_R10G10B10A2_UNORM, pParams->m_NumRaysX, pParams->m_NumRaysY, false, true, true);
 	m_pRayTracedResult = new ColorTexture(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &rayTracedResultDesc,
@@ -109,35 +109,19 @@ void RayTracingPass::InitGeometryBuffers(InitParams* pParams)
 
 	const u8 vertexFormatFlags = pMeshBatch->GetVertexFormatFlags();
 	assert((vertexFormatFlags & VertexData::FormatFlag_Position) != 0);
-	assert((vertexFormatFlags & VertexData::FormatFlag_Color) != 0);
-
-	const Vector3f* pPositions = pMeshBatch->GetPositions();
-	const Vector4f* pColors = pMeshBatch->GetColors();
-
-	const u32 positionSizeInBytes = sizeof(pPositions[0]);
-	const u32 colorSizeInBytes = sizeof(pColors[0]);
-	const u32 vertexSizeInBytes = positionSizeInBytes + colorSizeInBytes;
-
-	const u32 numVertices = pMeshBatch->GetNumVertices();
-	std::vector<u8> vertexData(vertexSizeInBytes * numVertices);
 	
-	for (u32 index = 0; index < numVertices; ++index)
-	{
-		u8* pVertexDest = &vertexData[index * vertexSizeInBytes];
-		
-		CopyMemory(pVertexDest, &pPositions[index], positionSizeInBytes);
-		CopyMemory(pVertexDest + positionSizeInBytes, &pColors[index], colorSizeInBytes);
-	}
-
+	const Vector3f* pPositions = pMeshBatch->GetPositions();
+	const u32 vertexSizeInBytes = sizeof(pPositions[0]);
+	
 	assert(m_pVertexBuffer == nullptr);
-	StructuredBufferDesc vertexBufferDesc(numVertices, vertexSizeInBytes, true, false, true);
+	StructuredBufferDesc vertexBufferDesc(pMeshBatch->GetNumVertices(), vertexSizeInBytes, true, false, true);
 	m_pVertexBuffer = new Buffer(pRenderEnv, pRenderEnv->m_pDefaultHeapProps, &vertexBufferDesc,
 		D3D12_RESOURCE_STATE_COPY_DEST, L"RayTracingPass::m_pVertexBuffer");
 
-	StructuredBufferDesc uploadVertexBufferDesc(numVertices, vertexSizeInBytes, false, false, false);
+	StructuredBufferDesc uploadVertexBufferDesc(pMeshBatch->GetNumVertices(), vertexSizeInBytes, false, false, false);
 	Buffer uploadVertexBuffer(pRenderEnv, pRenderEnv->m_pUploadHeapProps, &uploadVertexBufferDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ, L"RayTracingPass::uploadVertexBuffer");
-	uploadVertexBuffer.Write(vertexData.data(), vertexData.size());
+	uploadVertexBuffer.Write(pMeshBatch->GetPositions(), vertexSizeInBytes * pMeshBatch->GetNumVertices());
 
 	// Index Buffer
 	
@@ -188,17 +172,44 @@ void RayTracingPass::InitGeometryBuffers(InitParams* pParams)
 void RayTracingPass::InitAccelerationStructures(InitParams* pParams)
 {
 	RenderEnv* pRenderEnv = pParams->m_pRenderEnv;
-	
+	MeshBatch* pMeshBatch = pParams->m_pMeshBatch;
+
 	// Bottom level acceleration structure
-	RayTracingTrianglesGeometryDesc geometryDesc(DXGI_FORMAT_R32G32B32_FLOAT, m_pVertexBuffer, m_pIndexBuffer, D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE);
+
+	const VertexBufferView* pVBView = m_pVertexBuffer->GetVBView();
+	const IndexBufferView* pIBView = m_pIndexBuffer->GetIBView();
+	const u32 indexStrideInBytes = (pMeshBatch->GetIndexFormat() == DXGI_FORMAT_R16_UINT) ? sizeof(u16) : sizeof(u32);
+
+	const u32 numMeshes = pMeshBatch->GetNumMeshes();
+	const MeshInfo* meshInfos = pMeshBatch->GetMeshInfos();
+	
+	std::vector<RayTracingGeometryDesc> geometryDescs(numMeshes);
+	for (u32 index = 0; index < numMeshes; ++index)
+	{
+		const MeshInfo& meshInfo = meshInfos[index];
+		assert(meshInfo.m_InstanceCount == 1);
+				
+		geometryDescs[index].Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+		geometryDescs[index].Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
+
+		geometryDescs[index].Triangles.Transform3x4 = 0;
+		geometryDescs[index].Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+		geometryDescs[index].Triangles.VertexCount = meshInfo.m_VertexCount;
+		geometryDescs[index].Triangles.VertexBuffer.StartAddress = pVBView->BufferLocation + pVBView->StrideInBytes * meshInfo.m_BaseVertexLocation;
+		geometryDescs[index].Triangles.VertexBuffer.StrideInBytes = pVBView->StrideInBytes;
+
+		geometryDescs[index].Triangles.IndexFormat = pIBView->Format;
+		geometryDescs[index].Triangles.IndexCount = meshInfo.m_IndexCount;
+		geometryDescs[index].Triangles.IndexBuffer = pIBView->BufferLocation + indexStrideInBytes * meshInfo.m_StartIndexLocation;
+	}
 
 	BuildRayTracingAccelerationStructureInputs BLASBuildInputs;
 	BLASBuildInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
 	BLASBuildInputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
-	BLASBuildInputs.NumDescs = 1;
 	BLASBuildInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	BLASBuildInputs.pGeometryDescs = &geometryDesc;
-
+	BLASBuildInputs.NumDescs = (UINT)geometryDescs.size();
+	BLASBuildInputs.pGeometryDescs = geometryDescs.data();
+		
 	RayTracingAccelerationStructurePrebuildInfo BLASPrebuildInfo;
 	pRenderEnv->m_pDevice->GetRaytracingAccelerationStructurePrebuildInfo(&BLASBuildInputs, &BLASPrebuildInfo);
 
@@ -302,7 +313,7 @@ void RayTracingPass::InitRootSignatures(InitParams* pParams)
 	globalRootParams[kGlobalRootCBVParam] = RootCBVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
 	globalRootParams[kGlobalRootTLASParam] = RootSRVParameter(0, D3D12_SHADER_VISIBILITY_ALL);
 
-	D3D12_DESCRIPTOR_RANGE globalDescriptorRanges[] = {SRVDescriptorRange(2, 1), UAVDescriptorRange(1, 0)};
+	D3D12_DESCRIPTOR_RANGE globalDescriptorRanges[] = {UAVDescriptorRange(1, 0)};
 	globalRootParams[kGlobalRootSRVTableParam] = RootDescriptorTableParameter(ARRAYSIZE(globalDescriptorRanges), globalDescriptorRanges, D3D12_SHADER_VISIBILITY_ALL);
 	
 	assert(m_pGlobalRootSignature == nullptr);
@@ -344,7 +355,7 @@ void RayTracingPass::InitStateObject(InitParams* pParams)
 	RayTracingPipelineConfig pipelineConfig(1);
 	stateSubobjects[kPipelineConfigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG, &pipelineConfig);
 
-	RayTracingShaderConfig shaderConfig(sizeof(Vector4f)/*color*/, sizeof(Vector2f)/*attribs*/);
+	RayTracingShaderConfig shaderConfig(sizeof(Vector3f)/*color*/, sizeof(Vector2f)/*attribs*/);
 	stateSubobjects[kShaderConfigIndex] = StateSubobject(D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG, &shaderConfig);
 
 	LPCWSTR shaderConfigExports[] = {g_pRayGenShaderName, g_pMissShaderName, g_pClosesHitShaderName};
@@ -375,12 +386,6 @@ void RayTracingPass::InitDescriptorHeap(InitParams* pParams)
 		
 	m_GlobalSRVHeapStart = pRenderEnv->m_pShaderVisibleSRVHeap->Allocate();
 	pRenderEnv->m_pDevice->CopyDescriptor(m_GlobalSRVHeapStart,
-		m_pVertexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
-		m_pIndexBuffer->GetSRVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-	pRenderEnv->m_pDevice->CopyDescriptor(pRenderEnv->m_pShaderVisibleSRVHeap->Allocate(),
 		m_pRayTracedResult->GetUAVHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 

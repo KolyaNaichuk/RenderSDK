@@ -1720,38 +1720,6 @@ TextureCopyLocation::TextureCopyLocation(GraphicsResource* pGraphicsResource, co
 	PlacedFootprint = footprint;
 }
 
-RayTracingTrianglesGeometryDesc::RayTracingTrianglesGeometryDesc(DXGI_FORMAT vertexFormat, Buffer* pVertexBuffer, Buffer* pIndexBuffer,
-	D3D12_RAYTRACING_GEOMETRY_FLAGS flags, Buffer* pTransformBuffer)
-{
-	Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-	Flags = flags;
-
-	Triangles.Transform3x4 = (pTransformBuffer != nullptr) ? pTransformBuffer->GetGPUVirtualAddress() : 0;
-	
-	assert(pVertexBuffer != nullptr);
-	const VertexBufferView* pVBView = pVertexBuffer->GetVBView();
-	
-	Triangles.VertexFormat = vertexFormat;
-	Triangles.VertexCount = pVertexBuffer->GetNumElements();
-	Triangles.VertexBuffer.StartAddress = pVBView->BufferLocation;
-	Triangles.VertexBuffer.StrideInBytes = pVBView->StrideInBytes;
-
-	if (pIndexBuffer != nullptr)
-	{
-		const IndexBufferView* pIBView = pIndexBuffer->GetIBView();
-
-		Triangles.IndexFormat = pIBView->Format;
-		Triangles.IndexCount = pIndexBuffer->GetNumElements();
-		Triangles.IndexBuffer = pIBView->BufferLocation;
-	}
-	else
-	{
-		Triangles.IndexFormat = DXGI_FORMAT_UNKNOWN;
-		Triangles.IndexCount = 0;
-		Triangles.IndexBuffer = 0;
-	}
-}
-
 BuildRayTracingAccelerationStructureDesc::BuildRayTracingAccelerationStructureDesc(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* pInputs,
 	Buffer* pDestBuffer, Buffer* pScratchBuffer, Buffer* pSourceBuffer)
 {

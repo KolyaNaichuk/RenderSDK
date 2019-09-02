@@ -524,10 +524,8 @@ struct TextureCopyLocation : public D3D12_TEXTURE_COPY_LOCATION
 	TextureCopyLocation(GraphicsResource* pGraphicsResource, const D3D12_PLACED_SUBRESOURCE_FOOTPRINT& footprint);
 };
 
-struct RayTracingTrianglesGeometryDesc : D3D12_RAYTRACING_GEOMETRY_DESC
+struct RayTracingGeometryDesc : D3D12_RAYTRACING_GEOMETRY_DESC
 {
-	RayTracingTrianglesGeometryDesc(DXGI_FORMAT vertexFormat, Buffer* pVertexBuffer, Buffer* pIndexBuffer,
-		D3D12_RAYTRACING_GEOMETRY_FLAGS flags = D3D12_RAYTRACING_GEOMETRY_FLAG_NONE, Buffer* pTransformBuffer = nullptr);
 };
 
 struct RayTracingInstanceDesc : D3D12_RAYTRACING_INSTANCE_DESC
