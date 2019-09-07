@@ -51,8 +51,8 @@ void RayGeneration()
 	RayPayload payload;
 	payload.color = float3(0.0f, 0.0f, 0.0f);
 
-	TraceRay(g_TopLevelAccelStruct, RAY_FLAG_FORCE_OPAQUE, 0xFF/*instanceInclusionMask*/,
-		0/*hitGroupIndex*/, 1/*numHitGroups*/, 0/*missShaderIndex*/, ray, payload);
+	TraceRay(g_TopLevelAccelStruct, RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_CULL_BACK_FACING_TRIANGLES,
+		0xFF/*instanceInclusionMask*/, 0/*hitGroupIndex*/, 1/*numHitGroups*/, 0/*missShaderIndex*/, ray, payload);
 	
 	g_OutputTexture[pixelPos] = float4(payload.color, 1.0f);
 }

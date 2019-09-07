@@ -24,6 +24,7 @@ struct Rect;
 
 class RayTracingPass;
 class VisualizeTexturePass;
+class Camera;
 
 class DXApplication : public Application
 {
@@ -73,4 +74,5 @@ private:
 	RayTracingPass* m_pRayTracingPass = nullptr;
 	VisualizeTexturePass* m_VisualizeRayTracedResultPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	GPUProfiler* m_pGPUProfiler = nullptr;
+	Camera* m_pCamera = nullptr;
 };

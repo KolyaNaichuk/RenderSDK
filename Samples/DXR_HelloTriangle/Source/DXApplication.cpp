@@ -15,9 +15,11 @@
 #include "RenderPasses/MeshRenderResources.h"
 #include "Scene/MeshBatch.h"
 #include "Scene/Mesh.h"
+#include "Scene/Camera.h"
 #include "Math/Vector3.h"
 #include "Math/Transform.h"
 #include "Common/Color.h"
+#include "Common/KeyboardInput.h"
 
 struct AppData
 {
@@ -40,10 +42,6 @@ enum
 	kBackBufferHeight = 512
 };
 
-// To do:
-// Add multiple instances
-// Add camera navigation
-
 DXApplication::DXApplication(HINSTANCE hApp)
 	: Application(hApp, L"Hello Triangle", 0, 0, kBackBufferWidth, kBackBufferHeight)
 	, m_pDefaultHeapProps(new HeapProperties(D3D12_HEAP_TYPE_DEFAULT))
@@ -65,6 +63,7 @@ DXApplication::~DXApplication()
 		SafeDelete(m_AppDataBuffers[index]);
 	}
 	
+	SafeDelete(m_pCamera);
 	SafeDelete(m_pGPUProfiler);
 	SafeDelete(m_pCommandListPool);
 	SafeDelete(m_pRenderEnv);
@@ -91,13 +90,18 @@ void DXApplication::OnInit()
 
 void DXApplication::OnUpdate(float deltaTimeInMS)
 {
+	KeyboardInput::Poll();
+
+	assert(m_pCamera != nullptr);
+	m_pCamera->Update(deltaTimeInMS);
+
 	AppData* pAppData = (AppData*)m_AppData[m_BackBufferIndex];
-	pAppData->m_CameraWorldPos = Vector3f::ZERO;
-	pAppData->m_CameraWorldAxisX = Vector3f::RIGHT;
-	pAppData->m_CameraWorldAxisY = Vector3f::UP;
-	pAppData->m_CameraWorldAxisZ = Vector3f::FORWARD;
+	pAppData->m_CameraWorldPos = m_pCamera->GetWorldPosition();
+	pAppData->m_CameraWorldAxisX = m_pCamera->GetWorldOrientation().m_XAxis;
+	pAppData->m_CameraWorldAxisY = m_pCamera->GetWorldOrientation().m_YAxis;
+	pAppData->m_CameraWorldAxisZ = m_pCamera->GetWorldOrientation().m_ZAxis;
 	pAppData->m_RayMinExtent = 0.0001f;
-	pAppData->m_RayMaxExtent = 20.0f;
+	pAppData->m_RayMaxExtent = 1.5f * m_pCamera->GetFarClipDistance();
 }
 
 void DXApplication::OnRender()
@@ -198,6 +202,9 @@ void DXApplication::InitRenderEnvironment()
 		m_AppDataBuffers[index] = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pUploadHeapProps, &appDataBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, L"m_pAppDataBuffer");
 		m_AppData[index] = m_AppDataBuffers[index]->Map(0, &readRange);
 	}
+	
+	assert(m_pCamera == nullptr);
+	m_pCamera = new Camera(Vector3f::ZERO, BasisAxes(), PI_DIV_4, 1.0f, 0.1f, 20.0f, Vector3f(0.01f), Vector3f(0.001f));
 }
 
 void DXApplication::InitRayTracingPass()
