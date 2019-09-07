@@ -129,7 +129,7 @@ void DXApplication::OnInit()
 		{Vector4f( 1.0f * scale, -1.0f * scale, 0.0f, 1.0f), Vector4f(0.5f, 0.0f, 0.5f, 1.0f)},
 		{Vector4f(-1.0f * scale, -1.0f * scale, 0.0f, 1.0f), Vector4f(0.5f, 0.0f, 0.5f, 1.0f)}
 	};
-	const WORD indices[] = {0, 1, 3, 1, 2, 3};
+	const u16 indices[] = {0, 1, 3, 1, 2, 3};
 
 	StructuredBufferDesc vertexBufferDesc(ARRAYSIZE(vertices), sizeof(vertices[0]), false, false, true);
 	m_pVertexBuffer = new Buffer(m_pRenderEnv, m_pRenderEnv->m_pDefaultHeapProps, &vertexBufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, L"m_pVertexBuffer");
@@ -140,7 +140,7 @@ void DXApplication::OnInit()
 	UploadData(m_pRenderEnv, m_pIndexBuffer, indexBufferDesc, D3D12_RESOURCE_STATE_INDEX_BUFFER, indices, sizeof(indices));
 }
 
-void DXApplication::OnUpdate()
+void DXApplication::OnUpdate(float deltaTimeInMS)
 {
 }
 

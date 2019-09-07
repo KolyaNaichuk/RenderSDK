@@ -20,9 +20,7 @@ SG SGProduct(SG sg1, SG sg2)
 {
 	float unnormSharpness = sg1.sharpness + sg2.sharpness;
 	
-	float3 unnormAxis = (sg1.sharpness * sg1.axis + sg2.sharpness * sg2.axis) /
-		(sg1.sharpness + sg2.sharpness);
-	
+	float3 unnormAxis = (sg1.sharpness * sg1.axis + sg2.sharpness * sg2.axis) / (sg1.sharpness + sg2.sharpness);
 	float unnormAxisLength = length(unnormAxis);
 	
 	SG sg;

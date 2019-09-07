@@ -32,6 +32,7 @@ int Application::Run(int showCommand)
 	MSG msg;
 	ZeroMemory(&msg, sizeof(msg));
 
+	DWORD lastTimeInMS = GetTickCount();
 	while (true)
 	{
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
@@ -42,7 +43,12 @@ int Application::Run(int showCommand)
 			if (msg.message == WM_QUIT)
 				break;
 		}
-		OnUpdate();
+
+		DWORD currentTimeInMS = GetTickCount();
+		DWORD deltaTimeInMS = currentTimeInMS - lastTimeInMS;
+		lastTimeInMS = currentTimeInMS;
+
+		OnUpdate(deltaTimeInMS);
 		OnRender();
 	}
 

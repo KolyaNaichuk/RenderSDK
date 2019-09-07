@@ -89,7 +89,7 @@ void DXApplication::OnInit()
 	InitVisualizeRayTracedResultPass();
 }
 
-void DXApplication::OnUpdate()
+void DXApplication::OnUpdate(float deltaTimeInMS)
 {
 	AppData* pAppData = (AppData*)m_AppData[m_BackBufferIndex];
 	pAppData->m_CameraWorldPos = Vector3f::ZERO;

@@ -41,8 +41,10 @@ public:
 	const Matrix4f& GetProjMatrix() const;
 	const Matrix4f& GetViewProjMatrix() const;
 	
-	void Move(const Vector3f& moveDelta, f32 deltaTime);
-	void Rotate(const Vector3f& rotationDeltaInRadians, f32 deltaTime);
+	void Move(const Vector3f& moveDir, f32 deltaTimeInMS);
+	void Rotate(const Vector3f& rotationDir, f32 deltaTimeInMS);
+	
+	void Update(f32 deltaTime);
 
 private:
 	void RecalcMatricesIfDirty() const;

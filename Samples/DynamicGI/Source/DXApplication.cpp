@@ -418,10 +418,9 @@ void DXApplication::OnInit()
 	SafeDelete(pScene);
 }
 
-void DXApplication::OnUpdate()
+void DXApplication::OnUpdate(float deltaTimeInMS)
 {
-	KeyboardInput::Poll();
-	HandleUserInput();
+	ProcessUserInput(deltaTimeInMS);
 
 	static Matrix4f prevViewProjMatrix = m_pCamera->GetViewMatrix() * m_pCamera->GetProjMatrix();
 	static Matrix4f prevViewProjInvMatrix = Inverse(prevViewProjMatrix);
@@ -559,37 +558,11 @@ void DXApplication::OnDestroy()
 	m_pFence->WaitForSignalOnCPU(m_pRenderEnv->m_LastSubmissionFenceValue);
 }
 
-void DXApplication::HandleUserInput()
+void DXApplication::ProcessUserInput(float deltaTimeInMS)
 {
-	f32 deltaTime = 1.0f;
-	static const f32 moveStep = 2.0f;
-	static const f32 rotationStep = 0.01f;
+	KeyboardInput::Poll();
+	m_pCamera->Update(deltaTimeInMS);
 
-	Vector3f cameraMoveDelta(0.0f, 0.0f, 0.0f);
-	Vector3f cameraRotationDeltaInRadians(0.0f, 0.0f, 0.0f);
-				
-	if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Up))
-		cameraRotationDeltaInRadians.m_X = -rotationStep;
-	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Down))
-		cameraRotationDeltaInRadians.m_X = rotationStep;
-	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Left))
-		cameraRotationDeltaInRadians.m_Y = -rotationStep;
-	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Right))
-		cameraRotationDeltaInRadians.m_Y = rotationStep;
-					
-	if (KeyboardInput::IsKeyDown(KeyboardInput::Key_S))
-		cameraMoveDelta.m_Z = -moveStep;
-	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_W))
-		cameraMoveDelta.m_Z = moveStep;
-	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_A))
-		cameraMoveDelta.m_X = -moveStep;
-	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_D))
-		cameraMoveDelta.m_X = moveStep;
-	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_E))
-		cameraMoveDelta.m_Y = -moveStep;
-	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Q))
-		cameraMoveDelta.m_Y = moveStep;
-	
 	if (KeyboardInput::IsKeyDown(KeyboardInput::Key_1))
 		UpdateDisplayResult(DisplayResult::ShadingResult);
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_2))
@@ -604,19 +577,6 @@ void DXApplication::HandleUserInput()
 		UpdateDisplayResult(DisplayResult::DepthBufferWithMeshType);
 	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_7))
 		UpdateDisplayResult(DisplayResult::NumLightsPerTile);
-
-	m_pCamera->Move(cameraMoveDelta, deltaTime);
-	m_pCamera->Rotate(cameraRotationDeltaInRadians, deltaTime);
-
-#if 0
-	std::stringstream stream;
-	stream << "x: " << m_pCamera->GetWorldPosition().m_X
-		<< ", y: " << m_pCamera->GetWorldPosition().m_Y
-		<< ", z: " << m_pCamera->GetWorldPosition().m_Z
-		<< "\n";
-	auto str = stream.str();
-	OutputDebugStringA(str.c_str());
-#endif
 }
 
 void DXApplication::InitRenderEnvironment(UINT backBufferWidth, UINT backBufferHeight)

@@ -65,7 +65,7 @@ public:
 
 private:
 	void OnInit() override;
-	void OnUpdate() override;
+	void OnUpdate(float deltaTimeInMS) override;
 	void OnRender() override;
 	void OnDestroy() override;
 	
@@ -152,7 +152,7 @@ private:
 	void SetupSpotLightDataForUpload(const Frustum& cameraWorldFrustum);
 	
 	void UpdateDisplayResult(DisplayResult displayResult);
-	void HandleUserInput();
+	void ProcessUserInput(float deltaTimeInMS);
 
 #ifdef DEBUG_RENDER_PASS
 	void OuputDebugRenderPassResult();

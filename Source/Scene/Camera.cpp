@@ -1,5 +1,6 @@
 #include "Scene/Camera.h"
 #include "Math/Transform.h"
+#include "Common/KeyboardInput.h"
 
 namespace
 {
@@ -143,22 +144,22 @@ const Matrix4f& Camera::GetViewProjMatrix() const
 	return m_ViewProjMatrix;
 }
 
-void Camera::Move(const Vector3f& moveDelta, f32 deltaTime)
+void Camera::Move(const Vector3f& moveDir, f32 deltaTimeInMS)
 {
-	const Vector3f moveOffset = (deltaTime * m_MoveSpeed) * moveDelta;
+	const Vector3f strength = (deltaTimeInMS * m_MoveSpeed) * moveDir;
 	
-	m_WorldPosition += moveOffset.m_X * m_WorldOrientation.m_XAxis;
-	m_WorldPosition += moveOffset.m_Y * m_WorldOrientation.m_YAxis;
-	m_WorldPosition += moveOffset.m_Z * m_WorldOrientation.m_ZAxis;
+	m_WorldPosition += strength.m_X * m_WorldOrientation.m_XAxis;
+	m_WorldPosition += strength.m_Y * m_WorldOrientation.m_YAxis;
+	m_WorldPosition += strength.m_Z * m_WorldOrientation.m_ZAxis;
 	
 	m_Dirty = true;
 }
 
-void Camera::Rotate(const Vector3f& rotationDeltaInRadians, f32 deltaTime)
+void Camera::Rotate(const Vector3f& rotationDir, f32 deltaTimeInMS)
 {	
-	m_RotationInRadians.m_Y += (deltaTime * m_RotationSpeed.m_Y) * rotationDeltaInRadians.m_Y;
-	m_RotationInRadians.m_X += (deltaTime * m_RotationSpeed.m_X) * rotationDeltaInRadians.m_X;
-	m_RotationInRadians.m_Z += (deltaTime * m_RotationSpeed.m_Z) * rotationDeltaInRadians.m_Z;
+	m_RotationInRadians.m_Y += (deltaTimeInMS * m_RotationSpeed.m_Y) * rotationDir.m_Y;
+	m_RotationInRadians.m_X += (deltaTimeInMS * m_RotationSpeed.m_X) * rotationDir.m_X;
+	m_RotationInRadians.m_Z += (deltaTimeInMS * m_RotationSpeed.m_Z) * rotationDir.m_Z;
 
 	m_RotationInRadians.m_Y = NormalizeAngle(m_RotationInRadians.m_Y);
 	m_RotationInRadians.m_X = Clamp(-PI_DIV_2, PI_DIV_2, m_RotationInRadians.m_X);
@@ -166,6 +167,37 @@ void Camera::Rotate(const Vector3f& rotationDeltaInRadians, f32 deltaTime)
 	
 	m_WorldOrientation = BasisAxes(CreateRotationZXYMatrix(m_RotationInRadians));
 	m_Dirty = true;
+}
+
+void Camera::Update(f32 deltaTime)
+{
+	Vector3f moveDir(0.0f, 0.0f, 0.0f);
+	Vector3f rotationDir(0.0f, 0.0f, 0.0f);
+
+	if (KeyboardInput::IsKeyDown(KeyboardInput::Key_S))
+		moveDir.m_Z = -1.0f;
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_W))
+		moveDir.m_Z = 1.0f;
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_A))
+		moveDir.m_X = -1.0f;
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_D))
+		moveDir.m_X = 1.0f;
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_E))
+		moveDir.m_Y = -1.0f;
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Q))
+		moveDir.m_Y = 1.0f;
+
+	if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Up))
+		rotationDir.m_X = -1.0f;
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Down))
+		rotationDir.m_X = 1.0f;
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Left))
+		rotationDir.m_Y = -1.0f;
+	else if (KeyboardInput::IsKeyDown(KeyboardInput::Key_Right))
+		rotationDir.m_Y = 1.0f;
+
+	Move(moveDir, deltaTime);
+	Rotate(rotationDir, deltaTime);
 }
 
 void Camera::RecalcMatricesIfDirty() const

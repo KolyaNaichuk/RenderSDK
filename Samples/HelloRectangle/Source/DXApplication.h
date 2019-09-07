@@ -28,7 +28,7 @@ public:
 
 private:
 	void OnInit() override;
-	void OnUpdate() override;
+	void OnUpdate(float deltaTimeInMS) override;
 	void OnRender() override;
 	void OnDestroy() override;
 	

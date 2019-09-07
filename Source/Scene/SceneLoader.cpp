@@ -33,8 +33,8 @@ Scene* SceneLoader::LoadCrytekSponza()
 		1.0f/*aspectRatio*/,
 		0.1f/*nearClipDist*/,
 		60.0f/*farClipDist*/,
-		Vector3f(0.04f)/*moveSpeed*/,
-		Vector3f(1.2f)/*rotationSpeed*/
+		Vector3f(0.01f)/*moveSpeed*/,
+		Vector3f(0.001f)/*rotationSpeed*/
 	);
 	pScene->SetCamera(pCamera);
 
