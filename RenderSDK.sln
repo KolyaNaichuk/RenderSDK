@@ -21,10 +21,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DXR_HelloTriangle", "Sample
 		{81373C17-8965-4747-9818-AA450B2578DC} = {81373C17-8965-4747-9818-AA450B2578DC}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DXR_PathTracing", "Samples\DXR_PathTracing\DXR_PathTracing.vcxproj", "{4C2F0338-8043-4895-9441-43FD0FB12083}"
-	ProjectSection(ProjectDependencies) = postProject
-		{81373C17-8965-4747-9818-AA450B2578DC} = {81373C17-8965-4747-9818-AA450B2578DC}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DXR_Experiments", "Samples\DXR_Experiments\DXR_Experiments.vcxproj", "{4C2F0338-8043-4895-9441-43FD0FB12083}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

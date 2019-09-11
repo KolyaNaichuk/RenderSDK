@@ -26,8 +26,8 @@ Samples/DXR_HelloTriangle/Shaders/VisualizeTexturePS.hlsl
 Samples/DXR_HelloTriangle/Shaders/FullScreenTriangleVS.hlsl
 Samples/DXR_HelloTriangle/Shaders/GammaCorrection.hlsl
 Samples/DXR_HelloTriangle/Shaders/RayTracingUtils.hlsl
-Samples/DXR_PathTracing/x64/
-Samples/DXR_PathTracing/Shaders/FullScreenTriangleVS.hlsl
-Samples/DXR_PathTracing/Shaders/GammaCorrection.hlsl
-Samples/DXR_PathTracing/Shaders/VisualizeTexturePS.hlsl
-Samples/DXR_PathTracing/Shaders/RayTracingUtils.hlsl
+Samples/DXR_Experiments/x64/
+Samples/DXR_Experiments/Shaders/FullScreenTriangleVS.hlsl
+Samples/DXR_Experiments/Shaders/GammaCorrection.hlsl
+Samples/DXR_Experiments/Shaders/VisualizeTexturePS.hlsl
+Samples/DXR_Experiments/Shaders/RayTracingUtils.hlsl

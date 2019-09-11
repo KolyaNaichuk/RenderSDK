@@ -43,7 +43,7 @@ enum
 };
 
 DXApplication::DXApplication(HINSTANCE hApp)
-	: Application(hApp, L"Path Tracing", 0, 0, kBackBufferWidth, kBackBufferHeight)
+	: Application(hApp, L"DXR Experiments", 0, 0, kBackBufferWidth, kBackBufferHeight)
 	, m_pDefaultHeapProps(new HeapProperties(D3D12_HEAP_TYPE_DEFAULT))
 	, m_pUploadHeapProps(new HeapProperties(D3D12_HEAP_TYPE_UPLOAD))
 	, m_pReadbackHeapProps(new HeapProperties(D3D12_HEAP_TYPE_READBACK))
