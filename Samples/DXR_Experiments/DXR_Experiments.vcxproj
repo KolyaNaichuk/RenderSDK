@@ -79,9 +79,11 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)Include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <PostBuildEvent>
-      <Command>IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\dxcompiler.dll" COPY /Y "$(SolutionDir)Include\External\DxcCompiler\bin\$(Platform)\dxcompiler.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\dxcompiler.dll"
+      <Command>IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-4.1.0\bin\$(Platform)\assimp-vc140-mt.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\assimp-vc140-mt.dll"
+IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\dxcompiler.dll" COPY /Y "$(SolutionDir)Include\External\DxcCompiler\bin\$(Platform)\dxcompiler.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\dxcompiler.dll"
 IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\dxil.dll" COPY /Y "$(SolutionDir)Include\External\DxcCompiler\bin\$(Platform)\dxil.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\dxil.dll"
 
 IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders" MKDIR "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders"
@@ -100,8 +102,8 @@ COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\$(Pr
 COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\GammaCorrection.hlsl"</Command>
     </PostBuildEvent>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-4.1.0\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;dxcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

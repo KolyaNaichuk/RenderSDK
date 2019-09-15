@@ -22,6 +22,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DXR_HelloTriangle", "Sample
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DXR_Experiments", "Samples\DXR_Experiments\DXR_Experiments.vcxproj", "{4C2F0338-8043-4895-9441-43FD0FB12083}"
+	ProjectSection(ProjectDependencies) = postProject
+		{81373C17-8965-4747-9818-AA450B2578DC} = {81373C17-8965-4747-9818-AA450B2578DC}
+		{371B9FA9-4C90-4AC6-A123-ACED756D6C77} = {371B9FA9-4C90-4AC6-A123-ACED756D6C77}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -219,16 +219,10 @@
     <ClInclude Include="..\Include\Scene\MeshBatch.h">
       <Filter>Scene</Filter>
     </ClInclude>
-    <ClInclude Include="..\Include\Scene\OBJFileLoader.h">
-      <Filter>Scene</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\Scene\Scene.h">
       <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\Scene\SceneLoader.h">
-      <Filter>Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Include\Scene\SceneObject.h">
       <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="..\Include\RenderPasses\GeometryBuffer.h">
@@ -452,16 +446,10 @@
     <ClCompile Include="..\Source\Scene\MeshBatch.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
-    <ClCompile Include="..\Source\Scene\OBJFileLoader.cpp">
-      <Filter>Scene</Filter>
-    </ClCompile>
     <ClCompile Include="..\Source\Scene\Scene.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Scene\SceneLoader.cpp">
-      <Filter>Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\Scene\SceneObject.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\GeometryBuffer.cpp">
