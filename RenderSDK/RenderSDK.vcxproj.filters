@@ -273,6 +273,9 @@
     <ClInclude Include="..\Include\RenderPasses\VisualizeDepthTexturePass.h">
       <Filter>RenderPasses</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\D3DWrapper\RayTracing.h">
+      <Filter>D3DWrapper</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Math\Math.cpp">
@@ -502,6 +505,9 @@
     </ClCompile>
     <ClCompile Include="..\Source\RenderPasses\VisualizeDepthTexturePass.cpp">
       <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\D3DWrapper\RayTracing.cpp">
+      <Filter>D3DWrapper</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

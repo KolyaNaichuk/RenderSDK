@@ -4,6 +4,7 @@
 #include "D3DWrapper/StateObject.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/RenderEnv.h"
+#include "D3DWrapper/RayTracing.h"
 #include "Profiler/GPUProfiler.h"
 #include "Scene/Mesh.h"
 #include "Scene/MeshBatch.h"
