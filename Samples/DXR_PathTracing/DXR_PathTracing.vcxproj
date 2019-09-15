@@ -87,7 +87,7 @@ IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\dxcompiler.dll" COPY /Y "
 IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\dxil.dll" COPY /Y "$(SolutionDir)Include\External\DxcCompiler\bin\$(Platform)\dxil.dll" "$(SolutionDir)Samples\Bin\$(ProjectName)\dxil.dll"
 
 IF NOT EXIST "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders" MKDIR "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders"
-COPY /Y "$(SolutionDir)Samples\$(ProjectName)\Shaders\RayTracing.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\RayTracing.hlsl"
+COPY /Y "$(SolutionDir)Samples\$(ProjectName)\Shaders\PathTracing.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\PathTracing.hlsl"
 
 COPY /Y "$(SolutionDir)Shaders\FullScreenTriangleVS.hlsl" "$(SolutionDir)Samples\$(ProjectName)\Shaders\FullScreenTriangleVS.hlsl"
 COPY /Y "$(SolutionDir)Shaders\FullScreenTriangleVS.hlsl" "$(SolutionDir)Samples\Bin\$(ProjectName)\Shaders\FullScreenTriangleVS.hlsl"
@@ -143,18 +143,18 @@ COPY /Y "$(SolutionDir)Shaders\GammaCorrection.hlsl" "$(SolutionDir)Samples\Bin\
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="Shaders\RayTracing.hlsl">
+    <None Include="Shaders\PathTracing.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\DXApplication.cpp" />
     <ClCompile Include="Source\Main.cpp" />
-    <ClCompile Include="Source\RayTracingPass.cpp" />
+    <ClCompile Include="Source\RathTracingPass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\DXApplication.h" />
-    <ClInclude Include="Source\RayTracingPass.h" />
+    <ClInclude Include="Source\PathTracingPass.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

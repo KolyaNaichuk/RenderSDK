@@ -22,7 +22,7 @@ struct IndexBufferView;
 struct Viewport;
 struct Rect;
 
-class RayTracingPass;
+class PathTracingPass;
 class VisualizeTexturePass;
 class Camera;
 
@@ -40,11 +40,11 @@ private:
 
 	void InitRenderEnvironment();
 
-	void InitRayTracingPass();
-	CommandList* RecordRayTracingPass();
+	void InitPathTracingPass();
+	CommandList* RecordPathTracingPass();
 
-	void InitVisualizeRayTracedResultPass();
-	CommandList* RecordVisualizeRayTracedResultPass();
+	void InitVisualizePathTracedResultPass();
+	CommandList* RecordVisualizePathTracedResultPass();
 
 	CommandList* RecordPostRenderPass();
 	
@@ -71,8 +71,8 @@ private:
 	Buffer* m_AppDataBuffers[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	void* m_AppData[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 
-	RayTracingPass* m_pRayTracingPass = nullptr;
-	VisualizeTexturePass* m_VisualizeRayTracedResultPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
+	PathTracingPass* m_pPathTracingPass = nullptr;
+	VisualizeTexturePass* m_VisualizePathTracedResultPasses[kNumBackBuffers] = {nullptr, nullptr, nullptr};
 	GPUProfiler* m_pGPUProfiler = nullptr;
 	Camera* m_pCamera = nullptr;
 };

@@ -8,7 +8,7 @@ class RootSignature;
 class StateObject;
 class MeshBatch;
 
-class RayTracingPass
+class PathTracingPass
 {
 public:
 	struct ResourceStates
@@ -34,12 +34,12 @@ public:
 		u32 m_NumRaysY = 0;
 	};
 
-	RayTracingPass(InitParams* pParams);
-	~RayTracingPass();
+	PathTracingPass(InitParams* pParams);
+	~PathTracingPass();
 
 	void Record(RenderParams* pParams);
 	const ResourceStates* GetOutputResourceStates() const { return &m_OutputResourceStates; }
-	ColorTexture* GetRayTracedResult() { return m_pRayTracedResult; }
+	ColorTexture* GetPathTracedResult() { return m_pPathTracedResult; }
 
 private:
 	void InitTextures(InitParams* pParams);
@@ -55,7 +55,7 @@ private:
 	std::vector<ResourceTransitionBarrier> m_ResourceBarriers;
 	ResourceStates m_OutputResourceStates;
 
-	ColorTexture* m_pRayTracedResult = nullptr;
+	ColorTexture* m_pPathTracedResult = nullptr;
 	Buffer* m_pVertexBuffer = nullptr;
 	Buffer* m_pIndexBuffer = nullptr;
 	Buffer* m_pInstanceBuffer = nullptr;

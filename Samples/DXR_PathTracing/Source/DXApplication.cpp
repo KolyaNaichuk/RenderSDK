@@ -1,5 +1,5 @@
 #include "DXApplication.h"
-#include "RayTracingPass.h"
+#include "PathTracingPass.h"
 #include "D3DWrapper/GraphicsFactory.h"
 #include "D3DWrapper/GraphicsDevice.h"
 #include "D3DWrapper/SwapChain.h"
@@ -57,11 +57,11 @@ DXApplication::DXApplication(HINSTANCE hApp)
 
 DXApplication::~DXApplication()
 {
-	SafeDelete(m_pRayTracingPass);
+	SafeDelete(m_pPathTracingPass);
 
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
-		SafeDelete(m_VisualizeRayTracedResultPasses[index]);
+		SafeDelete(m_VisualizePathTracedResultPasses[index]);
 		SafeDelete(m_AppDataBuffers[index]);
 	}
 	
@@ -86,8 +86,8 @@ DXApplication::~DXApplication()
 void DXApplication::OnInit()
 {
 	InitRenderEnvironment();
-	InitRayTracingPass();
-	InitVisualizeRayTracedResultPass();
+	InitPathTracingPass();
+	InitVisualizePathTracedResultPass();
 }
 
 void DXApplication::OnUpdate(float deltaTimeInMS)
@@ -114,8 +114,8 @@ void DXApplication::OnRender()
 	
 	static const u8 commandListBatchSize = 3;
 	static CommandList* commandListBatch[commandListBatchSize];
-	commandListBatch[0] = RecordRayTracingPass();
-	commandListBatch[1] = RecordVisualizeRayTracedResultPass();
+	commandListBatch[0] = RecordPathTracingPass();
+	commandListBatch[1] = RecordVisualizePathTracedResultPass();
 	commandListBatch[2] = RecordPostRenderPass();
 	
 #ifdef ENABLE_PROFILING
@@ -209,9 +209,9 @@ void DXApplication::InitRenderEnvironment()
 	m_pCamera = new Camera(Vector3f::ZERO, BasisAxes(), PI_DIV_4, 1.0f, 0.1f, 20.0f, Vector3f(0.01f), Vector3f(0.001f));
 }
 
-void DXApplication::InitRayTracingPass()
+void DXApplication::InitPathTracingPass()
 {
-	assert(m_pRayTracingPass == nullptr);	
+	assert(m_pPathTracingPass == nullptr);	
 	MeshBatch meshBatch(VertexData::FormatFlag_Position, DXGI_FORMAT_R16_UINT, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	const Matrix4f worldMatrices[] =
@@ -238,64 +238,64 @@ void DXApplication::InitRayTracingPass()
 		meshBatch.AddMesh(&mesh);
 	}
 
-	RayTracingPass::InitParams params;
+	PathTracingPass::InitParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
 	params.m_InputResourceStates.m_RayTracedResultState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 	params.m_pMeshBatch = &meshBatch;
 	params.m_NumRaysX = kBackBufferWidth;
 	params.m_NumRaysY = kBackBufferHeight;
 
-	m_pRayTracingPass = new RayTracingPass(&params);
+	m_pPathTracingPass = new PathTracingPass(&params);
 }
 
-CommandList* DXApplication::RecordRayTracingPass()
+CommandList* DXApplication::RecordPathTracingPass()
 {
-	assert(m_pRayTracingPass != nullptr);
+	assert(m_pPathTracingPass != nullptr);
 
-	RayTracingPass::RenderParams params;
+	PathTracingPass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pRayTracingCommandList");
+	params.m_pCommandList = m_pCommandListPool->Create(L"pPathTracingCommandList");
 	params.m_pAppDataBuffer = m_AppDataBuffers[m_BackBufferIndex];
 	params.m_NumRaysX = kBackBufferWidth;
 	params.m_NumRaysY = kBackBufferHeight;
 	
-	m_pRayTracingPass->Record(&params);
+	m_pPathTracingPass->Record(&params);
 	return params.m_pCommandList;
 }
 
-void DXApplication::InitVisualizeRayTracedResultPass()
+void DXApplication::InitVisualizePathTracedResultPass()
 {
-	assert(m_pRayTracingPass != nullptr);
+	assert(m_pPathTracingPass != nullptr);
 	
-	const RayTracingPass::ResourceStates* pRayTracingPassResourceStates = m_pRayTracingPass->GetOutputResourceStates();
-	ColorTexture* pRayTracedResult = m_pRayTracingPass->GetRayTracedResult();
+	const PathTracingPass::ResourceStates* pPathTracingPassResourceStates = m_pPathTracingPass->GetOutputResourceStates();
+	ColorTexture* pRayTracedResult = m_pPathTracingPass->GetPathTracedResult();
 
 	for (u8 index = 0; index < kNumBackBuffers; ++index)
 	{
-		assert(m_VisualizeRayTracedResultPasses[index] == nullptr);
+		assert(m_VisualizePathTracedResultPasses[index] == nullptr);
 
 		VisualizeTexturePass::InitParams params;
-		params.m_pName = "VisualizeRayTracedResultPass";
+		params.m_pName = "VisualizePathTracedResultPass";
 		params.m_pRenderEnv = m_pRenderEnv;
-		params.m_InputResourceStates.m_InputTextureState = pRayTracingPassResourceStates->m_RayTracedResultState;
+		params.m_InputResourceStates.m_InputTextureState = pPathTracingPassResourceStates->m_RayTracedResultState;
 		params.m_InputResourceStates.m_BackBufferState = D3D12_RESOURCE_STATE_PRESENT;
 		params.m_pInputTexture = pRayTracedResult;
 		params.m_InputTextureSRV = pRayTracedResult->GetSRVHandle();
 		params.m_pBackBuffer = m_pSwapChain->GetBackBuffer(index);
 		params.m_TextureType = VisualizeTexturePass::TextureType_RGB;
 
-		m_VisualizeRayTracedResultPasses[index] = new VisualizeTexturePass(&params);
+		m_VisualizePathTracedResultPasses[index] = new VisualizeTexturePass(&params);
 	}
 }
 
-CommandList* DXApplication::RecordVisualizeRayTracedResultPass()
+CommandList* DXApplication::RecordVisualizePathTracedResultPass()
 {
-	VisualizeTexturePass* pVisualizeRayTracedResultPass = m_VisualizeRayTracedResultPasses[m_BackBufferIndex];
+	VisualizeTexturePass* pVisualizeRayTracedResultPass = m_VisualizePathTracedResultPasses[m_BackBufferIndex];
 	assert(pVisualizeRayTracedResultPass != nullptr);
 		
 	VisualizeTexturePass::RenderParams params;
 	params.m_pRenderEnv = m_pRenderEnv;
-	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizeRayTracedResultCommandList");;
+	params.m_pCommandList = m_pCommandListPool->Create(L"pVisualizePathTracedResultCommandList");;
 	params.m_pViewport = m_pViewport;
 
 	pVisualizeRayTracedResultPass->Record(&params);
