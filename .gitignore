@@ -31,3 +31,4 @@ Samples/DXR_PathTracing/Shaders/FullScreenTriangleVS.hlsl
 Samples/DXR_PathTracing/Shaders/VisualizeTexturePS.hlsl
 Samples/DXR_PathTracing/Shaders/GammaCorrection.hlsl
 Samples/DXR_PathTracing/Shaders/RayTracingUtils.hlsl
+Tools/AssimpModelExporter/x64/Debug/
