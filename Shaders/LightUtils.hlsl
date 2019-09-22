@@ -40,7 +40,7 @@ float CalcAngleFalloff(float3 dirToPosition, float3 lightDir, float angleFalloff
 float3 CalcPointLightContribution(
 	float visibility, float3 lightPos, float3 radiantIntensity, float lightRcpSquaredRange,
 	float3 position, float3 normal, float3 dirToViewer,
-	float3 baseColor, float metallic, float roughness)
+	float3 baseColor, float metalness, float roughness)
 {
 	float3 reflectedRadiance = 0.0f;
 	
@@ -54,7 +54,7 @@ float3 CalcPointLightContribution(
 		float distFalloff = CalcDistanceFalloff(squaredDistToLight, lightRcpSquaredRange);
 
 		float3 incidentRadiance = distFalloff * radiantIntensity;
-		float3 brdf = BRDF(NdotL, normal, dirToLight, dirToViewer, baseColor, metallic, roughness);
+		float3 brdf = BRDF(NdotL, normal, dirToLight, dirToViewer, baseColor, metalness, roughness);
 
 		reflectedRadiance = incidentRadiance * brdf * (visibility * NdotL);
 	}
@@ -66,7 +66,7 @@ float3 CalcSpotLightContribution(
 	float visibility, float3 lightPos, float3 lightDir, float3 radiantIntensity,
 	float lightRcpSquaredRange, float angleFalloffScale, float angleFalloffOffset,
 	float3 position, float3 normal, float3 dirToViewer,
-	float3 baseColor, float metallic, float roughness)
+	float3 baseColor, float metalness, float roughness)
 {
 	float3 reflectedRadiance = 0.0f;
 
@@ -81,7 +81,7 @@ float3 CalcSpotLightContribution(
 		float angleFalloff = CalcAngleFalloff(-dirToLight, lightDir, angleFalloffScale, angleFalloffOffset);
 
 		float3 incidentRadiance = (distFalloff * angleFalloff) * radiantIntensity;
-		float3 brdf = BRDF(NdotL, normal, dirToLight, dirToViewer, baseColor, metallic, roughness);
+		float3 brdf = BRDF(NdotL, normal, dirToLight, dirToViewer, baseColor, metalness, roughness);
 
 		reflectedRadiance = incidentRadiance * brdf * (visibility * NdotL);
 	}
@@ -91,7 +91,7 @@ float3 CalcSpotLightContribution(
 
 float3 CalcDirectionalLightContribution(
 	float3 dirToLight, float3 irradiancePerpToLightDir, float3 normal, float3 dirToViewer,
-	float3 baseColor, float metallic, float roughness)
+	float3 baseColor, float metalness, float roughness)
 {
 	float3 reflectedRadiance = 0.0f;
 
@@ -99,7 +99,7 @@ float3 CalcDirectionalLightContribution(
 	if (NdotL > 0.0f)
 	{
 		float3 irradianceAtSurface = irradiancePerpToLightDir * NdotL;
-		float3 brdf = BRDF(NdotL, normal, dirToLight, dirToViewer, baseColor, metallic, roughness);
+		float3 brdf = BRDF(NdotL, normal, dirToLight, dirToViewer, baseColor, metalness, roughness);
 
 		reflectedRadiance = irradianceAtSurface * brdf;
 	}

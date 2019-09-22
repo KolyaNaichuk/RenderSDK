@@ -26,7 +26,7 @@ float3 F_Schlick(float3 f0, float LdotH)
 	return f0 + (1.0f - f0) * pow(1.0f - LdotH, 5.0f);
 }
 
-float3 BRDF(float NdotL, float3 N, float3 L, float3 V, float3 baseColor, float metallic, float roughness)
+float3 BRDF(float NdotL, float3 N, float3 L, float3 V, float3 baseColor, float metalness, float roughness)
 {
 	float3 H = normalize(L + V);
 	float NdotV = saturate(dot(N, V));
@@ -37,14 +37,14 @@ float3 BRDF(float NdotL, float3 N, float3 L, float3 V, float3 baseColor, float m
 	float D = D_GGX(squaredRoughness, NdotH);
 	float Vis = V_SmithGGXCorrelated(squaredRoughness, NdotV, NdotL);
 
-	float3 f0 = baseColor * metallic;
+	float3 f0 = baseColor * metalness;
 	float3 F = F_Schlick(f0, LdotH);
 
 	// Cook-Torrance specular BRDF
 	float3 specularBRDF = (D * Vis) * F;
 
 	// Lambert diffuse BRDF
-	float3 diffuseAlbedo = (1.0f - metallic) * baseColor;
+	float3 diffuseAlbedo = (1.0f - metalness) * baseColor;
 	float3 diffuseBRDF = ((1.0f - F) * g_1DIVPI) * diffuseAlbedo;
 
 	return (diffuseBRDF + specularBRDF);

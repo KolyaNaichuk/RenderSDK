@@ -12,6 +12,15 @@
 #include "Math/Vector3.h"
 #include "Math/Vector4.h"
 
+// Path tracing
+// Russian roulette sampling
+// Next-event estimation
+// Bidirectional path tracing
+
+// Input params:
+// Max bounces the rays should travel
+// Number of samples per pixel that should be used for convergence
+
 namespace
 {
 	LPCWSTR g_pRayGenShaderName = L"RayGeneration";

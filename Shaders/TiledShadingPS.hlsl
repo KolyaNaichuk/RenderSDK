@@ -53,15 +53,15 @@ float4 Main(PSInput input) : SV_Target
 	
 	uint materialTextureOffset = materialID * NUM_TEXTURES_PER_MATERIAL;
 	uint baseColorTextureIndex = g_MaterialTextureIndicesBuffer[materialTextureOffset];
-	uint metallicTextureIndex = g_MaterialTextureIndicesBuffer[materialTextureOffset + 1];
+	uint metalnessTextureIndex = g_MaterialTextureIndicesBuffer[materialTextureOffset + 1];
 	uint roughnessTextureIndex = g_MaterialTextureIndicesBuffer[materialTextureOffset + 2];
 
 	Texture2D baseColorTexture = g_MaterialTextures[NonUniformResourceIndex(baseColorTextureIndex)];
-	Texture2D metallicTexture = g_MaterialTextures[NonUniformResourceIndex(metallicTextureIndex)];
+	Texture2D metalnessTexture = g_MaterialTextures[NonUniformResourceIndex(metalnessTextureIndex)];
 	Texture2D roughnessTexture = g_MaterialTextures[NonUniformResourceIndex(roughnessTextureIndex)];
 	
 	float3 baseColor = baseColorTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).rgb;
-	float metallic = metallicTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).r;
+	float metalness = metalnessTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).r;
 	float roughness = roughnessTexture.SampleGrad(g_AnisoSampler, texCoord, texCoordDX, texCoordDY).r;
 
 	float3 worldSpacePos = ComputeWorldSpacePosition(input.texCoord, hardwareDepth, g_AppData.viewProjInvMatrix).xyz;
@@ -87,7 +87,7 @@ float4 Main(PSInput input) : SV_Target
 		float3 reflectedRadiance = CalcSpotLightContribution(visibility, lightProps.worldSpacePos,
 			lightProps.worldSpaceDir, lightProps.radiantIntensity, lightProps.rcpSquaredRange,
 			lightProps.angleFalloffScale, lightProps.angleFalloffOffset, worldSpacePos,
-			worldSpaceNormal, worldSpaceDirToViewer, baseColor, metallic, roughness);
+			worldSpaceNormal, worldSpaceDirToViewer, baseColor, metalness, roughness);
 		
 		spotLightsContrib += reflectedRadiance;
 	}
@@ -96,7 +96,7 @@ float4 Main(PSInput input) : SV_Target
 #if ENABLE_DIRECTIONAL_LIGHT == 1
 	float3 directionalLightContrib = CalcDirectionalLightContribution(
 		g_AppData.worldSpaceDirToSun, g_AppData.irradiancePerpToSunDir,
-		worldSpaceNormal, worldSpaceDirToViewer, baseColor, metallic, roughness);
+		worldSpaceNormal, worldSpaceDirToViewer, baseColor, metalness, roughness);
 #else // ENABLE_DIRECTIONAL_LIGHT
 	float3 directionalLightContrib = 0.0f;
 #endif // ENABLE_DIRECTIONAL_LIGHT

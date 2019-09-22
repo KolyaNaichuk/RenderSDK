@@ -85,9 +85,13 @@ DXApplication::~DXApplication()
 
 void DXApplication::OnInit()
 {
+	Scene* pScene = SceneLoader::LoadLivingRoom();
+
 	InitRenderEnvironment();
 	InitPathTracingPass();
 	InitVisualizePathTracedResultPass();
+
+	SafeDelete(pScene);
 }
 
 void DXApplication::OnUpdate(float deltaTimeInMS)

@@ -27,6 +27,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DXR_PathTracing", "Samples\
 		{371B9FA9-4C90-4AC6-A123-ACED756D6C77} = {371B9FA9-4C90-4AC6-A123-ACED756D6C77}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AssimpModelExporter", "Tools\AssimpModelExporter\AssimpModelExporter.vcxproj", "{AD4F6FE5-A76B-4041-B4CC-64500C52175C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{81373C17-8965-4747-9818-AA450B2578DC} = {81373C17-8965-4747-9818-AA450B2578DC}
+		{371B9FA9-4C90-4AC6-A123-ACED756D6C77} = {371B9FA9-4C90-4AC6-A123-ACED756D6C77}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -148,6 +154,24 @@ Global
 		{4C2F0338-8043-4895-9441-43FD0FB12083}.Release|x64.Build.0 = Release|x64
 		{4C2F0338-8043-4895-9441-43FD0FB12083}.Release|x86.ActiveCfg = Release|Win32
 		{4C2F0338-8043-4895-9441-43FD0FB12083}.Release|x86.Build.0 = Release|Win32
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Debug|Win32.Build.0 = Debug|Win32
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Debug|x64.ActiveCfg = Debug|x64
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Debug|x64.Build.0 = Debug|x64
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Debug|x86.ActiveCfg = Debug|Win32
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Debug|x86.Build.0 = Debug|Win32
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Profile|Win32.ActiveCfg = Release|Win32
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Profile|Win32.Build.0 = Release|Win32
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Profile|x64.ActiveCfg = Release|x64
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Profile|x64.Build.0 = Release|x64
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Profile|x86.ActiveCfg = Release|Win32
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Profile|x86.Build.0 = Release|Win32
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Release|Win32.ActiveCfg = Release|Win32
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Release|Win32.Build.0 = Release|Win32
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Release|x64.ActiveCfg = Release|x64
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Release|x64.Build.0 = Release|x64
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Release|x86.ActiveCfg = Release|Win32
+		{AD4F6FE5-A76B-4041-B4CC-64500C52175C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -16,10 +16,33 @@
 
 namespace
 {
-	void AddAssimpMeshes(Scene* pScene, const aiScene* pAssimpScene, const Matrix4f& worldMatrix, bool use32BitIndices);
-	void AddAssimpMaterials(Scene* pScene, const aiScene* pAssimpScene, const std::filesystem::path& materialDirectoryPath);
+	struct LoadParams
+	{					
+		const wchar_t* m_pFilePath = nullptr;
+		const Matrix4f m_GeometryWorldMatrix = Matrix4f::IDENTITY;
+		bool m_Use16BitGeometryIndices = true;
+				
+		aiTextureType m_BaseColorTextureKey = aiTextureType_DIFFUSE;
+		const char* m_pBaseColorKey = "$clr.diffuse";
+		
+		aiTextureType m_MetalnessTextureKey = aiTextureType_AMBIENT;
+		const char* m_pMetalnessKey = nullptr;
+		
+		aiTextureType m_RoughnessTextureKey = aiTextureType_SHININESS;
+		const char* m_pRoughnessKey = "$mat.shininess";
 
-	Scene* LoadSceneFromFile(const wchar_t* pFilePath, const Matrix4f& worldMatrix, bool use32BitIndices = false);
+		aiTextureType m_EmissiveTextureKey = aiTextureType_EMISSIVE;
+		const char* m_pEmissiveKey = "$clr.emissive";
+	};
+
+	const Vector3f ToVector3f(const aiVector3D& assimpVec);
+	const Vector3f ToVector3f(const aiColor3D& assimpColor);
+	const Vector2f ToVector2f(const aiVector3D& assimpVec);
+
+	void AddAssimpMeshes(Scene* pScene, const aiScene* pAssimpScene, const Matrix4f& worldMatrix, bool use16BitIndices);
+	void AddAssimpMaterials(const LoadParams* pParams, Scene* pScene, const aiScene* pAssimpScene, const std::filesystem::path& materialDirectoryPath);
+
+	Scene* LoadSceneFromFile(const LoadParams* pParams);
 }
 
 Scene* SceneLoader::LoadCrytekSponza()
@@ -142,14 +165,47 @@ Scene* SceneLoader::LoadCrytekSponza()
 	return pScene;
 }
 
+Scene* SceneLoader::LoadLivingRoom()
+{
+#ifdef ENABLE_EXTERNAL_TOOL_DEBUGGING
+	const wchar_t* pFilePath = L"..\\..\\..\\Resources\\Living Room\\living_room.obj";
+#else
+	const wchar_t* pFilePath = L"..\\..\\Resources\\Living Room\\living_room.obj";
+#endif
+	
+	Matrix4f worldMatrix = Matrix4f::IDENTITY;
+	Scene* pScene = LoadSceneFromFile(pFilePath, worldMatrix, true);
+
+	const AxisAlignedBox& worldBounds = pScene->GetWorldBounds();
+	const Vector3f minPoint = worldBounds.m_Center - worldBounds.m_Radius;
+	const Vector3f maxPoint = worldBounds.m_Center + worldBounds.m_Radius;
+
+	return pScene;
+}
+
 namespace
 {
-	void AddAssimpMeshes(Scene* pScene, const aiScene* pAssimpScene, const Matrix4f& worldMatrix, bool use32BitIndices)
+	const Vector3f ToVector3f(const aiVector3D& assimpVec)
+	{
+		return Vector3f(assimpVec.x, assimpVec.y, assimpVec.z);
+	}
+	
+	const Vector3f ToVector3f(const aiColor3D& assimpColor)
+	{
+		return Vector3f(assimpColor.r, assimpColor.g, assimpColor.b);
+	}
+
+	const Vector2f ToVector2f(const aiVector3D& assimpVec)
+	{
+		return Vector2f(assimpVec.x, assimpVec.y);
+	}
+
+	void AddAssimpMeshes(Scene* pScene, const aiScene* pAssimpScene, const Matrix4f& worldMatrix, bool use16BitIndices)
 	{
 		assert(pAssimpScene->HasMeshes());
 
 		const u8 vertexFormat = VertexData::FormatFlag_Position | VertexData::FormatFlag_Normal | VertexData::FormatFlag_TexCoords;
-		const DXGI_FORMAT indexFormat = use32BitIndices ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+		const DXGI_FORMAT indexFormat = use16BitIndices ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
 		const D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		const D3D12_PRIMITIVE_TOPOLOGY primitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
@@ -169,40 +225,20 @@ namespace
 			Vector2f* pTexCoords = new Vector2f[pAssimpMesh->mNumVertices];
 
 			for (decltype(pAssimpMesh->mNumVertices) vertexIndex = 0; vertexIndex < pAssimpMesh->mNumVertices; ++vertexIndex)
-			{
-				const aiVector3D& position = pAssimpMesh->mVertices[vertexIndex];
-				pPositions[vertexIndex] = Vector3f(position.x, position.y, position.z);
-			}
+				pPositions[vertexIndex] = ToVector3f(pAssimpMesh->mVertices[vertexIndex]);
+			
 			for (decltype(pAssimpMesh->mNumVertices) vertexIndex = 0; vertexIndex < pAssimpMesh->mNumVertices; ++vertexIndex)
-			{
-				const aiVector3D& normal = pAssimpMesh->mNormals[vertexIndex];
-				pNormals[vertexIndex] = Vector3f(normal.x, normal.y, normal.z);
-			}
+				pNormals[vertexIndex] = ToVector3f(pAssimpMesh->mNormals[vertexIndex]);
+			
 			for (decltype(pAssimpMesh->mNumVertices) vertexIndex = 0; vertexIndex < pAssimpMesh->mNumVertices; ++vertexIndex)
-			{
-				const aiVector3D& texCoords = pAssimpMesh->mTextureCoords[0][vertexIndex];
-				pTexCoords[vertexIndex] = Vector2f(texCoords.x, texCoords.y);
-			}
-
+				pTexCoords[vertexIndex] = ToVector2f(pAssimpMesh->mTextureCoords[0][vertexIndex]);
+			
 			const u32 numIndices = 3 * pAssimpMesh->mNumFaces;
 
 			u16* p16BitIndices = nullptr;
 			u32* p32BitIndices = nullptr;
 
-			if (use32BitIndices)
-			{
-				p32BitIndices = new u32[numIndices];
-				for (decltype(pAssimpMesh->mNumFaces) faceIndex = 0; faceIndex < pAssimpMesh->mNumFaces; ++faceIndex)
-				{
-					const aiFace& face = pAssimpMesh->mFaces[faceIndex];
-					assert(face.mNumIndices == 3);
-
-					p32BitIndices[3 * faceIndex + 0] = face.mIndices[0];
-					p32BitIndices[3 * faceIndex + 1] = face.mIndices[1];
-					p32BitIndices[3 * faceIndex + 2] = face.mIndices[2];
-				}
-			}
-			else
+			if (use16BitIndices)
 			{
 				p16BitIndices = new u16[numIndices];
 				const u32 u16Max = std::numeric_limits<u16>::max();
@@ -220,14 +256,27 @@ namespace
 					p16BitIndices[3 * faceIndex + 2] = u16(face.mIndices[2]);
 				}
 			}
+			else
+			{
+				p32BitIndices = new u32[numIndices];
+				for (decltype(pAssimpMesh->mNumFaces) faceIndex = 0; faceIndex < pAssimpMesh->mNumFaces; ++faceIndex)
+				{
+					const aiFace& face = pAssimpMesh->mFaces[faceIndex];
+					assert(face.mNumIndices == 3);
+
+					p32BitIndices[3 * faceIndex + 0] = face.mIndices[0];
+					p32BitIndices[3 * faceIndex + 1] = face.mIndices[1];
+					p32BitIndices[3 * faceIndex + 2] = face.mIndices[2];
+				}
+			}
 
 			VertexData* pVertexData = new VertexData(pAssimpMesh->mNumVertices, pPositions, pNormals, pTexCoords);
 
 			IndexData* pIndexData = nullptr;
-			if (use32BitIndices)
-				pIndexData = new IndexData(numIndices, p32BitIndices);
-			else
+			if (use16BitIndices)
 				pIndexData = new IndexData(numIndices, p16BitIndices);
+			else				
+				pIndexData = new IndexData(numIndices, p32BitIndices);
 
 			const u8 numInstances = 1;
 			Matrix4f* pInstanceWorldMatrices = new Matrix4f[numInstances];
@@ -241,43 +290,92 @@ namespace
 		pScene->AddMeshBatch(pMeshBatch);
 	}
 
-	void AddAssimpMaterials(Scene* pScene, const aiScene* pAssimpScene, const std::filesystem::path& materialDirectoryPath)
+	void AddAssimpMaterials(const LoadParams* pParams, Scene* pScene, const aiScene* pAssimpScene, const std::filesystem::path& materialDirectoryPath)
 	{
-		assert(pAssimpScene->HasMaterials());
+		using Path = std::filesystem::path;
 
-		aiString assimpName;
-		aiString assimpMapPath;
+		assert(pAssimpScene->HasMaterials());
+		
+		aiString assimpString;
+		aiColor3D assimpColor;
 
 		for (decltype(pAssimpScene->mNumMaterials) materialIndex = 0; materialIndex < pAssimpScene->mNumMaterials; ++materialIndex)
 		{
 			const aiMaterial* pAssimpMaterial = pAssimpScene->mMaterials[materialIndex];
 
-			pAssimpMaterial->Get(AI_MATKEY_NAME, assimpName);
-			Material* pMaterial = new Material(AnsiToWideString(assimpName.C_Str()));
+			// Name
+			aiReturn result = pAssimpMaterial->Get(AI_MATKEY_NAME, assimpString);
+			assert(result == aiReturn_SUCCESS);
+			Material* pMaterial = new Material(AnsiToWideString(assimpString.C_Str()));
 
-			if (pAssimpMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &assimpMapPath) == aiReturn_SUCCESS)
-				pMaterial->m_FilePaths[Material::BaseColorTextureIndex] = materialDirectoryPath / std::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
+			// Base color
+			result = pAssimpMaterial->GetTexture(pParams->m_BaseColorTextureKey, 0, &assimpString);
+			if (result == aiReturn_SUCCESS)
+			{
+				pMaterial->m_BaseColorTexturePath = materialDirectoryPath / Path(AnsiToWideString(assimpString.C_Str()));
+			}
 			else
-				assert(false);
+			{
+				assert(pParams->m_pBaseColorKey != nullptr);
 
-			if (pAssimpMaterial->GetTexture(aiTextureType_AMBIENT, 0, &assimpMapPath) == aiReturn_SUCCESS)
-				pMaterial->m_FilePaths[Material::MetallicTextureIndex] = materialDirectoryPath / std::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
-			else
-				assert(false);
+				result = pAssimpMaterial->Get(pParams->m_pBaseColorKey, 0, 0, assimpColor);
+				assert(result == aiReturn_SUCCESS);
 
-			if (pAssimpMaterial->GetTexture(aiTextureType_SHININESS, 0, &assimpMapPath) == aiReturn_SUCCESS)
-				pMaterial->m_FilePaths[Material::RougnessTextureIndex] = materialDirectoryPath / std::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
+				pMaterial->m_BaseColor = ToVector3f(assimpColor);
+			}
+
+			// Metalness
+			result = pAssimpMaterial->GetTexture(pParams->m_MetalnessTextureKey, 0, &assimpString);
+			if (result == aiReturn_SUCCESS)
+			{
+				pMaterial->m_MetalnessTexturePath = materialDirectoryPath / Path(AnsiToWideString(assimpString.C_Str()));
+			}
 			else
-				assert(false);
+			{
+				assert(pParams->m_pMetalnessKey != nullptr);
+
+				result = pAssimpMaterial->Get(pParams->m_pMetalnessKey, 0, 0, pMaterial->m_Metalness);
+				assert(result == aiReturn_SUCCESS);
+			}
+
+			// Roughness
+			result = pAssimpMaterial->GetTexture(pParams->m_RoughnessTextureKey, 0, &assimpString);
+			if (result == aiReturn_SUCCESS)
+			{
+				pMaterial->m_RoughnessTexturePath = materialDirectoryPath / Path(AnsiToWideString(assimpString.C_Str()));
+			}
+			else
+			{
+				assert(pParams->m_pRoughnessKey != nullptr);
+
+				result = pAssimpMaterial->Get(pParams->m_pRoughnessKey, 0, 0, pParams->m_RoughnessMapping);
+				assert(result == aiReturn_SUCCESS);
+			}
+
+			// Emissive color
+			result = pAssimpMaterial->GetTexture(pParams->m_EmissiveTextureKey, 0, &assimpString);
+			if (result == aiReturn_SUCCESS)
+			{
+				pMaterial->m_EmissiveTexturePath = materialDirectoryPath / Path(AnsiToWideString(assimpString.C_Str()));
+			}
+			else
+			{
+				assert(pParams->m_pEmissiveKey != nullptr);
+
+				result = pAssimpMaterial->Get(pParams->m_pEmissiveKey, 0, 0, assimpColor);
+				assert(result == aiReturn_SUCCESS);
+
+				pMaterial->m_EmissiveColor = ToVector3f(assimpColor);
+			}
 
 			pScene->AddMaterial(pMaterial);
 		}
 	}
 
-	Scene* LoadSceneFromFile(const wchar_t* pFilePath, const Matrix4f& worldMatrix, bool use32BitIndices)
+	Scene* LoadSceneFromFile(const LoadParams* pParams)
 	{
-		Assimp::Importer importer;
-
+		assert(pParams->m_pFilePath != nullptr);
+				
 		const u32 importFlags = aiProcess_CalcTangentSpace |
 			aiProcess_GenNormals |
 			aiProcess_Triangulate |
@@ -288,8 +386,10 @@ namespace
 			aiProcess_JoinIdenticalVertices |
 			aiProcess_OptimizeMeshes |
 			aiProcess_RemoveRedundantMaterials;
-
-		const aiScene* pAssimpScene = importer.ReadFile(WideToAnsiString(pFilePath), importFlags);
+		
+		Assimp::Importer importer;
+		const aiScene* pAssimpScene = importer.ReadFile(WideToAnsiString(pParams->m_pFilePath), importFlags);
+		
 		if (pAssimpScene == nullptr)
 		{
 			OutputDebugStringA(importer.GetErrorString());
@@ -297,9 +397,9 @@ namespace
 		}
 
 		Scene* pScene = new Scene();
-		AddAssimpMeshes(pScene, pAssimpScene, worldMatrix, use32BitIndices);
+		AddAssimpMeshes(pScene, pAssimpScene, pParams->m_GeometryWorldMatrix, pParams->m_Use16BitGeometryIndices);
 
-		std::filesystem::path materialDirectoryPath(pFilePath);
+		std::filesystem::path materialDirectoryPath(pParams->m_pFilePath);
 		materialDirectoryPath.remove_filename();
 
 		AddAssimpMaterials(pScene, pAssimpScene, materialDirectoryPath);
