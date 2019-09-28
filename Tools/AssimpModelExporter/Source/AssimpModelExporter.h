@@ -1,32 +1,39 @@
 #pragma once
 
-#include "assimp/material.h"
-
-struct AssimpMaterialConfig
-{
-	aiTextureType m_BaseColorTextureKey = aiTextureType_UNKNOWN;
-	const char* m_pBaseColorKey = nullptr;
-
-	aiTextureType m_MetalnessTextureKey = aiTextureType_UNKNOWN;
-	const char* m_pMetalnessKey = nullptr;
-
-	aiTextureType m_RoughnessTextureKey = aiTextureType_UNKNOWN;
-	const char* m_pRoughnessKey = nullptr;
-
-	aiTextureType m_EmissiveTextureKey = aiTextureType_UNKNOWN;
-	const char* m_pEmissiveKey = nullptr;
-};
+#include "Commands.h"
+#include "MaterialConfigs.h"
 
 struct ExportParams
 {
-	const wchar_t* m_pAssimpModelPath = nullptr;
-	AssimpMaterialConfig m_AssimpModelMaterialConfig;
+	SourceMaterialConfig m_SourceMaterialConfig;
+	std::filesystem::path m_SourceFolderPath;
+	std::string m_SourceOBJFileName;
 
-	const wchar_t* m_pExportedModelPath = nullptr;
+	DestMaterialConfig m_DestMaterialConfig;
+	std::filesystem::path m_DestFolderPath;
+	std::string m_DestOBJFileName;
+	std::string m_DestTexturesFolderName;
 };
+
+struct aiScene;
 
 class AssimpModelExporter
 {
 public:
-	bool Export(const ExportParams* pParams);
+	bool Export(const ExportParams& params);
+
+private:
+	void GenerateCommands(aiScene& scene, const ExportParams& params);
+	void GenerateCommandsForBaseColorTexture(aiMaterial& material, const ExportParams& params);
+	void GenerateCommandsForMetalnessTexture(aiMaterial& material, const ExportParams& params);
+	void GenerateCommandsForRoughnessTexture(aiMaterial& material, const ExportParams& params);
+	void GenerateCommandsForEmissiveColorTexture(aiMaterial& material, const ExportParams& params);
+
+	void ExecuteCommands(const DestMaterialConfig& destMaterialConfig);
+		
+private:
+	std::vector<CreateColorTextureCommand> m_CreateColorTextureCommands;
+	std::vector<CreateFloatTextureCommand> m_CreateFloatTextureCommands;
+	std::vector<CopyTextureCommand> m_CopyTextureCommands;
+	std::vector<UpdateMaterialCommand> m_UpdateMaterialCommands;
 };

@@ -98,8 +98,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\assimp-4.1.0\lib\$(Platform)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RenderSDK.lib;d3d12.lib;DXGI.lib;dxguid.lib;dxcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\DirectXTex\Bin\$(Platform)\$(Configuration)\;$(SolutionDir)Include\External\assimp-4.1.0\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RenderSDK.lib;DirectXTex.lib;d3d12.lib;DXGI.lib;dxguid.lib;dxcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -156,10 +156,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Source\Material.h" />
+    <ClInclude Include="Source\Commands.h" />
     <ClInclude Include="Source\AssimpModelExporter.h" />
+    <ClInclude Include="Source\MaterialConfigs.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Commands.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\AssimpModelExporter.cpp" />
   </ItemGroup>
