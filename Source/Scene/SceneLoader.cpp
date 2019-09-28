@@ -281,24 +281,22 @@ namespace
 		{
 			const aiMaterial* pAssimpMaterial = pAssimpScene->mMaterials[materialIndex];
 
-			pAssimpMaterial->Get(AI_MATKEY_NAME, assimpName);
+			aiReturn result = pAssimpMaterial->Get(AI_MATKEY_NAME, assimpName);
+			assert(result == aiReturn_SUCCESS);
 			Material* pMaterial = new Material(AnsiToWideString(assimpName.C_Str()));
 
-			if (pAssimpMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &assimpMapPath) == aiReturn_SUCCESS)
-				pMaterial->m_FilePaths[Material::BaseColorTextureIndex] = materialDirectoryPath / std::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
-			else
-				assert(false);
-
-			if (pAssimpMaterial->GetTexture(aiTextureType_AMBIENT, 0, &assimpMapPath) == aiReturn_SUCCESS)
-				pMaterial->m_FilePaths[Material::MetalnessTextureIndex] = materialDirectoryPath / std::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
-			else
-				assert(false);
-
-			if (pAssimpMaterial->GetTexture(aiTextureType_SHININESS, 0, &assimpMapPath) == aiReturn_SUCCESS)
-				pMaterial->m_FilePaths[Material::RougnessTextureIndex] = materialDirectoryPath / std::filesystem::path(AnsiToWideString(assimpMapPath.C_Str()));
-			else
-				assert(false);
-
+			result = pAssimpMaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), assimpMapPath);
+			assert(result == aiReturn_SUCCESS);
+			pMaterial->m_FilePaths[Material::BaseColorTextureIndex] = materialDirectoryPath / assimpMapPath.C_Str();
+			
+			result = pAssimpMaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_AMBIENT, 0), assimpMapPath);
+			assert(result == aiReturn_SUCCESS);
+			pMaterial->m_FilePaths[Material::MetalnessTextureIndex] = materialDirectoryPath / assimpMapPath.C_Str();
+			
+			result = pAssimpMaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_SHININESS, 0), assimpMapPath);
+			assert(result == aiReturn_SUCCESS);
+			pMaterial->m_FilePaths[Material::RougnessTextureIndex] = materialDirectoryPath / assimpMapPath.C_Str();
+						
 			pScene->AddMaterial(pMaterial);
 		}
 	}
