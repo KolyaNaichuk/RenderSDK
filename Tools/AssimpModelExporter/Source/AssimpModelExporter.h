@@ -32,3 +32,5 @@ private:
 	std::vector<CopyTextureCommand> m_CopyTextureCommands;
 	std::vector<UpdateMaterialCommand> m_UpdateMaterialCommands;
 };
+
+const char* GetColorKey(const char* pKey, unsigned int type, unsigned int index);

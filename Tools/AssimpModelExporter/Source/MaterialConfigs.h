@@ -13,8 +13,8 @@ struct SourceMaterialConfig
 	aiTextureType m_RoughnessTextureKey = aiTextureType_UNKNOWN;
 	std::string m_RoughnessKey;
 
-	aiTextureType m_EmissiveTextureKey = aiTextureType_UNKNOWN;
-	std::string m_EmissiveKey;
+	aiTextureType m_EmissiveColorTextureKey = aiTextureType_UNKNOWN;
+	std::string m_EmissiveColorKey;
 };
 
 struct DestMaterialConfig
@@ -22,5 +22,5 @@ struct DestMaterialConfig
 	aiTextureType m_BaseColorTextureKey = aiTextureType_UNKNOWN;
 	aiTextureType m_MetalnessTextureKey = aiTextureType_UNKNOWN;
 	aiTextureType m_RoughnessTextureKey = aiTextureType_UNKNOWN;
-	aiTextureType m_EmissiveTextureKey = aiTextureType_UNKNOWN;
+	aiTextureType m_EmissiveColorTextureKey = aiTextureType_UNKNOWN;
 };

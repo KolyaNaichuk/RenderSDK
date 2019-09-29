@@ -85,19 +85,23 @@ void UpdateMaterialCommand::Execute(const DestMaterialConfig& destMaterialConfig
 	assert(result == aiReturn_SUCCESS);
 
 	string = m_BaseColorTexturePath.string();
+	assert(destMaterialConfig.m_BaseColorTextureKey != aiTextureType_UNKNOWN);
 	result = m_Material.AddProperty(&string, AI_MATKEY_TEXTURE(destMaterialConfig.m_BaseColorTextureKey, 0));
 	assert(result == aiReturn_SUCCESS);
 
 	string = m_MetalnessTexturePath.string();
+	assert(destMaterialConfig.m_MetalnessTextureKey != aiTextureType_UNKNOWN);
 	result = m_Material.AddProperty(&string, AI_MATKEY_TEXTURE(destMaterialConfig.m_MetalnessTextureKey, 0));
 	assert(result == aiReturn_SUCCESS);
 
 	string = m_RoughnessTexturePath.string();
+	assert(destMaterialConfig.m_RoughnessTextureKey != aiTextureType_UNKNOWN);
 	result = m_Material.AddProperty(&string, AI_MATKEY_TEXTURE(destMaterialConfig.m_RoughnessTextureKey, 0));
 	assert(result == aiReturn_SUCCESS);
 
 	string = m_EmissiveTexturePath.string();
-	result = m_Material.AddProperty(&string, AI_MATKEY_TEXTURE(destMaterialConfig.m_EmissiveTextureKey, 0));
+	assert(destMaterialConfig.m_EmissiveColorTextureKey != aiTextureType_UNKNOWN);
+	result = m_Material.AddProperty(&string, AI_MATKEY_TEXTURE(destMaterialConfig.m_EmissiveColorTextureKey, 0));
 	assert(result == aiReturn_SUCCESS);
 }
 

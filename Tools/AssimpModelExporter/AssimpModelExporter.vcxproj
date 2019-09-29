@@ -101,6 +101,10 @@
       <AdditionalLibraryDirectories>$(SolutionDir)Library\$(Platform)\$(Configuration);$(SolutionDir)Include\External\DirectXTex\Bin\$(Platform)\$(Configuration)\;$(SolutionDir)Include\External\assimp-4.1.0\lib\$(Platform)</AdditionalLibraryDirectories>
       <AdditionalDependencies>RenderSDK.lib;DirectXTex.lib;d3d12.lib;DXGI.lib;dxguid.lib;dxcompiler.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>IF NOT EXIST "$(SolutionDir)Tools\Bin\$(ProjectName)\assimp-vc140-mt.dll" COPY /Y "$(SolutionDir)Include\External\assimp-4.1.0\bin\$(Platform)\assimp-vc140-mt.dll" "$(SolutionDir)Tools\Bin\$(ProjectName)\assimp-vc140-mt.dll"
+</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

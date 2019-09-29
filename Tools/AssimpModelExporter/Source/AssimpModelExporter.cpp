@@ -7,6 +7,7 @@
 // ToDo
 // When loading assimp model SceneLoader should automatically figure out optimal index format
 // Remove unnecessary import flags from SceneLoader
+// Add support for opaque textures
 
 namespace
 {
@@ -63,7 +64,10 @@ void AssimpModelExporter::GenerateTextureCommands(aiScene& scene, const ExportPa
 
 	const std::filesystem::path newTextureExtension(".DDS");
 	const std::filesystem::path baseColorTextureNameSuffix(" base");
-
+	const std::filesystem::path metalnessTextureNameSuffix(" metalness");
+	const std::filesystem::path roughnessTextureNameSuffix(" roughness");
+	const std::filesystem::path emissiveColorTextureNameSuffix(" emissive");
+	
 	aiString materialName;
 	aiString texturePath;
 	aiColor3D textureColor;
@@ -95,7 +99,6 @@ void AssimpModelExporter::GenerateTextureCommands(aiScene& scene, const ExportPa
 		else if (result == aiReturn_FAILURE)
 		{
 			assert(!sourceMaterialConfig.m_BaseColorKey.empty());
-
 			result = material.Get(sourceMaterialConfig.m_BaseColorKey.c_str(), 0, 0, textureColor);
 			assert(result == aiReturn_SUCCESS);
 
@@ -144,6 +147,11 @@ void AssimpModelExporter::ProcessTextureCommands(const DestMaterialConfig& destM
 	m_CreateFloatTextureCommands.clear();
 	m_CopyTextureCommands.clear();
 	m_UpdateMaterialCommands.clear();
+}
+
+const char* GetColorKey(const char* pKey, unsigned int /*type*/, unsigned int /*index*/)
+{
+	return pKey;
 }
 
 namespace
