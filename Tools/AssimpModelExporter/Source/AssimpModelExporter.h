@@ -23,14 +23,9 @@ public:
 	bool Export(const ExportParams& params);
 
 private:
-	void GenerateCommands(aiScene& scene, const ExportParams& params);
-	void GenerateCommandsForBaseColorTexture(aiMaterial& material, const ExportParams& params);
-	void GenerateCommandsForMetalnessTexture(aiMaterial& material, const ExportParams& params);
-	void GenerateCommandsForRoughnessTexture(aiMaterial& material, const ExportParams& params);
-	void GenerateCommandsForEmissiveColorTexture(aiMaterial& material, const ExportParams& params);
-
-	void ExecuteCommands(const DestMaterialConfig& destMaterialConfig);
-		
+	void GenerateTextureCommands(aiScene& scene, const ExportParams& params);
+	void ProcessTextureCommands(const DestMaterialConfig& destMaterialConfig);
+				
 private:
 	std::vector<CreateColorTextureCommand> m_CreateColorTextureCommands;
 	std::vector<CreateFloatTextureCommand> m_CreateFloatTextureCommands;

@@ -6,6 +6,13 @@
 
 // ToDo
 // When loading assimp model SceneLoader should automatically figure out optimal index format
+// Remove unnecessary import flags from SceneLoader
+
+namespace
+{
+	std::filesystem::path ExtractFileExtension(const aiString& filePath);
+	std::filesystem::path GenerateTextureFileName(std::filesystem::path textureNamePrefix, const std::filesystem::path& suffix, const std::filesystem::path& extension);
+}
 
 bool AssimpModelExporter::Export(const ExportParams& params)
 {
@@ -43,40 +50,95 @@ bool AssimpModelExporter::Export(const ExportParams& params)
 	return true;
 }
 
-void AssimpModelExporter::GenerateCommands(aiScene& scene, const ExportParams& params)
+void AssimpModelExporter::GenerateTextureCommands(aiScene& scene, const ExportParams& params)
 {
 	assert(scene.HasMaterials());
 
+	assert(m_CreateColorTextureCommands.empty());
+	assert(m_CreateFloatTextureCommands.empty());
+	assert(m_CopyTextureCommands.empty());
+	assert(m_UpdateMaterialCommands.empty());
+
+	const SourceMaterialConfig& sourceMaterialConfig = params.m_SourceMaterialConfig;
+
+	const std::filesystem::path newTextureExtension(".DDS");
+	const std::filesystem::path baseColorTextureNameSuffix(" base");
+
 	aiString materialName;
+	aiString texturePath;
+	aiColor3D textureColor;
+
 	for (decltype(scene.mNumMaterials) index = 0; index < scene.mNumMaterials; ++index)
-	{
+	{		
 		aiMaterial& material = *scene.mMaterials[index];
 
 		aiReturn result = material.Get(AI_MATKEY_NAME, materialName);
 		assert(result == aiReturn_SUCCESS);
+		assert(materialName.length > 0);
 
-		/*
-		CorrectBaseColorTexture(material, materialName, params);
-		CorrectMetalnessTexture(material, materialName, params);
-		CorrectRoughnessTexture(material, materialName, params);
-		CorrectEmissiveColorTexture(material, materialName, params);
-		*/
+		const std::filesystem::path textureNamePrefix(materialName.C_Str());
+
+		// Base color texture
+		
+		std::filesystem::path baseColorTextureRelativePath;
+		result = material.Get(AI_MATKEY_TEXTURE(sourceMaterialConfig.m_BaseColorTextureKey, 0), texturePath);
+		if (result == aiReturn_SUCCESS)
+		{
+			std::filesystem::path destTextureName = GenerateTextureFileName(textureNamePrefix, baseColorTextureNameSuffix, ExtractFileExtension(texturePath));
+			baseColorTextureRelativePath = params.m_DestTexturesFolderName / destTextureName;
+
+			std::filesystem::path sourceTexturePath(params.m_SourceFolderPath / texturePath.C_Str());
+			std::filesystem::path destTexturePath(params.m_DestFolderPath / baseColorTextureRelativePath);
+
+			m_CopyTextureCommands.emplace_back(std::move(sourceTexturePath), std::move(destTexturePath));
+		}
+		else if (result == aiReturn_FAILURE)
+		{
+			assert(!sourceMaterialConfig.m_BaseColorKey.empty());
+
+			result = material.Get(sourceMaterialConfig.m_BaseColorKey.c_str(), 0, 0, textureColor);
+			assert(result == aiReturn_SUCCESS);
+
+			std::filesystem::path destTextureName = GenerateTextureFileName(textureNamePrefix, baseColorTextureNameSuffix, newTextureExtension);
+			baseColorTextureRelativePath = params.m_DestTexturesFolderName / destTextureName;
+
+			std::filesystem::path destTexturePath(params.m_DestFolderPath / baseColorTextureRelativePath);
+			m_CreateColorTextureCommands.emplace_back(textureColor, std::move(destTexturePath));
+		}
+		else
+		{
+			assert(false);
+		}
+
+		// Metalness texture
+		std::filesystem::path metalnessTextureRelativePath;
+		
+		// Roughness texture
+		std::filesystem::path roughnessTextureRelativePath;
+		
+		// Emissive color texture
+		std::filesystem::path emissiveColorTextureRelativePath;
+		
+		// Common
+
+		m_UpdateMaterialCommands.emplace_back(material, std::move(baseColorTextureRelativePath), std::move(metalnessTextureRelativePath),
+			std::move(roughnessTextureRelativePath), std::move(emissiveColorTextureRelativePath));
 	}
 }
 
-void AssimpModelExporter::ExecuteCommands(const DestMaterialConfig& destMaterialConfig)
+void AssimpModelExporter::ProcessTextureCommands(const DestMaterialConfig& destMaterialConfig)
 {
 	for (const CreateColorTextureCommand& command : m_CreateColorTextureCommands)
-		command.Execute();	
+		command.Execute();
 
 	for (const CreateFloatTextureCommand& command : m_CreateFloatTextureCommands)
 		command.Execute();
 
 	for (const CopyTextureCommand& command : m_CopyTextureCommands)
 		command.Execute();
-	
+
 	for (UpdateMaterialCommand& command : m_UpdateMaterialCommands)
-		command.Execute(destMaterialConfig);	
+		command.Execute(destMaterialConfig);
 
 	m_CreateColorTextureCommands.clear();
 	m_CreateFloatTextureCommands.clear();
@@ -84,52 +146,24 @@ void AssimpModelExporter::ExecuteCommands(const DestMaterialConfig& destMaterial
 	m_UpdateMaterialCommands.clear();
 }
 
-/*
-void AssimpModelExporter::CorrectBaseColorTexture(aiMaterial& material, const aiString& materialName, const ExportParams& params)
-{	
-	const MaterialConfig& materialConfig = params.m_SourceMaterialConfig;
-
-	aiString textureName;
-	aiReturn result = material.GetTexture(materialConfig.m_BaseColorTextureKey, 0, &textureName);
-	
-	if (result == aiReturn_SUCCESS)
+namespace
+{
+	std::filesystem::path ExtractFileExtension(const aiString& filePath)
 	{
-		std::filesystem::path sourceTextureRelativePath(textureName.C_Str());
-		std::filesystem::path sourceTextureFullPath
+		return std::filesystem::path(filePath.C_Str()).extension();
 	}
-	else if (result == aiReturn_FAILURE)
+
+	std::filesystem::path GenerateTextureFileName(std::filesystem::path textureNamePrefix, const std::filesystem::path& suffix, const std::filesystem::path& extension)
 	{
-		assert(!materialConfig.m_BaseColorKey.empty());
+		assert(!textureNamePrefix.empty());
+		assert(!suffix.empty());
+		assert(!extension.empty());
 
-		aiColor3D color;
-		result = material.Get(materialConfig.m_BaseColorKey.c_str(), 0, 0, color);
-		assert(result == aiReturn_SUCCESS);
-
-		assert((0.0f <= color.r) && (color.r <= 1.0f));
-		assert((0.0f <= color.g) && (color.g <= 1.0f));
-		assert((0.0f <= color.b) && (color.b <= 1.0f));
-		u8 pixelBytes[4] = {u8(255.0f * color.r), u8(255.0f * color.g), u8(255.0f * color.b), 255};
-		
-		DirectX::Image image;
-		GenerateImage(image, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, pixelBytes);
-
-		std::filesystem::path textureRelativePath(params.m_ExportTexturesDirectory);
-		textureRelativePath /= materialName.C_Str();
-		textureRelativePath += " base.dds";
-		
-		std::filesystem::path textureFullPath = params.m_ExportModelPath / textureRelativePath;
-		std::wstring textureFullPathString(textureFullPath.wstring());		
-		VerifyD3DResult(SaveToDDSFile(image, DirectX::DDS_FLAGS_NONE, textureFullPathString.c_str()));
-
-		aiString textureRelativePathString(textureRelativePath.string());
-		material.AddProperty(&textureRelativePathString, materialConfig.m_BaseColorTextureKey, 0, 0);
-	}
-	else
-	{
-		assert(false);
+		return ((textureNamePrefix += suffix) += extension);
 	}
 }
 
+/*
 void AssimpModelExporter::CorrectMetalnessTexture(aiMaterial& material, const aiString& materialName, const ExportParams& params)
 {
 	result = pAssimpMaterial->GetTexture(pParams->m_MetalnessTextureKey, 0, &assimpString);

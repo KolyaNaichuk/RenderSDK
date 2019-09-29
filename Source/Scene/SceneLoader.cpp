@@ -296,7 +296,7 @@ namespace
 			result = pAssimpMaterial->Get(AI_MATKEY_TEXTURE(aiTextureType_SHININESS, 0), assimpMapPath);
 			assert(result == aiReturn_SUCCESS);
 			pMaterial->m_FilePaths[Material::RougnessTextureIndex] = materialDirectoryPath / assimpMapPath.C_Str();
-						
+				
 			pScene->AddMaterial(pMaterial);
 		}
 	}
