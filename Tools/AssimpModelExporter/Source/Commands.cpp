@@ -58,18 +58,14 @@ void CopyTextureCommand::Execute() const
 	assert(result);
 }
 
-UpdateMaterialCommand::UpdateMaterialCommand(aiMaterial& material, std::filesystem::path baseColorTexturePath, std::filesystem::path metalnessTexturePath,
-	std::filesystem::path roughnessTexturePath, std::filesystem::path emissiveTexturePath)
+UpdateMaterialCommand::UpdateMaterialCommand(aiMaterial& material, std::filesystem::path texturePaths[NumMaterialProps])
 	: m_Material(material)
-	, m_BaseColorTexturePath(std::move(baseColorTexturePath))
-	, m_MetalnessTexturePath(std::move(metalnessTexturePath))
-	, m_RoughnessTexturePath(std::move(roughnessTexturePath))
-	, m_EmissiveTexturePath(std::move(emissiveTexturePath))
 {
-	assert(!m_BaseColorTexturePath.empty());
-	assert(!m_MetalnessTexturePath.empty());
-	assert(!m_RoughnessTexturePath.empty());
-	assert(!m_EmissiveTexturePath.empty());
+	for (u8 index = 0; index < NumMaterialProps; ++index)
+	{
+		assert(!texturePaths[index].empty());
+		m_TexturePaths[index] = std::move(texturePaths[index]);
+	}
 }
 
 void UpdateMaterialCommand::Execute(const DestMaterialConfig& destMaterialConfig)
@@ -84,25 +80,14 @@ void UpdateMaterialCommand::Execute(const DestMaterialConfig& destMaterialConfig
 	result = m_Material.AddProperty(&string, AI_MATKEY_NAME);
 	assert(result == aiReturn_SUCCESS);
 
-	string = m_BaseColorTexturePath.string();
-	assert(destMaterialConfig.m_BaseColorTextureKey != aiTextureType_UNKNOWN);
-	result = m_Material.AddProperty(&string, AI_MATKEY_TEXTURE(destMaterialConfig.m_BaseColorTextureKey, 0));
-	assert(result == aiReturn_SUCCESS);
-
-	string = m_MetalnessTexturePath.string();
-	assert(destMaterialConfig.m_MetalnessTextureKey != aiTextureType_UNKNOWN);
-	result = m_Material.AddProperty(&string, AI_MATKEY_TEXTURE(destMaterialConfig.m_MetalnessTextureKey, 0));
-	assert(result == aiReturn_SUCCESS);
-
-	string = m_RoughnessTexturePath.string();
-	assert(destMaterialConfig.m_RoughnessTextureKey != aiTextureType_UNKNOWN);
-	result = m_Material.AddProperty(&string, AI_MATKEY_TEXTURE(destMaterialConfig.m_RoughnessTextureKey, 0));
-	assert(result == aiReturn_SUCCESS);
-
-	string = m_EmissiveTexturePath.string();
-	assert(destMaterialConfig.m_EmissiveColorTextureKey != aiTextureType_UNKNOWN);
-	result = m_Material.AddProperty(&string, AI_MATKEY_TEXTURE(destMaterialConfig.m_EmissiveColorTextureKey, 0));
-	assert(result == aiReturn_SUCCESS);
+	for (u8 index = 0; index < NumMaterialProps; ++index)
+	{
+		assert(destMaterialConfig.m_TextureTypes[index] != aiTextureType_UNKNOWN);
+		
+		string = m_TexturePaths[index].string();
+		result = m_Material.AddProperty(&string, AI_MATKEY_TEXTURE(destMaterialConfig.m_TextureTypes[index], 0));
+		assert(result == aiReturn_SUCCESS);
+	}
 }
 
 namespace

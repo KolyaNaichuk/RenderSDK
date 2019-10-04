@@ -1,7 +1,7 @@
 #pragma once
 
+#include "MaterialConfigs.h"
 #include "Common/Common.h"
-#include "assimp/types.h"
 
 struct DestMaterialConfig;
 struct aiMaterial;
@@ -42,15 +42,10 @@ private:
 class UpdateMaterialCommand
 {
 public:
-	UpdateMaterialCommand(aiMaterial& material, std::filesystem::path baseColorTexturePath, std::filesystem::path metalnessTexturePath,
-		std::filesystem::path roughnessTexturePath, std::filesystem::path emissiveTexturePath);
-
+	UpdateMaterialCommand(aiMaterial& material, std::filesystem::path texturePaths[NumMaterialProps]);
 	void Execute(const DestMaterialConfig& destMaterialConfig);
 
 private:
 	aiMaterial& m_Material;
-	std::filesystem::path m_BaseColorTexturePath;
-	std::filesystem::path m_MetalnessTexturePath;
-	std::filesystem::path m_RoughnessTexturePath;
-	std::filesystem::path m_EmissiveTexturePath;
+	std::filesystem::path m_TexturePaths[NumMaterialProps];
 };

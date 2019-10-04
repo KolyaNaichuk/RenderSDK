@@ -4,21 +4,21 @@ int main()
 {
 	ExportParams params;
 	
-	params.m_SourceMaterialConfig.m_BaseColorTextureKey = aiTextureType_DIFFUSE;
-	params.m_SourceMaterialConfig.m_BaseColorKey = GetColorKey(AI_MATKEY_COLOR_DIFFUSE);
-	params.m_SourceMaterialConfig.m_MetalnessTextureKey = aiTextureType_REFLECTION;
-	params.m_SourceMaterialConfig.m_MetalnessKey = GetColorKey(AI_MATKEY_REFLECTIVITY);
-	params.m_SourceMaterialConfig.m_RoughnessTextureKey = aiTextureType_SHININESS;
-	params.m_SourceMaterialConfig.m_RoughnessKey = GetColorKey(AI_MATKEY_SHININESS);
-	params.m_SourceMaterialConfig.m_EmissiveColorTextureKey = aiTextureType_EMISSIVE;
-	params.m_SourceMaterialConfig.m_EmissiveColorKey = GetColorKey(AI_MATKEY_COLOR_EMISSIVE);
+	params.m_SourceMaterialConfig.m_TextureTypes[BaseColorProp] = aiTextureType_DIFFUSE;
+	params.m_SourceMaterialConfig.m_TextureTypes[MetalnessProp] = aiTextureType_REFLECTION;
+	params.m_SourceMaterialConfig.m_TextureTypes[RoughnessProp] = aiTextureType_SHININESS;
+	params.m_SourceMaterialConfig.m_TextureTypes[EmissiveColorProp] = aiTextureType_EMISSIVE;
+	params.m_SourceMaterialConfig.m_Keys[BaseColorProp] = GetColorKey(AI_MATKEY_COLOR_DIFFUSE);
+	params.m_SourceMaterialConfig.m_Keys[MetalnessProp] = GetColorKey(AI_MATKEY_REFLECTIVITY);
+	params.m_SourceMaterialConfig.m_Keys[RoughnessProp] = GetColorKey(AI_MATKEY_SHININESS);
+	params.m_SourceMaterialConfig.m_Keys[EmissiveColorProp] = GetColorKey(AI_MATKEY_COLOR_EMISSIVE);
 	params.m_SourceFolderPath = "D:\\Assimp Models\\Model 1";
 	params.m_SourceOBJFileName = "Model.obj";
 	
-	params.m_DestMaterialConfig.m_BaseColorTextureKey = aiTextureType_DIFFUSE;
-	params.m_DestMaterialConfig.m_MetalnessTextureKey = aiTextureType_REFLECTION;
-	params.m_DestMaterialConfig.m_RoughnessTextureKey = aiTextureType_SHININESS;
-	params.m_DestMaterialConfig.m_EmissiveColorTextureKey = aiTextureType_EMISSIVE;
+	params.m_DestMaterialConfig.m_TextureTypes[BaseColorProp] = aiTextureType_DIFFUSE;
+	params.m_DestMaterialConfig.m_TextureTypes[MetalnessProp] = aiTextureType_REFLECTION;
+	params.m_DestMaterialConfig.m_TextureTypes[RoughnessProp] = aiTextureType_SHININESS;
+	params.m_DestMaterialConfig.m_TextureTypes[EmissiveColorProp] = aiTextureType_EMISSIVE;
 	params.m_DestFolderPath = "D:\\Assimp Exported Models\\Model 1";
 	params.m_DestOBJFileName = "Model.obj";
 	params.m_DestTexturesFolderName = "Textures";
