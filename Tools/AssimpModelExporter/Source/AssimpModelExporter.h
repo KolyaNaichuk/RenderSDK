@@ -24,6 +24,13 @@ public:
 
 private:
 	void GenerateTextureCommands(aiScene& scene, const ExportParams& params);
+	
+	void GenerateBaseColorTextureCommands(aiMaterial& material, std::filesystem::path& textureRelativePath,
+		const ExportParams& params, const std::filesystem::path& textureNamePrefix, const std::filesystem::path& newTextureExtension);
+
+	void GenerateMetalnessTextureCommands(aiMaterial& material, std::filesystem::path& textureRelativePath,
+		const ExportParams& params, const std::filesystem::path& textureNamePrefix, const std::filesystem::path& newTextureExtension);
+
 	void ProcessTextureCommands(const DestMaterialConfig& destMaterialConfig);
 				
 private:
