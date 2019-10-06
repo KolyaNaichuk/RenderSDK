@@ -49,11 +49,26 @@ bool AssimpModelExporter::Export(const ExportParams& params)
 	}
 	std::cout << "Loading completed successfully\n";
 
+	std::cout << "Preparing export folder\n";
+	std::filesystem::file_status destFolderStatus = std::filesystem::status(params.m_DestFolderPath);
+	if (destFolderStatus.type() != std::filesystem::file_type::not_found)
+	{
+		if (destFolderStatus.type() == std::filesystem::file_type::directory)
+		{
+			std::filesystem::remove_all(params.m_DestFolderPath);
+		}
+		else
+		{
+			bool oldFileRemoved = std::filesystem::remove(params.m_DestFolderPath);
+			assert(oldFileRemoved);
+		}
+	}	
 	bool destFolderCreated = std::filesystem::create_directories(params.m_DestFolderPath);
 	assert(destFolderCreated);
 
 	bool destTexturesFolderCreated = std::filesystem::create_directories(params.m_DestFolderPath / params.m_DestTexturesFolderName);
 	assert(destTexturesFolderCreated);
+	std::cout << "Export folder is ready\n";
 
 	aiScene* pScene = importer.GetOrphanedScene();
 	std::cout << "Generating texture commands\n";
@@ -69,7 +84,7 @@ bool AssimpModelExporter::Export(const ExportParams& params)
 	for (size_t index = 0; (index < exporter.GetExportFormatCount()) && (OBJFileFormatDesc == nullptr); ++index)
 	{
 		const aiExportFormatDesc* formatDesc = exporter.GetExportFormatDescription(index);
-		if (AreEqual(formatDesc->fileExtension, "OBJ") || AreEqual(formatDesc->fileExtension, "obj"))
+		if (AreEqual(formatDesc->id, "obj"))
 			OBJFileFormatDesc = formatDesc;
 	}
 	assert(OBJFileFormatDesc != nullptr);
@@ -124,7 +139,7 @@ void AssimpModelExporter::GenerateTextureCommands(aiScene& scene, const ExportPa
 		std::filesystem::path textureRelativePaths[NumMaterialProps];
 				
 		GenerateBaseColorTextureCommands(material, textureRelativePaths[BaseColorProp], params, textureNamePrefix, newTextureExtension);
-		//GenerateMetalnessTextureCommands(material, textureRelativePaths[MetalnessProp], params, textureNamePrefix, newTextureExtension);
+		GenerateMetalnessTextureCommands(material, textureRelativePaths[MetalnessProp], params, textureNamePrefix, newTextureExtension);
 
 		m_UpdateMaterialCommands.emplace_back(material, textureRelativePaths);
 	}

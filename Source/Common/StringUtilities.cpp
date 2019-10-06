@@ -4,7 +4,8 @@ bool AreEqual(const char* str1, const char* str2)
 {
 	assert(str1 != nullptr);
 	assert(str2 != nullptr);
-	return std::strcmp(str1, str2);
+
+	return (std::strcmp(str1, str2) == 0);
 }
 
 const std::wstring AnsiToWideString(const char* pAnsiString)

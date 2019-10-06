@@ -23,7 +23,7 @@ void CreateColorTextureCommand::Execute() const
 	assert(IsInRange(0.0f, 1.0f, m_Color.r));
 	assert(IsInRange(0.0f, 1.0f, m_Color.g));
 	assert(IsInRange(0.0f, 1.0f, m_Color.b));
-		
+
 	u8 pixelBytes[4] = {u8(255.0f * m_Color.r), u8(255.0f * m_Color.g), u8(255.0f * m_Color.b), 255};
 	FillImage(image, 1, 1, DXGI_FORMAT_R8G8B8A8_UNORM, pixelBytes);
 
@@ -41,7 +41,15 @@ CreateFloatTextureCommand::CreateFloatTextureCommand(f32 value, std::filesystem:
 
 void CreateFloatTextureCommand::Execute() const
 {
-	assert(false);
+	DirectX::Image image;
+
+	assert(IsInRange(0.0f, 1.0f, m_Value));
+	u8 pixelBytes[] = {u8(255.0f * m_Value)};
+	FillImage(image, 1, 1, DXGI_FORMAT_R8_UNORM, pixelBytes);
+
+	assert(m_DestPath.extension() == ".DDS");
+	std::wstring destPathString(m_DestPath.wstring());
+	VerifyD3DResult(SaveToDDSFile(image, DirectX::DDS_FLAGS_NONE, destPathString.c_str()));
 }
 
 CopyTextureCommand::CopyTextureCommand(std::filesystem::path sourceTexturePath, std::filesystem::path destTexturePath)
